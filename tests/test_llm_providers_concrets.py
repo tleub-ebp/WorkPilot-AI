@@ -3,11 +3,34 @@ Tests d'intégration pour les providers LLM concrets (OpenAI, Claude, Ollama, Go
 Utilise des clés factices et vérifie la robustesse de l'instanciation et de la validation.
 """
 import pytest
-from src.connectors.llm_openai import OpenAIProvider
-from src.connectors.llm_claude import ClaudeProvider
-from src.connectors.llm_ollama import OllamaProvider
-from src.connectors.llm_google import GoogleLLMProvider
-from src.connectors.llm_anthropic import AnthropicProvider
+import sys
+import importlib.util
+from pathlib import Path
+
+# S'assurer que la racine du projet est dans le chemin
+project_root = Path(__file__).parent.parent
+if str(project_root) not in sys.path:
+    sys.path.insert(0, str(project_root))
+
+# Import direct des modules pour éviter les problèmes d'import imbriqués
+def import_module_from_file(module_name, file_path):
+    spec = importlib.util.spec_from_file_location(module_name, file_path)
+    module = importlib.util.module_from_spec(spec)
+    sys.modules[module_name] = module
+    spec.loader.exec_module(module)
+    return module
+
+# Import des modules dépendants d'abord
+connectors_dir = project_root / "src" / "connectors"
+llm_base = import_module_from_file("src.connectors.llm_base", connectors_dir / "llm_base.py")
+sys.modules["src.connectors.llm_base"] = llm_base
+
+# Import des providers
+OpenAIProvider = import_module_from_file("src.connectors.llm_openai", connectors_dir / "llm_openai.py").OpenAIProvider
+ClaudeProvider = import_module_from_file("src.connectors.llm_claude", connectors_dir / "llm_claude.py").ClaudeProvider
+OllamaProvider = import_module_from_file("src.connectors.llm_ollama", connectors_dir / "llm_ollama.py").OllamaProvider
+GoogleLLMProvider = import_module_from_file("src.connectors.llm_google", connectors_dir / "llm_google.py").GoogleLLMProvider
+AnthropicProvider = import_module_from_file("src.connectors.llm_anthropic", connectors_dir / "llm_anthropic.py").AnthropicProvider
 
 @pytest.mark.parametrize("provider_cls,kwargs,should_validate", [
     (OpenAIProvider, {"api_key": "sk-test", "model": "gpt-3.5-turbo"}, False),

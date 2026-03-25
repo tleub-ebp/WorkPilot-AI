@@ -704,6 +704,12 @@ class TestCacheIntegration:
             # Create files
             (project_path / "src" / "main.py").write_text("""
 from flask import Flask
+import sys
+import os
+
+# Add the project root to the Python path
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
+
 from src.utils.helpers import format_data
 
 app = Flask(__name__)

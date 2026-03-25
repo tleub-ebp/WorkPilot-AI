@@ -12,16 +12,51 @@ Tests the Jira connector including:
 from unittest.mock import MagicMock, patch
 
 import pytest
+from pathlib import Path
+import sys
 
-from src.connectors.jira.connector import JiraConnector
-from src.connectors.jira.models import (
-    JiraComment,
-    JiraIssue,
-    JiraProject,
-    JiraStatus,
-    JiraTransition,
-    JiraUser,
-)
+# Helper function to import modules directly
+def import_module_direct(module_name, file_path):
+    """Import a module directly from file path, bypassing package __init__.py"""
+    import importlib.util
+    spec = importlib.util.spec_from_file_location(module_name, file_path)
+    module = importlib.util.module_from_spec(spec)
+    sys.modules[module_name] = module
+    spec.loader.exec_module(module)
+    return module
+
+# Import modules directly to avoid circular import issues in __init__.py
+# First import exceptions and models, then connector (which depends on them)
+project_root = Path(__file__).parent.parent.parent.parent
+
+# Import exceptions first
+exceptions_module = import_module_direct("jira_exceptions", project_root / "src" / "connectors" / "jira" / "exceptions.py")
+models_module = import_module_direct("jira_models", project_root / "src" / "connectors" / "jira" / "models.py")
+client_module = import_module_direct("jira_client", project_root / "src" / "connectors" / "jira" / "client.py")
+
+# Make modules available in sys.modules so connector can import them
+# Create a proper package structure
+jira_package = type('Package', (), {
+    'exceptions': exceptions_module,
+    'models': models_module,
+    'client': client_module
+})()
+sys.modules["src.connectors.jira.exceptions"] = exceptions_module
+sys.modules["src.connectors.jira.models"] = models_module
+sys.modules["src.connectors.jira.client"] = client_module
+sys.modules["src.connectors.jira"] = jira_package
+sys.modules["src.connectors"] = type('Package', (), {'jira': jira_package})()
+
+# Now import connector
+connector_module = import_module_direct("jira_connector", project_root / "src" / "connectors" / "jira" / "connector.py")
+
+JiraConnector = connector_module.JiraConnector
+JiraComment = models_module.JiraComment
+JiraIssue = models_module.JiraIssue
+JiraProject = models_module.JiraProject
+JiraStatus = models_module.JiraStatus
+JiraTransition = models_module.JiraTransition
+JiraUser = models_module.JiraUser
 
 
 # ── Fixtures ─────────────────────────────────────────────────────
@@ -111,7 +146,7 @@ class TestSearchIssues:
 
     def test_returns_issues(self, connector, mock_jira_client):
         """search_issues() returns a list of JiraIssue objects."""
-        mock_jira_client.post.return_value = {
+        mock_jira_client.get.return_value = {
             "issues": [
                 {
                     "key": "PROJ-1",
@@ -139,29 +174,30 @@ class TestSearchIssues:
 
     def test_passes_jql_filter(self, connector, mock_jira_client):
         """search_issues() builds correct JQL with filter."""
-        mock_jira_client.post.return_value = {"issues": [], "total": 0}
+        mock_jira_client.get.return_value = {"issues": [], "total": 0}
 
         connector.search_issues("PROJ", jql_filter="status = 'To Do'")
 
-        call_args = mock_jira_client.post.call_args
-        jql = call_args.kwargs["json_data"]["jql"]
+        call_args = mock_jira_client.get.call_args
+        params = call_args.kwargs["params"]
+        jql = params["jql"]
         assert "project = PROJ" in jql
         assert "status = 'To Do'" in jql
 
     def test_passes_pagination_params(self, connector, mock_jira_client):
         """search_issues() passes maxResults and startAt."""
-        mock_jira_client.post.return_value = {"issues": [], "total": 0}
+        mock_jira_client.get.return_value = {"issues": [], "total": 0}
 
         connector.search_issues("PROJ", max_results=10, start_at=20)
 
-        call_args = mock_jira_client.post.call_args
-        body = call_args.kwargs["json_data"]
-        assert body["maxResults"] == 10
-        assert body["startAt"] == 20
+        call_args = mock_jira_client.get.call_args
+        params = call_args.kwargs["params"]
+        assert params["maxResults"] == 10
+        assert params["startAt"] == 20
 
     def test_returns_empty_list(self, connector, mock_jira_client):
         """search_issues() returns empty list when no issues match."""
-        mock_jira_client.post.return_value = {"issues": [], "total": 0}
+        mock_jira_client.get.return_value = {"issues": [], "total": 0}
 
         result = connector.search_issues("PROJ")
 
@@ -409,7 +445,7 @@ class TestKanbanImport:
 
     def test_imports_issues_for_kanban(self, connector, mock_jira_client):
         """import_issues_for_kanban() converts issues to Kanban format."""
-        mock_jira_client.post.return_value = {
+        mock_jira_client.get.return_value = {
             "issues": [
                 {
                     "key": "PROJ-1",

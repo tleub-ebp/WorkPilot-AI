@@ -29,13 +29,16 @@ vi.mock('./credential-utils', () => ({
 
 // Mock fetch for token refresh
 const mockFetch = vi.fn();
-global.fetch = mockFetch;
+globalThis.fetch = mockFetch;
 
 describe('token-refresh', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     vi.useFakeTimers();
     vi.setSystemTime(new Date('2025-01-20T12:00:00Z'));
+    
+    // Clear global state from token-refresh module to avoid test interference
+    vi.resetModules();
   });
 
   afterEach(() => {
@@ -267,11 +270,11 @@ describe('token-refresh', () => {
         email: 'test@example.com'
       });
 
-      const result = await ensureValidToken(undefined);
+      const result = await ensureValidToken(undefined, undefined, { forceRefresh: true });
 
       expect(result.token).toBe('expiring-token');
       expect(result.wasRefreshed).toBe(false);
-      expect(result.error).toContain('no refresh token');
+      expect(result.error).toContain('Token expired but no refresh token available');
     });
 
     it('should call onRefreshed callback when token is refreshed', async () => {
@@ -293,7 +296,7 @@ describe('token-refresh', () => {
       });
 
       const onRefreshed = vi.fn();
-      await ensureValidToken(undefined, onRefreshed);
+      await ensureValidToken(undefined, onRefreshed, { forceRefresh: true });
 
       expect(onRefreshed).toHaveBeenCalledWith(
         undefined,

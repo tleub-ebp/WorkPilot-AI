@@ -7,9 +7,14 @@ Engine pour appliquer automatiquement des fixes aux problèmes détectés.
 
 from __future__ import annotations
 
+import os
 import re
+import sys
 from pathlib import Path
 from typing import Any
+
+# Add the project root to the Python path
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..")))
 
 from src.connectors.base import GrepaiConnector
 

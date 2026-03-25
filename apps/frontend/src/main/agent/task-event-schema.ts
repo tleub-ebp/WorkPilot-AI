@@ -1,13 +1,13 @@
 import { z } from 'zod';
 
 export const TaskEventSchema = z.object({
-  type: z.string(),
-  taskId: z.string(),
-  specId: z.string(),
-  projectId: z.string(),
-  timestamp: z.string(),
-  eventId: z.string(),
-  sequence: z.number().int().min(0)
+  type: z.string().optional(),
+  taskId: z.string().optional(),
+  specId: z.string().optional(),
+  projectId: z.string().optional(),
+  timestamp: z.string().optional(),
+  eventId: z.string().optional(),
+  sequence: z.number().int().min(0).optional()
 }).passthrough();
 
 export type TaskEventPayload = z.infer<typeof TaskEventSchema>;

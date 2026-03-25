@@ -66,7 +66,7 @@ const AUTH_FAILURE_PATTERNS = [
   // Match specific error prefixes that indicate actual API errors (not AI discussion or spec content).
   // Require "Error:" to be at the start of a line to avoid matching mid-sentence error discussions.
   // Use non-greedy .* to prevent matching across long lines of AI-generated content.
-  /^Error:\s*.*?(?:unauthorized|authentication_error|invalid\s*(?:bearer\s+)?token)/im,
+  /^Error:\s*.*?(?:unauthorized|authentication_error|invalid\s*(?:bearer\s+)?token|authentication\s+required)/im,
   // Match · Please run /login format from Claude CLI
   /·\s*Please\s+run\s+\/login/i,
 ];
@@ -151,6 +151,16 @@ export interface RateLimitDetectionResult {
 }
 
 /**
+ * Type alias for authentication failure types
+ */
+type AuthFailureType = 'missing' | 'invalid' | 'expired' | 'unknown';
+
+/**
+ * Type alias for billing failure types
+ */
+type BillingFailureType = 'insufficient_credits' | 'payment_required' | 'subscription_inactive' | 'unknown';
+
+/**
  * Result of authentication failure detection
  */
 export interface AuthFailureDetectionResult {
@@ -159,7 +169,7 @@ export interface AuthFailureDetectionResult {
   /** The profile ID that failed to authenticate (if known) */
   profileId?: string;
   /** The type of auth failure detected */
-  failureType?: 'missing' | 'invalid' | 'expired' | 'unknown';
+  failureType?: AuthFailureType;
   /** User-friendly message describing the failure */
   message?: string;
   /** Original error message from the process output */
@@ -175,7 +185,7 @@ export interface BillingFailureDetectionResult {
   /** The profile ID that has billing issues (if known) */
   profileId?: string;
   /** The type of billing failure detected */
-  failureType?: 'insufficient_credits' | 'payment_required' | 'subscription_inactive' | 'unknown';
+  failureType?: BillingFailureType;
   /** User-friendly message describing the failure */
   message?: string;
   /** Original error message from the process output */
@@ -194,7 +204,7 @@ export function detectRateLimit(
   //   "Limit reached · resets Dec 17 at 6am (Europe/Oslo)"
   //   "You've hit your limit · resets 10am (Europe/Paris)"
   for (const primaryPattern of RATE_LIMIT_PATTERNS) {
-    const match = output.match(primaryPattern);
+    const match = primaryPattern.exec(output);
     if (match) {
       const resetTime = match[1].trim();
       const limitType = classifyRateLimitType(resetTime);
@@ -262,7 +272,7 @@ export function extractResetTime(output: string): string | null {
   // Try all primary patterns to extract reset time
   let match: RegExpMatchArray | null = null;
   for (const pattern of RATE_LIMIT_PATTERNS) {
-    match = output.match(pattern);
+    match = pattern.exec(output);
     if (match) break;
   }
   return match ? match[1].trim() : null;
@@ -271,7 +281,7 @@ export function extractResetTime(output: string): string | null {
 /**
  * Classify the type of authentication failure based on the error message
  */
-function classifyAuthFailureType(output: string): 'missing' | 'invalid' | 'expired' | 'unknown' {
+function classifyAuthFailureType(output: string): AuthFailureType {
   const lowerOutput = output.toLowerCase();
 
   if (/missing|not\s*(yet\s*)?authenticated|required/.test(lowerOutput)) {
@@ -294,7 +304,7 @@ function classifyAuthFailureType(output: string): 'missing' | 'invalid' | 'expir
 /**
  * Get a user-friendly message for the authentication failure
  */
-function getAuthFailureMessage(failureType: 'missing' | 'invalid' | 'expired' | 'unknown'): string {
+function getAuthFailureMessage(failureType: AuthFailureType): string {
   switch (failureType) {
     case 'missing':
       return 'Claude authentication required. Please go to Settings > Claude Profiles and authenticate your account.';
@@ -310,7 +320,7 @@ function getAuthFailureMessage(failureType: 'missing' | 'invalid' | 'expired' | 
 /**
  * Classify the type of billing failure based on the error message
  */
-function classifyBillingFailureType(output: string): 'insufficient_credits' | 'payment_required' | 'subscription_inactive' | 'unknown' {
+function classifyBillingFailureType(output: string): BillingFailureType {
   const lowerOutput = output.toLowerCase();
 
   // Check for credit-related failures (including extra_usage which indicates usage exhaustion)
@@ -331,7 +341,7 @@ function classifyBillingFailureType(output: string): 'insufficient_credits' | 'p
 /**
  * Get a user-friendly message for the billing failure
  */
-function getBillingFailureMessage(failureType: 'insufficient_credits' | 'payment_required' | 'subscription_inactive' | 'unknown'): string {
+function getBillingFailureMessage(failureType: BillingFailureType): string {
   switch (failureType) {
     case 'insufficient_credits':
       return 'Your Claude API credit balance is too low. Please add credits to your account or switch to another profile in Settings > Claude Profiles.';
@@ -503,11 +513,15 @@ export function getBestAvailableProfileEnv(): BestProfileEnvResult {
 
   // Determine if we need to find an alternative
   const needsSwap = rateLimitStatus.limited || isAtCapacity;
-  const swapReason: BestProfileEnvResult['swapReason'] = rateLimitStatus.limited
-    ? 'rate_limited'
-    : isAtCapacity
-      ? 'at_capacity'
-      : undefined;
+  
+  let swapReason: BestProfileEnvResult['swapReason'];
+  if (rateLimitStatus.limited) {
+    swapReason = 'rate_limited';
+  } else if (isAtCapacity) {
+    swapReason = 'at_capacity';
+  } else {
+    swapReason = undefined;
+  }
 
   if (needsSwap) {
     if (process.env.DEBUG === 'true') {
@@ -595,10 +609,10 @@ export function getBestAvailableProfileEnv(): BestProfileEnvResult {
           name: activeProfile.name
         }
       };
-    } else {
-      if (process.env.DEBUG === 'true') {
-        console.warn('[RateLimitDetector] No alternative profile available, using rate-limited/at-capacity profile');
-      }
+    }
+
+    if (process.env.DEBUG === 'true') {
+      console.warn('[RateLimitDetector] No alternative profile available, using rate-limited/at-capacity profile');
     }
   }
 

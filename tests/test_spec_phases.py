@@ -13,6 +13,7 @@ Tests the PhaseExecutor class in auto-claude/spec/phases.py covering:
 import json
 import sys
 from pathlib import Path
+from typing import Optional
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
@@ -414,8 +415,10 @@ class TestPhaseRequirements:
         assert (spec_dir / "requirements.json").exists()
 
         # Verify content
-        with open(spec_dir / "requirements.json") as f:
-            req = json.load(f)
+        import aiofiles
+        async with aiofiles.open(spec_dir / "requirements.json") as f:
+            content = await f.read()
+        req = json.loads(content)
         assert req["task_description"] == "Add user authentication"
 
 
@@ -561,7 +564,9 @@ class TestPhaseQuickSpec:
 
         # Agent creates spec.md on success
         async def agent_side_effect(*args, **kwargs):
-            (spec_dir / "spec.md").write_text("# Generated Spec")
+            import aiofiles
+            async with aiofiles.open(spec_dir / "spec.md", "w") as f:
+                await f.write("# Generated Spec")
             return (True, "Done")
 
         agent_fn = AsyncMock(side_effect=agent_side_effect)
@@ -687,7 +692,9 @@ class TestPhaseSpecWriting:
         (spec_dir / "spec.md").write_text("Invalid spec")
 
         async def agent_side_effect(*args, **kwargs):
-            (spec_dir / "spec.md").write_text("# Valid Spec\n\n## Overview\n")
+            import aiofiles
+            async with aiofiles.open(spec_dir / "spec.md", "w") as f:
+                await f.write("# Valid Spec\n\n## Overview\n")
             return (True, "Done")
 
         agent_fn = AsyncMock(side_effect=agent_side_effect)
@@ -702,8 +709,8 @@ class TestPhaseSpecWriting:
         class MockResult:
             valid: bool
             checkpoint: str = "spec_document"
-            errors: list = None
-            fixes: list = None
+            errors: Optional[list] = None
+            fixes: Optional[list] = None
 
             def __post_init__(self):
                 self.errors = self.errors or []
@@ -888,7 +895,7 @@ class TestPhaseValidation:
             project_dir=temp_dir,
             spec_dir=spec_dir,
             task_description="Test task",
-            spec_validator=mock_spec_validator(all_valid=False),
+            spec_validator=mock_spec_validator(spec_valid=False, plan_valid=False, context_valid=False),
             run_agent_fn=agent_fn,
             task_logger=mock_task_logger,
             ui_module=mock_ui_module,

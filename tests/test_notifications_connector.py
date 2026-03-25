@@ -16,32 +16,49 @@ DailySummary, models and exceptions.
 - NotificationsConnector stats: 2
 """
 
-import sys
-import os
 import json
+import sys
+import importlib.util
+from pathlib import Path
 from unittest.mock import patch, MagicMock
 from datetime import datetime, timezone
 
 import pytest
 
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
+# S'assurer que la racine du projet est dans le chemin
+project_root = Path(__file__).parent.parent
+if str(project_root) not in sys.path:
+    sys.path.insert(0, str(project_root))
 
-from src.connectors.notifications.exceptions import (
-    NotificationError,
-    NotificationAuthenticationError,
-    NotificationConfigurationError,
-    NotificationDeliveryError,
-)
-from src.connectors.notifications.models import (
-    DailySummary,
-    EventType,
-    NotificationChannel,
-    NotificationEvent,
-    NotificationPriority,
-    NotificationResult,
-    SlashCommand,
-)
-from src.connectors.notifications.connector import NotificationsConnector
+# Import direct des modules pour éviter les problèmes d'import imbriqués
+def import_module_from_file(module_name, file_path):
+    spec = importlib.util.spec_from_file_location(module_name, file_path)
+    module = importlib.util.module_from_spec(spec)
+    sys.modules[module_name] = module
+    spec.loader.exec_module(module)
+    return module
+
+# Import des modules notifications
+connectors_dir = project_root / "src" / "connectors" / "notifications"
+notifications_exceptions = import_module_from_file("src.connectors.notifications.exceptions", connectors_dir / "exceptions.py")
+notifications_models = import_module_from_file("src.connectors.notifications.models", connectors_dir / "models.py")
+notifications_connector = import_module_from_file("src.connectors.notifications.connector", connectors_dir / "connector.py")
+
+# Import des classes et fonctions
+NotificationError = notifications_exceptions.NotificationError
+NotificationAuthenticationError = notifications_exceptions.NotificationAuthenticationError
+NotificationConfigurationError = notifications_exceptions.NotificationConfigurationError
+NotificationDeliveryError = notifications_exceptions.NotificationDeliveryError
+
+DailySummary = notifications_models.DailySummary
+EventType = notifications_models.EventType
+NotificationChannel = notifications_models.NotificationChannel
+NotificationEvent = notifications_models.NotificationEvent
+NotificationPriority = notifications_models.NotificationPriority
+NotificationResult = notifications_models.NotificationResult
+SlashCommand = notifications_models.SlashCommand
+
+NotificationsConnector = notifications_connector.NotificationsConnector
 
 
 # -----------------------------------------------------------------------
@@ -205,7 +222,7 @@ class TestDailySummary:
             total_cost=2.50,
         )
         assert summary.tasks_completed == 5
-        assert summary.total_cost == 2.50
+        assert abs(summary.total_cost - 2.50) < 1e-9
 
     def test_summary_to_notification_event(self):
         summary = DailySummary(
@@ -453,4 +470,4 @@ class TestConnectorStats:
     def test_success_rate_no_deliveries(self):
         conn = NotificationsConnector(slack_webhook_url="https://hooks.slack.com/test")
         stats = conn.get_stats()
-        assert stats["success_rate"] == 100.0
+        assert stats["success_rate"] == 100

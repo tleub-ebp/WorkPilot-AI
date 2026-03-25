@@ -105,7 +105,6 @@ class AnalyticsCollector:
         db = next(get_db())
         try:
             phase = BuildPhase(
-                id=int(self.current_phase.replace("-", ""))[:18],  # Simplified ID
                 build_id=self.current_build,
                 phase_name=phase_name,
                 phase_type=phase_type,
@@ -330,6 +329,10 @@ class AnalyticsCollector:
         if not build:
             return
 
+        # Set completion status
+        build.status = BuildStatus.COMPLETE
+        build.completed_at = datetime.utcnow()
+
         # Calculate total duration
         if build.completed_at and build.started_at:
             build.total_duration_seconds = (
@@ -344,7 +347,7 @@ class AnalyticsCollector:
         # Aggregate QA metrics
         qa_results = db.query(QAResult).filter(QAResult.build_id == build_id).all()
         build.qa_iterations = len(qa_results)
-        if qa_results:
+        if qa_results and len(qa_results) > 0:
             build.qa_success_rate = (
                 sum(1 for qa in qa_results if qa.success) / len(qa_results) * 100
             )
@@ -406,7 +409,6 @@ def on_phase_event(phase_data: dict[str, Any]):
     """
     try:
         phase = phase_data.get("phase", "")
-        message = phase_data.get("message", "")
 
         collector = get_analytics_collector()
 

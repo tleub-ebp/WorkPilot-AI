@@ -421,12 +421,7 @@ export function registerSettingsHandlers(
         makeBackendRequest<{ selected: string }>(
           `http://127.0.0.1:9000/providers/select?provider=${encodeURIComponent(provider)}`,
           { method: 'POST', headers: { 'Content-Type': 'application/json' } }
-        ).then(result => {
-          if (result.success) {
-          }
-        }).catch(() => {
-          // Backend not running — not an error, provider is already persisted above
-        });
+        );
 
         return { success: true, data: provider };
       } catch (error) {

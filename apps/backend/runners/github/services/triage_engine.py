@@ -15,10 +15,18 @@ try:
     from .prompt_manager import PromptManager
     from .response_parsers import ResponseParser
 except (ImportError, ValueError, SystemError):
-    from models import GitHubRunnerConfig, TriageCategory, TriageResult
+    import sys
+    from pathlib import Path
+
+    # Add backend root to path for absolute imports
+    backend_root = Path(__file__).parent.parent.parent.parent
+    if str(backend_root) not in sys.path:
+        sys.path.insert(0, str(backend_root))
+
     from phase_config import resolve_model_id
-    from services.prompt_manager import PromptManager
-    from services.response_parsers import ResponseParser
+    from runners.github.models import GitHubRunnerConfig, TriageCategory, TriageResult
+    from runners.github.services.prompt_manager import PromptManager
+    from runners.github.services.response_parsers import ResponseParser
 
 
 class TriageEngine:

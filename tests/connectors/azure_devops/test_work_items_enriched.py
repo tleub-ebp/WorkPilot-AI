@@ -11,6 +11,9 @@ from unittest.mock import MagicMock, call
 
 import pytest
 
+import sys
+import os
+
 from src.connectors.azure_devops.exceptions import (
     APIError,
     AuthenticationError,

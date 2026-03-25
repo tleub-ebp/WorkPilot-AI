@@ -15,14 +15,23 @@ const mockOnPromptOptimizerStatus = vi.fn();
 const mockOnPromptOptimizerError = vi.fn();
 const mockOnPromptOptimizerComplete = vi.fn();
 
-vi.stubGlobal('window', {
-  electronAPI: {
-    optimizePrompt: mockOptimizePrompt,
-    onPromptOptimizerStreamChunk: mockOnPromptOptimizerStreamChunk,
-    onPromptOptimizerStatus: mockOnPromptOptimizerStatus,
-    onPromptOptimizerError: mockOnPromptOptimizerError,
-    onPromptOptimizerComplete: mockOnPromptOptimizerComplete,
-  },
+// Setup mocks before each test
+beforeEach(() => {
+  vi.clearAllMocks();
+  vi.resetModules();
+
+  // Mock globalThis.electronAPI
+  Object.defineProperty(globalThis, 'electronAPI', {
+    value: {
+      optimizePrompt: mockOptimizePrompt,
+      onPromptOptimizerStreamChunk: mockOnPromptOptimizerStreamChunk,
+      onPromptOptimizerStatus: mockOnPromptOptimizerStatus,
+      onPromptOptimizerError: mockOnPromptOptimizerError,
+      onPromptOptimizerComplete: mockOnPromptOptimizerComplete,
+    },
+    writable: true,
+    configurable: true
+  });
 });
 
 describe('Prompt Optimizer Store', () => {
@@ -31,8 +40,11 @@ describe('Prompt Optimizer Store', () => {
   let setupPromptOptimizerListeners: typeof import('../prompt-optimizer-store').setupPromptOptimizerListeners;
 
   beforeEach(async () => {
-    vi.clearAllMocks();
-    vi.resetModules();
+    // Mock the listener functions to return cleanup functions
+    mockOnPromptOptimizerStreamChunk.mockReturnValue(vi.fn());
+    mockOnPromptOptimizerStatus.mockReturnValue(vi.fn());
+    mockOnPromptOptimizerError.mockReturnValue(vi.fn());
+    mockOnPromptOptimizerComplete.mockReturnValue(vi.fn());
 
     const storeModule = await import('../prompt-optimizer-store');
     usePromptOptimizerStore = storeModule.usePromptOptimizerStore;
