@@ -10,7 +10,7 @@ import pickle
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime, timedelta
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any
 
 from .models import TransformationResult
 
@@ -31,7 +31,7 @@ class MigrationCache:
 
     def get(
         self, content: str, source: str, target: str
-    ) -> Optional[TransformationResult]:
+    ) -> TransformationResult | None:
         """Get cached transformation result."""
         key = self._get_cache_key(content, source, target)
 
@@ -72,7 +72,7 @@ class MigrationCache:
         except Exception as e:
             print(f"Warning: Failed to cache result: {e}")
 
-    def clear(self, older_than_hours: Optional[int] = None) -> int:
+    def clear(self, older_than_hours: int | None = None) -> int:
         """Clear cache entries."""
         cleared = 0
         cutoff_time = datetime.now() - timedelta(hours=older_than_hours or 0)
@@ -285,7 +285,7 @@ class TransformationBatcher:
         self,
         files: list[str],
         process_func: callable,
-        on_batch_complete: Optional[callable] = None,
+        on_batch_complete: callable | None = None,
     ) -> list[Any]:
         """Process files in batches."""
         batches = self.batch_files(files)
@@ -305,11 +305,11 @@ class ProgressTracker:
     """Track migration progress with detailed metrics."""
 
     def __init__(self):
-        self.start_time: Optional[datetime] = None
-        self.end_time: Optional[datetime] = None
+        self.start_time: datetime | None = None
+        self.end_time: datetime | None = None
         self.files_processed = 0
         self.files_total = 0
-        self.current_file: Optional[str] = None
+        self.current_file: str | None = None
         self.errors: list[str] = []
         self.warnings: list[str] = []
 
@@ -342,7 +342,7 @@ class ProgressTracker:
             return 0.0
         return round(self.files_processed / self.files_total * 100, 2)
 
-    def get_elapsed_time(self) -> Optional[float]:
+    def get_elapsed_time(self) -> float | None:
         """Get elapsed time in seconds."""
         if not self.start_time:
             return None
@@ -350,7 +350,7 @@ class ProgressTracker:
         end = self.end_time or datetime.now()
         return (end - self.start_time).total_seconds()
 
-    def get_eta(self) -> Optional[float]:
+    def get_eta(self) -> float | None:
         """Estimate time remaining in seconds."""
         elapsed = self.get_elapsed_time()
         if not elapsed or self.files_processed == 0:
