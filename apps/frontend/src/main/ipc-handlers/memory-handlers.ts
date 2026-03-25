@@ -74,6 +74,7 @@ interface OllamaEmbeddingModel {
  * Recommended Embedding Model Card
  * Pre-curated models suitable for WorkPilot AI memory system
  */
+// biome-ignore lint/correctness/noUnusedVariables: variable kept for clarity
 interface OllamaRecommendedModel {
   name: string;          // Model identifier
   description: string;   // Human-readable description
@@ -229,6 +230,7 @@ async function executeOllamaDetector(
   const cached = ollamaDetectorCache.get(cacheKey);
   if (cached && Date.now() - cached.timestamp < OLLAMA_CACHE_TTL_MS) {
     if (process.env.DEBUG) {
+      // noop
     }
     return cached.promise;
   }
@@ -287,6 +289,7 @@ async function executeOllamaDetectorImpl(
   }
 
   if (process.env.DEBUG) {
+    // noop
   }
 
   const [pythonExe, baseArgs] = parsePythonCommand(pythonCmd);

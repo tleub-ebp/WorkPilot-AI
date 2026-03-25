@@ -126,9 +126,11 @@ export function ThemedProviderCard({
   onConfigure,
   onTest,
   onToggle,
+  // biome-ignore lint/correctness/noUnusedFunctionParameters: parameter kept for API compatibility
   onRemove,
   className
 }: ThemedProviderCardProps) {
+  // biome-ignore lint/correctness/noUnusedVariables: variable kept for clarity
   const { t } = useTranslation('settings');
   const [isExpanded, setIsExpanded] = useState(false);
   const [showApiKey, setShowApiKey] = useState(false);

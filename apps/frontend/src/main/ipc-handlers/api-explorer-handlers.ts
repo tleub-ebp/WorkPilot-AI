@@ -35,6 +35,7 @@ function walkFiles(dir: string, extensions: string[], maxDepth = 12, depth = 0):
   for (const entry of entries) {
     if (EXCLUDED_DIRS.has(entry)) continue;
     const full = path.join(dir, entry);
+    // biome-ignore lint/suspicious/noImplicitAnyLet: type inferred from assignment
     let stat;
     try { stat = statSync(full); } catch { continue; }
     if (stat.isDirectory()) {
@@ -93,6 +94,7 @@ function detectDotnet(projectPath: string): DetectedRoute[] {
       /(?:\/\/\/\s*<summary>\s*((?:\/\/\/[^\n]*\n?)*?)\/\/\/\s*<\/summary>[\s\S]{0,600}?)?(\[Http(Get|Post|Put|Delete|Patch)(?:\(["']?([^"')\]]*?)["']?\))?\])/g;
 
     let m: RegExpExecArray | null;
+    // biome-ignore lint/suspicious/noAssignInExpressions: intentional assignment
     while ((m = methodRe.exec(content)) !== null) {
       const rawSummary = m[1] ?? '';
       const summary = rawSummary
@@ -131,12 +133,14 @@ function detectPython(projectPath: string): DetectedRoute[] {
     // FastAPI: @app.get("/path") @router.post("/path")
     const fastapiRe = /@(?:app|router)\.(get|post|put|delete|patch)\(["']([^"']+)["']/g;
     let m: RegExpExecArray | null;
+    // biome-ignore lint/suspicious/noAssignInExpressions: intentional assignment
     while ((m = fastapiRe.exec(content)) !== null) {
       routes.push({ path: m[2], methods: [m[1].toUpperCase()], tag, file: path.relative(projectPath, filePath), framework: 'FastAPI', requiresAuth: /Depends/.test(content.slice(m.index, m.index + 120)) });
     }
 
     // Flask: @app.route("/path", methods=["GET","POST"])
     const flaskRe = /@(?:app|bp|blueprint)\.route\(["']([^"']+)["'](?:[^)]*methods\s*=\s*\[([^\]]+)\])?/g;
+    // biome-ignore lint/suspicious/noAssignInExpressions: intentional assignment
     while ((m = flaskRe.exec(content)) !== null) {
       const methods = m[2]
         ? m[2].split(',').map((x) => x.trim().replace(/["']/g, '').toUpperCase())
@@ -160,12 +164,14 @@ function detectExpress(projectPath: string): DetectedRoute[] {
     // Express/Fastify: router.get('/path', ...)  app.post('/path', ...)
     const expressRe = /(?:app|router|server)\.(get|post|put|delete|patch)\s*\(\s*["']([^"']+)["']/g;
     let m: RegExpExecArray | null;
+    // biome-ignore lint/suspicious/noAssignInExpressions: intentional assignment
     while ((m = expressRe.exec(content)) !== null) {
       routes.push({ path: m[2], methods: [m[1].toUpperCase()], tag, file: path.relative(projectPath, filePath), framework: 'Express', requiresAuth: false });
     }
 
     // NestJS decorators: @Get('/path') @Post('/path') etc.
     const nestRe = /@(Get|Post|Put|Delete|Patch)\s*\(\s*["']?([^"')\s]*)["']?\s*\)/g;
+    // biome-ignore lint/suspicious/noAssignInExpressions: intentional assignment
     while ((m = nestRe.exec(content)) !== null) {
       const p = m[2] ? (m[2].startsWith('/') ? m[2] : `/${m[2]}`) : '/';
       routes.push({ path: p, methods: [m[1].toUpperCase()], tag, file: path.relative(projectPath, filePath), framework: 'NestJS', requiresAuth: false });
@@ -194,6 +200,7 @@ function detectSpring(projectPath: string): DetectedRoute[] {
 
     const methodRe = /@(GetMapping|PostMapping|PutMapping|DeleteMapping|PatchMapping)\s*\(\s*(?:value\s*=\s*)?["']?([^"')\s]*)["']?\s*\)/g;
     let m: RegExpExecArray | null;
+    // biome-ignore lint/suspicious/noAssignInExpressions: intentional assignment
     while ((m = methodRe.exec(content)) !== null) {
       const method = verbMap[m[1]] ?? 'GET';
       const sub = m[2] ? (m[2].startsWith('/') ? m[2] : `/${m[2]}`) : '';
@@ -216,6 +223,7 @@ function detectGo(projectPath: string): DetectedRoute[] {
 
     const goRe = /(?:r|e|app|router)\.(GET|POST|PUT|DELETE|PATCH|Get|Post|Put|Delete|Patch)\s*\(\s*["']([^"']+)["']/g;
     let m: RegExpExecArray | null;
+    // biome-ignore lint/suspicious/noAssignInExpressions: intentional assignment
     while ((m = goRe.exec(content)) !== null) {
       routes.push({ path: m[2], methods: [m[1].toUpperCase()], tag, file: path.relative(projectPath, filePath), framework: 'Go', requiresAuth: false });
     }
@@ -235,6 +243,7 @@ function detectRust(projectPath: string): DetectedRoute[] {
 
     const axumRe = /\.route\s*\(\s*["']([^"']+)["']\s*,\s*(get|post|put|delete|patch)/g;
     let m: RegExpExecArray | null;
+    // biome-ignore lint/suspicious/noAssignInExpressions: intentional assignment
     while ((m = axumRe.exec(content)) !== null) {
       routes.push({ path: m[1], methods: [m[2].toUpperCase()], tag, file: path.relative(projectPath, filePath), framework: 'Rust/Axum', requiresAuth: false });
     }
@@ -253,12 +262,14 @@ function detectRails(projectPath: string): DetectedRoute[] {
 
     const verbRe = /(get|post|put|patch|delete)\s+['"]([^'"]+)['"]/gi;
     let m: RegExpExecArray | null;
+    // biome-ignore lint/suspicious/noAssignInExpressions: intentional assignment
     while ((m = verbRe.exec(content)) !== null) {
       const p = m[2].startsWith('/') ? m[2] : `/${m[2]}`;
       routes.push({ path: p, methods: [m[1].toUpperCase()], tag: 'routes', file: path.relative(projectPath, filePath), framework: 'Rails', requiresAuth: false });
     }
 
     const resourcesRe = /resources\s+:(\w+)/g;
+    // biome-ignore lint/suspicious/noAssignInExpressions: intentional assignment
     while ((m = resourcesRe.exec(content)) !== null) {
       const base = `/${m[1]}`;
       for (const [p, method] of [[base, 'GET'], [base, 'POST'], [`${base}/{id}`, 'GET'], [`${base}/{id}`, 'PUT'], [`${base}/{id}`, 'DELETE']] as [string, string][]) {

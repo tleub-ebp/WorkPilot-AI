@@ -27,8 +27,8 @@ const PriorityOrder: React.FC = () => {
         {providerPriorityOrder.map((provider, idx) => (
           <li key={provider} style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
             <span style={{ flex: 1 }}>{provider}</span>
-            <button onClick={() => move(idx, idx - 1)} disabled={idx === 0} aria-label={t('settings.accounts.priorityOrder.up')}>↑</button>
-            <button onClick={() => move(idx, idx + 1)} disabled={idx === providerPriorityOrder.length - 1} aria-label={t('settings.accounts.priorityOrder.down')}>↓</button>
+            <button type="button" onClick={() => move(idx, idx - 1)} disabled={idx === 0} aria-label={t('settings.accounts.priorityOrder.up')}>↑</button>
+            <button type="button" onClick={() => move(idx, idx + 1)} disabled={idx === providerPriorityOrder.length - 1} aria-label={t('settings.accounts.priorityOrder.down')}>↓</button>
           </li>
         ))}
       </ul>

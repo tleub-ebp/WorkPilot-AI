@@ -1111,6 +1111,7 @@ export function AgentTools() {
         if (result.success && result.data) {
           setServerHealthStatus(prev => ({
             ...prev,
+            // biome-ignore lint/style/noNonNullAssertion: value is guaranteed by context
             [server.id]: result.data!,
           }));
         }

@@ -51,7 +51,9 @@ describe('task-event-parser', () => {
     const input = '__TASK_EVENT__:{"config": {"path": "C:\\\\temp\\\\file.txt", "description": "A \\"special\\" file"}, "status": "ready"}extra garbage';
     const result = parseTaskEvent(input);
     expect(result).not.toBeNull();
+    // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
     expect((result as any)?.config?.path).toBe('C:\\temp\\file.txt');
+    // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
     expect((result as any)?.config?.description).toBe('A "special" file');
   });
 });

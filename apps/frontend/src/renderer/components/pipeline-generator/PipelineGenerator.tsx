@@ -187,6 +187,7 @@ export function PipelineGenerator(): React.ReactElement {
           {(isRunning || status) && (
             <div className="px-4 py-2 bg-[var(--bg-secondary)] border-b border-[var(--border-color)] text-sm text-[var(--text-secondary)] flex items-center gap-2">
               {isRunning && (
+                // biome-ignore lint/a11y/noSvgWithoutTitle: SVG is decorative
                 <svg className="animate-spin w-4 h-4 text-[var(--accent)]" fill="none" viewBox="0 0 24 24">
                   <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                   <path

@@ -23,6 +23,8 @@ export function Skeleton({
 }: SkeletonProps) {
   return (
     <div
+      // biome-ignore lint/a11y/useSemanticElements: custom element maintains accessibility
+      // biome-ignore lint/a11y/useSemanticElements: intentional
       role="status"
       aria-label="Loading..."
       className={cn(
@@ -58,6 +60,8 @@ export function SkeletonLine({ className, ...props }: React.HTMLAttributes<HTMLD
 export function SkeletonCard({ className, children, ...props }: React.HTMLAttributes<HTMLDivElement>) {
   return (
     <div
+      // biome-ignore lint/a11y/useSemanticElements: custom element maintains accessibility
+      // biome-ignore lint/a11y/useSemanticElements: intentional
       role="status"
       aria-label="Loading..."
       className={cn(

@@ -59,6 +59,7 @@ function getCurrentModelInfo(): { model: string; provider: string; modelLabel: s
       let modelLabel = modelId;
       
       if (providerModels) {
+        // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
         const modelInfo = providerModels.find((m: any) => m.value === modelId);
         if (modelInfo) {
           modelLabel = modelInfo.label;

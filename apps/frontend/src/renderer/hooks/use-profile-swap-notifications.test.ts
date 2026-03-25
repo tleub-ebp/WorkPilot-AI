@@ -42,9 +42,9 @@ describe('useProfileSwapNotifications', () => {
     // Setup window.electronAPI mock
     (window as unknown as { electronAPI: unknown }).electronAPI = {
       queue: {
-        onQueueProfileSwapped: mockOnQueueProfileSwapped.mockReturnValue(() => {}),
-        onQueueBlockedNoProfiles: mockOnQueueBlockedNoProfiles.mockReturnValue(() => {}),
-        onQueueSessionCaptured: mockOnQueueSessionCaptured.mockReturnValue(() => {})
+        onQueueProfileSwapped: mockOnQueueProfileSwapped.mockReturnValue(() => { /* noop */ }),
+        onQueueBlockedNoProfiles: mockOnQueueBlockedNoProfiles.mockReturnValue(() => { /* noop */ }),
+        onQueueSessionCaptured: mockOnQueueSessionCaptured.mockReturnValue(() => { /* noop */ })
       }
     };
   });
@@ -89,7 +89,7 @@ describe('useProfileSwapNotifications', () => {
       let swapCallback: ((event: QueueProfileSwapEvent) => void) | undefined;
       mockOnQueueProfileSwapped.mockImplementation((cb) => {
         swapCallback = cb;
-        return () => {};
+        return () => { /* noop */ };
       });
 
       renderHook(() => useProfileSwapNotifications());
@@ -130,7 +130,7 @@ describe('useProfileSwapNotifications', () => {
       let swapCallback: ((event: QueueProfileSwapEvent) => void) | undefined;
       mockOnQueueProfileSwapped.mockImplementation((cb) => {
         swapCallback = cb;
-        return () => {};
+        return () => { /* noop */ };
       });
 
       renderHook(() => useProfileSwapNotifications());
@@ -176,7 +176,7 @@ describe('useProfileSwapNotifications', () => {
       let swapCallback: ((event: QueueProfileSwapEvent) => void) | undefined;
       mockOnQueueProfileSwapped.mockImplementation((cb) => {
         swapCallback = cb;
-        return () => {};
+        return () => { /* noop */ };
       });
 
       renderHook(() => useProfileSwapNotifications());
@@ -215,7 +215,7 @@ describe('useProfileSwapNotifications', () => {
       let blockedCallback: ((info: { reason: string; timestamp: string }) => void) | undefined;
       mockOnQueueBlockedNoProfiles.mockImplementation((cb) => {
         blockedCallback = cb;
-        return () => {};
+        return () => { /* noop */ };
       });
 
       renderHook(() => useProfileSwapNotifications());
@@ -246,7 +246,7 @@ describe('useProfileSwapNotifications', () => {
       let swapCallback: ((event: QueueProfileSwapEvent) => void) | undefined;
       mockOnQueueProfileSwapped.mockImplementation((cb) => {
         swapCallback = cb;
-        return () => {};
+        return () => { /* noop */ };
       });
 
       const { unmount } = renderHook(() => useProfileSwapNotifications());
@@ -286,7 +286,7 @@ describe('useSessionCaptureListener', () => {
 
     (window as unknown as { electronAPI: unknown }).electronAPI = {
       queue: {
-        onQueueSessionCaptured: mockOnQueueSessionCaptured.mockReturnValue(() => {})
+        onQueueSessionCaptured: mockOnQueueSessionCaptured.mockReturnValue(() => { /* noop */ })
       }
     };
   });

@@ -19,6 +19,7 @@ export interface UseCredentialServiceReturn {
   setActiveProvider: (provider: string, type: 'oauth' | 'api_key', profileId?: string) => Promise<void>;
   refreshUsageData: (provider?: string) => Promise<void>;
   validateCredentials: () => Promise<boolean>;
+  // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
   testProvider: (provider: string) => Promise<{ success: boolean; message: string; details?: any }>;
 
   // Utilitaires
@@ -121,6 +122,7 @@ export function useCredentialService(selectedProvider?: string): UseCredentialSe
   /**
    * Tester un provider
    */
+  // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
   const testProvider = useCallback(async (provider: string): Promise<{ success: boolean; message: string; details?: any }> => {
     try {
       setError(null);

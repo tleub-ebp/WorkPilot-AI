@@ -228,6 +228,7 @@ async function runTriage(
     throw new Error(validation.error);
   }
 
+  // biome-ignore lint/style/noNonNullAssertion: value is guaranteed by context
   const backendPath = validation.backendPath!;
 
   const { sendProgress } = createIPCCommunicators<TriageProgress, TriageResult[]>(
@@ -293,6 +294,7 @@ async function runTriage(
     throw new Error(result.error ?? 'Triage failed');
   }
 
+  // biome-ignore lint/style/noNonNullAssertion: value is guaranteed by context
   return result.data!;
 }
 

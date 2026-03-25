@@ -142,7 +142,7 @@ describe('findTaskAndProject', () => {
   });
 
   it('should log warning when provided projectId is not found', () => {
-    const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => { /* noop */ });
 
     mockProjects.push(createProject({ id: 'proj-1' }));
 

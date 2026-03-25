@@ -127,6 +127,7 @@ export class AppEmulatorService extends EventEmitter {
     const jsResult = this.detectProjectInline(projectDir);
     if (jsResult) {
       // Use subdirectory projectDir if detection found a nested project, otherwise use root
+      // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
       const resolvedProjectDir = (jsResult as any).projectDir || projectDir;
       const config: AppEmulatorConfig = { ...jsResult, projectDir: resolvedProjectDir };
       this.currentConfig = config;
@@ -200,6 +201,7 @@ export class AppEmulatorService extends EventEmitter {
         if (NODE_BACKEND.has(framework)) {
           const frontendResult = this.findFrontendInSubdirs(projectDir, 3);
           if (frontendResult) {
+            // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
             const frontendDir = (frontendResult as any).projectDir ?? projectDir;
             return this.buildFullstackConfig(
               { framework, startCommand, port, projectDir },
@@ -245,6 +247,7 @@ export class AppEmulatorService extends EventEmitter {
         if (backendCfg.isWeb) {
           const frontendResult = this.findFrontendInSubdirs(projectDir, 3);
           if (frontendResult) {
+            // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
             const frontendDir = (frontendResult as any).projectDir ?? projectDir;
             return this.buildFullstackConfig(
               { ...backendCfg, projectDir },
@@ -260,6 +263,7 @@ export class AppEmulatorService extends EventEmitter {
     if (existsSync(path.join(projectDir, 'go.mod'))) {
       const frontendResult = this.findFrontendInSubdirs(projectDir, 3);
       if (frontendResult) {
+        // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
         const frontendDir = (frontendResult as any).projectDir ?? projectDir;
         return this.buildFullstackConfig(
           { framework: 'go', startCommand: 'go run .', port: 8080, projectDir },
@@ -301,6 +305,7 @@ export class AppEmulatorService extends EventEmitter {
         if (frontendResult) {
           // Fullstack: launch .NET backend AND frontend separately so both are reachable.
           // The backend port becomes the API Studio base URL; the frontend runs in parallel.
+          // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
           const frontendDir = (frontendResult as any).projectDir ?? projectDir;
           return this.buildFullstackConfig(
             { framework: 'dotnet', startCommand: 'dotnet run', port: dotnetPort, projectDir: dotnetDir },
@@ -309,6 +314,7 @@ export class AppEmulatorService extends EventEmitter {
         }
 
         // Pure .NET backend — single service
+        // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
         return { type: 'web', framework: 'dotnet', startCommand: 'dotnet run', port: dotnetPort, isWeb: true, projectDir: dotnetDir } as any;
       }
     } catch { /* ignore */ }
@@ -387,6 +393,7 @@ export class AppEmulatorService extends EventEmitter {
                 startCommand = `npx ng serve --port ${port}`;
               }
               // Return config with projectDir pointing to the subdirectory where package.json lives
+              // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
               return { type, framework, startCommand, port, isWeb: type === 'web', projectDir: fullPath } as any;
             }
           } catch { /* ignore parse error */ }
@@ -526,6 +533,7 @@ export class AppEmulatorService extends EventEmitter {
     try {
       const settings = JSON.parse(readFileSync(launchSettingsPath, 'utf-8'));
       for (const profile of Object.values(settings.profiles ?? {})) {
+        // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
         const url: string | undefined = (profile as any).applicationUrl;
         if (!url) continue;
         const httpMatch = url.match(/http:\/\/[^;:]+:(\d+)/);
@@ -576,6 +584,7 @@ export class AppEmulatorService extends EventEmitter {
         try {
           if (!statSync(sub).isDirectory()) continue;
           if (readdirSync(sub).some(f => f.endsWith('.csproj'))) {
+            // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
             return { framework: 'dotnet', startCommand: 'dotnet run', port: this.readDotnetPort(sub) ?? 5000, projectDir: sub } as any;
           }
         } catch { /* ignore */ }
@@ -674,6 +683,7 @@ export class AppEmulatorService extends EventEmitter {
           isPrimary: false,
         },
       ],
+    // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
     } as any;
   }
 
@@ -925,6 +935,7 @@ export class AppEmulatorService extends EventEmitter {
    * started fire-and-forget alongside.
    */
   private async startMultipleServices(config: AppEmulatorConfig): Promise<void> {
+    // biome-ignore lint/style/noNonNullAssertion: value is guaranteed by context
     const services = config.services!;
     const primary = services.find(s => s.isPrimary) ?? services[0];
     const secondaries = services.filter(s => !s.isPrimary);
@@ -1302,7 +1313,7 @@ export class AppEmulatorService extends EventEmitter {
     // Fallback port-based kill: on Windows, dotnet run spawns the actual web server
     // as a grandchild process that taskkill /t sometimes misses. Kill by port to be sure.
     for (const port of portsToKill) {
-      this.killProcessOnPort(port).catch(() => {});
+      this.killProcessOnPort(port).catch(() => { /* noop */ });
     }
 
     // Remove any junctions created to work around spaces-in-path issues

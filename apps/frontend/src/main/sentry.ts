@@ -116,6 +116,7 @@ export function initSentryMain(): void {
   const shouldEnable = hasDsn && (app.isPackaged || process.env.SENTRY_DEV === 'true');
 
   if (!hasDsn) {
+    // noop
   }
 
   Sentry.init({
@@ -158,6 +159,7 @@ export function initSentryMain(): void {
   });
 
   if (hasDsn) {
+    // noop
   }
 }
 

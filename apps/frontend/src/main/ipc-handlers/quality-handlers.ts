@@ -64,6 +64,7 @@ async function runQualityAnalysis(
   files: string[],
   projectDir: string,
   backendPath: string
+// biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
 ): Promise<any> {
   return new Promise((resolve, reject) => {
     // Build command to run quality_cli.py

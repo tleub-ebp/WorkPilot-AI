@@ -147,9 +147,20 @@ class FreshnessCalculator:
         # Track which factors were considered
         metrics.factors_considered = list(self.factor_weights.keys())
 
+        # Map factor enum values to actual attribute names on FreshnessMetrics
+        factor_attr_map = {
+            FreshnessFactor.AGE: "age_score",
+            FreshnessFactor.GIT_CHANGES: "git_score",
+            FreshnessFactor.FILE_MODIFICATIONS: "file_score",
+            FreshnessFactor.DEPENDENCY_UPDATES: "dependency_score",
+            FreshnessFactor.ACCESS_PATTERN: "access_score",
+            FreshnessFactor.SEMANTIC_DRIFT: "semantic_score",
+            FreshnessFactor.BUILD_FAILURES: "build_score",
+        }
+
         # Calculate overall freshness (weighted average)
         metrics.overall_freshness = sum(
-            getattr(metrics, f"{factor.value}_score") * weight
+            getattr(metrics, factor_attr_map[factor]) * weight
             for factor, weight in self.factor_weights.items()
         )
 

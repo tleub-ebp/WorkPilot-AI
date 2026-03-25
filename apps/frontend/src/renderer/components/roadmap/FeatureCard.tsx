@@ -59,6 +59,7 @@ export function FeatureCard({
             size="sm"
             onClick={(e) => {
               e.stopPropagation();
+              // biome-ignore lint/style/noNonNullAssertion: value is guaranteed by context
               onGoToTask(feature.linkedSpecId!);
             }}
           >

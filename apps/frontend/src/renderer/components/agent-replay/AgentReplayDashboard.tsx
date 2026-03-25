@@ -486,6 +486,7 @@ const DebugPanel: React.FC<{
   breakpoints: Array<{ id: string; breakpoint_type: string; condition: string; description: string; enabled: boolean; hit_count: number }>;
   onAdd: (type: string, condition: string, desc: string) => void;
   onRemove: (id: string) => void;
+// biome-ignore lint/correctness/noUnusedFunctionParameters: parameter kept for API compatibility
 }> = ({ sessionId, breakpoints, onAdd, onRemove }) => {
   const { t } = useTranslation();
   const [newType, setNewType] = useState('tool_call');
@@ -802,6 +803,9 @@ export const AgentReplayDashboard: React.FC<AgentReplayDashboardProps> = ({
           <ScrollArea className="flex-1">
             <div className="p-1">
               {filteredSteps.map((step) => (
+                // biome-ignore lint/a11y/noNoninteractiveElementInteractions: interactive handler is intentional
+                // biome-ignore lint/a11y/noStaticElementInteractions: interactive handler is intentional
+                // biome-ignore lint/a11y/useKeyWithClickEvents: keyboard events handled elsewhere
                 <div
                   key={step.id}
                   className={`p-2 rounded cursor-pointer transition-colors text-xs mb-0.5 ${

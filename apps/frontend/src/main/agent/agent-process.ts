@@ -1,13 +1,13 @@
-import { spawn } from 'child_process';
-import path from 'path';
-import { fileURLToPath } from 'url';
-import { existsSync, readFileSync } from 'fs';
+import { spawn } from 'node:child_process';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+import { existsSync, readFileSync } from 'node:fs';
 import { app } from 'electron';
 
 // ESM-compatible __dirname
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-import { EventEmitter } from 'events';
+import { EventEmitter } from 'node:events';
 import { AgentState } from './agent-state';
 import { AgentEvents } from './agent-events';
 import { ProcessType, ExecutionProgressData } from './types';
@@ -106,9 +106,9 @@ function deriveGitBashPath(gitExePath: string): string | null {
  * Process spawning and lifecycle management
  */
 export class AgentProcessManager {
-  private state: AgentState;
-  private events: AgentEvents;
-  private emitter: EventEmitter;
+  private readonly state: AgentState;
+  private readonly events: AgentEvents;
+  private readonly emitter: EventEmitter;
   // Python path will be configured by pythonEnvManager after venv is ready
   // Use null to indicate not yet configured - getPythonPath() will use fallback
   private _pythonPath: string | null = null;
@@ -428,7 +428,7 @@ export class AgentProcessManager {
     } : 'NONE');
 
     // Verify the best profile is actually authenticated
-    if (!bestProfile || !bestProfile.isAuthenticated) {
+    if (!bestProfile?.isAuthenticated) {
       appLog.info('[AgentProcess] No authenticated alternative profile - falling back to UI');
       return false;
     }
@@ -761,6 +761,7 @@ export class AgentProcessManager {
 
     // Parse Python commandto handle space-separated commands like "py -3"
     const [pythonCommand, pythonBaseArgs] = parsePythonCommand(this.getPythonPath());
+    // biome-ignore lint/suspicious/noImplicitAnyLet: type inferred from assignment
     let childProcess;
     try {
       childProcess = spawn(pythonCommand, [...pythonBaseArgs, ...args], {
@@ -805,7 +806,7 @@ export class AgentProcessManager {
       return; // Do not proceed with this spawn
     }
 
-    let currentPhase: ExecutionProgressData['phase'] = isSpecRunner ? 'planning' : 'planning';
+    let currentPhase: ExecutionProgressData['phase'] = 'planning';
     let phaseProgress = 0;
     let currentSubtask: string | undefined;
     let lastMessage: string | undefined;

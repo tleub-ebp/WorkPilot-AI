@@ -157,8 +157,10 @@ export function setupSmartEstimationListeners(): () => void {
   );
 
   // Listen for events (for future extensibility)
+  // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
   const unsubEvent = globalThis.electronAPI.onSmartEstimationEvent((event: any) => {
     // Events are handled by the runner, but we store them if needed
+    // biome-ignore lint/suspicious/noConsole: logging retained for debugging
     console.log('Smart estimation event:', event);
   });
 

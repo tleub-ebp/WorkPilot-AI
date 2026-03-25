@@ -79,6 +79,7 @@ export function MergePreviewSummary({
           </p>
           <ul className="list-disc list-inside text-muted-foreground">
             {mergePreview.gitConflicts.conflictingFiles.map((file, idx) => (
+              // biome-ignore lint/suspicious/noArrayIndexKey: no stable key available
               <li key={idx} className="truncate">{file}</li>
             ))}
           </ul>

@@ -239,6 +239,7 @@ function resolveRef(ref: string, spec: OpenApiSpec): Record<string, unknown> | n
   if (!ref.startsWith('#/')) return null;
   const parts = ref.slice(2).split('/');
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
   let current: any = spec;
   for (const part of parts) {
     if (!current || typeof current !== 'object') return null;
@@ -383,7 +384,7 @@ function EnvironmentManager({ onClose }: EnvironmentManagerProps) {
           <h2 className="text-base font-semibold text-[var(--color-text-primary)]">
             {t('apiExplorer:environments.title')}
           </h2>
-          <button onClick={onClose} className="text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)] transition-colors">
+          <button type="button" onClick={onClose} className="text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)] transition-colors">
             <X size={18} />
           </button>
         </div>
@@ -451,14 +452,14 @@ function EnvironmentManager({ onClose }: EnvironmentManagerProps) {
                     <div className="text-xs font-mono text-[var(--color-text-muted)] mt-0.5">{env.baseUrl}</div>
                   </div>
                   <div className="flex items-center gap-1.5">
-                    <button
+                    <button type="button"
                       onClick={() => startEdit(env)}
                       className="text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)] p-1 rounded transition-colors"
                     >
                       <Settings size={14} />
                     </button>
                     {!env.isDefault && (
-                      <button
+                      <button type="button"
                         onClick={() => removeEnvironment(env.id)}
                         className="text-[var(--color-text-muted)] hover:text-red-400 p-1 rounded transition-colors"
                       >
@@ -478,7 +479,7 @@ function EnvironmentManager({ onClose }: EnvironmentManagerProps) {
             <div className="flex items-center justify-between mb-2.5">
               <span className="text-xs font-semibold text-emerald-400">{t('apiExplorer:environments.detected')} ({detectedEnvs.length})</span>
               <div className="flex gap-1.5">
-                <button onClick={() => setDetectedEnvs([])} className="text-[10px] text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)] transition-colors">
+                <button type="button" onClick={() => setDetectedEnvs([])} className="text-[10px] text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)] transition-colors">
                   {t('apiExplorer:actions.cancel')}
                 </button>
                 <Button size="sm" onClick={importDetected} disabled={selectedDetected.size === 0}>
@@ -559,7 +560,7 @@ function EnvironmentManager({ onClose }: EnvironmentManagerProps) {
         ) : (
           <div className="mt-3 flex gap-2">
             {activeProject && (
-              <button
+              <button type="button"
                 onClick={runDetection}
                 disabled={isDetecting}
                 className="flex-1 border border-dashed border-emerald-400/30 rounded-lg py-2 text-sm text-emerald-400/70 hover:text-emerald-400 hover:border-emerald-400/50 transition-colors flex items-center justify-center gap-2 disabled:opacity-50"
@@ -568,7 +569,7 @@ function EnvironmentManager({ onClose }: EnvironmentManagerProps) {
                 {isDetecting ? t('apiExplorer:environments.detecting') : t('apiExplorer:environments.detect')}
               </button>
             )}
-            <button
+            <button type="button"
               onClick={() => setIsAdding(true)}
               className="flex-1 border border-dashed border-[var(--color-border)] rounded-lg py-2 text-sm text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)] hover:border-[var(--color-border-hover)] transition-colors flex items-center justify-center gap-2"
             >
@@ -822,7 +823,7 @@ function ExportDialog({ spec, onClose }: ExportDialogProps) {
           <h2 className="text-base font-semibold text-[var(--color-text-primary)]">
             {t('apiExplorer:export.title')}
           </h2>
-          <button onClick={onClose} className="text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)] transition-colors">
+          <button type="button" onClick={onClose} className="text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)] transition-colors">
             <X size={18} />
           </button>
         </div>
@@ -833,7 +834,7 @@ function ExportDialog({ spec, onClose }: ExportDialogProps) {
               <span className="text-xs font-medium text-[var(--color-text-secondary)]">
                 {t('apiExplorer:export.endpoints', { selected: selectedEndpoints.size, total: allEndpoints.length })}
               </span>
-              <button
+              <button type="button"
                 onClick={toggleAll}
                 className="text-xs text-[var(--color-primary)] hover:underline"
               >
@@ -862,7 +863,7 @@ function ExportDialog({ spec, onClose }: ExportDialogProps) {
 
         <div className="space-y-2.5">
           {formats.map((fmt) => (
-            <button
+            <button type="button"
               key={fmt.label}
               onClick={fmt.action}
               disabled={selectedEndpoints.size === 0}
@@ -881,7 +882,7 @@ function ExportDialog({ spec, onClose }: ExportDialogProps) {
         </div>
 
         <div className="mt-4 pt-4 border-t border-[var(--color-border)]">
-          <button
+          <button type="button"
             onClick={copyOpenApi}
             disabled={selectedEndpoints.size === 0}
             className="w-full flex items-center justify-center gap-2 py-2 text-sm text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)] transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
@@ -1301,7 +1302,7 @@ function RequestPanel({ method, path, operation, spec, onOpenEnvManager }: Reque
       <div className="flex-1 min-h-0 overflow-y-auto">
         <div className="flex border-b border-[var(--color-border)] px-5">
           {tabs.map((tab) => (
-            <button
+            <button type="button"
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
               className={`relative px-4 py-2 text-xs font-medium transition-colors flex items-center gap-1.5 ${
@@ -1388,6 +1389,8 @@ function RequestPanel({ method, path, operation, spec, onOpenEnvManager }: Reque
             <div className="space-y-4">
               {/* Auth type selector */}
               <div>
+                // biome-ignore lint/a11y/noLabelWithoutControl: label association is implicit
+                // biome-ignore lint/a11y/noLabelWithoutControl: intentional
                 <label className="text-[10px] font-semibold text-[var(--color-text-muted)] uppercase tracking-wider block mb-1.5">
                   {t('apiExplorer:auth.type')}
                 </label>
@@ -1439,6 +1442,8 @@ function RequestPanel({ method, path, operation, spec, onOpenEnvManager }: Reque
               {/* Bearer Token */}
               {requestAuth.type === 'bearer' && (
                 <div className="space-y-2">
+                  // biome-ignore lint/a11y/noLabelWithoutControl: label association is implicit
+                  // biome-ignore lint/a11y/noLabelWithoutControl: intentional
                   <label className="text-[10px] font-semibold text-[var(--color-text-muted)] uppercase tracking-wider block">
                     {t('apiExplorer:auth.token')}
                   </label>
@@ -1466,6 +1471,8 @@ function RequestPanel({ method, path, operation, spec, onOpenEnvManager }: Reque
               {requestAuth.type === 'basic' && (
                 <div className="space-y-2">
                   <div>
+                    // biome-ignore lint/a11y/noLabelWithoutControl: label association is implicit
+                    // biome-ignore lint/a11y/noLabelWithoutControl: intentional
                     <label className="text-[10px] font-semibold text-[var(--color-text-muted)] uppercase tracking-wider block mb-1">
                       {t('apiExplorer:auth.username')}
                     </label>
@@ -1478,6 +1485,8 @@ function RequestPanel({ method, path, operation, spec, onOpenEnvManager }: Reque
                     />
                   </div>
                   <div>
+                    // biome-ignore lint/a11y/noLabelWithoutControl: label association is implicit
+                    // biome-ignore lint/a11y/noLabelWithoutControl: intentional
                     <label className="text-[10px] font-semibold text-[var(--color-text-muted)] uppercase tracking-wider block mb-1">
                       {t('apiExplorer:auth.password')}
                     </label>
@@ -1507,6 +1516,8 @@ function RequestPanel({ method, path, operation, spec, onOpenEnvManager }: Reque
                 <div className="space-y-2">
                   <div className="grid grid-cols-2 gap-2">
                     <div>
+                      // biome-ignore lint/a11y/noLabelWithoutControl: label association is implicit
+                      // biome-ignore lint/a11y/noLabelWithoutControl: intentional
                       <label className="text-[10px] font-semibold text-[var(--color-text-muted)] uppercase tracking-wider block mb-1">
                         {t('apiExplorer:auth.keyName')}
                       </label>
@@ -1519,6 +1530,8 @@ function RequestPanel({ method, path, operation, spec, onOpenEnvManager }: Reque
                       />
                     </div>
                     <div>
+                      // biome-ignore lint/a11y/noLabelWithoutControl: label association is implicit
+                      // biome-ignore lint/a11y/noLabelWithoutControl: intentional
                       <label className="text-[10px] font-semibold text-[var(--color-text-muted)] uppercase tracking-wider block mb-1">
                         {t('apiExplorer:auth.addTo')}
                       </label>
@@ -1533,6 +1546,8 @@ function RequestPanel({ method, path, operation, spec, onOpenEnvManager }: Reque
                     </div>
                   </div>
                   <div>
+                    // biome-ignore lint/a11y/noLabelWithoutControl: label association is implicit
+                    // biome-ignore lint/a11y/noLabelWithoutControl: intentional
                     <label className="text-[10px] font-semibold text-[var(--color-text-muted)] uppercase tracking-wider block mb-1">
                       {t('apiExplorer:auth.keyValue')}
                     </label>
@@ -1552,6 +1567,8 @@ function RequestPanel({ method, path, operation, spec, onOpenEnvManager }: Reque
                 <div className="space-y-3">
                   {/* Grant Type */}
                   <div>
+                    // biome-ignore lint/a11y/noLabelWithoutControl: label association is implicit
+                    // biome-ignore lint/a11y/noLabelWithoutControl: intentional
                     <label className="text-[10px] font-semibold text-[var(--color-text-muted)] uppercase tracking-wider block mb-1">
                       {t('apiExplorer:auth.oauth2.grantType')}
                     </label>
@@ -1575,6 +1592,8 @@ function RequestPanel({ method, path, operation, spec, onOpenEnvManager }: Reque
                     {/* Auth URL — only for authorization_code */}
                     {requestAuth.oauth2GrantType === 'authorization_code' && (
                       <div>
+                        // biome-ignore lint/a11y/noLabelWithoutControl: label association is implicit
+                        // biome-ignore lint/a11y/noLabelWithoutControl: intentional
                         <label className="text-[10px] text-[var(--color-text-muted)] block mb-1">{t('apiExplorer:auth.oauth2.authUrl')}</label>
                         <input
                           type="url"
@@ -1589,6 +1608,8 @@ function RequestPanel({ method, path, operation, spec, onOpenEnvManager }: Reque
                     {/* Token URL */}
                     {requestAuth.oauth2GrantType !== 'authorization_code' && (
                       <div>
+                        // biome-ignore lint/a11y/noLabelWithoutControl: label association is implicit
+                        // biome-ignore lint/a11y/noLabelWithoutControl: intentional
                         <label className="text-[10px] text-[var(--color-text-muted)] block mb-1">{t('apiExplorer:auth.oauth2.tokenUrl')}</label>
                         <input
                           type="url"
@@ -1602,6 +1623,8 @@ function RequestPanel({ method, path, operation, spec, onOpenEnvManager }: Reque
 
                     {/* Client ID */}
                     <div>
+                      // biome-ignore lint/a11y/noLabelWithoutControl: label association is implicit
+                      // biome-ignore lint/a11y/noLabelWithoutControl: intentional
                       <label className="text-[10px] text-[var(--color-text-muted)] block mb-1">{t('apiExplorer:auth.oauth2.clientId')}</label>
                       <input
                         type="text"
@@ -1614,6 +1637,8 @@ function RequestPanel({ method, path, operation, spec, onOpenEnvManager }: Reque
 
                     {/* Client Secret */}
                     <div>
+                      // biome-ignore lint/a11y/noLabelWithoutControl: label association is implicit
+                      // biome-ignore lint/a11y/noLabelWithoutControl: intentional
                       <label className="text-[10px] text-[var(--color-text-muted)] block mb-1">{t('apiExplorer:auth.oauth2.clientSecret')}</label>
                       <div className="flex gap-2">
                         <input
@@ -1635,6 +1660,8 @@ function RequestPanel({ method, path, operation, spec, onOpenEnvManager }: Reque
 
                     {/* Scope */}
                     <div>
+                      // biome-ignore lint/a11y/noLabelWithoutControl: label association is implicit
+                      // biome-ignore lint/a11y/noLabelWithoutControl: intentional
                       <label className="text-[10px] text-[var(--color-text-muted)] block mb-1">{t('apiExplorer:auth.oauth2.scope')}</label>
                       <input
                         type="text"
@@ -1649,6 +1676,8 @@ function RequestPanel({ method, path, operation, spec, onOpenEnvManager }: Reque
                     {requestAuth.oauth2GrantType === 'password' && (
                       <div className="grid grid-cols-2 gap-2">
                         <div>
+                          // biome-ignore lint/a11y/noLabelWithoutControl: label association is implicit
+                          // biome-ignore lint/a11y/noLabelWithoutControl: intentional
                           <label className="text-[10px] text-[var(--color-text-muted)] block mb-1">{t('apiExplorer:auth.username')}</label>
                           <input
                             type="text"
@@ -1659,6 +1688,8 @@ function RequestPanel({ method, path, operation, spec, onOpenEnvManager }: Reque
                           />
                         </div>
                         <div>
+                          // biome-ignore lint/a11y/noLabelWithoutControl: label association is implicit
+                          // biome-ignore lint/a11y/noLabelWithoutControl: intentional
                           <label className="text-[10px] text-[var(--color-text-muted)] block mb-1">{t('apiExplorer:auth.password')}</label>
                           <input
                             type="password"
@@ -1737,7 +1768,7 @@ function RequestPanel({ method, path, operation, spec, onOpenEnvManager }: Reque
                 placeholder={getBodyPlaceholder(operation, spec)}
                 spellCheck={false}
               />
-              <button
+              <button type="button"
                 onClick={() => {
                   const placeholder = getBodyPlaceholder(operation, spec);
                   if (placeholder && placeholder !== '{}') setRequestBody(placeholder);
@@ -1831,6 +1862,9 @@ function RequestPanel({ method, path, operation, spec, onOpenEnvManager }: Reque
       {(responseStatus !== null || isSendingRequest) && (
         <>
           {/* Drag handle */}
+          // biome-ignore lint/a11y/noNoninteractiveElementInteractions: interactive handler is intentional
+          // biome-ignore lint/a11y/noStaticElementInteractions: interactive handler is intentional
+          // biome-ignore lint/a11y/noNoninteractiveElementInteractions lint/a11y/noStaticElementInteractions: intentional
           <div
             className="shrink-0 h-2 flex items-center justify-center cursor-row-resize group select-none"
             onMouseDown={(e) => {
@@ -1854,7 +1888,7 @@ function RequestPanel({ method, path, operation, spec, onOpenEnvManager }: Reque
               {/* Body / Headers tabs */}
               <div className="flex">
                 {(['headers', 'body'] as const).map((tab) => (
-                  <button
+                  <button type="button"
                     key={tab}
                     onClick={() => setResponseTab(tab)}
                     className={`px-3 py-1 text-xs font-medium rounded transition-colors ${
@@ -1878,7 +1912,7 @@ function RequestPanel({ method, path, operation, spec, onOpenEnvManager }: Reque
                         ? 'bg-[var(--color-bg-primary)] shadow-sm'
                         : 'hover:bg-[var(--color-bg-secondary)]'
                     }`}>
-                      <button
+                      <button type="button"
                         onClick={() => setResponseFormat('pretty')}
                         className={`px-2.5 py-1 text-[11px] font-medium transition-colors ${
                           responseFormat === 'pretty'
@@ -1897,7 +1931,7 @@ function RequestPanel({ method, path, operation, spec, onOpenEnvManager }: Reque
                       />
                     </div>
                     {/* "Brut" */}
-                    <button
+                    <button type="button"
                       onClick={() => setResponseFormat('raw')}
                       className={`px-2.5 py-1 text-[11px] font-medium rounded transition-colors ${
                         responseFormat === 'raw'
@@ -1909,7 +1943,7 @@ function RequestPanel({ method, path, operation, spec, onOpenEnvManager }: Reque
                     </button>
                     {/* "Aperçu" — only for HTML responses */}
                     {detectContentType(responseHeaders).includes('text/html') && (
-                      <button
+                      <button type="button"
                         onClick={() => setResponseFormat('preview')}
                         className={`px-2.5 py-1 text-[11px] font-medium rounded transition-colors ${
                           responseFormat === 'preview'
@@ -1941,7 +1975,7 @@ function RequestPanel({ method, path, operation, spec, onOpenEnvManager }: Reque
             </div>
             <div className="flex items-center gap-2">
               {extractedToken && (
-                <button
+                <button type="button"
                   onClick={saveTokenToEnv}
                   title={t('apiExplorer:response.saveTokenTitle')}
                   className={`flex items-center gap-1.5 px-2 py-0.5 text-[11px] rounded border transition-colors ${
@@ -1955,7 +1989,7 @@ function RequestPanel({ method, path, operation, spec, onOpenEnvManager }: Reque
                 </button>
               )}
               {responseBody && (
-                <button onClick={copyResponse} className="text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)] transition-colors">
+                <button type="button" onClick={copyResponse} className="text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)] transition-colors">
                   {copiedResponse ? <Check size={13} className="text-emerald-400" /> : <Copy size={13} />}
                 </button>
               )}
@@ -2609,7 +2643,7 @@ export function ApiExplorer() {
             ]}
             className="max-w-36 text-xs"
           />
-          <button
+          <button type="button"
             onClick={() => setShowEnvManager(true)}
             className="p-1.5 text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)] hover:bg-[var(--color-bg-secondary)] rounded-md transition-colors"
             title={t('apiExplorer:environments.manage')}
@@ -2620,7 +2654,7 @@ export function ApiExplorer() {
 
         {/* Export */}
         {spec && (
-          <button
+          <button type="button"
             onClick={() => setShowExport(true)}
             className="flex items-center gap-1.5 px-2.5 py-1.5 text-xs text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)] hover:bg-[var(--color-bg-secondary)] border border-[var(--color-border)] rounded-md transition-colors shrink-0"
           >
@@ -2687,7 +2721,7 @@ export function ApiExplorer() {
                 placeholder={t('apiExplorer:sidebar.search')}
               />
               {searchQuery && (
-                <button onClick={() => setSearchQuery('')} className="absolute right-2 top-1/2 -translate-y-1/2 text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)]">
+                <button type="button" onClick={() => setSearchQuery('')} className="absolute right-2 top-1/2 -translate-y-1/2 text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)]">
                   <X size={11} />
                 </button>
               )}
@@ -2725,7 +2759,7 @@ export function ApiExplorer() {
               const isCollapsed = collapsedTags.includes(group.tag);
               return (
                 <div key={group.tag}>
-                  <button
+                  <button type="button"
                     onClick={() => toggleTag(group.tag)}
                     className="w-full flex items-center justify-between px-3 py-2 hover:bg-[var(--color-bg-secondary)] transition-colors group"
                   >
@@ -2749,7 +2783,7 @@ export function ApiExplorer() {
                         const isSelected = selectedEndpointKey === key;
                         const endpointTitle = op.summary ? `${path} — ${op.summary}` : path;
                         return (
-                          <button
+                          <button type="button"
                             key={key}
                             onClick={() => selectEndpoint(method, path)}
                             className={`w-full flex items-center gap-2 px-3 py-2 text-left transition-colors group ${
@@ -2795,6 +2829,7 @@ export function ApiExplorer() {
               method={selectedEndpoint.method}
               path={selectedEndpoint.path}
               operation={selectedEndpoint.op}
+              // biome-ignore lint/style/noNonNullAssertion: value is guaranteed by context
               spec={spec!}
               onOpenEnvManager={() => setShowEnvManager(true)}
             />

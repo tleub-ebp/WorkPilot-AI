@@ -325,6 +325,7 @@ describe('Task Order State Management', () => {
 
       const stored = localStorage.getItem('task-order-state-project-1');
       expect(stored).toBeTruthy();
+      // biome-ignore lint/style/noNonNullAssertion: value is guaranteed by context
       expect(JSON.parse(stored!)).toEqual(order);
     });
 
@@ -349,13 +350,14 @@ describe('Task Order State Management', () => {
 
     it('should handle localStorage write errors gracefully', () => {
       // Spy on console.error
-      const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+      const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => { /* noop */ });
 
       const order = createTestTaskOrder({ backlog: ['task-1'] });
       useTaskStore.setState({ taskOrder: order });
 
       // Mock localStorage.setItem to throw using our test setup helper
       const testError = new Error('Storage quota exceeded');
+      // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
       (localStorage as any)._setShouldThrow(true, testError);
 
       // Should not throw
@@ -366,6 +368,7 @@ describe('Task Order State Management', () => {
       expect(consoleSpy).toHaveBeenCalledWith('Failed to save task order:', testError);
 
       // Reset localStorage mock
+      // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
       (localStorage as any)._setShouldThrow(false);
       consoleSpy.mockRestore();
     });
@@ -379,6 +382,7 @@ describe('Task Order State Management', () => {
 
       useTaskStore.getState().saveTaskOrder('project-1');
 
+      // biome-ignore lint/style/noNonNullAssertion: value is guaranteed by context
       const stored = JSON.parse(localStorage.getItem('task-order-state-project-1')!);
       expect(stored.backlog).toEqual(['new-task-1', 'new-task-2']);
     });
@@ -407,7 +411,7 @@ describe('Task Order State Management', () => {
     });
 
     it('should handle localStorage removal errors gracefully', () => {
-      const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+      const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => { /* noop */ });
 
       // Mock localStorage.removeItem to throw
       const originalRemoveItem = localStorage.removeItem;
@@ -578,7 +582,7 @@ describe('Task Order State Management', () => {
 
   describe('localStorage persistence edge cases', () => {
     it('should handle empty string in localStorage', () => {
-      const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+      const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => { /* noop */ });
 
       localStorage.setItem('task-order-state-project-1', '');
 
@@ -794,6 +798,7 @@ describe('Task Order State Management', () => {
       useTaskStore.setState({ tasks, taskOrder: orderWithStaleInMultipleColumns });
 
       const currentTaskIds = new Set(tasks.map(t => t.id));
+      // biome-ignore lint/style/noNonNullAssertion: value is guaranteed by context
       const taskOrder = useTaskStore.getState().taskOrder!;
 
       // Filter each column

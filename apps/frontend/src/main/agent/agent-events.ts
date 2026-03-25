@@ -106,14 +106,16 @@ export class AgentEvents {
     }
 
     // Subtask progress detection - only when in coding phase
-    const subtaskMatch = log.match(/subtask[:\s]+(\d+(?:\/\d+)?|\w+[-_]\w+)/i);
+    const subtaskRegex = /subtask[:\s]+(\d+(?:\/\d+)?|\w+[-_]\w+)/i;
+    const subtaskMatch = subtaskRegex.exec(log);
     if (subtaskMatch && currentPhase === 'coding') {
       return { phase: 'coding', currentSubtask: subtaskMatch[1], message: `Working on subtask ${subtaskMatch[1]}...` };
     }
 
     // Subtask completion detection - don't regress from QA phases
     if (!checkRegression('coding') && (lowerLog.includes('subtask completed') || lowerLog.includes('subtask done'))) {
-      const completedSubtask = log.match(/subtask[:\s]+"?([^"]+)"?\s+completed/i);
+      const completedSubtaskRegex = /subtask[:\s]+"?([^"]+)"?\s+completed/i;
+      const completedSubtask = completedSubtaskRegex.exec(log);
       return {
         phase: 'coding',
         currentSubtask: completedSubtask?.[1],

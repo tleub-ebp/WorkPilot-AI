@@ -388,6 +388,7 @@ describe('Collaboration Store — Conflicts', () => {
   });
 
   it('should get unresolved conflicts', () => {
+    // biome-ignore lint/correctness/noUnusedVariables: variable kept for clarity
     const { addConflict, resolveConflict, getUnresolvedConflicts } = useCollaborationStore.getState();
     addConflict({
       conflictId: 'cfl-1', taskId: 't-1', userA: 'u-1', userB: 'u-2',
@@ -524,6 +525,7 @@ describe('Collaboration Store — Computed & Stats', () => {
   });
 
   it('should get online users only', () => {
+    // biome-ignore lint/correctness/noUnusedVariables: variable kept for clarity
     const { addUser, removeUser, getOnlineUsers } = useCollaborationStore.getState();
     addUser({
       userId: 'user-2', displayName: 'Bob', role: 'developer',

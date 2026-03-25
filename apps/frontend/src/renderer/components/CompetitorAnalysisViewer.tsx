@@ -156,6 +156,7 @@ export function CompetitorAnalysisViewer({
                     <p className="text-xs font-medium text-muted-foreground mb-1">Top Pain Points:</p>
                     <ul className="text-sm space-y-1">
                       {analysis.insightsSummary.topPainPoints.map((point, idx) => (
+                        // biome-ignore lint/suspicious/noArrayIndexKey: no stable key available
                         <li key={idx} className="text-muted-foreground">• {point}</li>
                       ))}
                     </ul>
@@ -167,6 +168,7 @@ export function CompetitorAnalysisViewer({
                     <p className="text-xs font-medium text-muted-foreground mb-1">Differentiator Opportunities:</p>
                     <ul className="text-sm space-y-1">
                       {analysis.insightsSummary.differentiatorOpportunities.map((opp, idx) => (
+                        // biome-ignore lint/suspicious/noArrayIndexKey: no stable key available
                         <li key={idx} className="text-muted-foreground">• {opp}</li>
                       ))}
                     </ul>
@@ -178,6 +180,7 @@ export function CompetitorAnalysisViewer({
                     <p className="text-xs font-medium text-muted-foreground mb-1">Market Trends:</p>
                     <ul className="text-sm space-y-1">
                       {analysis.insightsSummary.marketTrends.map((trend, idx) => (
+                        // biome-ignore lint/suspicious/noArrayIndexKey: no stable key available
                         <li key={idx} className="text-muted-foreground">• {trend}</li>
                       ))}
                     </ul>

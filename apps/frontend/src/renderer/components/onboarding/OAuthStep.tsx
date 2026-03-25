@@ -100,6 +100,7 @@ export function OAuthStep({ onNext, onBack, onSkip }: OAuthStepProps) {
   // Load Claude profiles on mount
   useEffect(() => {
     loadClaudeProfiles();
+  // biome-ignore lint/correctness/useExhaustiveDependencies: intentional dependency omission
   }, [loadClaudeProfiles]);
 
   // Profile management handlers - following patterns from IntegrationSettings.tsx
@@ -239,6 +240,7 @@ export function OAuthStep({ onNext, onBack, onSkip }: OAuthStepProps) {
 
     // Reload profiles to get updated auth state
     await loadClaudeProfiles();
+  // biome-ignore lint/correctness/useExhaustiveDependencies: intentional dependency omission
   }, [loadClaudeProfiles]);
 
   // Handle auth terminal error

@@ -12,15 +12,18 @@ import type { AppSettings } from '../shared/types';
 export interface AutoRefactorResult {
   analysis: {
     status: string;
+    // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
     analysis: any;
     files_analyzed: number;
   };
   plan: {
     status: string;
+    // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
     plan: any;
   };
   execution: {
     status: string;
+    // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
     execution: any;
     auto_executed: boolean;
   };
@@ -275,6 +278,7 @@ class OutputProcessor {
   fullOutput = '';
   stderrOutput = '';
   analysisResult: AutoRefactorResult | null = null;
+  // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
   executionResult: any = null;
 
   processStdout(text: string, emitter: AutoRefactorService): void {

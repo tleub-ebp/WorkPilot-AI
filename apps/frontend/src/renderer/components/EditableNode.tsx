@@ -10,6 +10,7 @@ const getUserNodeColors = () => ({
   nodeSelected: 'var(--primary, #e0e7ff)',
 });
 
+// biome-ignore lint/correctness/noUnusedFunctionParameters: parameter kept for API compatibility
 export const EditableNode: React.FC<NodeProps> = ({ id, data, selected, xPos, yPos, dragging, ...rest }) => {
   const [editing, setEditing] = useState(false);
   const [label, setLabel] = useState(data.label || '');
@@ -30,6 +31,8 @@ export const EditableNode: React.FC<NodeProps> = ({ id, data, selected, xPos, yP
   };
 
   return (
+    // biome-ignore lint/a11y/noNoninteractiveElementInteractions: interactive handler is intentional
+    // biome-ignore lint/a11y/noStaticElementInteractions: interactive handler is intentional
     <div
       onDoubleClick={handleDoubleClick}
       style={{

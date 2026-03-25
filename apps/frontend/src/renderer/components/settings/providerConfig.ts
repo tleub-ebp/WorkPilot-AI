@@ -11,6 +11,7 @@ export interface ProviderConfig {
   icon: React.ReactNode;
 }
 
+// biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
 export const getProviderFields = (t: any): Record<string, ProviderConfig> => ({
   'openai': {
     apiKey: 'globalOpenAIApiKey',

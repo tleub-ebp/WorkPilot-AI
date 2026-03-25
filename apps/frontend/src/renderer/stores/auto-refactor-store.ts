@@ -6,15 +6,18 @@ import { create } from 'zustand';
 export interface AutoRefactorResult {
   analysis: {
     status: string;
+    // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
     analysis: any;
     files_analyzed: number;
   };
   plan: {
     status: string;
+    // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
     plan: any;
   };
   execution: {
     status: string;
+    // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
     execution: any;
     auto_executed: boolean;
   };
@@ -36,6 +39,7 @@ interface AutoRefactorState {
   status: string;
   streamingOutput: string;
   result: AutoRefactorResult | null;
+  // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
   executionResult: any | null;
   error: string | null;
   isOpen: boolean;
@@ -50,6 +54,7 @@ interface AutoRefactorState {
   setStatus: (status: string) => void;
   appendStreamingOutput: (chunk: string) => void;
   setResult: (result: AutoRefactorResult) => void;
+  // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
   setExecutionResult: (result: any) => void;
   setError: (error: string) => void;
   setAutoExecute: (autoExecute: boolean) => void;
@@ -204,6 +209,7 @@ export function setupAutoRefactorListeners(): () => void {
 
   // Listen for execution completion (if auto-executed)
   const unsubExecutionComplete = window.electronAPI.onAutoRefactorExecutionComplete(
+    // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
     (result: any) => {
       store().setExecutionResult(result);
     }

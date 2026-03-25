@@ -95,6 +95,7 @@ export function DependencyGraphView({ graph, executionOrder, repoStates }: Depen
         {t('multiRepo:graph.title')}
       </h3>
       <div className="overflow-auto">
+        {/* biome-ignore lint/a11y/noSvgWithoutTitle: SVG is decorative, intentional */}
         <svg
           width={layout.width}
           height={layout.height}
@@ -117,6 +118,7 @@ export function DependencyGraphView({ graph, executionOrder, repoStates }: Depen
           {/* Edges */}
           {layout.edges.map((edge, i) => edge && (
             <line
+              // biome-ignore lint/suspicious/noArrayIndexKey: no stable key available
               key={`edge-${i}`}
               x1={edge.x1}
               y1={edge.y1}

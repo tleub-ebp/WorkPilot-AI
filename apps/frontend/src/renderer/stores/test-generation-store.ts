@@ -95,6 +95,7 @@ interface TestGenerationState {
   setTddSnippetType: (snippetType: string) => void;
   setSelectedFile: (filePath: string) => void;
   reset: () => void;
+  // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
   createErrorHandler: (cleanup: () => void, reject: (reason?: any) => void) => (error: string) => void;
   createCleanupHandler: (listeners: Array<() => void>) => () => void;
 
@@ -124,6 +125,7 @@ export const useTestGenerationStore = create<TestGenerationState>((set, get) => 
   ...initialState,
 
   // Common error handler for test generation
+  // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
   createErrorHandler: (cleanup: () => void, reject: (reason?: any) => void) => {
     const { setPhase, setError } = get();
     return (error: string) => {
@@ -187,6 +189,7 @@ export const useTestGenerationStore = create<TestGenerationState>((set, get) => 
         () => globalThis.electronAPI.removeTestGenerationResultListener(onResult),
         () => globalThis.electronAPI.removeTestGenerationErrorListener(onError),
       ]);
+      // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
       const onResult = (data: any) => {
         cleanup();
         setPhase('complete');
@@ -214,6 +217,7 @@ export const useTestGenerationStore = create<TestGenerationState>((set, get) => 
         () => globalThis.electronAPI.removeTestGenerationCompleteListener(onComplete),
         () => globalThis.electronAPI.removeTestGenerationErrorListener(onError),
       ]);
+      // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
       const onComplete = (data: any) => {
         cleanup();
         const parsed = data as { result?: TestGenerationResult };
@@ -244,6 +248,7 @@ export const useTestGenerationStore = create<TestGenerationState>((set, get) => 
         () => globalThis.electronAPI.removeTestGenerationCompleteListener(onComplete),
         () => globalThis.electronAPI.removeTestGenerationErrorListener(onError),
       ]);
+      // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
       const onComplete = (data: any) => {
         cleanup();
         const parsed = data as { result?: TestGenerationResult };
@@ -274,6 +279,7 @@ export const useTestGenerationStore = create<TestGenerationState>((set, get) => 
         () => globalThis.electronAPI.removeTestGenerationCompleteListener(onComplete),
         () => globalThis.electronAPI.removeTestGenerationErrorListener(onError),
       ]);
+      // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
       const onComplete = (data: any) => {
         cleanup();
         const parsed = data as { result?: TestGenerationResult };

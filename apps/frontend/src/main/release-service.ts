@@ -47,9 +47,11 @@ export class ReleaseService extends EventEmitter {
       const match = matches[i];
       const version = match[1];
       const date = match[2] || '';
+      // biome-ignore lint/style/noNonNullAssertion: value is guaranteed by context
       const startIndex = match.index! + match[0].length;
 
       // Content is until next version header or end of file
+      // biome-ignore lint/style/noNonNullAssertion: value is guaranteed by context
       const endIndex = i < matches.length - 1 ? matches[i + 1].index! : content.length;
       const versionContent = content.slice(startIndex, endIndex).trim();
 

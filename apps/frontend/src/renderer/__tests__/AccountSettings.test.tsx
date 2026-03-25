@@ -3,6 +3,7 @@ import { vi } from 'vitest';
 import { AccountSettings } from '@/components/settings/AccountSettings';
 
 // Minimal props mock
+// biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
 const settings = {} as any;
 const onSettingsChange = vi.fn();
 const isOpen = true;

@@ -71,6 +71,7 @@ const filterIcons: Record<FilterCategory, React.ElementType> = {
 
 export function MemoriesTab({
   memoryStatus,
+  // biome-ignore lint/correctness/noUnusedFunctionParameters: parameter kept for API compatibility
   memoryState,
   recentMemories,
   memoriesLoading,

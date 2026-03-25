@@ -51,10 +51,10 @@ export const settingsMock = {
   getDownloadedAppUpdate: async () => ({ success: true, data: null }),
 
   // App Update Event Listeners (no-op in browser mode)
-  onAppUpdateAvailable: () => () => {},
-  onAppUpdateDownloaded: () => () => {},
-  onAppUpdateProgress: () => () => {},
-  onAppUpdateStableDowngrade: () => () => {},
-  onAppUpdateReadOnlyVolume: () => () => {},
-  onAppUpdateError: () => () => {}
+  onAppUpdateAvailable: () => () => { /* noop */ },
+  onAppUpdateDownloaded: () => () => { /* noop */ },
+  onAppUpdateProgress: () => () => { /* noop */ },
+  onAppUpdateStableDowngrade: () => () => { /* noop */ },
+  onAppUpdateReadOnlyVolume: () => () => { /* noop */ },
+  onAppUpdateError: () => () => { /* noop */ }
 };

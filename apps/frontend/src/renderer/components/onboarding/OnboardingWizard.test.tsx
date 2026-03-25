@@ -54,6 +54,7 @@ vi.mock('react-i18next', () => ({
 // Mock the settings store
 const mockUpdateSettings = vi.fn();
 const mockLoadSettings = vi.fn();
+// biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
 const mockProfiles: any[] = [];
 
 vi.mock('../../stores/settings-store', () => ({

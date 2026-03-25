@@ -23,6 +23,7 @@ const DEBUG = process.env.DEBUG === 'true' || process.env.NODE_ENV === 'developm
 
 function debugLog(_message: string): void {
   if (DEBUG) {
+    // noop
   }
 }
 

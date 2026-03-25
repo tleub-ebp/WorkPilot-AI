@@ -109,6 +109,7 @@ function TaskDetailModalContent({ open, task, onOpenChange, onSwitchToTerminals,
       }
       // Notify the user if the provider will change when restarting
       const projectProvider = activeProject?.settings?.provider;
+      // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
       const taskProvider = (task.metadata as any)?.provider;
       if (projectProvider && taskProvider && projectProvider !== taskProvider) {
         toast({
@@ -644,6 +645,8 @@ function TaskDetailModalContent({ open, task, onOpenChange, onSwitchToTerminals,
             </AlertDialogTitle>
             <AlertDialogDescription asChild>
               <div className="text-sm text-muted-foreground space-y-3">
+                // biome-ignore lint/security/noDangerouslySetInnerHtml: content is sanitized before use
+                // biome-ignore lint/security/noDangerouslySetInnerHtml: intentional
                 <p dangerouslySetInnerHTML={{ __html: t('tasks:modal.delete.confirmMessage', { title: task.title.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'), interpolation: { escapeValue: false } }) }} />
                 <p className="text-destructive">
                   {t('tasks:modal.delete.warningMessage')}

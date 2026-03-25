@@ -94,7 +94,7 @@ export const VisualProgrammingPalette: React.FC<{ compact?: boolean }> = ({ comp
 			<div className="font-bold mb-2 text-lg">{t('palette')}</div>
 			{BLOCK_CATEGORIES.map((cat) => (
 				<div key={cat.labelKey} className="mb-2">
-					<button
+					<button type="button"
 						className="flex items-center w-full text-xs font-semibold text-muted-foreground mb-1 hover:text-foreground transition-colors"
 						style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
 						onClick={() => toggleGroup(cat.labelKey)}
@@ -106,6 +106,8 @@ export const VisualProgrammingPalette: React.FC<{ compact?: boolean }> = ({ comp
 					{openGroups[cat.labelKey] && (
 						<div className="flex flex-wrap gap-2">
 							{cat.blocks.map((tpl) => (
+								// biome-ignore lint/a11y/noNoninteractiveElementInteractions: interactive handler is intentional
+								// biome-ignore lint/a11y/noStaticElementInteractions: interactive handler is intentional
 								<div
 									key={tpl.type}
 									className="flex items-center gap-2 p-2 rounded cursor-grab hover:bg-muted/60"

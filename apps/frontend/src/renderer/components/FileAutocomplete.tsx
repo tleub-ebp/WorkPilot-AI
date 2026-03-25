@@ -202,7 +202,7 @@ export function FileAutocomplete({
         className="overflow-y-auto max-h-[240px]"
       >
         {filteredFiles.map((file, index) => (
-          <button
+          <button type="button"
             key={file.path}
             className={cn(
               'w-full flex items-center gap-2 px-3 py-2 text-left text-sm',

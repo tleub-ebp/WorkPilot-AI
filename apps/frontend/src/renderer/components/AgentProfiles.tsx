@@ -49,7 +49,7 @@ export function AgentProfiles() {
     const Icon = iconMap[profile.icon || 'Brain'] || Brain;
 
     return (
-      <button
+      <button type="button"
         key={profile.id}
         onClick={() => handleSelectProfile(profile.id)}
         className={cn(

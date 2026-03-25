@@ -47,6 +47,7 @@ function isValidImplementationPlan(plan: ImplementationPlan): boolean {
  * Log debug information about why a plan validation failed
  */
 function logInvalidPlanDetails(_taskId: string, _plan: ImplementationPlan): void {
+  // noop
 }
 
 /**
@@ -57,7 +58,9 @@ function restampXStateStatusIfNeeded(
   taskId: string,
   plan: ImplementationPlan,
   hasValidPhases: boolean,
+  // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
   task: any,
+  // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
   project: any
 ): void {
   const planWithStatus = plan as { xstateState?: string; executionPhase?: string; status?: string; phases?: unknown[] };
@@ -84,12 +87,14 @@ function restampXStateStatusIfNeeded(
       }
     }
   } else if (currentXState && !planWithStatus.xstateState && !hasValidPhases) {
+    // noop
   }
 }
 
 /**
  * Log detailed information for CODING_FAILED events
  */
+// biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
 function logCodingFailedEvent(taskId: string, event: any, projectId?: string): void {
   console.error(`[agent-events-handlers] CODING_FAILED RECEIVED FROM BACKEND:`, {
     taskId,
@@ -129,6 +134,7 @@ function initializeTaskSequenceIfNeeded(taskId: string, projectId?: string): voi
 /**
  * Persist last event to both main and worktree plan files
  */
+// biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
 function persistLastEventToAllPlans(_taskId: string, event: any, task: any, project: any): void {
   const mainPlanPath = getPlanPath(project, task);
   persistPlanLastEventSync(mainPlanPath, event);
@@ -317,6 +323,7 @@ export function registerAgenteventsHandlers(
       if (existsSync(mainPlanPath)) {
         persistPlanPhaseSync(mainPlanPath, progress.phase, project.id);
       } else {
+        // noop
       }
 
       // Also persist to worktree if task has one
@@ -334,6 +341,7 @@ export function registerAgenteventsHandlers(
         }
       }
     } else if (xstateInTerminalState && progress.phase) {
+      // noop
     }
 
     // Skip sending execution-progress to renderer when XState has settled.

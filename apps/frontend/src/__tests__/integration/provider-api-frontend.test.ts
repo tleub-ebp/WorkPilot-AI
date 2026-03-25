@@ -276,7 +276,7 @@ describe('Frontend ↔ Backend Provider API Integration', () => {
         name: 'Test Profile',
         baseUrl: 'https://api.openai.com/v1',
         apiKey: 'sk-test-lifecycle',
-      } as any);
+      } as { name: string; baseUrl: string; apiKey: string });
       expect(created).toBe(true);
       expect(useSettingsStore.getState().profiles).toHaveLength(1);
 

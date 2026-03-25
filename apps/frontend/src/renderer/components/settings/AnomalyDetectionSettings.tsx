@@ -79,7 +79,7 @@ export function AnomalyDetectionSettings() {
               <p className="text-xs text-muted-foreground">{t('sections.anomaly-detection.enable.description')}</p>
             </div>
           </div>
-          <button
+          <button type="button"
             onClick={() => setEnabled(!enabled)}
             className={cn(
               'relative h-6 w-11 rounded-full transition-colors',
@@ -105,6 +105,8 @@ export function AnomalyDetectionSettings() {
           <div className="space-y-4">
             <div className="space-y-1">
               <div className="flex items-center justify-between">
+                // biome-ignore lint/a11y/noLabelWithoutControl: label association is implicit
+                // biome-ignore lint/a11y/noLabelWithoutControl: intentional
                 <label className="text-xs font-medium text-muted-foreground">{t('sections.anomaly-detection.trustScore.pauseThreshold')}</label>
                 <span className="text-xs font-mono tabular-nums text-amber-600">{thresholds.trust_score_pause}</span>
               </div>
@@ -118,6 +120,8 @@ export function AnomalyDetectionSettings() {
             </div>
             <div className="space-y-1">
               <div className="flex items-center justify-between">
+                // biome-ignore lint/a11y/noLabelWithoutControl: label association is implicit
+                // biome-ignore lint/a11y/noLabelWithoutControl: intentional
                 <label className="text-xs font-medium text-muted-foreground">{t('sections.anomaly-detection.trustScore.terminateThreshold')}</label>
                 <span className="text-xs font-mono tabular-nums text-red-600">{thresholds.trust_score_terminate}</span>
               </div>
@@ -150,6 +154,8 @@ export function AnomalyDetectionSettings() {
             ].map(({ key, label, min, max, step, desc }) => (
               <div key={key} className="space-y-1">
                 <div className="flex items-center justify-between">
+                  // biome-ignore lint/a11y/noLabelWithoutControl: label association is implicit
+                  // biome-ignore lint/a11y/noLabelWithoutControl: intentional
                   <label className="text-xs font-medium text-muted-foreground">{label}</label>
                   <span className="text-xs font-mono tabular-nums text-foreground">{thresholds[key]}</span>
                 </div>

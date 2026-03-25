@@ -122,6 +122,7 @@ export function ConflictPredictorDialog() {
     return 'text-green-600';
   };
 
+  // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
   const generateReportText = (result: any) => {
     let report = '# Conflict Prediction Analysis Report\n\n';
     report += `**Risk Assessment:** ${result.summary.risk_assessment}\n\n`;
@@ -135,6 +136,7 @@ export function ConflictPredictorDialog() {
       report += `- Medium: ${result.summary.medium_conflicts}\n\n`;
       
       report += '## Conflicts\n\n';
+      // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
       result.conflicts_detected.forEach((conflict: any, index: number) => {
         report += `### ${index + 1}. ${conflict.risk_level.toUpperCase()} - ${conflict.file_path}\n`;
         report += `**Worktrees:** ${conflict.worktree1} vs ${conflict.worktree2}\n`;
@@ -178,6 +180,7 @@ export function ConflictPredictorDialog() {
     await navigator.clipboard.writeText(reportText);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
+  // biome-ignore lint/correctness/useExhaustiveDependencies: intentional dependency omission
   }, [result, generateReportText]);
 
   return (

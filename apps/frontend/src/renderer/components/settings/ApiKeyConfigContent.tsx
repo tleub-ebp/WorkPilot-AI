@@ -12,6 +12,7 @@ interface ApiKeyConfigContentProps {
   readonly formData: Record<string, string>;
   readonly showApiKey: boolean;
   readonly testResult: { success: boolean; message: string } | null;
+  // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
   readonly t: any;
   readonly onFormDataChange: (data: Record<string, string>) => void;
   readonly onToggleShowApiKey: () => void;
@@ -85,6 +86,7 @@ function ApiKeyInput({
   readonly placeholder?: string;
   readonly showApiKey: boolean;
   readonly onToggleShow: () => void;
+  // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
   readonly t: any;
 }) {
   return (
@@ -123,6 +125,7 @@ function GitHubCopilotTokenConfig({
 }: {
   readonly showApiKey: boolean;
   readonly onToggleShow: () => void;
+  // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
   readonly t: any;
 }) {
   return (
@@ -179,11 +182,13 @@ function ApiUrlInput({
   value,
   onChange,
   placeholder,
+  // biome-ignore lint/correctness/noUnusedFunctionParameters: parameter kept for API compatibility
   t
 }: {
   readonly value: string;
   readonly onChange: (value: string) => void;
   readonly placeholder?: string;
+  // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
   readonly t: any;
 }) {
   return (
@@ -205,10 +210,12 @@ function ApiUrlInput({
 function ModelInput({
   value,
   onChange,
+  // biome-ignore lint/correctness/noUnusedFunctionParameters: parameter kept for API compatibility
   t
 }: {
   readonly value: string;
   readonly onChange: (value: string) => void;
+  // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
   readonly t: any;
 }) {
   return (

@@ -58,6 +58,7 @@ export function registerGitHubCopilotHandlers(): void {
   /**
    * Tester la connexion GitHub Copilot
    */
+  // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
   ipcMain.handle('github-copilot:testConnection', async (): Promise<{ success: boolean; message: string; details?: any }> => {
     return await gitHubCopilotService.testConnection();
   });

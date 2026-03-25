@@ -53,7 +53,7 @@ describe('OAuthStep Profile Management Logic', () => {
       success: true,
       data: { profiles: [], activeProfileId: 'default' }
     });
-    mockOnTerminalOAuthToken.mockReturnValue(() => {});
+    mockOnTerminalOAuthToken.mockReturnValue(() => { /* noop */ });
   });
 
   afterEach(() => {
@@ -206,7 +206,7 @@ describe('OAuthStep Profile Management Logic', () => {
 
     it('should register OAuth token callback', () => {
       const callback = vi.fn();
-      mockOnTerminalOAuthToken.mockReturnValue(() => {});
+      mockOnTerminalOAuthToken.mockReturnValue(() => { /* noop */ });
 
       const unsubscribe = window.electronAPI.onTerminalOAuthToken(callback);
       expect(mockOnTerminalOAuthToken).toHaveBeenCalledWith(callback);

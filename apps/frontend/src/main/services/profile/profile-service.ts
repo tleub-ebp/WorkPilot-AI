@@ -232,6 +232,7 @@ export async function updateProfile(input: UpdateProfileInput): Promise<APIProfi
   });
 
   // Find and return the updated profile
+  // biome-ignore lint/style/noNonNullAssertion: value is guaranteed by context
   const updatedProfile = modifiedFile.profiles.find((p) => p.id === input.id)!;
   return updatedProfile;
 }

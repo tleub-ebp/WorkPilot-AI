@@ -355,6 +355,7 @@ export const useTaskStore = create<TaskState>((set, get) => ({
       }
 
       // Helper function to create a subtask with proper validation
+      // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
       const createSubtaskFromPlan = (subtask: any): Subtask => {
         // Ensure all required fields have valid values to prevent UI issues
         // Use crypto.randomUUID() for stronger randomness when available
@@ -377,6 +378,7 @@ export const useTaskStore = create<TaskState>((set, get) => ({
       };
 
       // Helper function to process individual phases
+      // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
       const processPhase = (phase: any) => 
         phase.subtasks.map(createSubtaskFromPlan);
 
@@ -434,6 +436,7 @@ export const useTaskStore = create<TaskState>((set, get) => ({
     const isValidSequence = (seq: number) => seq < 1000000;
     
     // Helper function to handle sequence validation and logging
+    // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
     const handleSequenceValidation = (incomingSeq: number, currentSeq: number, taskId: string, progress: any, existingProgress: any) => {
       const normalizedCurrentSeq = isValidSequence(currentSeq) ? currentSeq : 0;
       

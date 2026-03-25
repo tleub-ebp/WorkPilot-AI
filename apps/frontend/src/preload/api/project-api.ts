@@ -278,6 +278,7 @@ export const createProjectAPI = (): ProjectAPI => ({
     total: number;
     percentage: number;
   }) => void) => {
+    // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
     const listener = (_: any, data: any) => callback(data);
     ipcRenderer.on(IPC_CHANNELS.OLLAMA_PULL_PROGRESS, listener);
     return () => ipcRenderer.off(IPC_CHANNELS.OLLAMA_PULL_PROGRESS, listener);

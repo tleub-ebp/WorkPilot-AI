@@ -5,6 +5,7 @@ import ProjectInitModal from '../ProjectInitModal';
 // Mock ProviderSelector to avoid side effects
 vi.mock('../ProviderSelector', () => ({
   __esModule: true,
+  // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
   default: ({ selected, setSelected }: any) => (
     <select
       data-testid="provider-select"
@@ -24,7 +25,7 @@ describe('ProjectInitModal', () => {
     const { getByText, getByLabelText, getByTestId } = render(
       <ProjectInitModal
         open={true}
-        onOpenChange={() => {}}
+        onOpenChange={() => { /* noop */ }}
         projectName="MonProjetTest"
         onConfirm={onConfirm}
         onCancel={onCancel}
@@ -45,7 +46,7 @@ describe('ProjectInitModal', () => {
     const { getByLabelText, getByText, getByTestId } = render(
       <ProjectInitModal
         open={true}
-        onOpenChange={() => {}}
+        onOpenChange={() => { /* noop */ }}
         projectName="MonProjetTest"
         onConfirm={onConfirm}
         onCancel={onCancel}

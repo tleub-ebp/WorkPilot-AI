@@ -23,6 +23,7 @@ export async function initializeCredentialIntegration(): Promise<void> {
     // Connecter les événements d'usage du monitor existant au CredentialManager
     if (usageMonitor) {
       // Écouter les mises à jour d'usage existantes
+      // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
       usageMonitor.on('usage-updated', (usageData: any) => {
         // Convertir les données d'usage existantes au nouveau format
         const provider = usageData.providerName || 'anthropic';
@@ -45,6 +46,7 @@ export async function initializeCredentialIntegration(): Promise<void> {
       });
 
       // Écouter les changements de profils Claude existants
+      // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
       usageMonitor.on('profile-changed', (profileData: any) => {
         // Mettre à jour le credential actif quand le profil Claude change
         if (profileData.isAuthenticated) {
@@ -97,7 +99,9 @@ export async function switchToProvider(
  * Fonction utilitaire pour diagnostiquer l'état du système
  */
 export async function getCredentialState(): Promise<{
+  // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
   activeCredential: any;
+  // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
   usageData: Map<string, any>;
   environmentVariables: Record<string, string>;
 }> {

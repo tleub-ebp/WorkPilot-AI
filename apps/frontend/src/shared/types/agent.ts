@@ -96,9 +96,13 @@ export interface UsageSnapshot {
    * Présent uniquement si providerName === 'openai'
    */
   openaiUsageDetails?: {
+    // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
     completions?: any;
+    // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
     cost?: any;
+    // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
     embeddings?: any;
+    // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
     moderations?: any;
   };
 

@@ -2487,6 +2487,7 @@ export function registerWorktreeHandlers(
               }
 
               // Route status change through TaskStateManager (XState) to avoid dual emission
+              // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
               taskStateManager.handleManualStatusChange(taskId, newStatus as any, task, project);
 
               resolve({

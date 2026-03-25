@@ -1649,11 +1649,11 @@ class TestWorktreeIsolation:
 
         # Each worktree should have a unique branch
         assert info1.branch != info2.branch, "Worktrees should have different branches"
-        assert info1.branch == "auto-claude/spec-agent-1", (
-            f"Expected branch auto-claude/spec-agent-1, got {info1.branch}"
+        assert info1.branch == "workpilot/spec-agent-1", (
+            f"Expected branch workpilot/spec-agent-1, got {info1.branch}"
         )
-        assert info2.branch == "auto-claude/spec-agent-2", (
-            f"Expected branch auto-claude/spec-agent-2, got {info2.branch}"
+        assert info2.branch == "workpilot/spec-agent-2", (
+            f"Expected branch workpilot/spec-agent-2, got {info2.branch}"
         )
 
         # Each worktree should have a unique path

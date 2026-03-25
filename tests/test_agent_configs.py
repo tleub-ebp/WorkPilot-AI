@@ -137,12 +137,12 @@ class TestGetRequiredMcpServers:
         assert "context7" in servers
 
     def test_coder_has_context7_and_auto_claude(self):
-        """coder should require context7 and auto-claude."""
+        """coder should require context7 and workpilot."""
         from agents.tools_pkg.models import get_required_mcp_servers
 
         servers = get_required_mcp_servers("coder")
         assert "context7" in servers
-        assert "auto-claude" in servers
+        assert "workpilot" in servers
 
     def test_linear_optional_not_included_by_default(self):
         """Linear should not be included unless linear_enabled=True."""

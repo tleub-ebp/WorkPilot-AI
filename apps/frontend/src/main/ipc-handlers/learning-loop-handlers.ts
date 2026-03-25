@@ -35,6 +35,7 @@ export function registerLearningLoopHandlers(
       const raw = readFileSync(patternsPath, 'utf-8');
       const data = JSON.parse(raw);
       return { success: true, data: data.patterns || [] };
+    // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
     } catch (error: any) {
       console.error('[LearningLoop] Failed to get patterns:', error);
       return { success: false, error: error.message };
@@ -104,6 +105,7 @@ export function registerLearningLoopHandlers(
           disabled_count: disabledCount,
         },
       };
+    // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
     } catch (error: any) {
       console.error('[LearningLoop] Failed to get summary:', error);
       return { success: false, error: error.message };
@@ -123,6 +125,7 @@ export function registerLearningLoopHandlers(
       const raw = readFileSync(patternsPath, 'utf-8');
       const data = JSON.parse(raw);
       const before = data.patterns?.length || 0;
+      // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
       data.patterns = (data.patterns || []).filter((p: any) => p.pattern_id !== patternId);
       const after = data.patterns.length;
 
@@ -132,6 +135,7 @@ export function registerLearningLoopHandlers(
 
       writeFileSync(patternsPath, JSON.stringify(data, null, 2), 'utf-8');
       return { success: true };
+    // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
     } catch (error: any) {
       console.error('[LearningLoop] Failed to delete pattern:', error);
       return { success: false, error: error.message };
@@ -150,6 +154,7 @@ export function registerLearningLoopHandlers(
 
       const raw = readFileSync(patternsPath, 'utf-8');
       const data = JSON.parse(raw);
+      // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
       const pattern = (data.patterns || []).find((p: any) => p.pattern_id === patternId);
 
       if (!pattern) {
@@ -159,6 +164,7 @@ export function registerLearningLoopHandlers(
       pattern.enabled = !pattern.enabled;
       writeFileSync(patternsPath, JSON.stringify(data, null, 2), 'utf-8');
       return { success: true, data: pattern.enabled };
+    // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
     } catch (error: any) {
       console.error('[LearningLoop] Failed to toggle pattern:', error);
       return { success: false, error: error.message };
@@ -197,6 +203,7 @@ export function registerLearningLoopHandlers(
     safeSendToRenderer(getMainWindow, IPC_CHANNELS.LEARNING_LOOP_ERROR, error);
   };
 
+  // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
   const handleComplete = (result: any): void => {
     safeSendToRenderer(getMainWindow, IPC_CHANNELS.LEARNING_LOOP_COMPLETE, result);
   };

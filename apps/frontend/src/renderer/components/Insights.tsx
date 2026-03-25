@@ -618,7 +618,7 @@ function ToolUsageHistory({ tools }: ToolUsageHistoryProps) {
 
   return (
     <div className="mt-2">
-      <button
+      <button type="button"
         onClick={() => setExpanded(!expanded)}
         className="flex items-center gap-2 text-xs text-muted-foreground hover:text-foreground transition-colors"
       >

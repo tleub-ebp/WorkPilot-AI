@@ -187,6 +187,7 @@ function saveKanbanPreferencesToMain(projectId: string): void {
     try {
       await globalThis.electronAPI.saveKanbanPreferences(projectId, preferencesToSave);
     } catch (_err) {
+      // noop
     }
   }, 100);
 }

@@ -226,7 +226,7 @@ export function McpBuilder() {
         </div>
         <div className="flex-1 overflow-auto p-2 space-y-1">
           {builderProjects.map((project) => (
-            <button
+            <button type="button"
               key={project.id}
               onClick={() => handleSelectProject(project.id)}
               className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-colors flex items-center gap-2 ${
@@ -358,7 +358,7 @@ export function McpBuilder() {
                 ) : (
                   <div className="space-y-1">
                     {editingProject.tools.map((tool) => (
-                      <button
+                      <button type="button"
                         key={tool.id}
                         onClick={() => setEditingToolId(tool.id)}
                         className={`w-full text-left flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition-colors ${

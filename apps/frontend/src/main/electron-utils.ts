@@ -85,6 +85,7 @@ export const closeWindow = (): void => {
 };
 
 // IPC utilities
+// biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
 export const createIpcHandler = <T extends any[], R>(
   channel: string,
   handler: (event: IpcMainInvokeEvent, ...args: T) => Promise<R>
@@ -94,6 +95,7 @@ export const createIpcHandler = <T extends any[], R>(
 
 export const createIpcListener = (
   channel: string,
+  // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
   handler: (event: IpcMainEvent, ...args: any[]) => void
 ): void => {
   ipcMain.on(channel, handler);
@@ -101,6 +103,7 @@ export const createIpcListener = (
 
 export const removeIpcListener = (
   channel: string,
+  // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
   handler: (event: IpcMainEvent, ...args: any[]) => void
 ): void => {
   ipcMain.off(channel, handler);

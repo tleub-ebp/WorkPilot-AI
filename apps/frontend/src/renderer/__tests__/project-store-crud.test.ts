@@ -160,6 +160,7 @@ describe('Project Store — Core CRUD Operations', () => {
         projects: [createTestProject({ id: 'p1', name: 'Original' })]
       });
 
+      // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
       useProjectStore.getState().updateProject('p1', { name: 'Updated Name' } as any);
 
       const project = useProjectStore.getState().projects[0];
@@ -174,6 +175,7 @@ describe('Project Store — Core CRUD Operations', () => {
         ]
       });
 
+      // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
       useProjectStore.getState().updateProject('p1', { model: 'new-model' } as any);
 
       expect(useProjectStore.getState().projects[1].name).toBe('Project 2');

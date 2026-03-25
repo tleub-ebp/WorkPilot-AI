@@ -46,6 +46,7 @@ export function setupSmartEstimationHandlers() {
 
       currentProcess = spawnedProcess;
 
+      // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
       let result: any = null;
       let error: string | null = null;
 

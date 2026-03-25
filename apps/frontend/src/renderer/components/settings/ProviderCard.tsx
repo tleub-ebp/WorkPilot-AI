@@ -76,6 +76,7 @@ export function ProviderCard({
   onRemove,
   className
 }: ProviderCardProps) {
+  // biome-ignore lint/correctness/noUnusedVariables: variable kept for clarity
   const { t } = useTranslation('settings');
   const [isExpanded, setIsExpanded] = useState(false);
   const [showApiKey, setShowApiKey] = useState(false);

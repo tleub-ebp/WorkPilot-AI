@@ -470,6 +470,7 @@ describe('Smart Estimation Store', () => {
       expect(typeof cleanup).toBe('function');
 
       // Call cleanup to verify it doesn't throw
+      // biome-ignore lint/style/noNonNullAssertion: value is guaranteed by context
       expect(() => cleanup!()).not.toThrow();
     });
   });
@@ -503,6 +504,7 @@ describe('Smart Estimation Store', () => {
 
       // Try to set invalid result
       act(() => {
+        // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
         store.setResult(null as any);
       });
 

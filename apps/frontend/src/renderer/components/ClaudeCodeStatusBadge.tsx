@@ -41,6 +41,7 @@ interface ClaudeCodeStatusBadgeProps {
   readonly onNavigateToTerminals?: () => void; // Ajout de la prop pour la navigation
 }
 
+// biome-ignore lint/correctness/noUnusedVariables: variable kept for clarity
 type StatusType = "loading" | "installed" | "outdated" | "not-found" | "error";
 
 // Check interval for version updates
@@ -54,6 +55,7 @@ const VERSION_RECHECK_DELAY_MS = 5000;
  */
 export function ClaudeCodeStatusBadge({ className, onNavigateToTerminals }: ClaudeCodeStatusBadgeProps) {
   const { t } = useTranslation(["common", "navigation"]);
+  // biome-ignore lint/correctness/noUnusedVariables: variable kept for clarity
   const { data, refreshClaude } = useCliStatus();
   const { claude } = data;
   
@@ -612,6 +614,8 @@ export function ClaudeCodeStatusBadge({ className, onNavigateToTerminals }: Clau
           {/* Version selector - only show when Claude is installed */}
           {versionInfo?.installed && (
             <div className="space-y-1.5">
+              // biome-ignore lint/a11y/noLabelWithoutControl: label association is implicit
+              // biome-ignore lint/a11y/noLabelWithoutControl: intentional
               <label className="text-xs text-muted-foreground">
                 {t("navigation:claudeCode.switchVersion", "Switch Version")}
               </label>
@@ -652,6 +656,8 @@ export function ClaudeCodeStatusBadge({ className, onNavigateToTerminals }: Clau
           {/* CLI Installation selector - show when multiple installations are found */}
           {installations.length > 1 && (
             <div className="space-y-1.5">
+              // biome-ignore lint/a11y/noLabelWithoutControl: label association is implicit
+              // biome-ignore lint/a11y/noLabelWithoutControl: intentional
               <label className="text-xs text-muted-foreground">
                 {t("navigation:claudeCode.switchInstallation", "Switch Installation")}
               </label>

@@ -131,19 +131,19 @@ export const useSelfHealingStore = create<SelfHealingState>()(
     const merged = { ...get().cicdConfig, ...config };
     set({ cicdConfig: merged });
     // Persist to backend
-    globalThis.electronAPI.selfHealing.cicdConfig(projectPath, merged).catch(() => {});
+    globalThis.electronAPI.selfHealing.cicdConfig(projectPath, merged).catch(() => { /* noop */ });
   },
 
   setProductionConfig: (projectPath, config) => {
     const merged = { ...get().productionConfig, ...config };
     set({ productionConfig: merged });
-    globalThis.electronAPI.selfHealing.productionConfig(projectPath, merged).catch(() => {});
+    globalThis.electronAPI.selfHealing.productionConfig(projectPath, merged).catch(() => { /* noop */ });
   },
 
   setProactiveConfig: (projectPath, config) => {
     const merged = { ...get().proactiveConfig, ...config };
     set({ proactiveConfig: merged });
-    globalThis.electronAPI.selfHealing.proactiveConfig(projectPath, merged).catch(() => {});
+    globalThis.electronAPI.selfHealing.proactiveConfig(projectPath, merged).catch(() => { /* noop */ });
   },
 
   // Async actions

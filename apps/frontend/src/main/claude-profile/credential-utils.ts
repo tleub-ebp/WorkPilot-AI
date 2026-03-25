@@ -385,6 +385,7 @@ function executeCredentialRead(
 function parseCredentialJson<T extends PlatformCredentials>(
   credentialsJson: string | null,
   identifier: string,
+  // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
   extractFn: (data: any) => T
 ): T {
   if (!credentialsJson) {

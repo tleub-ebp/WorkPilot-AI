@@ -441,6 +441,7 @@ describe('Task Store — Kanban Order Management', () => {
       const result = useTaskStore.getState().saveTaskOrder('project-1');
 
       expect(result).toBe(true);
+      // biome-ignore lint/style/noNonNullAssertion: value is guaranteed by context
       const stored = JSON.parse(localStorage.getItem('task-order-state-project-1')!);
       expect(stored).toEqual(order);
     });

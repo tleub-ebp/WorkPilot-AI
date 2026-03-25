@@ -136,6 +136,7 @@ describe('PresetsPanel', () => {
       );
 
       const vscodeButton = screen.getByText('VS Code').closest('button');
+      // biome-ignore lint/style/noNonNullAssertion: value is guaranteed by context
       fireEvent.click(vscodeButton!);
 
       expect(mockOnPresetApply).toHaveBeenCalledWith('vscode');
@@ -151,6 +152,7 @@ describe('PresetsPanel', () => {
       );
 
       const intellijButton = screen.getByText('IntelliJ IDEA').closest('button');
+      // biome-ignore lint/style/noNonNullAssertion: value is guaranteed by context
       fireEvent.click(intellijButton!);
 
       expect(mockOnPresetApply).toHaveBeenCalledWith('intellij');
@@ -166,6 +168,7 @@ describe('PresetsPanel', () => {
       );
 
       const macosButton = screen.getByText('macOS Terminal').closest('button');
+      // biome-ignore lint/style/noNonNullAssertion: value is guaranteed by context
       fireEvent.click(macosButton!);
 
       expect(mockOnPresetApply).toHaveBeenCalledWith('macos');
@@ -181,6 +184,7 @@ describe('PresetsPanel', () => {
       );
 
       const ubuntuButton = screen.getByText('Ubuntu Terminal').closest('button');
+      // biome-ignore lint/style/noNonNullAssertion: value is guaranteed by context
       fireEvent.click(ubuntuButton!);
 
       expect(mockOnPresetApply).toHaveBeenCalledWith('ubuntu');

@@ -27,6 +27,7 @@ interface OAuthAuthContentProps {
   readonly windsurfAccountInfo: WindsurfAccountInfo | null;
   readonly windsurfSsoToken: string;
   readonly testResult: { success: boolean; message: string } | null;
+  // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
   readonly t: any;
   readonly onOAuthAuth: () => void;
   readonly onAuthTerminalClose: () => void;
@@ -38,11 +39,13 @@ interface OAuthAuthContentProps {
 
 export function OAuthAuthContent({
   providerId,
+  // biome-ignore lint/correctness/noUnusedFunctionParameters: parameter kept for API compatibility
   providerName,
   isAuthenticating,
   authTerminal,
   windsurfAccountInfo,
   windsurfSsoToken,
+  // biome-ignore lint/correctness/noUnusedFunctionParameters: parameter kept for API compatibility
   testResult,
   t,
   onOAuthAuth,
@@ -187,6 +190,7 @@ function WindsurfAuthContent({
   readonly onAuthTerminalSuccess: (email?: string) => void;
   readonly onAuthTerminalError: (error: string) => void;
   readonly onWindsurfSave: () => void;
+  // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
   readonly t: any;
 }) {
   // Show save form when SSO token is available
@@ -260,6 +264,7 @@ function WindsurfAuthContent({
 function OpenAICodexAuthContent({
   t
 }: {
+  // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
   readonly t: any;
 }) {
   return (
@@ -310,6 +315,7 @@ function ClaudeAuthContent({
   readonly onAuthTerminalClose: () => void;
   readonly onAuthTerminalSuccess: (email?: string) => void;
   readonly onAuthTerminalError: (error: string) => void;
+  // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
   readonly t: any;
 }) {
   // Show auth terminal when active

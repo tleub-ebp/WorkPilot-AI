@@ -12,6 +12,7 @@ interface GitLabMergeRequestsProps {
   onOpenSettings?: () => void;
 }
 
+// biome-ignore lint/correctness/noUnusedFunctionParameters: parameter kept for API compatibility
 export function GitLabMergeRequests({ projectId, onOpenSettings }: GitLabMergeRequestsProps) {
   const [stateFilter, setStateFilter] = useState<'opened' | 'closed' | 'merged' | 'all'>('opened');
   const [showCreateDialog, setShowCreateDialog] = useState(false);

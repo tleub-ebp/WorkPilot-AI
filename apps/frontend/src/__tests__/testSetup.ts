@@ -43,7 +43,9 @@ if (typeof globalThis !== 'undefined') {
   // Mock scrollIntoView for Radix Select in jsdom
   if (typeof HTMLElement !== 'undefined' && !HTMLElement.prototype.scrollIntoView) {
     Object.defineProperty(HTMLElement.prototype, 'scrollIntoView', {
-      value: () => {},
+      value: () => {
+        // Intentionally empty for tests
+      },
       writable: true
     });
   }
@@ -59,7 +61,7 @@ if (typeof globalThis !== 'undefined') {
   }
 
   // Mock window.electronAPI for renderer tests
-  (globalThis as any).electronAPI = {
+  (globalThis as unknown as { electronAPI: unknown }).electronAPI = {
     addProject: () => Promise.resolve({ success: true }),
     removeProject: () => Promise.resolve({ success: true }),
     getProjects: () => Promise.resolve({ success: true, data: [] }),
@@ -69,10 +71,18 @@ if (typeof globalThis !== 'undefined') {
     startTask: () => Promise.resolve({ success: true }),
     stopTask: () => Promise.resolve({ success: true }),
     submitReview: () => Promise.resolve({ success: true }),
-    onTaskProgress: () => () => {},
-    onTaskError: () => () => {},
-    onTaskLog: () => () => {},
-    onTaskStatusChange: () => () => {},
+    onTaskProgress: () => () => {
+      // Intentionally empty for tests
+    },
+    onTaskError: () => () => {
+      // Intentionally empty for tests
+    },
+    onTaskLog: () => () => {
+      // Intentionally empty for tests
+    },
+    onTaskStatusChange: () => () => {
+      // Intentionally empty for tests
+    },
     getSettings: () => Promise.resolve({ success: true, data: {} }),
     saveSettings: () => Promise.resolve({ success: true }),
     selectDirectory: () => Promise.resolve({ success: true, data: '/test/path' }),

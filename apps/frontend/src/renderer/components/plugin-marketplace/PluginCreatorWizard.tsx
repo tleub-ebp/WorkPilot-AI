@@ -182,6 +182,8 @@ function StepDetails({
 
       {/* Name → auto-generates id */}
       <div className="space-y-1.5">
+        // biome-ignore lint/a11y/noLabelWithoutControl: label association is implicit
+        // biome-ignore lint/a11y/noLabelWithoutControl: intentional
         <label className="text-xs font-medium">{t('common:pluginMarketplace.creator.fieldName')}</label>
         <input
           type="text"
@@ -195,6 +197,8 @@ function StepDetails({
       </div>
 
       <div className="space-y-1.5">
+        // biome-ignore lint/a11y/noLabelWithoutControl: label association is implicit
+        // biome-ignore lint/a11y/noLabelWithoutControl: intentional
         <label className="text-xs font-medium">{t('common:pluginMarketplace.creator.fieldId')}</label>
         <input
           type="text"
@@ -209,6 +213,8 @@ function StepDetails({
       </div>
 
       <div className="space-y-1.5">
+        // biome-ignore lint/a11y/noLabelWithoutControl: label association is implicit
+        // biome-ignore lint/a11y/noLabelWithoutControl: intentional
         <label className="text-xs font-medium">{t('common:pluginMarketplace.creator.fieldDescription')}</label>
         <textarea
           value={form.description}
@@ -220,6 +226,8 @@ function StepDetails({
       </div>
 
       <div className="space-y-1.5">
+        // biome-ignore lint/a11y/noLabelWithoutControl: label association is implicit
+        // biome-ignore lint/a11y/noLabelWithoutControl: intentional
         <label className="text-xs font-medium">{t('common:pluginMarketplace.creator.fieldVersion')}</label>
         <input
           type="text"
@@ -234,6 +242,8 @@ function StepDetails({
       {form.type === 'agent' && (
         <>
           <div className="space-y-1.5">
+            // biome-ignore lint/a11y/noLabelWithoutControl: label association is implicit
+            // biome-ignore lint/a11y/noLabelWithoutControl: intentional
             <label className="text-xs font-medium">{t('common:pluginMarketplace.creator.fieldSystemPrompt')}</label>
             <textarea
               value={form.systemPrompt}
@@ -244,6 +254,8 @@ function StepDetails({
             />
           </div>
           <div className="space-y-1.5">
+            // biome-ignore lint/a11y/noLabelWithoutControl: label association is implicit
+            // biome-ignore lint/a11y/noLabelWithoutControl: intentional
             <label className="text-xs font-medium">{t('common:pluginMarketplace.creator.fieldTriggers')}</label>
             <input
               type="text"
@@ -262,6 +274,8 @@ function StepDetails({
       {form.type === 'integration' && (
         <>
           <div className="space-y-1.5">
+            // biome-ignore lint/a11y/noLabelWithoutControl: label association is implicit
+            // biome-ignore lint/a11y/noLabelWithoutControl: intentional
             <label className="text-xs font-medium">{t('common:pluginMarketplace.creator.fieldAuthType')}</label>
             <select
               value={form.authType}
@@ -275,6 +289,8 @@ function StepDetails({
             </select>
           </div>
           <div className="space-y-1.5">
+            // biome-ignore lint/a11y/noLabelWithoutControl: label association is implicit
+            // biome-ignore lint/a11y/noLabelWithoutControl: intentional
             <label className="text-xs font-medium">{t('common:pluginMarketplace.creator.fieldApiEndpoint')}</label>
             <input
               type="text"
@@ -290,6 +306,8 @@ function StepDetails({
       {form.type === 'theme' && (
         <div className="grid grid-cols-2 gap-3">
           <div className="space-y-1.5">
+            // biome-ignore lint/a11y/noLabelWithoutControl: label association is implicit
+            // biome-ignore lint/a11y/noLabelWithoutControl: intentional
             <label className="text-xs font-medium">{t('common:pluginMarketplace.creator.fieldPrimaryColor')}</label>
             <div className="flex items-center gap-2">
               <input
@@ -307,6 +325,8 @@ function StepDetails({
             </div>
           </div>
           <div className="space-y-1.5">
+            // biome-ignore lint/a11y/noLabelWithoutControl: label association is implicit
+            // biome-ignore lint/a11y/noLabelWithoutControl: intentional
             <label className="text-xs font-medium">{t('common:pluginMarketplace.creator.fieldBackgroundColor')}</label>
             <div className="flex items-center gap-2">
               <input
@@ -328,6 +348,8 @@ function StepDetails({
 
       {(form.type === 'spec-template' || form.type === 'custom-prompt') && (
         <div className="space-y-1.5">
+          // biome-ignore lint/a11y/noLabelWithoutControl: label association is implicit
+          // biome-ignore lint/a11y/noLabelWithoutControl: intentional
           <label className="text-xs font-medium">
             {form.type === 'spec-template'
               ? t('common:pluginMarketplace.creator.fieldTemplateContent')

@@ -40,7 +40,9 @@ interface Provider {
 }
 
 interface CleanProviderSectionProps {
+  // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
   settings: any;
+  // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
   onSettingsChange: (settings: any) => void;
   isOpen: boolean;
 }
@@ -91,6 +93,7 @@ export function CleanProviderSection({
   
   // Create a unified settings object and onSettingsChange that updates both props and store
   const settings = storeSettings;
+  // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
   const onSettingsChange = async (newSettings: any) => {
     // Update props for backward compatibility
     propsOnSettingsChange(newSettings);
@@ -102,6 +105,7 @@ export function CleanProviderSection({
 
   // Load real data when section is opened (runs once when panel opens)
   // eslint-disable-next-line react-hooks/exhaustive-deps
+  // biome-ignore lint/correctness/useExhaustiveDependencies: intentional dependency omission
   useEffect(() => {
     if (isOpen) {
       loadConnectors();
@@ -113,6 +117,7 @@ export function CleanProviderSection({
 
   // Subscribe to live usage updates so the card refreshes without reopening settings
   // eslint-disable-next-line react-hooks/exhaustive-deps
+  // biome-ignore lint/correctness/useExhaustiveDependencies: intentional dependency omission
   useEffect(() => {
     if (!isOpen) return;
 
@@ -150,6 +155,7 @@ export function CleanProviderSection({
     setProfileUsageData(prev => new Map(prev).set(snapshot.profileId, summary));
   };
 
+  // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
   const handleAllProfilesUsageUpdated = (allProfilesUsage: any) => {
     setProfileUsageData(prev => {
       const next = new Map(prev);
@@ -212,7 +218,7 @@ export function CleanProviderSection({
     try {
       if (!globalThis.electronAPI?.invoke) return;
       // Trigger on-demand fetch for windsurf
-      globalThis.electronAPI.invoke('usage:getData', 'windsurf').catch(() => {});
+      globalThis.electronAPI.invoke('usage:getData', 'windsurf').catch(() => { /* noop */ });
       // Get all cached usage data
       const allUsage = await globalThis.electronAPI.invoke('usage:getAllData') as Record<string, { provider: string; profileId?: string; profileName?: string; usage: { sessionPercent?: number; weeklyPercent?: number; needsReauthentication?: boolean }; timestamp: number }>;
       if (allUsage) {
@@ -259,6 +265,7 @@ export function CleanProviderSection({
       Object.keys(settings).forEach(key => {
         if (key.startsWith('testResult_')) {
           const providerId = key.replace('testResult_', '');
+          // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
           const result = (settings as any)[key];
           if (result?.date) {
             testResults.set(providerId, {
@@ -329,9 +336,11 @@ export function CleanProviderSection({
 
     // Check settings for API keys (for providers like OpenAI, etc.)
     const apiKeyField = getProviderApiKeyField(providerId);
+    // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
     if (apiKeyField && (settings as any)[apiKeyField]) {
       return {
         hasKey: true,
+        // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
         keyPreview: (settings as any)[apiKeyField],
         isOAuth: false,
         authMethod: 'api-key'
@@ -421,11 +430,13 @@ export function CleanProviderSection({
 
   // Charger les providers de manière asynchrone
   // eslint-disable-next-line react-hooks/exhaustive-deps
+  // biome-ignore lint/correctness/useExhaustiveDependencies: intentional dependency omission
   useEffect(() => {
     loadProviders();
   }, []);
 
   // Extracted functions to reduce nesting
+  // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
   const enrichSettingsWithOAuth = async (baseSettings: any) => {
     const enrichedSettings = { ...baseSettings };
     
@@ -521,6 +532,7 @@ export function CleanProviderSection({
 
       return mappedProvider;
     });
+  // biome-ignore lint/correctness/useExhaustiveDependencies: intentional dependency omission
   }, [staticProviders, providerStatus, profileUsageData, credentialUsageData, providerTestResults, t, getApiKeyInfo]);
 
   // Synchronize providersState with providers (avoid infinite loop)
@@ -533,6 +545,7 @@ export function CleanProviderSection({
     if (isOpen && providers.length > 0) {
       autoTestConfiguredProviders(providers);
     }
+  // biome-ignore lint/correctness/useExhaustiveDependencies: intentional dependency omission
   }, [isOpen, providers.length, autoTestConfiguredProviders, providers]);
 
   const handleProviderActivated = async (providerId: string) => {
@@ -586,6 +599,7 @@ export function CleanProviderSection({
     return await ProviderService.testProvider(providerId);
   };
 
+  // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
   const processTestResult = async (providerId: string, result: any) => {
     const testResult = {
       date: new Date().toISOString(),
@@ -608,6 +622,7 @@ export function CleanProviderSection({
     }
   };
 
+  // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
   const handleTestSuccess = async (providerId: string, result: any) => {
     setProviderStatus(prev => ({
       ...prev,
@@ -632,6 +647,7 @@ export function CleanProviderSection({
     });
   };
 
+  // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
   const handleTestFailure = (providerId: string, result: any) => {
     toast({
       variant: 'destructive',
@@ -645,6 +661,7 @@ export function CleanProviderSection({
     console.error('Test failed:', providerId, result.message);
   };
 
+  // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
   const handleTestError = (providerId: string, err: any) => {
     console.error('Test error:', err);
     

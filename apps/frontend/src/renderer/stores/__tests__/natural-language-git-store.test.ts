@@ -221,6 +221,7 @@ describe('NaturalLanguageGitStore', () => {
     });
 
     it('should not execute command with empty input', async () => {
+      // biome-ignore lint/correctness/noUnusedVariables: variable kept for clarity
       const { result } = renderHook(() => useNaturalLanguageGitStore());
       
       await act(async () => {

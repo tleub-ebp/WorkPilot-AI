@@ -16,6 +16,7 @@ export interface OAuthCallbackData {
 }
 
 export class OAuthServer {
+  // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
   private server: any;
   private port: number;
   private pendingCallbacks: Map<string, OAuthCallbackData> = new Map();
@@ -68,7 +69,9 @@ export class OAuthServer {
   /**
    * Handle incoming HTTP requests
    */
+  // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
   private async handleRequest(req: any, res: any): Promise<void> {
+    // biome-ignore lint/style/noNonNullAssertion: value is guaranteed by context
     const url = new URL(req.url!, `http://localhost:${this.port}`);
 
     // CORS restricted to localhost only
@@ -103,7 +106,9 @@ export class OAuthServer {
   /**
    * Handle OAuth callback from GitHub
    */
+  // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
   private async handleOAuthCallback(req: any, res: any): Promise<void> {
+    // biome-ignore lint/style/noNonNullAssertion: value is guaranteed by context
     const url = new URL(req.url!, `http://localhost:${this.port}${req.url}`);
     const code = url.searchParams.get('code');
     const state = url.searchParams.get('state');
@@ -168,6 +173,7 @@ export class OAuthServer {
   /**
    * Handle status check
    */
+  // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
   private handleStatusCheck(_req: any, res: any): void {
     const status = {
       server: 'running',

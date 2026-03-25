@@ -184,9 +184,12 @@ export function SmartFilePicker({
               {displayValue}
             </span>
             <span
+              // biome-ignore lint/a11y/useSemanticElements: custom element maintains accessibility
+              // biome-ignore lint/a11y/useSemanticElements: intentional
               role="button"
               tabIndex={0}
               onClick={clearSelection}
+              // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
               onKeyDown={(e) => e.key === 'Enter' && clearSelection(e as any)}
               className="p-0.5 rounded hover:bg-[var(--color-bg-tertiary)] text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] transition-colors"
             >

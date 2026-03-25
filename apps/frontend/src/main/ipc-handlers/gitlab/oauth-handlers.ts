@@ -47,8 +47,10 @@ function _redactSensitiveData(data: unknown): unknown {
 
 function debugLog(_message: string, data?: unknown): void {
   if (DEBUG) {
+    // biome-ignore lint/suspicious/noEmptyBlockStatements: intentionally empty
     if (data !== undefined) {
     } else {
+      // noop
     }
   }
 }

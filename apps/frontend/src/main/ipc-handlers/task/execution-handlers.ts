@@ -40,6 +40,7 @@ function requiresClaudeAuth(): boolean {
  * Convert TaskMetadata to SpecCreationMetadata for spec creation
  * This handles the type incompatibility between the two metadata types
  */
+// biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
 function convertTaskMetadataToSpecCreation(metadata?: any): any {
   if (!metadata) return undefined;
 
@@ -59,6 +60,7 @@ function convertTaskMetadataToSpecCreation(metadata?: any): any {
 /**
  * Convert PhaseModelConfig (string-based) to SpecCreationMetadata format (literal union)
  */
+// biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
 function convertPhaseModelConfig(phaseModels?: any): any {
   if (!phaseModels) return undefined;
   
@@ -73,6 +75,7 @@ function convertPhaseModelConfig(phaseModels?: any): any {
 /**
  * Convert PhaseThinkingConfig to SpecCreationMetadata format
  */
+// biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
 function convertPhaseThinkingConfig(phaseThinking?: any): any {
   if (!phaseThinking) return undefined;
   
@@ -91,7 +94,9 @@ function convertPhaseThinkingConfig(phaseThinking?: any): any {
  * @returns L'ancien provider si un changement a eu lieu, null sinon.
  */
 function syncTaskProvider(
+  // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
   task: any,
+  // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
   project: any,
   specDir: string
 ): string | null {
@@ -119,6 +124,7 @@ function syncTaskProvider(
  * Handle initial provider injection when task has no provider set
  */
 function handleInitialProviderInjection(
+  // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
   task: any,
   projectProvider: string | undefined,
   specDir: string
@@ -133,6 +139,7 @@ function handleInitialProviderInjection(
  * Handle provider change and update task metadata
  */
 function handleProviderChange(
+  // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
   task: any,
   projectProvider: string,
   specDir: string
@@ -158,11 +165,15 @@ function handleProviderChange(
  * Get provider-specific configurations from global settings
  */
 function getProviderConfigurations(projectProvider: string): {
+  // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
   providerPhaseModels: any;
+  // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
   providerPhaseThinking: any;
 } {
   const globalSettings = readSettingsFile() ?? {};
+  // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
   const providerPhaseModels = (globalSettings.providerPhaseModels as Record<string, any> | undefined)?.[projectProvider];
+  // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
   const providerPhaseThinking = (globalSettings.providerPhaseThinking as Record<string, any> | undefined)?.[projectProvider];
   
   return { providerPhaseModels, providerPhaseThinking };
@@ -172,9 +183,12 @@ function getProviderConfigurations(projectProvider: string): {
  * Update task metadata with new provider information
  */
 function updateTaskProviderMetadata(
+  // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
   task: any,
   projectProvider: string,
+  // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
   providerPhaseModels: any,
+  // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
   providerPhaseThinking: any
 ): void {
   task.metadata.provider = projectProvider;
@@ -188,7 +202,9 @@ function updateTaskProviderMetadata(
 function persistProviderToMetadata(
   specDir: string,
   projectProvider: string,
+  // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
   providerPhaseModels: any,
+  // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
   providerPhaseThinking: any,
   context: string
 ): void {
@@ -1117,6 +1133,7 @@ print(json.dumps(result))
   /**
    * Update task metadata with new provider configuration
    */
+  // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
   async function updateTaskMetadata(task: any, specDir: string, currentProvider: string, globalSettings: any): Promise<void> {
     appLog.info(
       `[TASK_RESUME_PAUSED] Provider changed. ` +
@@ -1126,8 +1143,10 @@ print(json.dumps(result))
     const metadataPath = path.join(specDir, 'task_metadata.json');
     try {
       const providerPhaseModels =
+        // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
         (globalSettings.providerPhaseModels as Record<string, any> | undefined)?.[currentProvider];
       const providerPhaseThinking =
+        // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
         (globalSettings.providerPhaseThinking as Record<string, any> | undefined)?.[currentProvider];
 
       if (existsSync(metadataPath)) {
@@ -1159,6 +1178,7 @@ print(json.dumps(result))
   /**
    * Check if provider changed and update metadata if needed
    */
+  // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
   async function handleProviderSwitch(task: any, _project: any, specDir: string): Promise<{ changed: boolean; currentProvider: string }> {
     // Normalize 'anthropic' -> 'claude' for comparison purposes.
     const normalizeProvider = (p: string) => (p === 'anthropic' ? 'claude' : p.toLowerCase());
@@ -1181,6 +1201,7 @@ print(json.dumps(result))
   /**
    * Restart task with new provider
    */
+  // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
   async function restartTaskWithNewProvider(task: any, project: any, _specDir: string, _currentProvider: string): Promise<IPCResult> {
     // Kill paused subprocess, then restart with new provider credentials.
     // agentManager.startTaskExecution() will call credentialManager.getEnvironmentVariables()
@@ -1208,6 +1229,7 @@ print(json.dumps(result))
   /**
    * Handle writing RESUME file to worktree if it exists
    */
+  // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
   async function handleWorktreeResumeFile(task: any, project: any, specsBaseDir: string, resumeContent: string): Promise<void> {
     const worktreePath = findTaskWorktree(project.path, task.specId);
     if (worktreePath) {
@@ -1235,6 +1257,7 @@ print(json.dumps(result))
   /**
    * Write RESUME file to signal existing subprocess to continue
    */
+  // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
   async function writeResumeFile(task: any, project: any, specDir: string, specsBaseDir: string): Promise<IPCResult> {
     const resumeFilePath = path.join(specDir, 'RESUME');
 
@@ -1349,6 +1372,7 @@ print(json.dumps(result))
   /**
    * Get spec directory paths
    */
+  // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
   function getSpecPaths(task: any, project: any) {
     const specsBaseDir = getSpecsDir(project.autoBuildPath);
     const specDir = task.specsPath || path.join(
@@ -1367,6 +1391,7 @@ print(json.dumps(result))
   /**
    * Get all plan file paths that need updating
    */
+  // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
   function getPlanPaths(specPaths: ReturnType<typeof getSpecPaths>, _project: any): { primary: string; all: string[] } {
     const planPath = path.join(specPaths.specDir, AUTO_BUILD_PATHS.IMPLEMENTATION_PLAN);
     const planPathsToUpdate: string[] = [planPath];
@@ -1554,7 +1579,9 @@ print(json.dumps(result))
    */
   async function handleAutoRestart(
     autoRestart: boolean,
+    // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
     task: any,
+    // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
     project: any,
     taskId: string,
     newStatus: TaskStatus,
@@ -1593,7 +1620,9 @@ print(json.dumps(result))
    * Perform the actual task restart
    */
   async function performTaskRestart(
+    // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
     task: any,
+    // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
     project: any,
     taskId: string,
     _newStatus: TaskStatus,

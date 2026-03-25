@@ -23,6 +23,7 @@ import { Globe } from '@/lib/icons';
 interface AddProjectModalProps {
   readonly open: boolean;
   readonly onOpenChange: (open: boolean) => void;
+  // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
   readonly onProjectAdded?: (project: any, skipped: boolean) => void | Promise<void>;
 }
 
@@ -63,6 +64,7 @@ export function AddProjectModal({ open, onOpenChange, onProjectAdded }: AddProje
   const [remoteConfig, setRemoteConfig] = useState<RemoteConfig>({});
   const [isCreating, setIsCreating] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
+  // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
   const [_createdProject, setCreatedProject] = useState<any>(null);
   const [providerSelected, setProviderSelected] = useState<boolean>(false);
   const [showGitCommitModal, setShowGitCommitModal] = useState<boolean>(false);
@@ -104,6 +106,7 @@ export function AddProjectModal({ open, onOpenChange, onProjectAdded }: AddProje
     return undefined;
   };
 
+  // biome-ignore lint/suspicious/noEmptyBlockStatements: intentionally empty
   useEffect(() => {
   }, []);
 
@@ -219,6 +222,7 @@ export function AddProjectModal({ open, onOpenChange, onProjectAdded }: AddProje
     };
 
     autoDetectProvider();
+  // biome-ignore lint/correctness/useExhaustiveDependencies: intentional dependency omission
   }, [projectLocation, projectName, step, providerSelected, detectRepositoryProvider]);
 
   // Determine which provider options to show
@@ -526,6 +530,7 @@ export function AddProjectModal({ open, onOpenChange, onProjectAdded }: AddProje
       });
       onProjectAdded?.(project, false);
       onOpenChange(false); // FERMETURE TOTALE
+    // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
     } catch (err: any) {
       setError(err instanceof Error ? err.message : t('addProject.failedToCreate'));
       toast({

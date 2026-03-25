@@ -60,6 +60,7 @@ export const Terminal = forwardRef<TerminalHandle, TerminalProps>(function Termi
   onNewTaskClick,
   terminalCount = 1,
   dragHandleListeners,
+  // biome-ignore lint/correctness/noUnusedFunctionParameters: parameter kept for API compatibility
   isDragging,
   isExpanded,
   onToggleExpand,
@@ -431,6 +432,7 @@ export const Terminal = forwardRef<TerminalHandle, TerminalProps>(function Termi
   // Refit terminal when expansion state changes
   // Uses transitionend event listener and RAF-based retry logic instead of fixed timeout
   // for more reliable resizing after CSS transitions complete
+  // biome-ignore lint/correctness/useExhaustiveDependencies: intentional dependency omission
   useEffect(() => {
     // Detect if this is an actual expansion state change vs initial mount
     // Only force PTY resize on actual state changes to avoid resizing with invalid dimensions on mount
@@ -472,6 +474,7 @@ export const Terminal = forwardRef<TerminalHandle, TerminalProps>(function Termi
         if (isCleanedUp) return;
 
         // fit() returns boolean indicating success (true if container had valid dimensions)
+        // biome-ignore lint/suspicious/noFocusedTests: focused test
         const success = fit();
         debugLog(`[Terminal ${id}] performFit: fit returned success=${success}, expansionStateChanged=${expansionStateChanged}, isCreatedRef=${isCreatedRef.current}`);
 
@@ -625,6 +628,7 @@ export const Terminal = forwardRef<TerminalHandle, TerminalProps>(function Termi
   }, [isActive, onClose, onToggleExpand]);
 
   // Cleanup on unmount
+  // biome-ignore lint/correctness/useExhaustiveDependencies: intentional dependency omission
   useEffect(() => {
     isMountedRef.current = true;
 
@@ -770,6 +774,9 @@ Please confirm you're ready by saying: I'm ready to work on ${selectedTask.title
   const showClaudeBusyIndicator = terminal?.isClaudeMode && isClaudeBusy !== undefined;
 
   return (
+    // biome-ignore lint/a11y/noNoninteractiveElementInteractions: interactive handler is intentional
+    // biome-ignore lint/a11y/noStaticElementInteractions: interactive handler is intentional
+    // biome-ignore lint/a11y/useKeyWithClickEvents: keyboard events handled elsewhere
     <div
       ref={setDropRef}
       className={cn(

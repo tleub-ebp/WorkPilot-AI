@@ -410,7 +410,7 @@ async function launchBackendIfNeeded() {
   try {
     await waitForBackendReady('http://127.0.0.1:9000/providers', 1500);
     return;
-  } catch {}
+  } catch { /* noop */ }
   // Détermine le chemin Python dynamique via pythonEnvManager
   const backendDir = resolve(__dirname, '../../../backend');
   const pythonPath = pythonEnvManager.getPythonPath();
@@ -486,6 +486,7 @@ async function launchStreamingServer() {
     env: { ...process.env }
   });
 
+  // biome-ignore lint/suspicious/noEmptyBlockStatements: intentionally empty
   streamingServerProcess.stdout?.on('data', (_data: Buffer) => {
   });
   streamingServerProcess.stderr?.on('data', (data: Buffer) => {
@@ -586,6 +587,7 @@ function loadAndValidateSettings() {
 }
 
 // Validate and migrate autoBuildPath - must contain runners/spec_runner.py
+// biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
 function validateAndMigrateAutoBuildPath(autoBuildPath: string, settingsPath: string, settings: any): string | undefined {
   const specRunnerPath = join(autoBuildPath, 'runners', 'spec_runner.py');
   let specRunnerExists = false;
@@ -840,13 +842,13 @@ app.on('will-quit', () => {
   if (streamingServerProcess) {
     try {
       streamingServerProcess.kill();
-    } catch {}
+    } catch { /* noop */ }
     streamingServerProcess = null;
   }
   if (backendProcess) {
     try {
       backendProcess.kill();
-    } catch {}
+    } catch { /* noop */ }
     backendProcess = null;
   }
 });

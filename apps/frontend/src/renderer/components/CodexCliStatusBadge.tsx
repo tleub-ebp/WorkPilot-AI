@@ -23,6 +23,7 @@ interface CodexIconProps {
   readonly className?: string;
 }
 
+// biome-ignore lint/correctness/noUnusedVariables: variable kept for clarity
 type StatusType = "loading" | "installed" | "outdated" | "not-found" | "error";
 
 const _CHECK_INTERVAL_MS = 60 * 1000; // Re-check every 60s
@@ -32,6 +33,7 @@ const _CHECK_INTERVAL_MS = 60 * 1000; // Re-check every 60s
  */
 function CodexIcon({ className }: CodexIconProps) {
   return (
+    // biome-ignore lint/a11y/noSvgWithoutTitle: SVG is decorative
     <svg
       className={className}
       viewBox="0 0 24 24"
@@ -52,6 +54,7 @@ function CodexIcon({ className }: CodexIconProps) {
  * Codex CLI status badge for the sidebar.
  * Shows authentication status by checking ~/.codex/auth.json via IPC.
  */
+// biome-ignore lint/correctness/noUnusedFunctionParameters: parameter kept for API compatibility
 export function CodexCliStatusBadge({ className, onNavigateToTerminals }: CodexCliStatusBadgeProps) {
   const { t } = useTranslation(["common", "navigation"]);
   const { data, refreshCodex } = useCliStatus();

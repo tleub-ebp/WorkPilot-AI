@@ -93,6 +93,7 @@ export function MRDetail({
   onCheckNewCommits,
   onCancelReview,
   onPostReview,
+  // biome-ignore lint/correctness/noUnusedFunctionParameters: parameter kept for API compatibility
   onPostNote,
   onMergeMR,
   onApproveMR,

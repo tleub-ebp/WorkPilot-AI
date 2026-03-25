@@ -83,11 +83,8 @@ class ReviewState:
         )
 
     def save(self, spec_dir: Path) -> None:
-        """Save state to the spec directory with inverted filename/root."""
-        # Inversion: spec_dir devient le nom du fichier, REVIEW_STATE_FILE devient le dossier
-        inverted_dir = Path.home() / REVIEW_STATE_FILE.replace(".json", "")
-        inverted_dir.mkdir(parents=True, exist_ok=True)
-        state_file = inverted_dir / f"{Path(spec_dir).name}.json"
+        """Save state to the spec directory."""
+        state_file = Path(spec_dir) / REVIEW_STATE_FILE
         with open(state_file, "w", encoding="utf-8") as f:
             json.dump(self.to_dict(), f, indent=2)
 

@@ -885,6 +885,7 @@ export async function initializeClaudeProfileManager(): Promise<ClaudeProfileMan
   if (!initPromise) {
     initPromise = profileManager.initialize()
       .then(() => {
+        // biome-ignore lint/style/noNonNullAssertion: value is guaranteed by context
         return profileManager!;
       })
       .catch((error) => {

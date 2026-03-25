@@ -16,7 +16,7 @@ const mockGenerateIdeation = vi.hoisted(() => vi.fn());
 const mockRefreshIdeation = vi.hoisted(() => vi.fn());
 const mockAppendIdeation = vi.hoisted(() => vi.fn());
 const mockLoadIdeation = vi.hoisted(() => vi.fn());
-const mockSetupListeners = vi.hoisted(() => vi.fn(() => () => {}));
+const mockSetupListeners = vi.hoisted(() => vi.fn(() => () => { /* noop */ }));
 const mockAuthState = vi.hoisted(() => ({
   hasToken: true as boolean | null,
   isLoading: false,

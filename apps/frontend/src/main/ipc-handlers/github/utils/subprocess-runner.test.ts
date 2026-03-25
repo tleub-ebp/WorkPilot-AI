@@ -62,6 +62,7 @@ import { isWindows } from '../../../platform';
 const mockSpawn = vi.mocked(childProcess.spawn);
 
 describe('runPythonSubprocess', () => {
+  // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
   let mockChildProcess: any;
 
   beforeEach(() => {
@@ -204,6 +205,7 @@ describe('runPythonSubprocess', () => {
 
         // Assert - should only include safe vars
         const spawnCall = mockSpawn.mock.calls[0];
+        // biome-ignore lint/style/noNonNullAssertion: value is guaranteed by context
         const envArg = spawnCall[2].env!;
 
         // Safe vars should be included
@@ -250,6 +252,7 @@ describe('runPythonSubprocess', () => {
 
         // Assert - Windows-specific vars should be included
         const spawnCall = mockSpawn.mock.calls[0];
+        // biome-ignore lint/style/noNonNullAssertion: value is guaranteed by context
         const envArg = spawnCall[2].env!;
 
         expect(envArg.SYSTEMROOT).toBe('C:\\Windows');
@@ -447,7 +450,7 @@ describe('runPythonSubprocess', () => {
       });
 
       mockChildProcess.pid = 12345;
-      const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+      const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => { /* noop */ });
       vi.spyOn(process, 'kill').mockImplementation(() => true);
 
       // Act

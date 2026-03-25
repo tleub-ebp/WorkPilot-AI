@@ -32,6 +32,7 @@ export function GlobalDownloadIndicator() {
   const hasActive = activeDownloads.length > 0;
 
   // Determine which icon to show based on download status
+  // biome-ignore lint/suspicious/noImplicitAnyLet: type inferred from assignment
   let statusIcon;
   if (hasActive) {
     statusIcon = <Loader2 className="h-4 w-4 animate-spin text-primary" />;
@@ -44,6 +45,7 @@ export function GlobalDownloadIndicator() {
   }
 
   // Determine status text based on download state
+  // biome-ignore lint/suspicious/noImplicitAnyLet: type inferred from assignment
   let statusText;
   if (hasActive) {
     statusText = t('downloads.downloading', { count: activeDownloads.length });

@@ -75,7 +75,7 @@ export function LlmRouterSettings() {
           </p>
           <div className="grid grid-cols-2 gap-3">
             {strategies.map((s) => (
-              <button
+              <button type="button"
                 key={s.id}
                 onClick={() => setStrategy(s.id)}
                 className={cn(

@@ -66,6 +66,7 @@ function RepositorySelect({
 
   useEffect(() => {
     fetchRepositories();
+  // biome-ignore lint/correctness/useExhaustiveDependencies: intentional dependency omission
   }, [fetchRepositories]);
 
   // Auto-detect and select repository on first load

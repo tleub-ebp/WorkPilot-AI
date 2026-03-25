@@ -162,6 +162,7 @@ async function setupMockXterm(overrides: {
   // After rendering, keyEventHandler is guaranteed to be set by attachCustomKeyEventHandler
   // Use non-null assertion since we know the hook will set it
   return {
+    // biome-ignore lint/style/noNonNullAssertion: value is guaranteed by context
     keyEventHandler: keyEventHandler!,
     mockInstance: {
       hasSelection: overrides.hasSelection,
@@ -659,7 +660,7 @@ describe('useXterm keyboard handlers', () => {
 
   describe('Clipboard error handling', () => {
     it('should handle clipboard write errors gracefully', async () => {
-      const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+      const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => { /* noop */ });
       const mockHasSelection = vi.fn(() => true);
       const mockGetSelection = vi.fn(() => 'selected text');
 
@@ -691,7 +692,7 @@ describe('useXterm keyboard handlers', () => {
     });
 
     it('should handle clipboard read errors gracefully', async () => {
-      const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+      const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => { /* noop */ });
       const mockPaste = vi.fn();
 
       // Mock Windows platform to enable custom paste handler

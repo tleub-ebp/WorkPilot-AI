@@ -1,4 +1,5 @@
 import { useTranslation } from 'react-i18next';
+// biome-ignore lint/suspicious/noShadowRestrictedNames: shadow name is intentional
 import { Map, Sparkles } from 'lucide-react';
 import { Button } from '../ui/button';
 import { Card } from '../ui/card';

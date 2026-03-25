@@ -80,6 +80,7 @@ vi.stubGlobal('WebSocket', MockWebSocket);
 // Mock useTranslation
 vi.mock('react-i18next', () => ({
   useTranslation: () => ({
+    // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
     t: (key: string, options?: any) => {
       const translations: Record<string, string> = {
         'streaming:title': 'Live Coding Session',

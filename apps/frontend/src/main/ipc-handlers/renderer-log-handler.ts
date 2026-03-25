@@ -28,6 +28,7 @@ function getLogFunction(level: string, module?: string) {
   }
 }
 
+// biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
 function processLogMessage(logMessage: any): void {
   const { level, message, module = 'renderer', args = [] } = logMessage;
   const logFunction = getLogFunction(level, module);

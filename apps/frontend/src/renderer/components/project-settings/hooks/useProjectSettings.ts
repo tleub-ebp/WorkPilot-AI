@@ -421,6 +421,7 @@ export function useProjectSettings(
     // Debug: log Azure DevOps-specific updates
     const azureKeys = Object.keys(updates).filter(k => k.startsWith('azureDevOps'));
     if (azureKeys.length > 0) {
+      // noop
     }
 
     // OPTIMISTIC UPDATES: Update local state IMMEDIATELY for responsive UI
@@ -445,6 +446,7 @@ export function useProjectSettings(
         return;
       }
       if (azureKeys.length > 0) {
+        // noop
       }
     } catch (err) {
       console.error('[useProjectSettings] Error auto-saving env config:', err);

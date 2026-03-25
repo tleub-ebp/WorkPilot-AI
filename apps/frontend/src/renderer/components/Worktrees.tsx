@@ -244,6 +244,7 @@ export function Worktrees({ projectId }: WorktreesProps) {
 
     setIsDeleting(true);
     try {
+      // biome-ignore lint/suspicious/noImplicitAnyLet: type inferred from assignment
       let result;
       if (task) {
         // Normal delete via task ID
@@ -363,6 +364,7 @@ export function Worktrees({ projectId }: WorktreesProps) {
       const worktree = worktrees.find(w => w.specName === specName);
 
       try {
+        // biome-ignore lint/suspicious/noImplicitAnyLet: type inferred from assignment
         let result;
         if (task) {
           // Normal delete via task ID
@@ -503,7 +505,7 @@ export function Worktrees({ projectId }: WorktreesProps) {
       {isSelectionMode && totalWorktrees > 0 && (
         <div className="flex items-center justify-between py-2 mb-4 border-b border-border shrink-0">
           <div className="flex items-center gap-3">
-            <button
+            <button type="button"
               onClick={isAllSelected ? deselectAll : selectAll}
               className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground"
             >

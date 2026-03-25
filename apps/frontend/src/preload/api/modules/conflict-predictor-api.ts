@@ -12,7 +12,9 @@ export interface ConflictPredictorAPI {
   onConflictPredictionStreamChunk: (callback: (chunk: string) => void) => () => void;
   onConflictPredictionStatus: (callback: (status: string) => void) => () => void;
   onConflictPredictionError: (callback: (error: string) => void) => () => void;
+  // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
   onConflictPredictionComplete: (callback: (result: any) => void) => () => void;
+  // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
   onConflictPredictionEvent: (callback: (event: any) => void) => () => void;
 }
 
@@ -24,6 +26,7 @@ export const createConflictPredictorAPI = (): ConflictPredictorAPI => ({
     invokeIpc('cancel-conflict-prediction'),
   
   onConflictPredictionStreamChunk: (callback: (chunk: string) => void) => {
+    // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
     return createIpcListener('conflict-predictor-event', (event: any) => {
       if (event.type === 'progress' && event.data.status) {
         callback(event.data.status);
@@ -32,6 +35,7 @@ export const createConflictPredictorAPI = (): ConflictPredictorAPI => ({
   },
   
   onConflictPredictionStatus: (callback: (status: string) => void) => {
+    // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
     return createIpcListener('conflict-predictor-event', (event: any) => {
       if (event.type === 'progress' && event.data.status) {
         callback(event.data.status);
@@ -45,13 +49,17 @@ export const createConflictPredictorAPI = (): ConflictPredictorAPI => ({
     });
   },
   
+  // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
   onConflictPredictionComplete: (callback: (result: any) => void) => {
+    // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
     return createIpcListener('conflict-predictor-complete', (result: any) => {
       callback(result);
     });
   },
   
+  // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
   onConflictPredictionEvent: (callback: (event: any) => void) => {
+    // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
     return createIpcListener('conflict-predictor-event', (event: any) => {
       callback(event);
     });
@@ -66,6 +74,7 @@ export const conflictPredictorAPI: ConflictPredictorAPI = {
     invokeIpc('cancel-conflict-prediction'),
   
   onConflictPredictionStreamChunk: (callback: (chunk: string) => void) => 
+    // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
     createIpcListener('conflict-predictor-event', (event: any) => {
       if (event.type === 'progress' && event.data.status) {
         callback(event.data.status);
@@ -73,6 +82,7 @@ export const conflictPredictorAPI: ConflictPredictorAPI = {
     }),
   
   onConflictPredictionStatus: (callback: (status: string) => void) => 
+    // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
     createIpcListener('conflict-predictor-event', (event: any) => {
       if (event.type === 'progress' && event.data.status) {
         callback(event.data.status);
@@ -84,12 +94,16 @@ export const conflictPredictorAPI: ConflictPredictorAPI = {
       callback(error);
     }),
   
+  // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
   onConflictPredictionComplete: (callback: (result: any) => void) => 
+    // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
     createIpcListener('conflict-predictor-complete', (result: any) => {
       callback(result);
     }),
   
+  // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
   onConflictPredictionEvent: (callback: (event: any) => void) => 
+    // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
     createIpcListener('conflict-predictor-event', (event: any) => {
       callback(event);
     }),

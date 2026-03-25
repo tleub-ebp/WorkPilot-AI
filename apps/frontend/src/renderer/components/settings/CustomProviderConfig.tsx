@@ -61,6 +61,7 @@ export function CustomProviderConfig() {
       // Handle different API formats (OpenAI, HuggingFace, etc.)
       if (Array.isArray(data.data)) {
         // OpenAI-style API
+        // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
         data.data.forEach((model: any, index: number) => {
           discoveredModels.push({
             value: model.id || `model-${index}`,
@@ -73,6 +74,7 @@ export function CustomProviderConfig() {
         });
       } else if (Array.isArray(data)) {
         // Direct array of models
+        // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
         data.forEach((model: any, index: number) => {
           discoveredModels.push({
             value: model.id || model.name || `model-${index}`,
@@ -258,6 +260,7 @@ export function CustomProviderConfig() {
                 <select
                   id="model-tier"
                   value={newModelTier}
+                  // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
                   onChange={(e) => setNewModelTier(e.target.value as any)}
                   className="text-xs px-2 py-1 border border-border rounded bg-background"
                 >
