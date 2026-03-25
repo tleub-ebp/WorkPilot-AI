@@ -523,6 +523,33 @@ def test_provider(request: Request, provider: str):
         raise HTTPException(status_code=400, detail=PROVIDER_TEST_FAILED.format(e=e))
 
 
+def _validate_openai_base_url(base_url: str | None) -> str:
+    """
+    Validate a user-provided OpenAI base URL to prevent SSRF.
+
+    Returns a safe base URL string or raises ValueError if invalid.
+    """
+    # Default official OpenAI API endpoint when no base_url is provided.
+    if not base_url:
+        return "https://api.openai.com"
+
+    parsed = urlparse(base_url)
+    if parsed.scheme != "https":
+        raise ValueError("Invalid base_url scheme; only https is allowed.")
+    if not parsed.netloc:
+        raise ValueError("Invalid base_url; host is required.")
+
+    hostname = parsed.hostname or ""
+    # Restrict to known-safe OpenAI host(s). Extend this list if needed.
+   _allowed_hosts = {"api.openai.com"}
+    if hostname not in _allowed_hosts:
+        raise ValueError("base_url host is not allowed.")
+
+    # Rebuild a normalized base URL without path/query/fragment.
+    normalized = f"{parsed.scheme}://{parsed.netloc}"
+    return normalized.rstrip("/")
+
+
 @app.post("/providers/test-key/{provider}")
 @limiter.limit("5/minute")
 async def test_provider_api_key(request: Request, provider: str, payload: dict):
@@ -566,7 +593,11 @@ async def test_provider_api_key(request: Request, provider: str, payload: dict):
 
     # --- OpenAI ---
     if provider == "openai":
-        url = (base_url or "https://api.openai.com") + "API_MODELS_ENDPOINT"
+        try:
+            safe_base_url = _validate_openai_base_url(base_url)
+        except ValueError as e:
+            raise HTTPException(status_code=400, detail=str(e))
+        url = safe_base_url + "API_MODELS_ENDPOINT"
         return await _test_bearer(url, api_key)
 
     # --- Google Gemini ---
