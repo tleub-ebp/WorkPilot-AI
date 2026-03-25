@@ -35,7 +35,7 @@ class MockWebSocket {
       const message = JSON.parse(data);
       
       // Generate response based on message type
-      let response;
+      let response: unknown;
       if (message.type === 'init_session') {
         response = {
           event_type: 'session_confirmed',
@@ -140,7 +140,7 @@ describe('Streaming Integration Tests (Mock)', () => {
     });
   }
 
-  async function waitForMessage(ws: MockWebSocket, eventType: string, timeout = 5000): Promise<any> {
+  async function waitForMessage(ws: MockWebSocket, eventType: string, timeout = 5000): Promise<unknown> {
     return new Promise((resolve, reject) => {
       const timeoutId = setTimeout(() => {
         reject(new Error(`Timeout waiting for ${eventType} message`));
@@ -177,7 +177,7 @@ describe('Streaming Integration Tests (Mock)', () => {
     ws.send(JSON.stringify(initMessage));
     
     // Wait for confirmation (mocked)
-    const confirmation = await waitForMessage(ws, 'session_confirmed');
+    const confirmation = await waitForMessage(ws, 'session_confirmed') as { data: { session_id: string } };
     expect(confirmation.data.session_id).toBe('test-session-123');
   });
 
@@ -197,7 +197,7 @@ describe('Streaming Integration Tests (Mock)', () => {
     ws.send(JSON.stringify(chatMessage));
     
     // Should receive the chat message back (echo)
-    const received = await waitForMessage(ws, 'chat_message');
+    const received = await waitForMessage(ws, 'chat_message') as { data: { message: string } };
     expect(received.data.message).toBe('Hello from test');
   });
 
@@ -217,7 +217,7 @@ describe('Streaming Integration Tests (Mock)', () => {
     ws.send(JSON.stringify(pauseMessage));
     
     // Should receive pause event
-    const pauseEvent = await waitForMessage(ws, 'control');
+    const pauseEvent = await waitForMessage(ws, 'control') as { data: { action: string } };
     expect(pauseEvent.data.action).toBe('pause');
   });
 

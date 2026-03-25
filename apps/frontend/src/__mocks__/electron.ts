@@ -4,9 +4,9 @@
 import { EventEmitter } from 'node:events';
 
 // Helper function to create mock functions
-const createMockFn = <T extends (...args: any[]) => any>(impl?: T): T => {
-  const mockFn = ((...args: any[]) => {
-    if (impl) return impl(...args);
+const createMockFn = <T>(impl?: T): T => {
+  const mockFn = ((...args: unknown[]) => {
+    if (impl && typeof impl === 'function') return (impl as any)(...args);
     return undefined;
   }) as T;
   return mockFn;
