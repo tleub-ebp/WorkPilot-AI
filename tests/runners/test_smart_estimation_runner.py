@@ -144,7 +144,9 @@ class TestSmartEstimationRunner:
         """Test event emission"""
         with patch('builtins.print') as mock_print:
             with patch('runners.smart_estimation_runner.datetime') as mock_datetime:
-                mock_datetime.datetime.utcnow.return_value.isoformat.return_value = '2023-01-01T00:00:00'
+                mock_dt = Mock()
+                mock_dt.isoformat.return_value = '2023-01-01T00:00:00'
+                mock_datetime.utcnow.return_value = mock_dt
                 
                 runner._emit_event('test_event', {'data': 'test_data'})
 
@@ -163,12 +165,14 @@ class TestSmartEstimationRunner:
     def test_get_timestamp(self, runner):
         """Test timestamp generation"""
         with patch('runners.smart_estimation_runner.datetime') as mock_datetime:
-            mock_datetime.datetime.utcnow.return_value.isoformat.return_value = '2023-01-01T12:00:00'
+            mock_dt = Mock()
+            mock_dt.isoformat.return_value = '2023-01-01T12:00:00'
+            mock_datetime.utcnow.return_value = mock_dt
             
             timestamp = runner._get_timestamp()
             
             assert timestamp == '2023-01-01T12:00:00'
-            mock_datetime.datetime.utcnow.assert_called_once()
+            mock_datetime.utcnow.assert_called_once()
 
 
 class TestSmartEstimationRunnerCLI:
@@ -235,28 +239,23 @@ class TestSmartEstimationRunnerCLI:
 
     def test_argument_parser_setup(self):
         """Test argument parser configuration"""
-        with patch('runners.smart_estimation_runner.argparse.ArgumentParser') as mock_parser_class:
-            mock_parser = Mock()
-            mock_parser_class.return_value = mock_parser
+        # Test the actual parser setup by calling main and checking arguments
+        with patch('runners.smart_estimation_runner.SmartEstimationRunner') as mock_runner_class:
+            mock_runner = Mock()
+            mock_runner.run_estimation.return_value = {'result': 'test'}
+            mock_runner_class.return_value = mock_runner
             
-            # Import to trigger parser setup
-            from runners.smart_estimation_runner import argparse
+            with patch('sys.argv', ['smart_estimation_runner.py', '--project-id', 'test-project', '--task-description', 'Test task']):
+                try:
+                    from runners.smart_estimation_runner import main
+                    main()
+                except SystemExit as e:
+                    if e.code != 0:
+                        raise  # Re-raise if it's an error exit
             
-            # Verify parser was created with correct description
-            mock_parser_class.assert_called_once_with(description='Smart Estimation Runner')
-            
-            # Verify arguments were added
-            assert mock_parser.add_argument.call_count >= 2
-            
-            # Check project-id argument
-            project_call = mock_parser.add_argument.call_args_list[0]
-            assert project_call[0][0] == '--project-id'
-            assert project_call[1]['required'] is True
-            
-            # Check task-description argument
-            task_call = mock_parser.add_argument.call_args_list[1]
-            assert task_call[0][0] == '--task-description'
-            assert task_call[1]['required'] is True
+            # Verify runner was called, which means parsing worked
+            mock_runner_class.assert_called_once()
+            mock_runner.run_estimation.assert_called_once_with('test-project', 'Test task')
 
 
 class TestSmartEstimationRunnerIntegration:

@@ -480,16 +480,7 @@ class AutoFixLoop:
         """
         import re
 
-        # Try pytest format: "5 passed, 2 failed"
-        pytest_match = re.search(
-            r"(\d+)\s+passed(?:,\s+(\d+)\s+failed)?", output, re.IGNORECASE
-        )
-        if pytest_match:
-            passed = int(pytest_match.group(1))
-            failed = int(pytest_match.group(2)) if pytest_match.group(2) else 0
-            return passed + failed, failed
-
-        # Try jest/vitest format: "Tests: 2 failed, 5 passed, 7 total"
+        # Try jest/vitest format first: "Tests: 2 failed, 5 passed, 7 total" or "Tests: 5 passed, 7 total"
         jest_match = re.search(
             r"Tests:\s+(?:(\d+)\s+failed,\s+)?(\d+)\s+passed,\s+(\d+)\s+total",
             output,
@@ -499,6 +490,15 @@ class AutoFixLoop:
             failed = int(jest_match.group(1)) if jest_match.group(1) else 0
             total = int(jest_match.group(3))
             return total, failed
+
+        # Try pytest format: "5 passed, 2 failed"
+        pytest_match = re.search(
+            r"(\d+)\s+passed(?:,\s+(\d+)\s+failed)?", output, re.IGNORECASE
+        )
+        if pytest_match:
+            passed = int(pytest_match.group(1))
+            failed = int(pytest_match.group(2)) if pytest_match.group(2) else 0
+            return passed + failed, failed
 
         # Default: assume some tests ran if output contains test-related keywords
         if any(
