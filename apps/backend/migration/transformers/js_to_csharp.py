@@ -123,17 +123,17 @@ class JSToCSharpTransformer:
         # 2. Transform function declarations
         csharp = self._transform_functions(csharp)
 
-        # 3. Transform class declarations
+        # 3. Transform async/await (after function transformation)
+        csharp = self._transform_async_await(csharp)
+
+        # 4. Transform class declarations
         csharp = self._transform_classes(csharp)
 
-        # 4. Transform variable declarations
+        # 5. Transform variable declarations
         csharp = self._transform_variables(csharp)
 
-        # 5. Transform type annotations
+        # 6. Transform type annotations
         csharp = self._transform_types(csharp)
-
-        # 6. Transform async/await
-        csharp = self._transform_async_await(csharp)
 
         # 7. Transform object literals to C# objects
         csharp = self._transform_objects(csharp)
@@ -158,15 +158,12 @@ class JSToCSharpTransformer:
         pattern = r'import\s+{([^}]+)}\s+from\s+[\'"]([^\'"]+)[\'"]'
 
         def replace_import(match):
-            imports = match.group(1)
             module = match.group(2)
 
             # Convert module name to PascalCase for C#
-            module_name = "".join(
-                word.capitalize() for word in module.split("_").split("-")
-            )
+            module_parts = module.replace("-", "_").split("_")
+            module_name = "".join(word.capitalize() for word in module_parts)
 
-            import_list = [imp.strip() for imp in imports.split(",")]
             return f"using {module_name};"
 
         content = re.sub(pattern, replace_import, content)
@@ -202,6 +199,17 @@ class JSToCSharpTransformer:
         pattern = r"const\s+(\w+)\s*=\s*\(([^)]*)\)\s*:\s*(\w+)\s*=>\s*{"
         content = re.sub(pattern, lambda m: self._convert_arrow_to_csharp(m), content)
 
+        # Arrow functions without types: const name = (param) => { ... }
+        pattern = r"const\s+(\w+)\s*=\s*async\s*\(([^)]*)\)\s*=>\s*{"
+        content = re.sub(
+            pattern, lambda m: self._convert_arrow_to_csharp_simple(m), content
+        )
+
+        pattern = r"const\s+(\w+)\s*=\s*\(([^)]*)\)\s*=>\s*{"
+        content = re.sub(
+            pattern, lambda m: self._convert_arrow_to_csharp_simple(m), content
+        )
+
         return content
 
     def _convert_params_to_csharp(self, params: str) -> str:
@@ -235,6 +243,19 @@ class JSToCSharpTransformer:
         csharp_params = self._convert_params_to_csharp(params)
 
         return f"public {csharp_type} {func_name}({csharp_params}) {{"
+
+    def _convert_arrow_to_csharp_simple(self, match) -> str:
+        """Convert arrow function without types to C# method."""
+        func_name = match.group(1)
+        params = match.group(2)
+        csharp_params = self._convert_params_to_csharp(params)
+
+        # Check if the original match was for an async function
+        original_text = match.group(0)
+        if "async" in original_text:
+            return f"public async Task {func_name}({csharp_params}) {{"
+        else:
+            return f"public void {func_name}({csharp_params}) {{"
 
     def _transform_classes(self, content: str) -> str:
         """Transform class declarations."""
@@ -286,6 +307,13 @@ class JSToCSharpTransformer:
         # async function name() => async Task name()
         content = re.sub(r"async\s+function\s+(\w+)", r"async Task \1", content)
 
+        # async const name = (params) => ... => async Task name(params)
+        content = re.sub(
+            r"async\s+const\s+(\w+)\s*=\s*\(([^)]*)\)\s*=>",
+            r"async Task \1(\2)",
+            content,
+        )
+
         # () => { } becomes () => { }
         # Already handled by function transformation
 
@@ -301,56 +329,56 @@ class JSToCSharpTransformer:
     def _transform_arrays(self, content: str) -> str:
         """Transform array methods."""
         # .map() -> .Select()
-        content = re.sub(r"\.map\(", ".Select(", content)
+        content = content.replace(".map(", ".Select(")
 
         # .filter() -> .Where()
-        content = re.sub(r"\.filter\(", ".Where(", content)
+        content = content.replace(".filter(", ".Where(")
 
         # .reduce() -> .Aggregate()
-        content = re.sub(r"\.reduce\(", ".Aggregate(", content)
+        content = content.replace(".reduce(", ".Aggregate(")
 
         # .forEach() -> .ForEach()
-        content = re.sub(r"\.forEach\(", ".ForEach(", content)
+        content = content.replace(".forEach(", ".ForEach(")
 
         # .find() -> .FirstOrDefault()
-        content = re.sub(r"\.find\(", ".FirstOrDefault(", content)
+        content = content.replace(".find(", ".FirstOrDefault(")
 
         # .includes() -> .Contains()
-        content = re.sub(r"\.includes\(", ".Contains(", content)
+        content = content.replace(".includes(", ".Contains(")
 
         # .push() -> .Add()
-        content = re.sub(r"\.push\(", ".Add(", content)
+        content = content.replace(".push(", ".Add(")
 
         # .pop() -> RemoveAt()
-        content = re.sub(r"\.pop\(", ".RemoveAt(Count - 1)", content)
+        content = content.replace(".pop(", ".RemoveAt(Count - 1)")
 
         return content
 
     def _transform_strings(self, content: str) -> str:
         """Transform string methods."""
         # .substring() -> .Substring()
-        content = re.sub(r"\.substring\(", ".Substring(", content)
+        content = content.replace(".substring(", ".Substring(")
 
         # .charAt() -> .Char.At() or [index]
         content = re.sub(r"\.charAt\((\w+)\)", r"[\1]", content)
 
         # .toUpperCase() -> .ToUpper()
-        content = re.sub(r"\.toUpperCase\(", ".ToUpper(", content)
+        content = content.replace(".toUpperCase(", ".ToUpper(")
 
         # .toLowerCase() -> .ToLower()
-        content = re.sub(r"\.toLowerCase\(", ".ToLower(", content)
+        content = content.replace(r"\.toLowerCase\(", ".ToLower(", content)
 
         # .trim() -> .Trim()
-        content = re.sub(r"\.trim\(", ".Trim(", content)
+        content = content.replace(r"\.trim\(", ".Trim(", content)
 
         # .split() -> .Split()
-        content = re.sub(r"\.split\(", ".Split(", content)
+        content = content.replace(r"\.split\(", ".Split(", content)
 
         # .replace() -> .Replace()
-        content = re.sub(r"\.replace\(", ".Replace(", content)
+        content = content.replace(r"\.replace\(", ".Replace(", content)
 
         # .includes() -> .Contains()
-        content = re.sub(r"\.includes\(", ".Contains(", content)
+        content = content.replace(r"\.includes\(", ".Contains(", content)
 
         return content
 

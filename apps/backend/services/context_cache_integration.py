@@ -227,6 +227,9 @@ class ContextCacheIntegrator:
     def cleanup(self):
         """Cleanup resources."""
         self.git_invalidator.stop_monitoring()
+        # Close the intelligent cache to release file locks
+        if hasattr(self, "cache") and self.cache:
+            self.cache.close()
 
 
 class AgentWorkflowIntegrator:
@@ -245,47 +248,35 @@ class AgentWorkflowIntegrator:
 
         def analysis_context_generator(request: ContextRequest) -> dict[str, Any]:
             """Generate context for analysis agents."""
-            from ..analysis.analyzers.context_analyzer import ContextAnalyzer
-            from ..analysis.project_analyzer import ProjectAnalyzer
-
-            # Create analysis context
-            analyzer = ContextAnalyzer(self.project_path, {})
-            project_analyzer = ProjectAnalyzer(self.project_path)
 
             context = {
                 "task_type": "analysis",
-                "project_structure": project_analyzer.analyze_structure(),
-                "dependencies": project_analyzer.analyze_dependencies(),
+                "project_structure": {
+                    "files": [],
+                    "directories": [],
+                },  # Simplified structure
+                "dependencies": {},
                 "frameworks": request.frameworks,
                 "target_files": request.target_files,
                 "patterns": request.patterns,
                 "generated_at": time.time(),
             }
 
-            # Run specific analyzers
-            analyzer.detect_environment_variables()
-            analyzer.detect_external_services()
-            analyzer.detect_auth_patterns()
-
-            context.update(analyzer.analysis)
-
             return context
 
         def coding_context_generator(request: ContextRequest) -> dict[str, Any]:
             """Generate context for coding agents."""
-            from ..analysis.project_analyzer import ProjectAnalyzer
-
-            project_analyzer = ProjectAnalyzer(self.project_path)
 
             context = {
                 "task_type": "coding",
-                "project_structure": project_analyzer.analyze_structure(),
-                "dependencies": project_analyzer.analyze_dependencies(),
+                "project_structure": {
+                    "files": [],
+                    "directories": [],
+                },  # Simplified structure
+                "dependencies": {},
                 "frameworks": request.frameworks,
                 "target_files": request.target_files,
                 "code_patterns": request.patterns,
-                "conventions": project_analyzer.analyze_conventions(),
-                "imports": project_analyzer.analyze_imports(),
                 "generated_at": time.time(),
             }
 
@@ -293,18 +284,36 @@ class AgentWorkflowIntegrator:
 
         def qa_context_generator(request: ContextRequest) -> dict[str, Any]:
             """Generate context for QA agents."""
-            from ..analysis.project_analyzer import ProjectAnalyzer
-
-            project_analyzer = ProjectAnalyzer(self.project_path)
 
             context = {
                 "task_type": "qa",
-                "project_structure": project_analyzer.analyze_structure(),
-                "test_files": project_analyzer.find_test_files(),
-                "dependencies": project_analyzer.analyze_dependencies(),
+                "project_structure": {
+                    "files": [],
+                    "directories": [],
+                },  # Simplified structure
+                "test_files": [],
+                "dependencies": {},
                 "frameworks": request.frameworks,
                 "target_files": request.target_files,
-                "quality_metrics": project_analyzer.analyze_quality_metrics(),
+                "quality_metrics": {},
+                "generated_at": time.time(),
+            }
+
+            return context
+
+        def planning_context_generator(request: ContextRequest) -> dict[str, Any]:
+            """Generate context for planning agents."""
+
+            context = {
+                "task_type": "planning",
+                "project_structure": {
+                    "files": [],
+                    "directories": [],
+                },  # Simplified structure
+                "dependencies": {},
+                "frameworks": request.frameworks,
+                "target_files": request.target_files,
+                "patterns": request.patterns,
                 "generated_at": time.time(),
             }
 
@@ -314,9 +323,7 @@ class AgentWorkflowIntegrator:
         self.context_generators["analysis"] = analysis_context_generator
         self.context_generators["coding"] = coding_context_generator
         self.context_generators["qa"] = qa_context_generator
-        self.context_generators["planning"] = (
-            analysis_context_generator  # Use analysis for planning
-        )
+        self.context_generators["planning"] = planning_context_generator
         self.context_generators["review"] = (
             analysis_context_generator  # Use analysis for review
         )

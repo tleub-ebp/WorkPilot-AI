@@ -99,7 +99,7 @@ class TestPlannerToCoderTransition:
         """Test that first_run=True indicates planner mode."""
         from prompts import is_first_run
 
-        temp_dir, spec_dir, project_dir = test_env
+        _, spec_dir, _ = test_env
 
         # Empty spec directory - should be first run (planner mode)
         assert is_first_run(spec_dir) is True, "Empty spec should be first run"
@@ -116,7 +116,7 @@ class TestPlannerToCoderTransition:
         """Test that planning phase transitions to coding phase correctly."""
         from progress import get_next_subtask
 
-        temp_dir, spec_dir, project_dir = test_env
+        _, spec_dir, _ = test_env
 
         # Create implementation plan with pending subtask
         create_implementation_plan(
@@ -143,7 +143,7 @@ class TestPlannerToCoderTransition:
         """Test that planner completion (plan created) enables coder session."""
         from progress import count_subtasks, is_build_complete
 
-        temp_dir, spec_dir, project_dir = test_env
+        _, spec_dir, _ = test_env
 
         # Create plan with pending subtasks
         create_implementation_plan(
@@ -168,7 +168,7 @@ class TestPlannerToCoderTransition:
         """Test that subtask information is preserved during phase transition."""
         from agents.utils import find_subtask_in_plan, load_implementation_plan
 
-        temp_dir, spec_dir, project_dir = test_env
+        _, spec_dir, _ = test_env
 
         # Create plan with detailed subtask info
         subtask_data = {
@@ -219,7 +219,7 @@ class TestPostSessionProcessing:
         from agents.session import post_session_processing
         from recovery import RecoveryManager
 
-        temp_dir, spec_dir, project_dir = test_env
+        _, spec_dir, project_dir = test_env
 
         # Create plan with completed subtask
         create_implementation_plan(
@@ -228,7 +228,6 @@ class TestPostSessionProcessing:
         )
 
         recovery_manager = RecoveryManager(spec_dir, project_dir)
-        commit_before = get_latest_commit(project_dir)
 
         # Mock memory-related functions to avoid side effects
         with (
@@ -273,7 +272,7 @@ class TestPostSessionProcessing:
         from agents.session import post_session_processing
         from recovery import RecoveryManager
 
-        temp_dir, spec_dir, project_dir = test_env
+        _, spec_dir, project_dir = test_env
 
         # Create plan with in_progress subtask
         create_implementation_plan(
@@ -282,7 +281,6 @@ class TestPostSessionProcessing:
         )
 
         recovery_manager = RecoveryManager(spec_dir, project_dir)
-        commit_before = get_latest_commit(project_dir)
 
         with (
             patch(
@@ -327,7 +325,7 @@ class TestPostSessionProcessing:
         from agents.session import post_session_processing
         from recovery import RecoveryManager
 
-        temp_dir, spec_dir, project_dir = test_env
+        _, spec_dir, project_dir = test_env
 
         # Create plan with pending subtask (no progress made)
         create_implementation_plan(
@@ -336,7 +334,6 @@ class TestPostSessionProcessing:
         )
 
         recovery_manager = RecoveryManager(spec_dir, project_dir)
-        commit_before = get_latest_commit(project_dir)
 
         with (
             patch(
@@ -382,7 +379,7 @@ class TestSubtaskStateTransitions:
         """Test finding a subtask by ID in the plan."""
         from agents.utils import find_subtask_in_plan, load_implementation_plan
 
-        temp_dir, spec_dir, project_dir = test_env
+        _, spec_dir, _ = test_env
 
         create_implementation_plan(
             spec_dir,
@@ -412,7 +409,7 @@ class TestSubtaskStateTransitions:
         """Test finding the phase containing a subtask."""
         from agents.utils import find_phase_for_subtask, load_implementation_plan
 
-        temp_dir, spec_dir, project_dir = test_env
+        _, spec_dir, _ = test_env
 
         # Create plan with multiple phases
         plan = {
@@ -476,7 +473,7 @@ class TestSubtaskStateTransitions:
         """Test that get_next_subtask skips completed subtasks."""
         from progress import get_next_subtask
 
-        temp_dir, spec_dir, project_dir = test_env
+        _, spec_dir, _ = test_env
 
         create_implementation_plan(
             spec_dir,
@@ -502,7 +499,7 @@ class TestSubtaskStateTransitions:
         """Test that build is complete when all subtasks are completed."""
         from progress import is_build_complete
 
-        temp_dir, spec_dir, project_dir = test_env
+        _, spec_dir, _ = test_env
 
         create_implementation_plan(
             spec_dir,
@@ -534,7 +531,7 @@ class TestHandoffDataPreservation:
         """Test that subtask context is properly loaded for coder."""
         from prompt_generator import load_subtask_context
 
-        temp_dir, spec_dir, project_dir = test_env
+        _, spec_dir, project_dir = test_env
 
         # Create spec.md
         (spec_dir / "spec.md").write_text("# Test Spec\n\nTest content")
@@ -545,15 +542,19 @@ class TestHandoffDataPreservation:
             "files_to_reference": [
                 {"path": "app/utils.py", "reason": "Pattern reference"}
             ],
-        }
-        (spec_dir / "context.json").write_text(json.dumps(context))
-
-        subtask = {
-            "id": "subtask-1",
-            "description": "Implement feature",
-            "files_to_modify": ["app/main.py"],
             "patterns_from": ["app/utils.py"],
         }
+        context_file = spec_dir / "context.json"
+        context_file.write_text(json.dumps(context, indent=2))
+
+        # Create subtask
+        subtask = {
+            "id": "subtask-1",
+            "description": "Test subtask",
+            "files_to_modify": [{"path": "app/main.py", "reason": "Add feature"}],
+        }
+        subtask_file = spec_dir / "subtask-1.json"
+        subtask_file.write_text(json.dumps(subtask, indent=2))
 
         loaded_context = load_subtask_context(spec_dir, project_dir, subtask)
 
@@ -566,8 +567,9 @@ class TestHandoffDataPreservation:
         """Test that recovery hints are available for retry attempts."""
         from recovery import RecoveryManager
 
-        temp_dir, spec_dir, project_dir = test_env
+        _, spec_dir, project_dir = test_env
 
+        # spec_dir and project_dir are both used for RecoveryManager
         recovery_manager = RecoveryManager(spec_dir, project_dir)
 
         # Record a failed attempt
@@ -591,7 +593,7 @@ class TestHandoffDataPreservation:
         """Test that commit tracking works across sessions."""
         from recovery import RecoveryManager
 
-        temp_dir, spec_dir, project_dir = test_env
+        _, spec_dir, project_dir = test_env
 
         recovery_manager = RecoveryManager(spec_dir, project_dir)
 
@@ -633,7 +635,7 @@ class TestPlannerOutputValidation:
         """Test that valid plan has at least one pending subtask."""
         from progress import get_next_subtask
 
-        temp_dir, spec_dir, project_dir = test_env
+        _, spec_dir, _ = test_env
 
         # Create plan with only completed subtasks
         create_implementation_plan(
@@ -648,7 +650,7 @@ class TestPlannerOutputValidation:
         """Test that plan without phases returns None for next subtask."""
         from progress import get_next_subtask
 
-        temp_dir, spec_dir, project_dir = test_env
+        _, spec_dir, _ = test_env
 
         # Create empty plan
         plan = {
@@ -667,7 +669,7 @@ class TestPlannerOutputValidation:
         """Test that missing plan file returns None."""
         from progress import get_next_subtask
 
-        temp_dir, spec_dir, project_dir = test_env
+        _, spec_dir, _ = test_env
 
         # Don't create any plan file
         next_subtask = get_next_subtask(spec_dir)
@@ -686,7 +688,7 @@ class TestSubtaskCompletionDetection:
         """Test basic subtask counting."""
         from progress import count_subtasks
 
-        temp_dir, spec_dir, project_dir = test_env
+        _, spec_dir, _ = test_env
 
         create_implementation_plan(
             spec_dir,
@@ -706,7 +708,7 @@ class TestSubtaskCompletionDetection:
         """Test counting with empty plan returns zeros."""
         from progress import count_subtasks
 
-        temp_dir, spec_dir, project_dir = test_env
+        _, spec_dir, _ = test_env
 
         # No plan file exists
         completed, total = count_subtasks(spec_dir)
@@ -717,7 +719,7 @@ class TestSubtaskCompletionDetection:
         """Test detailed counting with all status types."""
         from progress import count_subtasks_detailed
 
-        temp_dir, spec_dir, project_dir = test_env
+        _, spec_dir, _ = test_env
 
         create_implementation_plan(
             spec_dir,
@@ -741,7 +743,7 @@ class TestSubtaskCompletionDetection:
         """Test that unknown status values are treated as pending."""
         from progress import count_subtasks_detailed
 
-        temp_dir, spec_dir, project_dir = test_env
+        _, spec_dir, _ = test_env
 
         create_implementation_plan(
             spec_dir,
@@ -765,7 +767,7 @@ class TestSubtaskCompletionDetection:
         """Test is_build_complete returns True when all subtasks completed."""
         from progress import is_build_complete
 
-        temp_dir, spec_dir, project_dir = test_env
+        _, spec_dir, _ = test_env
 
         create_implementation_plan(
             spec_dir,
@@ -781,7 +783,7 @@ class TestSubtaskCompletionDetection:
         """Test is_build_complete returns False with in_progress subtask."""
         from progress import is_build_complete
 
-        temp_dir, spec_dir, project_dir = test_env
+        _, spec_dir, _ = test_env
 
         create_implementation_plan(
             spec_dir,
@@ -799,7 +801,7 @@ class TestSubtaskCompletionDetection:
         """Test is_build_complete returns False with failed subtask."""
         from progress import is_build_complete
 
-        temp_dir, spec_dir, project_dir = test_env
+        _, spec_dir, _ = test_env
 
         create_implementation_plan(
             spec_dir,
@@ -817,7 +819,7 @@ class TestSubtaskCompletionDetection:
         """Test is_build_complete returns False for empty plan."""
         from progress import is_build_complete
 
-        temp_dir, spec_dir, project_dir = test_env
+        _, spec_dir, _ = test_env
 
         # No plan file
         assert is_build_complete(spec_dir) is False, "Empty plan should not be complete"
@@ -839,7 +841,7 @@ class TestSubtaskCompletionDetection:
         """Test progress percentage calculation."""
         from progress import get_progress_percentage
 
-        temp_dir, spec_dir, project_dir = test_env
+        _, spec_dir, _ = test_env
 
         # 50% complete
         create_implementation_plan(
@@ -851,24 +853,24 @@ class TestSubtaskCompletionDetection:
         )
 
         percentage = get_progress_percentage(spec_dir)
-        assert percentage == 50.0, "Should be 50% complete"
+        assert percentage == 50, "Should be 50% complete"
 
     def test_get_progress_percentage_empty_plan(self, test_env):
         """Test progress percentage for empty plan is 0."""
         from progress import get_progress_percentage
 
-        temp_dir, spec_dir, project_dir = test_env
+        _, spec_dir, _ = test_env
 
         # No plan file
         percentage = get_progress_percentage(spec_dir)
-        assert percentage == 0.0, "Empty plan should be 0%"
+        assert percentage == 0, "Empty plan should be 0%"
 
     def test_subtask_status_transition_to_completed(self, test_env):
         """Test detecting subtask transition from pending to completed."""
         from agents.utils import find_subtask_in_plan, load_implementation_plan
         from progress import is_build_complete
 
-        temp_dir, spec_dir, project_dir = test_env
+        _, spec_dir, _ = test_env
 
         # Start with pending subtask
         create_implementation_plan(
@@ -897,7 +899,7 @@ class TestSubtaskCompletionDetection:
         from agents.utils import find_subtask_in_plan, load_implementation_plan
         from progress import count_subtasks_detailed
 
-        temp_dir, spec_dir, project_dir = test_env
+        _, spec_dir, _ = test_env
 
         # Start pending
         create_implementation_plan(
@@ -933,7 +935,7 @@ class TestSubtaskCompletionDetection:
         """Test completion detection as subtasks complete one by one."""
         from progress import count_subtasks, is_build_complete
 
-        temp_dir, spec_dir, project_dir = test_env
+        _, spec_dir, _ = test_env
 
         # Start with all pending
         create_implementation_plan(
@@ -995,7 +997,7 @@ class TestSubtaskCompletionDetection:
         """Test get_next_subtask returns correct subtask after completions."""
         from progress import get_next_subtask
 
-        temp_dir, spec_dir, project_dir = test_env
+        _, spec_dir, _ = test_env
 
         # First and second completed, third pending
         create_implementation_plan(
@@ -1015,7 +1017,7 @@ class TestSubtaskCompletionDetection:
         """Test get_next_subtask returns None when all complete."""
         from progress import get_next_subtask
 
-        temp_dir, spec_dir, project_dir = test_env
+        _, spec_dir, _ = test_env
 
         create_implementation_plan(
             spec_dir,
@@ -1032,7 +1034,7 @@ class TestSubtaskCompletionDetection:
         """Test completion detection across multiple phases."""
         from progress import count_subtasks, is_build_complete
 
-        temp_dir, spec_dir, project_dir = test_env
+        _, spec_dir, _ = test_env
 
         # Multi-phase plan
         plan = {
@@ -1099,9 +1101,9 @@ class TestQALoopStateTransitions:
         """QA should not run when build is incomplete."""
         # Import the real is_build_complete to patch at the right level
         from core.progress import is_build_complete as real_is_build_complete
-        from qa_loop import save_implementation_plan
+        from qa.criteria import save_implementation_plan
 
-        temp_dir, spec_dir, project_dir = test_env
+        _, spec_dir, _ = test_env
 
         # Create plan with pending subtasks
         plan = {
@@ -1131,9 +1133,9 @@ class TestQALoopStateTransitions:
     def test_qa_required_when_build_complete(self, test_env):
         """QA should run when build is complete and not yet approved."""
         from core.progress import is_build_complete as real_is_build_complete
-        from qa_loop import save_implementation_plan
+        from qa.criteria import save_implementation_plan
 
-        temp_dir, spec_dir, project_dir = test_env
+        _, spec_dir, _ = test_env
 
         # Create plan with all completed subtasks
         plan = {
@@ -1160,9 +1162,9 @@ class TestQALoopStateTransitions:
     def test_qa_not_required_when_already_approved(self, test_env):
         """QA should not run when build is already approved."""
         from core.progress import is_build_complete as real_is_build_complete
-        from qa_loop import save_implementation_plan
+        from qa.criteria import save_implementation_plan
 
-        temp_dir, spec_dir, project_dir = test_env
+        _, spec_dir, _ = test_env
 
         plan = {
             "feature": "Test Feature",
@@ -1197,9 +1199,9 @@ class TestQAFixerInteraction:
 
     def test_fixer_should_run_when_qa_rejected(self, test_env):
         """Fixer should run when QA rejected the build."""
-        from qa_loop import save_implementation_plan, should_run_fixes
+        from qa.criteria import save_implementation_plan, should_run_fixes
 
-        temp_dir, spec_dir, project_dir = test_env
+        _, spec_dir, _ = test_env
 
         plan = {
             "feature": "Test Feature",
@@ -1215,9 +1217,9 @@ class TestQAFixerInteraction:
 
     def test_fixer_should_not_run_when_qa_approved(self, test_env):
         """Fixer should not run when QA approved the build."""
-        from qa_loop import save_implementation_plan, should_run_fixes
+        from qa.criteria import save_implementation_plan, should_run_fixes
 
-        temp_dir, spec_dir, project_dir = test_env
+        _, spec_dir, _ = test_env
 
         plan = {
             "feature": "Test Feature",
@@ -1233,13 +1235,10 @@ class TestQAFixerInteraction:
 
     def test_fixer_should_not_run_at_max_iterations(self, test_env):
         """Fixer should not run when max iterations reached."""
-        from qa_loop import (
-            MAX_QA_ITERATIONS,
-            save_implementation_plan,
-            should_run_fixes,
-        )
+        from qa.criteria import save_implementation_plan, should_run_fixes
+        from qa import MAX_QA_ITERATIONS
 
-        temp_dir, spec_dir, project_dir = test_env
+        _, spec_dir, _ = test_env
 
         plan = {
             "feature": "Test Feature",
@@ -1257,9 +1256,9 @@ class TestQAFixerInteraction:
 
     def test_fixer_fixes_applied_state(self, test_env):
         """Test transition to fixes_applied state after fixer runs."""
-        from qa_loop import is_fixes_applied, save_implementation_plan
+        from qa.criteria import is_fixes_applied, save_implementation_plan
 
-        temp_dir, spec_dir, project_dir = test_env
+        _, spec_dir, _ = test_env
 
         # Simulate fixer completing and setting fixes_applied
         plan = {
@@ -1276,9 +1275,9 @@ class TestQAFixerInteraction:
 
     def test_fixer_fixes_not_ready_for_revalidation(self, test_env):
         """Test fixes_applied but not ready for revalidation."""
-        from qa_loop import is_fixes_applied, save_implementation_plan
+        from qa.criteria import is_fixes_applied, save_implementation_plan
 
-        temp_dir, spec_dir, project_dir = test_env
+        _, spec_dir, _ = test_env
 
         plan = {
             "feature": "Test Feature",
@@ -1300,9 +1299,9 @@ class TestQAVerdictHandling:
 
     def test_qa_approved_verdict(self, test_env):
         """Test QA approved verdict is correctly detected."""
-        from qa_loop import is_qa_approved, is_qa_rejected, save_implementation_plan
+        from qa.criteria import is_qa_approved, is_qa_rejected, save_implementation_plan
 
-        temp_dir, spec_dir, project_dir = test_env
+        _, spec_dir, _ = test_env
 
         plan = {
             "feature": "Test Feature",
@@ -1322,9 +1321,9 @@ class TestQAVerdictHandling:
 
     def test_qa_rejected_verdict(self, test_env):
         """Test QA rejected verdict is correctly detected."""
-        from qa_loop import is_qa_approved, is_qa_rejected, save_implementation_plan
+        from qa.criteria import is_qa_approved, is_qa_rejected, save_implementation_plan
 
-        temp_dir, spec_dir, project_dir = test_env
+        _, spec_dir, _ = test_env
 
         plan = {
             "feature": "Test Feature",
@@ -1344,14 +1343,14 @@ class TestQAVerdictHandling:
 
     def test_qa_no_verdict_yet(self, test_env):
         """Test when no QA verdict has been made yet."""
-        from qa_loop import (
+        from qa.criteria import (
             get_qa_signoff_status,
             is_qa_approved,
             is_qa_rejected,
             save_implementation_plan,
         )
 
-        temp_dir, spec_dir, project_dir = test_env
+        _, spec_dir, _ = test_env
 
         plan = {
             "feature": "Test Feature",
@@ -1369,9 +1368,9 @@ class TestQAVerdictHandling:
 
     def test_qa_iteration_count_tracking(self, test_env):
         """Test QA iteration count is tracked correctly."""
-        from qa_loop import get_qa_iteration_count, save_implementation_plan
+        from qa.criteria import get_qa_iteration_count, save_implementation_plan
 
-        temp_dir, spec_dir, project_dir = test_env
+        _, spec_dir, _ = test_env
 
         # First iteration
         plan = {
@@ -1393,9 +1392,9 @@ class TestQAVerdictHandling:
 
     def test_qa_iteration_count_zero_when_no_signoff(self, test_env):
         """Test iteration count is 0 when no QA sessions yet."""
-        from qa_loop import get_qa_iteration_count, save_implementation_plan
+        from qa.criteria import get_qa_iteration_count, save_implementation_plan
 
-        temp_dir, spec_dir, project_dir = test_env
+        _, spec_dir, _ = test_env
 
         plan = {"feature": "Test Feature", "phases": []}
         save_implementation_plan(spec_dir, plan)
@@ -1408,14 +1407,14 @@ class TestQALoopWorkflow:
 
     def test_full_qa_workflow_approved_first_try(self, test_env):
         """Test complete QA workflow where build passes on first try."""
-        from qa_loop import (
+        from qa.criteria import (
             is_qa_approved,
             save_implementation_plan,
             should_run_fixes,
             should_run_qa,
         )
 
-        temp_dir, spec_dir, project_dir = test_env
+        _, spec_dir, _ = test_env
 
         # Build complete, QA should run
         plan = {
@@ -1448,7 +1447,7 @@ class TestQALoopWorkflow:
 
     def test_full_qa_workflow_with_one_rejection(self, test_env):
         """Test QA workflow with one rejection followed by approval."""
-        from qa_loop import (
+        from qa.criteria import (
             get_qa_iteration_count,
             is_fixes_applied,
             is_qa_approved,
@@ -1458,7 +1457,7 @@ class TestQALoopWorkflow:
             should_run_qa,
         )
 
-        temp_dir, spec_dir, project_dir = test_env
+        _, spec_dir, _ = test_env
 
         # Build complete
         plan = {
@@ -1510,15 +1509,15 @@ class TestQALoopWorkflow:
 
     def test_qa_workflow_multiple_rejections(self, test_env):
         """Test QA workflow with multiple rejections until max iterations."""
-        from qa_loop import (
-            MAX_QA_ITERATIONS,
+        from qa.criteria import (
             get_qa_iteration_count,
             is_qa_rejected,
             save_implementation_plan,
             should_run_fixes,
         )
+        from qa import MAX_QA_ITERATIONS
 
-        temp_dir, spec_dir, project_dir = test_env
+        _, spec_dir, _ = test_env
 
         plan = {"feature": "Test Feature", "phases": []}
 
@@ -1551,9 +1550,9 @@ class TestQASignoffDataStructure:
 
     def test_approved_signoff_has_tests_passed(self, test_env):
         """Test approved signoff includes tests_passed field."""
-        from qa_loop import get_qa_signoff_status, save_implementation_plan
+        from qa.criteria import get_qa_signoff_status, save_implementation_plan
 
-        temp_dir, spec_dir, project_dir = test_env
+        _, spec_dir, _ = test_env
 
         plan = {
             "feature": "Test Feature",
@@ -1577,9 +1576,9 @@ class TestQASignoffDataStructure:
 
     def test_rejected_signoff_has_issues_found(self, test_env):
         """Test rejected signoff includes issues_found field."""
-        from qa_loop import get_qa_signoff_status, save_implementation_plan
+        from qa.criteria import get_qa_signoff_status, save_implementation_plan
 
-        temp_dir, spec_dir, project_dir = test_env
+        _, spec_dir, _ = test_env
 
         plan = {
             "feature": "Test Feature",
@@ -1602,9 +1601,9 @@ class TestQASignoffDataStructure:
 
     def test_issues_have_title_and_type(self, test_env):
         """Test that issues in rejected signoff have required fields."""
-        from qa_loop import get_qa_signoff_status, save_implementation_plan
+        from qa.criteria import get_qa_signoff_status, save_implementation_plan
 
-        temp_dir, spec_dir, project_dir = test_env
+        _, spec_dir, _ = test_env
 
         plan = {
             "feature": "Test Feature",
@@ -1638,7 +1637,7 @@ class TestWorktreeIsolation:
         """Multiple worktrees for different specs have separate branches."""
         from worktree import WorktreeManager
 
-        temp_dir, spec_dir, project_dir = test_env
+        _, _, project_dir = test_env
 
         manager = WorktreeManager(project_dir)
         manager.setup()
@@ -1665,7 +1664,7 @@ class TestWorktreeIsolation:
         """Changes made in one worktree don't affect other worktrees."""
         from worktree import WorktreeManager
 
-        temp_dir, spec_dir, project_dir = test_env
+        _, _, project_dir = test_env
 
         manager = WorktreeManager(project_dir)
         manager.setup()
@@ -1716,7 +1715,7 @@ class TestWorktreeIsolation:
         """Concurrent operations on different worktrees don't cause conflicts."""
         from worktree import WorktreeManager
 
-        temp_dir, spec_dir, project_dir = test_env
+        _, _, project_dir = test_env
 
         manager = WorktreeManager(project_dir)
         manager.setup()
@@ -1756,7 +1755,7 @@ class TestWorktreeIsolation:
         """Worktrees properly isolate spec-related directories."""
         from worktree import WorktreeManager
 
-        temp_dir, spec_dir, project_dir = test_env
+        _, _, project_dir = test_env
 
         manager = WorktreeManager(project_dir)
         manager.setup()
@@ -1798,7 +1797,7 @@ class TestWorktreeIsolation:
         """Removing one worktree doesn't affect other worktrees."""
         from worktree import WorktreeManager
 
-        temp_dir, spec_dir, project_dir = test_env
+        _, _, project_dir = test_env
 
         manager = WorktreeManager(project_dir)
         manager.setup()
@@ -1848,7 +1847,7 @@ class TestWorktreeIsolation:
         """Merging one worktree doesn't affect other worktrees."""
         from worktree import WorktreeManager
 
-        temp_dir, spec_dir, project_dir = test_env
+        _, _, project_dir = test_env
 
         manager = WorktreeManager(project_dir)
         manager.setup()
@@ -1899,7 +1898,7 @@ class TestWorktreeIsolation:
         """get_or_create_worktree returns existing worktree instead of creating new."""
         from worktree import WorktreeManager
 
-        temp_dir, spec_dir, project_dir = test_env
+        _, _, project_dir = test_env
 
         manager = WorktreeManager(project_dir)
         manager.setup()

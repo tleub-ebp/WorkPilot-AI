@@ -78,8 +78,10 @@ for name in _mocked_module_names:
 
 # Mock all external dependencies before importing qa_loop
 # The SDKs and internal modules aren't available in the test environment
+# But we need to exclude qa_loop from mocking since we want to test it
 for name in _mocked_module_names:
-    sys.modules[name] = MagicMock()
+    if name != "qa_loop":  # Don't mock qa_loop itself
+        sys.modules[name] = MagicMock()
 
 # Set up specific mock attributes needed by tests
 mock_progress = sys.modules["progress"]
@@ -111,8 +113,12 @@ def mock_is_build_complete(spec_dir: Path) -> bool:
 
 mock_progress.is_build_complete = mock_is_build_complete
 
-from qa_loop import (
-    MAX_QA_ITERATIONS,
+# Add the apps/backend directory to the Python path for qa module imports
+backend_path = Path(__file__).parent.parent / "apps" / "backend"
+sys.path.insert(0, str(backend_path))
+
+# Import qa functions directly from the criteria module to avoid mocking issues
+from qa.criteria import (
     get_qa_iteration_count,
     get_qa_signoff_status,
     is_fixes_applied,
@@ -123,6 +129,7 @@ from qa_loop import (
     should_run_fixes,
     should_run_qa,
 )
+from qa import MAX_QA_ITERATIONS
 
 
 # Cleanup fixture to restore original modules after all tests in this module

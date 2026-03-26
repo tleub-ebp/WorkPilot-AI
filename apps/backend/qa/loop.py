@@ -24,12 +24,13 @@ from linear_updater import (
 from phase_config import get_phase_model, get_phase_thinking_budget
 from phase_event import ExecutionPhase, emit_phase
 from progress import count_subtasks, is_build_complete
-from security.constants import PROJECT_DIR_ENV_VAR
-from security.qa_scanner import run_qa_security_scan
 from task_logger import (
     LogPhase,
     get_task_logger,
 )
+
+from apps.backend.security.constants import PROJECT_DIR_ENV_VAR
+from apps.backend.security.qa_scanner import run_qa_security_scan
 
 from .criteria import (
     get_qa_iteration_count,
