@@ -110,12 +110,12 @@ See the [Setup Guide](docs/SETUP.md) for detailed instructions.
 | Provider | Auth Method |
 |----------|-------------|
 | **Anthropic Claude** | OAuth (subscription) or API key |
-| **OpenAI** | API key |
+| **OpenAI** | OAuth (subscription) or API key |
 | **Google Gemini** | API key |
 | **Grok / xAI** | API key |
 | **Ollama** | Local endpoint |
 | **Azure OpenAI** | API key + endpoint |
-| **GitHub Copilot** | OAuth |
+| **GitHub Copilot** | OAuth (subscription) or API key |
 | **Custom endpoints** | Any OpenAI-compatible API (e.g. z.ai for GLM models) |
 
 **Multi-account switching** — Register multiple profiles per provider. WorkPilot AI automatically switches to an available account when one hits a rate limit.
