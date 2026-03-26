@@ -31,7 +31,7 @@ needed for the detected tech stack, while blocking dangerous operations.
 
 from __future__ import annotations
 
-from project import (
+from apps.backend.project import (
     # Command registries
     BASE_COMMANDS,
     VALIDATED_COMMANDS,
@@ -47,7 +47,7 @@ from project import (
 )
 
 # Also re-export command registries for backward compatibility
-from project.command_registry import (
+from apps.backend.project.command_registry import (
     CLOUD_COMMANDS,
     CODE_QUALITY_COMMANDS,
     DATABASE_COMMANDS,
