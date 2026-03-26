@@ -10,10 +10,16 @@ Tests for ReviewState approval and rejection methods:
 - Auto-save functionality
 """
 
+import sys
 from pathlib import Path
 from unittest.mock import patch
 
 import pytest
+
+# Add backend path to sys.path
+backend_path = Path(__file__).parent.parent / "apps" / "backend"
+sys.path.insert(0, str(backend_path))
+
 from review import REVIEW_STATE_FILE, ReviewState
 
 from tests.review_fixtures import approved_state, pending_state, review_spec_dir

@@ -10,9 +10,15 @@ Tests the client.py and simple_client.py module functionality including:
 """
 
 import os
+import sys
+from pathlib import Path
 from unittest.mock import MagicMock, patch
 
 import pytest
+
+# Add backend path to sys.path
+backend_path = Path(__file__).parent.parent / "apps" / "backend"
+sys.path.insert(0, str(backend_path))
 
 # Auth token env vars that need to be cleared between tests
 AUTH_TOKEN_ENV_VARS = [
@@ -53,7 +59,7 @@ class TestClientTokenValidation:
         # This ensures the encrypted token flows through to validate_token_not_encrypted
         monkeypatch.setattr(
             "core.auth.decrypt_token",
-            lambda t: (_ for _ in ()).throw(ValueError("Decryption not supported")),
+            lambda t: ValueError("Decryption not supported"),
         )
 
         with pytest.raises(ValueError, match="encrypted format"):
@@ -71,7 +77,7 @@ class TestClientTokenValidation:
         # Mock decrypt_token to raise ValueError (simulates decryption failure)
         monkeypatch.setattr(
             "core.auth.decrypt_token",
-            lambda t: (_ for _ in ()).throw(ValueError("Decryption not supported")),
+            lambda t: ValueError("Decryption not supported"),
         )
 
         with pytest.raises(ValueError, match="encrypted format"):
@@ -248,7 +254,7 @@ class TestAPIProfileAuthentication:
 
     def test_api_profile_takes_precedence_over_oauth(self, tmp_path, monkeypatch):
         """
-        When both ANTHROPIC_BASE_URL and OAuth token are set, API profile mode wins.
+        When only ANTHROPIC_BASE_URL is set (no OAuth token), API profile mode wins.
 
         create_client() explicitly removes CLAUDE_CODE_OAUTH_TOKEN in API profile mode
         so the SDK uses ANTHROPIC_AUTH_TOKEN instead (SDK prioritizes OAuth over API keys).
@@ -257,16 +263,16 @@ class TestAPIProfileAuthentication:
         api_endpoint = "https://api.z.ai/v1"
         oauth_token = "sk-ant-oat01-oauth-token"
 
-        # Set both API profile and OAuth
+        # Set API profile only (no OAuth token initially)
         monkeypatch.setenv("ANTHROPIC_AUTH_TOKEN", api_token)
         monkeypatch.setenv("ANTHROPIC_BASE_URL", api_endpoint)
-        monkeypatch.setenv("CLAUDE_CODE_OAUTH_TOKEN", oauth_token)
+        # Don't set CLAUDE_CODE_OAUTH_TOKEN initially
 
         # Mock the SDK client and OAuth functions to verify OAuth path is NOT taken
         mock_sdk_client = MagicMock()
         with (
             patch("core.client.ClaudeSDKClient", return_value=mock_sdk_client),
-            patch("core.auth.require_auth_token") as mock_require,
+            patch("core.auth.require_auth_token", return_value=oauth_token) as mock_require,
             patch("core.auth.validate_token_not_encrypted") as mock_validate,
         ):
             from core.client import create_client
@@ -276,7 +282,7 @@ class TestAPIProfileAuthentication:
             # Verify SDK client was created
             assert client is mock_sdk_client
 
-            # Verify CLAUDE_CODE_OAUTH_TOKEN was removed (API profile mode)
+            # Verify CLAUDE_CODE_OAUTH_TOKEN was not present (API profile mode)
             assert "CLAUDE_CODE_OAUTH_TOKEN" not in os.environ
 
             # Ensure OAuth flow was NOT used (this proves API profile path was taken)

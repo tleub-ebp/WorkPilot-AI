@@ -18,6 +18,10 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
+# Add backend path to sys.path
+backend_path = Path(__file__).parent.parent / "apps" / "backend"
+sys.path.insert(0, str(backend_path))
+
 # Store original modules before mocking (for cleanup)
 _original_modules = {}
 _mocked_module_names = [
@@ -102,7 +106,7 @@ mock_validate_spec = sys.modules["validate_spec"]
 mock_validate_spec.auto_fix_plan = MagicMock(return_value=False)
 
 # Now import the phases module directly (bypasses __init__.py issues)
-from spec.phases import MAX_RETRIES, PhaseExecutor, PhaseResult
+from apps.backend.spec.phases import MAX_RETRIES, PhaseExecutor, PhaseResult
 
 
 # Cleanup fixture to restore original modules after all tests in this module
@@ -285,7 +289,7 @@ class TestPhaseDiscovery:
 
         # Always fail
         with patch(
-            "spec.discovery.run_discovery_script", return_value=(False, "Script failed")
+            "apps.backend.spec.phases.discovery_phases.discovery.run_discovery_script", return_value=(False, "Script failed")
         ):
             result = await executor.phase_discovery()
 

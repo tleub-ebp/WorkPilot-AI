@@ -15,8 +15,13 @@ import asyncio
 import sys
 from types import SimpleNamespace
 from unittest.mock import AsyncMock, MagicMock, patch
+from pathlib import Path
 
 import pytest
+
+# Add the apps/backend directory to the Python path
+backend_path = Path(__file__).parent.parent / "apps" / "backend"
+sys.path.insert(0, str(backend_path))
 
 # Mock claude_agent_sdk before any imports that transitively need it
 if "claude_agent_sdk" not in sys.modules:
@@ -439,10 +444,12 @@ class TestCopilotAgentClient:
         mock_session.post = MagicMock(return_value=mock_response)
 
         client._http_client = mock_session
-
-        messages = []
-        async for msg in client.receive_response():
-            messages.append(msg)
+        
+        # Mock the token method to bypass authentication
+        with patch.object(client, '_get_copilot_token', return_value="mock_token"):
+            messages = []
+            async for msg in client.receive_response():
+                messages.append(msg)
 
         assert len(messages) == 1
         assert messages[0].role == MessageRole.ASSISTANT
@@ -480,7 +487,7 @@ class TestCopilotAgentClient:
     @pytest.mark.asyncio
     async def test_receive_response_with_tool_calls(self):
         """Test response with function-calling tool_calls."""
-        client = CopilotAgentClient(github_token="ghp_test")
+        client = CopilotAgentClient(github_token="ghp_test", max_turns=1)
         await client.query("read a file")
 
         mock_response = MagicMock()
@@ -512,11 +519,13 @@ class TestCopilotAgentClient:
         mock_session.post = MagicMock(return_value=mock_response)
         client._http_client = mock_session
 
-        messages = []
-        async for msg in client.receive_response():
-            messages.append(msg)
+        # Mock the token method to bypass authentication
+        with patch.object(client, '_get_copilot_token', return_value="mock_token"):
+            messages = []
+            async for msg in client.receive_response():
+                messages.append(msg)
 
-        assert len(messages) == 1
+        assert len(messages) == 2  # Tool use + tool result
         tool_blocks = [
             b for b in messages[0].content if b.type == ContentBlockType.TOOL_USE
         ]
@@ -524,6 +533,13 @@ class TestCopilotAgentClient:
         assert tool_blocks[0].tool_name == "Read"
         assert tool_blocks[0].tool_id == "call_1"
         assert tool_blocks[0].tool_input == {"file_path": "/foo.py"}
+        
+        # Check tool result message
+        result_blocks = [
+            b for b in messages[1].content if b.type == ContentBlockType.TOOL_RESULT
+        ]
+        assert len(result_blocks) == 1
+        assert "Tool executor not available" in result_blocks[0].result_content
 
     @pytest.mark.asyncio
     async def test_run_subagents_parallel(self):
@@ -566,7 +582,9 @@ class TestCopilotAgentClient:
         mock_session.post = MagicMock(side_effect=lambda *a, **kw: next(responses))
         client._http_client = mock_session
 
-        results = await client.run_subagents(agents, "Review this PR")
+        # Mock the token method to bypass authentication
+        with patch.object(client, '_get_copilot_token', return_value="mock_token"):
+            results = await client.run_subagents(agents, "Review this PR")
 
         assert len(results) == 2
         assert "security" in results
@@ -581,6 +599,7 @@ class TestCopilotAgentClient:
         client._http_client = mock_session
 
         async with client:
+            # Context manager body is intentionally empty - we're testing __aexit__ behavior
             pass
 
         mock_session.close.assert_awaited_once()

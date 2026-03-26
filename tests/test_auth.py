@@ -13,9 +13,16 @@ Tests the auth.py module functionality including:
 import json
 import os
 import platform
+import sys
+from pathlib import Path
 from unittest.mock import MagicMock, Mock
 
 import pytest
+
+# Add the apps/backend directory to the Python path
+backend_path = Path(__file__).parent.parent / "apps" / "backend"
+sys.path.insert(0, str(backend_path))
+
 from core.auth import (
     AUTH_TOKEN_ENV_VARS,
     ensure_claude_code_oauth_token,
