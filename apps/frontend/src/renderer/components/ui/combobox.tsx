@@ -238,7 +238,7 @@ const Combobox = React.forwardRef<HTMLButtonElement, ComboboxProps>(
                   return (
                     <React.Fragment key={option.value}>
                       {/* Group header */}
-                      // biome-ignore lint/a11y/useSemanticElements: custom element maintains accessibility 
+                      {/* biome-ignore lint/a11y/useSemanticElements: custom element maintains accessibility */}
                       {showGroupHeader && (
                         <div
                           role="presentation"
