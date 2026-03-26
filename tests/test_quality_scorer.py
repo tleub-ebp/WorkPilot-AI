@@ -43,7 +43,7 @@ class TestQualityScorer:
         """Test scoring d'une PR vide."""
         score = scorer.score_pr("", [], "")
 
-        assert score.overall_score == 100.0
+        assert score.overall_score == 100
         assert score.grade == "A+"
         assert score.total_issues == 0
         assert score.is_passing
@@ -77,7 +77,7 @@ except:
         bare_except_issues = [
             i
             for i in scorer.issues
-            if "except" in i.title.lower() and "handler" in i.title.lower()
+            if "bare except" in i.title.lower()
         ]
         assert len(bare_except_issues) > 0
 

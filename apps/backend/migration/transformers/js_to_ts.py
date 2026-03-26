@@ -31,7 +31,7 @@ class JSToTypeScriptTransformer:
                 content = full_path.read_text()
 
                 # Transform JavaScript to TypeScript
-                transformed = self._transform_to_typescript(content, file_path)
+                transformed = self._transform_to_typescript(content)
 
                 # Change file extension
                 ts_path = file_path.replace(".js", ".ts").replace(".jsx", ".tsx")
@@ -63,7 +63,7 @@ class JSToTypeScriptTransformer:
         self.transformations = results
         return results
 
-    def _transform_to_typescript(self, content: str, file_path: str) -> str:
+    def _transform_to_typescript(self, content: str) -> str:
         """Transform JavaScript to TypeScript."""
         ts = content
 
@@ -167,7 +167,7 @@ class JSToTypeScriptTransformer:
         code = re.sub(r"const\s+(\w+)\s*=\s*(\d+)", r"const \1: number = \2", code)
 
         code = re.sub(
-            r'const\s+(\w+)\s*=\s*([\'"][^\'"]+ [\'"])', r"const \1: string = \2", code
+            r'const\s+(\w+)\s*=\s*([\'"][^\'"]*[\'"])', r"const \1: string = \2", code
         )
 
         code = re.sub(r"const\s+(\w+)\s*=\s*({)", r"const \1: any = \2", code)

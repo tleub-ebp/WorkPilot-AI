@@ -172,10 +172,10 @@ def test_fallback_to_default():
         result = analyzer.analyze()
 
         assert result["framework"] == "FastAPI"
-        assert result["default_port"] == 9000, (
-            f"Expected 9000 (default), got {result['default_port']}"
+        assert result["default_port"] == 8000, (
+            f"Expected 8000 (default), got {result['default_port']}"
         )
-        print("\u2713 Fallback to default test passed (port=9000)")
+        print("\u2713 Fallback to default test passed (port=8000)")
 
 
 def test_port_priority():

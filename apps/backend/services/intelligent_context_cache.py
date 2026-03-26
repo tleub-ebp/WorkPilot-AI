@@ -35,6 +35,7 @@ class ContextCacheEntry:
     cache_key: str
     context_hash: str
     context_data: dict[str, Any]
+    context_request: dict[str, Any]  # Store request for pattern matching
 
     # Metadata
     created_at: float
@@ -534,6 +535,7 @@ class IntelligentContextCache:
             cache_key=cache_key,
             context_hash=context_hash,
             context_data=context_data,
+            context_request=context_request,  # Store the request for pattern matching
             created_at=time.time(),
             last_accessed=time.time(),
             access_count=1,
@@ -741,41 +743,54 @@ class IntelligentContextCache:
         """Invalidate cache entries, optionally filtered by pattern.
 
         The pattern is matched against the cache key, the semantic signature,
-        and any string values in the context data (e.g. task_type).
+        and any string values in the context data and request (e.g. task_type).
         """
         with self._cache_lock:
-            if pattern:
-                # Invalidate entries matching pattern in key OR context data
-                keys_to_remove = []
-                for key, entry in self._cache.items():
-                    if pattern in key:
-                        keys_to_remove.append(key)
-                    elif pattern in entry.semantic_signature:
-                        keys_to_remove.append(key)
-                    else:
-                        # Check string values in context_data
-                        context_str = json.dumps(entry.context_data, default=str)
-                        if pattern in context_str:
-                            keys_to_remove.append(key)
-            else:
-                # Invalidate all entries
-                keys_to_remove = list(self._cache.keys())
-
-            for key in keys_to_remove:
-                del self._cache[key]
-
-            # Remove from database
-            with sqlite3.connect(self.db_path) as conn:
-                if pattern:
-                    for key in keys_to_remove:
-                        conn.execute(
-                            DELETE_CACHE_ENTRY_QUERY,
-                            (key,),
-                        )
-                else:
-                    conn.execute("DELETE FROM context_cache")
+            keys_to_remove = self._find_keys_to_invalidate(pattern)
+            self._remove_from_cache(keys_to_remove)
+            self._remove_from_database(keys_to_remove, pattern)
 
         logger.info(f"Invalidated {len(keys_to_remove)} cache entries")
+
+    def _find_keys_to_invalidate(self, pattern: str | None) -> list[str]:
+        """Find cache keys that should be invalidated based on pattern."""
+        if not pattern:
+            return list(self._cache.keys())
+        
+        keys_to_remove = []
+        for key, entry in self._cache.items():
+            if self._entry_matches_pattern(entry, key, pattern):
+                keys_to_remove.append(key)
+        return keys_to_remove
+
+    def _entry_matches_pattern(self, entry, key: str, pattern: str) -> bool:
+        """Check if a cache entry matches the invalidation pattern."""
+        if pattern in key:
+            return True
+        if pattern in entry.semantic_signature:
+            return True
+        
+        # Check string values in context_data and context_request
+        context_str = json.dumps(entry.context_data, default=str)
+        if pattern in context_str:
+            return True
+        
+        request_str = json.dumps(entry.context_request, default=str)
+        return pattern in request_str
+
+    def _remove_from_cache(self, keys_to_remove: list[str]) -> None:
+        """Remove entries from in-memory cache."""
+        for key in keys_to_remove:
+            del self._cache[key]
+
+    def _remove_from_database(self, keys_to_remove: list[str], pattern: str | None) -> None:
+        """Remove entries from database cache."""
+        with sqlite3.connect(self.db_path) as conn:
+            if pattern:
+                for key in keys_to_remove:
+                    conn.execute(DELETE_CACHE_ENTRY_QUERY, (key,))
+            else:
+                conn.execute("DELETE FROM context_cache")
 
     def get_cache_stats(self) -> dict[str, Any]:
         """Get comprehensive cache statistics."""

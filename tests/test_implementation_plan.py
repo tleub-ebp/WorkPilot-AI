@@ -12,10 +12,16 @@ Tests the implementation_plan.py module functionality including:
 """
 
 import json
+import sys
 from datetime import datetime
 from pathlib import Path
 
 import pytest
+
+# Add backend path to sys.path
+backend_path = Path(__file__).parent.parent / "apps" / "backend"
+sys.path.insert(0, str(backend_path))
+
 from implementation_plan import (
     ImplementationPlan,
     Phase,
@@ -328,7 +334,7 @@ class TestImplementationPlan:
         assert progress["total_phases"] == 3
         assert progress["total_subtasks"] == 4  # Based on fixture
         assert progress["completed_subtasks"] == 1
-        assert progress["percent_complete"] == 25.0  # 1/4 = 25%
+        assert progress["percent_complete"] == 25  # 1/4 = 25%
         assert progress["is_complete"] is False
 
     def test_plan_save_and_load(self, temp_dir: Path, sample_implementation_plan: dict):
@@ -1462,7 +1468,7 @@ class TestEdgeCaseStateTransitions:
         assert progress["completed_subtasks"] == 1
         assert progress["failed_subtasks"] == 1
         assert progress["total_subtasks"] == 4
-        assert progress["percent_complete"] == 25.0
+        assert progress["percent_complete"] == 25
         assert progress["is_complete"] is False
 
     # =========================================================================
@@ -1665,7 +1671,7 @@ class TestEdgeCaseStateTransitions:
         # Now work is available
         result = plan.get_next_subtask()
         assert result is not None
-        phase, subtask = result
+        _, subtask = result
         assert subtask.id == "c1"
 
     def test_failed_subtask_retry_transition(self):

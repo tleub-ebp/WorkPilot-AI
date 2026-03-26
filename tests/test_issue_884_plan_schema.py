@@ -9,9 +9,16 @@ execution to get stuck because no "pending" subtasks are detected.
 
 import importlib
 import json
+import sys
+import asyncio
 from pathlib import Path
 
 import pytest
+
+# Add backend path to sys.path
+backend_path = Path(__file__).parent.parent / "apps" / "backend"
+sys.path.insert(0, str(backend_path))
+
 from core.progress import get_next_subtask
 from prompt_generator import generate_planner_prompt
 from spec.validate_pkg import SpecValidator, auto_fix_plan
@@ -295,6 +302,7 @@ async def test_planner_session_does_not_trigger_post_session_processing_on_retry
         return DummyClient()
 
     async def fake_get_graphiti_context(*_args, **_kwargs):
+        await asyncio.sleep(0)  # Make it properly async
         return None
 
     def fake_get_next_subtask(_spec_dir: Path):
@@ -303,6 +311,7 @@ async def test_planner_session_does_not_trigger_post_session_processing_on_retry
         return {"id": "1.1", "description": "Should not be processed in planning"}
 
     async def fake_post_session_processing(*_args, **_kwargs):
+        await asyncio.sleep(0)  # Make it properly async
         raise AssertionError("post_session_processing must not run during planning")
 
     async def fake_run_agent_session(
@@ -312,6 +321,7 @@ async def test_planner_session_does_not_trigger_post_session_processing_on_retry
         _verbose: bool = False,
         phase: LogPhase = LogPhase.CODING,
     ) -> tuple[str, str, dict]:
+        await asyncio.sleep(0)  # Make it properly async
         assert phase == LogPhase.PLANNING
         return "error", "planner failed", {}
 
@@ -363,9 +373,11 @@ async def test_worktree_planning_to_coding_sync_updates_source_phase_status(
         return DummyClient()
 
     async def fake_get_graphiti_context(*_args, **_kwargs):
+        await asyncio.sleep(0)  # Make it properly async
         return None
 
     async def fake_post_session_processing(*_args, **_kwargs):
+        await asyncio.sleep(0)  # Make it properly async
         return True
 
     async def fake_run_agent_session(
@@ -375,6 +387,7 @@ async def test_worktree_planning_to_coding_sync_updates_source_phase_status(
         _verbose: bool = False,
         phase: LogPhase = LogPhase.CODING,
     ) -> tuple[str, str, dict]:
+        await asyncio.sleep(0)  # Make it properly async
         if phase == LogPhase.PLANNING:
             plan = {
                 "feature": "Test feature",
