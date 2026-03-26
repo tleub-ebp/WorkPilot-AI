@@ -774,6 +774,9 @@ Please confirm you're ready by saying: I'm ready to work on ${selectedTask.title
   const showClaudeBusyIndicator = terminal?.isClaudeMode && isClaudeBusy !== undefined;
 
   return (
+    // biome-ignore lint/a11y/noNoninteractiveElementInteractions: terminal container handles drag-drop and focus
+    // biome-ignore lint/a11y/noStaticElementInteractions: terminal container handles drag-drop and focus
+    // biome-ignore lint/a11y/useKeyWithClickEvents: keyboard handled by xterm.js terminal inside
     <div
       ref={setDropRef}
       className={cn(

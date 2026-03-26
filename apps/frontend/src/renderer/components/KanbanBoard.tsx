@@ -2658,12 +2658,9 @@ export function KanbanBoard({ tasks, onTaskClick, onNewTaskClick, onRefresh, isR
               {/* Task list preview */}
               <div className="mt-6 space-y-3">
                 <div className="flex items-center justify-between">
-                  <label
-                    // biome-ignore lint/a11y/noLabelWithoutControl: intentional
-                    className="text-sm font-semibold text-slate-200"
-                  >
+                  <span className="text-sm font-semibold text-slate-200">
                     {t('kanban.tasksToComplete')}
-                  </label>
+                  </span>
                   <span className="rounded-full bg-emerald-500/20 px-3 py-1 text-xs font-medium text-emerald-300">
                     {selectedTaskIds.size} {selectedTaskIds.size === 1 ? 'tâche' : 'tâches'}
                   </span>

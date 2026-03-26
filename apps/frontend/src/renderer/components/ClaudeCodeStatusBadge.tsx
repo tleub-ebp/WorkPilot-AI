@@ -614,18 +614,15 @@ export function ClaudeCodeStatusBadge({ className, onNavigateToTerminals }: Clau
           {/* Version selector - only show when Claude is installed */}
           {versionInfo?.installed && (
             <div className="space-y-1.5">
-              <label
-                className="text-xs text-muted-foreground"
-                // biome-ignore lint/a11y/noLabelWithoutControl: intentional
-              >
+              <p className="text-xs text-muted-foreground">
                 {t("navigation:claudeCode.switchVersion", "Switch Version")}
-              </label>
+              </p>
               <Select
                 value={selectedVersion || ""}
                 onValueChange={handleVersionSelect}
                 disabled={isLoadingVersions || isInstalling}
               >
-                <SelectTrigger className="h-8 text-xs">
+                <SelectTrigger className="h-8 text-xs" id="claude-version-select">
                   <SelectValue
                     placeholder={getVersionSelectPlaceholder()}
                   />

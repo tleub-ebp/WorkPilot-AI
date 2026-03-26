@@ -524,7 +524,6 @@ export function AzureDevOpsSidePanel({
     <>
       {/* Panel seulement - pas de conteneur qui bloque l'écran */}
       {/* biome-ignore lint/a11y/noNoninteractiveElementInteractions: interactive handler is intentional */}
-      {/* biome-ignore lint/a11y/noNoninteractiveElementInteractions: intentional */}
       <section
         ref={panelRef}
         className="fixed right-0 top-0 h-full bg-background border-l border-border shadow-2xl flex flex-col z-300"
@@ -721,6 +720,8 @@ export function AzureDevOpsSidePanel({
           {!isLoadingItems && filteredItems.length > 0 && (
             <div className="p-4 space-y-2">
               {filteredItems.map((item) => (
+                  // biome-ignore lint/a11y/noLabelWithoutControl: Radix Checkbox renders a hidden input
+                  // biome-ignore lint/a11y/noNoninteractiveElementInteractions: draggable item
                   <label
                     key={item.id}
                     className={cn(
@@ -732,8 +733,6 @@ export function AzureDevOpsSidePanel({
                       "bg-transparent border-none"
                   )}
                     draggable={true}
-                    // biome-ignore lint/a11y/noLabelWithoutControl: label association is implicit
-                    // biome-ignore lint/a11y/noNoninteractiveElementInteractions: interactive handler is intentional
                   onDragStart={(e) => {
                     if (selectedIds.has(item.id)) {
                       handleDragStart(e, Array.from(selectedIds));

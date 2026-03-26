@@ -310,8 +310,8 @@ export const MigrationWizard: React.FC = () => {
             </div>
 
             <div className="space-y-4">
+              {/* biome-ignore lint/a11y/noLabelWithoutControl: Radix Checkbox renders a hidden input */}
               <label
-                // biome-ignore lint/a11y/noLabelWithoutControl: intentional
                 className="flex items-center space-x-3"
               >
                 <Checkbox
@@ -327,8 +327,8 @@ export const MigrationWizard: React.FC = () => {
                 </div>
               </label>
 
+              {/* biome-ignore lint/a11y/noLabelWithoutControl: Radix Checkbox renders a hidden input */}
               <label
-                // biome-ignore lint/a11y/noLabelWithoutControl: intentional
                 className="flex items-center space-x-3"
               >
                 <Checkbox
@@ -344,8 +344,8 @@ export const MigrationWizard: React.FC = () => {
                 </div>
               </label>
 
+              {/* biome-ignore lint/a11y/noLabelWithoutControl: Radix Checkbox renders a hidden input */}
               <label
-                // biome-ignore lint/a11y/noLabelWithoutControl: intentional
                 className="flex items-center space-x-3"
               >
                 <Checkbox
