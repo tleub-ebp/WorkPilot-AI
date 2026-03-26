@@ -34,8 +34,7 @@ export function useTaskDetailHandlers({ task, state, onOpenChange }: TaskDetailH
       }
       // Notify the user if the provider will change when restarting
       const projectProvider = activeProject?.settings?.provider;
-      // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
-      const taskProvider = (task.metadata as any)?.provider;
+      const taskProvider = task.metadata?.provider;
       if (projectProvider && taskProvider && projectProvider !== taskProvider) {
         toast({
           title: t('tasks:providerSwitch.title'),
