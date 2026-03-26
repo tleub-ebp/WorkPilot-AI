@@ -90,7 +90,7 @@ class ReactToAngularTransformer:
         )
 
         # 3. Convert function component to Angular class component
-        angular_ts = self._convert_to_class_component(angular_ts, comp_class_name)
+        angular_ts = self._convert_to_class_component(angular_ts)
 
         # 4. Transform props to @Input decorators
         angular_ts = self._transform_props_to_inputs(angular_ts)
@@ -119,7 +119,7 @@ class ReactToAngularTransformer:
             or re.search(r"const\s+\w+\s*=\s*\(", content)
         )
 
-    def _convert_to_class_component(self, content: str, class_name: str) -> str:
+    def _convert_to_class_component(self, content: str) -> str:
         """Convert function component to Angular class component."""
         # Extract function body
         func_pattern = (
@@ -128,7 +128,6 @@ class ReactToAngularTransformer:
 
         match = re.search(func_pattern, content, re.MULTILINE)
         if match:
-            params = match.group(1)
             body = match.group(2)
             return body
 
@@ -139,9 +138,26 @@ class ReactToAngularTransformer:
         # Detect prop access patterns
         prop_pattern = r"props\.(\w+)"
 
+        # Also detect destructured props in function parameters
+        destructured_pattern = r"function\s+\w+\s*\(\s*\{([^}]+)\}\s*\)"
+
         props = set()
+
+        # Find props.propName patterns
         for match in re.finditer(prop_pattern, content):
             props.add(match.group(1))
+
+        # Find destructured props
+        for match in re.finditer(destructured_pattern, content):
+            props_str = match.group(1)
+            # Split by comma and clean up
+            for prop in props_str.split(","):
+                prop = prop.strip()
+                # Handle default values like "prop = defaultValue"
+                if "=" in prop:
+                    prop = prop.split("=")[0].strip()
+                if prop:
+                    props.add(prop)
 
         # Add @Input decorators for each prop
         if props:
@@ -163,7 +179,6 @@ class ReactToAngularTransformer:
 
         def replace_state(match):
             var_name = match.group(1)
-            setter_name = match.group(2)
             initial_value = match.group(3)
 
             return f"{var_name}: any = {initial_value}"
@@ -208,12 +223,12 @@ class ReactToAngularTransformer:
         template = jsx
 
         # className -> class
-        template = re.sub(r"className=", "[class]=", template)
-        template = re.sub(r"class=", "class=", template)
+        template = template.replace("className=", "[class]=")
+        template = template.replace("class=", "class=")
 
         # onClick -> (click)
-        template = re.sub(r"onClick=", "(click)=", template)
-        template = re.sub(r"onChange=", "(change)=", template)
+        template = template.replace("onClick=", "(click)=")
+        template = template.replace("onChange=", "(change)=")
 
         # {variable} -> {{ variable }}
         template = re.sub(r"{(\w+)}", r"{{ \1 }}", template)

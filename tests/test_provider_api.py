@@ -10,7 +10,7 @@ def test_api_providers():
     assert isinstance(data["status"], dict)
 
 def test_api_select_provider():
-    r = requests.post("http://localhost:9000/providers/select", data={"provider": "openai"})
+    r = requests.post("http://localhost:9000/providers/select?provider=openai")
     assert r.status_code == 200
     data = r.json()
     assert data["selected"] == "openai"
