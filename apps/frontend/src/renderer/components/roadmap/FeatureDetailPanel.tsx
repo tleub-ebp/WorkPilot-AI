@@ -31,9 +31,20 @@ export function FeatureDetailPanel({
   onGoToTask,
   onDelete,
   competitorInsights = [],
-}: FeatureDetailPanelProps) {
+}: Readonly<FeatureDetailPanelProps>) {
   const { t } = useTranslation('common');
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+
+  const getSeverityColorClass = (severity: string) => {
+    switch (severity) {
+      case 'high':
+        return 'text-red-500 border-red-500/50';
+      case 'medium':
+        return 'text-yellow-500 border-yellow-500/50';
+      default:
+        return 'text-green-500 border-green-500/50';
+    }
+  };
 
   const handleDelete = () => {
     if (onDelete) {
@@ -130,9 +141,8 @@ export function FeatureDetailPanel({
               User Stories
             </h3>
             <div className="space-y-2">
-              {feature.userStories.map((story, i) => (
-{/* biome-ignore lint/suspicious/noArrayIndexKey: no stable key available */}
-                <div key={i} className="text-sm p-2 bg-muted/50 rounded-md italic">
+              {feature.userStories.map((story) => (
+                <div key={`story-${story.slice(0, 20)}`} className="text-sm p-2 bg-muted/50 rounded-md italic">
                   "{story}"
                 </div>
               ))}
@@ -148,9 +158,8 @@ export function FeatureDetailPanel({
               Acceptance Criteria
             </h3>
             <ul className="space-y-1">
-              {feature.acceptanceCriteria.map((criterion, i) => (
-// biome-ignore lint/suspicious/noArrayIndexKey: no stable key available 
-                <li key={i} className="text-sm flex items-start gap-2">
+              {feature.acceptanceCriteria.map((criterion) => (
+                <li key={`criterion-${criterion.slice(0, 20)}`} className="text-sm flex items-start gap-2">
                   <Circle className="h-3 w-3 mt-1.5 shrink-0" />
                   <span>{criterion}</span>
                 </li>
@@ -196,13 +205,7 @@ export function FeatureDetailPanel({
                     </Badge>
                     <Badge
                       variant="outline"
-                      className={`text-xs ${
-                        insight.severity === 'high'
-                          ? 'text-red-500 border-red-500/50'
-                          : insight.severity === 'medium'
-                          ? 'text-yellow-500 border-yellow-500/50'
-                          : 'text-green-500 border-green-500/50'
-                      }`}
+                      className={`text-xs ${getSeverityColorClass(insight.severity)}`}
                     >
                       {insight.severity} severity
                     </Badge>
@@ -213,9 +216,9 @@ export function FeatureDetailPanel({
           </div>
         )}
         </div>
-      </ScrollArea>feature.linkedSpecId ? (
+      </ScrollArea>
+      {feature.linkedSpecId ? (
         <div className="shrink-0 p-4 border-t border-border">
-{/* biome-ignore lint/style/noNonNullAssertion: intentional */}
           <Button className="w-full" onClick={() => onGoToTask(feature.linkedSpecId!)}>
             <ExternalLink className="h-4 w-4 mr-2" />
             Go to Task
@@ -230,7 +233,8 @@ export function FeatureDetailPanel({
             </Button>
           </div>
         )
-      )showDeleteConfirm && (
+      )}
+      {showDeleteConfirm && (
         <div className="absolute inset-0 bg-background/95 flex items-center justify-center p-6 z-10">
           <div className="text-center space-y-4">
             <div className="w-12 h-12 rounded-full bg-destructive/10 flex items-center justify-center mx-auto">
@@ -252,10 +256,7 @@ export function FeatureDetailPanel({
             </div>
           </div>
         </div>
-      )
+      )}
     </div>
   );
 }
-
-
-

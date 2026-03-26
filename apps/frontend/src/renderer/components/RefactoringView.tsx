@@ -43,7 +43,7 @@ interface RefactoringProposal {
 }
 
 interface RefactoringViewProps {
-  projectId: string;
+  readonly projectId: string;
 }
 
 // ---------------------------------------------------------------------------
@@ -69,7 +69,7 @@ const RISK_CONFIG: Record<string, { color: string; bg: string }> = {
 // ---------------------------------------------------------------------------
 
 // biome-ignore lint/correctness/noUnusedFunctionParameters: parameter kept for API compatibility
-export function RefactoringView({ projectId }: RefactoringViewProps) {
+export function RefactoringView({ projectId }: Readonly<RefactoringViewProps>) {
   const { t } = useTranslation(['refactoring']);
   const [source, setSource] = useState('');
   const [smells, setSmells] = useState<CodeSmell[]>([]);
@@ -77,7 +77,7 @@ export function RefactoringView({ projectId }: RefactoringViewProps) {
   const [loading, setLoading] = useState(false);
   const [loadingProposals, setLoadingProposals] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [expandedSmells, setExpandedSmells] = useState<Set<number>>(new Set());
+  const [expandedSmells, setExpandedSmells] = useState<Set<string>>(new Set());
 
   const projectIndex = useContextStore((s) => s.projectIndex);
   const detectedLanguages = useMemo(() => {
@@ -90,11 +90,11 @@ export function RefactoringView({ projectId }: RefactoringViewProps) {
   }, [projectIndex]);
   const primaryLanguage = detectedLanguages[0] ?? null;
 
-  const toggleSmell = (idx: number) => {
+  const toggleSmell = (key: string) => {
     setExpandedSmells((prev) => {
       const next = new Set(prev);
-      if (next.has(idx)) next.delete(idx);
-      else next.add(idx);
+      if (next.has(key)) next.delete(key);
+      else next.add(key);
       return next;
     });
   };
@@ -273,16 +273,16 @@ export function RefactoringView({ projectId }: RefactoringViewProps) {
                 </div>
               </div>
               <div className="space-y-2">
-                {smells.map((smell, idx) => {
+                {smells.map((smell) => {
                   const sev = smell.severity?.toLowerCase() || 'info';
                   const cfg = SEVERITY_CONFIG[sev] || SEVERITY_CONFIG.info;
-                  const expanded = expandedSmells.has(idx);
+                  const smellKey = `${smell.smell_type}-${smell.symbol || 'no-symbol'}-${smell.line || 'no-line'}`;
+                  const expanded = expandedSmells.has(smellKey);
 
                   return (
                     <button type="button"
-                      // biome-ignore lint/suspicious/noArrayIndexKey: no stable key available
-                      key={idx}
-                      onClick={() => toggleSmell(idx)}
+                      key={smellKey}
+                      onClick={() => toggleSmell(smellKey)}
                       className="w-full text-left rounded-lg border border-border p-3 hover:bg-accent/30 transition-colors"
                     >
                       <div className="flex items-center gap-3">
@@ -293,7 +293,7 @@ export function RefactoringView({ projectId }: RefactoringViewProps) {
                         )}
                         <div className={cn('h-2 w-2 rounded-full shrink-0', cfg.color.replace('text-', 'bg-'))} />
                         <span className="text-sm font-medium text-foreground flex-1 truncate">
-                          {smell.smell_type?.replace(/_/g, ' ')}
+                          {smell.smell_type?.replaceAll('_', ' ')}
                         </span>
                         {smell.symbol && (
                           <span className="text-xs font-mono text-muted-foreground">{smell.symbol}</span>
@@ -332,16 +332,16 @@ export function RefactoringView({ projectId }: RefactoringViewProps) {
                 {t('refactoring:proposals.title', { count: proposals.length })}
               </h3>
               <div className="space-y-3">
-                {proposals.map((p, idx) => {
+                {proposals.map((p) => {
                   const risk = p.risk_level?.toLowerCase() || 'low';
                   const rcfg = RISK_CONFIG[risk] || RISK_CONFIG.low;
+                  const proposalKey = `${p.pattern}-${p.symbol || 'no-symbol'}-${p.risk_level || 'low'}`;
 
                   return (
-{/* biome-ignore lint/suspicious/noArrayIndexKey: no stable key available */}
-                    <div key={idx} className="rounded-lg border border-border p-4 space-y-2">
+                    <div key={proposalKey} className="rounded-lg border border-border p-4 space-y-2">
                       <div className="flex items-center gap-3">
                         <FileCode2 className="h-4 w-4 text-primary shrink-0" />
-                        <span className="text-sm font-semibold text-foreground">{p.pattern?.replace(/_/g, ' ')}</span>
+                        <span className="text-sm font-semibold text-foreground">{p.pattern?.replaceAll('_', ' ')}</span>
                         {p.symbol && (
                           <span className="text-xs font-mono text-muted-foreground">{p.symbol}</span>
                         )}

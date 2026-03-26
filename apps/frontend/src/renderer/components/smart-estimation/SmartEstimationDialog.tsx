@@ -269,10 +269,10 @@ function ResultView({
   onCopy,
   t,
 }: {
-  result: SmartEstimationResult;
-  copied: boolean;
-  onCopy: (text: string) => void;
-  t: (key: string) => string;
+  readonly result: SmartEstimationResult;
+  readonly copied: boolean;
+  readonly onCopy: (text: string) => void;
+  readonly t: (key: string) => string;
 }) {
   const getComplexityColor = (score: number) => {
     if (score <= 3) return 'bg-green-500';
@@ -401,9 +401,8 @@ function ResultView({
           </CardHeader>
           <CardContent>
             <ul className="space-y-2">
-              {result.reasoning.map((reason, i) => (
-// biome-ignore lint/suspicious/noArrayIndexKey: no stable key available 
-                <li key={`reason-${i}`} className="flex items-start gap-2 text-sm">
+              {result.reasoning.map((reason) => (
+                <li key={reason} className="flex items-start gap-2 text-sm">
                   <span className="text-primary mt-1.5 shrink-0">•</span>
                   <span>{reason}</span>
                 </li>
@@ -424,9 +423,8 @@ function ResultView({
           </CardHeader>
           <CardContent>
             <ul className="space-y-2">
-              {result.risk_factors.map((risk, i) => (
-// biome-ignore lint/suspicious/noArrayIndexKey: no stable key available 
-                <li key={`risk-${i}`} className="flex items-start gap-2 text-sm">
+              {result.risk_factors.map((risk) => (
+                <li key={risk} className="flex items-start gap-2 text-sm">
                   <span className="text-orange-500 mt-1.5 shrink-0">⚠</span>
                   <span>{risk}</span>
                 </li>
@@ -447,9 +445,8 @@ function ResultView({
           </CardHeader>
           <CardContent>
             <ul className="space-y-2">
-              {result.recommendations.map((rec, i) => (
-// biome-ignore lint/suspicious/noArrayIndexKey: no stable key available 
-                <li key={`rec-${i}`} className="flex items-start gap-2 text-sm">
+              {result.recommendations.map((rec) => (
+                <li key={rec} className="flex items-start gap-2 text-sm">
                   <span className="text-blue-500 mt-1.5 shrink-0">💡</span>
                   <span>{rec}</span>
                 </li>
@@ -470,9 +467,8 @@ function ResultView({
           </CardHeader>
           <CardContent>
             <div className="space-y-3">
-              {result.similar_tasks.slice(0, 3).map((task, i) => (
-{/* biome-ignore lint/suspicious/noArrayIndexKey: no stable key available */}
-                <div key={`task-${i}`} className="border rounded-lg p-3">
+              {result.similar_tasks.slice(0, 3).map((task) => (
+                <div key={task.spec_name} className="border rounded-lg p-3">
                   <div className="flex items-center justify-between mb-2">
                     <span className="font-medium text-sm">{task.spec_name}</span>
                     <div className="flex items-center gap-2">

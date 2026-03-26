@@ -61,13 +61,13 @@ function formatTimeAgo(timestamp: Date | string | undefined): string {
  */
 function useReducedMotion(): boolean {
   const [reducedMotion, setReducedMotion] = useState(() => {
-    // Check if window is available (for SSR safety)
-    if (typeof window === 'undefined') return false;
-    return window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    // Check if globalThis is available (for SSR safety)
+    if (typeof globalThis === 'undefined') return false;
+    return globalThis.matchMedia('(prefers-reduced-motion: reduce)').matches;
   });
 
   useEffect(() => {
-    const mediaQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
+    const mediaQuery = globalThis.matchMedia('(prefers-reduced-motion: reduce)');
 
     const handleChange = (event: MediaQueryListEvent) => {
       setReducedMotion(event.matches);
@@ -85,9 +85,9 @@ function useReducedMotion(): boolean {
 }
 
 interface RoadmapGenerationProgressProps {
-  generationStatus: RoadmapGenerationStatus;
-  className?: string;
-  onStop?: () => void | Promise<void>;
+  readonly generationStatus: RoadmapGenerationStatus;
+  readonly className?: string;
+  readonly onStop?: () => void | Promise<void>;
 }
 
 // Type for generation phases (excluding idle)
@@ -159,13 +159,13 @@ function HeartbeatIndicator({
   color,
   processingLabel,
   tooltipText,
-}: {
+}: Readonly<{
   isActive: boolean;
   reducedMotion: boolean;
   color: string;
   processingLabel: string;
   tooltipText: string;
-}) {
+}>) {
   if (!isActive) return null;
 
   // Heartbeat animation: subtle scale pulse to show process is alive
@@ -208,11 +208,11 @@ function PhaseStepsIndicator({
   currentPhase,
   reducedMotion,
   t,
-}: {
+}: Readonly<{
   currentPhase: RoadmapGenerationStatus['phase'];
   reducedMotion: boolean;
   t: (key: string) => string;
-}) {
+}>) {
   const getPhaseState = (
     phaseKey: GenerationPhase
   ): 'pending' | 'active' | 'complete' | 'error' => {
@@ -256,7 +256,7 @@ function PhaseStepsIndicator({
               transition={getStepTransition(state)}
             >
               {state === 'complete' && (
-// biome-ignore lint/a11y/noSvgWithoutTitle: SVG is decorative  
+                // biome-ignore lint/a11y/noSvgWithoutTitle: SVG is decorative
                 <svg
                   className="h-3 w-3"
                   fill="none"
@@ -272,17 +272,19 @@ function PhaseStepsIndicator({
                 </svg>
               )}
               {t(phase.labelKey)}
-            </motion.div>index < STEP_PHASES.length - 1 && (
-              <div
-                className={cn(
-                  'w-4 h-px mx-1',
-                  getPhaseState(STEP_PHASES[index + 1].key) !== 'pending'
-                    ? 'bg-success/50'
-                    : 'bg-border'
-                )}
-              />
-            )
-          </div>
+            </motion.div>
+          )
+          {index < STEP_PHASES.length - 1 && (
+            <div
+              className={cn(
+                'w-4 h-px mx-1',
+                getPhaseState(STEP_PHASES[index + 1].key) === 'pending'
+                  ? 'bg-border'
+                  : 'bg-success/50'
+              )}
+            />
+          )}
+        </div>
         );
       })}
     </div>
@@ -298,7 +300,7 @@ export function RoadmapGenerationProgress({
   generationStatus,
   className,
   onStop
-}: RoadmapGenerationProgressProps) {
+}: Readonly<RoadmapGenerationProgressProps>) {
   const { t } = useTranslation('common');
   const { phase, progress, message, error, startedAt, lastActivityAt } = generationStatus;
   const reducedMotion = useReducedMotion();
@@ -574,7 +576,7 @@ export function RoadmapGenerationProgress({
             className="p-3 bg-destructive/10 rounded-md"
           >
             <div className="flex items-start gap-2">
-              <AlertCircle className="h-4 w-4 text-destructive flex-shrink-0 mt-0.5" />
+              <AlertCircle className="h-4 w-4 text-destructive shrink-0 mt-0.5" />
               <p className="text-sm text-destructive">{error}</p>
             </div>
           </motion.div>
