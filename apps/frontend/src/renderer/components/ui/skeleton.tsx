@@ -1,12 +1,12 @@
 import { cn } from '../../lib/utils';
 
-interface SkeletonProps extends React.HTMLAttributes<HTMLDivElement> {
+interface SkeletonProps extends React.OutputHTMLAttributes<HTMLOutputElement> {
   /** Width of the skeleton element */
-  width?: string | number;
+  readonly width?: string | number;
   /** Height of the skeleton element */
-  height?: string | number;
+  readonly height?: string | number;
   /** Whether to render as a circle */
-  circle?: boolean;
+  readonly circle?: boolean;
 }
 
 /**
@@ -20,15 +20,12 @@ export function Skeleton({
   circle,
   style,
   ...props
-}: SkeletonProps) {
+}: Readonly<SkeletonProps>) {
   return (
-    <div
-      // biome-ignore lint/a11y/useSemanticElements: custom element maintains accessibility
-      // biome-ignore lint/a11y/useSemanticElements: intentional
-      role="status"
+    <output
       aria-label="Loading..."
       className={cn(
-        'animate-pulse bg-muted rounded-md',
+        'animate-pulse bg-muted rounded-md border-0 p-0 m-0',
         circle && 'rounded-full',
         className
       )}
@@ -43,9 +40,16 @@ export function Skeleton({
 }
 
 /**
+ * Props for SkeletonLine component.
+ */
+interface SkeletonLineProps extends Readonly<React.OutputHTMLAttributes<HTMLOutputElement>> {
+  // No additional props currently, but interface for future extensibility
+}
+
+/**
  * A skeleton text line — useful for simulating paragraphs.
  */
-export function SkeletonLine({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) {
+export function SkeletonLine({ className, ...props }: Readonly<SkeletonLineProps>) {
   return (
     <Skeleton
       className={cn('h-4 w-full', className)}
@@ -55,14 +59,19 @@ export function SkeletonLine({ className, ...props }: React.HTMLAttributes<HTMLD
 }
 
 /**
+ * Props for SkeletonCard component.
+ */
+interface SkeletonCardProps extends React.OutputHTMLAttributes<HTMLOutputElement> {
+  /** Content to render inside the card skeleton */
+  readonly children?: React.ReactNode;
+}
+
+/**
  * A skeleton card — useful for simulating card-based layouts.
  */
-export function SkeletonCard({ className, children, ...props }: React.HTMLAttributes<HTMLDivElement>) {
+export function SkeletonCard({ className, children, ...props }: Readonly<SkeletonCardProps>) {
   return (
-    <div
-      // biome-ignore lint/a11y/useSemanticElements: custom element maintains accessibility
-      // biome-ignore lint/a11y/useSemanticElements: intentional
-      role="status"
+    <output
       aria-label="Loading..."
       className={cn(
         'rounded-lg border border-border bg-card p-4 space-y-3',
@@ -77,6 +86,6 @@ export function SkeletonCard({ className, children, ...props }: React.HTMLAttrib
           <Skeleton className="h-3 w-5/6" />
         </>
       )}
-    </div>
+    </output>
   );
 }
