@@ -756,7 +756,7 @@ class IntelligentContextCache:
         """Find cache keys that should be invalidated based on pattern."""
         if not pattern:
             return list(self._cache.keys())
-        
+
         keys_to_remove = []
         for key, entry in self._cache.items():
             if self._entry_matches_pattern(entry, key, pattern):
@@ -769,12 +769,12 @@ class IntelligentContextCache:
             return True
         if pattern in entry.semantic_signature:
             return True
-        
+
         # Check string values in context_data and context_request
         context_str = json.dumps(entry.context_data, default=str)
         if pattern in context_str:
             return True
-        
+
         request_str = json.dumps(entry.context_request, default=str)
         return pattern in request_str
 
@@ -783,7 +783,9 @@ class IntelligentContextCache:
         for key in keys_to_remove:
             del self._cache[key]
 
-    def _remove_from_database(self, keys_to_remove: list[str], pattern: str | None) -> None:
+    def _remove_from_database(
+        self, keys_to_remove: list[str], pattern: str | None
+    ) -> None:
         """Remove entries from database cache."""
         with sqlite3.connect(self.db_path) as conn:
             if pattern:
