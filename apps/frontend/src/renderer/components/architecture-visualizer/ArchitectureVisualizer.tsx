@@ -1,4 +1,4 @@
-import React from 'react';
+﻿import React from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   useArchitectureVisualizerStore,
@@ -17,10 +17,10 @@ const DIAGRAM_LABELS: Record<DiagramType, string> = {
 };
 
 const DIAGRAM_ICONS: Record<DiagramType, string> = {
-  module_dependencies: '🔗',
-  component_hierarchy: '🌳',
-  data_flow: '🌊',
-  database_schema: '🗄️',
+  module_dependencies: 'ðŸ”—',
+  component_hierarchy: 'ðŸŒ³',
+  data_flow: 'ðŸŒŠ',
+  database_schema: 'ðŸ—„ï¸',
 };
 
 export function ArchitectureVisualizer(): React.ReactElement {
@@ -155,7 +155,7 @@ export function ArchitectureVisualizer(): React.ReactElement {
           {(isRunning || status) && (
             <div className="px-4 py-2 bg-[var(--bg-secondary)] border-b border-[var(--border-color)] text-sm text-[var(--text-secondary)] flex items-center gap-2">
               {isRunning && (
-                // biome-ignore lint/a11y/noSvgWithoutTitle: SVG is decorative
+// biome-ignore lint/a11y/noSvgWithoutTitle: SVG is decorative 
                 <svg className="animate-spin w-4 h-4 text-[var(--accent)]" fill="none" viewBox="0 0 24 24">
                   <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                   <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
@@ -179,7 +179,7 @@ export function ArchitectureVisualizer(): React.ReactElement {
                 <span className="text-lg">{DIAGRAM_ICONS[selectedDiagramView as DiagramType]}</span>
                 <h2 className="text-lg font-medium">{selectedDiagram.title}</h2>
                 <span className="text-xs text-[var(--text-secondary)] ml-2">
-                  {selectedDiagram.nodes?.length ?? 0} nodes • {selectedDiagram.edges?.length ?? 0} edges
+                  {selectedDiagram.nodes?.length ?? 0} nodes â€¢ {selectedDiagram.edges?.length ?? 0} edges
                 </span>
               </div>
               <div className="bg-[var(--bg-secondary)] rounded-lg p-4 overflow-auto">
@@ -210,7 +210,7 @@ export function ArchitectureVisualizer(): React.ReactElement {
           {phase === 'idle' && !result && (
             <div className="flex-1 flex items-center justify-center text-center p-8">
               <div>
-                <div className="text-5xl mb-4">🏗️</div>
+                <div className="text-5xl mb-4">ðŸ—ï¸</div>
                 <h3 className="text-lg font-medium mb-2">Architecture Visualizer</h3>
                 <p className="text-sm text-[var(--text-secondary)] max-w-sm">
                   Select diagram types and click "Generate Diagrams" to automatically analyze
@@ -226,3 +226,5 @@ export function ArchitectureVisualizer(): React.ReactElement {
 }
 
 export default ArchitectureVisualizer;
+
+

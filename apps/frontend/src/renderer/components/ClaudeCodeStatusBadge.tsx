@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+﻿import { useState, useEffect, useCallback } from "react";
 import { useTranslation } from "react-i18next";
 import {
   Terminal,
@@ -615,7 +615,7 @@ export function ClaudeCodeStatusBadge({ className, onNavigateToTerminals }: Clau
           {versionInfo?.installed && (
             <div className="space-y-1.5">
               // biome-ignore lint/a11y/noLabelWithoutControl: label association is implicit
-              // biome-ignore lint/a11y/noLabelWithoutControl: intentional
+{/* biome-ignore lint/a11y/noLabelWithoutControl: intentional  */}
               <label className="text-xs text-muted-foreground">
                 {t("navigation:claudeCode.switchVersion", "Switch Version")}
               </label>
@@ -657,7 +657,7 @@ export function ClaudeCodeStatusBadge({ className, onNavigateToTerminals }: Clau
           {installations.length > 1 && (
             <div className="space-y-1.5">
               // biome-ignore lint/a11y/noLabelWithoutControl: label association is implicit
-              // biome-ignore lint/a11y/noLabelWithoutControl: intentional
+{/* biome-ignore lint/a11y/noLabelWithoutControl: intentional  */}
               <label className="text-xs text-muted-foreground">
                 {t("navigation:claudeCode.switchInstallation", "Switch Installation")}
               </label>
@@ -809,3 +809,6 @@ export function ClaudeCodeStatusBadge({ className, onNavigateToTerminals }: Clau
     </Popover>
   );
 }
+
+
+

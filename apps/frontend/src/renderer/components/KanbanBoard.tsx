@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect, useCallback, useRef, memo } from 'react';
+﻿import { useState, useMemo, useEffect, useCallback, useRef, memo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useViewState } from '../contexts/ViewStateContext';
 import {
@@ -812,7 +812,7 @@ const DroppableColumn = memo(function DroppableColumn({ status, tasks, onTaskCli
 }, droppableColumnPropsAreEqual);
 
 // ============================================
-// SortableColumnWrapper — enables column drag-to-reorder
+// SortableColumnWrapper â€” enables column drag-to-reorder
 // ============================================
 
 interface SortableColumnWrapperProps extends Omit<React.ComponentProps<typeof DroppableColumn>, 'dragHandleProps'> {
@@ -947,7 +947,7 @@ export function KanbanBoard({ tasks, onTaskClick, onNewTaskClick, onRefresh, isR
   // Bulk PR dialog state
   const [bulkPRDialogOpen, setBulkPRDialogOpen] = useState(false);
 
-  // Bulk "mark as done" confirmation dialog state (human_review → done)
+  // Bulk "mark as done" confirmation dialog state (human_review â†’ done)
   const [bulkMarkDoneConfirmOpen, setBulkMarkDoneConfirmOpen] = useState(false);
 
   // Delete confirmation dialog state
@@ -1099,7 +1099,7 @@ export function KanbanBoard({ tasks, onTaskClick, onNewTaskClick, onRefresh, isR
         });
 
         // 4. Sort ordered tasks by their index in validOrder
-        // Pre-compute index map for O(n) sorting instead of O(n²) with indexOf
+        // Pre-compute index map for O(n) sorting instead of O(nÂ²) with indexOf
         const indexMap = new Map(validOrder.map((id, idx) => [id, idx]));
         const orderedTasks = columnTasks
           .filter(t => validOrderSet.has(t.id))
@@ -1536,7 +1536,7 @@ export function KanbanBoard({ tasks, onTaskClick, onNewTaskClick, onRefresh, isR
   const handleDragOver = useCallback((event: DragOverEvent) => {
     const { active, over } = event;
 
-    // Ignore column drags — no task drop highlighting needed
+    // Ignore column drags â€” no task drop highlighting needed
     if (active.id.toString().startsWith('col-')) return;
 
     if (!over) {
@@ -2298,7 +2298,7 @@ export function KanbanBoard({ tasks, onTaskClick, onNewTaskClick, onRefresh, isR
         return;
       }
 
-      // human_review → done requires confirmation before opening BulkPRDialog
+      // human_review â†’ done requires confirmation before opening BulkPRDialog
       if (selectedColumnStatus === 'human_review' && targetVisualColumn === 'done') {
         setBulkMarkDoneConfirmOpen(true);
         return;
@@ -2364,7 +2364,7 @@ export function KanbanBoard({ tasks, onTaskClick, onNewTaskClick, onRefresh, isR
     }
   }, [taskOrder, tasksByStatus, setTaskOrder, reorderTasksInColumn, moveTaskToColumnTop, saveTaskOrder, projectId, maxParallelTasks, handleStatusChange, processQueue, selectedTaskIds, selectedColumnStatus, handleBulkMove, toast, t, setColumnOrder]);
 
-  // Ajout ou correction de la déclaration de l'état pour la boîte de dialogue de paramètres projet
+  // Ajout ou correction de la dÃ©claration de l'Ã©tat pour la boÃ®te de dialogue de paramÃ¨tres projet
   // Ajout d'un compteur pour forcer le remount d'AppSettingsDialog
   const [settingsDialogKey, _setSettingsDialogKey] = useState(0);
   const [isProjectSettingsOpen, setIsProjectSettingsOpen] = useState(false);
@@ -2372,7 +2372,7 @@ export function KanbanBoard({ tasks, onTaskClick, onNewTaskClick, onRefresh, isR
 
   return (
     <div className="flex h-full flex-col">
-      {/* Kanban header avec bouton paramètres projet */}
+      {/* Kanban header avec bouton paramÃ¨tres projet */}
       <div className="flex items-center justify-between px-2 pt-4 pb-2">
         <div className="flex items-center gap-2">
           {onRefresh && (
@@ -2632,7 +2632,7 @@ export function KanbanBoard({ tasks, onTaskClick, onNewTaskClick, onRefresh, isR
         </div>
       )}
 
-      {/* Bulk "mark as done" confirmation dialog (human_review → done + PR creation) */}
+      {/* Bulk "mark as done" confirmation dialog (human_review â†’ done + PR creation) */}
       <AlertDialog open={bulkMarkDoneConfirmOpen} onOpenChange={setBulkMarkDoneConfirmOpen}>
         <AlertDialogPortal>
           <AlertDialogOverlay className="bg-black/60 backdrop-blur-md" />
@@ -2659,10 +2659,10 @@ export function KanbanBoard({ tasks, onTaskClick, onNewTaskClick, onRefresh, isR
               <div className="mt-6 space-y-3">
                 <div className="flex items-center justify-between">
                   // biome-ignore lint/a11y/noLabelWithoutControl: label association is implicit
-                  // biome-ignore lint/a11y/noLabelWithoutControl: intentional
+{/* biome-ignore lint/a11y/noLabelWithoutControl: intentional  */}
                   <label className="text-sm font-semibold text-slate-200">{t('kanban.tasksToComplete')}</label>
                   <span className="rounded-full bg-emerald-500/20 px-3 py-1 text-xs font-medium text-emerald-300">
-                    {selectedTaskIds.size} {selectedTaskIds.size === 1 ? 'tâche' : 'tâches'}
+                    {selectedTaskIds.size} {selectedTaskIds.size === 1 ? 'tÃ¢che' : 'tÃ¢ches'}
                   </span>
                 </div>
                 <ScrollArea className="h-32 rounded-xl border border-slate-700/50 bg-slate-800/50 p-3 backdrop-blur-sm">
@@ -2742,10 +2742,10 @@ export function KanbanBoard({ tasks, onTaskClick, onNewTaskClick, onRefresh, isR
           <div className="mt-6 space-y-3">
             <div className="flex items-center justify-between">
               // biome-ignore lint/a11y/noLabelWithoutControl: label association is implicit
-              // biome-ignore lint/a11y/noLabelWithoutControl: intentional
+{/* biome-ignore lint/a11y/noLabelWithoutControl: intentional  */}
               <label className="text-sm font-semibold text-slate-200">{t('kanban.tasksToDelete')}</label>
               <span className="rounded-full bg-red-500/20 px-3 py-1 text-xs font-medium text-red-300">
-                {selectedTaskIds.size} {selectedTaskIds.size === 1 ? 'tâche' : 'tâches'}
+                {selectedTaskIds.size} {selectedTaskIds.size === 1 ? 'tÃ¢che' : 'tÃ¢ches'}
               </span>
             </div>
             <ScrollArea className="h-32 rounded-xl border border-slate-700/50 bg-slate-800/50 p-3 backdrop-blur-sm">
@@ -2878,7 +2878,7 @@ export function KanbanBoard({ tasks, onTaskClick, onNewTaskClick, onRefresh, isR
         onComplete={handleBulkPRComplete}
       />
 
-      {/* Boîte de dialogue paramètres projet (AppSettingsDialog) */}
+      {/* BoÃ®te de dialogue paramÃ¨tres projet (AppSettingsDialog) */}
       {project && settingsDialogProjectId && (
         <AppSettingsDialog
           key={settingsDialogKey + settingsDialogProjectId}
@@ -2960,3 +2960,5 @@ export function KanbanBoard({ tasks, onTaskClick, onNewTaskClick, onRefresh, isR
     </div>
   );
 }
+
+

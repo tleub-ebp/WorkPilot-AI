@@ -1,4 +1,4 @@
-import { useState, useEffect, lazy, Suspense, useRef } from 'react';
+﻿import { useState, useEffect, lazy, Suspense, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { debugLog } from '@shared/utils/debug-logger';
 import {
@@ -262,7 +262,7 @@ export function App() {
       setHasRestoredView(true);
       isRestoringView.current = true;
       setActiveView(settings.activeView);
-      // Réinitialiser le flag après un court délai pour permettre les futures sauvegardes
+      // RÃ©initialiser le flag aprÃ¨s un court dÃ©lai pour permettre les futures sauvegardes
       setTimeout(() => {
         isRestoringView.current = false;
       }, 100);
@@ -290,7 +290,7 @@ export function App() {
   const projectTabs = getProjectTabs();
   const selectedProject = projects.find((p) => p.id === (activeProjectId || selectedProjectId));
 
-  // State global pour provider LLM actif et modèles associés
+  // State global pour provider LLM actif et modÃ¨les associÃ©s
   const [_providers, setProviders] = useState<string[]>([]);
   const [selectedProvider, setSelectedProvider] = useState<string>("");
   const [_providerModels, setProviderModels] = useState<string[]>([]);
@@ -785,7 +785,7 @@ export function App() {
 
   const handleProjectAdded = async (project: Project, needsInit: boolean) => {
     openProjectTab(project.id);
-    // Si le projet a déjà une description et un provider, il est déjà initialisé
+    // Si le projet a dÃ©jÃ  une description et un provider, il est dÃ©jÃ  initialisÃ©
     const alreadyInitialized = !!(project.settings?.description && project.settings?.provider);
     if (needsInit && !alreadyInitialized) {
       setPendingProject(project);
@@ -955,7 +955,7 @@ export function App() {
     }
   };
 
-  // Récupère la liste des providers au chargement
+  // RÃ©cupÃ¨re la liste des providers au chargement
   useEffect(() => {
     const backendUrl = import.meta.env?.VITE_BACKEND_URL || '';
     fetch(`${backendUrl}/providers`)
@@ -976,7 +976,7 @@ export function App() {
             typeof p === 'object' && p !== null && 'name' in p ? (p as { name: string }).name : String(p)
           );
           setProviders(providerNames);
-          // Sélectionne automatiquement 'claude' si présent
+          // SÃ©lectionne automatiquement 'claude' si prÃ©sent
           if (!selectedProvider && providerNames.includes('claude')) {
             setSelectedProvider('claude');
           } else if (!selectedProvider && providerNames.length > 0) {
@@ -994,7 +994,7 @@ export function App() {
         });
   }, [selectedProvider]);
 
-  // Récupère les modèles du provider sélectionné
+  // RÃ©cupÃ¨re les modÃ¨les du provider sÃ©lectionnÃ©
   useEffect(() => {
     if (!selectedProvider) {
       setProviderModels([]);
@@ -1026,7 +1026,7 @@ export function App() {
             console.error(`Failed to fetch models for provider ${selectedProvider}:`, err);
           }
           setProviderModels([]);
-          setProviderModelsError(`Erreur lors de la récupération des modèles pour le provider «${selectedProvider}».`);
+          setProviderModelsError(`Erreur lors de la rÃ©cupÃ©ration des modÃ¨les pour le provider Â«${selectedProvider}Â».`);
         });
   }, [selectedProvider]);
 
@@ -1074,10 +1074,10 @@ export function App() {
 
                 {/* Main content */}
                 <div className="flex flex-1 flex-col overflow-hidden">
-                  {/* Ligne sticky avec ProviderSelector et bouton "Claude Code" placée juste sous les tabs projets */}
+                  {/* Ligne sticky avec ProviderSelector et bouton "Claude Code" placÃ©e juste sous les tabs projets */}
                   <div className="flex items-center justify-between gap-3 px-2.5 py-2 border-b border-border bg-background sticky top-0 z-30">
                     <div className="flex items-center flex-1 min-w-0">
-                      {/* Espace réservé pour alignement, ou autre contenu si besoin */}
+                      {/* Espace rÃ©servÃ© pour alignement, ou autre contenu si besoin */}
                     </div>
                     <div className="shrink-0">
                       <ProviderSelector
@@ -1177,23 +1177,23 @@ export function App() {
                             />
                           </div>
                           {activeView === 'roadmap' && (activeProjectId || selectedProjectId) && (
-                              // biome-ignore lint/style/noNonNullAssertion: value is guaranteed by context
+// biome-ignore lint/style/noNonNullAssertion: value is guaranteed by context 
                               <Roadmap projectId={activeProjectId || selectedProjectId!} onGoToTask={handleGoToTask} />
                           )}
                           {activeView === 'context' && (activeProjectId || selectedProjectId) && (
                               <ErrorBoundary>
                                 // biome-ignore lint/suspicious/noCommentText: intentional
                                 // biome-ignore lint/style/noNonNullAssertion: value is guaranteed by context
-                                // biome-ignore lint/style/noNonNullAssertion: intentional
+// biome-ignore lint/style/noNonNullAssertion: intentional 
                                 <Context projectId={activeProjectId || selectedProjectId!} />
                               </ErrorBoundary>
                           )}
                           {activeView === 'ideation' && (activeProjectId || selectedProjectId) && (
-                              // biome-ignore lint/style/noNonNullAssertion: value is guaranteed by context
+// biome-ignore lint/style/noNonNullAssertion: value is guaranteed by context 
                               <Ideation projectId={activeProjectId || selectedProjectId!} onGoToTask={handleGoToTask} />
                           )}
                           {activeView === 'insights' && (activeProjectId || selectedProjectId) && (
-                              // biome-ignore lint/style/noNonNullAssertion: value is guaranteed by context
+// biome-ignore lint/style/noNonNullAssertion: value is guaranteed by context 
                               <Insights projectId={activeProjectId || selectedProjectId!} />
                           )}
                           {activeView === 'github-issues' && (activeProjectId || selectedProjectId) && (
@@ -1243,7 +1243,7 @@ export function App() {
                               <AgentTools />
                           )}
                           {activeView === 'worktrees' && (activeProjectId || selectedProjectId) && (
-                              // biome-ignore lint/style/noNonNullAssertion: value is guaranteed by context
+// biome-ignore lint/style/noNonNullAssertion: value is guaranteed by context 
                               <Worktrees projectId={activeProjectId || selectedProjectId!} />
                           )}
                           {activeView === 'migration' && (
@@ -1259,26 +1259,26 @@ export function App() {
                               <AnalyticsDashboard projectPath={selectedProject?.path} />
                           )}
                           {activeView === 'code-review' && (activeProjectId || selectedProjectId) && (
-                              // biome-ignore lint/style/noNonNullAssertion: value is guaranteed by context
+// biome-ignore lint/style/noNonNullAssertion: value is guaranteed by context 
                               <CodeReview projectId={activeProjectId || selectedProjectId!} />
                           )}
                           {activeView === 'refactoring' && (activeProjectId || selectedProjectId) && (
-                              // biome-ignore lint/style/noNonNullAssertion: value is guaranteed by context
+// biome-ignore lint/style/noNonNullAssertion: value is guaranteed by context 
                               <RefactoringView projectId={activeProjectId || selectedProjectId!} />
                           )}
                           {activeView === 'documentation' && (activeProjectId || selectedProjectId) && (
-                              // biome-ignore lint/style/noNonNullAssertion: value is guaranteed by context
+// biome-ignore lint/style/noNonNullAssertion: value is guaranteed by context 
                               <DocumentationView projectId={activeProjectId || selectedProjectId!} />
                           )}
                           {activeView === 'cost-estimator' && selectedProject?.path && (
                               <CostEstimator projectPath={selectedProject.path} />
                           )}
                           {activeView === 'session-history' && (activeProjectId || selectedProjectId) && (
-                              // biome-ignore lint/style/noNonNullAssertion: value is guaranteed by context
+// biome-ignore lint/style/noNonNullAssertion: value is guaranteed by context 
                               <SessionHistory projectId={activeProjectId || selectedProjectId!} />
                           )}
                           {activeView === 'pair-programming' && (activeProjectId || selectedProjectId) && (
-                              // biome-ignore lint/style/noNonNullAssertion: value is guaranteed by context
+// biome-ignore lint/style/noNonNullAssertion: value is guaranteed by context 
                               <PairProgramming projectId={activeProjectId || selectedProjectId!} />
                           )}
                           {activeView === 'pipeline-generator' && (activeProjectId || selectedProjectId) && (
@@ -1384,7 +1384,7 @@ export function App() {
               onClose={handleVersionWarningClose}
             />
 
-            {/* Modals spécifiques à GitHub et Azure DevOps */}
+            {/* Modals spÃ©cifiques Ã  GitHub et Azure DevOps */}
             {gitHubSetupProject && (
               <GitHubSetupModal
                 open={showGitHubSetup}
@@ -1453,3 +1453,5 @@ export function App() {
       </ProviderContextProvider>
     );
 }
+
+

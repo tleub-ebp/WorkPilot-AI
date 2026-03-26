@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+﻿import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   Dialog,
@@ -353,7 +353,7 @@ export function PRFilesModal({ open, onOpenChange, prUrl, taskId }: PRFilesModal
                     key={file.filename}
                     className="border rounded-lg overflow-hidden"
                   >
-                    {/* biome-ignore lint/a11y/noNoninteractiveElementInteractions lint/a11y/noStaticElementInteractions lint/a11y/useKeyWithClickEvents: interactive handler is intentional */}
+{/* biome-ignore lint/a11y/noNoninteractiveElementInteractions lint/a11y/noStaticElementInteractions lint/a11y/useKeyWithClickEvents: interactive handler is intentional  */}
                     <div
                       className={cn(
                         "flex items-center justify-between p-3 cursor-pointer hover:bg-muted/50 transition-colors"
@@ -413,3 +413,4 @@ export function PRFilesModal({ open, onOpenChange, prUrl, taskId }: PRFilesModal
 }
 
 export default PRFilesModal;
+

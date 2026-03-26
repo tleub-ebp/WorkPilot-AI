@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Jira Side Panel Component
  * Provides a sliding panel for importing Jira issues with drag & drop
  * Mirrors the Azure DevOps Side Panel functionality
@@ -25,11 +25,11 @@ import type { JiraWorkItem, JiraSyncStatus } from '../../../shared/types/integra
 import type { TaskStatus } from '../../../shared/types';
 
 interface JiraSidePanelProps {
-  projectId: string;
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  onWorkItemsImported?: (workItems: JiraWorkItem[], targetStatus: TaskStatus) => void;
-  onOpenSettings?: () => void;
+  readonly projectId: string;
+  readonly open: boolean;
+  readonly onOpenChange: (open: boolean) => void;
+  readonly onWorkItemsImported?: (workItems: JiraWorkItem[], targetStatus: TaskStatus) => void;
+  readonly onOpenSettings?: () => void;
 }
 
 interface JiraFilters {
@@ -89,17 +89,13 @@ export function JiraSidePanel({
   // Load saved panel width on component mount
   useEffect(() => {
     const loadSavedPanelWidth = () => {
-      try {
-        const savedWidth = localStorage.getItem(`jira-panel-width-${projectId}`);
-        if (savedWidth) {
-          const width = parseInt(savedWidth, 10);
-          if (!Number.isNaN(width) && width >= 320 && width <= 800) {
-            setPanelWidth(width);
-            setIsCollapsed(width <= 320);
-          }
+      const savedWidth = localStorage.getItem(`jira-panel-width-${projectId}`);
+      if (savedWidth) {
+        const width = Number.parseInt(savedWidth, 10);
+        if (!Number.isNaN(width) && width >= 320 && width <= 800) {
+          setPanelWidth(width);
+          setIsCollapsed(width <= 320);
         }
-      } catch (_error) {
-        // noop
       }
     };
 
@@ -111,17 +107,13 @@ export function JiraSidePanel({
   // Save panel width when it changes (but not when collapsed)
   useEffect(() => {
     if (projectId && !isCollapsed) {
-      try {
-        localStorage.setItem(`jira-panel-width-${projectId}`, panelWidth.toString());
-      } catch (_error) {
-        // noop
-      }
+      localStorage.setItem(`jira-panel-width-${projectId}`, panelWidth.toString());
     }
   }, [panelWidth, projectId, isCollapsed]);
 
   const loadConnectionStatus = async () => {
     try {
-      const result = await window.electronAPI.checkJiraConnection(projectId);
+      const result = await globalThis.electronAPI.checkJiraConnection(projectId);
       if (result.success) {
         setSyncStatus(result.data ?? null);
         if (!result.data?.connected) {
@@ -147,24 +139,20 @@ export function JiraSidePanel({
     setIsLoadingItems(true);
     setError(null);
     try {
-      const result = await window.electronAPI.getJiraIssues(projectId, 100);
+      const result = await globalThis.electronAPI.getJiraIssues(projectId, 100);
 
       if (result.success) {
         const workItems = result.data || [];
         setWorkItems(workItems);
 
         // Save to cache
-        try {
-          const cacheKey = `jira-workitems-cache-${projectId}`;
-          const cacheTimeKey = `jira-workitems-cache-time-${projectId}`;
-          const now = Date.now();
+        const cacheKey = `jira-workitems-cache-${projectId}`;
+        const cacheTimeKey = `jira-workitems-cache-time-${projectId}`;
+        const now = Date.now();
 
-          localStorage.setItem(cacheKey, JSON.stringify(workItems));
-          localStorage.setItem(cacheTimeKey, now.toString());
-          setLastCacheTime(now);
-        } catch (_cacheError) {
-          // noop
-        }
+        localStorage.setItem(cacheKey, JSON.stringify(workItems));
+        localStorage.setItem(cacheTimeKey, now.toString());
+        setLastCacheTime(now);
       } else {
         setError(result.error || 'Failed to load Jira issues');
       }
@@ -186,27 +174,23 @@ export function JiraSidePanel({
   // Load cached work items on component mount
   useEffect(() => {
     const loadCachedWorkItems = () => {
-      try {
-        const cacheKey = `jira-workitems-cache-${projectId}`;
-        const cacheTimeKey = `jira-workitems-cache-time-${projectId}`;
+      const cacheKey = `jira-workitems-cache-${projectId}`;
+      const cacheTimeKey = `jira-workitems-cache-time-${projectId}`;
 
-        const cachedData = localStorage.getItem(cacheKey);
-        const cachedTime = localStorage.getItem(cacheTimeKey);
+      const cachedData = localStorage.getItem(cacheKey);
+      const cachedTime = localStorage.getItem(cacheTimeKey);
 
-        if (cachedData && cachedTime) {
-          const cacheTime = parseInt(cachedTime, 10);
-          const now = Date.now();
-          const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
+      if (cachedData && cachedTime) {
+        const cacheTime = Number.parseInt(cachedTime, 10);
+        const now = Date.now();
+        const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
 
-          if (now - cacheTime < CACHE_DURATION) {
-            const workItems = JSON.parse(cachedData);
-            setWorkItems(workItems);
-            setLastCacheTime(cacheTime);
-            return;
-          }
+        if (now - cacheTime < CACHE_DURATION) {
+          const workItems = JSON.parse(cachedData);
+          setWorkItems(workItems);
+          setLastCacheTime(cacheTime);
+          return;
         }
-      } catch (_error) {
-        // noop
       }
     };
 
@@ -267,11 +251,11 @@ export function JiraSidePanel({
 
   // Get unique values for filters
   const uniqueTypes = useMemo(() => {
-    return Array.from(new Set(workItems.map((item) => item.workItemType))).sort();
+    return Array.from(new Set(workItems.map((item) => item.workItemType))).sort((a, b) => a.localeCompare(b));
   }, [workItems]);
 
   const uniqueStates = useMemo(() => {
-    return Array.from(new Set(workItems.map((item) => item.state))).sort();
+    return Array.from(new Set(workItems.map((item) => item.state))).sort((a, b) => a.localeCompare(b));
   }, [workItems]);
 
   // Selection handlers
@@ -320,26 +304,18 @@ export function JiraSidePanel({
   const toggleCollapse = useCallback(() => {
     if (isCollapsed) {
       let restoredWidth = 384;
-      try {
         const savedWidth = localStorage.getItem(`jira-panel-width-${projectId}`);
         if (savedWidth) {
-          const width = parseInt(savedWidth, 10);
+          const width = Number.parseInt(savedWidth, 10);
           if (!Number.isNaN(width) && width >= 320 && width <= 800) {
             restoredWidth = width;
           }
         }
-      } catch (_error) {
-        // noop
-      }
 
       setPanelWidth(restoredWidth);
       setIsCollapsed(false);
     } else {
-      try {
-        localStorage.setItem(`jira-panel-width-${projectId}`, panelWidth.toString());
-      } catch (_error) {
-        // noop
-      }
+      localStorage.setItem(`jira-panel-width-${projectId}`, panelWidth.toString());
 
       setPanelWidth(320);
       setIsCollapsed(true);
@@ -372,7 +348,7 @@ export function JiraSidePanel({
     e.dataTransfer.effectAllowed = 'copy';
     setDraggedIds(new Set(workItemIds));
 
-    // Créer un ghost avec liseré pour le drag image
+    // CrÃ©er un ghost avec liserÃ© pour le drag image
     const sourceEl = e.currentTarget as HTMLElement;
     const clone = sourceEl.cloneNode(true) as HTMLDivElement;
     clone.style.position = 'absolute';
@@ -392,7 +368,7 @@ export function JiraSidePanel({
     // Marquer le panel comme étant en cours de drag
     const panelElement = panelRef.current;
     if (panelElement) {
-      panelElement.setAttribute('data-dragging', 'true');
+      panelElement.dataset.dragging = 'true';
     }
 
     const customEvent = new CustomEvent('jira-drag-start', {
@@ -407,15 +383,15 @@ export function JiraSidePanel({
     setDraggedIds(new Set());
 
     // Nettoyer le ghost du drag image
-    if (dragImageRef.current?.parentNode) {
-      dragImageRef.current.parentNode.removeChild(dragImageRef.current);
+    if (dragImageRef.current) {
+      dragImageRef.current.remove();
       dragImageRef.current = null;
     }
 
     // Nettoyer l'attribut data-dragging
     const panelElement = panelRef.current;
     if (panelElement) {
-      panelElement.removeAttribute('data-dragging');
+      delete panelElement.dataset.dragging;
     }
     
     // Dispatch custom event for KanbanBoard to detect
@@ -450,7 +426,7 @@ export function JiraSidePanel({
         return;
       }
     } catch (_error) {
-      // Not our data, ignore
+      // Invalid JSON data - ignore and let it fall through
       return;
     }
   }, []);
@@ -494,12 +470,112 @@ export function JiraSidePanel({
 
   const selectedWorkItems = workItems.filter(item => selectedIds.has(item.id));
 
+  const renderWorkItemsContent = () => {
+    if (isLoadingItems) {
+      return (
+        <div className="flex items-center justify-center py-12">
+          <RefreshCw className="h-8 w-8 animate-spin text-muted-foreground" />
+        </div>
+      );
+    }
+
+    if (filteredItems.length === 0) {
+      return (
+        <div className="text-center py-12 text-muted-foreground px-4">
+          <p>No Jira issues found</p>
+          {(searchQuery || filters.workItemType !== 'all' || filters.state !== 'all') && (
+            <p className="text-sm mt-2">Try adjusting your filters</p>
+          )}
+        </div>
+      );
+    }
+
+    return (
+      <div className="p-4 space-y-2">
+        {filteredItems.map((item, index) => (
+          <div
+            key={index}
+            className={cn(
+              "flex items-start gap-3 p-3 rounded-md border transition-all cursor-pointer",
+              "hover:bg-muted/50",
+              "select-none", // Empêche la sélection de texte
+              selectedIds.has(item.id) && "bg-primary/10 border-primary/30 cursor-grab",
+              draggedIds.has(item.id) && "cursor-grabbing opacity-70 ring-2 ring-primary ring-offset-1 ring-offset-background rounded-md shadow-md"
+            )}
+            onClick={() => toggleItem(item.id)}
+            draggable={true}
+            onDragStart={(e) => {
+              if (selectedIds.has(item.id)) {
+                handleDragStart(e, Array.from(selectedIds));
+              } else {
+                handleDragStart(e, [item.id]);
+              }
+            }}
+            onDragEnd={handleDragEnd}
+          >
+            <Checkbox
+              checked={selectedIds.has(item.id)}
+              onCheckedChange={() => toggleItem(item.id)}
+              onClick={(e) => e.stopPropagation()}
+            />
+
+            {selectedIds.has(item.id) && (
+              <GripVertical className="h-4 w-4 text-muted-foreground cursor-grab" />
+            )}
+
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-2 mb-1">
+                <span className="font-mono text-xs text-muted-foreground select-none">
+                  {item.id}
+                </span>
+                <Badge variant="outline" className={cn(getTypeColor(item.workItemType), "select-none")}>
+                  {item.workItemType}
+                </Badge>
+                <Badge variant="outline" className="select-none">{item.state}</Badge>
+                {item.priority && (
+                  <Badge variant="outline" className={cn(getPriorityColor(item.priority), "select-none")}>
+                    {item.priority}
+                  </Badge>
+                )}
+              </div>
+              <h4 className="font-medium text-sm mb-1 truncate select-none">{item.title}</h4>
+              {item.description && (
+                <p className="text-xs text-muted-foreground line-clamp-2 select-none">
+                  {item.description}
+                </p>
+              )}
+              {item.assignedTo && (
+                <p className="text-xs text-muted-foreground mt-1 select-none">
+                  Assignee: {item.assignedTo}
+                </p>
+              )}
+              {item.tags.length > 0 && (
+                <div className="flex flex-wrap gap-1 mt-2">
+                  {item.tags.slice(0, 3).map((tag) => (
+                    <Badge key={tag} variant="secondary" className="text-xs select-none">
+                      {tag}
+                    </Badge>
+                  ))}
+                  {item.tags.length > 3 && (
+                    <Badge variant="secondary" className="text-xs select-none">
+                      +{item.tags.length - 3}
+                    </Badge>
+                  )}
+                </div>
+              )}
+            </div>
+          </div>
+        ))}
+      </div>
+    );
+  };
+
   if (!open) return null;
 
   return (
     <>
-      {/* Panel seulement - pas de conteneur qui bloque l'écran */}
-      {/* biome-ignore lint/a11y/noNoninteractiveElementInteractions lint/a11y/noStaticElementInteractions: interactive handler is intentional */}
+      {/* Panel seulement - pas de conteneur qui bloque l'Ã©cran */}
+{/* biome-ignore lint/a11y/noNoninteractiveElementInteractions lint/a11y/noStaticElementInteractions: interactive handler is intentional  */}
       <div
         ref={panelRef}
         className="fixed right-0 top-0 h-full bg-background border-l border-border shadow-2xl flex flex-col z-300"
@@ -520,7 +596,7 @@ export function JiraSidePanel({
               size="icon"
               onClick={toggleCollapse}
               className="h-7 w-7"
-              title={isCollapsed ? "Agrandir" : "Réduire"}
+              title={isCollapsed ? "Agrandir" : "RÃ©duire"}
             >
               {isCollapsed ? <ChevronLeft className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
             </Button>
@@ -656,7 +732,15 @@ export function JiraSidePanel({
                   disabled={isLoadingItems || isRefreshing}
                   title={isRefreshing ? "Refreshing..." : "Refresh (bypass cache)"}
                 >
-                  <RefreshCw className={`h-4 w-4 ${isRefreshing ? 'animate-spin text-primary' : isLoadingItems ? 'animate-spin' : ''}`} />
+                  {(() => {
+                    let refreshIconClass = '';
+                    if (isRefreshing) {
+                      refreshIconClass = 'animate-spin text-primary';
+                    } else if (isLoadingItems) {
+                      refreshIconClass = 'animate-spin';
+                    }
+                    return <RefreshCw className={`h-4 w-4 ${refreshIconClass}`} />;
+                  })()}
                 </Button>
               </div>
             )}
@@ -665,101 +749,7 @@ export function JiraSidePanel({
 
         {/* Work Items List */}
         <ScrollArea className="flex-1">
-          {isLoadingItems ? (
-            <div className="flex items-center justify-center py-12">
-              <RefreshCw className="h-8 w-8 animate-spin text-muted-foreground" />
-            </div>
-          ) : filteredItems.length === 0 ? (
-            <div className="text-center py-12 text-muted-foreground px-4">
-              <p>No Jira issues found</p>
-              {(searchQuery || filters.workItemType !== 'all' || filters.state !== 'all') && (
-                <p className="text-sm mt-2">Try adjusting your filters</p>
-              )}
-            </div>
-          ) : (
-            <div className="p-4 space-y-2">
-              {filteredItems.map((item) => (
-                // biome-ignore lint/a11y/noNoninteractiveElementInteractions: interactive handler is intentional
-                // biome-ignore lint/a11y/noStaticElementInteractions: interactive handler is intentional
-                // biome-ignore lint/a11y/useKeyWithClickEvents: keyboard events handled elsewhere
-                <div
-                  key={item.id}
-                  className={cn(
-                    "flex items-start gap-3 p-3 rounded-md border transition-all cursor-pointer",
-                    "hover:bg-muted/50",
-                    "select-none", // Empêche la sélection de texte
-                    selectedIds.has(item.id) && "bg-primary/10 border-primary/30 cursor-grab",
-                    draggedIds.has(item.id) && "cursor-grabbing opacity-70 ring-2 ring-primary ring-offset-1 ring-offset-background rounded-md shadow-md"
-                  )}
-                  onClick={() => toggleItem(item.id)}
-                  draggable={true} // Toujours draggable, pas seulement si sélectionné
-                  onDragStart={(e) => {
-                    // Si l'item est déjà sélectionné, dragger tous les items sélectionnés
-                    if (selectedIds.has(item.id)) {
-                      handleDragStart(e, Array.from(selectedIds));
-                    } else {
-                      // Sinon, dragger uniquement cet item
-                      handleDragStart(e, [item.id]);
-                    }
-                  }}
-                  onDragEnd={handleDragEnd}
-                >
-                  <Checkbox
-                    checked={selectedIds.has(item.id)}
-                    onCheckedChange={() => toggleItem(item.id)}
-                    onClick={(e) => e.stopPropagation()}
-                  />
-
-                  {selectedIds.has(item.id) && (
-                    <GripVertical className="h-4 w-4 text-muted-foreground cursor-grab" />
-                  )}
-
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 mb-1">
-                      <span className="font-mono text-xs text-muted-foreground select-none">
-                        {item.id}
-                      </span>
-                      <Badge variant="outline" className={cn(getTypeColor(item.workItemType), "select-none")}>
-                        {item.workItemType}
-                      </Badge>
-                      <Badge variant="outline" className="select-none">{item.state}</Badge>
-                      {item.priority && (
-                        <Badge variant="outline" className={cn(getPriorityColor(item.priority), "select-none")}>
-                          {item.priority}
-                        </Badge>
-                      )}
-                    </div>
-                    <h4 className="font-medium text-sm mb-1 truncate select-none">{item.title}</h4>
-                    {item.description && (
-                      <p className="text-xs text-muted-foreground line-clamp-2 select-none">
-                        {item.description}
-                      </p>
-                    )}
-                    {item.assignedTo && (
-                      <p className="text-xs text-muted-foreground mt-1 select-none">
-                        Assignee: {item.assignedTo}
-                      </p>
-                    )}
-                    {item.tags.length > 0 && (
-                      <div className="flex flex-wrap gap-1 mt-2">
-                        {item.tags.slice(0, 3).map((tag, idx) => (
-                          // biome-ignore lint/suspicious/noArrayIndexKey: no stable key available
-                          <Badge key={idx} variant="secondary" className="text-xs select-none">
-                            {tag}
-                          </Badge>
-                        ))}
-                        {item.tags.length > 3 && (
-                          <Badge variant="secondary" className="text-xs select-none">
-                            +{item.tags.length - 3}
-                          </Badge>
-                        )}
-                      </div>
-                    )}
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
+          {renderWorkItemsContent()}
         </ScrollArea>
 
         {/* Footer */}
@@ -788,7 +778,7 @@ export function JiraSidePanel({
         )}
 
         {/* Resize handle */}
-        {/* biome-ignore lint/a11y/noNoninteractiveElementInteractions lint/a11y/noStaticElementInteractions: interactive handler is intentional */}
+        {/* biome-ignore lint/a11y/noNoninteractiveElementInteractions lint/a11y/noStaticElementInteractions: interactive handler is intentional  */}
         <div
           className="absolute left-0 top-0 bottom-0 w-1 cursor-col-resize hover:bg-primary/20 transition-colors"
           onMouseDown={handleResizeStart}
@@ -800,3 +790,6 @@ export function JiraSidePanel({
       </>
   );
 }
+
+
+

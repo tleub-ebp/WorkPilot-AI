@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Azure DevOps Drop Zone Component
  * Provides a drop zone for Azure DevOps work items within Kanban columns
  */
@@ -81,7 +81,7 @@ export function AzureDevOpsDropZone({
   const hasItems = draggedWorkItems.length > 0;
 
   return (
-    // biome-ignore lint/a11y/noNoninteractiveElementInteractions: interactive handler is intentional
+{/* biome-ignore lint/a11y/noNoninteractiveElementInteractions: interactive handler is intentional */}
     <section
       className={cn('relative flex-1', className)}
       onDragOver={handleDragOver}
@@ -100,7 +100,7 @@ export function AzureDevOpsDropZone({
             <div className="flex items-center justify-center gap-2">
               <Download className="h-6 w-6 text-primary animate-bounce" />
               <ArrowRight className="h-4 w-4 text-primary" />
-              <div className="text-2xl">📋</div>
+              <div className="text-2xl">ðŸ“‹</div>
             </div>
             
             <div className="space-y-1">
@@ -142,3 +142,4 @@ export function AzureDevOpsDropZone({
     </section>
   );
 }
+

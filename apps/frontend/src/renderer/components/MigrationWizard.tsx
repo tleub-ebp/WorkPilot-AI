@@ -311,7 +311,7 @@ export const MigrationWizard: React.FC = () => {
 
             <div className="space-y-4">
               // biome-ignore lint/a11y/noLabelWithoutControl: label association is implicit
-              // biome-ignore lint/a11y/noLabelWithoutControl: intentional
+{/* biome-ignore lint/a11y/noLabelWithoutControl: intentional  */}
               <label className="flex items-center space-x-3">
                 <Checkbox
                   checked={config.enableLLM}
@@ -327,7 +327,7 @@ export const MigrationWizard: React.FC = () => {
               </label>
 
               // biome-ignore lint/a11y/noLabelWithoutControl: label association is implicit
-              // biome-ignore lint/a11y/noLabelWithoutControl: intentional
+{/* biome-ignore lint/a11y/noLabelWithoutControl: intentional  */}
               <label className="flex items-center space-x-3">
                 <Checkbox
                   checked={config.autoFix}
@@ -343,7 +343,7 @@ export const MigrationWizard: React.FC = () => {
               </label>
 
               // biome-ignore lint/a11y/noLabelWithoutControl: label association is implicit
-              // biome-ignore lint/a11y/noLabelWithoutControl: intentional
+{/* biome-ignore lint/a11y/noLabelWithoutControl: intentional  */}
               <label className="flex items-center space-x-3">
                 <Checkbox
                   checked={config.backupEnabled}
@@ -401,8 +401,8 @@ export const MigrationWizard: React.FC = () => {
             {transformations.length > 0 && (
               <div className="space-y-2 max-h-64 overflow-y-auto">
                 {transformations.map((t, i) => (
-                  // biome-ignore lint/suspicious/noArrayIndexKey: no stable key available
-                  <div key={i} className="flex items-center justify-between p-3 bg-gray-50 rounded">
+                // biome-ignore lint/suspicious/noArrayIndexKey: no stable key available
+                <div key={i} className="flex items-center justify-between p-3 bg-gray-50 rounded">
                     <div className="flex items-center space-x-2">
                       {t.llm_enhanced && (
                         <Zap className="w-4 h-4 text-yellow-500" />
@@ -538,3 +538,5 @@ export const MigrationWizard: React.FC = () => {
     </div>
   );
 };
+
+

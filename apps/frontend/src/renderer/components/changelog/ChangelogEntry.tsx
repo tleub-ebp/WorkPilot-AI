@@ -1,21 +1,21 @@
-import { GitCommit } from 'lucide-react';
+﻿import { GitCommit } from 'lucide-react';
 import { Checkbox } from '../ui/checkbox';
 import { Badge } from '../ui/badge';
 import { cn } from '../../lib/utils';
 import type { ChangelogTask, GitCommit as GitCommitType } from '../../../shared/types';
 
 interface TaskCardProps {
-  task: ChangelogTask;
-  isSelected: boolean;
-  onToggle: () => void;
+  readonly task: ChangelogTask;
+  readonly isSelected: boolean;
+  readonly onToggle: () => void;
 }
 
 export function TaskCard({ task, isSelected, onToggle }: TaskCardProps) {
   const completedDate = new Date(task.completedAt).toLocaleDateString();
 
   return (
-    // biome-ignore lint/a11y/noLabelWithoutControl: label association is implicit
     <label
+      htmlFor={`task-${task.id}`}
       className={cn(
         'flex flex-col rounded-lg border p-4 cursor-pointer transition-all',
         isSelected
@@ -25,6 +25,7 @@ export function TaskCard({ task, isSelected, onToggle }: TaskCardProps) {
     >
       <div className="flex items-start gap-3">
         <Checkbox
+          id={`task-${task.id}`}
           checked={isSelected}
           onCheckedChange={onToggle}
           className="mt-1"
@@ -53,7 +54,7 @@ export function TaskCard({ task, isSelected, onToggle }: TaskCardProps) {
 }
 
 interface CommitCardProps {
-  commit: GitCommitType;
+  readonly commit: GitCommitType;
 }
 
 export function CommitCard({ commit }: CommitCardProps) {
@@ -74,7 +75,7 @@ export function CommitCard({ commit }: CommitCardProps) {
           <span>{commitDate}</span>
           {commit.filesChanged !== undefined && (
             <span>
-              {commit.filesChanged} file{commit.filesChanged !== 1 ? 's' : ''}
+              {commit.filesChanged} file{commit.filesChanged === 1 ? '' : 's'}
             </span>
           )}
         </div>
@@ -82,3 +83,4 @@ export function CommitCard({ commit }: CommitCardProps) {
     </div>
   );
 }
+

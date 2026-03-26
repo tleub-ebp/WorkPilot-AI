@@ -1,4 +1,4 @@
-import { useState } from 'react';
+﻿import { useState } from 'react';
 import { ShieldAlert, Activity, AlertTriangle, BarChart3, Settings2 } from 'lucide-react';
 import { SettingsSection } from './SettingsSection';
 import { cn } from '@/lib/utils';
@@ -106,7 +106,7 @@ export function AnomalyDetectionSettings() {
             <div className="space-y-1">
               <div className="flex items-center justify-between">
                 // biome-ignore lint/a11y/noLabelWithoutControl: label association is implicit
-                // biome-ignore lint/a11y/noLabelWithoutControl: intentional
+{/* biome-ignore lint/a11y/noLabelWithoutControl: intentional  */}
                 <label className="text-xs font-medium text-muted-foreground">{t('sections.anomaly-detection.trustScore.pauseThreshold')}</label>
                 <span className="text-xs font-mono tabular-nums text-amber-600">{thresholds.trust_score_pause}</span>
               </div>
@@ -121,7 +121,7 @@ export function AnomalyDetectionSettings() {
             <div className="space-y-1">
               <div className="flex items-center justify-between">
                 // biome-ignore lint/a11y/noLabelWithoutControl: label association is implicit
-                // biome-ignore lint/a11y/noLabelWithoutControl: intentional
+{/* biome-ignore lint/a11y/noLabelWithoutControl: intentional  */}
                 <label className="text-xs font-medium text-muted-foreground">{t('sections.anomaly-detection.trustScore.terminateThreshold')}</label>
                 <span className="text-xs font-mono tabular-nums text-red-600">{thresholds.trust_score_terminate}</span>
               </div>
@@ -155,7 +155,7 @@ export function AnomalyDetectionSettings() {
               <div key={key} className="space-y-1">
                 <div className="flex items-center justify-between">
                   // biome-ignore lint/a11y/noLabelWithoutControl: label association is implicit
-                  // biome-ignore lint/a11y/noLabelWithoutControl: intentional
+{/* biome-ignore lint/a11y/noLabelWithoutControl: intentional  */}
                   <label className="text-xs font-medium text-muted-foreground">{label}</label>
                   <span className="text-xs font-mono tabular-nums text-foreground">{thresholds[key]}</span>
                 </div>
@@ -224,3 +224,6 @@ export function AnomalyDetectionSettings() {
     </SettingsSection>
   );
 }
+
+
+

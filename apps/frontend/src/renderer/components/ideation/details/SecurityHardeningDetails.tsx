@@ -1,4 +1,4 @@
-import {
+﻿import {
   Shield,
   AlertTriangle,
   AlertCircle,
@@ -86,7 +86,7 @@ export function SecurityHardeningDetails({ idea }: SecurityHardeningDetailsProps
           </h3>
           <ul className="space-y-1">
             {idea.affectedFiles.map((file, i) => (
-              // biome-ignore lint/suspicious/noArrayIndexKey: no stable key available
+// biome-ignore lint/suspicious/noArrayIndexKey: no stable key available 
               <li key={i} className="text-sm font-mono text-muted-foreground">
                 {file}
               </li>
@@ -104,7 +104,7 @@ export function SecurityHardeningDetails({ idea }: SecurityHardeningDetailsProps
           </h3>
           <ul className="space-y-1">
             {idea.references.map((ref, i) => (
-              // biome-ignore lint/suspicious/noArrayIndexKey: no stable key available
+// biome-ignore lint/suspicious/noArrayIndexKey: no stable key available 
               <li key={i} className="text-sm text-primary hover:underline">
                 <a href={ref} target="_blank" rel="noopener noreferrer">{ref}</a>
               </li>
@@ -119,7 +119,7 @@ export function SecurityHardeningDetails({ idea }: SecurityHardeningDetailsProps
           <h3 className="text-sm font-medium mb-2">Compliance</h3>
           <div className="flex flex-wrap gap-1">
             {idea.compliance.map((comp, i) => (
-              // biome-ignore lint/suspicious/noArrayIndexKey: no stable key available
+// biome-ignore lint/suspicious/noArrayIndexKey: no stable key available 
               <Badge key={i} variant="outline" className="text-xs">
                 {comp}
               </Badge>
@@ -130,3 +130,5 @@ export function SecurityHardeningDetails({ idea }: SecurityHardeningDetailsProps
     </>
   );
 }
+
+

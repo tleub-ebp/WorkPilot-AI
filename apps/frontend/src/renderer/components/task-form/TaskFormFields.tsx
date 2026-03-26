@@ -1,4 +1,4 @@
-/**
+﻿/**
  * TaskFormFields - Shared form fields component for task create/edit
  *
  * Bundles the common form fields used in both TaskCreationWizard and TaskEditDialog:
@@ -324,7 +324,7 @@ export function TaskFormFields({
           </div>
           <div className="flex items-center justify-between">
             <p id={`${prefix}description-help`} className="text-xs text-muted-foreground">
-              {t('images.pasteHint', { shortcut: navigator.platform.includes('Mac') ? '⌘V' : 'Ctrl+V' })}
+              {t('images.pasteHint', { shortcut: navigator.platform.includes('Mac') ? 'âŒ˜V' : 'Ctrl+V' })}
             </p>
             <Button
               type="button"
@@ -399,7 +399,7 @@ export function TaskFormFields({
                 {t('tasks:screenshot.capture')}
               </Button>
               <span className="text-xs text-muted-foreground">
-                {t('images.pasteHint', { shortcut: navigator.platform.includes('Mac') ? '⌘V' : 'Ctrl+V' })}
+                {t('images.pasteHint', { shortcut: navigator.platform.includes('Mac') ? 'âŒ˜V' : 'Ctrl+V' })}
               </span>
             </div>
 
@@ -559,3 +559,6 @@ export function TaskFormFields({
     </>
   );
 }
+
+
+

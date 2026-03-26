@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+﻿import { useState, useEffect, useCallback } from 'react';
 import {
   Layers,
   CheckCircle2,
@@ -297,18 +297,19 @@ export function BatchReviewWizard({
               </h4>
               <div className="grid grid-cols-2 gap-2">
                 {singleIssues.slice(0, 10).map((issue) => (
-                  // biome-ignore lint/a11y/noNoninteractiveElementInteractions: interactive handler is intentional
-                  // biome-ignore lint/a11y/noStaticElementInteractions: interactive handler is intentional
-                  // biome-ignore lint/a11y/useKeyWithClickEvents: keyboard events handled elsewhere
-                  <div
-                    key={issue.issueNumber}
-                    onClick={() => toggleSingleIssueSelection(issue.issueNumber)}
-                    className={`p-2 rounded border text-sm truncate cursor-pointer transition-colors ${
-                      selectedSingleIssueNumbers.has(issue.issueNumber)
-                        ? 'border-primary bg-primary/5'
-                        : 'border-border hover:bg-accent'
-                    }`}
-                  >
+                  <>
+                    {/* biome-ignore lint/a11y/noNoninteractiveElementInteractions: interactive handler is intentional */}
+                    {/* biome-ignore lint/a11y/noStaticElementInteractions: interactive handler is intentional */}
+                    {/* biome-ignore lint/a11y/useKeyWithClickEvents: keyboard events handled elsewhere  */}
+                    <div
+                      key={issue.issueNumber}
+                      onClick={() => toggleSingleIssueSelection(issue.issueNumber)}
+                      className={`p-2 rounded border text-sm truncate cursor-pointer transition-colors ${
+                        selectedSingleIssueNumbers.has(issue.issueNumber)
+                          ? 'border-primary bg-primary/5'
+                          : 'border-border hover:bg-accent'
+                      }`}
+                    >
                     <Checkbox
                       checked={selectedSingleIssueNumbers.has(issue.issueNumber)}
                       className="inline-block mr-2"
@@ -318,6 +319,7 @@ export function BatchReviewWizard({
                     <span className="text-muted-foreground">#{issue.issueNumber}</span>{' '}
                     {issue.title}
                   </div>
+                  </>
                 ))}
                 {singleIssues.length > 10 && (
                   <div className="p-2 text-sm text-muted-foreground">
@@ -525,7 +527,7 @@ function BatchCard({
             {batch.commonThemes.length > 0 && (
               <div className="flex flex-wrap gap-1 px-6 pt-2">
                 {batch.commonThemes.map((theme, i) => (
-                  // biome-ignore lint/suspicious/noArrayIndexKey: no stable key available
+// biome-ignore lint/suspicious/noArrayIndexKey: no stable key available 
                   <Badge key={i} variant="secondary" className="text-xs">
                     {theme}
                   </Badge>
@@ -538,3 +540,6 @@ function BatchCard({
     </div>
   );
 }
+
+
+

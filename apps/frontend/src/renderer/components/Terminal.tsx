@@ -1,4 +1,4 @@
-import { useEffect, useRef, useCallback, useState, useMemo, forwardRef, useImperativeHandle } from 'react';
+﻿import { useEffect, useRef, useCallback, useState, useMemo, forwardRef, useImperativeHandle } from 'react';
 import { useDroppable, useDndContext } from '@dnd-kit/core';
 import '@xterm/xterm/css/xterm.css';
 import { FileDown } from 'lucide-react';
@@ -162,7 +162,7 @@ export const Terminal = forwardRef<TerminalHandle, TerminalProps>(function Termi
     const sequence = ++resizeSequenceRef.current;
     lastResizeTimeRef.current = Date.now();
 
-    window.electronAPI.resizeTerminal(id, cols, rows).then((result) => {
+    globalThis.electronAPI.resizeTerminal(id, cols, rows).then((result) => {
       // Only update dimensions if this is still the latest resize operation
       // This prevents race conditions where an earlier failed call overwrites a later successful one
       if (sequence !== resizeSequenceRef.current) {
@@ -299,7 +299,7 @@ export const Terminal = forwardRef<TerminalHandle, TerminalProps>(function Termi
 
       // Skip redundant resize calls if dimensions haven't changed
       const lastDims = lastPtyDimensionsRef.current;
-      if (lastDims && lastDims.cols === cols && lastDims.rows === rows) {
+      if (lastDims?.cols === cols && lastDims.rows === rows) {
         return;
       }
 
@@ -375,8 +375,8 @@ export const Terminal = forwardRef<TerminalHandle, TerminalProps>(function Termi
       if (pendingWorktreeConfigRef.current) {
         const config = pendingWorktreeConfigRef.current;
         try {
-          window.electronAPI.setTerminalWorktreeConfig(id, config);
-          window.electronAPI.setTerminalTitle(id, config.name);
+          globalThis.electronAPI.setTerminalWorktreeConfig(id, config);
+          globalThis.electronAPI.setTerminalTitle(id, config.name);
         } catch (error) {
           console.error('Failed to sync worktree config after PTY creation:', error);
         }
@@ -442,13 +442,13 @@ export const Terminal = forwardRef<TerminalHandle, TerminalProps>(function Termi
     prevIsExpandedRef.current = isExpanded;
 
     // RAF fallback for test environments where requestAnimationFrame may not be defined
-    const raf = typeof requestAnimationFrame !== 'undefined'
-      ? requestAnimationFrame
-      : (cb: FrameRequestCallback) => setTimeout(() => cb(Date.now()), 0) as unknown as number;
+    const raf = typeof requestAnimationFrame === 'undefined'
+      ? (cb: FrameRequestCallback) => setTimeout(() => cb(Date.now()), 0) as unknown as number
+      : requestAnimationFrame;
 
-    const cancelRaf = typeof cancelAnimationFrame !== 'undefined'
-      ? cancelAnimationFrame
-      : (id: number) => clearTimeout(id);
+    const cancelRaf = typeof cancelAnimationFrame === 'undefined'
+      ? (id: number) => clearTimeout(id)
+      : cancelAnimationFrame;
 
     let rafId: number | null = null;
     let retryTimeoutId: ReturnType<typeof setTimeout> | null = null;
@@ -593,7 +593,7 @@ export const Terminal = forwardRef<TerminalHandle, TerminalProps>(function Termi
         if (currentTerminal?.pendingClaudeResume) {
           // Clear the pending flag and trigger the actual resume
           useTerminalStore.getState().setPendingClaudeResume(id, false);
-          window.electronAPI.activateDeferredClaudeResume(id);
+          globalThis.electronAPI.activateDeferredClaudeResume(id);
         }
       }, 100); // Small delay to let React finish batched updates
 
@@ -623,8 +623,8 @@ export const Terminal = forwardRef<TerminalHandle, TerminalProps>(function Termi
     };
 
     // Use capture phase to get the event before xterm
-    window.addEventListener('keydown', handleKeyDown, true);
-    return () => window.removeEventListener('keydown', handleKeyDown, true);
+    globalThis.addEventListener('keydown', handleKeyDown, true);
+    return () => globalThis.removeEventListener('keydown', handleKeyDown, true);
   }, [isActive, onClose, onToggleExpand]);
 
   // Cleanup on unmount
@@ -652,7 +652,7 @@ export const Terminal = forwardRef<TerminalHandle, TerminalProps>(function Termi
 
   const handleInvokeClaude = useCallback(() => {
     setClaudeMode(id, true);
-    window.electronAPI.invokeClaudeInTerminal(id, effectiveCwd);
+    globalThis.electronAPI.invokeClaudeInTerminal(id, effectiveCwd);
   }, [id, effectiveCwd, setClaudeMode]);
 
   const handleClick = useCallback(() => {
@@ -663,7 +663,7 @@ export const Terminal = forwardRef<TerminalHandle, TerminalProps>(function Termi
   const handleTitleChange = useCallback((newTitle: string) => {
     updateTerminal(id, { title: newTitle });
     // Sync to main process so title persists across hot reloads
-    window.electronAPI.setTerminalTitle(id, newTitle);
+    globalThis.electronAPI.setTerminalTitle(id, newTitle);
   }, [id, updateTerminal]);
 
   const handleTaskSelect = useCallback((taskId: string) => {
@@ -673,7 +673,7 @@ export const Terminal = forwardRef<TerminalHandle, TerminalProps>(function Termi
     setAssociatedTask(id, taskId);
     updateTerminal(id, { title: selectedTask.title });
     // Sync to main process so title persists across hot reloads
-    window.electronAPI.setTerminalTitle(id, selectedTask.title);
+    globalThis.electronAPI.setTerminalTitle(id, selectedTask.title);
 
     const contextMessage = `I'm working on: ${selectedTask.title}
 
@@ -682,14 +682,14 @@ ${selectedTask.description}
 
 Please confirm you're ready by saying: I'm ready to work on ${selectedTask.title} - Context is loaded.`;
 
-    window.electronAPI.sendTerminalInput(id, contextMessage + '\r');
+    globalThis.electronAPI.sendTerminalInput(id, contextMessage + '\r');
   }, [id, tasks, setAssociatedTask, updateTerminal]);
 
   const handleClearTask = useCallback(() => {
     setAssociatedTask(id, undefined);
     updateTerminal(id, { title: 'Claude' });
     // Sync to main process so title persists across hot reloads
-    window.electronAPI.setTerminalTitle(id, 'Claude');
+    globalThis.electronAPI.setTerminalTitle(id, 'Claude');
   }, [id, setAssociatedTask, updateTerminal]);
 
   // Worktree handlers
@@ -714,16 +714,16 @@ Please confirm you're ready by saying: I'm ready to work on ${selectedTask.title
     setWorktreeConfig(id, config);
     // Try to sync to main process (may be ignored if terminal doesn't exist yet)
     // The onCreated callback will re-sync using pendingWorktreeConfigRef
-    window.electronAPI.setTerminalWorktreeConfig(id, config);
+    globalThis.electronAPI.setTerminalWorktreeConfig(id, config);
 
     // Update terminal title and cwd to worktree path
     updateTerminal(id, { title: config.name, cwd: config.worktreePath });
     // Try to sync to main process (may be ignored if terminal doesn't exist yet)
-    window.electronAPI.setTerminalTitle(id, config.name);
+    globalThis.electronAPI.setTerminalTitle(id, config.name);
 
     // Destroy current PTY - a new one will be created in the worktree directory
     if (isCreatedRef.current) {
-      await window.electronAPI.destroyTerminal(id);
+      await globalThis.electronAPI.destroyTerminal(id);
       isCreatedRef.current = false;
     }
 
@@ -749,7 +749,7 @@ Please confirm you're ready by saying: I'm ready to work on ${selectedTask.title
 
     const preferredIDE = settings.preferredIDE || 'vscode';
     try {
-      await window.electronAPI.worktreeOpenInIDE(
+      await globalThis.electronAPI.worktreeOpenInIDE(
         worktreePath,
         preferredIDE,
         settings.customIDEPath
@@ -774,10 +774,10 @@ Please confirm you're ready by saying: I'm ready to work on ${selectedTask.title
   const showClaudeBusyIndicator = terminal?.isClaudeMode && isClaudeBusy !== undefined;
 
   return (
-    // biome-ignore lint/a11y/noNoninteractiveElementInteractions: interactive handler is intentional
-    // biome-ignore lint/a11y/noStaticElementInteractions: interactive handler is intentional
-    // biome-ignore lint/a11y/useKeyWithClickEvents: keyboard events handled elsewhere
     <div
+      // biome-ignore lint/a11y/noNoninteractiveElementInteractions: interactive handler is intentional
+      // biome-ignore lint/a11y/noStaticElementInteractions: interactive handler is intentional
+      // biome-ignore lint/a11y/useKeyWithClickEvents: keyboard events handled elsewhere
       ref={setDropRef}
       className={cn(
         'flex h-full flex-col rounded-lg border bg-[#0B0B0F] overflow-hidden transition-all relative',

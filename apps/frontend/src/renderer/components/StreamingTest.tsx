@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+﻿import React, { useState } from 'react';
 import { Button } from './ui/button';
 import { Card } from './ui/card';
 import { Input } from './ui/input';
@@ -161,7 +161,7 @@ export function StreamingTest({ tasks, onTaskStart }: StreamingTestProps) {
 
             <div>
               // biome-ignore lint/a11y/useSemanticElements: custom element maintains accessibility
-              // biome-ignore lint/a11y/useSemanticElements: intentional
+{/* biome-ignore lint/a11y/useSemanticElements: intentional  */}
               <div className="block text-sm font-medium mb-2" role="status" aria-live="polite">
                 {t('streaming:test.connectionStatus')}
               </div>
@@ -223,3 +223,6 @@ export function StreamingTest({ tasks, onTaskStart }: StreamingTestProps) {
     </Card>
   );
 }
+
+
+

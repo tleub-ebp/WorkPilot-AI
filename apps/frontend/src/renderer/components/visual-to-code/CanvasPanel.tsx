@@ -1,10 +1,10 @@
-/**
+﻿/**
  * CanvasPanel
  * Interactive visual programming canvas (no-code/low-code).
- * - Flowchart → Code
- * - Architecture diagrams → Implementation
- * - Mockup → Frontend code
- * - Reverse: Code → Visual representation
+ * - Flowchart â†’ Code
+ * - Architecture diagrams â†’ Implementation
+ * - Mockup â†’ Frontend code
+ * - Reverse: Code â†’ Visual representation
  */
 
 import React, { useState, useRef, useEffect } from 'react';
@@ -86,7 +86,7 @@ export const CanvasPanel: React.FC = () => {
     ],
   };
 
-  // ── AI generation state ─────────────────────────────────────────────
+  // â”€â”€ AI generation state â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   const [isAiRunning, setIsAiRunning] = useState(false);
   const [aiStatus, setAiStatus] = useState('');
   const [showCodeResult, setShowCodeResult] = useState(false);
@@ -119,7 +119,7 @@ export const CanvasPanel: React.FC = () => {
     setCodeResult(result);
     setSelectedCodeFile(0);
     setShowCodeResult(true);
-    toast({ title: t('codeGenerated', 'Code généré !'), description: result.summary });
+    toast({ title: t('codeGenerated', 'Code gÃ©nÃ©rÃ© !'), description: result.summary });
   };
 
   const handleCodeToVisualComplete = (result: CodeToVisualResult) => {
@@ -138,7 +138,7 @@ export const CanvasPanel: React.FC = () => {
     setNodes(newNodes);
     setEdges(newEdges);
     setIsJsonSaved(false);
-    toast({ title: t('codeToVisualDone', 'Diagramme généré !'), description: result.summary });
+    toast({ title: t('codeToVisualDone', 'Diagramme gÃ©nÃ©rÃ© !'), description: result.summary });
   };
 
   // Subscribe to backend events once on mount
@@ -161,11 +161,11 @@ export const CanvasPanel: React.FC = () => {
       return;
     }
     if (nodes.length === 0) {
-      toast({ title: t('emptyDiagram', 'Diagramme vide'), description: t('addBlocksFirst', 'Ajoutez des blocs avant de générer du code.'), variant: 'destructive' });
+      toast({ title: t('emptyDiagram', 'Diagramme vide'), description: t('addBlocksFirst', 'Ajoutez des blocs avant de gÃ©nÃ©rer du code.'), variant: 'destructive' });
       return;
     }
     setIsAiRunning(true);
-    setAiStatus(t('starting', 'Démarrage…'));
+    setAiStatus(t('starting', 'DÃ©marrageâ€¦'));
     const diagramJson = JSON.stringify({ nodes, edges, diagramType });
     await globalThis.electronAPI.runVisualProgramming({
       action: 'generate-code',
@@ -183,7 +183,7 @@ export const CanvasPanel: React.FC = () => {
       return;
     }
     setIsAiRunning(true);
-    setAiStatus(t('starting', 'Démarrage…'));
+    setAiStatus(t('starting', 'DÃ©marrageâ€¦'));
     await globalThis.electronAPI.runVisualProgramming({
       action: 'code-to-visual',
       // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
@@ -241,8 +241,8 @@ export const CanvasPanel: React.FC = () => {
           setIsJsonSaved(true);
           setShowSaveAsDialog(false);
           toast({
-            title: t('saveSuccess', 'Sauvegarde réussie'),
-            description: `${t('fileSavedIn', 'Fichier sauvegardé dans')} ${folderPath}`
+            title: t('saveSuccess', 'Sauvegarde rÃ©ussie'),
+            description: `${t('fileSavedIn', 'Fichier sauvegardÃ© dans')} ${folderPath}`
           });
         } else {
           toast({
@@ -253,7 +253,7 @@ export const CanvasPanel: React.FC = () => {
       } else {
         toast({
           title: t('saveError', 'Electron API non disponible'),
-          description: 'Impossible de sauvegarder le fichier côté client.',
+          description: 'Impossible de sauvegarder le fichier cÃ´tÃ© client.',
         });
       }
     // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
@@ -325,7 +325,7 @@ export const CanvasPanel: React.FC = () => {
     const pascalType = pendingNode.type.charAt(0).toUpperCase() + pendingNode.type.slice(1);
     let label = `${framework} (${pascalType})`;
     if (pendingNode.type === 'custom') {
-      const customName = globalThis.prompt(t('customBlockPrompt', 'Nom du bloc personnalisé?'));
+      const customName = globalThis.prompt(t('customBlockPrompt', 'Nom du bloc personnalisÃ©?'));
       if (customName) label = customName;
     }
     setNodes((nds) => [
@@ -500,7 +500,7 @@ export const CanvasPanel: React.FC = () => {
     <div className="flex flex-col h-full flex-1 relative">
       {/* Toolbar */}
       <div className="flex items-center gap-1 px-2 py-1.5 border-b bg-background shrink-0">
-        {/* Group 1 — Diagram type selector */}
+        {/* Group 1 â€” Diagram type selector */}
         <div className="flex items-center gap-0.5 p-0.5 bg-muted rounded-md">
           {DIAGRAM_OPTIONS.map(({ type, icon, label }) => (
             <button
@@ -522,7 +522,7 @@ export const CanvasPanel: React.FC = () => {
 
         <div className="h-5 w-px bg-border mx-0.5" />
 
-        {/* Group 2 — Canvas editing */}
+        {/* Group 2 â€” Canvas editing */}
         <Button
           size="sm" variant="ghost"
           onClick={handleAddNode}
@@ -538,32 +538,32 @@ export const CanvasPanel: React.FC = () => {
           onClick={() => codeToVisualInputRef.current?.click()}
           disabled={isAiRunning}
           className="gap-1.5 h-7 px-2 text-xs"
-          title={t('reverseTooltip', 'Analyser un fichier source et générer le diagramme correspondant')}
+          title={t('reverseTooltip', 'Analyser un fichier source et gÃ©nÃ©rer le diagramme correspondant')}
         >
           <ArrowLeftRight className="h-3.5 w-3.5" />
-          <span className="hidden md:inline">{t('reverse', 'Code → Visuel')}</span>
+          <span className="hidden md:inline">{t('reverse', 'Code â†’ Visuel')}</span>
         </Button>
 
         <div className="h-5 w-px bg-border mx-0.5" />
 
-        {/* Group 3 — AI: primary action */}
+        {/* Group 3 â€” AI: primary action */}
         <Button
           size="sm"
           onClick={handleGenerateCode}
           disabled={isAiRunning || nodes.length === 0}
-          title={t('generateCodeTooltip', 'Générer du code à partir du diagramme courant')}
+          title={t('generateCodeTooltip', 'GÃ©nÃ©rer du code Ã  partir du diagramme courant')}
           className="gap-1.5 h-7 px-3 text-xs bg-violet-600 hover:bg-violet-700 text-white"
         >
           {isAiRunning
             ? <Loader2 className="h-3.5 w-3.5 animate-spin" />
             : <Sparkles className="h-3.5 w-3.5" />}
-          {isAiRunning ? (aiStatus || t('generating', 'Génération…')) : t('generateCode', 'Générer le code')}
+          {isAiRunning ? (aiStatus || t('generating', 'GÃ©nÃ©rationâ€¦')) : t('generateCode', 'GÃ©nÃ©rer le code')}
         </Button>
 
         {/* Spacer */}
         <div className="flex-1" />
 
-        {/* Group 4 — File operations */}
+        {/* Group 4 â€” File operations */}
         <Button
           size="sm" variant="ghost"
           onClick={handleExportCode}
@@ -577,7 +577,7 @@ export const CanvasPanel: React.FC = () => {
           size="sm" variant="ghost"
           onClick={handleSaveAs}
           className="gap-1.5 h-7 px-2 text-xs relative"
-          title={t('saveAs', 'Enregistrer sous…')}
+          title={t('saveAs', 'Enregistrer sousâ€¦')}
         >
           <Save className="h-3.5 w-3.5" />
           <span className="hidden lg:inline">{t('saveAs', 'Enregistrer')}</span>
@@ -624,7 +624,7 @@ export const CanvasPanel: React.FC = () => {
       <Dialog open={showFrameworkModal} onOpenChange={setShowFrameworkModal}>
         <DialogContent>
           <DialogTitle>{t('chooseFramework')}</DialogTitle>
-          <DialogDescription>{t('chooseFrameworkDesc', 'Sélectionnez le framework ou la technologie pour ce bloc.')}</DialogDescription>
+          <DialogDescription>{t('chooseFrameworkDesc', 'SÃ©lectionnez le framework ou la technologie pour ce bloc.')}</DialogDescription>
           {pendingNode && (
             <Select value={selectedFramework} onValueChange={(fw) => {
               setSelectedFramework(fw);
@@ -649,7 +649,7 @@ export const CanvasPanel: React.FC = () => {
           </div>
           <div className="mt-4">
             // biome-ignore lint/a11y/noLabelWithoutControl: label association is implicit
-            // biome-ignore lint/a11y/noLabelWithoutControl: intentional
+{/* biome-ignore lint/a11y/noLabelWithoutControl: intentional  */}
             <label className="block text-xs font-bold mb-1">{t('explorerRoot', 'Racine de l\'explorateur :')}</label>
             <div className="flex gap-2">
               <input
@@ -660,7 +660,7 @@ export const CanvasPanel: React.FC = () => {
                 placeholder="C:\\ ou /"
               />
               <Button variant="secondary" onClick={() => setExplorerRoot(explorerRootInput)} disabled={explorerRootInput.length === 0}>
-                {t('selectFolder', 'Sélectionner')}
+                {t('selectFolder', 'SÃ©lectionner')}
               </Button>
             </div>
           </div>
@@ -672,7 +672,7 @@ export const CanvasPanel: React.FC = () => {
           </div>
           <div className="mt-4">
             // biome-ignore lint/a11y/noLabelWithoutControl: label association is implicit
-            // biome-ignore lint/a11y/noLabelWithoutControl: intentional
+{/* biome-ignore lint/a11y/noLabelWithoutControl: intentional  */}
             <label className="block text-xs font-bold mb-1">{t('fileNameLabel', 'Nom du fichier :')}</label>
             <input
               type="text"
@@ -684,7 +684,7 @@ export const CanvasPanel: React.FC = () => {
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={confirmSaveAs} disabled={!selectedFolder || !saveAsFileName || saveAsFileName.trim().length === 0}>
-              {t('save', 'Sauvegarder dans le dossier sélectionné')}
+              {t('save', 'Sauvegarder dans le dossier sÃ©lectionnÃ©')}
             </Button>
             <Button variant="ghost" onClick={cancelSaveAs}>{t('cancel', 'Annuler')}</Button>
           </DialogFooter>
@@ -694,7 +694,7 @@ export const CanvasPanel: React.FC = () => {
       {/* Generated Code Dialog */}
       <Dialog open={showCodeResult} onOpenChange={setShowCodeResult}>
         <DialogContent style={{ maxWidth: '80vw', maxHeight: '90vh', overflowY: 'auto' }}>
-          <DialogTitle>{t('generatedCodeTitle', 'Code généré par IA')}</DialogTitle>
+          <DialogTitle>{t('generatedCodeTitle', 'Code gÃ©nÃ©rÃ© par IA')}</DialogTitle>
           {codeResult && (
             <>
               <DialogDescription>{codeResult.summary}</DialogDescription>
@@ -740,7 +740,7 @@ export const CanvasPanel: React.FC = () => {
                     );
                   }}
                 >
-                  {t('downloadFile', 'Télécharger ce fichier')}
+                  {t('downloadFile', 'TÃ©lÃ©charger ce fichier')}
                 </Button>
                 <Button
                   variant="outline"
@@ -753,7 +753,7 @@ export const CanvasPanel: React.FC = () => {
                     });
                   }}
                 >
-                  {t('downloadAll', 'Tout télécharger')}
+                  {t('downloadAll', 'Tout tÃ©lÃ©charger')}
                 </Button>
                 <Button variant="ghost" onClick={() => setShowCodeResult(false)}>
                   {t('close', 'Fermer')}
@@ -766,3 +766,6 @@ export const CanvasPanel: React.FC = () => {
     </div>
   );
 };
+
+
+

@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+﻿import { useState, useEffect, useCallback } from "react";
 import { useTranslation } from "react-i18next";
 import {
   Check,
@@ -58,21 +58,23 @@ const _UPDATE_CHECK_INTERVAL_MS = 5 * 60 * 1000; // Check for updates every 5 mi
  */
 function CopilotIcon({ className }: CopilotIconProps) {
   return (
-    // biome-ignore lint/a11y/noSvgWithoutTitle: SVG is decorative
-    <svg
-      className={className}
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    >
-      <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2z" />
-      <path d="M8 14s1.5 2 4 2 4-2 4-2" />
-      <circle cx="9" cy="10" r="1.25" fill="currentColor" stroke="none" />
-      <circle cx="15" cy="10" r="1.25" fill="currentColor" stroke="none" />
-    </svg>
+    <>
+      {/* biome-ignore lint/a11y/noSvgWithoutTitle: SVG is decorative */}
+      <svg
+        className={className}
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      >
+        <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2z" />
+        <path d="M8 14s1.5 2 4 2 4-2 4-2" />
+        <circle cx="9" cy="10" r="1.25" fill="currentColor" stroke="none" />
+        <circle cx="15" cy="10" r="1.25" fill="currentColor" stroke="none" />
+      </svg>
+    </>
   );
 }
 
@@ -338,7 +340,7 @@ export function CopilotCliStatusBadge({ className, onNavigateToTerminals }: Copi
       case "not-found":
         return t("copilot:copilotCliExtensionNotInstalled", "Copilot CLI extension not installed");
       case "gh-missing":
-        return t("copilot:gitHubCliNotFound", "GitHub CLI (gh) not found — required for Copilot");
+        return t("copilot:gitHubCliNotFound", "GitHub CLI (gh) not found â€” required for Copilot");
       case "error":
         return t("copilot:errorCheckingCopilotCli", "Error checking Copilot CLI");
     }
@@ -646,3 +648,4 @@ export function CopilotCliStatusBadge({ className, onNavigateToTerminals }: Copi
     </Popover>
   );
 }
+

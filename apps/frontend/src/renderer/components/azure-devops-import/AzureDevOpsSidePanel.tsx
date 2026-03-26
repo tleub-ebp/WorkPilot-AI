@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Azure DevOps Side Panel Component
  * Provides a sliding panel for importing Azure DevOps work items with drag & drop
  */
@@ -52,7 +52,7 @@ export function AzureDevOpsSidePanel({
   const [searchQuery, setSearchQuery] = useState('');
   const panelRef = useRef<HTMLDivElement>(null);
 
-  // Gérer la fermeture par clic en dehors du panel
+  // GÃ©rer la fermeture par clic en dehors du panel
   useEffect(() => {
     if (!open) return;
 
@@ -402,7 +402,7 @@ export function AzureDevOpsSidePanel({
     e.dataTransfer.effectAllowed = 'copy';
     setDraggedIds(new Set(workItemIds));
 
-    // Créer un ghost avec liseré pour le drag image
+    // CrÃ©er un ghost avec liserÃ© pour le drag image
     const sourceEl = e.currentTarget as HTMLElement;
     const clone = sourceEl.cloneNode(true) as HTMLDivElement;
     clone.style.position = 'absolute';
@@ -419,7 +419,7 @@ export function AzureDevOpsSidePanel({
     e.dataTransfer.setDragImage(clone, clone.offsetWidth / 2, 20);
     dragImageRef.current = clone;
 
-    // Marquer le panel comme étant en cours de drag
+    // Marquer le panel comme Ã©tant en cours de drag
     const panelElement = panelRef.current;
     if (panelElement) {
       panelElement.dataset.dragging = 'true';
@@ -439,7 +439,7 @@ export function AzureDevOpsSidePanel({
 
     // Nettoyer le ghost du drag image
     if (dragImageRef.current?.parentNode) {
-      dragImageRef.current.parentNode.removeChild(dragImageRef.current);
+      dragImageRef.current.remove();
       dragImageRef.current = null;
     }
 
@@ -522,9 +522,9 @@ export function AzureDevOpsSidePanel({
 
   return (
     <>
-      {/* Panel seulement - pas de conteneur qui bloque l'écran */}
+      {/* Panel seulement - pas de conteneur qui bloque l'Ã©cran */}
       // biome-ignore lint/a11y/noNoninteractiveElementInteractions: interactive handler is intentional
-      // biome-ignore lint/a11y/noNoninteractiveElementInteractions: intentional
+      // biome-ignore lint/a11y/noNoninteractiveElementInteractions: intentional 
       <section 
         ref={panelRef}
         className="fixed right-0 top-0 h-full bg-background border-l border-border shadow-2xl flex flex-col z-300"
@@ -547,7 +547,7 @@ export function AzureDevOpsSidePanel({
               size="icon"
               onClick={toggleCollapse}
               className="h-7 w-7"
-              title={isCollapsed ? "Agrandir" : "Réduire"}
+              title={isCollapsed ? "Agrandir" : "RÃ©duire"}
             >
               {isCollapsed ? <ChevronLeft className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
             </Button>
@@ -692,7 +692,7 @@ export function AzureDevOpsSidePanel({
                   size="sm"
                   onClick={handleRefresh}
                   disabled={isLoadingItems || isRefreshing}
-                  title={isRefreshing ? "Rafraîchissement forcé..." : "Rafraîchir (contourne le cache)"}
+                  title={isRefreshing ? "RafraÃ®chissement forcÃ©..." : "RafraÃ®chir (contourne le cache)"}
                 >
                   <RefreshCw className={`h-4 w-4 ${getRefreshIconClasses()}`} />
                 </Button>
@@ -721,17 +721,18 @@ export function AzureDevOpsSidePanel({
           {!isLoadingItems && filteredItems.length > 0 && (
             <div className="p-4 space-y-2">
               {filteredItems.map((item) => (
-                // biome-ignore lint/a11y/noLabelWithoutControl: label association is implicit
-                // biome-ignore lint/a11y/noNoninteractiveElementInteractions: interactive handler is intentional
-                <label
-                  key={item.id}
-                  className={cn(
-                    "flex items-start gap-3 p-3 rounded-md border transition-all cursor-pointer w-full text-left",
-                    "hover:bg-muted/50",
-                    "select-none",
-                    selectedIds.has(item.id) && "bg-primary/10 border-primary/30 cursor-grab",
-                    draggedIds.has(item.id) && "cursor-grabbing opacity-70 ring-2 ring-primary ring-offset-1 ring-offset-background rounded-md shadow-md",
-                    "bg-transparent border-none"
+                <>
+                  {/* biome-ignore lint/a11y/noLabelWithoutControl: label association is implicit */}
+                  {/* biome-ignore lint/a11y/noNoninteractiveElementInteractions: interactive handler is intentional  */}
+                  <label
+                    key={item.id}
+                    className={cn(
+                      "flex items-start gap-3 p-3 rounded-md border transition-all cursor-pointer w-full text-left",
+                      "hover:bg-muted/50",
+                      "select-none",
+                      selectedIds.has(item.id) && "bg-primary/10 border-primary/30 cursor-grab",
+                      draggedIds.has(item.id) && "cursor-grabbing opacity-70 ring-2 ring-primary ring-offset-1 ring-offset-background rounded-md shadow-md",
+                      "bg-transparent border-none"
                   )}
                   draggable={true}
                   onDragStart={(e) => {
@@ -795,6 +796,7 @@ export function AzureDevOpsSidePanel({
                         )}
                       </div>
                 </label>
+                </>
               ))}
             </div>
           )}
@@ -840,3 +842,6 @@ export function AzureDevOpsSidePanel({
       </>
   );
 }
+
+
+

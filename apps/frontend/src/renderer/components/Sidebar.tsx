@@ -1,4 +1,4 @@
-// React
+﻿// React
 import { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 
 // i18n
@@ -955,7 +955,7 @@ const toggleGroupExpansion = (groupId: string) => {
           "flex items-center py-2 transition-all duration-300",
           isCollapsed ? "justify-center px-2" : "justify-end gap-1 px-3"
         )}>
-          {/* Search button / inline input — only when expanded */}
+          {/* Search button / inline input â€” only when expanded */}
           {!isCollapsed && (
             <div className={cn(
               "flex items-center overflow-hidden rounded-md transition-all duration-300 ease-in-out",
@@ -1082,7 +1082,7 @@ const toggleGroupExpansion = (groupId: string) => {
                 <Wrench className="h-4 w-4" />
                 {!isCollapsed && (
                   <>
-                    <span>Outils CLI & Paramètres</span>
+                    <span>Outils CLI & ParamÃ¨tres</span>
                     <ChevronRight 
                       className={cn(
                         "h-3 w-3 ml-auto transition-transform duration-200",
@@ -1095,7 +1095,7 @@ const toggleGroupExpansion = (groupId: string) => {
             </CollapsibleTrigger>
             
             <CollapsibleContent className="mt-2 space-y-2">
-              {/* CLI Tools — compact grouped badges */}
+              {/* CLI Tools â€” compact grouped badges */}
               <div className="rounded-lg bg-white/4 border border-white/8 p-2 space-y-0.5">
                 <ClaudeCodeStatusBadge onNavigateToTerminals={() => onViewChange?.('terminals')} />
                 <CopilotCliStatusBadge onNavigateToTerminals={() => onViewChange?.('terminals')} />
@@ -1241,3 +1241,6 @@ const toggleGroupExpansion = (groupId: string) => {
     </TooltipProvider>
   );
 }
+
+
+

@@ -1,5 +1,5 @@
-/**
- * Event-Driven Hooks System — Visual Hook Editor & Manager
+﻿/**
+ * Event-Driven Hooks System â€” Visual Hook Editor & Manager
  *
  * n8n/Zapier-style visual workflow editor with template library,
  * hook management, and execution history.
@@ -69,9 +69,9 @@ import {
   type TemplateCategory,
 } from '../../stores/hooks-store';
 
-// ─────────────────────────────────────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 // Icon helpers
-// ─────────────────────────────────────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 const TRIGGER_ICONS: Record<string, React.ReactNode> = {
   file_saved: <FileCode className="h-4 w-4" />,
@@ -137,9 +137,9 @@ function StatusBadge({ status }: { readonly status: string }) {
   );
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 // Stats Bar
-// ─────────────────────────────────────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 function StatsBar() {
   const { t } = useTranslation('hooks');
@@ -170,9 +170,9 @@ function StatsBar() {
   );
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 // Hook List Tab
-// ─────────────────────────────────────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 function HookListTab() {
   const { t } = useTranslation('hooks');
@@ -275,7 +275,7 @@ function HookCard({
             <StatusBadge status={hook.status} />
             {hook.cross_project && (
               <Badge variant="outline" className="text-xs bg-blue-500/10 text-blue-400 border-blue-500/20">
-                🌐
+                ðŸŒ
               </Badge>
             )}
           </div>
@@ -342,9 +342,9 @@ function HookCard({
   );
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 // Templates Tab
-// ─────────────────────────────────────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 function TemplatesTab() {
   const { t } = useTranslation('hooks');
@@ -448,9 +448,9 @@ function TemplatesTab() {
   );
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 // History Tab
-// ─────────────────────────────────────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 function HistoryTab() {
   const { t } = useTranslation('hooks');
@@ -515,9 +515,9 @@ function ExecutionCard({ execution }: { readonly execution: HookExecution }) {
   );
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 // Visual Editor Tab
-// ─────────────────────────────────────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 function EditorTab() {
   const { t } = useTranslation('hooks');
@@ -582,7 +582,7 @@ function EditorTab() {
       <div className="grid grid-cols-2 gap-3">
         <div>
           // biome-ignore lint/a11y/noLabelWithoutControl: label association is implicit
-          // biome-ignore lint/a11y/noLabelWithoutControl: intentional
+{/* biome-ignore lint/a11y/noLabelWithoutControl: intentional  */}
           <label className="text-xs text-zinc-400 block mb-1">{t('editor.hookName')}</label>
           <input
             type="text"
@@ -594,7 +594,7 @@ function EditorTab() {
         </div>
         <div>
           // biome-ignore lint/a11y/noLabelWithoutControl: label association is implicit
-          // biome-ignore lint/a11y/noLabelWithoutControl: intentional
+{/* biome-ignore lint/a11y/noLabelWithoutControl: intentional  */}
           <label className="text-xs text-zinc-400 block mb-1">{t('editor.hookDescription')}</label>
           <input
             type="text"
@@ -683,7 +683,7 @@ function EditorTab() {
       {/* Visual canvas */}
       <div className="relative rounded-xl border border-zinc-700/50 bg-zinc-900/60 min-h-[300px] overflow-auto p-4">
         {/* Connections (SVG lines) */}
-        {/* biome-ignore lint/a11y/noSvgWithoutTitle: SVG is decorative, intentional */}
+        // biome-ignore lint/a11y/noSvgWithoutTitle: SVG is decorative, intentional 
         <svg className="absolute inset-0 w-full h-full pointer-events-none" style={{ zIndex: 0 }}>
           {editingHook.connections.map((conn) => {
             const sourceNode =
@@ -730,7 +730,7 @@ function EditorTab() {
         {editingHook.triggers.map((trigger) => (
           // biome-ignore lint/a11y/noNoninteractiveElementInteractions: interactive handler is intentional
           // biome-ignore lint/a11y/noStaticElementInteractions: interactive handler is intentional
-          // biome-ignore lint/a11y/useKeyWithClickEvents: keyboard events handled elsewhere
+{/* biome-ignore lint/a11y/useKeyWithClickEvents: keyboard events handled elsewhere  */}
           <div
             key={trigger.id}
             className={`absolute cursor-pointer rounded-lg border-2 px-3 py-2 w-[160px] transition-all ${
@@ -776,7 +776,7 @@ function EditorTab() {
         {editingHook.actions.map((action) => (
           // biome-ignore lint/a11y/noNoninteractiveElementInteractions: interactive handler is intentional
           // biome-ignore lint/a11y/noStaticElementInteractions: interactive handler is intentional
-          // biome-ignore lint/a11y/useKeyWithClickEvents: keyboard events handled elsewhere
+{/* biome-ignore lint/a11y/useKeyWithClickEvents: keyboard events handled elsewhere  */}
           <div
             key={action.id}
             className={`absolute cursor-pointer rounded-lg border-2 px-3 py-2 w-[160px] transition-all ${
@@ -812,7 +812,7 @@ function EditorTab() {
             </div>
             <div className="text-[10px] text-zinc-500 mt-0.5">
               {action.timeout_ms > 0 && `timeout: ${action.timeout_ms / 1000}s`}
-              {action.delay_ms > 0 && ` • delay: ${action.delay_ms}ms`}
+              {action.delay_ms > 0 && ` â€¢ delay: ${action.delay_ms}ms`}
             </div>
           </div>
         ))}
@@ -848,7 +848,7 @@ function EditorTab() {
                   variant="outline"
                   className="text-[10px] py-0 px-1.5 bg-zinc-800/50 text-zinc-400 border-zinc-600/30 gap-1"
                 >
-                  {sourceName} → {targetName}
+                  {sourceName} â†’ {targetName}
                   <span className="text-purple-400">({conn.condition || 'always'})</span>
                   <button type="button"
                     onClick={() => removeConnectionFromEditor(conn.source_id, conn.target_id)}
@@ -882,9 +882,9 @@ function EditorTab() {
   );
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 // Main Dialog
-// ─────────────────────────────────────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 export function HooksDialog() {
   const { t } = useTranslation('hooks');
@@ -943,3 +943,6 @@ export function HooksDialog() {
 }
 
 export default HooksDialog;
+
+
+

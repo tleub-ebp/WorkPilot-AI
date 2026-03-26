@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+﻿import { useState, useEffect, useRef } from 'react';
 import {
   GitBranch,
   FileCode,
@@ -31,25 +31,22 @@ import { useSettingsStore } from '../../../stores/settings-store';
 const MAX_LOG_ENTRIES = 500;
 
 interface WorkspaceStatusProps {
-  taskId: string;
-  worktreeStatus: WorktreeStatus;
-  workspaceError: string | null;
-  stageOnly: boolean;
-  mergePreview: { files: string[]; conflicts: MergeConflict[]; summary: MergeStats; gitConflicts?: GitConflictInfo; uncommittedChanges?: { hasChanges: boolean; files: string[]; count: number } | null } | null;
-  isLoadingPreview: boolean;
-  isMerging: boolean;
-  isDiscarding: boolean;
-  isCreatingPR?: boolean;
-  onShowDiffDialog: (show: boolean) => void;
-  onShowDiscardDialog: (show: boolean) => void;
-  onShowConflictDialog: (show: boolean) => void;
-  onLoadMergePreview: () => void;
-  onStageOnlyChange: (value: boolean) => void;
-  onMerge: () => void;
-  onShowPRDialog?: (show: boolean) => void;
-  onClose?: () => void;
-  onSwitchToTerminals?: () => void;
-  onOpenInbuiltTerminal?: (id: string, cwd: string) => void;
+  readonly taskId: string;
+  readonly worktreeStatus: WorktreeStatus;
+  readonly workspaceError: string | null;
+  readonly stageOnly: boolean;
+  readonly mergePreview: { files: string[]; conflicts: MergeConflict[]; summary: MergeStats; gitConflicts?: GitConflictInfo; uncommittedChanges?: { hasChanges: boolean; files: string[]; count: number } | null } | null;
+  readonly isLoadingPreview: boolean;
+  readonly isMerging: boolean;
+  readonly isDiscarding: boolean;
+  readonly isCreatingPR?: boolean;
+  readonly onShowDiffDialog: (show: boolean) => void;
+  readonly onShowDiscardDialog: (show: boolean) => void;
+  readonly onShowConflictDialog: (show: boolean) => void;
+  readonly onLoadMergePreview: () => void;
+  readonly onStageOnlyChange: (value: boolean) => void;
+  readonly onMerge: () => void;
+  readonly onShowPRDialog?: (show: boolean) => void;
 }
 
 /**
@@ -105,13 +102,7 @@ export function WorkspaceStatus({
   onLoadMergePreview,
   onStageOnlyChange,
   onMerge,
-  onShowPRDialog,
-  // biome-ignore lint/correctness/noUnusedFunctionParameters: parameter kept for API compatibility
-  onClose,
-  // biome-ignore lint/correctness/noUnusedFunctionParameters: parameter kept for API compatibility
-  onSwitchToTerminals,
-  // biome-ignore lint/correctness/noUnusedFunctionParameters: parameter kept for API compatibility
-  onOpenInbuiltTerminal
+  onShowPRDialog
 }: WorkspaceStatusProps) {
   const { t } = useTranslation(['taskReview', 'common', 'tasks']);
   const { settings } = useSettingsStore();
@@ -127,7 +118,7 @@ export function WorkspaceStatus({
   const minDisplayTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const ipcCleanupRef = useRef<(() => void) | null>(null);
 
-  // Reset state when isMerging transitions from false → true
+  // Reset state when isMerging transitions from false â†’ true
   useEffect(() => {
     if (isMerging && !prevIsMergingRef.current) {
       setMergeProgress(null);
@@ -190,7 +181,7 @@ export function WorkspaceStatus({
       }
     };
 
-    const cleanup = window.electronAPI.onMergeProgress((eventTaskId: string, progress: MergeProgress) => {
+    const cleanup = globalThis.electronAPI.onMergeProgress((eventTaskId: string, progress: MergeProgress) => {
       // Filter by task ID to prevent cross-task event leakage
       if (eventTaskId !== taskId) return;
 
@@ -233,7 +224,7 @@ export function WorkspaceStatus({
   const handleOpenInIDE = async () => {
     if (!worktreeStatus.worktreePath) return;
     try {
-      await window.electronAPI.worktreeOpenInIDE(
+      await globalThis.electronAPI.worktreeOpenInIDE(
         worktreeStatus.worktreePath,
         preferredIDE,
         settings.customIDEPath
@@ -246,7 +237,7 @@ export function WorkspaceStatus({
   const handleOpenInTerminal = async () => {
     if (!worktreeStatus.worktreePath) return;
     try {
-      await window.electronAPI.worktreeOpenInTerminal(
+      await globalThis.electronAPI.worktreeOpenInTerminal(
         worktreeStatus.worktreePath,
         preferredTerminal,
         settings.customTerminalPath
@@ -276,12 +267,108 @@ export function WorkspaceStatus({
   const pathMappedAIMergeCount = mergePreview?.summary?.pathMappedAIMergeCount || 0;
   const totalRenames = mergePreview?.gitConflicts?.totalRenames || 0;
 
+  // Helper function to get merge warning message
+  const getMergeWarningMessage = () => {
+    if (hasPathMappedMerges) {
+      return (
+        <span className="text-warning">
+          {' '}{t(totalRenames === 1 ? 'taskReview:merge.filesNeedAIMergeDueToRenames' : 'taskReview:merge.filesNeedAIMergeDueToRenamesPlural', { renameCount: totalRenames, count: pathMappedAIMergeCount })}
+        </span>
+      );
+    }
+    
+    if (totalRenames > 0) {
+      return <span className="text-warning"> {t('taskReview:merge.fileRenamesDetected', { count: totalRenames })}</span>;
+    }
+    
+    return <span className="text-warning"> {t('taskReview:merge.filesRenamedOrMoved')}</span>;
+  };
+
   // Branch is behind if needsRebase is true and there are commits to catch up on
   // This triggers AI merge for path-mapped files even without explicit conflicts
   const isBranchBehind = needsRebase && commitsBehind > 0;
 
   // Has path-mapped files that need AI merge
   const hasPathMappedMerges = pathMappedAIMergeCount > 0;
+
+  // Helper function to get merge button text during merging
+  const getMergeButtonText = () => {
+    if (hasGitConflicts || isBranchBehind || hasPathMappedMerges) {
+      return t('taskReview:merge.buttons.resolving');
+    }
+    if (stageOnly) {
+      return t('taskReview:merge.buttons.staging');
+    }
+    return t('taskReview:merge.buttons.merging');
+  };
+
+  // Helper function to get merge button text when not merging
+  const getMergeButtonIdleText = () => {
+    const targetBranch = worktreeStatus.currentProjectBranch || worktreeStatus.baseBranch || 'main';
+    
+    if (hasGitConflicts || isBranchBehind || hasPathMappedMerges) {
+      return stageOnly 
+        ? t('taskReview:merge.buttons.stageWithAIMerge')
+        : t('taskReview:merge.buttons.mergeWithAI');
+    }
+    
+    return stageOnly
+      ? t('taskReview:merge.buttons.stageTo', { branch: targetBranch })
+      : t('taskReview:merge.buttons.mergeTo', { branch: targetBranch });
+  };
+
+  // Helper function to render merge status indicator
+  const renderMergeStatusIndicator = () => {
+    if (hasGitConflicts) {
+      return (
+        <>
+          <AlertTriangle className="h-4 w-4 text-warning" />
+          <div>
+            <span className="text-sm font-medium text-warning">{t('taskReview:merge.status.branchDiverged')}</span>
+            <span className="text-xs text-muted-foreground ml-2">{t('taskReview:merge.status.aiWillResolve')}</span>
+          </div>
+        </>
+      );
+    }
+
+    if (isBranchBehind || hasPathMappedMerges) {
+      return (
+        <>
+          <AlertTriangle className="h-4 w-4 text-warning" />
+          <div>
+            <span className="text-sm font-medium text-warning">
+              {hasPathMappedMerges ? t('taskReview:merge.status.filesRenamed') : t('taskReview:merge.status.branchBehind')}
+            </span>
+            <span className="text-xs text-muted-foreground ml-2">
+              {t('taskReview:merge.status.aiWillResolve')} ({hasPathMappedMerges ? `${pathMappedAIMergeCount} ${t('taskReview:merge.status.files')}` : `${commitsBehind} commits`})
+            </span>
+          </div>
+        </>
+      );
+    }
+
+    if (!hasAIConflicts) {
+      return (
+        <>
+          <CheckCircle className="h-4 w-4 text-success" />
+          <span className="text-sm font-medium text-success">{t('taskReview:merge.status.readyToMerge')}</span>
+          <span className="text-xs text-muted-foreground ml-1">
+            {mergePreview?.summary?.totalFiles || 0} {t('taskReview:merge.status.files')}
+          </span>
+        </>
+      );
+    }
+
+    // Default case: has AI conflicts
+    return (
+      <>
+        <AlertTriangle className="h-4 w-4 text-warning" />
+        <span className="text-sm font-medium text-warning">
+          {mergePreview?.conflicts?.length || 0} {(mergePreview?.conflicts?.length || 0) === 1 ? t('taskReview:merge.status.conflict') : t('taskReview:merge.status.conflicts')}
+        </span>
+      </>
+    );
+  };
 
   return (
     <div className="rounded-xl border border-border bg-card overflow-hidden">
@@ -323,11 +410,11 @@ export function WorkspaceStatus({
           </span>
         </div>
 
-        {/* Branch info: spec branch → user's current branch (merge target) */}
+        {/* Branch info: spec branch â†’ user's current branch (merge target) */}
         {worktreeStatus.branch && (
           <div className="mt-2 text-xs text-muted-foreground">
             <code className="bg-background/80 px-1.5 py-0.5 rounded text-[11px]">{worktreeStatus.branch}</code>
-            <span className="mx-1.5">→</span>
+            <span className="mx-1.5">â†’</span>
             <code className="bg-background/80 px-1.5 py-0.5 rounded text-[11px]">{worktreeStatus.currentProjectBranch || worktreeStatus.baseBranch || 'main'}</code>
           </div>
         )}
@@ -335,7 +422,7 @@ export function WorkspaceStatus({
         {/* Worktree path display */}
         {worktreeStatus.worktreePath && (
           <div className="mt-2 text-xs text-muted-foreground font-mono">
-            📁 {worktreeStatus.worktreePath}
+            ðŸ“ {worktreeStatus.worktreePath}
           </div>
         )}
 
@@ -441,49 +528,12 @@ export function WorkspaceStatus({
         {mergePreview && !isAlreadyMerged && !isSuperseded && (
           <div className={cn(
             "flex items-center justify-between p-2.5 rounded-lg border",
-            hasGitConflicts || isBranchBehind || hasPathMappedMerges
+            hasGitConflicts || isBranchBehind || hasPathMappedMerges || hasAIConflicts
               ? "bg-warning/10 border-warning/20"
-              : !hasAIConflicts
-                ? "bg-success/10 border-success/20"
-                : "bg-warning/10 border-warning/20"
+              : "bg-success/10 border-success/20"
           )}>
             <div className="flex items-center gap-2">
-              {hasGitConflicts ? (
-                <>
-                  <AlertTriangle className="h-4 w-4 text-warning" />
-                  <div>
-                    <span className="text-sm font-medium text-warning">{t('taskReview:merge.status.branchDiverged')}</span>
-                    <span className="text-xs text-muted-foreground ml-2">{t('taskReview:merge.status.aiWillResolve')}</span>
-                  </div>
-                </>
-              ) : isBranchBehind || hasPathMappedMerges ? (
-                <>
-                  <AlertTriangle className="h-4 w-4 text-warning" />
-                  <div>
-                    <span className="text-sm font-medium text-warning">
-                      {hasPathMappedMerges ? t('taskReview:merge.status.filesRenamed') : t('taskReview:merge.status.branchBehind')}
-                    </span>
-                    <span className="text-xs text-muted-foreground ml-2">
-                      {t('taskReview:merge.status.aiWillResolve')} ({hasPathMappedMerges ? `${pathMappedAIMergeCount} ${t('taskReview:merge.status.files')}` : `${commitsBehind} commits`})
-                    </span>
-                  </div>
-                </>
-              ) : !hasAIConflicts ? (
-                <>
-                  <CheckCircle className="h-4 w-4 text-success" />
-                  <span className="text-sm font-medium text-success">{t('taskReview:merge.status.readyToMerge')}</span>
-                  <span className="text-xs text-muted-foreground ml-1">
-                    {mergePreview.summary.totalFiles} {t('taskReview:merge.status.files')}
-                  </span>
-                </>
-              ) : (
-                <>
-                  <AlertTriangle className="h-4 w-4 text-warning" />
-                  <span className="text-sm font-medium text-warning">
-                    {mergePreview.conflicts.length} {mergePreview.conflicts.length !== 1 ? t('taskReview:merge.status.conflicts') : t('taskReview:merge.status.conflict')}
-                  </span>
-                </>
-              )}
+              {renderMergeStatusIndicator()}
             </div>
             <div className="flex items-center gap-1">
               {(hasGitConflicts || isBranchBehind || hasPathMappedMerges || hasAIConflicts) && (
@@ -530,20 +580,12 @@ export function WorkspaceStatus({
         {!hasGitConflicts && isBranchBehind && mergePreview?.gitConflicts && !isAlreadyMerged && !isSuperseded && (
           <div className="text-xs text-muted-foreground pl-6">
             {t('taskReview:merge.branchHasNewCommitsSinceBuild', { branch: mergePreview.gitConflicts.baseBranch, count: commitsBehind })}
-            {hasPathMappedMerges ? (
-              <span className="text-warning">
-                {' '}{t(totalRenames === 1 ? 'taskReview:merge.filesNeedAIMergeDueToRenames' : 'taskReview:merge.filesNeedAIMergeDueToRenamesPlural', { renameCount: totalRenames, count: pathMappedAIMergeCount })}
-              </span>
-            ) : totalRenames > 0 ? (
-              <span className="text-warning"> {t('taskReview:merge.fileRenamesDetected', { count: totalRenames })}</span>
-            ) : (
-              <span className="text-warning"> {t('taskReview:merge.filesRenamedOrMoved')}</span>
-            )}
+            {getMergeWarningMessage()}
           </div>
         )}
       </div>
 
-      {/* Merge Progress Overlay — shown during merge and for minimum display time after */}
+      {/* Merge Progress Overlay â€” shown during merge and for minimum display time after */}
       {(isMerging || showOverlay) && (
         <MergeProgressOverlay mergeProgress={mergeProgress} logEntries={logEntries} />
       )}
@@ -679,20 +721,12 @@ export function WorkspaceStatus({
                   {isMerging ? (
                     <>
                       <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      {hasGitConflicts || isBranchBehind || hasPathMappedMerges
-                        ? t('taskReview:merge.buttons.resolving')
-                        : stageOnly
-                          ? t('taskReview:merge.buttons.staging')
-                          : t('taskReview:merge.buttons.merging')}
+                      {getMergeButtonText()}
                     </>
                   ) : (
                     <>
                       <GitMerge className="mr-2 h-4 w-4" />
-                      {hasGitConflicts || isBranchBehind || hasPathMappedMerges
-                        ? (stageOnly ? t('taskReview:merge.buttons.stageWithAIMerge') : t('taskReview:merge.buttons.mergeWithAI'))
-                        : (stageOnly
-                            ? t('taskReview:merge.buttons.stageTo', { branch: worktreeStatus.currentProjectBranch || worktreeStatus.baseBranch || 'main' })
-                            : t('taskReview:merge.buttons.mergeTo', { branch: worktreeStatus.currentProjectBranch || worktreeStatus.baseBranch || 'main' }))}
+                      {getMergeButtonIdleText()}
                     </>
                   )}
                 </Button>
@@ -745,3 +779,6 @@ export function WorkspaceStatus({
     </div>
   );
 }
+
+
+

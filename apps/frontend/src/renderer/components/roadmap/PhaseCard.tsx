@@ -1,4 +1,4 @@
-import { CheckCircle2, Circle, ExternalLink, Play, TrendingUp } from 'lucide-react';
+﻿import { CheckCircle2, Circle, ExternalLink, Play, TrendingUp } from 'lucide-react';
 import { Badge } from '../ui/badge';
 import { Button } from '../ui/button';
 import { Card } from '../ui/card';
@@ -89,7 +89,7 @@ export function PhaseCard({
           {features.slice(0, 5).map((feature) => (
             // biome-ignore lint/a11y/noNoninteractiveElementInteractions: interactive handler is intentional
             // biome-ignore lint/a11y/noStaticElementInteractions: interactive handler is intentional
-            // biome-ignore lint/a11y/useKeyWithClickEvents: keyboard events handled elsewhere
+{/* biome-ignore lint/a11y/useKeyWithClickEvents: keyboard events handled elsewhere  */}
             <div
               key={feature.id}
               className="flex items-center justify-between p-2 rounded-md bg-muted/50 hover:bg-muted cursor-pointer transition-colors"
@@ -149,3 +149,6 @@ export function PhaseCard({
     </Card>
   );
 }
+
+
+

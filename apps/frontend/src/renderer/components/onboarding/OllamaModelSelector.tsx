@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from 'react';
+﻿import { useState, useEffect, useRef, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   Check,
@@ -24,11 +24,11 @@ interface OllamaModel {
 }
 
 interface OllamaModelSelectorProps {
-  selectedModel: string;
-  onModelSelect: (model: string, dim: number) => void;
-  disabled?: boolean;
-  className?: string;
-  baseUrl?: string;
+  readonly selectedModel: string;
+  readonly onModelSelect: (model: string, dim: number) => void;
+  readonly disabled?: boolean;
+  readonly className?: string;
+  readonly baseUrl?: string;
 }
 
 // Recommended embedding models for WorkPilot AI Memory
@@ -140,7 +140,7 @@ export function OllamaModelSelector({
 
     try {
       // First check if Ollama is installed (binary exists)
-      const installResult = await window.electronAPI.checkOllamaInstalled();
+      const installResult = await globalThis.electronAPI.checkOllamaInstalled();
       if (abortSignal?.aborted) return;
 
       if (!installResult?.success || !installResult?.data?.installed) {
@@ -150,7 +150,7 @@ export function OllamaModelSelector({
       }
 
       // Ollama is installed, now check if it's running
-      const statusResult = await window.electronAPI.checkOllamaStatus(baseUrl);
+      const statusResult = await globalThis.electronAPI.checkOllamaStatus(baseUrl);
       if (abortSignal?.aborted) return;
 
       if (!statusResult?.success || !statusResult?.data?.running) {
@@ -162,7 +162,7 @@ export function OllamaModelSelector({
       setOllamaState('available');
 
       // Get list of installed embedding models
-      const result = await window.electronAPI.listOllamaEmbeddingModels(baseUrl);
+      const result = await globalThis.electronAPI.listOllamaEmbeddingModels(baseUrl);
       if (abortSignal?.aborted) return;
 
       if (result?.success && result?.data?.embedding_models) {
@@ -184,7 +184,8 @@ export function OllamaModelSelector({
 
           // Handle quantization variants (e.g., qwen3-embedding:8b-q4_K_M)
           // Extract base:version without quantization suffix
-          const quantMatch = name.match(/^([^:]+:[^-]+)/);
+          const quantRegex = /^([^:]+:[^-]+)/;
+          const quantMatch = quantRegex.exec(name);
           if (quantMatch) {
             installedVersionNames.add(quantMatch[1]);
           }
@@ -227,7 +228,7 @@ export function OllamaModelSelector({
     setError(null);
 
     try {
-      const result = await window.electronAPI.installOllama();
+      const result = await globalThis.electronAPI.installOllama();
       if (result?.success) {
         setInstallSuccess(true);
         // Clear any existing timeout before setting a new one
@@ -275,7 +276,7 @@ export function OllamaModelSelector({
      setError(null);
 
      try {
-       const result = await window.electronAPI.pullOllamaModel(modelName);
+       const result = await globalThis.electronAPI.pullOllamaModel(modelName);
        if (result?.success) {
          completeDownload(modelName);
          // Refresh the model list
@@ -384,7 +385,7 @@ export function OllamaModelSelector({
               <Button
                 variant="ghost"
                 size="sm"
-                onClick={() => window.electronAPI?.openExternal?.('https://ollama.com')}
+                onClick={() => globalThis.electronAPI?.openExternal?.('https://ollama.com')}
                 className="text-muted-foreground"
               >
                 <ExternalLink className="h-3.5 w-3.5 mr-1.5" />
@@ -549,12 +550,12 @@ export function OllamaModelSelector({
                    <div className="w-full bg-muted rounded-full h-2 overflow-hidden">
                      {progress && progress.percentage > 0 ? (
                        <div
-                         className="h-full rounded-full bg-gradient-to-r from-primary via-primary to-primary/80 transition-all duration-300"
+                         className="h-full rounded-full bg-linear-to-r from-primary via-primary to-primary/80 transition-all duration-300"
                          style={{ width: `${Math.max(0, Math.min(100, progress.percentage))}%` }}
                        />
                      ) : (
                        /* Indeterminate/sliding state while waiting for progress events */
-                       <div className="h-full w-1/4 rounded-full bg-gradient-to-r from-primary via-primary to-primary/80 animate-indeterminate" />
+                       <div className="h-full w-1/4 rounded-full bg-linear-to-r from-primary via-primary to-primary/80 animate-indeterminate" />
                      )}
                    </div>
                    {/* Progress info: percentage, speed, time remaining */}
@@ -580,3 +581,6 @@ export function OllamaModelSelector({
     </div>
   );
 }
+
+
+
