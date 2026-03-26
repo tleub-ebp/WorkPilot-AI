@@ -1,0 +1,56 @@
+# Normalise les fins de ligne pour tous les fichiers texte
+* text=auto
+
+# Extensions spécifiques pour les fichiers source
+*.tsx text
+*.ts text
+*.js text
+*.jsx text
+*.json text
+*.md text
+*.yml text
+*.yaml text
+*.xml text
+*.html text
+*.css text
+*.scss text
+*.less text
+*.py text
+*.sh text
+*.bat text
+*.ps1 text
+*.toml text
+*.ini text
+*.cfg text
+*.conf text
+
+# Fichiers binaires - ne pas modifier les fins de ligne
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.svg binary
+*.pdf binary
+*.zip binary
+*.tar binary
+*.gz binary
+*.exe binary
+*.dll binary
+*.so binary
+*.dylib binary
+*.sqlite binary
+*.sqlite3 binary
+*.db binary
+
+# Fichiers de lock et dépendances - traiter comme texte
+*.lock text
+*.lockfile text
+package-lock.json text
+yarn.lock text
+pnpm-lock.yaml text
+
+# Git et configuration
+.gitignore text
+.gitattributes text
+.gitmodules text
