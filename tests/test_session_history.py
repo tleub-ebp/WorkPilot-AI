@@ -18,10 +18,13 @@ FileChange, TimelineEntry, and export/import functionality.
 import json
 import sys
 import os
+from pathlib import Path
 
 import pytest
 
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
+# Add backend path to sys.path
+backend_path = Path(__file__).parent.parent / "apps" / "backend"
+sys.path.insert(0, str(backend_path))
 
 from apps.backend.agents.session_history import (
     ActionType,
@@ -67,7 +70,7 @@ class TestSessionAction:
         }
         action = SessionAction.from_dict(d)
         assert action.action_type == ActionType.RESPONSE
-        assert action.duration_ms == 150.0
+        assert action.duration_ms == 150
 
 
 # -----------------------------------------------------------------------
@@ -115,7 +118,7 @@ class TestAgentSession:
             started_at="2026-01-01T00:00:00+00:00",
             ended_at="2026-01-01T00:05:00+00:00",
         )
-        assert session.duration_seconds == 300.0
+        assert session.duration_seconds == 300
 
     def test_session_to_dict(self):
         session = AgentSession(session_id="s1", project_id="p", task_id="t1")
@@ -200,7 +203,7 @@ class TestSessionRecorderRecording:
         assert action.action_type == ActionType.PROMPT
 
     def test_record_action_with_metadata(self):
-        action = self.recorder.record_action(
+        self.recorder.record_action(
             self.session.session_id, "response", "Code here",
             metadata={"input_tokens": 100, "output_tokens": 50},
         )

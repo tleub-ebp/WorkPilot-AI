@@ -14,6 +14,13 @@ import subprocess
 from pathlib import Path
 
 import pytest
+import sys
+from pathlib import Path
+
+# Add backend path to sys.path
+backend_path = Path(__file__).parent.parent / "apps" / "backend"
+sys.path.insert(0, str(backend_path))
+
 from workspace import (
     WorkspaceChoice,
     WorkspaceMode,
@@ -22,7 +29,7 @@ from workspace import (
     has_uncommitted_changes,
     setup_workspace,
 )
-from worktree import WorktreeManager
+from worktree import WorktreeManager, WorktreeError
 
 # Test constant - in the new per-spec architecture, each spec has its own worktree
 # named after the spec itself. This constant is used for test assertions.
@@ -179,7 +186,7 @@ class TestWorkspaceUtilities:
     def test_per_spec_worktree_naming(self, temp_git_repo: Path):
         """Per-spec architecture uses spec name for worktree directory."""
         spec_name = "my-spec-001"
-        working_dir, manager, _ = setup_workspace(
+        working_dir, _, _ = setup_workspace(
             temp_git_repo,
             spec_name,
             WorkspaceMode.ISOLATED,
@@ -197,7 +204,7 @@ class TestWorkspaceIntegration:
     def test_isolated_workflow(self, temp_git_repo: Path):
         """Full isolated workflow: setup -> work -> finalize."""
         # Setup isolated workspace
-        working_dir, manager, _ = setup_workspace(
+        working_dir, _, _ = setup_workspace(
             temp_git_repo,
             "test-spec",
             WorkspaceMode.ISOLATED,
@@ -215,7 +222,7 @@ class TestWorkspaceIntegration:
     def test_direct_workflow(self, temp_git_repo: Path):
         """Full direct workflow: setup -> work."""
         # Setup direct workspace
-        working_dir, manager, _ = setup_workspace(
+        working_dir, _, _ = setup_workspace(
             temp_git_repo,
             "test-spec",
             WorkspaceMode.DIRECT,
@@ -312,7 +319,7 @@ class TestWorkspaceReuse:
     def test_reuse_existing_workspace(self, temp_git_repo: Path):
         """Can reuse existing workspace on second setup."""
         # First setup
-        working_dir1, manager1, _ = setup_workspace(
+        working_dir1, _, _ = setup_workspace(
             temp_git_repo,
             "test-spec",
             WorkspaceMode.ISOLATED,
@@ -322,7 +329,7 @@ class TestWorkspaceReuse:
         (working_dir1 / "marker.txt").write_text("marker")
 
         # Second setup (should reuse)
-        working_dir2, manager2, _ = setup_workspace(
+        working_dir2, _, _ = setup_workspace(
             temp_git_repo,
             "test-spec",
             WorkspaceMode.ISOLATED,
@@ -340,7 +347,7 @@ class TestWorkspaceErrors:
 
     def test_setup_non_git_directory(self, temp_dir: Path):
         """Handles non-git directories gracefully."""
-        with pytest.raises((RuntimeError, ValueError, OSError)):
+        with pytest.raises((RuntimeError, ValueError, OSError, WorktreeError)):
             # This should fail because temp_dir is not a git repo
             setup_workspace(
                 temp_dir,

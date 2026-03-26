@@ -17,6 +17,10 @@ from unittest.mock import MagicMock
 
 import pytest
 
+# Add the apps/backend directory to the Python path
+backend_path = Path(__file__).parent.parent / "apps" / "backend"
+sys.path.insert(0, str(backend_path))
+
 # Store original modules for cleanup
 _original_modules = {}
 _mocked_module_names = [
@@ -37,6 +41,9 @@ _mocked_module_names = [
     "core.plan_normalization",
     "core.platform",
     "client",
+    # Security modules
+    "security",
+    "security.qa_scanner",
     # Config & phases
     "phase_config",
     "phase_event",
@@ -76,6 +83,33 @@ for name in _mocked_module_names:
 
 # Set up specific mock attributes needed by tests
 mock_progress = sys.modules["progress"]
+
+# Configure the progress module mock to properly handle is_build_complete
+def mock_is_build_complete(spec_dir: Path) -> bool:
+    """Mock implementation that correctly checks subtask completion."""
+    plan_file = spec_dir / "implementation_plan.json"
+    if not plan_file.exists():
+        return False
+    
+    try:
+        with open(plan_file, 'r') as f:
+            plan = json.load(f)
+    except (json.JSONDecodeError, OSError):
+        return False
+    
+    # Count completed vs total subtasks
+    total = 0
+    completed = 0
+    
+    for phase in plan.get("phases", []):
+        for subtask in phase.get("subtasks", []):
+            total += 1
+            if subtask.get("status") == "completed":
+                completed += 1
+    
+    return total > 0 and completed == total
+
+mock_progress.is_build_complete = mock_is_build_complete
 
 from qa_loop import (
     MAX_QA_ITERATIONS,
@@ -260,10 +294,6 @@ class TestQASignoffStatus:
 class TestShouldRunQA:
     """Tests for should_run_qa logic."""
 
-    @pytest.mark.xfail(
-        reason="Test isolation issue: progress module mocked by test_qa_criteria.py persists due to Python import caching. Passes when run individually.",
-        strict=False,
-    )
     def test_should_run_qa_build_not_complete(self, spec_dir: Path):
         """Returns False when build not complete."""
         # Create plan with incomplete subtasks

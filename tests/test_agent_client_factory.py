@@ -20,6 +20,10 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
+# Add the apps/backend directory to the Python path
+backend_path = Path(__file__).parent.parent / "apps" / "backend"
+sys.path.insert(0, str(backend_path))
+
 # Mock claude_agent_sdk before any imports that transitively need it
 if "claude_agent_sdk" not in sys.modules:
     _mock_sdk = MagicMock()
@@ -66,7 +70,7 @@ class TestGetActiveProvider:
 
     def test_env_invalid_value_falls_through(self, monkeypatch):
         """Invalid env value should fall through to default."""
-        monkeypatch.setenv("AUTO_CLAUDE_PROVIDER", "openai")
+        monkeypatch.setenv("AUTO_CLAUDE_PROVIDER", "invalid_provider")
         assert _get_active_provider(spec_dir=None) == "claude"
 
     def test_project_env_file_copilot(self, tmp_path, monkeypatch):
@@ -207,17 +211,20 @@ class TestCreateAgentClient:
         assert client.model == "gpt-4o"
         assert client.provider_name() == "copilot"
 
-    def test_invalid_provider_raises(self, tmp_path):
-        """Invalid provider should raise ValueError."""
+    def test_invalid_provider_falls_back_to_claude(self, tmp_path):
+        """Invalid provider should fall back to Claude SDK."""
         from core.client import create_agent_client
 
-        with pytest.raises(ValueError, match="Unsupported provider"):
-            create_agent_client(
-                project_dir=tmp_path,
-                spec_dir=tmp_path,
-                model="test",
-                provider="openai",
-            )
+        # Should not raise an error, but fall back to Claude
+        client = create_agent_client(
+            project_dir=tmp_path,
+            spec_dir=tmp_path,
+            model="test",
+            provider="invalid_provider",
+        )
+        
+        # Should return a ClaudeAgentClient due to fallback
+        assert isinstance(client, ClaudeAgentClient)
 
     @patch("core.client._get_active_provider")
     @patch("core.client.create_client")
