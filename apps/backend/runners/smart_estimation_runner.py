@@ -84,6 +84,7 @@ class SmartEstimationRunner:
         except Exception as e:
             error_msg = f"Smart estimation failed: {str(e)}"
             self._emit_event("error", {"error": error_msg})
+            print(f"SMART_ESTIMATION_ERROR:{str(e)}", flush=True)
             raise
 
     def _emit_event(self, event_type: str, data: dict[str, Any]):

@@ -173,7 +173,7 @@ export function SandboxSettings() {
               <div key={key} className="space-y-1">
                 <div className="flex items-center justify-between">
                   <label
-                    // biome-ignore lint/a11y/noLabelWithoutControl: intentional
+                    htmlFor={`sandbox-limit-${key}`}
                     className="text-xs font-medium text-muted-foreground"
                   >
                     {label}
@@ -181,6 +181,7 @@ export function SandboxSettings() {
                   <span className="text-xs font-mono tabular-nums text-foreground">{limits[key]}</span>
                 </div>
                 <input
+                  id={`sandbox-limit-${key}`}
                   type="range"
                   min={min}
                   max={max}

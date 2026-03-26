@@ -106,7 +106,7 @@ export function AnomalyDetectionSettings() {
             <div className="space-y-1">
               <div className="flex items-center justify-between">
                 <label
-                  // biome-ignore lint/a11y/noLabelWithoutControl: intentional
+                  htmlFor="trust-score-pause"
                   className="text-xs font-medium text-muted-foreground"
                 >
                   {t('sections.anomaly-detection.trustScore.pauseThreshold')}
@@ -114,6 +114,7 @@ export function AnomalyDetectionSettings() {
                 <span className="text-xs font-mono tabular-nums text-amber-600">{thresholds.trust_score_pause}</span>
               </div>
               <input
+                id="trust-score-pause"
                 type="range" min={10} max={80} step={5}
                 value={thresholds.trust_score_pause}
                 onChange={(e) => handleChange('trust_score_pause', Number(e.target.value))}
@@ -124,7 +125,7 @@ export function AnomalyDetectionSettings() {
             <div className="space-y-1">
               <div className="flex items-center justify-between">
                 <label
-                  // biome-ignore lint/a11y/noLabelWithoutControl: intentional
+                  htmlFor="trust-score-terminate"
                   className="text-xs font-medium text-muted-foreground"
                 >
                   {t('sections.anomaly-detection.trustScore.terminateThreshold')}
@@ -132,6 +133,7 @@ export function AnomalyDetectionSettings() {
                 <span className="text-xs font-mono tabular-nums text-red-600">{thresholds.trust_score_terminate}</span>
               </div>
               <input
+                id="trust-score-terminate"
                 type="range" min={0} max={50} step={5}
                 value={thresholds.trust_score_terminate}
                 onChange={(e) => handleChange('trust_score_terminate', Number(e.target.value))}
