@@ -313,8 +313,7 @@ export function DocumentationView({ projectId }: DocumentationViewProps) {
                   <h3 className="text-sm font-semibold text-foreground mb-3">{t('documentation:symbols.title')}</h3>
                   <div className="space-y-1.5 max-h-60 overflow-y-auto">
                     {coverage.symbols.map((sym, idx) => (
-                      // biome-ignore lint/suspicious/noArrayIndexKey: no stable key available
-                      <div key={idx} className="flex items-center gap-2 text-xs">
+                      <div key={`symbol-${idx}-${sym.name}-${sym.status}`} className="flex items-center gap-2 text-xs">
                         {sym.status === 'documented' ? (
                           <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500 shrink-0" />
                         ) : sym.status === 'partial' ? (
@@ -342,8 +341,7 @@ export function DocumentationView({ projectId }: DocumentationViewProps) {
               </h3>
               <div className="space-y-4">
                 {generatedDocs.generated_docs.map((doc, idx) => (
-                  // biome-ignore lint/suspicious/noArrayIndexKey: no stable key available
-                  <div key={idx} className="rounded-lg border border-border p-4">
+                  <div key={`doc-${idx}-${doc.name.slice(0, 30)}`} className="rounded-lg border border-border p-4">
                     <div className="flex items-center justify-between mb-2">
                       <div className="flex items-center gap-2">
                         <span className="text-sm font-mono font-medium text-foreground">{doc.name}</span>

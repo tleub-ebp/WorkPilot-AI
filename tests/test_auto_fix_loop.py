@@ -13,9 +13,18 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
-# Add backend to path
+# Add tests directory to path for helper imports
+sys.path.insert(0, str(Path(__file__).parent))
+
+# Add backend directory to path for qa imports
 backend_dir = Path(__file__).parent.parent / "apps" / "backend"
 sys.path.insert(0, str(backend_dir))
+
+# Setup mocks before importing auto-claude modules
+from qa_report_helpers import cleanup_qa_report_mocks, setup_qa_report_mocks
+
+# Setup mocks
+setup_qa_report_mocks()
 
 from qa.auto_fix_loop import (
     DEFAULT_MAX_AUTO_FIX_ATTEMPTS,
@@ -32,6 +41,18 @@ from qa.auto_fix_metrics import (
     print_auto_fix_summary,
     record_auto_fix_run,
 )
+
+
+# =============================================================================
+# FIXTURES
+# =============================================================================
+
+
+@pytest.fixture(scope="module", autouse=True)
+def cleanup_mocked_modules():
+    """Restore original modules after all tests in this module complete."""
+    yield  # Run all tests first
+    cleanup_qa_report_mocks()
 
 
 @pytest.fixture

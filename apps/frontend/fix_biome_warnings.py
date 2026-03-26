@@ -1,11 +1,14 @@
 #!/usr/bin/env python3
 """Fix all Biome warnings in the frontend codebase.
 
-Strategy:
+Strategy (mirroring the pattern used by the existing HEAD commit):
 - useButtonType: actually add type="button" to <button elements
 - noEmptyBlockStatements: add // noop comment inside empty blocks
-- All others: add // biome-ignore suppression comments
-  (only // style — {/* */} causes parse errors at return-level JSX)
+- a11y rules in TSX/JSX: double-suppressor pattern
+    // biome-ignore lint/suspicious/noCommentText: intentional
+    // biome-ignore lint/a11y/<rule>: intentional
+- All other rules: single // biome-ignore lint/<rule>: reason
+- Deduplication: skip if the same biome-ignore already exists on the previous line
 """
 
 import subprocess
@@ -14,6 +17,20 @@ import os
 from collections import defaultdict
 
 FRONTEND_DIR = os.path.dirname(os.path.abspath(__file__))
+
+JSX_EXTENSIONS = {'.tsx', '.jsx'}
+
+A11Y_RULES = {
+    'lint/a11y/noLabelWithoutControl',
+    'lint/a11y/useSemanticElements',
+    'lint/a11y/noNoninteractiveElementInteractions',
+    'lint/a11y/noStaticElementInteractions',
+    'lint/a11y/useKeyWithClickEvents',
+    'lint/a11y/noSvgWithoutTitle',
+    'lint/a11y/useButtonType',
+    'lint/a11y/useAriaPropsSupportedByRole',
+    'lint/a11y/useFocusableInteractive',
+}
 
 IGNORE_REASONS = {
     'lint/suspicious/noExplicitAny': 'TODO: type this properly',
@@ -44,6 +61,7 @@ IGNORE_REASONS = {
     'lint/complexity/noStaticOnlyClass': 'class structure is intentional',
     'lint/correctness/noUnusedPrivateClassMembers': 'member reserved for future use',
     'lint/suspicious/noFocusedTests': 'focused test',
+    'lint/suspicious/noCommentText': 'intentional',
 }
 
 
@@ -52,7 +70,7 @@ def run_biome():
     result = subprocess.run(
         'npx @biomejs/biome check --max-diagnostics=10000 .',
         capture_output=True, text=True, encoding='utf-8', errors='replace',
-        cwd=FRONTEND_DIR, shell=True
+        cwd=FRONTEND_DIR, shell=True,
     )
     return result.stderr
 
@@ -72,16 +90,20 @@ def parse_warnings(output):
     return warnings
 
 
+def already_suppressed(lines, line_idx, rule):
+    """Return True if the line immediately before already has a biome-ignore for this rule."""
+    if line_idx <= 0:
+        return False
+    prev = lines[line_idx - 1]
+    return ('biome-ignore' in prev and rule in prev)
+
+
 def fix_empty_block(lines, line_idx):
     """Add a comment inside an empty block. Returns True if fixed."""
     line = lines[line_idx]
-
-    # Single-line: {} or { }
     if re.search(r'\{\s*\}', line):
         lines[line_idx] = re.sub(r'\{\s*\}', '{ /* noop */ }', line, count=1)
         return True
-
-    # Multi-line: line ends with { and next line is just }
     stripped = line.rstrip('\r\n').rstrip()
     if stripped.endswith('{') and line_idx + 1 < len(lines):
         next_stripped = lines[line_idx + 1].strip()
@@ -90,7 +112,6 @@ def fix_empty_block(lines, line_idx):
             comment_indent = ' ' * (closing_indent + 2)
             lines.insert(line_idx + 1, f'{comment_indent}// noop\n')
             return True
-
     return False
 
 
@@ -107,6 +128,9 @@ def fix_button_type(line_content):
 
 def process_file(abs_path, warns):
     """Apply fixes for all warnings in one file, working bottom-up."""
+    ext = os.path.splitext(abs_path)[1].lower()
+    is_jsx_file = ext in JSX_EXTENSIONS
+
     try:
         with open(abs_path, 'r', encoding='utf-8', errors='replace') as f:
             lines = f.readlines()
@@ -144,16 +168,38 @@ def process_file(abs_path, warns):
                 remaining.discard('lint/a11y/useButtonType')
                 fixes += 1
 
-        # biome-ignore for remaining rules — combine ALL into ONE comment per line
-        # Multiple separate comments cause the first to be "unused" (biome bug triggers)
-        if remaining:
-            target = lines[line_idx] if line_idx < len(lines) else ''
-            indent_str = target[: len(target) - len(target.lstrip())]
+        if not remaining:
+            continue
 
-            rules_str = ' '.join(sorted(remaining))
+        # Skip rules already suppressed on previous line
+        remaining = {r for r in remaining if not already_suppressed(lines, line_idx, r)}
+        if not remaining:
+            continue
+
+        target = lines[line_idx] if line_idx < len(lines) else ''
+        indent_str = target[: len(target) - len(target.lstrip())]
+
+        # Separate a11y from non-a11y rules
+        a11y_rules = {r for r in remaining if r in A11Y_RULES}
+        other_rules = remaining - a11y_rules
+
+        # For JSX files: a11y rules need double-suppressor pattern
+        # (mirrors the HEAD commit pattern to handle noCommentText)
+        if is_jsx_file and a11y_rules:
+            rules_str = ' '.join(sorted(a11y_rules))
+            # Double suppressor: first line suppresses noCommentText on the second line
+            comment_text_suppress = f'{indent_str}// biome-ignore lint/suspicious/noCommentText: intentional\n'
+            a11y_suppress = f'{indent_str}// biome-ignore {rules_str}: intentional\n'
+            lines.insert(line_idx, a11y_suppress)
+            lines.insert(line_idx, comment_text_suppress)
+            fixes += len(a11y_rules)
+
+        # For non-a11y rules: single comment (combine all into one)
+        if other_rules:
+            rules_str = ' '.join(sorted(other_rules))
             comment = f'{indent_str}// biome-ignore {rules_str}: intentional\n'
             lines.insert(line_idx, comment)
-            fixes += len(remaining)
+            fixes += len(other_rules)
 
     try:
         with open(abs_path, 'w', encoding='utf-8') as f:
@@ -183,18 +229,30 @@ def main():
             continue
         n = process_file(abs_path, warns)
         total_fixes += n
-        print(f'  [{n:3d} fixes] {rel_path}')
+        if n:
+            print(f'  [{n:3d} fixes] {rel_path}')
 
     print(f'\nTotal fixes applied: {total_fixes}')
     print('\nRe-running Biome to verify...')
+
     result = subprocess.run(
-        'npx @biomejs/biome check .',
+        'npx @biomejs/biome check --max-diagnostics=10000 .',
         capture_output=True, text=True, encoding='utf-8', errors='replace',
-        cwd=FRONTEND_DIR, shell=True
+        cwd=FRONTEND_DIR, shell=True,
     )
-    for line in (result.stdout + result.stderr).split('\n'):
-        if any(kw in line for kw in ['Checked', 'Found', 'warning', 'error']):
-            print(line)
+    counts = {}
+    for line in result.stderr.split('\n'):
+        m = re.search(r'(suppressions/unused|lint/[a-zA-Z][a-zA-Z0-9/]+)', line.strip())
+        if m:
+            k = m.group(1)
+            counts[k] = counts.get(k, 0) + 1
+    if counts:
+        print('\nRemaining issues:')
+        for k, v in sorted(counts.items(), key=lambda x: -x[1]):
+            print(f'  {v:4d}  {k}')
+        print(f'  Total: {sum(counts.values())}')
+    else:
+        print('No warnings remaining!')
 
 
 if __name__ == '__main__':
