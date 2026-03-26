@@ -1,4 +1,4 @@
-﻿import React from 'react';
+import React from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   usePerformanceProfilerStore,
@@ -148,7 +148,7 @@ export function PerformanceProfilerDashboard(): React.ReactElement {
             <div className="mt-auto">
               <div className="flex items-center gap-2 text-sm text-[var(--text-secondary)]">
                 {isRunning && (
-// biome-ignore lint/a11y/noSvgWithoutTitle: SVG is decorative 
+// biome-ignore lint/a11y/noSvgWithoutTitle: SVG is decorative  
                   <svg className="animate-spin w-3.5 h-3.5 text-[var(--accent)] shrink-0" fill="none" viewBox="0 0 24 24">
                     <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                     <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
@@ -178,7 +178,7 @@ export function PerformanceProfilerDashboard(): React.ReactElement {
               {/* Implementation result banner */}
               {Boolean(implementationResult) && (
                 <div className="p-3 rounded-lg bg-green-500/10 border border-green-500/20 text-green-400 text-sm">
-                  âœ… Auto-implementation complete
+                  ✅ Auto-implementation complete
                 </div>
               )}
 
@@ -188,7 +188,7 @@ export function PerformanceProfilerDashboard(): React.ReactElement {
                   <h2 className="text-sm font-semibold mb-2">Benchmarks</h2>
                   <div className="grid grid-cols-2 gap-2">
                     {result.report.benchmarks.map((b, i) => (
-{/* biome-ignore lint/suspicious/noArrayIndexKey: no stable key available  */}
+{/* biome-ignore lint/suspicious/noArrayIndexKey: no stable key available */}
                       <div key={i} className="bg-[var(--bg-secondary)] rounded-lg p-3">
                         <div className="text-xs text-[var(--text-secondary)] mb-1">{b.name}</div>
                         <div className="text-sm font-mono">
@@ -231,7 +231,7 @@ export function PerformanceProfilerDashboard(): React.ReactElement {
                 </div>
               ) : (
                 <div className="text-sm text-[var(--text-secondary)] text-center py-8">
-                  No bottlenecks detected ðŸŽ‰
+                  No bottlenecks detected 🎉
                 </div>
               )}
 
@@ -243,7 +243,7 @@ export function PerformanceProfilerDashboard(): React.ReactElement {
                   </h2>
                   <div className="flex flex-col gap-3">
                     {result.report.suggestions.map((s, i) => (
-{/* biome-ignore lint/suspicious/noArrayIndexKey: no stable key available  */}
+{/* biome-ignore lint/suspicious/noArrayIndexKey: no stable key available */}
                       <div key={i} className="bg-[var(--bg-secondary)] rounded-lg p-3">
                         <div className="flex items-start justify-between gap-2 mb-1">
                           <div className="font-medium text-sm">{s.title}</div>
@@ -254,7 +254,7 @@ export function PerformanceProfilerDashboard(): React.ReactElement {
                         <div className="text-xs text-[var(--text-secondary)] mb-2">{s.description}</div>
                         {s.estimated_improvement && (
                           <div className="text-xs text-green-400">
-                            â†‘ {s.estimated_improvement}
+                            ↑ {s.estimated_improvement}
                           </div>
                         )}
                         {s.implementation && (
@@ -288,10 +288,10 @@ export function PerformanceProfilerDashboard(): React.ReactElement {
           {phase === 'idle' && !result && (
             <div className="flex-1 flex items-center justify-center text-center p-8">
               <div>
-                <div className="text-5xl mb-4">âš¡</div>
+                <div className="text-5xl mb-4">⚡</div>
                 <h3 className="text-lg font-medium mb-2">Performance Profiler</h3>
                 <p className="text-sm text-[var(--text-secondary)] max-w-sm">
-                  Analyze your codebase for performance bottlenecks â€” algorithm complexity,
+                  Analyze your codebase for performance bottlenecks — algorithm complexity,
                   memory leaks, slow queries, React render issues, and more.
                 </p>
               </div>

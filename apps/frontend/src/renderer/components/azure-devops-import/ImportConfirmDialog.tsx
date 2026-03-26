@@ -36,14 +36,14 @@ export interface ImportableWorkItem {
 }
 
 interface ImportConfirmDialogProps {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  workItems: ImportableWorkItem[];
-  targetColumn: TaskStatus | null;
-  isImporting: boolean;
-  onConfirm: (requireReviewBeforeCoding: boolean) => void;
+  readonly open: boolean;
+  readonly onOpenChange: (open: boolean) => void;
+  readonly workItems: ImportableWorkItem[];
+  readonly targetColumn: TaskStatus | null;
+  readonly isImporting: boolean;
+  readonly onConfirm: (requireReviewBeforeCoding: boolean) => void;
   /** Called when the user explicitly cancels (closes the side panel too) */
-  onCancel?: () => void;
+  readonly onCancel?: () => void;
 }
 
 export function ImportConfirmDialog({

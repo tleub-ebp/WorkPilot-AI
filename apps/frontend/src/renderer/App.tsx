@@ -1182,10 +1182,7 @@ export function App() {
                           )}
                           {activeView === 'context' && (activeProjectId || selectedProjectId) && (
                               <ErrorBoundary>
-                                // biome-ignore lint/suspicious/noCommentText: intentional
-                                // biome-ignore lint/style/noNonNullAssertion: value is guaranteed by context
-// biome-ignore lint/style/noNonNullAssertion: intentional 
-                                <Context projectId={activeProjectId || selectedProjectId!} />
+                                <Context projectId={(activeProjectId || selectedProjectId) as string} />
                               </ErrorBoundary>
                           )}
                           {activeView === 'ideation' && (activeProjectId || selectedProjectId) && (

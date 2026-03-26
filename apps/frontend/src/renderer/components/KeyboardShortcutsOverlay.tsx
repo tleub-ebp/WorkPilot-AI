@@ -1,4 +1,4 @@
-﻿import { useEffect, useRef } from 'react';
+import { useEffect, useRef } from 'react';
 import { Keyboard, X } from 'lucide-react';
 
 // ---------------------------------------------------------------------------
@@ -16,8 +16,8 @@ interface ShortcutGroup {
 }
 
 interface KeyboardShortcutsOverlayProps {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
+  readonly open: boolean;
+  readonly onOpenChange: (open: boolean) => void;
 }
 
 // ---------------------------------------------------------------------------
@@ -74,13 +74,12 @@ const SHORTCUT_GROUPS: ShortcutGroup[] = [
 // Kbd component
 // ---------------------------------------------------------------------------
 
-function Kbd({ children }: { children: string }) {
+function Kbd({ children }: { readonly children: string }) {
   const parts = children.split('+');
   return (
     <span className="inline-flex items-center gap-0.5">
       {parts.map((part, i) => (
-        // biome-ignore lint/suspicious/noArrayIndexKey: no stable key available
-        <span key={i}>
+        <span key={part}>
           {i > 0 && <span className="mx-0.5 text-muted-foreground/50">+</span>}
           <kbd className="inline-flex h-6 min-w-6 items-center justify-center rounded border border-border bg-secondary px-1.5 font-mono text-[11px] font-medium text-foreground shadow-sm">
             {part}
@@ -108,17 +107,17 @@ export function KeyboardShortcutsOverlay({ open, onOpenChange }: KeyboardShortcu
       }
     };
 
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
+    globalThis.addEventListener('keydown', handleKeyDown);
+    return () => globalThis.removeEventListener('keydown', handleKeyDown);
   }, [open, onOpenChange]);
 
   if (!open) return null;
 
   return (
-    // biome-ignore lint/a11y/noNoninteractiveElementInteractions: interactive handler is intentional
-    // biome-ignore lint/a11y/noStaticElementInteractions: interactive handler is intentional
-    // biome-ignore lint/a11y/useKeyWithClickEvents: keyboard events handled elsewhere
     <div
+      // biome-ignore lint/a11y/noNoninteractiveElementInteractions: interactive handler is intentional
+      // biome-ignore lint/a11y/noStaticElementInteractions: interactive handler is intentional
+      // biome-ignore lint/a11y/useKeyWithClickEvents: keyboard events handled elsewhere
       className="fixed inset-0 z-100 flex items-center justify-center"
       onClick={() => onOpenChange(false)}
     >
@@ -178,6 +177,3 @@ export function KeyboardShortcutsOverlay({ open, onOpenChange }: KeyboardShortcu
     </div>
   );
 }
-
-
-

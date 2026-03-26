@@ -1,4 +1,4 @@
-﻿import { useTranslation } from 'react-i18next';
+import { useTranslation } from 'react-i18next';
 import { CheckCircle2, Plus } from 'lucide-react';
 import { Button } from '../ui/button';
 import { Switch } from '../ui/switch';
@@ -133,7 +133,7 @@ export function IdeationDialogs({
                 <>
                   {/* biome-ignore lint/a11y/noNoninteractiveElementInteractions: interactive handler is intentional */}
                   {/* biome-ignore lint/a11y/noStaticElementInteractions: interactive handler is intentional */}
-                  {/* biome-ignore lint/a11y/useKeyWithClickEvents: keyboard events handled elsewhere  */}
+                  {/* biome-ignore lint/a11y/useKeyWithClickEvents: keyboard events handled elsewhere */}
                   <div
                     key={type}
                     className={`flex items-center justify-between p-3 rounded-lg cursor-pointer transition-colors ${

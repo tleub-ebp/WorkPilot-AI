@@ -1,4 +1,4 @@
-﻿import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import {
   Layers,
   CheckCircle2,
@@ -300,7 +300,7 @@ export function BatchReviewWizard({
                   <>
                     {/* biome-ignore lint/a11y/noNoninteractiveElementInteractions: interactive handler is intentional */}
                     {/* biome-ignore lint/a11y/noStaticElementInteractions: interactive handler is intentional */}
-                    {/* biome-ignore lint/a11y/useKeyWithClickEvents: keyboard events handled elsewhere  */}
+                    {/* biome-ignore lint/a11y/useKeyWithClickEvents: keyboard events handled elsewhere */}
                     <div
                       key={issue.issueNumber}
                       onClick={() => toggleSingleIssueSelection(issue.issueNumber)}

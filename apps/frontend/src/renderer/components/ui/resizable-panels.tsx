@@ -1,4 +1,4 @@
-﻿/**
+/**
  * ResizablePanels - A split panel layout with a draggable divider
  *
  * Features:
@@ -139,7 +139,7 @@ export function ResizablePanels({
       </div>
 
       {/* Resizable divider */}
-{/* biome-ignore lint/a11y/noNoninteractiveElementInteractions lint/a11y/noStaticElementInteractions: interactive handler is intentional  */}
+{/* biome-ignore lint/a11y/noNoninteractiveElementInteractions lint/a11y/noStaticElementInteractions: interactive handler is intentional */}
       <div
         className={cn(
           "w-1 flex-shrink-0 relative cursor-col-resize touch-none",

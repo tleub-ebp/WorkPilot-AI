@@ -775,9 +775,6 @@ Please confirm you're ready by saying: I'm ready to work on ${selectedTask.title
 
   return (
     <div
-      // biome-ignore lint/a11y/noNoninteractiveElementInteractions: interactive handler is intentional
-      // biome-ignore lint/a11y/noStaticElementInteractions: interactive handler is intentional
-      // biome-ignore lint/a11y/useKeyWithClickEvents: keyboard events handled elsewhere
       ref={setDropRef}
       className={cn(
         'flex h-full flex-col rounded-lg border bg-[#0B0B0F] overflow-hidden transition-all relative',

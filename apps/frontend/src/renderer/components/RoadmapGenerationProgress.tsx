@@ -256,7 +256,7 @@ function PhaseStepsIndicator({
               transition={getStepTransition(state)}
             >
               {state === 'complete' && (
-// biome-ignore lint/a11y/noSvgWithoutTitle: SVG is decorative 
+// biome-ignore lint/a11y/noSvgWithoutTitle: SVG is decorative  
                 <svg
                   className="h-3 w-3"
                   fill="none"
@@ -272,8 +272,7 @@ function PhaseStepsIndicator({
                 </svg>
               )}
               {t(phase.labelKey)}
-            </motion.div>
-            {index < STEP_PHASES.length - 1 && (
+            </motion.div>index < STEP_PHASES.length - 1 && (
               <div
                 className={cn(
                   'w-4 h-px mx-1',
@@ -282,7 +281,7 @@ function PhaseStepsIndicator({
                     : 'bg-border'
                 )}
               />
-            )}
+            )
           </div>
         );
       })}
