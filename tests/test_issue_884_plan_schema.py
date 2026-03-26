@@ -315,7 +315,7 @@ async def test_planner_session_does_not_trigger_post_session_processing_on_retry
         assert phase == LogPhase.PLANNING
         return "error", "planner failed", {}
 
-    monkeypatch.setattr("agents.coder.create_client", fake_create_client)
+    monkeypatch.setattr("agents.coder.create_agent_client", fake_create_client)
     monkeypatch.setattr("agents.coder.get_graphiti_context", fake_get_graphiti_context)
     monkeypatch.setattr("agents.coder.get_next_subtask", fake_get_next_subtask)
     monkeypatch.setattr(
@@ -408,7 +408,7 @@ async def test_worktree_planning_to_coding_sync_updates_source_phase_status(
         assert logs["phases"]["coding"]["status"] == "active"
         return "complete", "done", {}
 
-    monkeypatch.setattr("agents.coder.create_client", fake_create_client)
+    monkeypatch.setattr("agents.coder.create_agent_client", fake_create_client)
     monkeypatch.setattr("agents.coder.get_graphiti_context", fake_get_graphiti_context)
     monkeypatch.setattr(
         "agents.coder.post_session_processing", fake_post_session_processing
