@@ -1,46 +1,26 @@
-﻿#!/usr/bin/env python3
+#!/usr/bin/env python3
 """
 Quick test to verify imports work after fixing optional dependencies
 """
 import sys
 from pathlib import Path
+import pytest
 
 # Add backend to path
 backend_dir = Path(__file__).parent.parent / "apps" / "backend"
 sys.path.insert(0, str(backend_dir))
 
-print("Testing imports after optional dependency fix...\n")
 
-# Test 1: Import auto_fix_loop
-print("[1/3] Testing auto_fix_loop import...")
-try:
+def test_auto_fix_loop_import():
     from qa.auto_fix_loop import AutoFixLoop, AutoFixTestResult, AutoFixAttempt
-    print("  ✓ AutoFixLoop imported successfully")
-    print("  ✓ AutoFixTestResult imported successfully")
-    print("  ✓ AutoFixAttempt imported successfully")
-except Exception as e:
-    print(f"  ✗ Error: {e}")
-    sys.exit(1)
+    assert AutoFixLoop is not None
 
-# Test 2: Import auto_fix_metrics
-print("\n[2/3] Testing auto_fix_metrics import...")
-try:
+
+def test_auto_fix_metrics_import():
     from qa.auto_fix_metrics import AutoFixMetricsTracker, get_auto_fix_stats
-    print("  ✓ AutoFixMetricsTracker imported successfully")
-    print("  ✓ get_auto_fix_stats imported successfully")
-except Exception as e:
-    print(f"  ✗ Error: {e}")
-    sys.exit(1)
+    assert AutoFixMetricsTracker is not None
 
-# Test 3: Import via qa package
-print("\n[3/3] Testing qa package exports...")
-try:
+
+def test_qa_package_exports():
     from qa import AutoFixLoop, DEFAULT_MAX_AUTO_FIX_ATTEMPTS
-    print("  ✓ AutoFixLoop exported via qa package")
-    print(f"  ✓ DEFAULT_MAX_AUTO_FIX_ATTEMPTS = {DEFAULT_MAX_AUTO_FIX_ATTEMPTS}")
-except Exception as e:
-    print(f"  ✗ Error: {e}")
-    sys.exit(1)
-
-print("\n✅ All imports successful!")
-print("✨ Optional dependencies handled correctly!")
+    assert DEFAULT_MAX_AUTO_FIX_ATTEMPTS > 0
