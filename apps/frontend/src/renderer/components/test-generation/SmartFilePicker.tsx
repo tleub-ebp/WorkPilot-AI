@@ -37,14 +37,14 @@ function isSourceFile(name: string): boolean {
 
 function getFileIcon(node: FileNode) {
   if (node.isDirectory) return null;
-  return <FileCode className="w-3.5 h-3.5 shrink-0 text-[var(--color-text-secondary)]" />;
+  return <FileCode className="w-3.5 h-3.5 shrink-0 text-(--color-text-secondary)" />;
 }
 
 interface SmartFilePickerProps {
-  value: string;
-  onChange: (path: string) => void;
-  tabType?: 'unit' | 'analyze' | 'e2e' | 'tdd';
-  placeholder?: string;
+  readonly value: string;
+  readonly onChange: (path: string) => void;
+  readonly tabType?: 'unit' | 'analyze' | 'e2e' | 'tdd';
+  readonly placeholder?: string;
 }
 
 export function SmartFilePicker({
@@ -69,9 +69,9 @@ export function SmartFilePicker({
   const resolveStartDir = useCallback(async (root: string): Promise<string> => {
     const candidates = FOLDER_CANDIDATES[tabType] ?? [];
     for (const candidate of candidates) {
-      const candidatePath = `${root}/${candidate}`.replace(/\\/g, '/');
+      const candidatePath = `${root}/${candidate}`.replaceAll('\\', '/');
       try {
-        const result = await window.electronAPI.listDirectory(candidatePath);
+        const result = await globalThis.electronAPI.listDirectory(candidatePath);
         if (result.success) return candidatePath;
       } catch {
         // try next
@@ -85,7 +85,7 @@ export function SmartFilePicker({
     setLoading(true);
     setFilter('');
     try {
-      const result = await window.electronAPI.listDirectory(dirPath);
+      const result = await globalThis.electronAPI.listDirectory(dirPath);
       if (result.success && result.data) {
         // Show directories + source files only
         const filtered = result.data.filter(
@@ -161,6 +161,19 @@ export function SmartFilePicker({
     ? value.replace(projectPath, '').replace(/^[/\\]+/, '') || value
     : '';
 
+  const openStateClasses = 'border-[var(--color-accent)] bg-[var(--color-accent)]/5';
+  const hasValueClasses = 'border-[var(--color-border)] bg-[var(--color-bg-secondary)]';
+  const noValueClasses = 'border-dashed border-[var(--color-border)] bg-transparent';
+  
+  let buttonClasses: string;
+  if (isOpen) {
+    buttonClasses = openStateClasses;
+  } else if (value) {
+    buttonClasses = hasValueClasses;
+  } else {
+    buttonClasses = noValueClasses;
+  }
+
   return (
     <div className="space-y-1.5">
       {/* Selected file chip / trigger */}
@@ -169,42 +182,33 @@ export function SmartFilePicker({
         onClick={isOpen ? () => setIsOpen(false) : handleOpen}
         className={cn(
           'w-full flex items-center gap-2 px-3 py-2.5 rounded-lg border-2 text-left transition-all duration-200',
-          'hover:border-[var(--color-accent)] focus:outline-none focus:border-[var(--color-accent)]',
-          isOpen
-            ? 'border-[var(--color-accent)] bg-[var(--color-accent)]/5'
-            : value
-              ? 'border-[var(--color-border)] bg-[var(--color-bg-secondary)]'
-              : 'border-dashed border-[var(--color-border)] bg-transparent',
+          'hover:border-accent focus:outline-none focus:border-accent',
+          buttonClasses
         )}
       >
         {value ? (
           <>
-            <FileCode className="w-4 h-4 shrink-0 text-[var(--color-accent)]" />
-            <span className="flex-1 text-sm font-mono truncate text-[var(--color-text-primary)]">
+            <FileCode className="w-4 h-4 shrink-0 text-accent" />
+            <span className="flex-1 text-sm font-mono truncate text-(--color-text-primary)">
               {displayValue}
             </span>
-            <span
-              // biome-ignore lint/a11y/useSemanticElements: custom element maintains accessibility
-              // biome-ignore lint/a11y/useSemanticElements: intentional
-              role="button"
-              tabIndex={0}
+            <button
+              type="button"
               onClick={clearSelection}
-              // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
-              onKeyDown={(e) => e.key === 'Enter' && clearSelection(e as any)}
-              className="p-0.5 rounded hover:bg-[var(--color-bg-tertiary)] text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] transition-colors"
+              className="p-0.5 rounded hover:bg-(--color-bg-tertiary) text-(--color-text-secondary) hover:text-(--color-text-primary) transition-colors"
             >
               <X className="w-3.5 h-3.5" />
-            </span>
+            </button>
           </>
         ) : (
           <>
-            <FolderOpen className="w-4 h-4 shrink-0 text-[var(--color-text-secondary)]" />
-            <span className="flex-1 text-sm text-[var(--color-text-secondary)]">
+            <FolderOpen className="w-4 h-4 shrink-0 text-(--color-text-secondary)" />
+            <span className="flex-1 text-sm text-(--color-text-secondary)">
               {placeholder ?? t('testGeneration:filePicker.selectFile')}
             </span>
           </>
         )}
-        <span className="text-[var(--color-text-secondary)]">
+        <span className="text-(--color-text-secondary)">
           {isOpen ? (
             <ChevronUp className="w-4 h-4" />
           ) : (
@@ -215,13 +219,13 @@ export function SmartFilePicker({
 
       {/* Inline file tree panel */}
       {isOpen && (
-        <div className="rounded-lg border border-[var(--color-border)] bg-[var(--color-bg-secondary)] overflow-hidden shadow-lg">
+        <div className="rounded-lg border border-border bg-(--color-bg-secondary) overflow-hidden shadow-lg">
           {/* Breadcrumb */}
-          <div className="flex items-center gap-1 px-3 py-2 border-b border-[var(--color-border)] overflow-x-auto scrollbar-none">
+          <div className="flex items-center gap-1 px-3 py-2 border-b border-border overflow-x-auto scrollbar-none">
             {breadcrumbs.map((crumb, idx) => (
               <span key={crumb.path} className="flex items-center gap-1 shrink-0">
                 {idx > 0 && (
-                  <ChevronRight className="w-3 h-3 text-[var(--color-text-secondary)]" />
+                  <ChevronRight className="w-3 h-3 text-(--color-text-secondary)" />
                 )}
                 <button
                   type="button"
@@ -229,8 +233,8 @@ export function SmartFilePicker({
                   className={cn(
                     'text-xs px-1.5 py-0.5 rounded transition-colors',
                     idx === breadcrumbs.length - 1
-                      ? 'text-[var(--color-text-primary)] font-medium bg-[var(--color-accent)]/10'
-                      : 'text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] hover:bg-[var(--color-bg-tertiary)]',
+                      ? 'text-(--color-text-primary) font-medium bg-accent/10'
+                      : 'text-(--color-text-secondary) hover:text-(--color-text-primary) hover:bg-(--color-bg-tertiary)',
                   )}
                 >
                   {crumb.name}
@@ -240,21 +244,21 @@ export function SmartFilePicker({
           </div>
 
           {/* Search filter */}
-          <div className="flex items-center gap-2 px-3 py-2 border-b border-[var(--color-border)]">
-            <Search className="w-3.5 h-3.5 shrink-0 text-[var(--color-text-secondary)]" />
+          <div className="flex items-center gap-2 px-3 py-2 border-b border-border">
+            <Search className="w-3.5 h-3.5 shrink-0 text-(--color-text-secondary)" />
             <input
               ref={filterRef}
               type="text"
               value={filter}
               onChange={(e) => setFilter(e.target.value)}
               placeholder={t('testGeneration:filePicker.filter')}
-              className="flex-1 bg-transparent text-sm text-[var(--color-text-primary)] placeholder:text-[var(--color-text-secondary)] outline-none"
+              className="flex-1 bg-transparent text-sm text-(--color-text-primary) placeholder:text-(--color-text-secondary) outline-none"
             />
             {filter && (
               <button
                 type="button"
                 onClick={() => setFilter('')}
-                className="text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)]"
+                className="text-(--color-text-secondary) hover:text-(--color-text-primary)"
               >
                 <X className="w-3 h-3" />
               </button>
@@ -263,15 +267,19 @@ export function SmartFilePicker({
 
           {/* File list */}
           <div className="max-h-56 overflow-y-auto">
-            {loading ? (
+            {loading && (
               <div className="flex items-center justify-center py-6">
-                <Loader2 className="w-4 h-4 animate-spin text-[var(--color-text-secondary)]" />
+                <Loader2 className="w-4 h-4 animate-spin text-(--color-text-secondary)" />
               </div>
-            ) : filteredEntries.length === 0 ? (
-              <p className="text-xs text-[var(--color-text-secondary)] text-center py-6">
+            )}
+            
+            {!loading && filteredEntries.length === 0 && (
+              <p className="text-xs text-(--color-text-secondary) text-center py-6">
                 {t('testGeneration:filePicker.empty')}
               </p>
-            ) : (
+            )}
+            
+            {!loading && filteredEntries.length > 0 && (
               <ul>
                 {filteredEntries.map((node) => (
                   <li key={node.path}>
@@ -282,12 +290,12 @@ export function SmartFilePicker({
                       }
                       className={cn(
                         'w-full flex items-center gap-2 px-3 py-1.5 text-left text-sm transition-colors',
-                        'hover:bg-[var(--color-accent)]/10 group',
-                        !node.isDirectory && node.path === value && 'bg-[var(--color-accent)]/15',
+                        'hover:bg-accent/10 group',
+                        !node.isDirectory && node.path === value && 'bg-accent/15',
                       )}
                     >
                       {node.isDirectory ? (
-                        <Folder className="w-3.5 h-3.5 shrink-0 text-[var(--color-accent)] opacity-70 group-hover:opacity-100" />
+                        <Folder className="w-3.5 h-3.5 shrink-0 text-accent opacity-70 group-hover:opacity-100" />
                       ) : (
                         getFileIcon(node)
                       )}
@@ -295,14 +303,14 @@ export function SmartFilePicker({
                         className={cn(
                           'flex-1 truncate font-mono',
                           node.isDirectory
-                            ? 'text-[var(--color-text-primary)]'
-                            : 'text-[var(--color-text-secondary)] group-hover:text-[var(--color-text-primary)]',
+                            ? 'text-(--color-text-primary)'
+                            : 'text-(--color-text-secondary) group-hover:text-(--color-text-primary)',
                         )}
                       >
                         {node.name}
                       </span>
                       {node.isDirectory && (
-                        <ChevronRight className="w-3 h-3 shrink-0 text-[var(--color-text-secondary)] opacity-0 group-hover:opacity-100 transition-opacity" />
+                        <ChevronRight className="w-3 h-3 shrink-0 text-(--color-text-secondary) opacity-0 group-hover:opacity-100 transition-opacity" />
                       )}
                     </button>
                   </li>

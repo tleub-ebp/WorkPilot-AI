@@ -6,9 +6,9 @@ import { Card, CardContent } from './card';
 import { captureException } from '../../lib/sentry';
 
 interface ErrorBoundaryProps {
-  children: React.ReactNode;
-  fallback?: React.ReactNode;
-  onReset?: () => void;
+  readonly children: React.ReactNode;
+  readonly fallback?: React.ReactNode;
+  readonly onReset?: () => void;
 }
 
 interface ErrorBoundaryState {
@@ -19,7 +19,7 @@ interface ErrorBoundaryState {
 /**
  * Functional fallback UI that can access i18n hooks.
  */
-function ErrorFallbackUI({ error, onReset }: { error: Error | null; onReset: () => void }) {
+function ErrorFallbackUI({ error, onReset }: { readonly error: Error | null; readonly onReset: () => void }) {
   const { t } = useTranslation('errors');
 
   return (

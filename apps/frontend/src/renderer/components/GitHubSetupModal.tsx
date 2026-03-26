@@ -551,8 +551,6 @@ export function GitHubSetupModal({
                                 : 'border-muted hover:border-primary/50'
                             }`}
                             disabled={isCreatingRepo}
-                            // biome-ignore lint/a11y/useSemanticElements: custom element maintains accessibility
-                            // biome-ignore lint/a11y/useSemanticElements: intentional
                             role="radio"
                             aria-checked={selectedOwner === githubUsername}
                             aria-label={t('githubSetup.selectOwnerAriaLabel', { owner: githubUsername })}
@@ -572,8 +570,6 @@ export function GitHubSetupModal({
                                 : 'border-muted hover:border-primary/50'
                             }`}
                             disabled={isCreatingRepo}
-                            // biome-ignore lint/a11y/useSemanticElements: custom element maintains accessibility
-                            // biome-ignore lint/a11y/useSemanticElements: intentional
                             role="radio"
                             aria-checked={selectedOwner === org.login}
                             aria-label={t('githubSetup.selectOrgAriaLabel', { org: org.login })}
@@ -619,8 +615,6 @@ export function GitHubSetupModal({
                             : 'border-muted hover:border-primary/50'
                         }`}
                         disabled={isCreatingRepo}
-                        // biome-ignore lint/a11y/useSemanticElements: custom element maintains accessibility
-                        // biome-ignore lint/a11y/useSemanticElements: intentional
                         role="radio"
                         aria-checked={isPrivateRepo}
                         aria-label={t('githubSetup.selectVisibilityAriaLabel', { visibility: 'private' })}
@@ -636,8 +630,6 @@ export function GitHubSetupModal({
                             : 'border-primary bg-primary/10 text-primary'
                         }`}
                         disabled={isCreatingRepo}
-                        // biome-ignore lint/a11y/useSemanticElements: custom element maintains accessibility
-                        // biome-ignore lint/a11y/useSemanticElements: intentional
                         role="radio"
                         aria-checked={!isPrivateRepo}
                         aria-label={t('githubSetup.selectVisibilityAriaLabel', { visibility: 'public' })}

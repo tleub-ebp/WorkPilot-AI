@@ -16,9 +16,16 @@ vi.mock('../worktree-paths', () => ({
   findTaskWorktree: vi.fn(() => null)
 }));
 
-vi.mock('fs', () => ({
-  existsSync: vi.fn(() => false)
-}));
+vi.mock('fs', () => {
+  const mod = {
+    existsSync: vi.fn(() => false),
+    readFileSync: vi.fn(() => ''),
+    writeFileSync: vi.fn(),
+    mkdirSync: vi.fn(),
+    promises: {},
+  };
+  return { ...mod, default: mod };
+});
 
 // Create mock task and project
 function createMockTask(overrides: Partial<Task> = {}): Task {

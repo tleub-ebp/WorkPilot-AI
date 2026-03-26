@@ -60,10 +60,7 @@ export function IdeaCard({ idea, isSelected, onClick, onConvert, onGoToTask, onD
     >
       <div className="flex items-start gap-3">
         {/* Selection checkbox */}
-        // biome-ignore lint/a11y/noNoninteractiveElementInteractions: interactive handler is intentional
-        // biome-ignore lint/a11y/noStaticElementInteractions: interactive handler is intentional
-        // biome-ignore lint/a11y/useKeyWithClickEvents: keyboard events handled elsewhere
-        // biome-ignore lint/a11y/noNoninteractiveElementInteractions lint/a11y/noStaticElementInteractions lint/a11y/useKeyWithClickEvents: intentional
+        {/* biome-ignore lint/a11y/noNoninteractiveElementInteractions lint/a11y/noStaticElementInteractions lint/a11y/useKeyWithClickEvents: interactive handler is intentional */}
         <div
           className="pt-0.5"
           onClick={(e) => {

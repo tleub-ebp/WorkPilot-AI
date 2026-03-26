@@ -2,8 +2,8 @@ import { cn } from '../../lib/utils';
 import { Skeleton } from './skeleton';
 
 interface TerminalGridSkeletonProps {
-  panels?: number;
-  className?: string;
+  readonly panels?: number;
+  readonly className?: string;
 }
 
 /**
@@ -15,18 +15,14 @@ export function TerminalGridSkeleton({
   className,
 }: TerminalGridSkeletonProps) {
   return (
-    <div
-      // biome-ignore lint/a11y/useSemanticElements: custom element maintains accessibility
-      // biome-ignore lint/a11y/useSemanticElements: intentional
-      role="status"
+    <output 
       aria-label="Loading terminals..."
       className={cn('grid grid-cols-2 gap-2 p-4 h-full', className)}
     >
-      {Array.from({ length: panels }).map((_, idx) => (
-        // biome-ignore lint/suspicious/noArrayIndexKey: no stable key available
-        <TerminalPanelSkeleton key={idx} />
+      {Array.from({ length: panels }).map(() => (
+        <TerminalPanelSkeleton key={crypto.randomUUID()} />
       ))}
-    </div>
+    </output>
   );
 }
 

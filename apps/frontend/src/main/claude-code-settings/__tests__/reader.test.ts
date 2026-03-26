@@ -3,15 +3,22 @@ import path from 'path';
 import type { ClaudeCodeSettings } from '../types';
 
 // Mock fs module
-vi.mock('fs', () => ({
-  existsSync: vi.fn(),
-  readFileSync: vi.fn(),
-}));
+vi.mock('fs', () => {
+  const mod = {
+    existsSync: vi.fn(),
+    readFileSync: vi.fn(),
+    writeFileSync: vi.fn(),
+    mkdirSync: vi.fn(),
+    promises: {},
+  };
+  return { ...mod, default: mod };
+});
 
 // Mock os module
-vi.mock('os', () => ({
-  homedir: vi.fn(() => '/home/testuser'),
-}));
+vi.mock('os', () => {
+  const mod = { homedir: vi.fn(() => '/home/testuser') };
+  return { ...mod, default: mod };
+});
 
 // Mock platform module
 vi.mock('../../platform', () => ({

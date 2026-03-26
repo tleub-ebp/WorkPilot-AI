@@ -164,10 +164,10 @@ const Combobox = React.forwardRef<HTMLButtonElement, ComboboxProps>(
     return (
       <Popover open={open} onOpenChange={setOpen}>
         <PopoverTrigger asChild disabled={disabled}>
-          <button
+          {/* biome-ignore lint/a11y/useSemanticElements: custom element maintains accessibility */}
+          <button role="combobox"
             ref={ref}
             type="button"
-            role="combobox"
             aria-expanded={open}
             aria-haspopup="listbox"
             aria-controls={open ? listboxId : undefined}
@@ -195,7 +195,7 @@ const Combobox = React.forwardRef<HTMLButtonElement, ComboboxProps>(
           </button>
         </PopoverTrigger>
         <PopoverContent
-          className="w-[var(--radix-popover-trigger-width)] p-0"
+          className="w-(--radix-popover-trigger-width) p-0"
           align="start"
           sideOffset={4}
           onKeyDown={handleKeyDown}
@@ -203,11 +203,10 @@ const Combobox = React.forwardRef<HTMLButtonElement, ComboboxProps>(
           {/* Search input */}
           <div className="flex items-center border-b border-border px-3">
             <Search className="h-4 w-4 shrink-0 text-muted-foreground" />
+            {/* biome-ignore lint/a11y/useSemanticElements: custom element maintains accessibility */}
             <input
               ref={inputRef}
               type="text"
-              // biome-ignore lint/a11y/useSemanticElements: custom element maintains accessibility
-              // biome-ignore lint/a11y/useSemanticElements: intentional
               role="searchbox"
               aria-controls={listboxId}
               aria-activedescendant={activeDescendant}
@@ -239,6 +238,7 @@ const Combobox = React.forwardRef<HTMLButtonElement, ComboboxProps>(
                   return (
                     <React.Fragment key={option.value}>
                       {/* Group header */}
+                      {/* biome-ignore lint/a11y/useSemanticElements: custom element maintains accessibility */}
                       {showGroupHeader && (
                         <div
                           role="presentation"

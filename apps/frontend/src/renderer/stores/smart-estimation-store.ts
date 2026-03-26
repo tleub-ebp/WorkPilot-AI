@@ -114,7 +114,7 @@ export function startSmartEstimation(projectId: string): void {
   const store = useSmartEstimationStore.getState();
   const { initialTaskDescription } = store;
 
-  if (!initialTaskDescription.trim()) return;
+  if (!projectId || !initialTaskDescription.trim()) return;
 
   // Reset streaming state
   store.setPhase('analyzing');

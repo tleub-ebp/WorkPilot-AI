@@ -2,10 +2,10 @@ import { cn } from '../../lib/utils';
 import { Skeleton, SkeletonCard } from './skeleton';
 
 interface KanbanSkeletonProps {
-  columns?: number;
-  cardsPerColumn?: number[];
-  className?: string;
-  showRefreshText?: boolean;
+  readonly columns?: number;
+  readonly cardsPerColumn?: number[];
+  readonly className?: string;
+  readonly showRefreshText?: boolean;
 }
 
 /**
@@ -19,10 +19,7 @@ export function KanbanSkeleton({
   showRefreshText = false,
 }: KanbanSkeletonProps) {
   return (
-    <div
-      // biome-ignore lint/a11y/useSemanticElements: custom element maintains accessibility
-      // biome-ignore lint/a11y/useSemanticElements: intentional
-      role="status"
+    <output
       aria-label={showRefreshText ? "Refreshing kanban board..." : "Loading kanban board..."}
       className={cn('flex gap-3 p-4 h-full overflow-hidden', className)}
     >
@@ -34,8 +31,7 @@ export function KanbanSkeleton({
       )}
       {Array.from({ length: columns }).map((_, colIdx) => (
         <div
-          // biome-ignore lint/suspicious/noArrayIndexKey: no stable key available
-          key={colIdx}
+          key={`skeleton-column-${String(colIdx)}`}
           className="flex flex-col flex-1 min-w-[220px] max-w-[350px]"
         >
           {/* Column header skeleton */}
@@ -48,14 +44,13 @@ export function KanbanSkeleton({
           <div className="flex-1 space-y-2 rounded-lg bg-muted/30 p-2">
             {Array.from({ length: cardsPerColumn[colIdx] ?? 2 }).map(
               (_, cardIdx) => (
-                // biome-ignore lint/suspicious/noArrayIndexKey: no stable key available
-                <KanbanCardSkeleton key={cardIdx} />
+                <KanbanCardSkeleton key={`skeleton-card-${String(colIdx)}-${String(cardIdx)}`} />
               )
             )}
           </div>
         </div>
       ))}
-    </div>
+    </output>
   );
 }
 

@@ -40,12 +40,17 @@ const mockFs = {
   writeFileSync: vi.fn(),
 };
 
-vi.mock('fs', () => ({
-  existsSync: (...args: unknown[]) => mockFs.existsSync(...args),
-  readFileSync: (...args: unknown[]) => mockFs.readFileSync(...args),
-  writeFileSync: (...args: unknown[]) => mockFs.writeFileSync(...args),
-  readFile: vi.fn(),
-}));
+vi.mock('fs', () => {
+  const mod = {
+    existsSync: (...args: unknown[]) => mockFs.existsSync(...args),
+    readFileSync: (...args: unknown[]) => mockFs.readFileSync(...args),
+    writeFileSync: (...args: unknown[]) => mockFs.writeFileSync(...args),
+    readFile: vi.fn(),
+    mkdirSync: vi.fn(),
+    promises: { readFile: vi.fn(), writeFile: vi.fn(), mkdir: vi.fn() },
+  };
+  return { ...mod, default: mod };
+});
 
 describe('Long-Lived Auth Fix', () => {
   beforeEach(() => {

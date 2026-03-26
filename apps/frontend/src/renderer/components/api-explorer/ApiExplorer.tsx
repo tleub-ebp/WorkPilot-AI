@@ -1862,9 +1862,7 @@ function RequestPanel({ method, path, operation, spec, onOpenEnvManager }: Reque
       {(responseStatus !== null || isSendingRequest) && (
         <>
           {/* Drag handle */}
-          // biome-ignore lint/a11y/noNoninteractiveElementInteractions: interactive handler is intentional
-          // biome-ignore lint/a11y/noStaticElementInteractions: interactive handler is intentional
-          // biome-ignore lint/a11y/noNoninteractiveElementInteractions lint/a11y/noStaticElementInteractions: intentional
+          {/* biome-ignore lint/a11y/noNoninteractiveElementInteractions lint/a11y/noStaticElementInteractions: interactive handler is intentional */}
           <div
             className="shrink-0 h-2 flex items-center justify-center cursor-row-resize group select-none"
             onMouseDown={(e) => {
