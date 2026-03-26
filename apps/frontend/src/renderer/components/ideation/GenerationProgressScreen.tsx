@@ -1,4 +1,4 @@
-﻿import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Sparkles, FileCode, Square } from 'lucide-react';
 import { Button } from '../ui/button';
@@ -165,7 +165,7 @@ export function GenerationProgressScreen({
             <div className="p-3 space-y-1 font-mono text-xs">
               {logs.map((log, index) => (
                 <>
-                  {/* biome-ignore lint/suspicious/noArrayIndexKey: no stable key available  */}
+                  {/* biome-ignore lint/suspicious/noArrayIndexKey: no stable key available */}
                   <div key={index} className="text-muted-foreground leading-relaxed">
                     <span className="text-muted-foreground/50 mr-2 select-none">
                       {String(index + 1).padStart(3, '0')}

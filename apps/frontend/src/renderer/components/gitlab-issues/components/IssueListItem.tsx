@@ -1,4 +1,4 @@
-﻿import { User, MessageCircle, Tag, Sparkles } from 'lucide-react';
+import { User, MessageCircle, Tag, Sparkles } from 'lucide-react';
 import { Badge } from '../../ui/badge';
 import { Button } from '../../ui/button';
 import type { IssueListItemProps } from '../types';

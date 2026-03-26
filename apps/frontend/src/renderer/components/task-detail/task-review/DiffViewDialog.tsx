@@ -1,4 +1,4 @@
-﻿import { useState, useMemo, useCallback } from 'react';
+import { useState, useMemo, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   Eye,
@@ -29,7 +29,7 @@ import { DiffViewer } from '../../ui/diff-viewer';
 import { cn } from '../../../lib/utils';
 import type { WorktreeDiff, WorktreeDiffFile } from '../../../../shared/types';
 
-// â”€â”€ Tree data structure â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── Tree data structure ──────────────────────────────────────────────
 
 interface TreeNode {
   name: string;
@@ -100,7 +100,7 @@ function buildFileTree(files: WorktreeDiffFile[]): TreeNode[] {
   return root;
 }
 
-// â”€â”€ Tree node component â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── Tree node component ──────────────────────────────────────────────
 
 function FileTreeNode({
   node,
@@ -205,7 +205,7 @@ function FileTreeNode({
   );
 }
 
-// â”€â”€ Main dialog â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── Main dialog ──────────────────────────────────────────────────────
 
 type ViewMode = 'list' | 'tree';
 

@@ -1,4 +1,4 @@
-﻿import { useState, useCallback, useMemo } from 'react';
+import { useState, useCallback, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   Wand2,
@@ -184,8 +184,7 @@ export function RefactoringView({ projectId }: RefactoringViewProps) {
           <CardContent className="p-5 space-y-3">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                // biome-ignore lint/a11y/noLabelWithoutControl: label association is implicit
-{/* biome-ignore lint/a11y/noLabelWithoutControl: intentional  */}
+{/* biome-ignore lint/a11y/noLabelWithoutControl: intentional */}
                 <label className="text-sm font-medium text-foreground">
                   {primaryLanguage
                     ? t('refactoring:input.labelWithLanguage', { language: primaryLanguage })
@@ -350,12 +349,11 @@ export function RefactoringView({ projectId }: RefactoringViewProps) {
                           {t('refactoring:proposals.risk')}: {risk}
                         </Badge>
                       </div>
-                      <p className="text-sm text-muted-foreground">{p.description}</p>
-                      {p.impact && (
+                      <p className="text-sm text-muted-foreground">{p.description}</p>p.impact && (
                         <p className="text-xs text-muted-foreground">
                           <span className="font-medium text-foreground">{t('refactoring:proposals.impact')}:</span> {p.impact}
                         </p>
-                      )}
+                      )
                     </div>
                   );
                 })}

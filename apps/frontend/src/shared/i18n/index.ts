@@ -52,6 +52,7 @@ import enArena from './locales/en/arena.json';
 import enApiExplorer from './locales/en/apiExplorer.json';
 import enPipelineGenerator from './locales/en/pipelineGenerator.json';
 import enVisualToCode from './locales/en/visualToCode.json';
+import enQualityScore from './locales/en/qualityScore.json';
 
 // Import French translation resources
 import frAppEmulator from './locales/fr/appEmulator.json';
@@ -104,6 +105,7 @@ import frArena from './locales/fr/arena.json';
 import frApiExplorer from './locales/fr/apiExplorer.json';
 import frPipelineGenerator from './locales/fr/pipelineGenerator.json';
 import frVisualToCode from './locales/fr/visualToCode.json';
+import frQualityScore from './locales/fr/qualityScore.json';
 
 export const defaultNS = 'common';
 
@@ -159,6 +161,7 @@ export const resources = {
     apiExplorer: enApiExplorer,
     pipelineGenerator: enPipelineGenerator,
     visualToCode: enVisualToCode,
+    qualityScore: enQualityScore,
   },
   fr: {
     appEmulator: frAppEmulator,
@@ -211,6 +214,7 @@ export const resources = {
     apiExplorer: frApiExplorer,
     pipelineGenerator: frPipelineGenerator,
     visualToCode: frVisualToCode,
+    qualityScore: frQualityScore,
   }
 } as const;
 
@@ -272,6 +276,7 @@ i18n
       'apiExplorer',
       'pipelineGenerator',
       'visualToCode',
+      'qualityScore',
     ],
     interpolation: {
       escapeValue: false 

@@ -36,14 +36,14 @@ import type { PRFilterState, PRStatusFilter, PRSortOption } from '../hooks/usePR
 import { cn } from '../../../lib/utils';
 
 interface PRFilterBarProps {
-  filters: PRFilterState;
-  contributors: string[];
-  hasActiveFilters: boolean;
-  onSearchChange: (query: string) => void;
-  onContributorsChange: (contributors: string[]) => void;
-  onStatusesChange: (statuses: PRStatusFilter[]) => void;
-  onSortChange: (sortBy: PRSortOption) => void;
-  onClearFilters: () => void;
+  readonly filters: PRFilterState;
+  readonly contributors: string[];
+  readonly hasActiveFilters: boolean;
+  readonly onSearchChange: (query: string) => void;
+  readonly onContributorsChange: (contributors: string[]) => void;
+  readonly onStatusesChange: (statuses: PRStatusFilter[]) => void;
+  readonly onSortChange: (sortBy: PRSortOption) => void;
+  readonly onClearFilters: () => void;
 }
 
 // Status options
@@ -91,18 +91,18 @@ function FilterDropdown<T extends string>({
   noResultsLabel,
   clearLabel,
 }: {
-  title: string;
-  icon: typeof Users;
-  items: T[];
-  selected: T[];
-  onChange: (selected: T[]) => void;
-  renderItem?: (item: T) => React.ReactNode;
-  renderTrigger?: (selected: T[]) => React.ReactNode;
-  searchable?: boolean;
-  searchPlaceholder?: string;
-  selectedCountLabel?: string;
-  noResultsLabel?: string;
-  clearLabel?: string;
+  readonly title: string;
+  readonly icon: typeof Users;
+  readonly items: T[];
+  readonly selected: T[];
+  readonly onChange: (selected: T[]) => void;
+  readonly renderItem?: (item: T) => React.ReactNode;
+  readonly renderTrigger?: (selected: T[]) => React.ReactNode;
+  readonly searchable?: boolean;
+  readonly searchPlaceholder?: string;
+  readonly selectedCountLabel?: string;
+  readonly noResultsLabel?: string;
+  readonly clearLabel?: string;
 }) {
   const [searchTerm, setSearchTerm] = useState('');
   const [isOpen, setIsOpen] = useState(false);
@@ -189,26 +189,32 @@ function FilterDropdown<T extends string>({
                 {selected.length}
               </Badge>
               <div className="hidden space-x-1 lg:flex flex-1 truncate">
-                {selected.length > 2 ? (
-                  <Badge
-                    variant="secondary"
-                    className="rounded-sm px-1 font-normal"
-                  >
-                    {selectedCountLabel}
-                  </Badge>
-                ) : (
-                  renderTrigger ? renderTrigger(selected) : (
-                    selected.map((item) => (
+                {(() => {
+                  if (selected.length > 2) {
+                    return (
                       <Badge
                         variant="secondary"
-                        key={item}
                         className="rounded-sm px-1 font-normal"
                       >
-                        {item}
+                        {selectedCountLabel}
                       </Badge>
-                    ))
-                  )
-                )}
+                    );
+                  }
+                  
+                  if (renderTrigger) {
+                    return renderTrigger(selected);
+                  }
+                  
+                  return selected.map((item) => (
+                    <Badge
+                      variant="secondary"
+                      key={item}
+                      className="rounded-sm px-1 font-normal"
+                    >
+                      {item}
+                    </Badge>
+                  ));
+                })()}
               </div>
             </>
           )}
@@ -304,17 +310,19 @@ function FilterDropdown<T extends string>({
 /**
  * Single-select Sort Dropdown Component
  */
+interface SortDropdownProps {
+  readonly value: PRSortOption;
+  readonly onChange: (value: PRSortOption) => void;
+  readonly options: typeof SORT_OPTIONS;
+  readonly title: string;
+}
+
 function SortDropdown({
   value,
   onChange,
   options,
   title,
-}: {
-  value: PRSortOption;
-  onChange: (value: PRSortOption) => void;
-  options: typeof SORT_OPTIONS;
-  title: string;
-}) {
+}: SortDropdownProps) {
   const { t } = useTranslation('common');
   const [isOpen, setIsOpen] = useState(false);
   const [focusedIndex, setFocusedIndex] = useState(-1);
@@ -391,8 +399,6 @@ function SortDropdown({
             const isFocused = focusedIndex === index;
             const Icon = option.icon;
             return (
-              // biome-ignore lint/a11y/useFocusableInteractive: element is focusable via tabIndex
-{/* biome-ignore lint/a11y/useKeyWithClickEvents: keyboard events handled elsewhere  */}
               <div
                 key={option.value}
                 role="option"
@@ -402,6 +408,8 @@ function SortDropdown({
                   isSelected && "bg-accent/50",
                   isFocused && "bg-accent text-accent-foreground"
                 )}
+                // biome-ignore lint/a11y/useFocusableInteractive: element is focusable via tabIndex
+                // biome-ignore lint/a11y/useKeyWithClickEvents: keyboard events handled elsewhere
                 onClick={() => {
                   onChange(option.value);
                   setIsOpen(false);
@@ -441,7 +449,7 @@ export function PRFilterBar({
     STATUS_OPTIONS.find((opt) => opt.value === value);
 
   return (
-    <div className="px-4 py-2 border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+    <div className="px-4 py-2 border-b border-border/40 bg-background/95 backdrop-blur supports-backdrop-filter:bg-background/60">
       <div className="flex items-center gap-2 h-9">
         {/* Search Input - Flexible width */}
         <div className="relative flex-1 max-w-md">
@@ -540,7 +548,7 @@ export function PRFilterBar({
         </div>
 
         {/* Sort Dropdown */}
-        <div className="flex-shrink-0">
+        <div className="shrink-0">
           <SortDropdown
             value={filters.sortBy}
             onChange={onSortChange}

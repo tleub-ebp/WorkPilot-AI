@@ -31,8 +31,13 @@ export function Toaster() {
                 <ToastDescription>{description}</ToastDescription>
               )}
             </div>
-            {action}
-            <ToastClose />
+            {action && (
+              <div className="flex items-center gap-2">
+                {action}
+                <ToastClose />
+              </div>
+            )}
+            {!action && <ToastClose />}
           </Toast>
         ))}
       <ToastViewport />

@@ -1,5 +1,5 @@
-﻿/**
- * AgentPanel â€” Individual agent card in the Mission Control grid.
+/**
+ * AgentPanel — Individual agent card in the Mission Control grid.
  *
  * Shows: status badge, provider/model, progress bar, live thinking,
  * last tool call, active files, token usage, and control buttons.
@@ -66,14 +66,14 @@ const STATUS_DOT: Record<string, string> = {
 };
 
 const ROLE_LABELS: Record<string, string> = {
-  architect: 'ðŸ—ï¸ Architect',
-  coder: 'ðŸ’» Coder',
-  tester: 'ðŸ§ª Tester',
-  reviewer: 'ðŸ‘ï¸ Reviewer',
-  documenter: 'ðŸ“ Documenter',
-  planner: 'ðŸ“‹ Planner',
-  debugger: 'ðŸ› Debugger',
-  custom: 'âš™ï¸ Custom',
+  architect: '🏗️ Architect',
+  coder: '💻 Coder',
+  tester: '🧪 Tester',
+  reviewer: '👁️ Reviewer',
+  documenter: '📝 Documenter',
+  planner: '📋 Planner',
+  debugger: '🐛 Debugger',
+  custom: '⚙️ Custom',
 };
 
 export function AgentPanel({
@@ -137,7 +137,7 @@ export function AgentPanel({
         {/* Role + Provider/Model */}
         <div className="flex items-center gap-2 text-xs text-muted-foreground">
           <span>{ROLE_LABELS[agent.role] ?? agent.role}</span>
-          <span className="text-border">â€¢</span>
+          <span className="text-border">•</span>
           <span className="truncate">
             {agent.provider ? `${agent.provider}:` : ''}
             {agent.model_label || agent.model || 'No model'}
@@ -216,7 +216,7 @@ export function AgentPanel({
         </div>
 
         {/* Controls */}
-{/* biome-ignore lint/a11y/noNoninteractiveElementInteractions lint/a11y/noStaticElementInteractions lint/a11y/useKeyWithClickEvents: interactive handler is intentional  */}
+{/* biome-ignore lint/a11y/noNoninteractiveElementInteractions lint/a11y/noStaticElementInteractions lint/a11y/useKeyWithClickEvents: interactive handler is intentional */}
         <div className="flex items-center gap-1.5 pt-1" onClick={(e) => e.stopPropagation()}>
           {agent.status === 'idle' && (
             <>

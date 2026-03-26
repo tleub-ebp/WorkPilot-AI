@@ -1,4 +1,4 @@
-﻿import React, { useState, } from 'react';
+import React, { useState, } from 'react';
 import {
   ChevronRight,
   Check,
@@ -90,68 +90,68 @@ export const MigrationWizard: React.FC = () => {
 
   const supportedMigrations = [
     // Frontend
-    { source: 'react', target: 'vue', label: 'React → Vue 3', complexity: 'medium', category: 'frontend' },
-    { source: 'vue', target: 'react', label: 'Vue 3 → React', complexity: 'medium', category: 'frontend' },
-    { source: 'react', target: 'angular', label: 'React → Angular', complexity: 'high', category: 'frontend' },
-    { source: 'angular', target: 'react', label: 'Angular → React', complexity: 'high', category: 'frontend' },
-    { source: 'react', target: 'svelte', label: 'React → Svelte', complexity: 'medium', category: 'frontend' },
-    { source: 'svelte', target: 'react', label: 'Svelte → React', complexity: 'medium', category: 'frontend' },
+    { source: 'react', target: 'vue', label: 'React ? Vue 3', complexity: 'medium', category: 'frontend' },
+    { source: 'vue', target: 'react', label: 'Vue 3 ? React', complexity: 'medium', category: 'frontend' },
+    { source: 'react', target: 'angular', label: 'React ? Angular', complexity: 'high', category: 'frontend' },
+    { source: 'angular', target: 'react', label: 'Angular ? React', complexity: 'high', category: 'frontend' },
+    { source: 'react', target: 'svelte', label: 'React ? Svelte', complexity: 'medium', category: 'frontend' },
+    { source: 'svelte', target: 'react', label: 'Svelte ? React', complexity: 'medium', category: 'frontend' },
     
     // Databases
-    { source: 'mysql', target: 'postgresql', label: 'MySQL → PostgreSQL', complexity: 'medium', category: 'database' },
-    { source: 'postgresql', target: 'mysql', label: 'PostgreSQL → MySQL', complexity: 'medium', category: 'database' },
-    { source: 'mysql', target: 'mongodb', label: 'MySQL → MongoDB', complexity: 'high', category: 'database' },
-    { source: 'mongodb', target: 'postgresql', label: 'MongoDB → PostgreSQL', complexity: 'high', category: 'database' },
-    { source: 'sqlite', target: 'postgresql', label: 'SQLite → PostgreSQL', complexity: 'low', category: 'database' },
+    { source: 'mysql', target: 'postgresql', label: 'MySQL ? PostgreSQL', complexity: 'medium', category: 'database' },
+    { source: 'postgresql', target: 'mysql', label: 'PostgreSQL ? MySQL', complexity: 'medium', category: 'database' },
+    { source: 'mysql', target: 'mongodb', label: 'MySQL ? MongoDB', complexity: 'high', category: 'database' },
+    { source: 'mongodb', target: 'postgresql', label: 'MongoDB ? PostgreSQL', complexity: 'high', category: 'database' },
+    { source: 'sqlite', target: 'postgresql', label: 'SQLite ? PostgreSQL', complexity: 'low', category: 'database' },
     
     // Languages
-    { source: 'python2', target: 'python3', label: 'Python 2 → Python 3', complexity: 'medium', category: 'language' },
-    { source: 'javascript', target: 'typescript', label: 'JavaScript → TypeScript', complexity: 'low', category: 'language' },
-    { source: 'typescript', target: 'javascript', label: 'TypeScript → JavaScript', complexity: 'low', category: 'language' },
-    { source: 'javascript', target: 'python', label: 'JavaScript → Python', complexity: 'high', category: 'language' },
-    { source: 'python', target: 'javascript', label: 'Python → JavaScript', complexity: 'high', category: 'language' },
-    { source: 'java', target: 'kotlin', label: 'Java → Kotlin', complexity: 'medium', category: 'language' },
+    { source: 'python2', target: 'python3', label: 'Python 2 ? Python 3', complexity: 'medium', category: 'language' },
+    { source: 'javascript', target: 'typescript', label: 'JavaScript ? TypeScript', complexity: 'low', category: 'language' },
+    { source: 'typescript', target: 'javascript', label: 'TypeScript ? JavaScript', complexity: 'low', category: 'language' },
+    { source: 'javascript', target: 'python', label: 'JavaScript ? Python', complexity: 'high', category: 'language' },
+    { source: 'python', target: 'javascript', label: 'Python ? JavaScript', complexity: 'high', category: 'language' },
+    { source: 'java', target: 'kotlin', label: 'Java ? Kotlin', complexity: 'medium', category: 'language' },
     
     // API
-    { source: 'rest', target: 'graphql', label: 'REST → GraphQL', complexity: 'high', category: 'api' },
-    { source: 'graphql', target: 'rest', label: 'GraphQL → REST', complexity: 'high', category: 'api' },
-    { source: 'rest', target: 'grpc', label: 'REST → gRPC', complexity: 'high', category: 'api' },
+    { source: 'rest', target: 'graphql', label: 'REST ? GraphQL', complexity: 'high', category: 'api' },
+    { source: 'graphql', target: 'rest', label: 'GraphQL ? REST', complexity: 'high', category: 'api' },
+    { source: 'rest', target: 'grpc', label: 'REST ? gRPC', complexity: 'high', category: 'api' },
     
     // Backend
-    { source: 'express', target: 'fastify', label: 'Express → Fastify', complexity: 'medium', category: 'backend' },
-    { source: 'django', target: 'fastapi', label: 'Django → FastAPI', complexity: 'high', category: 'backend' },
-    { source: 'flask', target: 'fastapi', label: 'Flask → FastAPI', complexity: 'medium', category: 'backend' },
+    { source: 'express', target: 'fastify', label: 'Express ? Fastify', complexity: 'medium', category: 'backend' },
+    { source: 'django', target: 'fastapi', label: 'Django ? FastAPI', complexity: 'high', category: 'backend' },
+    { source: 'flask', target: 'fastapi', label: 'Flask ? FastAPI', complexity: 'medium', category: 'backend' },
     
     // Build Tools
-    { source: 'webpack', target: 'vite', label: 'Webpack → Vite', complexity: 'medium', category: 'build' },
-    { source: 'webpack', target: 'rollup', label: 'Webpack → Rollup', complexity: 'medium', category: 'build' },
+    { source: 'webpack', target: 'vite', label: 'Webpack ? Vite', complexity: 'medium', category: 'build' },
+    { source: 'webpack', target: 'rollup', label: 'Webpack ? Rollup', complexity: 'medium', category: 'build' },
     
     // Testing
-    { source: 'jest', target: 'vitest', label: 'Jest → Vitest', complexity: 'low', category: 'testing' },
-    { source: 'mocha', target: 'jest', label: 'Mocha → Jest', complexity: 'medium', category: 'testing' },
-    { source: 'unittest', target: 'pytest', label: 'unittest → pytest', complexity: 'medium', category: 'testing' },
+    { source: 'jest', target: 'vitest', label: 'Jest ? Vitest', complexity: 'low', category: 'testing' },
+    { source: 'mocha', target: 'jest', label: 'Mocha ? Jest', complexity: 'medium', category: 'testing' },
+    { source: 'unittest', target: 'pytest', label: 'unittest ? pytest', complexity: 'medium', category: 'testing' },
     
     // Mobile
-    { source: 'reactnative', target: 'flutter', label: 'React Native → Flutter', complexity: 'very_high', category: 'mobile' },
-    { source: 'flutter', target: 'reactnative', label: 'Flutter → React Native', complexity: 'very_high', category: 'mobile' },
+    { source: 'reactnative', target: 'flutter', label: 'React Native ? Flutter', complexity: 'very_high', category: 'mobile' },
+    { source: 'flutter', target: 'reactnative', label: 'Flutter ? React Native', complexity: 'very_high', category: 'mobile' },
     
     // Package Managers
-    { source: 'npm', target: 'yarn', label: 'npm → Yarn', complexity: 'low', category: 'package' },
-    { source: 'yarn', target: 'pnpm', label: 'Yarn → pnpm', complexity: 'low', category: 'package' },
-    { source: 'pip', target: 'poetry', label: 'pip → Poetry', complexity: 'low', category: 'package' },
+    { source: 'npm', target: 'yarn', label: 'npm ? Yarn', complexity: 'low', category: 'package' },
+    { source: 'yarn', target: 'pnpm', label: 'Yarn ? pnpm', complexity: 'low', category: 'package' },
+    { source: 'pip', target: 'poetry', label: 'pip ? Poetry', complexity: 'low', category: 'package' },
   ];
 
   const categories = [
-    { value: 'all', label: t('categories.all'), icon: '🌐' },
-    { value: 'frontend', label: t('categories.frontend'), icon: '⚛️' },
-    { value: 'backend', label: t('categories.backend'), icon: '🔧' },
-    { value: 'database', label: t('categories.database'), icon: '🗄️' },
-    { value: 'language', label: t('categories.language'), icon: '💻' },
-    { value: 'api', label: t('categories.api'), icon: '🔌' },
-    { value: 'build', label: t('categories.build'), icon: '⚙️' },
-    { value: 'testing', label: t('categories.testing'), icon: '🧪' },
-    { value: 'mobile', label: t('categories.mobile'), icon: '📱' },
-    { value: 'package', label: t('categories.package'), icon: '📦' },
+    { value: 'all', label: t('categories.all'), icon: '??' },
+    { value: 'frontend', label: t('categories.frontend'), icon: '??' },
+    { value: 'backend', label: t('categories.backend'), icon: '??' },
+    { value: 'database', label: t('categories.database'), icon: '???' },
+    { value: 'language', label: t('categories.language'), icon: '??' },
+    { value: 'api', label: t('categories.api'), icon: '??' },
+    { value: 'build', label: t('categories.build'), icon: '??' },
+    { value: 'testing', label: t('categories.testing'), icon: '??' },
+    { value: 'mobile', label: t('categories.mobile'), icon: '??' },
+    { value: 'package', label: t('categories.package'), icon: '??' },
   ];
 
   const getComplexityColor = (complexity: string) => {
@@ -310,9 +310,10 @@ export const MigrationWizard: React.FC = () => {
             </div>
 
             <div className="space-y-4">
-              // biome-ignore lint/a11y/noLabelWithoutControl: label association is implicit
-{/* biome-ignore lint/a11y/noLabelWithoutControl: intentional  */}
-              <label className="flex items-center space-x-3">
+              <label
+                // biome-ignore lint/a11y/noLabelWithoutControl: intentional
+                className="flex items-center space-x-3"
+              >
                 <Checkbox
                   checked={config.enableLLM}
                   onCheckedChange={(checked) => setConfig({ ...config, enableLLM: !!checked })}
@@ -326,9 +327,10 @@ export const MigrationWizard: React.FC = () => {
                 </div>
               </label>
 
-              // biome-ignore lint/a11y/noLabelWithoutControl: label association is implicit
-{/* biome-ignore lint/a11y/noLabelWithoutControl: intentional  */}
-              <label className="flex items-center space-x-3">
+              <label
+                // biome-ignore lint/a11y/noLabelWithoutControl: intentional
+                className="flex items-center space-x-3"
+              >
                 <Checkbox
                   checked={config.autoFix}
                   onCheckedChange={(checked) => setConfig({ ...config, autoFix: !!checked })}
@@ -342,9 +344,10 @@ export const MigrationWizard: React.FC = () => {
                 </div>
               </label>
 
-              // biome-ignore lint/a11y/noLabelWithoutControl: label association is implicit
-{/* biome-ignore lint/a11y/noLabelWithoutControl: intentional  */}
-              <label className="flex items-center space-x-3">
+              <label
+                // biome-ignore lint/a11y/noLabelWithoutControl: intentional
+                className="flex items-center space-x-3"
+              >
                 <Checkbox
                   checked={config.backupEnabled}
                   onCheckedChange={(checked) => setConfig({ ...config, backupEnabled: !!checked })}

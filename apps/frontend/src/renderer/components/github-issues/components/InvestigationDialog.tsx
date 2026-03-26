@@ -1,4 +1,4 @@
-﻿import { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Sparkles, Loader2, CheckCircle2, MessageCircle } from 'lucide-react';
 import { Button } from '../../ui/button';
 import { Progress } from '../../ui/progress';
@@ -74,7 +74,7 @@ const CommentsList = ({
           <>
             {/* biome-ignore lint/a11y/noNoninteractiveElementInteractions: interactive handler is intentional */}
             {/* biome-ignore lint/a11y/noStaticElementInteractions: interactive handler is intentional */}
-            {/* biome-ignore lint/a11y/useKeyWithClickEvents: keyboard events handled elsewhere  */}
+            {/* biome-ignore lint/a11y/useKeyWithClickEvents: keyboard events handled elsewhere */}
             <div
               key={comment.id}
               className="flex gap-3 p-3 rounded-lg border border-border bg-card hover:bg-accent/50 transition-colors cursor-pointer"
@@ -88,7 +88,7 @@ const CommentsList = ({
               <div className="flex-1 space-y-1 min-w-0">
                 <div className="flex items-center gap-2 text-xs text-muted-foreground">
                   <span className="font-medium">{comment.user.login}</span>
-                  <span>•</span>
+                  <span>�</span>
                   <span>{formatDate(comment.created_at)}</span>
                 </div>
                 <p className="text-sm text-foreground whitespace-pre-wrap wrap-break-word line-clamp-3">
@@ -108,10 +108,10 @@ const NoCommentsState = () => (
   <div className="rounded-lg border border-border bg-muted/30 p-4">
     <h4 className="text-sm font-medium mb-2">The task will include:</h4>
     <ul className="text-sm text-muted-foreground space-y-1">
-      <li>• Issue title and description</li>
-      <li>• Link back to the GitHub issue</li>
-      <li>• Labels and metadata from the issue</li>
-      <li>• No comments (this issue has no comments)</li>
+      <li>� Issue title and description</li>
+      <li>� Link back to the GitHub issue</li>
+      <li>� Labels and metadata from the issue</li>
+      <li>� No comments (this issue has no comments)</li>
     </ul>
   </div>
 );
