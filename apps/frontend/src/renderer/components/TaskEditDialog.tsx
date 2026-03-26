@@ -35,7 +35,7 @@ import { TaskFormFields } from './task-form/TaskFormFields';
 import { type FileReferenceData } from './task-form/useImageUpload';
 import { persistUpdateTask } from '../stores/task-store';
 import { useProjectStore } from '../stores/project-store';
-import type { Task, ImageAttachment, TaskCategory, TaskPriority, TaskComplexity, TaskImpact, ModelType, ThinkingLevel } from '../../shared/types';
+import type { Task, ImageAttachment, TaskCategory, TaskPriority, TaskComplexity, TaskImpact, ThinkingLevel } from '../../shared/types';
 import {
   DEFAULT_AGENT_PROFILES,
   DEFAULT_PHASE_MODELS,
@@ -49,15 +49,15 @@ import { useSettingsStore } from '../stores/settings-store';
  */
 interface TaskEditDialogProps {
   /** The task to edit */
-  task: Task;
+  readonly task: Task;
   /** Whether the dialog is open */
-  open: boolean;
+  readonly open: boolean;
   /** Callback when the dialog open state changes */
-  onOpenChange: (open: boolean) => void;
+  readonly onOpenChange: (open: boolean) => void;
   /** Optional callback when task is successfully saved */
-  onSaved?: () => void;
+  readonly onSaved?: () => void;
   /** Callback pour fermeture explicite de la tâche courante (remonte jusqu'à App.tsx) */
-  onCloseTask?: () => void;
+  readonly onCloseTask?: () => void;
 }
 
 export function TaskEditDialog({ task, open, onOpenChange, onSaved, onCloseTask }: TaskEditDialogProps) {
@@ -104,7 +104,7 @@ export function TaskEditDialog({ task, open, onOpenChange, onSaved, onCloseTask 
     }
     return settings.selectedAgentProfile || 'auto';
   });
-  const [model, setModel] = useState<string | ''>(task.metadata?.model || selectedProfile.model);
+  const [model, setModel] = useState<string>(task.metadata?.model || selectedProfile.model);
   const [thinkingLevel, setThinkingLevel] = useState<ThinkingLevel | ''>(
     task.metadata?.thinkingLevel || selectedProfile.thinkingLevel
   );
@@ -225,8 +225,8 @@ export function TaskEditDialog({ task, open, onOpenChange, onSaved, onCloseTask 
     if (priority) metadataUpdates.priority = priority;
     if (complexity) metadataUpdates.complexity = complexity;
     if (impact) metadataUpdates.impact = impact;
-    if (model) metadataUpdates.model = model as ModelType;
-    if (thinkingLevel) metadataUpdates.thinkingLevel = thinkingLevel as ThinkingLevel;
+    if (model) metadataUpdates.model = model;
+    if (thinkingLevel) metadataUpdates.thinkingLevel = thinkingLevel;
     if (phaseModels && phaseThinking) {
       metadataUpdates.isAutoProfile = profileId === 'auto';
       metadataUpdates.phaseModels = phaseModels;

@@ -7,7 +7,7 @@ import { debounce } from '../../../lib/debounce';
 import { DEFAULT_TERMINAL_THEME } from '../../../lib/terminal-theme';
 
 interface LivePreviewTerminalProps {
-  settings: TerminalFontSettings;
+  readonly settings: TerminalFontSettings;
 }
 
 /**
@@ -144,8 +144,7 @@ export function LivePreviewTerminal({ settings }: LivePreviewTerminalProps) {
    * Cancels any pending debounced calls on unmount
    */
   useEffect(() => {
-    if (!debouncedUpdateRef.current) {
-      debouncedUpdateRef.current = debounce(() => {
+    debouncedUpdateRef.current ??= debounce(() => {
         const xterm = xtermRef.current;
         if (!xterm) return;
 
@@ -176,7 +175,6 @@ export function LivePreviewTerminal({ settings }: LivePreviewTerminalProps) {
           }
         }
       }, 300); // 300ms debounce
-    }
 
     // Cleanup: cancel any pending debounced call on unmount
     return () => {
@@ -223,7 +221,7 @@ export function LivePreviewTerminal({ settings }: LivePreviewTerminalProps) {
   return (
     <div className="space-y-2">
       {/* Terminal container */}
-      <div
+      <section
         ref={terminalRef}
         className="rounded-lg overflow-hidden border-2 border-border bg-[#0B0B0F]"
         style={{
@@ -234,7 +232,6 @@ export function LivePreviewTerminal({ settings }: LivePreviewTerminalProps) {
         aria-label={t('terminalFonts.preview.ariaLabel', {
           defaultValue: 'Terminal preview showing sample output with current font settings',
         })}
-        role="region"
       />
 
       {/* Info text */}
