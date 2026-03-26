@@ -4,14 +4,15 @@ import { IssueListItem } from './IssueListItem';
 import { EmptyState } from './EmptyStates';
 import type { IssueListProps } from '../types';
 
-export function IssueList({
-  issues,
-  selectedIssueIid,
-  isLoading,
-  error,
-  onSelectIssue,
-  onInvestigate
-}: IssueListProps) {
+export function IssueList(props: Readonly<IssueListProps>) {
+  const {
+    issues,
+    selectedIssueIid,
+    isLoading,
+    error,
+    onSelectIssue,
+    onInvestigate
+  } = props;
   if (error) {
     return (
       <div className="p-4 bg-destructive/10 border-b border-destructive/30">

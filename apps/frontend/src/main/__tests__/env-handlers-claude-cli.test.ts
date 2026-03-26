@@ -65,11 +65,12 @@ vi.mock('child_process', () => {
     }
   );
 
-  return {
+  const mod = {
     spawn: spawnMock,
     execFileSync: vi.fn(),
-    execFile: mockExecFile
+    execFile: mockExecFile,
   };
+  return { ...mod, default: mod };
 });
 
 vi.mock('electron', () => ({

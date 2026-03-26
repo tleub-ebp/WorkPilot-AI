@@ -82,8 +82,8 @@ export function FileTreeItem({
   // This handles cases where component unmounts mid-drag or dragend doesn't fire
   useEffect(() => {
     return () => {
-      if (dragImageRef.current?.parentNode) {
-        dragImageRef.current.parentNode.removeChild(dragImageRef.current);
+      if (dragImageRef.current) {
+        dragImageRef.current.remove();
         dragImageRef.current = null;
       }
     };
@@ -155,8 +155,8 @@ export function FileTreeItem({
     setIsDragging(false);
 
     // Clean up drag image element
-    if (dragImageRef.current?.parentNode) {
-      dragImageRef.current.parentNode.removeChild(dragImageRef.current);
+    if (dragImageRef.current) {
+      dragImageRef.current.remove();
       dragImageRef.current = null;
     }
   };
@@ -170,6 +170,17 @@ export function FileTreeItem({
 
   // Ajoute un effet visuel sur le dossier sélectionné
   const isSelected = selectedFolder === node.path;
+
+  // Determine which icon to show in the expand/collapse button
+  const getExpandIcon = () => {
+    if (isLoading) {
+      return <Loader2 className="h-3 w-3 animate-spin text-muted-foreground" aria-hidden="true" />;
+    }
+    if (isExpanded) {
+      return <ChevronDown className="h-3 w-3 text-muted-foreground" aria-hidden="true" />;
+    }
+    return <ChevronRight className="h-3 w-3 text-muted-foreground" aria-hidden="true" />;
+  };
 
   return (
     // biome-ignore lint/a11y/noNoninteractiveElementInteractions: interactive handler is intentional
@@ -208,13 +219,7 @@ export function FileTreeItem({
           aria-expanded={isExpanded}
           tabIndex={-1}
         >
-          {isLoading ? (
-            <Loader2 className="h-3 w-3 animate-spin text-muted-foreground" aria-hidden="true" />
-          ) : isExpanded ? (
-            <ChevronDown className="h-3 w-3 text-muted-foreground" aria-hidden="true" />
-          ) : (
-            <ChevronRight className="h-3 w-3 text-muted-foreground" aria-hidden="true" />
-          )}
+          {getExpandIcon()}
         </button>
       ) : (
         <span className="w-4" aria-hidden="true" />

@@ -239,9 +239,7 @@ export function ElegantProviderCard({
 
   return (
     <TooltipProvider>
-      // biome-ignore lint/a11y/noNoninteractiveElementInteractions: interactive handler is intentional
-      // biome-ignore lint/a11y/noStaticElementInteractions: interactive handler is intentional
-      // biome-ignore lint/a11y/noNoninteractiveElementInteractions lint/a11y/noStaticElementInteractions: intentional
+      {/* biome-ignore lint/a11y/noNoninteractiveElementInteractions lint/a11y/noStaticElementInteractions: interactive handler is intentional */}
       <div
         className={cn(
           'group relative overflow-hidden rounded-2xl border transition-all duration-500 ease-out',

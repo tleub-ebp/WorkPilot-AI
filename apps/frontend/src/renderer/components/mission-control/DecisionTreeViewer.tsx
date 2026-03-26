@@ -90,6 +90,19 @@ function TreeNode({ node, allNodes, currentNodeId, depth }: TreeNodeProps) {
   const StatusIcon = statusInfo.icon;
   const isCurrent = node.id === currentNodeId;
   const hasChildren = node.children.length > 0;
+  
+  // Determine which icon to show for expand/collapse toggle
+  const toggleIcon = () => {
+    if (!hasChildren) {
+      return <span className="h-1 w-1 rounded-full bg-border" />;
+    }
+    
+    if (expanded) {
+      return <ChevronDown className="h-3 w-3 text-muted-foreground" />;
+    }
+    
+    return <ChevronRight className="h-3 w-3 text-muted-foreground" />;
+  };
 
   return (
     <div className="select-none">
@@ -101,23 +114,13 @@ function TreeNode({ node, allNodes, currentNodeId, depth }: TreeNodeProps) {
         )}
         style={{ paddingLeft: `${depth * 16 + 4}px` }}
         onClick={() => hasChildren && setExpanded(!expanded)}
-        // biome-ignore lint/a11y/useSemanticElements: custom element maintains accessibility
-        // biome-ignore lint/a11y/useSemanticElements: intentional
         role="button"
         tabIndex={0}
         onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { hasChildren && setExpanded(!expanded); } }}
       >
         {/* Expand/collapse toggle */}
         <span className="w-3.5 h-3.5 shrink-0 flex items-center justify-center mt-0.5">
-          {hasChildren ? (
-            expanded ? (
-              <ChevronDown className="h-3 w-3 text-muted-foreground" />
-            ) : (
-              <ChevronRight className="h-3 w-3 text-muted-foreground" />
-            )
-          ) : (
-            <span className="h-1 w-1 rounded-full bg-border" />
-          )}
+          {toggleIcon()}
         </span>
 
         {/* Node icon */}

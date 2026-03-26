@@ -234,8 +234,6 @@ export function LivePreviewTerminal({ settings }: LivePreviewTerminalProps) {
         aria-label={t('terminalFonts.preview.ariaLabel', {
           defaultValue: 'Terminal preview showing sample output with current font settings',
         })}
-        // biome-ignore lint/a11y/useSemanticElements: custom element maintains accessibility
-        // biome-ignore lint/a11y/useSemanticElements: intentional
         role="region"
       />
 

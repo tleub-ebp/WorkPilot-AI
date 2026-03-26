@@ -25,10 +25,10 @@ Module structure:
 
 # Auto-fix loop
 from .auto_fix_loop import (
+    DEFAULT_MAX_AUTO_FIX_ATTEMPTS,
     AutoFixAttempt,
     AutoFixLoop,
     AutoFixTestResult,
-    DEFAULT_MAX_AUTO_FIX_ATTEMPTS,
     run_auto_fix_loop,
 )
 

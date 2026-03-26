@@ -499,9 +499,7 @@ export function JiraSidePanel({
   return (
     <>
       {/* Panel seulement - pas de conteneur qui bloque l'écran */}
-      // biome-ignore lint/a11y/noNoninteractiveElementInteractions: interactive handler is intentional
-      // biome-ignore lint/a11y/noStaticElementInteractions: interactive handler is intentional
-      // biome-ignore lint/a11y/noNoninteractiveElementInteractions lint/a11y/noStaticElementInteractions: intentional
+      {/* biome-ignore lint/a11y/noNoninteractiveElementInteractions lint/a11y/noStaticElementInteractions: interactive handler is intentional */}
       <div
         ref={panelRef}
         className="fixed right-0 top-0 h-full bg-background border-l border-border shadow-2xl flex flex-col z-300"
@@ -790,9 +788,7 @@ export function JiraSidePanel({
         )}
 
         {/* Resize handle */}
-        // biome-ignore lint/a11y/noNoninteractiveElementInteractions: interactive handler is intentional
-        // biome-ignore lint/a11y/noStaticElementInteractions: interactive handler is intentional
-        // biome-ignore lint/a11y/noNoninteractiveElementInteractions lint/a11y/noStaticElementInteractions: intentional
+        {/* biome-ignore lint/a11y/noNoninteractiveElementInteractions lint/a11y/noStaticElementInteractions: interactive handler is intentional */}
         <div
           className="absolute left-0 top-0 bottom-0 w-1 cursor-col-resize hover:bg-primary/20 transition-colors"
           onMouseDown={handleResizeStart}

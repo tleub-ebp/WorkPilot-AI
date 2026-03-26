@@ -362,8 +362,10 @@ describe('AutoRefactorStore Actions', () => {
         });
       });
       
-      startAutoRefactor('test-project');
-      
+      act(() => {
+        startAutoRefactor('test-project');
+      });
+
       expect(result.current.phase).toBe('analyzing');
       expect(result.current.status).toBe('');
       expect(result.current.streamingOutput).toBe('');
@@ -388,13 +390,20 @@ describe('AutoRefactorStore Actions', () => {
         result.current.setPhase('analyzing');
       });
       
-      cancelAutoRefactor();
-      
+      act(() => {
+        cancelAutoRefactor();
+      });
+
       expect(result.current.phase).toBe('idle');
     });
   });
 
   describe('setupAutoRefactorListeners', () => {
+    beforeEach(() => {
+      // Ensure listeners are registered so callbacks are available via mock.calls[0][0]
+      setupAutoRefactorListeners();
+    });
+
     it('should setup all event listeners', () => {
       const cleanup = setupAutoRefactorListeners();
       
