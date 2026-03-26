@@ -402,12 +402,11 @@ export const ProviderManager: React.FC<{ selected: string }> = ({ selected }) =>
               <h4>{t('providers:configureProvider', 'Configurer «' + selected + '»', { provider: selected })}</h4>
               {Object.entries(schema).map(([k, v]) => (
                 <div key={k} style={{ marginBottom: 8 }}>
-                  <label
-                    // biome-ignore lint/a11y/noLabelWithoutControl: intentional
-                  >
+                  <label htmlFor={`config-field-${k}`}>
                     {t(`providers:configField_${k}`, k, { field: k })} ({String(v)})
                   </label>
                   <input
+                    id={`config-field-${k}`}
                     type="text"
                     value={configForm[k] || ""}
                     onChange={e => handleConfigChange(k, e.target.value)}

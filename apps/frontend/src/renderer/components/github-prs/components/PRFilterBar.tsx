@@ -399,17 +399,17 @@ function SortDropdown({
             const isFocused = focusedIndex === index;
             const Icon = option.icon;
             return (
+              // biome-ignore lint/a11y/useKeyWithClickEvents: keyboard handled at listbox parent level
               <div
                 key={option.value}
                 role="option"
                 aria-selected={isSelected}
+                tabIndex={-1}
                 className={cn(
                   "relative flex cursor-pointer select-none items-center rounded-sm px-2 py-2 text-sm outline-none transition-colors hover:bg-accent hover:text-accent-foreground",
                   isSelected && "bg-accent/50",
                   isFocused && "bg-accent text-accent-foreground"
                 )}
-                // biome-ignore lint/a11y/useFocusableInteractive: element is focusable via tabIndex
-                // biome-ignore lint/a11y/useKeyWithClickEvents: keyboard events handled elsewhere
                 onClick={() => {
                   onChange(option.value);
                   setIsOpen(false);
