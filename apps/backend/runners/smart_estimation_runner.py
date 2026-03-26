@@ -8,6 +8,7 @@ Provides streaming output and structured results.
 import argparse
 import json
 import sys
+from datetime import datetime
 from pathlib import Path
 from typing import Any
 
@@ -94,8 +95,6 @@ class SmartEstimationRunner:
 
     def _get_timestamp(self) -> str:
         """Get current timestamp"""
-        from datetime import datetime
-
         return datetime.utcnow().isoformat()
 
 

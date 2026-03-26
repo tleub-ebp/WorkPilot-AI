@@ -1082,7 +1082,7 @@ const toggleGroupExpansion = (groupId: string) => {
                 <Wrench className="h-4 w-4" />
                 {!isCollapsed && (
                   <>
-                    <span>Outils CLI & ParamÃ¨tres</span>
+                    <span>{t('actions.cliToolsAndSettings')}</span>
                     <ChevronRight 
                       className={cn(
                         "h-3 w-3 ml-auto transition-transform duration-200",

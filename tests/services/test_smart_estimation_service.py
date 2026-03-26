@@ -9,7 +9,7 @@ import sys
 from pathlib import Path
 
 # Add the apps/backend directory to the Python path
-backend_path = Path(__file__).parent.parent.parent
+backend_path = Path(__file__).parent.parent.parent / "apps" / "backend"
 sys.path.insert(0, str(backend_path))
 
 from services.smart_estimation_service import (
@@ -18,6 +18,16 @@ from services.smart_estimation_service import (
     EstimationResult,
     get_smart_estimation_service
 )
+
+
+def _make_db_generator(mock_session):
+    """Return a callable that produces a generator yielding mock_session,
+    matching the ``yield``-based ``get_db()`` implementation."""
+    def _gen():
+        yield mock_session
+    def _get_db():
+        return _gen()
+    return _get_db
 
 
 class TestSmartEstimationService:
@@ -30,20 +40,16 @@ class TestSmartEstimationService:
             return SmartEstimationService()
 
     @pytest.fixture
-    def mock_db(self):
+    def mock_session(self):
         """Mock database session"""
-        with patch('services.smart_estimation_service.get_db') as mock_get_db:
-            mock_session = Mock()
-            mock_get_db.return_value.__enter__.return_value = mock_session
-            mock_get_db.return_value.__exit__.return_value = None
-            yield mock_session
+        return Mock()
 
     def test_extract_file_patterns(self, service):
         """Test file pattern extraction from task descriptions"""
         # Test with various file types
         description = "Create a new component with service and controller"
         patterns = service._extract_file_patterns(description)
-        
+
         assert 'component' in patterns
         assert 'service' in patterns
         assert 'controller' in patterns
@@ -67,7 +73,7 @@ class TestSmartEstimationService:
         # High-risk keywords
         risky_desc = "Refactor the authentication database for production"
         risks = service._identify_risk_factors(risky_desc)
-        
+
         assert any('refactor' in risk.lower() for risk in risks)
         assert any('database' in risk.lower() for risk in risks)
         assert any('production' in risk.lower() for risk in risks)
@@ -88,7 +94,7 @@ class TestSmartEstimationService:
         """Test text similarity calculation"""
         text1 = "create user authentication with JWT"
         text2 = "implement user login with JWT tokens"
-        
+
         similarity = service._calculate_text_similarity(text1, text2)
         assert 0 <= similarity <= 1
         assert similarity > 0.5  # Should be quite similar
@@ -101,22 +107,22 @@ class TestSmartEstimationService:
     def test_infer_complexity_from_metrics(self, service):
         """Test complexity inference from build metrics"""
         from analytics.database_schema import Build, BuildPhase, QAResult, BuildStatus
-        
+
         # Create mock build with high complexity metrics
         build = Mock()
         build.total_duration_seconds = 18000  # 5 hours
         build.qa_iterations = 3
         build.total_tokens_used = 15000
-        
+
         # Create mock phases with some failures
         phases = [
             Mock(success=True),
             Mock(success=False),  # One failure
             Mock(success=True)
         ]
-        
+
         qa_results = []
-        
+
         complexity = service._infer_complexity_from_metrics(build, phases, qa_results)
         assert complexity >= 5  # Should be high due to duration and failures
 
@@ -130,13 +136,13 @@ class TestSmartEstimationService:
             risk_factors=['High risk factor 1', 'High risk factor 2'],
             complexity_indicators=['Complex indicator 1']
         )
-        
+
         similar_tasks = [
             {'complexity_score': 8},
             {'complexity_score': 9},
             {'complexity_score': 7}
         ]
-        
+
         score = service._calculate_complexity_score(factors, similar_tasks)
         assert 1 <= score <= 13
         assert score >= 6  # Should be relatively high
@@ -150,7 +156,7 @@ class TestSmartEstimationService:
             {'similarity_score': 0.85}
         ]
         factors = TaskComplexityFactors(0, 0, [], [], [])
-        
+
         confidence = service._calculate_confidence_level(similar_tasks_high, factors)
         assert confidence >= 0.7
 
@@ -159,15 +165,9 @@ class TestSmartEstimationService:
         confidence = service._calculate_confidence_level(similar_tasks_low, factors)
         assert confidence <= 0.6
 
-    @patch('services.smart_estimation_service.get_project_context')
-    def test_analyze_task_description_success(self, mock_get_context, service, mock_db):
+    def test_analyze_task_description_success(self, service, mock_session):
         """Test successful task analysis"""
-        # Mock project context
-        mock_get_context.return_value = {
-            'project_path': '/path/to/project'
-        }
-        
-        # Mock database queries
+        # Mock database queries — use 'complete' (lowercase) to match BuildStatus.COMPLETE
         mock_build = Mock()
         mock_build.build_id = 'build-123'
         mock_build.spec_name = 'Add user authentication'
@@ -175,20 +175,23 @@ class TestSmartEstimationService:
         mock_build.qa_iterations = 2
         mock_build.total_tokens_used = 5000
         mock_build.total_cost_usd = 2.5
-        mock_build.status = 'COMPLETE'
-        
-        mock_db.query.return_value.filter.return_value.order_by.return_value.limit.return_value.all.return_value = [
+        mock_build.status = 'complete'
+
+        mock_session.query.return_value.filter.return_value.order_by.return_value.limit.return_value.all.return_value = [
             mock_build
         ]
-        
-        mock_db.query.return_value.filter.return_value.all.return_value = []
-        
-        # Test analysis
-        result = service.analyze_task_description(
-            "Add user authentication with JWT",
-            "project-123"
-        )
-        
+        mock_session.query.return_value.filter.return_value.all.return_value = []
+
+        # Patch get_db to return a generator (matching the yield-based implementation)
+        with patch(
+            'services.smart_estimation_service.get_db',
+            side_effect=_make_db_generator(mock_session)
+        ):
+            result = service.analyze_task_description(
+                "Add user authentication with JWT",
+                "project-123"
+            )
+
         assert isinstance(result, EstimationResult)
         assert 1 <= result.complexity_score <= 13
         assert 0 <= result.confidence_level <= 1
@@ -196,16 +199,24 @@ class TestSmartEstimationService:
         assert isinstance(result.estimated_duration_hours, (int, float, type(None)))
         assert isinstance(result.estimated_qa_iterations, (int, float, type(None)))
 
-    @patch('services.smart_estimation_service.get_project_context')
-    def test_analyze_task_description_no_project(self, mock_get_context, service):
-        """Test task analysis with no project context"""
-        mock_get_context.return_value = {}
-        
-        with pytest.raises(ValueError, match="Project context not found"):
-            service.analyze_task_description(
+    def test_analyze_task_description_no_db(self, service):
+        """Test task analysis when database returns no builds"""
+        mock_session = Mock()
+        mock_session.query.return_value.filter.return_value.order_by.return_value.limit.return_value.all.return_value = []
+        mock_session.query.return_value.filter.return_value.all.return_value = []
+
+        with patch(
+            'services.smart_estimation_service.get_db',
+            side_effect=_make_db_generator(mock_session)
+        ):
+            # Should still return a valid result using fallback estimates
+            result = service.analyze_task_description(
                 "Add user authentication",
-                "invalid-project"
+                "any-project"
             )
+
+        assert isinstance(result, EstimationResult)
+        assert 1 <= result.complexity_score <= 13
 
     def test_generate_recommendations(self, service):
         """Test recommendation generation"""
@@ -216,14 +227,15 @@ class TestSmartEstimationService:
             risk_factors=['Production deployment risk'],
             complexity_indicators=['Distributed system complexity']
         )
-        
+
+        # Use lowercase status values matching BuildStatus enum ('failed', 'complete')
         similar_tasks = [
-            {'status': 'FAILED'},
-            {'status': 'COMPLETE'}
+            {'status': 'failed'},
+            {'status': 'complete'}
         ]
-        
+
         recommendations = service._generate_recommendations(factors, 10, similar_tasks)
-        
+
         assert len(recommendations) > 0
         assert any('branch' in rec.lower() for rec in recommendations)
         assert any('testing' in rec.lower() for rec in recommendations)
@@ -250,26 +262,20 @@ class TestSmartEstimationService:
         """Test that the service is a singleton"""
         service1 = get_smart_estimation_service()
         service2 = get_smart_estimation_service()
-        
+
         assert service1 is service2
 
 
 class TestSmartEstimationIntegration:
     """Integration tests for Smart Estimation"""
 
-    @patch('services.smart_estimation_service.get_project_context')
     @patch('services.smart_estimation_service.get_db')
-    def test_full_estimation_flow(self, mock_get_db, mock_get_context):
+    def test_full_estimation_flow(self, mock_get_db):
         """Test complete estimation flow with realistic data"""
         with patch('services.smart_estimation_service.get_current_model_info'):
             service = SmartEstimationService()
-        
-        # Setup mocks
-        mock_get_context.return_value = {
-            'project_path': '/test/project'
-        }
-        
-        # Mock realistic build data
+
+        # Mock realistic build data — use lowercase status to match BuildStatus enum
         mock_builds = [
             Mock(
                 build_id='build-1',
@@ -278,7 +284,7 @@ class TestSmartEstimationIntegration:
                 qa_iterations=2,
                 total_tokens_used=8000,
                 total_cost_usd=4.0,
-                status='COMPLETE'
+                status='complete'
             ),
             Mock(
                 build_id='build-2',
@@ -287,22 +293,26 @@ class TestSmartEstimationIntegration:
                 qa_iterations=3,
                 total_tokens_used=12000,
                 total_cost_usd=6.0,
-                status='COMPLETE'
+                status='complete'
             )
         ]
-        
+
         mock_session = Mock()
         mock_session.query.return_value.filter.return_value.order_by.return_value.limit.return_value.all.return_value = mock_builds
         mock_session.query.return_value.filter.return_value.all.return_value = []
-        mock_get_db.return_value.__enter__.return_value = mock_session
-        mock_get_db.return_value.__exit__.return_value = None
-        
+
+        # get_db is a generator (yield-based) so mock it accordingly
+        def _gen():
+            yield mock_session
+
+        mock_get_db.side_effect = _gen
+
         # Run estimation
         result = service.analyze_task_description(
             "Implement user authentication with OAuth2",
             "project-123"
         )
-        
+
         # Verify results
         assert isinstance(result, EstimationResult)
         assert result.complexity_score >= 3  # Should be moderate to high

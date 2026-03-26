@@ -519,17 +519,12 @@ def spec_dir(tmp_path):
 @pytest.fixture
 def mock_run_agent_fn():
     """Mock run_agent function."""
-    from unittest.mock import MagicMock
-    import asyncio
-    
+    from unittest.mock import AsyncMock
+
     def _create_mock(success=True, output="Success"):
-        def mock_async(*args, **kwargs):
-            return success, output
-        
-        mock = MagicMock()
-        mock.side_effect = mock_async
+        mock = AsyncMock(return_value=(success, output))
         return mock
-    
+
     return _create_mock
 
 
@@ -586,3 +581,385 @@ pytest_plugins = ('pytest_asyncio',)
 def pytest_configure(config):
     """Configure pytest-asyncio"""
     config.option.asyncio_mode = "auto"
+
+
+# ---------------------------------------------------------------------------
+# Merge system fixtures
+# ---------------------------------------------------------------------------
+
+@pytest.fixture
+def semantic_analyzer():
+    """Create a SemanticAnalyzer instance for testing."""
+    import sys
+    from pathlib import Path as _Path
+    sys.path.insert(0, str(_Path(__file__).parent.parent / "apps" / "backend"))
+    from merge.semantic_analyzer import SemanticAnalyzer
+    return SemanticAnalyzer()
+
+
+@pytest.fixture
+def temp_project(tmp_path):
+    """Create a temporary project directory with a git repo and sample files.
+
+    Sets up:
+    - git repository with an initial commit
+    - src/App.tsx and src/utils.py files
+    """
+    import subprocess
+
+    repo = tmp_path / "project"
+    repo.mkdir()
+
+    env = {
+        "GIT_CONFIG_NOSYSTEM": "1",
+        "HOME": str(tmp_path),
+        "GIT_AUTHOR_NAME": "Test",
+        "GIT_AUTHOR_EMAIL": TEST_EMAIL,
+        "GIT_COMMITTER_NAME": "Test",
+        "GIT_COMMITTER_EMAIL": TEST_EMAIL,
+    }
+    merged_env = {**subprocess.os.environ, **env}
+
+    subprocess.run(
+        ["git", "init", "--initial-branch=main"],
+        cwd=repo,
+        env=merged_env,
+        capture_output=True,
+        check=True,
+    )
+    subprocess.run(
+        ["git", "config", "user.email", TEST_EMAIL],
+        cwd=repo,
+        capture_output=True,
+        check=True,
+    )
+    subprocess.run(
+        ["git", "config", "user.name", "Test"],
+        cwd=repo,
+        capture_output=True,
+        check=True,
+    )
+
+    # Create src directory and sample files
+    src = repo / "src"
+    src.mkdir()
+
+    (src / "App.tsx").write_text(
+        "import React from 'react';\n\nfunction App() {\n  return <div>Hello</div>;\n}\n\nexport default App;\n"
+    )
+    (src / "utils.py").write_text(
+        '"""Sample Python module."""\nimport os\nfrom pathlib import Path\n\ndef hello():\n    """Say hello."""\n    print("Hello")\n\ndef goodbye():\n    """Say goodbye."""\n    print("Goodbye")\n\nclass Greeter:\n    """A greeter class."""\n\n    def greet(self, name: str) -> str:\n        return f"Hello, {name}"\n'
+    )
+
+    subprocess.run(["git", "add", "."], cwd=repo, capture_output=True, check=True)
+    subprocess.run(
+        ["git", "commit", "-m", "Initial commit"],
+        cwd=repo,
+        env=merged_env,
+        capture_output=True,
+        check=True,
+    )
+
+    yield repo
+
+
+@pytest.fixture
+def file_tracker(temp_project):
+    """Create a FileEvolutionTracker instance for testing."""
+    import sys
+    from pathlib import Path as _Path
+    sys.path.insert(0, str(_Path(__file__).parent.parent / "apps" / "backend"))
+    from merge.file_evolution import FileEvolutionTracker
+    return FileEvolutionTracker(project_dir=temp_project)
+
+
+@pytest.fixture
+def conflict_detector():
+    """Create a ConflictDetector instance for testing."""
+    import sys
+    from pathlib import Path as _Path
+    sys.path.insert(0, str(_Path(__file__).parent.parent / "apps" / "backend"))
+    from merge.conflict_detector import ConflictDetector
+    return ConflictDetector()
+
+
+@pytest.fixture
+def auto_merger():
+    """Create an AutoMerger instance for testing."""
+    import sys
+    from pathlib import Path as _Path
+    sys.path.insert(0, str(_Path(__file__).parent.parent / "apps" / "backend"))
+    from merge.auto_merger import AutoMerger
+    return AutoMerger()
+
+
+@pytest.fixture
+def ai_resolver():
+    """Create an AIResolver instance without AI function (for testing fallback behaviour)."""
+    import sys
+    from pathlib import Path as _Path
+    sys.path.insert(0, str(_Path(__file__).parent.parent / "apps" / "backend"))
+    from merge.ai_resolver import AIResolver
+    return AIResolver(ai_call_fn=None)
+
+
+@pytest.fixture
+def mock_ai_resolver():
+    """Create an AIResolver instance with a mock AI function."""
+    import sys
+    from pathlib import Path as _Path
+    sys.path.insert(0, str(_Path(__file__).parent.parent / "apps" / "backend"))
+    from merge.ai_resolver import AIResolver
+
+    def _mock_ai_fn(system_prompt: str, user_prompt: str) -> str:
+        # Return a simple merged code block that the resolver can parse
+        return "```python\n# AI merged result\nmerged_code = True\n```"
+
+    return AIResolver(ai_call_fn=_mock_ai_fn)
+
+
+# ---------------------------------------------------------------------------
+# QA loop fixtures
+# ---------------------------------------------------------------------------
+
+@pytest.fixture
+def qa_signoff_approved():
+    """Create an approved QA signoff dict."""
+    return {
+        "status": "approved",
+        "qa_session": 1,
+        "timestamp": "2024-01-01T12:00:00",
+        "tests_passed": {
+            "unit": True,
+            "integration": True,
+            "e2e": True,
+        },
+    }
+
+
+@pytest.fixture
+def qa_signoff_rejected():
+    """Create a rejected QA signoff dict with issues."""
+    return {
+        "status": "rejected",
+        "qa_session": 1,
+        "timestamp": "2024-01-01T12:00:00",
+        "issues_found": [
+            {"title": "Missing unit tests", "type": "unit_test"},
+            {"title": "API endpoint returns 500", "type": "bug"},
+        ],
+    }
+
+
+@pytest.fixture
+def python_project(tmp_path):
+    """Create a temporary Python project directory."""
+    project = tmp_path / "python_project"
+    project.mkdir()
+    (project / "requirements.txt").write_text("flask\nrequests\n")
+    (project / "app.py").write_text("from flask import Flask\napp = Flask(__name__)\n")
+    (project / "setup.py").write_text("from setuptools import setup\nsetup(name='test')\n")
+    return project
+
+
+@pytest.fixture
+def node_project(tmp_path):
+    """Create a temporary Node.js project directory."""
+    import json
+    project = tmp_path / "node_project"
+    project.mkdir()
+    pkg = {
+        "name": "test-project",
+        "version": "1.0.0",
+        "scripts": {"start": "node index.js", "test": "jest"},
+        "dependencies": {"express": "^4.18.0"},
+    }
+    (project / "package.json").write_text(json.dumps(pkg))
+    (project / "package-lock.json").write_text("{}")
+    (project / "index.js").write_text("const express = require('express');\n")
+    return project
+
+
+@pytest.fixture
+def docker_project(tmp_path):
+    """Create a temporary Docker project directory."""
+    project = tmp_path / "docker_project"
+    project.mkdir()
+    (project / "Dockerfile").write_text("FROM python:3.11\nWORKDIR /app\n")
+    (project / "docker-compose.yml").write_text(
+        "version: '3'\nservices:\n  app:\n    build: .\n"
+    )
+    (project / "requirements.txt").write_text("flask\n")
+    return project
+
+
+@pytest.fixture
+def stage_files(tmp_path, temp_git_repo):
+    """Return a function that stages files into the temp_git_repo.
+
+    Usage::
+
+        def test_something(stage_files):
+            stage_files({"normal.py": "x = 42\\n"})
+    """
+
+    def _stage(files: dict):
+        import subprocess
+        for name, content in files.items():
+            file_path = temp_git_repo / name
+            file_path.parent.mkdir(parents=True, exist_ok=True)
+            file_path.write_text(content)
+        subprocess.run(["git", "add", "."], cwd=temp_git_repo, capture_output=True, check=True)
+
+    return _stage
+
+
+# ---------------------------------------------------------------------------
+# Implementation plan fixture
+# ---------------------------------------------------------------------------
+
+@pytest.fixture
+def sample_implementation_plan():
+    """Create a sample implementation plan dict for testing.
+
+    Returns a plan with:
+    - feature: "User Avatar Upload"
+    - workflow_type: "feature"
+    - 3 phases (backend, frontend, testing)
+    - 4 subtasks total (2+1+1)
+    - 3 services_involved
+    """
+    return {
+        "feature": "User Avatar Upload",
+        "workflow_type": "feature",
+        "services_involved": ["backend", "frontend", "storage"],
+        "phases": [
+            {
+                "phase": 1,
+                "name": "Backend API",
+                "phase_type": "backend",
+                "depends_on": [],
+                "subtasks": [
+                    {
+                        "id": "c1",
+                        "description": "Create upload endpoint",
+                        "status": "pending",
+                        "service": "backend",
+                        "files_to_modify": ["app/routes/upload.py"],
+                        "files_to_create": [],
+                    },
+                    {
+                        "id": "c2",
+                        "description": "Add storage service",
+                        "status": "pending",
+                        "service": "backend",
+                        "files_to_modify": [],
+                        "files_to_create": ["app/services/storage.py"],
+                    },
+                ],
+            },
+            {
+                "phase": 2,
+                "name": "Frontend UI",
+                "phase_type": "frontend",
+                "depends_on": [1],
+                "subtasks": [
+                    {
+                        "id": "c3",
+                        "description": "Build avatar upload component",
+                        "status": "pending",
+                        "service": "frontend",
+                        "files_to_modify": [],
+                        "files_to_create": ["src/components/AvatarUpload.tsx"],
+                    },
+                ],
+            },
+            {
+                "phase": 3,
+                "name": "Testing",
+                "phase_type": "testing",
+                "depends_on": [1],
+                "subtasks": [
+                    {
+                        "id": "c4",
+                        "description": "Write unit tests for upload endpoint",
+                        "status": "pending",
+                        "service": "backend",
+                        "files_to_modify": [],
+                        "files_to_create": ["tests/test_upload.py"],
+                    },
+                ],
+            },
+        ],
+    }
+
+
+# ---------------------------------------------------------------------------
+# GitLab/GitHub worktree fixtures
+# ---------------------------------------------------------------------------
+
+@pytest.fixture
+def temp_project_dir(tmp_path):
+    """Create a temporary project directory for worktree tests."""
+    import subprocess
+
+    project = tmp_path / "project"
+    project.mkdir()
+
+    env = {
+        "GIT_CONFIG_NOSYSTEM": "1",
+        "HOME": str(tmp_path),
+        "GIT_AUTHOR_NAME": "Test",
+        "GIT_AUTHOR_EMAIL": TEST_EMAIL,
+        "GIT_COMMITTER_NAME": "Test",
+        "GIT_COMMITTER_EMAIL": TEST_EMAIL,
+    }
+    merged_env = {**subprocess.os.environ, **env}
+
+    subprocess.run(
+        ["git", "init", "--initial-branch=main"],
+        cwd=project,
+        env=merged_env,
+        capture_output=True,
+        check=True,
+    )
+    subprocess.run(
+        ["git", "config", "user.email", TEST_EMAIL],
+        cwd=project,
+        capture_output=True,
+        check=True,
+    )
+    subprocess.run(
+        ["git", "config", "user.name", "Test"],
+        cwd=project,
+        capture_output=True,
+        check=True,
+    )
+
+    # Create initial commit
+    readme = project / "README.md"
+    readme.write_text("# Test Project\n")
+    subprocess.run(["git", "add", "."], cwd=project, capture_output=True, check=True)
+    subprocess.run(
+        ["git", "commit", "-m", "Initial commit"],
+        cwd=project,
+        env=merged_env,
+        capture_output=True,
+        check=True,
+    )
+
+    # Create the worktrees directory structure
+    worktrees_dir = project / ".workpilot" / "worktrees" / "tasks"
+    worktrees_dir.mkdir(parents=True, exist_ok=True)
+
+    return project
+
+
+@pytest.fixture
+def worktree_manager(temp_project_dir):
+    """Create a WorktreeManager instance for testing."""
+    import sys
+    from pathlib import Path as _Path
+    sys.path.insert(0, str(_Path(__file__).parent.parent / "apps" / "backend"))
+    from core.worktree import WorktreeManager
+    return WorktreeManager(temp_project_dir, base_branch="main")
