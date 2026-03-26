@@ -615,8 +615,8 @@ export function ClaudeCodeStatusBadge({ className, onNavigateToTerminals }: Clau
           {versionInfo?.installed && (
             <div className="space-y-1.5">
               <label
-                // biome-ignore lint/a11y/noLabelWithoutControl: intentional
                 className="text-xs text-muted-foreground"
+                // biome-ignore lint/a11y/noLabelWithoutControl: intentional
               >
                 {t("navigation:claudeCode.switchVersion", "Switch Version")}
               </label>
