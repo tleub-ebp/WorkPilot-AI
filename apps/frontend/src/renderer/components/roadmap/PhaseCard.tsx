@@ -132,6 +132,7 @@ export function PhaseCard({
         <div className="grid gap-2">
           {features.slice(0, 5).map((feature) => (
             // biome-ignore lint/a11y/noNoninteractiveElementInteractions: interactive handler is intentional
+            // biome-ignore lint/a11y/noStaticElementInteractions: interactive handler is intentional
             // biome-ignore lint/a11y/useKeyWithClickEvents: keyboard events handled elsewhere
             <div
               key={feature.id}

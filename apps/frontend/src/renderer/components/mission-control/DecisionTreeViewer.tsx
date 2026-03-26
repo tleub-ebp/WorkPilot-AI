@@ -107,15 +107,14 @@ function TreeNode({ node, allNodes, currentNodeId, depth }: TreeNodeProps) {
   return (
     <div className="select-none">
       {/* Node row */}
-      <div
+      <button
+        type="button"
         className={cn(
-          'flex items-start gap-1.5 py-1 px-1.5 rounded-md text-xs transition-colors cursor-pointer hover:bg-muted/50',
+          'flex items-start gap-1.5 py-1 px-1.5 rounded-md text-xs transition-colors cursor-pointer hover:bg-muted/50 w-full text-left',
           isCurrent && 'bg-primary/5 ring-1 ring-primary/20',
         )}
         style={{ paddingLeft: `${depth * 16 + 4}px` }}
         onClick={() => hasChildren && setExpanded(!expanded)}
-        role="button"
-        tabIndex={0}
         onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { hasChildren && setExpanded(!expanded); } }}
       >
         {/* Expand/collapse toggle */}
@@ -164,7 +163,7 @@ function TreeNode({ node, allNodes, currentNodeId, depth }: TreeNodeProps) {
             </div>
           )}
         </div>
-      </div>
+      </button>
 
       {/* Children */}
       {expanded && hasChildren && (

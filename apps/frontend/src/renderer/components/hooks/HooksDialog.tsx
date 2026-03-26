@@ -727,6 +727,7 @@ function EditorTab() {
         {/* Trigger nodes */}
         {editingHook.triggers.map((trigger) => (
           // biome-ignore lint/a11y/noNoninteractiveElementInteractions: interactive handler is intentional
+          // biome-ignore lint/a11y/noStaticElementInteractions: interactive handler is intentional
           // biome-ignore lint/a11y/useKeyWithClickEvents: keyboard events handled elsewhere
           <div
             key={trigger.id}
@@ -772,6 +773,7 @@ function EditorTab() {
         {/* Action nodes */}
         {editingHook.actions.map((action) => (
           // biome-ignore lint/a11y/noNoninteractiveElementInteractions: interactive handler is intentional
+          // biome-ignore lint/a11y/noStaticElementInteractions: interactive handler is intentional
           // biome-ignore lint/a11y/useKeyWithClickEvents: keyboard events handled elsewhere
           <div
             key={action.id}

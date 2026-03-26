@@ -107,7 +107,6 @@ export function TeamSyncPanel({ projectDir }: Readonly<Props>) {
     try {
       const res = await api.teamSyncPush(projectDir);
       if (res.success) {
-        // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
         showFeedback('success', t('feedback.pushSuccess', { count: res.data?.episode_count ?? '?' }));
         loadStatus();
         loadPeers();
@@ -123,7 +122,6 @@ export function TeamSyncPanel({ projectDir }: Readonly<Props>) {
     setPulling(true);
     try {
       const res = await api.teamSyncPull(projectDir);
-      // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
       const data = res.data;
       if (res.success) {
         const count = data?.imported ?? 0;

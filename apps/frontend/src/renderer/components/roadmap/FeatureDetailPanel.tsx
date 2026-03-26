@@ -219,7 +219,7 @@ export function FeatureDetailPanel({
       </ScrollArea>
       {feature.linkedSpecId ? (
         <div className="shrink-0 p-4 border-t border-border">
-          <Button className="w-full" onClick={() => onGoToTask(feature.linkedSpecId!)}>
+          <Button className="w-full" onClick={() => onGoToTask(feature.linkedSpecId ?? '')}>
             <ExternalLink className="h-4 w-4 mr-2" />
             Go to Task
           </Button>
