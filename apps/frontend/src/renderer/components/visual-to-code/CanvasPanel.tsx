@@ -649,13 +649,14 @@ export const CanvasPanel: React.FC = () => {
           </div>
           <div className="mt-4">
             <label
-              // biome-ignore lint/a11y/noLabelWithoutControl: intentional
+              htmlFor="explorer-root-input"
               className="block text-xs font-bold mb-1"
             >
               {t('explorerRoot', 'Racine de l\'explorateur :')}
             </label>
             <div className="flex gap-2">
               <input
+                id="explorer-root-input"
                 type="text"
                 value={explorerRootInput}
                 onChange={e => setExplorerRootInput(e.target.value)}

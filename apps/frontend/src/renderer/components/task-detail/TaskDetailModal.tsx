@@ -65,8 +65,6 @@ export function TaskDetailModal({ open, task, onOpenChange, onSwitchToTerminals,
       open={open}
       task={task}
       onOpenChange={onOpenChange}
-      onSwitchToTerminals={onSwitchToTerminals}
-      onOpenInbuiltTerminal={onOpenInbuiltTerminal}
       onCloseTask={() => onOpenChange(false)}
     />
   );
@@ -79,7 +77,7 @@ const isFilesTabEnabled = () => {
 };
 
 // Separate component to use hooks only when task exists
-function TaskDetailModalContent({ open, task, onOpenChange, onSwitchToTerminals, onOpenInbuiltTerminal, onCloseTask }: { open: boolean; task: Task; onOpenChange: (open: boolean) => void; onSwitchToTerminals?: () => void; onOpenInbuiltTerminal?: (id: string, cwd: string) => void; onCloseTask?: () => void }) {
+function TaskDetailModalContent({ open, task, onOpenChange, onCloseTask }: { open: boolean; task: Task; onOpenChange: (open: boolean) => void; onCloseTask?: () => void }) {
   const { t } = useTranslation(['tasks']);
   const { toast } = useToast();
   const state = useTaskDetail({ task });
@@ -562,8 +560,6 @@ function TaskDetailModalContent({ open, task, onOpenChange, onSwitchToTerminals,
                             onShowConflictDialog={state.setShowConflictDialog}
                             onLoadMergePreview={state.loadMergePreview}
                             onClose={handleClose}
-                            onSwitchToTerminals={onSwitchToTerminals}
-                            onOpenInbuiltTerminal={onOpenInbuiltTerminal}
                             onReviewAgain={state.handleReviewAgain}
                             showPRDialog={state.showPRDialog}
                             isCreatingPR={state.isCreatingPR}
@@ -646,7 +642,6 @@ function TaskDetailModalContent({ open, task, onOpenChange, onSwitchToTerminals,
             <AlertDialogDescription asChild>
               <div className="text-sm text-muted-foreground space-y-3">
                 {/* biome-ignore lint/security/noDangerouslySetInnerHtml: content is sanitized before use */}
-                {/* biome-ignore lint/security/noDangerouslySetInnerHtml: intentional */}
                 <p dangerouslySetInnerHTML={{ __html: t('tasks:modal.delete.confirmMessage', { title: task.title.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'), interpolation: { escapeValue: false } }) }} />
                 <p className="text-destructive">
                   {t('tasks:modal.delete.warningMessage')}

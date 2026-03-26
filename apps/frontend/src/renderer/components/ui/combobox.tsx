@@ -164,7 +164,6 @@ const Combobox = React.forwardRef<HTMLButtonElement, ComboboxProps>(
     return (
       <Popover open={open} onOpenChange={setOpen}>
         <PopoverTrigger asChild disabled={disabled}>
-          {/* biome-ignore lint/a11y/useSemanticElements: custom element maintains accessibility */}
           <button role="combobox"
             ref={ref}
             type="button"
@@ -238,7 +237,6 @@ const Combobox = React.forwardRef<HTMLButtonElement, ComboboxProps>(
                   return (
                     <React.Fragment key={option.value}>
                       {/* Group header */}
-                      {/* biome-ignore lint/a11y/useSemanticElements: custom element maintains accessibility */}
                       {showGroupHeader && (
                         <div
                           role="presentation"

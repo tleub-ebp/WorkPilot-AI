@@ -354,13 +354,14 @@ export function DesignImportPanel() {
                 {/* Figma URL Input */}
                 <div className="space-y-1.5">
                   <label
-                    // biome-ignore lint/a11y/noLabelWithoutControl: intentional
+                    htmlFor="figma-url-input"
                     className="text-sm font-medium flex items-center gap-1.5"
                   >
                     <Palette className="h-4 w-4" />
                     {t('upload.figmaUrl')}
                   </label>
                   <input
+                    id="figma-url-input"
                     type="text"
                     placeholder={t('upload.figmaUrlPlaceholder')}
                     value={figmaUrl}
@@ -374,12 +375,9 @@ export function DesignImportPanel() {
 
                 {/* Framework Selection */}
                 <div className="space-y-1.5">
-                  <label
-                    // biome-ignore lint/a11y/noLabelWithoutControl: intentional
-                    className="text-sm font-medium"
-                  >
+                  <div className="text-sm font-medium">
                     {t('upload.targetFramework')}
-                  </label>
+                  </div>
                   <div className="grid grid-cols-3 sm:grid-cols-6 gap-2">
                     {FRAMEWORK_OPTIONS.map((fw) => (
                       <button
@@ -401,12 +399,9 @@ export function DesignImportPanel() {
 
                 {/* Source Type */}
                 <div className="space-y-1.5">
-                  <label
-                    // biome-ignore lint/a11y/noLabelWithoutControl: intentional
-                    className="text-sm font-medium"
-                  >
+                  <div className="text-sm font-medium">
                     {t('upload.sourceType')}
-                  </label>
+                  </div>
                   <div className="flex gap-2 flex-wrap">
                     {SOURCE_TYPE_OPTIONS.map((st) => (
                       <button
