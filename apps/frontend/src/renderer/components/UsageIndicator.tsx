@@ -652,8 +652,7 @@ export function UsageIndicator() {
                 <div className="mt-2 p-1 bg-muted/30 rounded text-[10px]">
                   <b>{t('common:usage.debugProfiles')}</b>
                   <ul>
-                    // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
-                    // biome-ignore lint/suspicious/noExplicitAny: intentional
+                    {/* biome-ignore lint/suspicious/noExplicitAny: intentional */}
                     {debugProfiles.length > 0 ? debugProfiles.map((p: any) => (
                       <li key={`${p.name}-${p.baseUrl}`}>{p.name} | {p.baseUrl} | provider: {p.detectedProvider}</li>
                     )) : <li>{t('common:usage.noProfileDetected')}</li>}

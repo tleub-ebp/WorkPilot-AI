@@ -336,23 +336,19 @@ export function UsageIndicatorAgnostic({ selectedProvider }: UsageIndicatorAgnos
                 <AlertCircle className="h-4 w-4 text-orange-500 shrink-0 mt-0.5" />
                 <div className="space-y-1">
                   <p className="text-xs font-medium text-orange-500">
-                    // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
-                    // biome-ignore lint/suspicious/noExplicitAny: intentional
+                    {/* biome-ignore lint/suspicious/noExplicitAny: intentional */}
                     {(error as any).code?.replaceAll('_', ' ') || 'Error'}
                   </p>
                   <p className="text-[10px] text-muted-foreground leading-relaxed">
-                    // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
-                    // biome-ignore lint/suspicious/noExplicitAny: intentional
+                    {/* biome-ignore lint/suspicious/noExplicitAny: intentional */}
                     {(error as any).message || 'Unknown error occurred'}
                   </p>
-                  // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
-                  // biome-ignore lint/suspicious/noExplicitAny: intentional
+                  {/* biome-ignore lint/suspicious/noExplicitAny: intentional */}
                   {(error as any).suggestions && (error as any).suggestions.length > 0 && (
                     <div className="text-[10px] text-muted-foreground">
                       <strong>Suggestions:</strong>
                       <ul className="list-disc list-inside space-y-0.5 mt-1">
-                        // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
-                        // biome-ignore lint/suspicious/noExplicitAny: intentional
+                        {/* biome-ignore lint/suspicious/noExplicitAny: intentional */}
                         {(error as any).suggestions.map((suggestion: string, _idx: number) => (
                           <li key={suggestion}>{suggestion}</li>
                         ))}
@@ -361,8 +357,7 @@ export function UsageIndicatorAgnostic({ selectedProvider }: UsageIndicatorAgnos
                   )}
                 </div>
               </div>
-              // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
-              // biome-ignore lint/suspicious/noExplicitAny: intentional
+              {/* biome-ignore lint/suspicious/noExplicitAny: intentional */}
               {(error as any).actionType === 'reauth' && (
                 <button
                   type="button"

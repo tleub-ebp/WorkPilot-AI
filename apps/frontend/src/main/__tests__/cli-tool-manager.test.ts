@@ -198,7 +198,7 @@ describe('cli-tool-manager - Claude CLI NVM detection', () => {
           return true;
         }
         // Claude CLI exists in v22.17.0
-        if (pathStr.includes(`v22.17.0/bin/claude`) || pathStr.includes(`v22.17.0\bin\claude`)) {
+        if (pathStr.includes(`v22.17.0/bin/claude`) || pathStr.includes('v22.17.0\\bin\\claude')) {
           return true;
         }
         return false;
@@ -325,7 +325,7 @@ describe('cli-tool-manager - Claude CLI NVM detection', () => {
         const pathStr = String(filePath);
         if (pathStr.includes(`.nvm/versions/node`) || pathStr.includes(`.nvm\versions\node`)) return true;
         // Claude exists in all versions
-        if (pathStr.includes('/bin/claude') || pathStr.includes(`\bin\claude`)) return true;
+        if (pathStr.includes('/bin/claude') || pathStr.includes('\\bin\\claude')) return true;
         return false;
       });
 
@@ -406,7 +406,7 @@ describe('cli-tool-manager - Claude CLI NVM detection', () => {
 
       vi.mocked(existsSync).mockImplementation((filePath) => {
         const pathStr = String(filePath);
-        if (pathStr.includes('.local/bin/claude') || pathStr.includes(`.local\bin\claude`)) {
+        if (pathStr.includes('.local/bin/claude') || pathStr.includes('.local\\bin\\claude')) {
           return true;
         }
         return false;

@@ -198,7 +198,6 @@ export function PreviewPanel({
 
       {/* Preview Content */}
       {/* biome-ignore lint/a11y/noNoninteractiveElementInteractions: interactive handler is intentional */}
-      {/* biome-ignore lint/a11y/noNoninteractiveElementInteractions: intentional */}
       <section
         className={`flex-1 overflow-hidden p-6 ${isDragOver ? 'bg-muted/50' : ''}`}
         aria-label="Changelog preview with drag and drop support"

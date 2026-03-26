@@ -543,6 +543,7 @@ export function GitHubSetupModal({
                       <div className="flex flex-wrap gap-2" role="radiogroup" aria-label={t('common:accessibility.repositoryOwnerAriaLabel')}>
                         {/* Personal account */}
                         {githubUsername && (
+                          // biome-ignore lint/a11y/useSemanticElements: custom styled radio button within radiogroup
                           <button type="button"
                             onClick={() => setSelectedOwner(githubUsername)}
                             className={`flex items-center gap-2 px-3 py-2 rounded-md border ${
@@ -561,6 +562,7 @@ export function GitHubSetupModal({
                         )}
                         {/* Organizations */}
                         {organizations.map((org) => (
+                          // biome-ignore lint/a11y/useSemanticElements: custom styled radio button within radiogroup
                           <button type="button"
                             key={org.login}
                             onClick={() => setSelectedOwner(org.login)}
@@ -607,6 +609,7 @@ export function GitHubSetupModal({
                   <div className="space-y-2">
                     <Label>Visibility</Label>
                     <div className="flex gap-2" role="radiogroup" aria-label={t('common:accessibility.repositoryVisibilityAriaLabel')}>
+                      {/* biome-ignore lint/a11y/useSemanticElements: custom styled radio button within radiogroup */}
                       <button type="button"
                         onClick={() => setIsPrivateRepo(true)}
                         className={`flex items-center gap-2 px-3 py-2 rounded-md border ${
@@ -622,6 +625,7 @@ export function GitHubSetupModal({
                         <Lock className="h-4 w-4" />
                         <span className="text-sm">Private</span>
                       </button>
+                      {/* biome-ignore lint/a11y/useSemanticElements: custom styled radio button within radiogroup */}
                       <button type="button"
                         onClick={() => setIsPrivateRepo(false)}
                         className={`flex items-center gap-2 px-3 py-2 rounded-md border ${

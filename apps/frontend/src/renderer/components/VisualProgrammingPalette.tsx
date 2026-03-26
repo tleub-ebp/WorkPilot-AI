@@ -106,12 +106,12 @@ export const VisualProgrammingPalette: React.FC<{ compact?: boolean }> = ({ comp
 					{openGroups[cat.labelKey] && (
 						<div className="flex flex-wrap gap-2">
 							{cat.blocks.map((tpl) => (
+								// biome-ignore lint/a11y/noNoninteractiveElementInteractions: draggable palette block
+								// biome-ignore lint/a11y/noStaticElementInteractions: draggable palette block
 								<div
 									key={tpl.type}
 									className="flex items-center gap-2 p-2 rounded cursor-grab hover:bg-muted/60"
 									draggable
-									// biome-ignore lint/a11y/noNoninteractiveElementInteractions: interactive handler is intentional
-									// biome-ignore lint/a11y/noStaticElementInteractions: interactive handler is intentional
 									title={t(tpl.labelKey + 'Desc', '')}
 									onDragStart={(e) => handleDragStart(e, tpl.type)}
 								>

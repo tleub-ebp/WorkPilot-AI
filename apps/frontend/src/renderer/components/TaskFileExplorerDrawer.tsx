@@ -5,9 +5,9 @@ import { FileTree } from './FileTree';
 import { useFileExplorerStore } from '../stores/file-explorer-store';
 
 interface TaskFileExplorerDrawerProps {
-  isOpen: boolean;
-  onClose: () => void;
-  projectPath: string;
+  readonly isOpen: boolean;
+  readonly onClose: () => void;
+  readonly projectPath: string;
 }
 
 // Animation variants for the sidebar panel

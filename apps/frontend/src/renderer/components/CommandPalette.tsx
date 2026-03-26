@@ -571,11 +571,10 @@ export function CommandPalette({
 
   return (
     <div
-      // biome-ignore lint/a11y/noNoninteractiveElementInteractions: interactive handler is intentional
-      // biome-ignore lint/a11y/noStaticElementInteractions: interactive handler is intentional
-      // biome-ignore lint/a11y/useKeyWithClickEvents: keyboard events handled elsewhere
+      role="none"
       className="fixed inset-0 z-100"
       onClick={() => onOpenChange(false)}
+      onKeyDown={(e) => e.key === 'Escape' && onOpenChange(false)}
     >
       {/* Backdrop */}
       <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" />

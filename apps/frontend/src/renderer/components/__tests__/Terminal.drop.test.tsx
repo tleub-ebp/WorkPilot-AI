@@ -716,6 +716,7 @@ describe('Terminal File Drop - Component Integration', () => {
 
     return (
       // biome-ignore lint/a11y/noStaticElementInteractions: interactive handler is intentional
+      // biome-ignore lint/a11y/noNoninteractiveElementInteractions: drag-drop test zone
       <div
         data-testid="drop-zone"
         onDragOver={handleNativeDragOver}
