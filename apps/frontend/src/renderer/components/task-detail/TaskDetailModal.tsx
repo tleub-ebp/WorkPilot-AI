@@ -30,8 +30,7 @@ import {
   X,
   GitPullRequest
 } from 'lucide-react';
-import { cn } from '../../lib/utils';
-import { calculateProgress } from '../../lib/utils';
+import { cn, calculateProgress} from '../../lib/utils';
 import { startTask, stopTask, submitReview, recoverStuckTask, deleteTask, useTaskStore } from '../../stores/task-store';
 import { useProjectStore } from '../../stores/project-store';
 import { TASK_STATUS_LABELS } from '../../../shared/constants';
@@ -47,12 +46,77 @@ import { StreamingSessionButton } from '../streaming/StreamingSessionButton';
 import type { Task, WorktreeCreatePROptions } from '../../../shared/types';
 
 interface TaskDetailModalProps {
-  open: boolean;
-  task: Task | null;
-  onOpenChange: (open: boolean) => void;
-  onSwitchToTerminals?: () => void;
-  onOpenInbuiltTerminal?: (id: string, cwd: string) => void;
+  readonly open: boolean;
+  readonly task: Task | null;
+  readonly onOpenChange: (open: boolean) => void;
+  readonly onSwitchToTerminals?: () => void;
+  readonly onOpenInbuiltTerminal?: (id: string, cwd: string) => void;
 }
+
+const renderTaskStatusBadges = (task: Task, state: any, t: (key: string) => string, getStatusBadgeVariant: (status: string, isStuck: boolean) => "success" | "destructive" | "warning" | "default" | "purple" | "info" | "secondary" | "outline" | "muted" | null | undefined) => {
+  if (state.isStuck) {
+    return (
+      <Badge variant="warning" className="text-xs flex items-center gap-1 animate-pulse">
+        <AlertTriangle className="h-3 w-3" />
+        Stuck
+      </Badge>
+    );
+  }
+
+  if (state.isIncomplete) {
+    return (
+      <Badge variant="warning" className="text-xs flex items-center gap-1">
+        <AlertTriangle className="h-3 w-3" />
+        Incomplete
+      </Badge>
+    );
+  }
+
+  return (
+    <>
+      <Badge
+        variant={getStatusBadgeVariant(task.status, state.isStuck)}
+        className={cn('text-xs', (task.status === 'in_progress' && !state.isStuck) && 'status-running')}
+      >
+        {t(TASK_STATUS_LABELS[task.status])}
+      </Badge>
+      {task.status === 'human_review' && task.reviewReason && (
+        <Badge
+          variant={getReviewReasonBadgeVariant(task.reviewReason)}
+          className="text-xs"
+        >
+          {getReviewReasonBadgeText(task.reviewReason, t)}
+        </Badge>
+      )}
+    </>
+  );
+};
+
+const getReviewReasonBadgeText = (reviewReason: string, t: (key: string) => string): string => {
+  switch (reviewReason) {
+    case 'completed':
+      return t('tasks:modal.badges.completed');
+    case 'errors':
+      return t('tasks:modal.badges.hasErrors');
+    case 'plan_review':
+      return t('tasks:modal.badges.approvePlan');
+    case 'stopped':
+      return t('tasks:modal.badges.stopped');
+    default:
+      return t('tasks:modal.badges.qaIssues');
+  }
+};
+
+const getReviewReasonBadgeVariant = (reviewReason: string): 'success' | 'destructive' | 'warning' => {
+  switch (reviewReason) {
+    case 'completed':
+      return 'success';
+    case 'errors':
+      return 'destructive';
+    default:
+      return 'warning';
+  }
+};
 
 export function TaskDetailModal({ open, task, onOpenChange, onSwitchToTerminals, onOpenInbuiltTerminal }: TaskDetailModalProps) {
   // Don't render anything if no task
@@ -76,48 +140,41 @@ const isFilesTabEnabled = () => {
   return flag === null || flag === 'true'; // Enabled by default
 };
 
-// Separate component to use hooks only when task exists
-function TaskDetailModalContent({ open, task, onOpenChange, onCloseTask }: { open: boolean; task: Task; onOpenChange: (open: boolean) => void; onCloseTask?: () => void }) {
+// Custom hook for task handlers
+function useTaskDetailHandlers(task: Task, state: any, onOpenChange: (open: boolean) => void) {
   const { t } = useTranslation(['tasks']);
   const { toast } = useToast();
-  const state = useTaskDetail({ task });
   const activeProject = useProjectStore(s => s.getActiveProject());
-  const showFilesTab = isFilesTabEnabled();
-  const progressPercent = calculateProgress(task.subtasks);
-  const completedSubtasks = task.subtasks.filter(s => s.status === 'completed').length;
-  const totalSubtasks = task.subtasks.length;
 
-  // Event Handlers
   const handleStartStop = async () => {
     if (state.isRunning && !state.isStuck) {
       stopTask(task.id);
-    } else {
-      // If task is incomplete, validate and reload plan before starting
-      if (state.isIncomplete) {
-        const isValid = await state.reloadPlanForIncompleteTask();
-        if (!isValid) {
-          toast({
-            title: 'Cannot Resume Task',
-            description: 'Failed to load implementation plan. Please try again or check the task files.',
-            variant: 'destructive',
-            duration: 5000,
-          });
-          return;
-        }
-      }
-      // Notify the user if the provider will change when restarting
-      const projectProvider = activeProject?.settings?.provider;
-      // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
-      const taskProvider = (task.metadata as any)?.provider;
-      if (projectProvider && taskProvider && projectProvider !== taskProvider) {
-        toast({
-          title: t('tasks:providerSwitch.title'),
-          description: t('tasks:providerSwitch.description', { from: taskProvider, to: projectProvider }),
-          duration: 4000,
-        });
-      }
-      startTask(task.id);
+      return;
     }
+    
+    if (state.isIncomplete) {
+      const isValid = await state.reloadPlanForIncompleteTask();
+      if (!isValid) {
+        toast({
+          title: 'Cannot Resume Task',
+          description: 'Failed to load implementation plan. Please try again or check the task files.',
+          variant: 'destructive',
+          duration: 5000,
+        });
+        return;
+      }
+    }
+    
+    const projectProvider = activeProject?.settings?.provider;
+    const taskProvider = (task.metadata as any)?.provider;
+    if (projectProvider && taskProvider && projectProvider !== taskProvider) {
+      toast({
+        title: t('tasks:providerSwitch.title'),
+        description: t('tasks:providerSwitch.description', { from: taskProvider, to: projectProvider }),
+        duration: 4000,
+      });
+    }
+    startTask(task.id);
   };
 
   const handleRecover = async () => {
@@ -131,7 +188,6 @@ function TaskDetailModalContent({ open, task, onOpenChange, onCloseTask }: { ope
   };
 
   const handleReject = async () => {
-    // Allow submission if there's text feedback OR images attached
     if (!state.feedback.trim() && state.feedbackImages.length === 0) {
       return;
     }
@@ -155,11 +211,38 @@ function TaskDetailModalContent({ open, task, onOpenChange, onCloseTask }: { ope
     state.setIsDeleting(false);
   };
 
+  const handleClose = () => {
+    if (state.isRunning && !state.isStuck) {
+      toast({
+        title: t('tasks:notifications.backgroundTaskTitle'),
+        description: t('tasks:notifications.backgroundTaskDescription'),
+        duration: 4000,
+      });
+    }
+    onOpenChange(false);
+  };
+
+  return { handleStartStop, handleRecover, handleReject, handleDelete, handleClose };
+}
+
+// Separate component to use hooks only when task exists
+function TaskDetailModalContent({ open, task, onOpenChange, onCloseTask }: { readonly open: boolean; readonly task: Task; readonly onOpenChange: (open: boolean) => void; readonly onCloseTask?: () => void }) {
+  const { t } = useTranslation(['tasks']);
+  const state = useTaskDetail({ task });
+  const activeProject = useProjectStore(s => s.getActiveProject());
+  const showFilesTab = isFilesTabEnabled();
+  const progressPercent = calculateProgress(task.subtasks);
+  const completedSubtasks = task.subtasks.filter(s => s.status === 'completed').length;
+  const totalSubtasks = task.subtasks.length;
+
+  // Extract handlers using custom hook
+  const { handleStartStop, handleRecover, handleReject, handleDelete, handleClose } = useTaskDetailHandlers(task, state, onOpenChange);
+
   const handleMerge = async () => {
     state.setIsMerging(true);
     state.setWorkspaceError(null);
     try {
-      const result = await window.electronAPI.mergeWorktree(task.id, { noCommit: state.stageOnly });
+      const result = await globalThis.electronAPI.mergeWorktree(task.id, { noCommit: state.stageOnly });
       if (result.success && result.data?.success) {
         if (state.stageOnly && result.data.staged) {
           state.setWorkspaceError(null);
@@ -182,7 +265,7 @@ function TaskDetailModalContent({ open, task, onOpenChange, onCloseTask }: { ope
   const handleDiscard = async () => {
     state.setIsDiscarding(true);
     state.setWorkspaceError(null);
-    const result = await window.electronAPI.discardWorktree(task.id);
+    const result = await globalThis.electronAPI.discardWorktree(task.id);
     if (result.success && result.data?.success) {
       state.setShowDiscardDialog(false);
       onOpenChange(false);
@@ -195,7 +278,7 @@ function TaskDetailModalContent({ open, task, onOpenChange, onCloseTask }: { ope
   const handleCreatePR = async (options: WorktreeCreatePROptions) => {
     state.setIsCreatingPR(true);
     try {
-      const result = await window.electronAPI.createWorktreePR(task.id, options);
+      const result = await globalThis.electronAPI.createWorktreePR(task.id, options);
       if (result.success && result.data) {
         // Update single task in store with new status and prUrl (more efficient than reloading all tasks)
         if (result.data.success && result.data.prUrl && !result.data.alreadyExists) {
@@ -214,18 +297,6 @@ function TaskDetailModalContent({ open, task, onOpenChange, onCloseTask }: { ope
     } finally {
       state.setIsCreatingPR(false);
     }
-  };
-
-  const handleClose = () => {
-    // Show toast notification if task is running
-    if (state.isRunning && !state.isStuck) {
-      toast({
-        title: t('tasks:notifications.backgroundTaskTitle'),
-        description: t('tasks:notifications.backgroundTaskDescription'),
-        duration: 4000,
-      });
-    }
-    onOpenChange(false);
   };
 
   // Helper function to get status badge variant
@@ -328,7 +399,7 @@ function TaskDetailModalContent({ open, task, onOpenChange, onCloseTask }: { ope
                type="button"
                onClick={() => {
                  if (task.metadata?.prUrl) {
-                   window.electronAPI?.openExternal(task.metadata.prUrl);
+                   globalThis.electronAPI?.openExternal(task.metadata.prUrl);
                  }
                }}
                className="completion-state text-sm flex items-center gap-2 text-info cursor-pointer hover:underline bg-transparent border-none p-0"
@@ -393,37 +464,7 @@ function TaskDetailModalContent({ open, task, onOpenChange, onCloseTask }: { ope
                       <Badge variant="outline" className="text-xs font-mono">
                         {task.specId}
                       </Badge>
-                      {state.isStuck ? (
-                        <Badge variant="warning" className="text-xs flex items-center gap-1 animate-pulse">
-                          <AlertTriangle className="h-3 w-3" />
-                          Stuck
-                        </Badge>
-                      ) : state.isIncomplete ? (
-                        <Badge variant="warning" className="text-xs flex items-center gap-1">
-                            <AlertTriangle className="h-3 w-3" />
-                            Incomplete
-                          </Badge>
-                      ) : (
-                        <>
-                           <Badge
-                             variant={getStatusBadgeVariant(task.status, state.isStuck)}
-                             className={cn('text-xs', (task.status === 'in_progress' && !state.isStuck) && 'status-running')}
-                           >
-                             {t(TASK_STATUS_LABELS[task.status])}
-                           </Badge>
-                          {task.status === 'human_review' && task.reviewReason && (
-                            <Badge
-                              variant={task.reviewReason === 'completed' ? 'success' : task.reviewReason === 'errors' ? 'destructive' : 'warning'}
-                              className="text-xs"
-                            >
-                              {task.reviewReason === 'completed' ? t('tasks:modal.badges.completed') :
-                               task.reviewReason === 'errors' ? t('tasks:modal.badges.hasErrors') :
-                               task.reviewReason === 'plan_review' ? t('tasks:modal.badges.approvePlan') :
-                               task.reviewReason === 'stopped' ? t('tasks:modal.badges.stopped') : t('tasks:modal.badges.qaIssues')}
-                            </Badge>
-                          )}
-                        </>
-                      )}
+                      {renderTaskStatusBadges(task, state, t, getStatusBadgeVariant)}
                       {/* Compact progress indicator */}
                       {totalSubtasks > 0 && (
                         <span className="text-xs text-muted-foreground ml-1">
@@ -432,7 +473,7 @@ function TaskDetailModalContent({ open, task, onOpenChange, onCloseTask }: { ope
                       )}
                     </div>
                   </DialogPrimitive.Description>
-                  {window.DEBUG && (
+                  {globalThis.DEBUG && (
                     <div className="mt-1 text-[11px] text-muted-foreground font-mono">
                       status={task.status} reviewReason={task.reviewReason ?? 'none'} phase={task.executionProgress?.phase ?? 'none'} reviewRequired={task.metadata?.requireReviewBeforeCoding ? 'true' : 'false'}
                       <br />
@@ -642,7 +683,7 @@ function TaskDetailModalContent({ open, task, onOpenChange, onCloseTask }: { ope
             <AlertDialogDescription asChild>
               <div className="text-sm text-muted-foreground space-y-3">
                 {/* biome-ignore lint/security/noDangerouslySetInnerHtml: content is sanitized before use */}
-                <p dangerouslySetInnerHTML={{ __html: t('tasks:modal.delete.confirmMessage', { title: task.title.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'), interpolation: { escapeValue: false } }) }} />
+                <p dangerouslySetInnerHTML={{ __html: t('tasks:modal.delete.confirmMessage', { title: task.title.replaceAll(/[&<>"']/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[char] || char)), interpolation: { escapeValue: false } }) }} />
                 <p className="text-destructive">
                   {t('tasks:modal.delete.warningMessage')}
                 </p>
