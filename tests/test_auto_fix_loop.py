@@ -16,6 +16,10 @@ import pytest
 # Add tests directory to path for helper imports
 sys.path.insert(0, str(Path(__file__).parent))
 
+# Add backend directory to path for qa imports
+backend_dir = Path(__file__).parent.parent / "apps" / "backend"
+sys.path.insert(0, str(backend_dir))
+
 # Setup mocks before importing auto-claude modules
 from qa_report_helpers import cleanup_qa_report_mocks, setup_qa_report_mocks
 
