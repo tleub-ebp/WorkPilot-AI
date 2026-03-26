@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+﻿import React, { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   usePipelineGeneratorStore,
@@ -174,7 +174,7 @@ export function PipelineGenerator(): React.ReactElement {
                   </div>
                 )}
                 {result.stack.has_docker && (
-                  <div className="text-blue-400">🐳 {t('pipelineGenerator:stackInfo.dockerDetected')}</div>
+                  <div className="text-blue-400">ðŸ³ {t('pipelineGenerator:stackInfo.dockerDetected')}</div>
                 )}
               </div>
             </div>
@@ -187,7 +187,7 @@ export function PipelineGenerator(): React.ReactElement {
           {(isRunning || status) && (
             <div className="px-4 py-2 bg-[var(--bg-secondary)] border-b border-[var(--border-color)] text-sm text-[var(--text-secondary)] flex items-center gap-2">
               {isRunning && (
-                // biome-ignore lint/a11y/noSvgWithoutTitle: SVG is decorative
+// biome-ignore lint/a11y/noSvgWithoutTitle: SVG is decorative 
                 <svg className="animate-spin w-4 h-4 text-[var(--accent)]" fill="none" viewBox="0 0 24 24">
                   <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                   <path
@@ -258,7 +258,7 @@ export function PipelineGenerator(): React.ReactElement {
           {phase === 'idle' && !result && (
             <div className="flex-1 flex items-center justify-center text-center p-8">
               <div>
-                <div className="text-5xl mb-4">⚙️</div>
+                <div className="text-5xl mb-4">âš™ï¸</div>
                 <h3 className="text-lg font-medium mb-2">{t('pipelineGenerator:emptyState.title')}</h3>
                 <p className="text-sm text-[var(--text-secondary)] max-w-sm">
                   {t('pipelineGenerator:emptyState.description')}
@@ -278,3 +278,5 @@ export function PipelineGenerator(): React.ReactElement {
 }
 
 export default PipelineGenerator;
+
+

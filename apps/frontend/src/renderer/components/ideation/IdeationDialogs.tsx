@@ -1,4 +1,4 @@
-import { useTranslation } from 'react-i18next';
+﻿import { useTranslation } from 'react-i18next';
 import { CheckCircle2, Plus } from 'lucide-react';
 import { Button } from '../ui/button';
 import { Switch } from '../ui/switch';
@@ -61,26 +61,28 @@ export function IdeationDialogs({
             <div className="space-y-3">
               <h4 className="text-sm font-medium">{t('config.typesLabel')}</h4>
               {ALL_IDEATION_TYPES.map((type) => (
-                <div
-                  key={type}
-                  className="flex items-center justify-between p-3 bg-muted/50 rounded-lg"
-                >
-                  <div className="flex items-center gap-3">
-                    <div className={`p-2 rounded-md ${IDEATION_TYPE_COLORS[type]}`}>
-                      <TypeIcon type={type} />
-                    </div>
-                    <div>
-                      <div className="font-medium text-sm">{t(`types.${type}`)}</div>
-                      <div className="text-xs text-muted-foreground">
-                        {IDEATION_TYPE_DESCRIPTIONS[type]}
+                <>
+                  <div
+                    key={type}
+                    className="flex items-center justify-between p-3 bg-muted/50 rounded-lg"
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className={`p-2 rounded-md ${IDEATION_TYPE_COLORS[type]}`}>
+                        <TypeIcon type={type} />
+                      </div>
+                      <div>
+                        <div className="font-medium text-sm">{t(`types.${type}`)}</div>
+                        <div className="text-xs text-muted-foreground">
+                          {IDEATION_TYPE_DESCRIPTIONS[type]}
+                        </div>
                       </div>
                     </div>
+                    <Switch
+                      checked={config.enabledTypes.includes(type)}
+                      onCheckedChange={() => onToggleIdeationType(type)}
+                    />
                   </div>
-                  <Switch
-                    checked={config.enabledTypes.includes(type)}
-                    onCheckedChange={() => onToggleIdeationType(type)}
-                  />
-                </div>
+                </>
               ))}
             </div>
 
@@ -128,17 +130,18 @@ export function IdeationDialogs({
               </div>
             ) : (
               availableTypesToAdd.map((type) => (
-                // biome-ignore lint/a11y/noNoninteractiveElementInteractions: interactive handler is intentional
-                // biome-ignore lint/a11y/noStaticElementInteractions: interactive handler is intentional
-                // biome-ignore lint/a11y/useKeyWithClickEvents: keyboard events handled elsewhere
-                <div
-                  key={type}
-                  className={`flex items-center justify-between p-3 rounded-lg cursor-pointer transition-colors ${
-                    typesToAdd.includes(type)
-                      ? 'bg-primary/10 border border-primary'
-                      : 'bg-muted/50 hover:bg-muted'
-                  }`}
-                  onClick={() => onToggleTypeToAdd(type)}
+                <>
+                  {/* biome-ignore lint/a11y/noNoninteractiveElementInteractions: interactive handler is intentional */}
+                  {/* biome-ignore lint/a11y/noStaticElementInteractions: interactive handler is intentional */}
+                  {/* biome-ignore lint/a11y/useKeyWithClickEvents: keyboard events handled elsewhere  */}
+                  <div
+                    key={type}
+                    className={`flex items-center justify-between p-3 rounded-lg cursor-pointer transition-colors ${
+                      typesToAdd.includes(type)
+                        ? 'bg-primary/10 border border-primary'
+                        : 'bg-muted/50 hover:bg-muted'
+                    }`}
+                    onClick={() => onToggleTypeToAdd(type)}
                 >
                   <div className="flex items-center gap-3">
                     <div className={`p-2 rounded-md ${IDEATION_TYPE_COLORS[type]}`}>
@@ -161,6 +164,7 @@ export function IdeationDialogs({
                     )}
                   </div>
                 </div>
+                </>
               ))
             )}
           </div>
@@ -188,3 +192,6 @@ export function IdeationDialogs({
     </>
   );
 }
+
+
+

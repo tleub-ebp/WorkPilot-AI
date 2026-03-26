@@ -1,4 +1,4 @@
-import { useState } from 'react';
+﻿import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Shield, Plus, Trash2, FolderOpen, Lock, AlertTriangle, RotateCcw } from 'lucide-react';
 import { SettingsSection } from './SettingsSection';
@@ -173,7 +173,7 @@ export function SandboxSettings() {
               <div key={key} className="space-y-1">
                 <div className="flex items-center justify-between">
                   // biome-ignore lint/a11y/noLabelWithoutControl: label association is implicit
-                  // biome-ignore lint/a11y/noLabelWithoutControl: intentional
+{/* biome-ignore lint/a11y/noLabelWithoutControl: intentional  */}
                   <label className="text-xs font-medium text-muted-foreground">{label}</label>
                   <span className="text-xs font-mono tabular-nums text-foreground">{limits[key]}</span>
                 </div>
@@ -231,3 +231,6 @@ export function SandboxSettings() {
     </SettingsSection>
   );
 }
+
+
+

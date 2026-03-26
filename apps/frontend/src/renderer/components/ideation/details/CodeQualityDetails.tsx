@@ -1,4 +1,4 @@
-import {
+﻿import {
   Code2,
   AlertTriangle,
   AlertCircle,
@@ -136,7 +136,7 @@ export function CodeQualityDetails({ idea }: CodeQualityDetailsProps) {
           </h3>
           <ul className="space-y-1">
             {idea.affectedFiles.map((file, i) => (
-              // biome-ignore lint/suspicious/noArrayIndexKey: no stable key available
+// biome-ignore lint/suspicious/noArrayIndexKey: no stable key available 
               <li key={i} className="text-sm font-mono text-muted-foreground">
                 {file}
               </li>
@@ -165,9 +165,9 @@ export function CodeQualityDetails({ idea }: CodeQualityDetailsProps) {
           </h3>
           <ul className="space-y-1">
             {idea.prerequisites.map((prereq, i) => (
-              // biome-ignore lint/suspicious/noArrayIndexKey: no stable key available
+// biome-ignore lint/suspicious/noArrayIndexKey: no stable key available 
               <li key={i} className="text-sm text-muted-foreground flex items-start gap-2">
-                <span className="text-muted-foreground">•</span>
+                <span className="text-muted-foreground">â€¢</span>
                 {prereq}
               </li>
             ))}
@@ -177,3 +177,5 @@ export function CodeQualityDetails({ idea }: CodeQualityDetailsProps) {
     </>
   );
 }
+
+

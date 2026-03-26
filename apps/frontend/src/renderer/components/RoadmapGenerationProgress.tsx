@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+﻿import { useState, useEffect, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { motion, AnimatePresence } from 'motion/react';
 import { Search, Users, Sparkles, CheckCircle2, AlertCircle, Square, Clock } from 'lucide-react';
@@ -256,7 +256,7 @@ function PhaseStepsIndicator({
               transition={getStepTransition(state)}
             >
               {state === 'complete' && (
-                // biome-ignore lint/a11y/noSvgWithoutTitle: SVG is decorative
+// biome-ignore lint/a11y/noSvgWithoutTitle: SVG is decorative 
                 <svg
                   className="h-3 w-3"
                   fill="none"
@@ -518,7 +518,7 @@ export function RoadmapGenerationProgress({
                 <Tooltip>
                   <TooltipTrigger asChild>
                     <span className="text-xs text-muted-foreground/70 cursor-help">
-                      · {t('roadmapProgress.lastActivityPrefix')} {lastActivityDisplay}
+                      Â· {t('roadmapProgress.lastActivityPrefix')} {lastActivityDisplay}
                     </span>
                   </TooltipTrigger>
                   <TooltipContent>
@@ -584,3 +584,5 @@ export function RoadmapGenerationProgress({
     </div>
   );
 }
+
+

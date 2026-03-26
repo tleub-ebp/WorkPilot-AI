@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Quality Score Panel Component
  * Displays detailed quality analysis with issues breakdown
  */
@@ -37,10 +37,10 @@ const SEVERITY_COLORS: Record<string, string> = {
 
 // Category icons
 const CATEGORY_ICONS: Record<string, string> = {
-  bugs: '🐛',
-  security: '🔒',
-  maintainability: '🔧',
-  complexity: '📊',
+  bugs: 'ðŸ›',
+  security: 'ðŸ”’',
+  maintainability: 'ðŸ”§',
+  complexity: 'ðŸ“Š',
 };
 
 // biome-ignore lint/correctness/noUnusedFunctionParameters: parameter kept for API compatibility
@@ -72,7 +72,7 @@ export function QualityScorePanel({ score, isLoading, onRefresh }: QualityScoreP
       <CardHeader className="pb-3">
         <div className="flex items-center justify-between">
           <CardTitle className="text-lg flex items-center gap-2">
-            🧠 Code Quality Analysis
+            ðŸ§  Code Quality Analysis
           </CardTitle>
           <QualityScoreBadge
             score={score.overall_score}
@@ -91,7 +91,7 @@ export function QualityScorePanel({ score, isLoading, onRefresh }: QualityScoreP
             'font-medium',
             score.is_passing ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'
           )}>
-            {score.is_passing ? '✅ PASSED' : '❌ FAILED'}
+            {score.is_passing ? 'âœ… PASSED' : 'âŒ FAILED'}
           </div>
         </div>
 
@@ -136,7 +136,7 @@ export function QualityScorePanel({ score, isLoading, onRefresh }: QualityScoreP
                 <div className="mt-4 space-y-3">
                   {Object.entries(issuesByCategory).map(([category, issues]) => {
                     const isOpen = expandedCategories.has(category);
-                    const icon = CATEGORY_ICONS[category] || '📄';
+                    const icon = CATEGORY_ICONS[category] || 'ðŸ“„';
 
                     return (
                       <div key={category} className="border rounded-lg p-3">
@@ -163,7 +163,7 @@ export function QualityScorePanel({ score, isLoading, onRefresh }: QualityScoreP
                               const severityColor = SEVERITY_COLORS[issue.severity];
 
                               return (
-                                // biome-ignore lint/suspicious/noArrayIndexKey: no stable key available
+{/* biome-ignore lint/suspicious/noArrayIndexKey: no stable key available */}
                                 <div key={idx} className="text-sm pl-6 py-2 border-l-2 border-muted">
                                   <div className="flex items-start gap-2">
                                     <SeverityIcon className={cn('h-4 w-4 mt-0.5 flex-shrink-0', severityColor)} />
@@ -174,7 +174,7 @@ export function QualityScorePanel({ score, isLoading, onRefresh }: QualityScoreP
                                       </div>
                                       {issue.suggestion && (
                                         <div className="text-xs text-muted-foreground mt-1 flex items-start gap-1">
-                                          <span>💡</span>
+                                          <span>ðŸ’¡</span>
                                           <span>{issue.suggestion}</span>
                                         </div>
                                       )}
@@ -202,7 +202,7 @@ export function QualityScorePanel({ score, isLoading, onRefresh }: QualityScoreP
         {/* No Issues */}
         {score.total_issues === 0 && (
           <div className="text-center py-4 text-muted-foreground">
-            <div className="text-4xl mb-2">🎉</div>
+            <div className="text-4xl mb-2">ðŸŽ‰</div>
             <div className="text-sm">No issues detected! Great job!</div>
           </div>
         )}
@@ -210,4 +210,5 @@ export function QualityScorePanel({ score, isLoading, onRefresh }: QualityScoreP
     </Card>
   );
 }
+
 

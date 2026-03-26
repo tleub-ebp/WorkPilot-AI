@@ -1,4 +1,4 @@
-import { motion, AnimatePresence } from 'motion/react';
+﻿import { motion, AnimatePresence } from 'motion/react';
 import { useTranslation } from 'react-i18next';
 import { memo, useRef, useState, useEffect, type MouseEvent } from 'react';
 import { cn } from '../lib/utils';
@@ -154,7 +154,7 @@ export const PhaseProgressIndicator = memo(function PhaseProgressIndicator({
             // biome-ignore lint/style/noNonNullAssertion: value is guaranteed by context
             `${Math.round(Math.min(phaseProgress!, 100))}%`
           ) : (
-            '—'
+            'â€”'
           )}
         </span>
       </div>
@@ -333,7 +333,7 @@ const PhaseStepsIndicator = memo(function PhaseStepsIndicator({
               role={isPlanClickable ? 'button' : undefined}
             >
               {state === 'complete' && (
-                // biome-ignore lint/a11y/noSvgWithoutTitle: SVG is decorative
+// biome-ignore lint/a11y/noSvgWithoutTitle: SVG is decorative 
                 <svg className="h-2.5 w-2.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
                 </svg>
@@ -354,3 +354,5 @@ const PhaseStepsIndicator = memo(function PhaseStepsIndicator({
     </div>
   );
 });
+
+

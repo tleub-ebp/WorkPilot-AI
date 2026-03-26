@@ -1,4 +1,4 @@
-import { useTranslation } from 'react-i18next';
+﻿import { useTranslation } from 'react-i18next';
 import { ChevronRight, ExternalLink, Lightbulb, Loader2, Play, X } from 'lucide-react';
 import { Button } from '../ui/button';
 import { Badge } from '../ui/badge';
@@ -24,12 +24,12 @@ import { PerformanceOptimizationDetails } from './details/PerformanceOptimizatio
 import { CodeQualityDetails } from './details/CodeQualityDetails';
 
 interface IdeaDetailPanelProps {
-  idea: Idea;
-  onClose: () => void;
-  onConvert: (idea: Idea) => void;
-  onGoToTask?: (taskId: string) => void;
-  onDismiss: (idea: Idea) => void;
-  isConverting?: boolean;
+  readonly idea: Idea;
+  readonly onClose: () => void;
+  readonly onConvert: (idea: Idea) => void;
+  readonly onGoToTask?: (taskId: string) => void;
+  readonly onDismiss: (idea: Idea) => void;
+  readonly isConverting?: boolean;
 }
 
 export function IdeaDetailPanel({ idea, onClose, onConvert, onGoToTask, onDismiss, isConverting }: IdeaDetailPanelProps) {
@@ -114,8 +114,7 @@ export function IdeaDetailPanel({ idea, onClose, onConvert, onGoToTask, onDismis
       )}
       {isConverted && idea.taskId && onGoToTask && (
         <div className="shrink-0 p-4 border-t border-border">
-          // biome-ignore lint/style/noNonNullAssertion: value is guaranteed by context
-          // biome-ignore lint/style/noNonNullAssertion: intentional
+          {/* biome-ignore lint/style/noNonNullAssertion: intentional */}
           <Button className="w-full" onClick={() => onGoToTask(idea.taskId!)}>
             <ExternalLink className="h-4 w-4 mr-2" />
             {t('common:ideation.goToTask')}

@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from 'react';
+﻿import { useEffect, useState, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   Swords,
@@ -32,15 +32,15 @@ import { useArenaStore } from '@/stores/arena-store';
 import { useProjectStore } from '@/stores/project-store';
 import type { ArenaTaskType, ArenaBattle, ArenaLabel, ArenaParticipant } from '@shared/types/arena';
 
-// ─── Constants ────────────────────────────────────────────────────────────────
+// â”€â”€â”€ Constants â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 const TASK_TYPES: { value: ArenaTaskType; labelKey: string; icon: string }[] = [
-  { value: 'coding', labelKey: 'arena:taskTypes.coding', icon: '💻' },
-  { value: 'review', labelKey: 'arena:taskTypes.review', icon: '🔍' },
-  { value: 'test', labelKey: 'arena:taskTypes.test', icon: '🧪' },
-  { value: 'planning', labelKey: 'arena:taskTypes.planning', icon: '📋' },
-  { value: 'spec', labelKey: 'arena:taskTypes.spec', icon: '📝' },
-  { value: 'insights', labelKey: 'arena:taskTypes.insights', icon: '💡' },
+  { value: 'coding', labelKey: 'arena:taskTypes.coding', icon: 'ðŸ’»' },
+  { value: 'review', labelKey: 'arena:taskTypes.review', icon: 'ðŸ”' },
+  { value: 'test', labelKey: 'arena:taskTypes.test', icon: 'ðŸ§ª' },
+  { value: 'planning', labelKey: 'arena:taskTypes.planning', icon: 'ðŸ“‹' },
+  { value: 'spec', labelKey: 'arena:taskTypes.spec', icon: 'ðŸ“' },
+  { value: 'insights', labelKey: 'arena:taskTypes.insights', icon: 'ðŸ’¡' },
 ];
 
 const LABEL_COLORS: Record<ArenaLabel, string> = {
@@ -70,11 +70,11 @@ const ARENA_TABS = [
   { id: 'routing' as ArenaTab, icon: Route, labelKey: 'tabs.routing' },
 ];
 
-// ─── Tab types ────────────────────────────────────────────────────────────────
+// â”€â”€â”€ Tab types â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 type ArenaTab = 'battle' | 'history' | 'analytics' | 'routing';
 
-// ─── Sub-components ───────────────────────────────────────────────────────────
+// â”€â”€â”€ Sub-components â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 function ParticipantCard({
   participant,
@@ -102,21 +102,22 @@ function ParticipantCard({
   };
 
   return (
-    // biome-ignore lint/a11y/noNoninteractiveElementInteractions: interactive handler is intentional
-    // biome-ignore lint/a11y/noStaticElementInteractions: interactive handler is intentional
-    // biome-ignore lint/a11y/useAriaPropsSupportedByRole: ARIA attributes are valid for this role
-    <div
-      role={canVote ? 'button' : undefined}
-      tabIndex={canVote ? 0 : undefined}
-      className={cn(
-        'flex flex-col rounded-xl border transition-all duration-300 text-left',
-        isWinner && isRevealed
-          ? 'border-yellow-500/60 bg-yellow-500/5 shadow-lg shadow-yellow-500/10'
-          : 'border-border bg-card',
-        canVote && 'cursor-pointer hover:border-primary/50 hover:bg-accent/30',
-        !canVote && 'cursor-default'
-      )}
-      onClick={() => canVote && onVote(participant.label)}
+    <>
+      {/* biome-ignore lint/a11y/noNoninteractiveElementInteractions: interactive handler is intentional */}
+      {/* biome-ignore lint/a11y/noStaticElementInteractions: interactive handler is intentional */}
+      {/* biome-ignore lint/a11y/useAriaPropsSupportedByRole: ARIA attributes are valid for this role  */}
+      <div
+        role={canVote ? 'button' : undefined}
+        tabIndex={canVote ? 0 : undefined}
+        className={cn(
+          'flex flex-col rounded-xl border transition-all duration-300 text-left',
+          isWinner && isRevealed
+            ? 'border-yellow-500/60 bg-yellow-500/5 shadow-lg shadow-yellow-500/10'
+            : 'border-border bg-card',
+          canVote && 'cursor-pointer hover:border-primary/50 hover:bg-accent/30',
+          !canVote && 'cursor-default'
+        )}
+        onClick={() => canVote && onVote(participant.label)}
       onKeyDown={(e) => canVote && (e.key === 'Enter' || e.key === ' ') && onVote(participant.label)}
       aria-label={canVote ? `${t('battle.model')} ${participant.label}. ${isWinner && isRevealed ? t('battle.winner') : ''}` : undefined}
     >
@@ -167,9 +168,9 @@ function ParticipantCard({
 
       {/* Footer stats */}
       <div className="flex items-center justify-between px-3 py-2 border-t border-border text-xs text-muted-foreground">
-        <span>{participant.tokensUsed > 0 ? `${participant.tokensUsed.toLocaleString()} tokens` : '—'}</span>
-        <span>{participant.costUsd > 0 ? `$${participant.costUsd.toFixed(5)}` : '—'}</span>
-        <span>{participant.durationMs > 0 ? `${(participant.durationMs / 1000).toFixed(1)}s` : '—'}</span>
+        <span>{participant.tokensUsed > 0 ? `${participant.tokensUsed.toLocaleString()} tokens` : 'â€”'}</span>
+        <span>{participant.costUsd > 0 ? `$${participant.costUsd.toFixed(5)}` : 'â€”'}</span>
+        <span>{participant.durationMs > 0 ? `${(participant.durationMs / 1000).toFixed(1)}s` : 'â€”'}</span>
       </div>
 
       {/* Vote button */}
@@ -187,10 +188,11 @@ function ParticipantCard({
         </div>
       )}
     </div>
+    </>
   );
 }
 
-// ─── Battle Tab ───────────────────────────────────────────────────────────────
+// â”€â”€â”€ Battle Tab â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 function BattleTab() {
   const { t } = useTranslation('arena');
@@ -207,7 +209,7 @@ function BattleTab() {
     const loadProfiles = async () => {
       try {
         if (typeof globalThis.electronAPI?.arenaGetProfiles !== 'function') {
-          // Preload not yet reloaded — use demo profiles
+          // Preload not yet reloaded â€” use demo profiles
           setProfiles(DEMO_PROFILES);
           setSelectedProfiles([DEMO_PROFILES[0].id, DEMO_PROFILES[1].id]);
           return;
@@ -255,7 +257,7 @@ function BattleTab() {
 
     try {
       if (typeof globalThis.electronAPI?.arenaStartBattle !== 'function') {
-        setError('Arena API not available — please restart the application.');
+        setError('Arena API not available â€” please restart the application.');
         return;
       }
       const result = await globalThis.electronAPI.arenaStartBattle({
@@ -291,13 +293,13 @@ function BattleTab() {
 
   return (
     <div className="flex flex-col gap-4 h-full">
-      {/* Config panel — only show when not in a battle */}
+      {/* Config panel â€” only show when not in a battle */}
       {!activeBattle && (
         <div className="flex flex-col gap-4 p-4 rounded-xl border border-border bg-card">
           {/* Task type */}
           <div>
             // biome-ignore lint/a11y/noLabelWithoutControl: label association is implicit
-            // biome-ignore lint/a11y/noLabelWithoutControl: intentional
+{/* biome-ignore lint/a11y/noLabelWithoutControl: intentional  */}
             <label className="text-sm font-medium mb-2 block text-foreground">{t('battle.taskType')}</label>
             <div className="flex flex-wrap gap-2">
               {TASK_TYPES.map((tt) => (
@@ -322,7 +324,7 @@ function BattleTab() {
           {/* Model selection */}
           <div>
             // biome-ignore lint/a11y/noLabelWithoutControl: label association is implicit
-            // biome-ignore lint/a11y/noLabelWithoutControl: intentional
+{/* biome-ignore lint/a11y/noLabelWithoutControl: intentional  */}
             <label className="text-sm font-medium mb-2 block text-foreground">
               {t('battle.selectModels')}
               <span className="ml-1.5 text-xs text-muted-foreground">({t('battle.selectModelHint')})</span>
@@ -351,7 +353,7 @@ function BattleTab() {
           {/* Prompt */}
           <div>
             // biome-ignore lint/a11y/noLabelWithoutControl: label association is implicit
-            // biome-ignore lint/a11y/noLabelWithoutControl: intentional
+{/* biome-ignore lint/a11y/noLabelWithoutControl: intentional  */}
             <label className="text-sm font-medium mb-2 block text-foreground">{t('battle.prompt')}</label>
             <Textarea
               value={prompt}
@@ -468,7 +470,7 @@ function BattleTab() {
   );
 }
 
-// ─── History Tab ──────────────────────────────────────────────────────────────
+// â”€â”€â”€ History Tab â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 function HistoryTab() {
   const { t } = useTranslation('arena');
@@ -542,7 +544,7 @@ function BattleHistoryRow({ battle }: { readonly battle: ArenaBattle }) {
       >
         <div className="flex items-center gap-2 min-w-0">
           <span className="text-base">{TASK_TYPES.find((tt) => tt.value === battle.taskType)?.icon}</span>
-          <span className="text-sm truncate">{battle.prompt.length > 60 ? `${battle.prompt.slice(0, 60)}…` : battle.prompt}</span>
+          <span className="text-sm truncate">{battle.prompt.length > 60 ? `${battle.prompt.slice(0, 60)}â€¦` : battle.prompt}</span>
         </div>
         <div className="flex items-center gap-2 shrink-0">
           {battle.status === 'completed' && winner && (
@@ -572,7 +574,7 @@ function BattleHistoryRow({ battle }: { readonly battle: ArenaBattle }) {
               </div>
               <p className="text-muted-foreground">{p.modelName}</p>
               <p className="font-mono text-muted-foreground/70 mt-0.5">
-                {p.tokensUsed.toLocaleString()} tokens · ${p.costUsd.toFixed(5)}
+                {p.tokensUsed.toLocaleString()} tokens Â· ${p.costUsd.toFixed(5)}
               </p>
             </div>
           ))}
@@ -582,7 +584,7 @@ function BattleHistoryRow({ battle }: { readonly battle: ArenaBattle }) {
   );
 }
 
-// ─── Analytics Tab ────────────────────────────────────────────────────────────
+// â”€â”€â”€ Analytics Tab â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 function AnalyticsTab() {
   const { t } = useTranslation('arena');
@@ -677,7 +679,7 @@ function AnalyticsTab() {
   );
 }
 
-// ─── Auto-Routing Tab ─────────────────────────────────────────────────────────
+// â”€â”€â”€ Auto-Routing Tab â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 function RoutingTab() {
   const { t } = useTranslation('arena');
@@ -736,7 +738,7 @@ function RoutingTab() {
                 <div className="flex items-center gap-3">
                   <span className="text-sm font-medium">{rec.modelName}</span>
                   <Badge variant="outline" className={cn('text-xs', CONFIDENCE_COLOR[rec.confidence])}>
-                    {(rec.winRate * 100).toFixed(0)}% · {t(`routing.confidence.${rec.confidence}`)}
+                    {(rec.winRate * 100).toFixed(0)}% Â· {t(`routing.confidence.${rec.confidence}`)}
                   </Badge>
                 </div>
               </div>
@@ -761,7 +763,7 @@ function RoutingTab() {
   );
 }
 
-// ─── Main Dialog ──────────────────────────────────────────────────────────────
+// â”€â”€â”€ Main Dialog â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 export function ArenaDialog() {
   const { t } = useTranslation('arena');
@@ -816,3 +818,6 @@ export function ArenaDialog() {
     </Dialog>
   );
 }
+
+
+

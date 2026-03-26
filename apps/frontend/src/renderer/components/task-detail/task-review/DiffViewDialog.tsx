@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback } from 'react';
+﻿import { useState, useMemo, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   Eye,
@@ -29,7 +29,7 @@ import { DiffViewer } from '../../ui/diff-viewer';
 import { cn } from '../../../lib/utils';
 import type { WorktreeDiff, WorktreeDiffFile } from '../../../../shared/types';
 
-// ── Tree data structure ──────────────────────────────────────────────
+// â”€â”€ Tree data structure â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 interface TreeNode {
   name: string;
@@ -45,7 +45,7 @@ function buildFileTree(files: WorktreeDiffFile[]): TreeNode[] {
   const root: TreeNode[] = [];
 
   for (const file of files) {
-    const parts = file.path.replace(/\\/g, '/').split('/');
+    const parts = file.path.replaceAll('\\', '/').split('/');
     let current = root;
 
     for (let i = 0; i < parts.length; i++) {
@@ -100,7 +100,7 @@ function buildFileTree(files: WorktreeDiffFile[]): TreeNode[] {
   return root;
 }
 
-// ── Tree node component ──────────────────────────────────────────────
+// â”€â”€ Tree node component â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 function FileTreeNode({
   node,
@@ -109,11 +109,11 @@ function FileTreeNode({
   t,
   onFileClick,
 }: {
-  node: TreeNode;
-  depth: number;
-  defaultExpanded: boolean;
-  t: (key: string) => string;
-  onFileClick?: (file: WorktreeDiffFile) => void;
+  readonly node: TreeNode;
+  readonly depth: number;
+  readonly defaultExpanded: boolean;
+  readonly t: (key: string) => string;
+  readonly onFileClick?: (file: WorktreeDiffFile) => void;
 }) {
   const [expanded, setExpanded] = useState(defaultExpanded);
 
@@ -205,14 +205,14 @@ function FileTreeNode({
   );
 }
 
-// ── Main dialog ──────────────────────────────────────────────────────
+// â”€â”€ Main dialog â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 type ViewMode = 'list' | 'tree';
 
 interface DiffViewDialogProps {
-  open: boolean;
-  worktreeDiff: WorktreeDiff | null;
-  onOpenChange: (open: boolean) => void;
+  readonly open: boolean;
+  readonly worktreeDiff: WorktreeDiff | null;
+  readonly onOpenChange: (open: boolean) => void;
 }
 
 /**
@@ -242,6 +242,100 @@ export function DiffViewDialog({
   const handleBackToList = useCallback(() => {
     setSelectedFile(null);
   }, []);
+
+  // Helper function to render the appropriate content based on selection and view mode
+  const renderContent = () => {
+    if (selectedFile) {
+      return (
+        <div className="h-full">
+          <DiffViewer 
+            patch={selectedFile.patch || ''} 
+            className="h-full max-h-[75vh] overflow-auto border rounded"
+          />
+        </div>
+      );
+    }
+
+    if (!hasFiles) {
+      return (
+        <div className="text-center py-8 text-muted-foreground">
+          {t('taskReview:diff.noFiles')}
+        </div>
+      );
+    }
+
+    if (viewMode === 'list') {
+      return (
+        <div className="space-y-2">
+          {worktreeDiff?.files.map((file, idx) => (
+            // biome-ignore lint/a11y/noNoninteractiveElementInteractions: interactive handler is intentional
+            // biome-ignore lint/a11y/noStaticElementInteractions: interactive handler is intentional
+            // biome-ignore lint/a11y/useKeyWithClickEvents: keyboard events handled elsewhere
+            <div
+              // biome-ignore lint/suspicious/noArrayIndexKey: no stable key available
+              key={idx}
+              className="flex items-center justify-between p-2 rounded-lg bg-secondary/30 hover:bg-secondary/50 transition-colors cursor-pointer"
+              onClick={() => handleFileClick(file)}
+            >
+              <div className="flex items-center gap-2 min-w-0 flex-1">
+                <FileCode
+                  className={cn(
+                    'h-4 w-4 shrink-0',
+                    file.status === 'added' && 'text-success',
+                    file.status === 'deleted' && 'text-destructive',
+                    file.status === 'modified' && 'text-info',
+                    file.status === 'renamed' && 'text-warning'
+                  )}
+                />
+                <span className="text-sm font-mono truncate">
+                  {file.path}
+                </span>
+              </div>
+              <div className="flex items-center gap-2 shrink-0 ml-2">
+                <Badge
+                  variant="secondary"
+                  className={cn(
+                    'text-xs',
+                    file.status === 'added' &&
+                      'bg-success/10 text-success',
+                    file.status === 'deleted' &&
+                      'bg-destructive/10 text-destructive',
+                    file.status === 'modified' && 'bg-info/10 text-info',
+                    file.status === 'renamed' &&
+                      'bg-warning/10 text-warning'
+                  )}
+                >
+                  {t('taskReview:diff.status.' + file.status)}
+                </Badge>
+                <span className="text-xs text-success">
+                  +{file.additions}
+                </span>
+                <span className="text-xs text-destructive">
+                  -{file.deletions}
+                </span>
+              </div>
+            </div>
+          ))}
+        </div>
+      );
+    }
+
+    // Tree view
+    return (
+      <div className="space-y-0.5">
+        {tree.map((node) => (
+          <FileTreeNode
+            key={node.path}
+            node={node}
+            depth={0}
+            defaultExpanded={true}
+            t={t}
+            onFileClick={handleFileClick}
+          />
+        ))}
+      </div>
+    );
+  };
 
   return (
     <AlertDialog open={open} onOpenChange={onOpenChange}>
@@ -289,92 +383,14 @@ export function DiffViewDialog({
           </div>
           <AlertDialogDescription>
             {selectedFile 
-              ? `${selectedFile.path} - ${t(`taskReview:diff.status.${selectedFile.status}`)} (+${selectedFile.additions}, -${selectedFile.deletions})`
+              ? `${selectedFile.path} - ${t('taskReview:diff.status.' + selectedFile.status)} (+${selectedFile.additions}, -${selectedFile.deletions})`
               : worktreeDiff?.summary || t('taskReview:diff.noChanges')
             }
           </AlertDialogDescription>
         </AlertDialogHeader>
 
         <div className="flex-1 overflow-auto min-h-0 -mx-6 px-6">
-          {selectedFile ? (
-            <div className="h-full">
-              <DiffViewer 
-                patch={selectedFile.patch || ''} 
-                className="h-full max-h-[75vh] overflow-auto border rounded"
-              />
-            </div>
-          ) : hasFiles ? (
-            viewMode === 'list' ? (
-              <div className="space-y-2">
-                {worktreeDiff?.files.map((file, idx) => (
-                  // biome-ignore lint/a11y/noNoninteractiveElementInteractions: interactive handler is intentional
-                  // biome-ignore lint/a11y/noStaticElementInteractions: interactive handler is intentional
-                  // biome-ignore lint/a11y/useKeyWithClickEvents: keyboard events handled elsewhere
-                  <div
-                    // biome-ignore lint/suspicious/noArrayIndexKey: no stable key available
-                    key={idx}
-                    className="flex items-center justify-between p-2 rounded-lg bg-secondary/30 hover:bg-secondary/50 transition-colors cursor-pointer"
-                    onClick={() => handleFileClick(file)}
-                  >
-                    <div className="flex items-center gap-2 min-w-0 flex-1">
-                      <FileCode
-                        className={cn(
-                          'h-4 w-4 shrink-0',
-                          file.status === 'added' && 'text-success',
-                          file.status === 'deleted' && 'text-destructive',
-                          file.status === 'modified' && 'text-info',
-                          file.status === 'renamed' && 'text-warning'
-                        )}
-                      />
-                      <span className="text-sm font-mono truncate">
-                        {file.path}
-                      </span>
-                    </div>
-                    <div className="flex items-center gap-2 shrink-0 ml-2">
-                      <Badge
-                        variant="secondary"
-                        className={cn(
-                          'text-xs',
-                          file.status === 'added' &&
-                            'bg-success/10 text-success',
-                          file.status === 'deleted' &&
-                            'bg-destructive/10 text-destructive',
-                          file.status === 'modified' && 'bg-info/10 text-info',
-                          file.status === 'renamed' &&
-                            'bg-warning/10 text-warning'
-                        )}
-                      >
-                        {t(`taskReview:diff.status.${file.status}`)}
-                      </Badge>
-                      <span className="text-xs text-success">
-                        +{file.additions}
-                      </span>
-                      <span className="text-xs text-destructive">
-                        -{file.deletions}
-                      </span>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <div className="space-y-0.5">
-                {tree.map((node) => (
-                  <FileTreeNode
-                    key={node.path}
-                    node={node}
-                    depth={0}
-                    defaultExpanded={true}
-                    t={t}
-                    onFileClick={handleFileClick}
-                  />
-                ))}
-              </div>
-            )
-          ) : (
-            <div className="text-center py-8 text-muted-foreground">
-              {t('taskReview:diff.noFiles')}
-            </div>
-          )}
+          {renderContent()}
         </div>
 
         <AlertDialogFooter className="mt-4">
@@ -384,3 +400,6 @@ export function DiffViewDialog({
     </AlertDialog>
   );
 }
+
+
+

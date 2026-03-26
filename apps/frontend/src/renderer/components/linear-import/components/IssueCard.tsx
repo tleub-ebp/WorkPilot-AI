@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Individual issue card component
  */
 
@@ -15,9 +15,9 @@ import { PRIORITY_COLORS, STATE_TYPE_COLORS } from '../types';
 import type { LinearIssue } from '../types';
 
 interface IssueCardProps {
-  issue: LinearIssue;
-  isSelected: boolean;
-  onToggle: (issueId: string) => void;
+  readonly issue: LinearIssue;
+  readonly isSelected: boolean;
+  readonly onToggle: (issueId: string) => void;
 }
 
 export function IssueCard({ issue, isSelected, onToggle }: IssueCardProps) {
@@ -139,3 +139,6 @@ export function IssueCard({ issue, isSelected, onToggle }: IssueCardProps) {
     </div>
   );
 }
+
+
+

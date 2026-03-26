@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Filter bar for GitHub PRs list
  * Grid layout: Contributors (3) | Status (3) | Search (8)
  * Multi-select dropdowns with visible chip selections
@@ -392,7 +392,7 @@ function SortDropdown({
             const Icon = option.icon;
             return (
               // biome-ignore lint/a11y/useFocusableInteractive: element is focusable via tabIndex
-              // biome-ignore lint/a11y/useKeyWithClickEvents: keyboard events handled elsewhere
+{/* biome-ignore lint/a11y/useKeyWithClickEvents: keyboard events handled elsewhere  */}
               <div
                 key={option.value}
                 role="option"
@@ -565,3 +565,6 @@ export function PRFilterBar({
     </div>
   );
 }
+
+
+

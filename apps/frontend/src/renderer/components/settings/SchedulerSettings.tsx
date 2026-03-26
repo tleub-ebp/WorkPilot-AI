@@ -1,4 +1,4 @@
-import { useState } from 'react';
+﻿import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { CalendarClock, Play, Link2, BarChart3, Plus } from 'lucide-react';
 import { SettingsSection } from './SettingsSection';
@@ -36,7 +36,7 @@ export function SchedulerSettings() {
   const [scheduledTasks] = useState<ScheduledTaskEntry[]>([
     { id: 'sched-1', name: t('tasks.sampleTasks.dailyScan.name'), cron: '0 22 * * *', action: 'security_scan', priority: 2, status: 'pending', nextRun: t('tasks.sampleTasks.dailyScan.nextRun') },
     { id: 'sched-2', name: t('tasks.sampleTasks.weeklyUpdate.name'), cron: '0 3 * * 1', action: 'update_deps', priority: 5, status: 'pending', nextRun: t('tasks.sampleTasks.weeklyUpdate.nextRun') },
-    { id: 'sched-3', name: t('tasks.sampleTasks.hourlyLog.name'), cron: '0 * * * *', action: 'check_logs', priority: 8, status: 'paused', nextRun: '—' },
+    { id: 'sched-3', name: t('tasks.sampleTasks.hourlyLog.name'), cron: '0 * * * *', action: 'check_logs', priority: 8, status: 'paused', nextRun: 'â€”' },
   ]);
 
   const [chains] = useState<TaskChainEntry[]>([
@@ -88,7 +88,7 @@ export function SchedulerSettings() {
             <div className="space-y-1">
               <div className="flex items-center justify-between">
                 // biome-ignore lint/a11y/noLabelWithoutControl: label association is implicit
-                // biome-ignore lint/a11y/noLabelWithoutControl: intentional
+{/* biome-ignore lint/a11y/noLabelWithoutControl: intentional  */}
                 <label className="text-xs font-medium text-muted-foreground">{t('tasks.settings.checkInterval.label')}</label>
                 <span className="text-xs font-mono tabular-nums text-foreground">{checkInterval}s</span>
               </div>
@@ -180,7 +180,7 @@ export function SchedulerSettings() {
                         <span className={cn(taskStyleClass)}>
                           {task}
                         </span>
-                        {taskIndex < chain.tasks.length - 1 && <span className="text-muted-foreground text-xs">→</span>}
+                        {taskIndex < chain.tasks.length - 1 && <span className="text-muted-foreground text-xs">â†’</span>}
                       </span>
                     );
                   })}
@@ -234,3 +234,6 @@ export function SchedulerSettings() {
     </SettingsSection>
   );
 }
+
+
+

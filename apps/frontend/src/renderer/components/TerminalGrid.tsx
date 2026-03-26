@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+﻿import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   Group,
@@ -54,7 +54,7 @@ export function TerminalGrid({ projectPath, onNewTaskClick, isActive = false }: 
   // Map of terminal ID -> timestamp when it was marked for cleanup
   const [pendingCleanup, setPendingCleanup] = useState<Map<string, number>>(new Map());
 
-  // Ref to track active cleanup timers — avoids including pendingCleanup in effect deps
+  // Ref to track active cleanup timers â€” avoids including pendingCleanup in effect deps
   const cleanupTimersRef = useRef<Map<string, NodeJS.Timeout>>(new Map());
 
   // Helper to clear all active cleanup timers
@@ -91,7 +91,7 @@ export function TerminalGrid({ projectPath, onNewTaskClick, isActive = false }: 
   // Manage grace period timers for exited terminals
   // When a terminal exits, add it to pendingCleanup and schedule its removal
   // Uses cleanupTimersRef to track scheduled timers, avoiding pendingCleanup in deps
-  // No cleanup function here — timers must survive dependency changes
+  // No cleanup function here â€” timers must survive dependency changes
   useEffect(() => {
     const filtered = projectPath
       ? allTerminals.filter(t => t.projectPath === projectPath || !t.projectPath)
@@ -585,7 +585,7 @@ export function TerminalGrid({ projectPath, onNewTaskClick, isActive = false }: 
               <Plus className="h-3 w-3" />
               {t('terminalGrid.newTerminal')}
               <kbd className="ml-1 text-[10px] text-muted-foreground">
-                {navigator.platform.includes('Mac') ? '⌘' : 'Ctrl'}+T
+                {navigator.platform.includes('Mac') ? 'âŒ˜' : 'Ctrl'}+T
               </kbd>
             </Button>
             {/* File explorer toggle button */}
@@ -707,3 +707,4 @@ export function TerminalGrid({ projectPath, onNewTaskClick, isActive = false }: 
     </DndContext>
   );
 }
+

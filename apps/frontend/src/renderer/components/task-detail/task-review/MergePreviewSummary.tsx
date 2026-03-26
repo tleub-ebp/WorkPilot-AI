@@ -1,4 +1,4 @@
-import { CheckCircle, AlertTriangle } from 'lucide-react';
+﻿import { CheckCircle, AlertTriangle } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { Button } from '../../ui/button';
 import { cn } from '../../../lib/utils';
@@ -79,7 +79,7 @@ export function MergePreviewSummary({
           </p>
           <ul className="list-disc list-inside text-muted-foreground">
             {mergePreview.gitConflicts.conflictingFiles.map((file, idx) => (
-              // biome-ignore lint/suspicious/noArrayIndexKey: no stable key available
+// biome-ignore lint/suspicious/noArrayIndexKey: no stable key available 
               <li key={idx} className="truncate">{file}</li>
             ))}
           </ul>
@@ -110,3 +110,5 @@ export function MergePreviewSummary({
     </div>
   );
 }
+
+

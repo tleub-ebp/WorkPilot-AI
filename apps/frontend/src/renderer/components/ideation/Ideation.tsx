@@ -76,6 +76,12 @@ export function Ideation({ projectId, onGoToTask }: IdeationProps) {
     getIdeasByType
   } = useIdeation(projectId, { onGoToTask, showArchived });
 
+  const getCheckboxState = (selectedCount: number, totalCount: number): boolean | 'indeterminate' => {
+    if (selectedCount === totalCount) return true;
+    if (selectedCount > 0) return 'indeterminate';
+    return false;
+  };
+
   // Show generation progress with streaming ideas (use isGenerating flag for reliable state)
   if (isGenerating) {
     return (
@@ -140,13 +146,7 @@ export function Ideation({ projectId, onGoToTask }: IdeationProps) {
                 {activeIdeas.length > 0 && (
                   <div className="flex items-center gap-2 mb-3 pl-4">
                     <Checkbox
-                      checked={
-                        selectedIds.size === activeIdeas.length
-                          ? true
-                          : selectedIds.size > 0
-                            ? 'indeterminate'
-                            : false
-                      }
+                      checked={getCheckboxState(selectedIds.size, activeIdeas.length)}
                       onCheckedChange={(checked) => {
                         if (checked) {
                           handleSelectAll(activeIdeas);

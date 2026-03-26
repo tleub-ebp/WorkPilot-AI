@@ -1,4 +1,4 @@
-import { useTranslation } from 'react-i18next';
+﻿import { useTranslation } from 'react-i18next';
 import {
   Layers,
   AlertTriangle,
@@ -234,7 +234,7 @@ export function DeepContextInsights({ deepContext }: DeepContextInsightsProps) {
             {hasInsights && (
               <ul className="text-xs text-muted-foreground space-y-0.5 pl-3">
                 {deepContext.historicalInsights.slice(0, 5).map((hint, i) => (
-                  // biome-ignore lint/suspicious/noArrayIndexKey: no stable key available
+// biome-ignore lint/suspicious/noArrayIndexKey: no stable key available 
                   <li key={`insight-${i}`} className="list-disc">
                     {String(
                       (hint as Record<string, unknown>).fact ??
@@ -253,7 +253,7 @@ export function DeepContextInsights({ deepContext }: DeepContextInsightsProps) {
                 </p>
                 <ul className="text-xs text-muted-foreground space-y-0.5 pl-3">
                   {deepContext.pastBugsInArea.slice(0, 5).map((bug, i) => (
-                    // biome-ignore lint/suspicious/noArrayIndexKey: no stable key available
+// biome-ignore lint/suspicious/noArrayIndexKey: no stable key available 
                     <li key={`bug-${i}`} className="list-disc">
                       {String(
                         (bug as Record<string, unknown>).description ??
@@ -274,7 +274,7 @@ export function DeepContextInsights({ deepContext }: DeepContextInsightsProps) {
                 </p>
                 <ul className="text-xs text-muted-foreground space-y-0.5 pl-3">
                   {deepContext.regressionRisks.slice(0, 5).map((risk, i) => (
-                    // biome-ignore lint/suspicious/noArrayIndexKey: no stable key available
+// biome-ignore lint/suspicious/noArrayIndexKey: no stable key available 
                     <li key={`risk-${i}`} className="list-disc text-destructive/80">
                       {risk}
                     </li>
@@ -288,3 +288,5 @@ export function DeepContextInsights({ deepContext }: DeepContextInsightsProps) {
     </CollapsibleCard>
   );
 }
+
+

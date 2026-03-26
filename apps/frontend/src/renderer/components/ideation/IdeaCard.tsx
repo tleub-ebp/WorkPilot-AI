@@ -1,4 +1,4 @@
-import { useTranslation } from 'react-i18next';
+﻿import { useTranslation } from 'react-i18next';
 import { ExternalLink, Play, X } from 'lucide-react';
 import { Button } from '../ui/button';
 import { Badge } from '../ui/badge';
@@ -60,7 +60,7 @@ export function IdeaCard({ idea, isSelected, onClick, onConvert, onGoToTask, onD
     >
       <div className="flex items-start gap-3">
         {/* Selection checkbox */}
-        {/* biome-ignore lint/a11y/noNoninteractiveElementInteractions lint/a11y/noStaticElementInteractions lint/a11y/useKeyWithClickEvents: interactive handler is intentional */}
+{/* biome-ignore lint/a11y/noNoninteractiveElementInteractions lint/a11y/noStaticElementInteractions lint/a11y/useKeyWithClickEvents: interactive handler is intentional  */}
         <div
           className="pt-0.5"
           onClick={(e) => {
@@ -213,3 +213,5 @@ export function IdeaCard({ idea, isSelected, onClick, onConvert, onGoToTask, onD
     </Card>
   );
 }
+
+

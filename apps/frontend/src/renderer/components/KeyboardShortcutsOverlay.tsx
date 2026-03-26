@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+﻿import { useEffect, useRef } from 'react';
 import { Keyboard, X } from 'lucide-react';
 
 // ---------------------------------------------------------------------------
@@ -178,3 +178,6 @@ export function KeyboardShortcutsOverlay({ open, onOpenChange }: KeyboardShortcu
     </div>
   );
 }
+
+
+

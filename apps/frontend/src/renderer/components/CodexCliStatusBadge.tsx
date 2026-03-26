@@ -1,4 +1,4 @@
-import { useState } from "react";
+﻿import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
   Check,
@@ -33,20 +33,22 @@ const _CHECK_INTERVAL_MS = 60 * 1000; // Re-check every 60s
  */
 function CodexIcon({ className }: CodexIconProps) {
   return (
-    // biome-ignore lint/a11y/noSvgWithoutTitle: SVG is decorative
-    <svg
-      className={className}
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    >
-      <path d="M12 2L2 7l10 5 10-5-10-5z" />
-      <path d="M2 17l10 5 10-5" />
-      <path d="M2 12l10 5 10-5" />
-    </svg>
+    <>
+      {/* biome-ignore lint/a11y/noSvgWithoutTitle: SVG is decorative */}
+      <svg
+        className={className}
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      >
+        <path d="M12 2L2 7l10 5 10-5-10-5z" />
+        <path d="M2 17l10 5 10-5" />
+        <path d="M2 12l10 5 10-5" />
+      </svg>
+    </>
   );
 }
 
@@ -104,13 +106,13 @@ export function CodexCliStatusBadge({ className, onNavigateToTerminals }: CodexC
   const getTooltipText = () => {
     switch (status) {
       case "loading":
-        return "Vérification Codex CLI...";
+        return "VÃ©rification Codex CLI...";
       case "installed":
-        return versionInfo?.installed ? `Codex CLI (${versionInfo.installed})` : "Codex CLI installé";
+        return versionInfo?.installed ? `Codex CLI (${versionInfo.installed})` : "Codex CLI installÃ©";
       case "outdated":
-        return `Codex CLI (${versionInfo?.installed}) - mise à jour disponible`;
+        return `Codex CLI (${versionInfo?.installed}) - mise Ã  jour disponible`;
       case "not-found":
-        return "Codex CLI non trouvé";
+        return "Codex CLI non trouvÃ©";
       case "error":
         return "Erreur Codex CLI";
       default:
@@ -164,9 +166,9 @@ export function CodexCliStatusBadge({ className, onNavigateToTerminals }: CodexC
               <h4 className="text-sm font-medium">OpenAI Codex CLI</h4>
               <p className="text-xs text-muted-foreground flex items-center gap-1">
                 {getStatusIcon()}
-                {status === "installed" && "Connecté"}
-                {status === "not-found" && "Non configuré"}
-                {status === "loading" && "Vérification..."}
+                {status === "installed" && "ConnectÃ©"}
+                {status === "not-found" && "Non configurÃ©"}
+                {status === "loading" && "VÃ©rification..."}
                 {status === "error" && "Erreur"}
               </p>
             </div>
@@ -181,7 +183,7 @@ export function CodexCliStatusBadge({ className, onNavigateToTerminals }: CodexC
               </div>
               {lastChecked && (
                 <div className="flex justify-between text-muted-foreground">
-                  <span>Vérifié :</span>
+                  <span>VÃ©rifiÃ© :</span>
                   <span>{lastChecked.toLocaleTimeString()}</span>
                 </div>
               )}
@@ -192,7 +194,7 @@ export function CodexCliStatusBadge({ className, onNavigateToTerminals }: CodexC
           {status === "not-found" && (
             <div className="text-xs p-2 bg-muted/50 rounded-md text-muted-foreground">
               <p>Lancez <code className="font-mono bg-muted px-1 rounded">codex</code> dans un terminal pour vous authentifier via OAuth.</p>
-              <p className="mt-1">Configurez dans Paramètres → OpenAI → OAuth / Codex.</p>
+              <p className="mt-1">Configurez dans ParamÃ¨tres â†’ OpenAI â†’ OAuth / Codex.</p>
             </div>
           )}
 
@@ -208,7 +210,7 @@ export function CodexCliStatusBadge({ className, onNavigateToTerminals }: CodexC
               disabled={status === "loading"}
             >
               <RefreshCw className={cn("h-3 w-3", status === "loading" && "animate-spin")} />
-              {t("common:refresh", "Rafraîchir")}
+              {t("common:refresh", "RafraÃ®chir")}
             </Button>
           </div>
 
@@ -231,3 +233,4 @@ export function CodexCliStatusBadge({ className, onNavigateToTerminals }: CodexC
     </Popover>
   );
 }
+

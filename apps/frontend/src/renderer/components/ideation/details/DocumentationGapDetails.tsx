@@ -1,4 +1,4 @@
-import {
+﻿import {
   Users,
   AlertCircle,
   CheckCircle2,
@@ -14,7 +14,7 @@ import {
 import type { DocumentationGapIdea } from '../../../../shared/types';
 
 interface DocumentationGapDetailsProps {
-  idea: DocumentationGapIdea;
+  readonly idea: DocumentationGapIdea;
 }
 
 export function DocumentationGapDetails({ idea }: DocumentationGapDetailsProps) {
@@ -75,9 +75,8 @@ export function DocumentationGapDetails({ idea }: DocumentationGapDetailsProps) 
             Affected Areas
           </h3>
           <ul className="space-y-1">
-            {idea.affectedAreas.map((area, i) => (
-              // biome-ignore lint/suspicious/noArrayIndexKey: no stable key available
-              <li key={i} className="text-sm font-mono text-muted-foreground">
+            {idea.affectedAreas.map((area) => (
+              <li key={area} className="text-sm font-mono text-muted-foreground">
                 {area}
               </li>
             ))}
