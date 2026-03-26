@@ -13,46 +13,44 @@ import {
 } from './task-review';
 
 interface TaskReviewProps {
-  task: Task;
-  feedback: string;
-  isSubmitting: boolean;
-  worktreeStatus: WorktreeStatus | null;
-  worktreeDiff: WorktreeDiff | null;
-  isLoadingWorktree: boolean;
-  isMerging: boolean;
-  isDiscarding: boolean;
-  showDiscardDialog: boolean;
-  showDiffDialog: boolean;
-  workspaceError: string | null;
-  stageOnly: boolean;
-  stagedSuccess: string | null;
-  stagedProjectPath: string | undefined;
-  suggestedCommitMessage: string | undefined;
-  mergePreview: { files: string[]; conflicts: MergeConflict[]; summary: MergeStats; gitConflicts?: GitConflictInfo; uncommittedChanges?: { hasChanges: boolean; files: string[]; count: number } | null } | null;
-  isLoadingPreview: boolean;
-  showConflictDialog: boolean;
-  onFeedbackChange: (value: string) => void;
-  onReject: () => void;
+  readonly task: Task;
+  readonly feedback: string;
+  readonly isSubmitting: boolean;
+  readonly worktreeStatus: WorktreeStatus | null;
+  readonly worktreeDiff: WorktreeDiff | null;
+  readonly isLoadingWorktree: boolean;
+  readonly isMerging: boolean;
+  readonly isDiscarding: boolean;
+  readonly showDiscardDialog: boolean;
+  readonly showDiffDialog: boolean;
+  readonly workspaceError: string | null;
+  readonly stageOnly: boolean;
+  readonly stagedSuccess: string | null;
+  readonly stagedProjectPath: string | undefined;
+  readonly suggestedCommitMessage: string | undefined;
+  readonly mergePreview: { files: string[]; conflicts: MergeConflict[]; summary: MergeStats; gitConflicts?: GitConflictInfo; uncommittedChanges?: { hasChanges: boolean; files: string[]; count: number } | null } | null;
+  readonly isLoadingPreview: boolean;
+  readonly showConflictDialog: boolean;
+  readonly onFeedbackChange: (value: string) => void;
+  readonly onReject: () => void;
   /** Image attachments for visual feedback */
-  images?: ImageAttachment[];
+  readonly images?: ImageAttachment[];
   /** Callback when images change */
-  onImagesChange?: (images: ImageAttachment[]) => void;
-  onMerge: () => void;
-  onDiscard: () => void;
-  onShowDiscardDialog: (show: boolean) => void;
-  onShowDiffDialog: (show: boolean) => void;
-  onStageOnlyChange: (value: boolean) => void;
-  onShowConflictDialog: (show: boolean) => void;
-  onLoadMergePreview: () => void;
-  onClose?: () => void;
-  onSwitchToTerminals?: () => void;
-  onOpenInbuiltTerminal?: (id: string, cwd: string) => void;
-  onReviewAgain?: () => void;
+  readonly onImagesChange?: (images: ImageAttachment[]) => void;
+  readonly onMerge: () => void;
+  readonly onDiscard: () => void;
+  readonly onShowDiscardDialog: (show: boolean) => void;
+  readonly onShowDiffDialog: (show: boolean) => void;
+  readonly onStageOnlyChange: (value: boolean) => void;
+  readonly onShowConflictDialog: (show: boolean) => void;
+  readonly onLoadMergePreview: () => void;
+  readonly onClose?: () => void;
+  readonly onReviewAgain?: () => void;
   // PR creation
-  showPRDialog: boolean;
-  isCreatingPR: boolean;
-  onShowPRDialog: (show: boolean) => void;
-  onCreatePR: (options: { targetBranch?: string; title?: string; draft?: boolean }) => Promise<WorktreeCreatePRResult | null>;
+  readonly showPRDialog: boolean;
+  readonly isCreatingPR: boolean;
+  readonly onShowPRDialog: (show: boolean) => void;
+  readonly onCreatePR: (options: { targetBranch?: string; title?: string; draft?: boolean }) => Promise<WorktreeCreatePRResult | null>;
 }
 
 /**
@@ -95,35 +93,26 @@ export function TaskReview({
   onShowConflictDialog,
   onLoadMergePreview,
   onClose,
-  onSwitchToTerminals,
-  onOpenInbuiltTerminal,
   onReviewAgain,
   showPRDialog,
   isCreatingPR,
   onShowPRDialog,
   onCreatePR
 }: TaskReviewProps) {
-  return (
-    <div className="space-y-4">
-      {/* Section divider */}
-      <div className="section-divider-gradient" />
-
-      {/* Staged Success Message */}
-      {stagedSuccess && (
-        <StagedSuccessMessage
-          stagedSuccess={stagedSuccess}
-          suggestedCommitMessage={suggestedCommitMessage}
-        />
-      )}
-
-      {/* Workspace Status - priority: loading > fresh staging success > already staged (persisted) > worktree exists > no workspace */}
-      {isLoadingWorktree ? (
-        <LoadingMessage />
-      ) : stagedSuccess ? (
-        /* Fresh staging just completed - StagedSuccessMessage is rendered above */
-        null
-      ) : task.stagedInMainProject ? (
-        /* Task was previously staged (persisted state) - show even if worktree still exists */
+  // Extract nested ternary into a clear variable
+  const workspaceStatusComponent = (() => {
+    if (isLoadingWorktree) {
+      return <LoadingMessage />;
+    }
+    
+    if (stagedSuccess) {
+      /* Fresh staging just completed - StagedSuccessMessage is rendered above */
+      return null;
+    }
+    
+    if (task.stagedInMainProject) {
+      /* Task was previously staged (persisted state) - show even if worktree still exists */
+      return (
         <StagedInProjectMessage
           task={task}
           projectPath={stagedProjectPath}
@@ -131,8 +120,12 @@ export function TaskReview({
           onClose={onClose}
           onReviewAgain={onReviewAgain}
         />
-      ) : worktreeStatus?.exists ? (
-        /* Worktree exists but not yet staged - show staging UI */
+      );
+    }
+    
+    if (worktreeStatus?.exists) {
+      /* Worktree exists but not yet staged - show staging UI */
+      return (
         <WorkspaceStatus
           taskId={task.id}
           worktreeStatus={worktreeStatus}
@@ -150,13 +143,28 @@ export function TaskReview({
           onStageOnlyChange={onStageOnlyChange}
           onMerge={onMerge}
           onShowPRDialog={onShowPRDialog}
-          onClose={onClose}
-          onSwitchToTerminals={onSwitchToTerminals}
-          onOpenInbuiltTerminal={onOpenInbuiltTerminal}
         />
-      ) : (
-        <NoWorkspaceMessage task={task} onClose={onClose} />
+      );
+    }
+    
+    return <NoWorkspaceMessage task={task} onClose={onClose} />;
+  })();
+
+  return (
+    <div className="space-y-4">
+      {/* Section divider */}
+      <div className="section-divider-gradient" />
+
+      {/* Staged Success Message */}
+      {stagedSuccess && (
+        <StagedSuccessMessage
+          stagedSuccess={stagedSuccess}
+          suggestedCommitMessage={suggestedCommitMessage}
+        />
       )}
+
+      {/* Workspace Status Section */}
+      {workspaceStatusComponent}
 
       {/* QA Feedback Section */}
       <QAFeedbackSection
