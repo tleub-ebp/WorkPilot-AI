@@ -1,4 +1,4 @@
-﻿/**
+/**
  * Jira Side Panel Component
  * Provides a sliding panel for importing Jira issues with drag & drop
  * Mirrors the Azure DevOps Side Panel functionality
@@ -51,7 +51,7 @@ export function JiraSidePanel({
   const [searchQuery, setSearchQuery] = useState('');
   const panelRef = useRef<HTMLDivElement>(null);
 
-  // Gérer la fermeture par clic en dehors du panel
+  // G�rer la fermeture par clic en dehors du panel
   useEffect(() => {
     if (!open) return;
 
@@ -348,7 +348,7 @@ export function JiraSidePanel({
     e.dataTransfer.effectAllowed = 'copy';
     setDraggedIds(new Set(workItemIds));
 
-    // CrÃ©er un ghost avec liserÃ© pour le drag image
+    // Créer un ghost avec liseré pour le drag image
     const sourceEl = e.currentTarget as HTMLElement;
     const clone = sourceEl.cloneNode(true) as HTMLDivElement;
     clone.style.position = 'absolute';
@@ -365,7 +365,7 @@ export function JiraSidePanel({
     e.dataTransfer.setDragImage(clone, clone.offsetWidth / 2, 20);
     dragImageRef.current = clone;
 
-    // Marquer le panel comme étant en cours de drag
+    // Marquer le panel comme �tant en cours de drag
     const panelElement = panelRef.current;
     if (panelElement) {
       panelElement.dataset.dragging = 'true';
@@ -498,7 +498,7 @@ export function JiraSidePanel({
             className={cn(
               "flex items-start gap-3 p-3 rounded-md border transition-all cursor-pointer",
               "hover:bg-muted/50",
-              "select-none", // Empêche la sélection de texte
+              "select-none", // Emp�che la s�lection de texte
               selectedIds.has(item.id) && "bg-primary/10 border-primary/30 cursor-grab",
               draggedIds.has(item.id) && "cursor-grabbing opacity-70 ring-2 ring-primary ring-offset-1 ring-offset-background rounded-md shadow-md"
             )}
@@ -574,8 +574,8 @@ export function JiraSidePanel({
 
   return (
     <>
-      {/* Panel seulement - pas de conteneur qui bloque l'Ã©cran */}
-{/* biome-ignore lint/a11y/noNoninteractiveElementInteractions lint/a11y/noStaticElementInteractions: interactive handler is intentional  */}
+      {/* Panel seulement - pas de conteneur qui bloque l'écran */}
+{/* biome-ignore lint/a11y/noNoninteractiveElementInteractions lint/a11y/noStaticElementInteractions: interactive handler is intentional */}
       <div
         ref={panelRef}
         className="fixed right-0 top-0 h-full bg-background border-l border-border shadow-2xl flex flex-col z-300"
@@ -596,7 +596,7 @@ export function JiraSidePanel({
               size="icon"
               onClick={toggleCollapse}
               className="h-7 w-7"
-              title={isCollapsed ? "Agrandir" : "RÃ©duire"}
+              title={isCollapsed ? "Agrandir" : "Réduire"}
             >
               {isCollapsed ? <ChevronLeft className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
             </Button>
@@ -778,7 +778,7 @@ export function JiraSidePanel({
         )}
 
         {/* Resize handle */}
-        {/* biome-ignore lint/a11y/noNoninteractiveElementInteractions lint/a11y/noStaticElementInteractions: interactive handler is intentional  */}
+        {/* biome-ignore lint/a11y/noNoninteractiveElementInteractions lint/a11y/noStaticElementInteractions: interactive handler is intentional */}
         <div
           className="absolute left-0 top-0 bottom-0 w-1 cursor-col-resize hover:bg-primary/20 transition-colors"
           onMouseDown={handleResizeStart}

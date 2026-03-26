@@ -1,4 +1,4 @@
-﻿/**
+/**
  * Azure DevOps Side Panel Component
  * Provides a sliding panel for importing Azure DevOps work items with drag & drop
  */
@@ -52,7 +52,7 @@ export function AzureDevOpsSidePanel({
   const [searchQuery, setSearchQuery] = useState('');
   const panelRef = useRef<HTMLDivElement>(null);
 
-  // GÃ©rer la fermeture par clic en dehors du panel
+  // Gérer la fermeture par clic en dehors du panel
   useEffect(() => {
     if (!open) return;
 
@@ -402,7 +402,7 @@ export function AzureDevOpsSidePanel({
     e.dataTransfer.effectAllowed = 'copy';
     setDraggedIds(new Set(workItemIds));
 
-    // CrÃ©er un ghost avec liserÃ© pour le drag image
+    // Créer un ghost avec liseré pour le drag image
     const sourceEl = e.currentTarget as HTMLElement;
     const clone = sourceEl.cloneNode(true) as HTMLDivElement;
     clone.style.position = 'absolute';
@@ -419,7 +419,7 @@ export function AzureDevOpsSidePanel({
     e.dataTransfer.setDragImage(clone, clone.offsetWidth / 2, 20);
     dragImageRef.current = clone;
 
-    // Marquer le panel comme Ã©tant en cours de drag
+    // Marquer le panel comme étant en cours de drag
     const panelElement = panelRef.current;
     if (panelElement) {
       panelElement.dataset.dragging = 'true';
@@ -522,10 +522,10 @@ export function AzureDevOpsSidePanel({
 
   return (
     <>
-      {/* Panel seulement - pas de conteneur qui bloque l'Ã©cran */}
-      // biome-ignore lint/a11y/noNoninteractiveElementInteractions: interactive handler is intentional
-      // biome-ignore lint/a11y/noNoninteractiveElementInteractions: intentional 
-      <section 
+      {/* Panel seulement - pas de conteneur qui bloque l'écran */}
+      {/* biome-ignore lint/a11y/noNoninteractiveElementInteractions: interactive handler is intentional */}
+      {/* biome-ignore lint/a11y/noNoninteractiveElementInteractions: intentional */}
+      <section
         ref={panelRef}
         className="fixed right-0 top-0 h-full bg-background border-l border-border shadow-2xl flex flex-col z-300"
         style={{ width: `${panelWidth}px` }}
@@ -547,7 +547,7 @@ export function AzureDevOpsSidePanel({
               size="icon"
               onClick={toggleCollapse}
               className="h-7 w-7"
-              title={isCollapsed ? "Agrandir" : "RÃ©duire"}
+              title={isCollapsed ? "Agrandir" : "Réduire"}
             >
               {isCollapsed ? <ChevronLeft className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
             </Button>
@@ -692,7 +692,7 @@ export function AzureDevOpsSidePanel({
                   size="sm"
                   onClick={handleRefresh}
                   disabled={isLoadingItems || isRefreshing}
-                  title={isRefreshing ? "RafraÃ®chissement forcÃ©..." : "RafraÃ®chir (contourne le cache)"}
+                  title={isRefreshing ? "Rafraîchissement forcé..." : "Rafraîchir (contourne le cache)"}
                 >
                   <RefreshCw className={`h-4 w-4 ${getRefreshIconClasses()}`} />
                 </Button>
@@ -721,9 +721,6 @@ export function AzureDevOpsSidePanel({
           {!isLoadingItems && filteredItems.length > 0 && (
             <div className="p-4 space-y-2">
               {filteredItems.map((item) => (
-                <>
-                  {/* biome-ignore lint/a11y/noLabelWithoutControl: label association is implicit */}
-                  {/* biome-ignore lint/a11y/noNoninteractiveElementInteractions: interactive handler is intentional  */}
                   <label
                     key={item.id}
                     className={cn(
@@ -734,7 +731,9 @@ export function AzureDevOpsSidePanel({
                       draggedIds.has(item.id) && "cursor-grabbing opacity-70 ring-2 ring-primary ring-offset-1 ring-offset-background rounded-md shadow-md",
                       "bg-transparent border-none"
                   )}
-                  draggable={true}
+                    draggable={true}
+                    // biome-ignore lint/a11y/noLabelWithoutControl: label association is implicit
+                    // biome-ignore lint/a11y/noNoninteractiveElementInteractions: interactive handler is intentional
                   onDragStart={(e) => {
                     if (selectedIds.has(item.id)) {
                       handleDragStart(e, Array.from(selectedIds));
@@ -770,7 +769,7 @@ export function AzureDevOpsSidePanel({
                           )}
                           {item.repository && (
                             <Badge variant="secondary" className="text-xs select-none">
-                              📁 {item.repository}
+                              ?? {item.repository}
                             </Badge>
                           )}
                         </div>
@@ -796,7 +795,6 @@ export function AzureDevOpsSidePanel({
                         )}
                       </div>
                 </label>
-                </>
               ))}
             </div>
           )}

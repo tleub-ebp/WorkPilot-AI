@@ -1,4 +1,4 @@
-﻿import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useTranslation } from "react-i18next";
 import {
   Check,
@@ -340,7 +340,7 @@ export function CopilotCliStatusBadge({ className, onNavigateToTerminals }: Copi
       case "not-found":
         return t("copilot:copilotCliExtensionNotInstalled", "Copilot CLI extension not installed");
       case "gh-missing":
-        return t("copilot:gitHubCliNotFound", "GitHub CLI (gh) not found â€” required for Copilot");
+        return t("copilot:gitHubCliNotFound", "GitHub CLI (gh) not found — required for Copilot");
       case "error":
         return t("copilot:errorCheckingCopilotCli", "Error checking Copilot CLI");
     }

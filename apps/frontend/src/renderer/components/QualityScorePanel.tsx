@@ -4,6 +4,7 @@
  */
 
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { ChevronDown, ChevronRight, AlertCircle, AlertTriangle, Info, } from 'lucide-react';
 import type { QualityScore, QualityIssue } from '../../preload/api/modules/quality-api';
 import { QualityScoreBadge } from './QualityScoreBadge';
@@ -14,9 +15,9 @@ import { Button } from './ui/button';
 import { cn } from '../lib/utils';
 
 interface QualityScorePanelProps {
-  score: QualityScore;
-  isLoading?: boolean;
-  onRefresh?: () => void;
+  readonly score: QualityScore;
+  readonly isLoading?: boolean;
+  readonly onRefresh?: () => void;
 }
 
 // Icon mapping for severity
@@ -45,6 +46,7 @@ const CATEGORY_ICONS: Record<string, string> = {
 
 // biome-ignore lint/correctness/noUnusedFunctionParameters: parameter kept for API compatibility
 export function QualityScorePanel({ score, isLoading, onRefresh }: QualityScorePanelProps) {
+  const { t } = useTranslation('qualityScore');
   const [isExpanded, setIsExpanded] = useState(true);
   const [expandedCategories, setExpandedCategories] = useState<Set<string>>(new Set());
 
@@ -72,7 +74,7 @@ export function QualityScorePanel({ score, isLoading, onRefresh }: QualityScoreP
       <CardHeader className="pb-3">
         <div className="flex items-center justify-between">
           <CardTitle className="text-lg flex items-center gap-2">
-            ðŸ§  Code Quality Analysis
+            🧠 {t('title')}
           </CardTitle>
           <QualityScoreBadge
             score={score.overall_score}
@@ -85,13 +87,13 @@ export function QualityScorePanel({ score, isLoading, onRefresh }: QualityScoreP
         {/* Summary */}
         <div className="flex items-center justify-between text-sm">
           <div className="font-medium">
-            Score: {score.overall_score.toFixed(1)}/100
+            {t('score')}: {score.overall_score.toFixed(1)}/100
           </div>
           <div className={cn(
             'font-medium',
             score.is_passing ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'
           )}>
-            {score.is_passing ? 'âœ… PASSED' : 'âŒ FAILED'}
+            {score.is_passing ? '✅ ' + t('passed') : '❌ ' + t('failed')}
           </div>
         </div>
 
@@ -101,7 +103,7 @@ export function QualityScorePanel({ score, isLoading, onRefresh }: QualityScoreP
             <Collapsible open={isExpanded} onOpenChange={setIsExpanded}>
               <CollapsibleTrigger className="flex items-center gap-2 text-sm font-medium w-full hover:underline">
                 {isExpanded ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
-                {score.total_issues} Issue{score.total_issues !== 1 ? 's' : ''} Detected
+                {t('issuesDetected_' + (score.total_issues === 1 ? 'one' : 'other'), { count: score.total_issues })}
               </CollapsibleTrigger>
               <CollapsibleContent className="mt-3 space-y-2">
                 {/* Severity Breakdown */}
@@ -109,25 +111,25 @@ export function QualityScorePanel({ score, isLoading, onRefresh }: QualityScoreP
                   {score.critical_issues > 0 && (
                     <Badge variant="destructive" className="gap-1">
                       <AlertCircle className="h-3 w-3" />
-                      {score.critical_issues} Critical
+                      {score.critical_issues} {t('critical')}
                     </Badge>
                   )}
-                  {score.issues.filter(i => i.severity === 'high').length > 0 && (
+                  {score.issues.some(i => i.severity === 'high') && (
                     <Badge variant="secondary" className="gap-1 bg-orange-100 dark:bg-orange-900/20">
                       <AlertTriangle className="h-3 w-3" />
-                      {score.issues.filter(i => i.severity === 'high').length} High
+                      {score.issues.filter(i => i.severity === 'high').length} {t('high')}
                     </Badge>
                   )}
-                  {score.issues.filter(i => i.severity === 'medium').length > 0 && (
+                  {score.issues.some(i => i.severity === 'medium') && (
                     <Badge variant="secondary" className="gap-1 bg-yellow-100 dark:bg-yellow-900/20">
                       <AlertTriangle className="h-3 w-3" />
-                      {score.issues.filter(i => i.severity === 'medium').length} Medium
+                      {score.issues.filter(i => i.severity === 'medium').length} {t('medium')}
                     </Badge>
                   )}
-                  {score.issues.filter(i => i.severity === 'low').length > 0 && (
+                  {score.issues.some(i => i.severity === 'low') && (
                     <Badge variant="outline" className="gap-1">
                       <Info className="h-3 w-3" />
-                      {score.issues.filter(i => i.severity === 'low').length} Low
+                      {score.issues.filter(i => i.severity === 'low').length} {t('low')}
                     </Badge>
                   )}
                 </div>
@@ -149,7 +151,7 @@ export function QualityScorePanel({ score, isLoading, onRefresh }: QualityScoreP
                           <div className="flex items-center gap-2">
                             {isOpen ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
                             <span>{icon}</span>
-                            <span className="font-medium capitalize">{category}</span>
+                            <span className="font-medium capitalize">{t('categories.' + category, category)}</span>
                             <Badge variant="outline" className="ml-2">
                               {issues.length}
                             </Badge>
@@ -158,13 +160,15 @@ export function QualityScorePanel({ score, isLoading, onRefresh }: QualityScoreP
 
                         {isOpen && (
                           <div className="mt-3 space-y-2">
-                            {issues.slice(0, 5).map((issue, idx) => {
+                            {issues.slice(0, 5).map((issue) => {
                               const SeverityIcon = SEVERITY_ICONS[issue.severity];
                               const severityColor = SEVERITY_COLORS[issue.severity];
 
+                              // Create a stable key using issue properties
+                              const issueKey = `${issue.file}-${issue.line || 'no-line'}-${issue.title.slice(0, 50)}`;
+
                               return (
-{/* biome-ignore lint/suspicious/noArrayIndexKey: no stable key available */}
-                                <div key={idx} className="text-sm pl-6 py-2 border-l-2 border-muted">
+                                <div key={issueKey} className="text-sm pl-6 py-2 border-l-2 border-muted">
                                   <div className="flex items-start gap-2">
                                     <SeverityIcon className={cn('h-4 w-4 mt-0.5 flex-shrink-0', severityColor)} />
                                     <div className="flex-1 min-w-0">
@@ -185,7 +189,7 @@ export function QualityScorePanel({ score, isLoading, onRefresh }: QualityScoreP
                             })}
                             {issues.length > 5 && (
                               <div className="text-xs text-muted-foreground pl-6">
-                                ... and {issues.length - 5} more
+                                {t('andMore', { count: issues.length - 5 })}
                               </div>
                             )}
                           </div>
@@ -203,12 +207,10 @@ export function QualityScorePanel({ score, isLoading, onRefresh }: QualityScoreP
         {score.total_issues === 0 && (
           <div className="text-center py-4 text-muted-foreground">
             <div className="text-4xl mb-2">ðŸŽ‰</div>
-            <div className="text-sm">No issues detected! Great job!</div>
+            <div className="text-sm">{t('noIssues')}</div>
           </div>
         )}
       </CardContent>
     </Card>
   );
 }
-
-

@@ -1,4 +1,4 @@
-﻿import { useState } from "react";
+import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
   Check,
@@ -106,13 +106,13 @@ export function CodexCliStatusBadge({ className, onNavigateToTerminals }: CodexC
   const getTooltipText = () => {
     switch (status) {
       case "loading":
-        return "VÃ©rification Codex CLI...";
+        return "Vérification Codex CLI...";
       case "installed":
-        return versionInfo?.installed ? `Codex CLI (${versionInfo.installed})` : "Codex CLI installÃ©";
+        return versionInfo?.installed ? `Codex CLI (${versionInfo.installed})` : "Codex CLI installé";
       case "outdated":
-        return `Codex CLI (${versionInfo?.installed}) - mise Ã  jour disponible`;
+        return `Codex CLI (${versionInfo?.installed}) - mise à jour disponible`;
       case "not-found":
-        return "Codex CLI non trouvÃ©";
+        return "Codex CLI non trouvé";
       case "error":
         return "Erreur Codex CLI";
       default:
@@ -166,9 +166,9 @@ export function CodexCliStatusBadge({ className, onNavigateToTerminals }: CodexC
               <h4 className="text-sm font-medium">OpenAI Codex CLI</h4>
               <p className="text-xs text-muted-foreground flex items-center gap-1">
                 {getStatusIcon()}
-                {status === "installed" && "ConnectÃ©"}
-                {status === "not-found" && "Non configurÃ©"}
-                {status === "loading" && "VÃ©rification..."}
+                {status === "installed" && "Connecté"}
+                {status === "not-found" && "Non configuré"}
+                {status === "loading" && "Vérification..."}
                 {status === "error" && "Erreur"}
               </p>
             </div>
@@ -183,7 +183,7 @@ export function CodexCliStatusBadge({ className, onNavigateToTerminals }: CodexC
               </div>
               {lastChecked && (
                 <div className="flex justify-between text-muted-foreground">
-                  <span>VÃ©rifiÃ© :</span>
+                  <span>Vérifié :</span>
                   <span>{lastChecked.toLocaleTimeString()}</span>
                 </div>
               )}
@@ -194,7 +194,7 @@ export function CodexCliStatusBadge({ className, onNavigateToTerminals }: CodexC
           {status === "not-found" && (
             <div className="text-xs p-2 bg-muted/50 rounded-md text-muted-foreground">
               <p>Lancez <code className="font-mono bg-muted px-1 rounded">codex</code> dans un terminal pour vous authentifier via OAuth.</p>
-              <p className="mt-1">Configurez dans ParamÃ¨tres â†’ OpenAI â†’ OAuth / Codex.</p>
+              <p className="mt-1">Configurez dans Paramètres → OpenAI → OAuth / Codex.</p>
             </div>
           )}
 
@@ -210,7 +210,7 @@ export function CodexCliStatusBadge({ className, onNavigateToTerminals }: CodexC
               disabled={status === "loading"}
             >
               <RefreshCw className={cn("h-3 w-3", status === "loading" && "animate-spin")} />
-              {t("common:refresh", "RafraÃ®chir")}
+              {t("common:refresh", "Rafraîchir")}
             </Button>
           </div>
 

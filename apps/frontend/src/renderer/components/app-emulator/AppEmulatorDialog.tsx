@@ -1,4 +1,4 @@
-﻿import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   Loader2,
@@ -64,13 +64,13 @@ function classifyLogLevel(keyword: string): string {
 
 /**
  * Classify a log line and return its Tailwind color class.
- * Generic â€” works across any language, framework, or log format.
+ * Generic — works across any language, framework, or log format.
  *
  * Priority order:
- *  1. Bracket notation  â€” [ERROR], (WARN), {INFO}
- *  2. Keyword prefix    â€” "ERROR:", "warn |", "fail -" at line start
- *  3. Uppercase keyword â€” standalone ERROR/WARN/INFO/DEBUG anywhere in line
- *  4. Success symbols   â€” âœ“, âœ”, âœ… or common "ready" phrases
+ *  1. Bracket notation  — [ERROR], (WARN), {INFO}
+ *  2. Keyword prefix    — "ERROR:", "warn |", "fail -" at line start
+ *  3. Uppercase keyword — standalone ERROR/WARN/INFO/DEBUG anywhere in line
+ *  4. Success symbols   — ✓, ✔, ✅ or common "ready" phrases
  */
 function classifyLogLine(line: string): string {
   // 1. Bracket notation: [LEVEL], (LEVEL), {LEVEL}
@@ -96,7 +96,7 @@ function classifyLogLine(line: string): string {
   }
 
   // 4. Success / ready indicators (symbols or common phrases)
-  if (/[âœ“âœ”âœ…]/.test(line) || /\b(compiled successfully|ready in|ready on|application started|now listening|server (started|running))\b/i.test(line)) {
+  if (/[✓✔✅]/.test(line) || /\b(compiled successfully|ready in|ready on|application started|now listening|server (started|running))\b/i.test(line)) {
     return 'text-green-400';
   }
 
@@ -107,7 +107,7 @@ function classifyLogLine(line: string): string {
 function renderColorizedContent(text: string) {
   return text.split('\n').map((line, i) => (
     <>
-      {/* biome-ignore lint/suspicious/noArrayIndexKey: no stable key available  */}
+      {/* biome-ignore lint/suspicious/noArrayIndexKey: no stable key available */}
       <span key={i} className={`block ${classifyLogLine(line)}`}>
         {line}
       </span>
@@ -116,7 +116,7 @@ function renderColorizedContent(text: string) {
 }
 
 /**
- * AppEmulatorDialog â€” Preview the application directly from WorkPilot.
+ * AppEmulatorDialog — Preview the application directly from WorkPilot.
  *
  * Detects project type, launches dev server, and shows preview in an iframe
  * (web apps) or terminal output (CLI/desktop apps).
@@ -304,7 +304,7 @@ export function AppEmulatorDialog() {
           <DialogDescription>{t('appEmulator:description')}</DialogDescription>
         </DialogHeader>
 
-        {/* Project Info Bar â€” tabs row */}
+        {/* Project Info Bar — tabs row */}
         {config && (
           <div className="flex items-center gap-3 text-sm flex-wrap">
             {isMultiService ? (
@@ -322,7 +322,7 @@ export function AppEmulatorDialog() {
                     {svc.isPrimary && <span className="text-xs opacity-70 ml-0.5">API</span>}
                   </Badge>
                 ))}
-                {/* Preview tab â€” only shown once the server is running */}
+                {/* Preview tab — only shown once the server is running */}
                 {phase === 'running' && isWeb && (
                   <Badge
                     variant="outline"
@@ -351,12 +351,12 @@ export function AppEmulatorDialog() {
         {/* Main Content Area */}
         <div className="flex-1 min-h-0 overflow-hidden rounded-lg border border-border flex flex-col">
 
-          {/* Loading State â€” step indicator + live terminal */}
+          {/* Loading State — step indicator + live terminal */}
           {isLoading && (
             <div className="flex-1 min-h-0 flex flex-col overflow-hidden">
               {/* Step bar */}
               <div className="flex items-center gap-3 px-4 py-3 border-b border-border shrink-0">
-                {/* Step 1 â€” Detection */}
+                {/* Step 1 — Detection */}
                 <div className="flex items-center gap-1.5">
                   {phase !== 'detecting' ? (
                     <span className="flex h-4 w-4 items-center justify-center rounded-full bg-green-500/15">
@@ -369,13 +369,13 @@ export function AppEmulatorDialog() {
                     {t('appEmulator:steps.detect')}
                   </span>
                   {phase !== 'detecting' && config && (
-                    <span className="text-xs text-green-600 dark:text-green-400">Â· {config.framework}</span>
+                    <span className="text-xs text-green-600 dark:text-green-400">· {config.framework}</span>
                   )}
                 </div>
 
-                <span className="text-muted-foreground/50 text-xs">â€º</span>
+                <span className="text-muted-foreground/50 text-xs">›</span>
 
-                {/* Step 2 â€” Starting */}
+                {/* Step 2 — Starting */}
                 <div className="flex items-center gap-1.5">
                   {phase === 'starting' ? (
                     <Loader2 className="h-4 w-4 animate-spin text-primary shrink-0" />
@@ -387,7 +387,7 @@ export function AppEmulatorDialog() {
                   </span>
                 </div>
 
-                {/* Current status â€” single source of truth, only in the step bar */}
+                {/* Current status — single source of truth, only in the step bar */}
                 {status && (
                   <span className="ml-auto text-xs text-muted-foreground truncate max-w-xs">{status}</span>
                 )}
@@ -434,7 +434,7 @@ export function AppEmulatorDialog() {
             </div>
           )}
 
-          {/* Running State â€” webview (Preview tab) */}
+          {/* Running State — webview (Preview tab) */}
           {/* Keep webview mounted to avoid reloads; toggle visibility via CSS */}
           {phase === 'running' && isWeb && url && (
             <webview
@@ -446,7 +446,7 @@ export function AppEmulatorDialog() {
             />
           )}
 
-          {/* Running State â€” log tabs (service tabs or non-web terminal) */}
+          {/* Running State — log tabs (service tabs or non-web terminal) */}
           {phase === 'running' && !showPreview && (
             <div className="flex-1 min-h-0 flex flex-col overflow-hidden">
               <div className="flex items-center gap-2 px-4 py-2 border-b border-border shrink-0">

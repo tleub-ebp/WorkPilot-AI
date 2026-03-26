@@ -1,4 +1,4 @@
-﻿import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
+import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   Search,
@@ -78,7 +78,7 @@ function fuzzyMatch(query: string, text: string): { match: boolean; score: numbe
   const q = query.toLowerCase();
   const t = text.toLowerCase();
 
-  // Exact substring match â€” highest score
+  // Exact substring match — highest score
   if (t.includes(q)) {
     const bonus = t.startsWith(q) ? 20 : 0;
     return { match: true, score: 100 + bonus - t.length };
@@ -570,10 +570,13 @@ export function CommandPalette({
   let flatIndex = 0;
 
   return (
-    // biome-ignore lint/a11y/noNoninteractiveElementInteractions: interactive handler is intentional
-    // biome-ignore lint/a11y/noStaticElementInteractions: interactive handler is intentional
-    // biome-ignore lint/a11y/useKeyWithClickEvents: keyboard events handled elsewhere
-    <div className="fixed inset-0 z-100" onClick={() => onOpenChange(false)}>
+    <div
+      // biome-ignore lint/a11y/noNoninteractiveElementInteractions: interactive handler is intentional
+      // biome-ignore lint/a11y/noStaticElementInteractions: interactive handler is intentional
+      // biome-ignore lint/a11y/useKeyWithClickEvents: keyboard events handled elsewhere
+      className="fixed inset-0 z-100"
+      onClick={() => onOpenChange(false)}
+    >
       {/* Backdrop */}
       <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" />
 
@@ -653,11 +656,11 @@ export function CommandPalette({
           <div className="flex items-center justify-between border-t border-border px-4 py-2 text-xs text-muted-foreground">
             <div className="flex items-center gap-3">
               <span className="flex items-center gap-1">
-                <kbd className="rounded border border-border bg-secondary px-1 font-mono text-[10px]">â†‘â†“</kbd>
+                <kbd className="rounded border border-border bg-secondary px-1 font-mono text-[10px]">↑↓</kbd>
                 navigate
               </span>
               <span className="flex items-center gap-1">
-                <kbd className="rounded border border-border bg-secondary px-1 font-mono text-[10px]">â†µ</kbd>
+                <kbd className="rounded border border-border bg-secondary px-1 font-mono text-[10px]">↵</kbd>
                 select
               </span>
               <span className="flex items-center gap-1">

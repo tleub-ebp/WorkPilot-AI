@@ -1,4 +1,4 @@
-﻿import { useCallback, useRef, useState, type DragEvent, type ChangeEvent } from 'react';
+import { useCallback, useRef, useState, type DragEvent, type ChangeEvent } from 'react';
 import { Upload, X, AlertCircle, Image as ImageIcon } from 'lucide-react';
 import { Button } from './ui/button';
 import { cn } from '../lib/utils';
@@ -273,7 +273,7 @@ export function ImageUpload({
   return (
     <div className={cn('space-y-3', className)}>
       {/* Drop zone */}
-{/* biome-ignore lint/a11y/noNoninteractiveElementInteractions lint/a11y/noStaticElementInteractions lint/a11y/useKeyWithClickEvents: interactive handler is intentional  */}
+{/* biome-ignore lint/a11y/noNoninteractiveElementInteractions lint/a11y/noStaticElementInteractions lint/a11y/useKeyWithClickEvents: interactive handler is intentional */}
       <div
         onDragOver={handleDragOver}
         onDragLeave={handleDragLeave}

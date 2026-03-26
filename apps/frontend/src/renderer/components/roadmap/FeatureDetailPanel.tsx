@@ -1,4 +1,4 @@
-﻿import { useState } from 'react';
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   ChevronRight,
@@ -131,7 +131,7 @@ export function FeatureDetailPanel({
             </h3>
             <div className="space-y-2">
               {feature.userStories.map((story, i) => (
-{/* biome-ignore lint/suspicious/noArrayIndexKey: no stable key available  */}
+{/* biome-ignore lint/suspicious/noArrayIndexKey: no stable key available */}
                 <div key={i} className="text-sm p-2 bg-muted/50 rounded-md italic">
                   "{story}"
                 </div>
@@ -213,13 +213,9 @@ export function FeatureDetailPanel({
           </div>
         )}
         </div>
-      </ScrollArea>
-
-      {/* Actions */}
-      {feature.linkedSpecId ? (
+      </ScrollArea>feature.linkedSpecId ? (
         <div className="shrink-0 p-4 border-t border-border">
-          // biome-ignore lint/style/noNonNullAssertion: value is guaranteed by context
-{/* biome-ignore lint/style/noNonNullAssertion: intentional  */}
+{/* biome-ignore lint/style/noNonNullAssertion: intentional */}
           <Button className="w-full" onClick={() => onGoToTask(feature.linkedSpecId!)}>
             <ExternalLink className="h-4 w-4 mr-2" />
             Go to Task
@@ -234,10 +230,7 @@ export function FeatureDetailPanel({
             </Button>
           </div>
         )
-      )}
-
-      {/* Delete Confirmation */}
-      {showDeleteConfirm && (
+      )showDeleteConfirm && (
         <div className="absolute inset-0 bg-background/95 flex items-center justify-center p-6 z-10">
           <div className="text-center space-y-4">
             <div className="w-12 h-12 rounded-full bg-destructive/10 flex items-center justify-center mx-auto">
@@ -259,7 +252,7 @@ export function FeatureDetailPanel({
             </div>
           </div>
         </div>
-      )}
+      )
     </div>
   );
 }

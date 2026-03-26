@@ -1,4 +1,4 @@
-﻿/**
+/**
  * AI Pair Programming View (Feature 10)
  *
  * Split-view interface for real parallel coordinated development:
@@ -112,8 +112,7 @@ function SetupForm({ onStart }: SetupFormProps) {
       {/* Form */}
       <form onSubmit={handleSubmit} className="flex flex-col gap-4 w-full">
         <div className="flex flex-col gap-1.5">
-          // biome-ignore lint/a11y/noLabelWithoutControl: label association is implicit
-{/* biome-ignore lint/a11y/noLabelWithoutControl: intentional  */}
+{/* biome-ignore lint/a11y/noLabelWithoutControl: intentional */}
           <label className="text-sm font-medium">{t('setup.goalLabel')}</label>
           <Textarea
             value={goal}
@@ -123,8 +122,7 @@ function SetupForm({ onStart }: SetupFormProps) {
           />
         </div>
         <div className="flex flex-col gap-1.5">
-          // biome-ignore lint/a11y/noLabelWithoutControl: label association is implicit
-{/* biome-ignore lint/a11y/noLabelWithoutControl: intentional  */}
+{/* biome-ignore lint/a11y/noLabelWithoutControl: intentional */}
           <label className="text-sm font-medium">{t('setup.devScopeLabel')}</label>
           <Textarea
             value={devScope}
@@ -134,8 +132,7 @@ function SetupForm({ onStart }: SetupFormProps) {
           />
         </div>
         <div className="flex flex-col gap-1.5">
-          // biome-ignore lint/a11y/noLabelWithoutControl: label association is implicit
-{/* biome-ignore lint/a11y/noLabelWithoutControl: intentional  */}
+{/* biome-ignore lint/a11y/noLabelWithoutControl: intentional */}
           <label className="text-sm font-medium">{t('setup.aiScopeLabel')}</label>
           <Textarea
             value={aiScope}
@@ -330,7 +327,7 @@ export function PairProgramming({ projectId }: PairProgrammingProps) {
       {/* Three-panel layout */}
       <div className="flex flex-1 min-h-0 divide-x divide-border">
 
-        {/* LEFT â€” Developer scope */}
+        {/* LEFT — Developer scope */}
         <div className="w-56 flex-shrink-0 flex flex-col">
           <div className="px-3 py-2 border-b border-border text-xs font-semibold text-muted-foreground uppercase tracking-wide">
             {t('sections.yourWork')}
@@ -358,7 +355,7 @@ export function PairProgramming({ projectId }: PairProgrammingProps) {
           </ScrollArea>
         </div>
 
-        {/* CENTER â€” Chat */}
+        {/* CENTER — Chat */}
         <div className="flex-1 flex flex-col min-w-0">
           <div className="px-3 py-2 border-b border-border text-xs font-semibold text-muted-foreground uppercase tracking-wide">
             {t('sections.chat')}
@@ -401,7 +398,7 @@ export function PairProgramming({ projectId }: PairProgrammingProps) {
           </div>
         </div>
 
-        {/* RIGHT â€” AI work */}
+        {/* RIGHT — AI work */}
         <div className="w-72 flex-shrink-0 flex flex-col">
           <div className="px-3 py-2 border-b border-border text-xs font-semibold text-muted-foreground uppercase tracking-wide flex items-center justify-between">
             <span>{t('sections.aiWork')}</span>
@@ -422,7 +419,7 @@ export function PairProgramming({ projectId }: PairProgrammingProps) {
               <ScrollArea className="h-full">
                 <pre className="p-3 text-xs text-foreground font-mono whitespace-pre-wrap leading-relaxed">
                   {streamingContent}
-                  {isRunning && <span className="animate-pulse">â–Œ</span>}
+                  {isRunning && <span className="animate-pulse">▌</span>}
                 </pre>
                 <div ref={streamEndRef} />
               </ScrollArea>

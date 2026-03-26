@@ -1,4 +1,4 @@
-﻿import { FileText, History, GitBranch, Tag, Calendar, RefreshCw, Loader2, AlertCircle } from 'lucide-react';
+import { FileText, History, GitBranch, Tag, Calendar, RefreshCw, Loader2, AlertCircle } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { Button } from '../ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
@@ -92,8 +92,7 @@ export function ChangelogFilters({
             onValueChange={(value) => onSourceModeChange(value as ChangelogSourceMode)}
             className="space-y-2"
           >
-            // biome-ignore lint/a11y/noLabelWithoutControl: label association is implicit
-{/* biome-ignore lint/a11y/noLabelWithoutControl: intentional  */}
+{/* biome-ignore lint/a11y/noLabelWithoutControl: intentional */}
             <label
               className={cn(
                 'flex items-start gap-3 rounded-lg border p-3 cursor-pointer transition-all',
@@ -118,9 +117,7 @@ export function ChangelogFilters({
                 </p>
               </div>
             </label>
-
-            // biome-ignore lint/a11y/noLabelWithoutControl: label association is implicit
-{/* biome-ignore lint/a11y/noLabelWithoutControl: intentional  */}
+{/* biome-ignore lint/a11y/noLabelWithoutControl: intentional */}
             <label
               className={cn(
                 'flex items-start gap-3 rounded-lg border p-3 cursor-pointer transition-all',
@@ -142,9 +139,7 @@ export function ChangelogFilters({
                 </p>
               </div>
             </label>
-
-            // biome-ignore lint/a11y/noLabelWithoutControl: label association is implicit
-{/* biome-ignore lint/a11y/noLabelWithoutControl: intentional  */}
+{/* biome-ignore lint/a11y/noLabelWithoutControl: intentional */}
             <label
               className={cn(
                 'flex items-start gap-3 rounded-lg border p-3 cursor-pointer transition-all',

@@ -1,5 +1,5 @@
-﻿/**
- * AgentBubble â€” Interactive comic-style speech bubble overlay.
+/**
+ * AgentBubble — Interactive comic-style speech bubble overlay.
  *
  * Appears when the user clicks an agent in the Pixel Office canvas.
  * Handles both terminal agents and Kanban task agents.
@@ -28,7 +28,7 @@ import { stripAnsiCodes } from '../../../shared/utils/ansi-sanitizer';
 import type { PixelAgent } from '../../stores/pixel-office-store';
 import type { Terminal } from '../../stores/terminal-store';
 
-// â”€â”€ Phase descriptions (human-friendly) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── Phase descriptions (human-friendly) ──────────────────────
 
 interface PhaseInfo {
   emoji: string;
@@ -37,18 +37,18 @@ interface PhaseInfo {
 }
 
 const PHASE_INFO: Record<string, PhaseInfo> = {
-  idle:                { emoji: 'ðŸ˜´', label: 'En veille',        description: "PrÃªt Ã  dÃ©marrer." },
-  planning:            { emoji: 'ðŸ“‹', label: 'Planification',    description: "L'IA analyse ta demande et prÃ©pare un plan d'action dÃ©taillÃ©." },
-  coding:              { emoji: 'âœï¸', label: 'DÃ©veloppement',    description: "Le code est en cours d'Ã©criture. Les sous-tÃ¢ches s'enchaÃ®nent automatiquement." },
-  qa_review:           { emoji: 'ðŸ”', label: 'VÃ©rification QA',  description: "Un agent vÃ©rifie la qualitÃ© du code produit : tests, cohÃ©rence, bonnes pratiques." },
-  qa_fixing:           { emoji: 'ðŸ”§', label: 'Correction QA',    description: "Des problÃ¨mes ont Ã©tÃ© dÃ©tectÃ©s. L'agent les corrige avant livraison." },
-  rate_limit_paused:   { emoji: 'â³', label: 'Limite API',       description: "L'API Claude a atteint sa limite. Reprise automatique dans quelques instants." },
-  auth_failure_paused: { emoji: 'ðŸ”‘', label: 'Auth. Ã©chouÃ©e',    description: "ProblÃ¨me d'authentification. VÃ©rifie tes profils Claude dans les paramÃ¨tres." },
-  complete:            { emoji: 'âœ…', label: 'TerminÃ©',           description: "La tÃ¢che est complÃ¨te et prÃªte pour ta revue." },
-  failed:              { emoji: 'âŒ', label: 'Ã‰chec',             description: "La tÃ¢che a Ã©chouÃ©. Consulte les logs pour comprendre ce qui s'est passÃ©." },
+  idle:                { emoji: '😴', label: 'En veille',        description: "Prêt à démarrer." },
+  planning:            { emoji: '📋', label: 'Planification',    description: "L'IA analyse ta demande et prépare un plan d'action détaillé." },
+  coding:              { emoji: '✍️', label: 'Développement',    description: "Le code est en cours d'écriture. Les sous-tâches s'enchaînent automatiquement." },
+  qa_review:           { emoji: '🔍', label: 'Vérification QA',  description: "Un agent vérifie la qualité du code produit : tests, cohérence, bonnes pratiques." },
+  qa_fixing:           { emoji: '🔧', label: 'Correction QA',    description: "Des problèmes ont été détectés. L'agent les corrige avant livraison." },
+  rate_limit_paused:   { emoji: '⏳', label: 'Limite API',       description: "L'API Claude a atteint sa limite. Reprise automatique dans quelques instants." },
+  auth_failure_paused: { emoji: '🔑', label: 'Auth. échouée',    description: "Problème d'authentification. Vérifie tes profils Claude dans les paramètres." },
+  complete:            { emoji: '✅', label: 'Terminé',           description: "La tâche est complète et prête pour ta revue." },
+  failed:              { emoji: '❌', label: 'Échec',             description: "La tâche a échoué. Consulte les logs pour comprendre ce qui s'est passé." },
 };
 
-// â”€â”€ Activity descriptions for terminal agents â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── Activity descriptions for terminal agents ─────────────────
 
 interface ActivityInfo {
   emoji: string;
@@ -60,42 +60,42 @@ interface ActivityInfo {
 
 const ACTIVITY_INFO: Record<string, ActivityInfo> = {
   typing: {
-    emoji: 'âœï¸', label: 'En train de coder',
+    emoji: '✍️', label: 'En train de coder',
     description: (a) => a.taskName
-      ? `ImplÃ©mentation de "${a.taskName}" â€” l'agent Ã©crit du code activement.`
-      : "L'agent est en train d'Ã©crire du code.",
+      ? `Implémentation de "${a.taskName}" — l'agent écrit du code activement.`
+      : "L'agent est en train d'écrire du code.",
     color: '#4A90D9', bgColor: 'rgba(74,144,217,0.12)',
   },
   running: {
-    emoji: 'âš™ï¸', label: 'ExÃ©cution',
-    description: () => "L'agent exÃ©cute une commande (tests, build, installationâ€¦). Attends ou interromps-le.",
+    emoji: '⚙️', label: 'Exécution',
+    description: () => "L'agent exécute une commande (tests, build, installation…). Attends ou interromps-le.",
     color: '#1ABC9C', bgColor: 'rgba(26,188,156,0.12)',
   },
   reading: {
-    emoji: 'ðŸ“–', label: 'Analyse',
+    emoji: '📖', label: 'Analyse',
     description: (a) => a.taskName
       ? `Lecture du code pour comprendre "${a.taskName}".`
       : "L'agent analyse les fichiers du projet.",
     color: '#27AE60', bgColor: 'rgba(39,174,96,0.12)',
   },
   waiting: {
-    emoji: 'ðŸ’¬', label: 'En attente',
-    description: () => "L'agent attend ta rÃ©ponse ou une approbation.",
+    emoji: '💬', label: 'En attente',
+    description: () => "L'agent attend ta réponse ou une approbation.",
     color: '#F39C12', bgColor: 'rgba(243,156,18,0.12)',
   },
   idle: {
-    emoji: 'ðŸ˜´', label: 'Au repos',
-    description: () => "L'agent est disponible. Donne-lui un ordre ou dÃ©marre Claude.",
+    emoji: '😴', label: 'Au repos',
+    description: () => "L'agent est disponible. Donne-lui un ordre ou démarre Claude.",
     color: '#6B7280', bgColor: 'rgba(107,114,128,0.12)',
   },
   exited: {
-    emoji: 'ðŸ’¤', label: 'Session terminÃ©e',
-    description: () => "Ce terminal a Ã©tÃ© fermÃ©.",
+    emoji: '💤', label: 'Session terminée',
+    description: () => "Ce terminal a été fermé.",
     color: '#E74C3C', bgColor: 'rgba(231,76,60,0.12)',
   },
   pending: {
-    emoji: 'â³', label: 'File d\'attente',
-    description: () => "Cette tÃ¢che attend son lancement. DÃ©marre-la depuis le Kanban.",
+    emoji: '⏳', label: 'File d\'attente',
+    description: () => "Cette tâche attend son lancement. Démarre-la depuis le Kanban.",
     color: '#8B5CF6', bgColor: 'rgba(139,92,246,0.12)',
   },
 };
@@ -112,7 +112,7 @@ function getAgentColor(agent: PixelAgent): string {
   return ACTIVITY_INFO[agent.activity]?.color ?? '#6B7280';
 }
 
-// â”€â”€ Syntax-highlighted inline code chip â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── Syntax-highlighted inline code chip ──────────────────────
 
 function CodeChip({ text }: { readonly text: string }) {
   return (
@@ -125,7 +125,7 @@ function CodeChip({ text }: { readonly text: string }) {
   );
 }
 
-// â”€â”€ Progress bar â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── Progress bar ──────────────────────────────────────────────
 
 function ProgressBar({ value, color }: { readonly value: number; readonly color: string }) {
   return (
@@ -138,14 +138,14 @@ function ProgressBar({ value, color }: { readonly value: number; readonly color:
   );
 }
 
-// â”€â”€ Live log stream â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── Live log stream ───────────────────────────────────────────
 
 const LOG_KEEP = 5000;
 
 function logLineColor(line: string): string {
   if (/\[ERROR\]|error:/i.test(line) || /\bError\b/.test(line)) return '#F87171';
   if (/\[WARN\]|warning/i.test(line)) return '#FCD34D';
-  if (line.startsWith('âœ…') || /\[OK\]|\bsuccess\b/i.test(line)) return '#6EE7B7';
+  if (line.startsWith('✅') || /\[OK\]|\bsuccess\b/i.test(line)) return '#6EE7B7';
   if (/\[INFO\]/.test(line)) return 'rgba(255,255,255,0.65)';
   return 'rgba(255,255,255,0.42)';
 }
@@ -220,7 +220,7 @@ function LogStream({ taskId }: { readonly taskId: string }) {
             title="Copier tous les logs"
           >
             {copied
-              ? <><Check className="h-3 w-3" /> CopiÃ©</>
+              ? <><Check className="h-3 w-3" /> Copié</>
               : <><Copy className="h-3 w-3" /> Copier</>
             }
           </button>
@@ -236,7 +236,7 @@ function LogStream({ taskId }: { readonly taskId: string }) {
         </div>
       )}
 
-      {/* Expanded log area â€” flex-1 fills remaining space */}
+      {/* Expanded log area — flex-1 fills remaining space */}
       {open && (
         <div
           ref={scrollRef}
@@ -252,7 +252,7 @@ function LogStream({ taskId }: { readonly taskId: string }) {
           {visibleLines.length === 0 ? (
             <div className="flex flex-col items-center justify-center h-full gap-2 text-white/20">
               <TerminalIcon className="h-5 w-5" />
-              <p className="text-[10px] font-mono">En attente de logsâ€¦</p>
+              <p className="text-[10px] font-mono">En attente de logs…</p>
             </div>
           ) : (
             <div className="p-3 space-y-1">
@@ -274,7 +274,7 @@ function LogStream({ taskId }: { readonly taskId: string }) {
   );
 }
 
-// â”€â”€ Pending task panel (planning/queued) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── Pending task panel (planning/queued) ──────────────────────
 
 function PendingTaskPanel({
   onGoToTask,
@@ -287,14 +287,14 @@ function PendingTaskPanel({
     <div className="flex flex-col flex-1 min-h-0">
       <div className="px-4 py-4 flex-1">
         <p className="text-xs text-white/75 leading-relaxed">
-          Cette tÃ¢che est en file d&apos;attente et n&apos;a pas encore dÃ©marrÃ©. Rends-toi dans le
-          Kanban pour la lancer, la prioriser ou modifier sa spÃ©cification.
+          Cette tâche est en file d&apos;attente et n&apos;a pas encore démarré. Rends-toi dans le
+          Kanban pour la lancer, la prioriser ou modifier sa spécification.
         </p>
         <div
           className="mt-4 flex items-center gap-2 px-3 py-2 rounded-lg text-[11px] font-mono"
           style={{ background: 'rgba(139,92,246,0.1)', border: '1px solid rgba(139,92,246,0.25)', color: 'rgba(196,181,253,0.8)' }}
         >
-          <span>ðŸ“‹</span>
+          <span>📋</span>
           <span>En attente d&apos;un agent disponible</span>
         </div>
       </div>
@@ -323,7 +323,7 @@ function PendingTaskPanel({
   );
 }
 
-// â”€â”€ Task agent panel â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── Task agent panel ──────────────────────────────────────────
 
 function TaskPanel({
   agent,
@@ -345,7 +345,7 @@ function TaskPanel({
 
   return (
     <div className="flex flex-col flex-1 min-h-0">
-      {/* Phase status â€” fixed */}
+      {/* Phase status — fixed */}
       <div className="px-4 py-3 shrink-0">
         <p className="text-xs text-white/75 leading-relaxed">{phaseInfo.description}</p>
         {agent.currentSubtask && (
@@ -356,7 +356,7 @@ function TaskPanel({
         )}
       </div>
 
-      {/* Progress â€” fixed */}
+      {/* Progress — fixed */}
       {agent.progress !== undefined && (
         <div className="px-4 pb-3 shrink-0">
           <div className="flex justify-between text-[10px] text-white/40 font-mono mb-1.5">
@@ -367,10 +367,10 @@ function TaskPanel({
         </div>
       )}
 
-      {/* Live log stream â€” expands to fill remaining space */}
+      {/* Live log stream — expands to fill remaining space */}
       {taskId && <LogStream taskId={taskId} />}
 
-      {/* Actions â€” fixed */}
+      {/* Actions — fixed */}
       <div
         className="flex flex-wrap gap-1.5 px-4 pb-4 shrink-0"
         style={{ borderTop: '1px solid rgba(255,255,255,0.06)', paddingTop: '10px', marginTop: '2px' }}
@@ -391,7 +391,7 @@ function TaskPanel({
             onClick={onStopTask}
           >
             <Square className="h-3 w-3 mr-1" />
-            ArrÃªter
+            Arrêter
           </Button>
         )}
 
@@ -410,7 +410,7 @@ function TaskPanel({
   );
 }
 
-// â”€â”€ Terminal agent panel â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── Terminal agent panel ──────────────────────────────────────
 
 function TerminalPanel({
   agent,
@@ -455,7 +455,7 @@ function TerminalPanel({
 
         {agent.taskName && (
           <div className="mt-2 flex items-center gap-1.5 text-xs text-white/50">
-            <span>ðŸ“‹ TÃ¢che :</span>
+            <span>📋 Tâche :</span>
             <CodeChip text={agent.taskName} />
           </div>
         )}
@@ -464,17 +464,17 @@ function TerminalPanel({
           <div className="mt-2 flex flex-wrap gap-1.5 text-[10px] text-white/40 font-mono">
             {terminal.cwd && (
               <span className="flex items-center gap-1">
-                ðŸ“ <CodeChip text={terminal.cwd.split(/[\\/]/).slice(-2).join('/')} />
+                📁 <CodeChip text={terminal.cwd.split(/[\\/]/).slice(-2).join('/')} />
               </span>
             )}
             {terminal.claudeSessionId && (
               <span className="flex items-center gap-1">
-                ðŸ”‘ <CodeChip text={`${terminal.claudeSessionId.slice(0, 8)}â€¦`} />
+                🔑 <CodeChip text={`${terminal.claudeSessionId.slice(0, 8)}…`} />
               </span>
             )}
             {terminal.worktreeConfig && (
               <span className="flex items-center gap-1">
-                ðŸŒ¿ <CodeChip text={terminal.worktreeConfig.branchName} />
+                🌿 <CodeChip text={terminal.worktreeConfig.branchName} />
               </span>
             )}
           </div>
@@ -491,7 +491,7 @@ function TerminalPanel({
               value={command}
               onChange={(e) => setCommand(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && handleSend()}
-              placeholder={isWaiting ? "RÃ©ponds Ã  l'agentâ€¦" : "Donne un ordre au terminalâ€¦"}
+              placeholder={isWaiting ? "Réponds à l'agent…" : "Donne un ordre au terminal…"}
               className="flex-1 bg-white/5 border border-white/10 rounded-lg px-3 py-1.5 text-xs text-white placeholder:text-white/30 font-mono focus:outline-none focus:border-white/30"
             />
             <Button
@@ -506,7 +506,7 @@ function TerminalPanel({
           </div>
           {isWaiting && (
             <p className="text-[10px] text-white/30 mt-1 font-mono">
-              â†µ EntrÃ©e pour envoyer Â· TapÃ© directement dans le terminal
+              ↵ Entrée pour envoyer · Tapé directement dans le terminal
             </p>
           )}
         </div>
@@ -559,7 +559,7 @@ function TerminalPanel({
   );
 }
 
-// â”€â”€ Main component â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── Main component ────────────────────────────────────────────
 
 export interface AgentBubbleProps {
   readonly agent: PixelAgent;
@@ -661,25 +661,23 @@ export function AgentBubble({
       <div style={{ paddingLeft: arrowLeft, lineHeight: 0 }}>
         <div
           className="w-0 h-0 inline-block"
-          style={{
+          style={
             borderLeft: '10px solid transparent',
             borderRight: '10px solid transparent',
-            borderBottom: `10px solid ${color}60`,
+            borderBottom: `10px solid $color60`,
           }}
         />
       </div>
 
       <div
         className="rounded-2xl shadow-2xl border border-white/10 flex flex-col min-h-0 flex-1"
-        style={{
+        style={
           background: 'linear-gradient(135deg, #1A1A2E 0%, #16213E 100%)',
-          boxShadow: `0 0 0 2px ${color}40, 0 20px 60px rgba(0,0,0,0.5)`,
-        }}
+          boxShadow: `0 0 0 2px $color40, 0 20px 60px rgba(0,0,0,0.5)`,
       >
-        {/* Header */}
         <div
           className="flex items-center justify-between px-5 py-4 shrink-0"
-          style={{ borderBottom: `1px solid ${color}30`, background: `${color}15` }}
+          style=borderBottom: `1px solid ${color}30`, background: `$color15` }}
         >
           <div className="flex items-center gap-3 min-w-0">
             <span className="text-2xl shrink-0">{headerEmoji}</span>
@@ -702,7 +700,7 @@ export function AgentBubble({
           <div className="flex items-center gap-2 shrink-0 ml-3">
             <span
               className="text-sm font-mono font-semibold px-3 py-1 rounded-full"
-              style={{ background: `${color}20`, color, border: `1px solid ${color}50` }}
+              style={{ background: `$color20`, color, border: `1px solid $color50` }}
             >
               {headerLabel}
             </span>
@@ -711,12 +709,10 @@ export function AgentBubble({
               onClick={onClose}
               className="text-white/40 hover:text-white/80 transition-colors rounded-full w-7 h-7 flex items-center justify-center text-lg"
             >
-              Ã—
+              ×
             </button>
           </div>
         </div>
-
-        {/* Body â€” split by agent type */}
         <div className="flex flex-col flex-1 min-h-0">
           {bodyPanel}
         </div>
@@ -725,7 +721,7 @@ export function AgentBubble({
   );
 }
 
-// â”€â”€ Add Agent Button â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── Add Agent Button ──────────────────────────────────────────
 
 export function AddAgentButton({ onClick, disabled }: { readonly onClick: () => void; readonly disabled?: boolean }) {
   return (

@@ -221,7 +221,7 @@ export function SortableProjectTab({
               }}
               aria-label={t('projectTab.closeTabAriaLabel')}
             >
-              // biome-ignore lint/a11y/noSvgWithoutTitle: SVG is decorative, intentional 
+              {/* biome-ignore lint/a11y/noSvgWithoutTitle: SVG is decorative, intentional  */}
               <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
               </svg>

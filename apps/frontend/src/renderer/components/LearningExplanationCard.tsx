@@ -1,4 +1,4 @@
-﻿import { useState } from 'react';
+import { useState } from 'react';
 import { ChevronDown, ChevronUp, Lightbulb, Code, BookOpen, Layers, CheckCircle } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
@@ -22,11 +22,11 @@ const CATEGORY_ICONS = {
 };
 
 const CATEGORY_LABELS = {
-  tool_use: '🔧 Utilisation d\'outil',
-  decision: '🤔 Décision',
-  code: '💻 Code',
-  pattern: '🎨 Pattern de conception',
-  best_practice: '✨ Bonne pratique'
+  tool_use: '?? Utilisation d\'outil',
+  decision: '?? D�cision',
+  code: '?? Code',
+  pattern: '?? Pattern de conception',
+  best_practice: '? Bonne pratique'
 };
 
 const CATEGORY_COLORS = {
@@ -122,7 +122,7 @@ export function LearningExplanationCard({ explanation, defaultExpanded = false }
               </div>
               <div className="space-y-2">
                 {explanation.alternative_approaches.map((alt, idx) => (
-{/* biome-ignore lint/suspicious/noArrayIndexKey: no stable key available  */}
+                  // biome-ignore lint/suspicious/noArrayIndexKey: no stable key available
                   <div key={idx} className="bg-muted/50 p-3 rounded-md text-xs">
                     <div className="font-medium mb-1">{alt.name}</div>
                     {alt.description && (

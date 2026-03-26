@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   Play,
@@ -804,8 +804,7 @@ export const AgentReplayDashboard: React.FC<AgentReplayDashboardProps> = ({
             <div className="p-1">
               {filteredSteps.map((step) => (
                 // biome-ignore lint/a11y/noNoninteractiveElementInteractions: interactive handler is intentional
-                // biome-ignore lint/a11y/noStaticElementInteractions: interactive handler is intentional
-{/* biome-ignore lint/a11y/useKeyWithClickEvents: keyboard events handled elsewhere  */}
+{/* biome-ignore lint/a11y/useKeyWithClickEvents: keyboard events handled elsewhere */}
                 <div
                   key={step.id}
                   className={`p-2 rounded cursor-pointer transition-colors text-xs mb-0.5 ${
@@ -1011,7 +1010,7 @@ export const AgentReplayDashboard: React.FC<AgentReplayDashboardProps> = ({
                           </pre>
                         ) : (
                           <p className="text-xs text-muted-foreground">
-                            {diff.line_count_before} â†’ {diff.line_count_after} lines
+                            {diff.line_count_before} → {diff.line_count_after} lines
                           </p>
                         )}
                       </CardContent>
@@ -1067,7 +1066,7 @@ export const AgentReplayDashboard: React.FC<AgentReplayDashboardProps> = ({
                       <DollarSign className="h-4 w-4" /> {t('replay:tokenConsumption')}
                     </CardTitle>
                     <CardDescription className="text-xs">
-                      {t('replay:total', '{{tokens}} total â€¢ {{cost}}', { tokens: formatTokens(activeSession.total_tokens), cost: formatCost(activeSession.total_cost_usd) })}
+                      {t('replay:total', '{{tokens}} total • {{cost}}', { tokens: formatTokens(activeSession.total_tokens), cost: formatCost(activeSession.total_cost_usd) })}
                     </CardDescription>
                   </CardHeader>
                   <CardContent>

@@ -1,4 +1,4 @@
-﻿/**
+/**
  * Unit tests for Terminal file drop handling via useTerminalFileDrop hook
  *
  * Tests file drag-and-drop from FileTreeItem to insert file paths into terminal.
@@ -444,8 +444,8 @@ describe('useTerminalFileDrop Hook', () => {
         })
       );
 
-      const unicodePath = '/path/to/æ–‡ä»¶.ts';
-      const dragData = createFileReferenceDragData(unicodePath, 'æ–‡ä»¶.ts');
+      const unicodePath = '/path/to/文件.ts';
+      const dragData = createFileReferenceDragData(unicodePath, '文件.ts');
       const mockEvent = createMockDragEvent(dragData);
 
       act(() => {
@@ -463,8 +463,8 @@ describe('useTerminalFileDrop Hook', () => {
         })
       );
 
-      const unicodePath = '/path/to/æˆ‘çš„ æ–‡ä»¶.ts';
-      const dragData = createFileReferenceDragData(unicodePath, 'æˆ‘çš„ æ–‡ä»¶.ts');
+      const unicodePath = '/path/to/我的 文件.ts';
+      const dragData = createFileReferenceDragData(unicodePath, '我的 文件.ts');
       const mockEvent = createMockDragEvent(dragData);
 
       act(() => {
@@ -716,8 +716,7 @@ describe('Terminal File Drop - Component Integration', () => {
       });
 
     return (
-      // biome-ignore lint/a11y/noNoninteractiveElementInteractions: interactive handler is intentional
-{/* biome-ignore lint/a11y/noStaticElementInteractions: interactive handler is intentional  */}
+{/* biome-ignore lint/a11y/noStaticElementInteractions: interactive handler is intentional */}
       <div
         data-testid="drop-zone"
         onDragOver={handleNativeDragOver}
