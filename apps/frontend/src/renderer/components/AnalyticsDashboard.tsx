@@ -193,6 +193,50 @@ function StatusBar({ data }: { readonly data: Record<string, number> }) {
 }
 
 // ---------------------------------------------------------------------------
+// Helper functions
+// ---------------------------------------------------------------------------
+
+function formatDuration(seconds: number): string {
+  if (seconds < 60) {
+    return `${seconds.toFixed(0)}s`;
+  } else if (seconds < 3600) {
+    return `${(seconds / 60).toFixed(1)}m`;
+  } else {
+    return `${(seconds / 3600).toFixed(1)}h`;
+  }
+}
+
+function getTokensByProviderContent(sn: SnapshotData | null, cs: CostSummaryData | null, t: (key: string) => string) {
+  if (sn && Object.keys(sn.tokens_by_provider).length > 0) {
+    return (
+      <BreakdownList
+        data={sn.tokens_by_provider}
+        formatValue={(v) => formatTokens(v)}
+      />
+    );
+  } else if (cs) {
+    return (
+      <BreakdownList
+        data={cs.cost_by_provider}
+        formatValue={(_v) => formatTokens(cs.total_tokens)}
+      />
+    );
+  } else {
+    return <p className="text-xs text-muted-foreground">{t('status.noData')}</p>;
+  }
+}
+
+function getTrendColor(trendPct: number): string {
+  if (trendPct > 20) {
+    return 'text-red-500';
+  } else if (trendPct > 0) {
+    return 'text-amber-500';
+  } else {
+    return 'text-emerald-500';
+  }
+}
+
+// ---------------------------------------------------------------------------
 // Main component
 // ---------------------------------------------------------------------------
 
@@ -289,7 +333,7 @@ export function AnalyticsDashboard({ className, projectPath }: AnalyticsDashboar
 
   const trendPct = cs?.trend_pct ?? 0;
   const TrendIcon = trendPct >= 0 ? TrendingUp : TrendingDown;
-  const trendColor = trendPct > 20 ? 'text-red-500' : trendPct > 0 ? 'text-amber-500' : 'text-emerald-500';
+  const trendColor = getTrendColor(trendPct);
 
   return (
     <ScrollArea className={cn('h-full', className)}>
@@ -481,19 +525,7 @@ export function AnalyticsDashboard({ className, projectPath }: AnalyticsDashboar
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  {sn && Object.keys(sn.tokens_by_provider).length > 0 ? (
-                    <BreakdownList
-                      data={sn.tokens_by_provider}
-                      formatValue={(v) => formatTokens(v)}
-                    />
-                  ) : cs ? (
-                    <BreakdownList
-                      data={cs.cost_by_provider}
-                      formatValue={(_v) => formatTokens(cs.total_tokens)}
-                    />
-                  ) : (
-                    <p className="text-xs text-muted-foreground">{t('status.noData')}</p>
-                  )}
+                  {getTokensByProviderContent(sn, cs, t)}
                 </CardContent>
               </Card>
 
@@ -514,11 +546,7 @@ export function AnalyticsDashboard({ className, projectPath }: AnalyticsDashboar
                           <div key={complexity} className="flex items-center justify-between text-xs">
                             <span className="text-foreground capitalize font-medium">{complexity}</span>
                             <span className="text-muted-foreground">
-                              {avgSecs < 60
-                                ? `${avgSecs.toFixed(0)}s`
-                                : avgSecs < 3600
-                                  ? `${(avgSecs / 60).toFixed(1)}m`
-                                  : `${(avgSecs / 3600).toFixed(1)}h`}
+                              {formatDuration(avgSecs)}
                             </span>
                           </div>
                         ))}
