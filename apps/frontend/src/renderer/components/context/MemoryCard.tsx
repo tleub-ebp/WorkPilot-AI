@@ -207,8 +207,7 @@ export function MemoryCard({ memory }: MemoryCardProps) {
                 <SectionHeader icon={CheckCircle2} title="What Worked" count={parsed.what_worked.length} />
                 <ul className="space-y-0.5">
                   {parsed.what_worked.map((item, idx) => (
-                    // biome-ignore lint/suspicious/noArrayIndexKey: no stable key available
-                    <ListItem key={idx} variant="success">{item}</ListItem>
+                    <ListItem key={`worked-${idx}-${item.slice(0, 20)}`} variant="success">{item}</ListItem>
                   ))}
                 </ul>
               </div>
@@ -220,8 +219,7 @@ export function MemoryCard({ memory }: MemoryCardProps) {
                 <SectionHeader icon={XCircle} title="What Failed" count={parsed.what_failed.length} />
                 <ul className="space-y-0.5">
                   {parsed.what_failed.map((item, idx) => (
-                    // biome-ignore lint/suspicious/noArrayIndexKey: no stable key available
-                    <ListItem key={idx} variant="error">{item}</ListItem>
+                    <ListItem key={`failed-${idx}-${item.slice(0, 20)}`} variant="error">{item}</ListItem>
                   ))}
                 </ul>
               </div>
@@ -263,12 +261,10 @@ export function MemoryCard({ memory }: MemoryCardProps) {
                 />
                 <ul className="space-y-0.5">
                   {parsed.recommendations_for_next_session?.map((item, idx) => (
-                    // biome-ignore lint/suspicious/noArrayIndexKey: no stable key available
-                    <ListItem key={`rec-${idx}`}>{item}</ListItem>
+                    <ListItem key={`rec-${idx}-${item.slice(0, 20)}`}>{item}</ListItem>
                   ))}
                   {parsed.discoveries?.recommendations?.map((item, idx) => (
-                    // biome-ignore lint/suspicious/noArrayIndexKey: no stable key available
-                    <ListItem key={`disc-rec-${idx}`}>{item}</ListItem>
+                    <ListItem key={`disc-rec-${idx}-${item.slice(0, 20)}`}>{item}</ListItem>
                   ))}
                 </ul>
               </div>
@@ -284,8 +280,7 @@ export function MemoryCard({ memory }: MemoryCardProps) {
                       ? pattern
                       : (pattern?.pattern || pattern?.applies_to || JSON.stringify(pattern));
                     return text ? (
-                      // biome-ignore lint/suspicious/noArrayIndexKey: no stable key available
-                      <Badge key={idx} variant="secondary" className="text-xs">
+                      <Badge key={`pattern-${idx}-${text.slice(0, 20)}`} variant="secondary" className="text-xs">
                         {text}
                       </Badge>
                     ) : null;
@@ -304,8 +299,7 @@ export function MemoryCard({ memory }: MemoryCardProps) {
                       ? gotcha
                       : (gotcha?.gotcha || JSON.stringify(gotcha));
                     return text ? (
-                      // biome-ignore lint/suspicious/noArrayIndexKey: no stable key available
-                      <ListItem key={idx} variant="error">{text}</ListItem>
+                      <ListItem key={`gotcha-${idx}-${text.slice(0, 20)}`} variant="error">{text}</ListItem>
                     ) : null;
                   })}
                 </ul>
@@ -318,8 +312,7 @@ export function MemoryCard({ memory }: MemoryCardProps) {
                 <SectionHeader icon={FileCode} title="Changed Files" count={parsed.discoveries.changed_files.length} />
                 <div className="flex flex-wrap gap-1.5 pl-4">
                   {parsed.discoveries.changed_files.map((file, idx) => (
-                    // biome-ignore lint/suspicious/noArrayIndexKey: no stable key available
-                    <Badge key={idx} variant="outline" className="text-xs font-mono">
+                    <Badge key={`file-${idx}-${file.slice(0, 20)}`} variant="outline" className="text-xs font-mono">
                       {file}
                     </Badge>
                   ))}
@@ -333,8 +326,7 @@ export function MemoryCard({ memory }: MemoryCardProps) {
                 <SectionHeader icon={FileCode} title="File Insights" count={parsed.discoveries.file_insights.length} />
                 <div className="space-y-2 pl-4">
                   {parsed.discoveries.file_insights.map((insight, idx) => (
-                    // biome-ignore lint/suspicious/noArrayIndexKey: no stable key available
-                    <div key={idx} className="text-sm">
+                    <div key={`insight-${idx}-${insight.path?.slice(0, 20) || 'no-path'}`} className="text-sm">
                       {insight.path && (
                         <Badge variant="outline" className="text-xs font-mono mb-1">
                           {insight.path}
@@ -358,8 +350,7 @@ export function MemoryCard({ memory }: MemoryCardProps) {
                 <SectionHeader icon={CheckCircle2} title="Subtasks Completed" count={parsed.subtasks_completed.length} />
                 <div className="flex flex-wrap gap-1.5 pl-4">
                   {parsed.subtasks_completed.map((task, idx) => (
-                    // biome-ignore lint/suspicious/noArrayIndexKey: no stable key available
-                    <Badge key={idx} variant="secondary" className="text-xs font-mono">
+                    <Badge key={`task-${idx}-${task.slice(0, 20)}`} variant="secondary" className="text-xs font-mono">
                       {task}
                     </Badge>
                   ))}

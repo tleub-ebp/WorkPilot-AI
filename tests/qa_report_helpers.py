@@ -22,6 +22,10 @@ from unittest.mock import MagicMock
 _original_modules: dict[str, Any] = {}
 _mocked_module_names: list[str] = [
     "claude_agent_sdk",
+    "claude_agent_sdk.types",
+    "claude_agent_sdk._errors",
+    "claude_agent_sdk.client",
+    "claude_agent_sdk.query",
     "ui",
     "progress",
     "task_logger",
@@ -47,7 +51,15 @@ def setup_qa_report_mocks() -> None:
     mock_sdk.ClaudeSDKClient = MagicMock()
     mock_sdk.ClaudeAgentOptions = MagicMock()
     mock_sdk.ClaudeCodeOptions = MagicMock()
+    mock_sdk.__path__ = []  # mark as package so submodule imports work
     sys.modules["claude_agent_sdk"] = mock_sdk
+    # Register submodules so `from claude_agent_sdk.types import X` works
+    mock_types = MagicMock()
+    mock_types.ResultMessage = MagicMock()
+    sys.modules["claude_agent_sdk.types"] = mock_types
+    sys.modules["claude_agent_sdk._errors"] = MagicMock()
+    sys.modules["claude_agent_sdk.client"] = MagicMock()
+    sys.modules["claude_agent_sdk.query"] = MagicMock()
 
     # Mock UI module (used by progress)
     mock_ui = MagicMock()

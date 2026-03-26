@@ -836,9 +836,7 @@ class IntelligentContextCache:
                 del self._cache[key]
 
                 with sqlite3.connect(self.db_path) as conn:
-                    conn.execute(
-                        DELETE_CACHE_ENTRY_QUERY, (key,)
-                    )
+                    conn.execute(DELETE_CACHE_ENTRY_QUERY, (key,))
 
             logger.info(f"Optimized cache: removed {len(stale_keys)} stale entries")
 

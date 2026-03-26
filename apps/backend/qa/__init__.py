@@ -25,9 +25,21 @@ Module structure:
 
 # Auto-fix loop
 from .auto_fix_loop import (
-    DEFAULT_MAX_AUTO_FIX_ATTEMPTS,
+    AutoFixAttempt,
     AutoFixLoop,
+    AutoFixTestResult,
+    DEFAULT_MAX_AUTO_FIX_ATTEMPTS,
     run_auto_fix_loop,
+)
+
+# Auto-fix metrics
+from .auto_fix_metrics import (
+    AutoFixMetricsTracker,
+    AutoFixStats,
+    get_auto_fix_dashboard_data,
+    get_auto_fix_stats,
+    print_auto_fix_summary,
+    record_auto_fix_run,
 )
 
 # Configuration constants
@@ -86,6 +98,15 @@ __all__ = [
     # Auto-fix loop
     "run_auto_fix_loop",
     "AutoFixLoop",
+    "AutoFixAttempt",
+    "AutoFixTestResult",
+    # Auto-fix metrics
+    "AutoFixMetricsTracker",
+    "AutoFixStats",
+    "get_auto_fix_dashboard_data",
+    "get_auto_fix_stats",
+    "print_auto_fix_summary",
+    "record_auto_fix_run",
     # Criteria & status
     "load_implementation_plan",
     "save_implementation_plan",

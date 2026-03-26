@@ -14,6 +14,7 @@ import sys
 from pathlib import Path
 
 import pytest
+from qa.criteria import save_implementation_plan
 
 # Add tests directory to path for helper imports
 sys.path.insert(0, str(Path(__file__).parent))
@@ -104,7 +105,7 @@ class TestRecordIteration:
         assert history[0]["iteration"] == 1
         assert history[0]["status"] == "rejected"
         assert history[0]["issues"] == issues
-        assert history[0]["duration_seconds"] == 5.5
+        assert history[0]["duration_seconds"] == pytest.approx(5.5)
 
     def test_multiple_iterations(self, spec_with_plan: Path) -> None:
         """Test recording multiple iterations."""
@@ -157,7 +158,7 @@ class TestRecordIteration:
         record_iteration(spec_with_plan, 1, "rejected", [], 12.345678)
 
         history = get_iteration_history(spec_with_plan)
-        assert history[0]["duration_seconds"] == 12.35
+        assert history[0]["duration_seconds"] == pytest.approx(12.35)
 
     def test_includes_timestamp(self, spec_with_plan: Path) -> None:
         """Test that timestamp is included in record."""

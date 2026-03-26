@@ -23,7 +23,7 @@
       "updatedAt": "2026-03-25T14:51:39.218Z"
     },
     {
-      "id": "5670aa29-a212-44a1-a8ef-9b334d81e7f0",
+      "id": "43ab8ee8-08d4-477e-892c-547bcb3f5652",
       "name": "test-project",
       "path": "C:\\Users\\thomas.leberre\\Repositories\\Auto-Claude_EBP\\tmp\\ipc-handlers-test\\test-project",
       "autoBuildPath": "",
@@ -41,8 +41,8 @@
         "graphitiMcpUrl": "http://localhost:9000/mcp/",
         "useClaudeMd": true
       },
-      "createdAt": "2026-03-25T17:44:28.885Z",
-      "updatedAt": "2026-03-25T17:44:30.508Z"
+      "createdAt": "2026-03-26T05:14:48.338Z",
+      "updatedAt": "2026-03-26T05:15:03.025Z"
     }
   ],
   "settings": {}
