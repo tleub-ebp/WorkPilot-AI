@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import type { TeamSyncStatus, TeamSyncPeer, TeamSyncEpisode } from '../../../preload/api/modules/team-sync-api';
 
 interface Props {
-  projectDir: string;
+  readonly projectDir: string;
 }
 
 type SyncMode = 'directory' | 'http';
@@ -18,7 +18,7 @@ const EPISODE_TYPE_COLORS: Record<string, string> = {
   historical_context: 'text-gray-400',
 };
 
-function EpisodeTypeBadge({ type }: { type: string }) {
+function EpisodeTypeBadge({ type }: Readonly<{ type: string }>) {
   const { t } = useTranslation('teamSync');
   const color = EPISODE_TYPE_COLORS[type] ?? 'text-gray-400';
   return (
@@ -28,7 +28,7 @@ function EpisodeTypeBadge({ type }: { type: string }) {
   );
 }
 
-function StatCard({ label, value }: { label: string; value: number | string }) {
+function StatCard({ label, value }: Readonly<{ label: string; value: number | string }>) {
   return (
     <div className="flex flex-col items-center rounded-lg bg-white/5 border border-white/10 px-5 py-3 min-w-[110px]">
       <span className="text-2xl font-bold text-white">{value}</span>
@@ -37,9 +37,9 @@ function StatCard({ label, value }: { label: string; value: number | string }) {
   );
 }
 
-export function TeamSyncPanel({ projectDir }: Props) {
+export function TeamSyncPanel({ projectDir }: Readonly<Props>) {
   const { t } = useTranslation('teamSync');
-  const api = window.electronAPI;
+  const api = globalThis.electronAPI;
 
   const [status, setStatus] = useState<TeamSyncStatus | null>(null);
   const [peers, setPeers] = useState<TeamSyncPeer[]>([]);
@@ -108,7 +108,7 @@ export function TeamSyncPanel({ projectDir }: Props) {
       const res = await api.teamSyncPush(projectDir);
       if (res.success) {
         // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
-        showFeedback('success', t('feedback.pushSuccess', { count: (res.data as any)?.episode_count ?? '?' }));
+        showFeedback('success', t('feedback.pushSuccess', { count: res.data?.episode_count ?? '?' }));
         loadStatus();
         loadPeers();
       } else {
@@ -124,7 +124,7 @@ export function TeamSyncPanel({ projectDir }: Props) {
     try {
       const res = await api.teamSyncPull(projectDir);
       // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
-      const data = res.data as any;
+      const data = res.data;
       if (res.success) {
         const count = data?.imported ?? 0;
         const peerCount = (data?.peers ?? []).length;
@@ -442,9 +442,8 @@ export function TeamSyncPanel({ projectDir }: Props) {
                     {peerEpisodes.length === 0 ? (
                       <p className="text-xs text-white/30 italic">{t('episodes.empty')}</p>
                     ) : (
-                      peerEpisodes.slice(0, 50).map((ep, i) => (
-{/* biome-ignore lint/suspicious/noArrayIndexKey: no stable key available */}
-                        <div key={i} className="flex flex-col gap-1 bg-white/5 rounded-md px-3 py-2">
+                      peerEpisodes.slice(0, 50).map((ep) => (
+                        <div key={`${ep.type}-${ep.spec}-${ep.timestamp}`} className="flex flex-col gap-1 bg-white/5 rounded-md px-3 py-2">
                           <div className="flex items-center gap-2">
                             <EpisodeTypeBadge type={ep.type} />
                             <span className="text-xs text-white/30">{ep.spec}</span>

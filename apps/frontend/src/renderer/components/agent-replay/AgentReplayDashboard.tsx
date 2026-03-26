@@ -804,7 +804,7 @@ export const AgentReplayDashboard: React.FC<AgentReplayDashboardProps> = ({
             <div className="p-1">
               {filteredSteps.map((step) => (
                 // biome-ignore lint/a11y/noNoninteractiveElementInteractions: interactive handler is intentional
-{/* biome-ignore lint/a11y/useKeyWithClickEvents: keyboard events handled elsewhere */}
+                // biome-ignore lint/a11y/useKeyWithClickEvents: keyboard events handled elsewhere
                 <div
                   key={step.id}
                   className={`p-2 rounded cursor-pointer transition-colors text-xs mb-0.5 ${

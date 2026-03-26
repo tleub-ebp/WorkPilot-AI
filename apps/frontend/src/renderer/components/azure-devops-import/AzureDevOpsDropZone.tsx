@@ -81,7 +81,7 @@ export function AzureDevOpsDropZone({
   const hasItems = draggedWorkItems.length > 0;
 
   return (
-{/* biome-ignore lint/a11y/noNoninteractiveElementInteractions: interactive handler is intentional */}
+    // biome-ignore lint/a11y/noNoninteractiveElementInteractions: interactive handler is intentional
     <section
       className={cn('relative flex-1', className)}
       onDragOver={handleDragOver}

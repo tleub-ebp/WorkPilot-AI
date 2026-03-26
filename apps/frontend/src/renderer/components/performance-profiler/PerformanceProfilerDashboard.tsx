@@ -188,7 +188,7 @@ export function PerformanceProfilerDashboard(): React.ReactElement {
                   <h2 className="text-sm font-semibold mb-2">Benchmarks</h2>
                   <div className="grid grid-cols-2 gap-2">
                     {result.report.benchmarks.map((b, i) => (
-{/* biome-ignore lint/suspicious/noArrayIndexKey: no stable key available */}
+                      // biome-ignore lint/suspicious/noArrayIndexKey: no stable key available
                       <div key={i} className="bg-[var(--bg-secondary)] rounded-lg p-3">
                         <div className="text-xs text-[var(--text-secondary)] mb-1">{b.name}</div>
                         <div className="text-sm font-mono">
@@ -243,7 +243,7 @@ export function PerformanceProfilerDashboard(): React.ReactElement {
                   </h2>
                   <div className="flex flex-col gap-3">
                     {result.report.suggestions.map((s, i) => (
-{/* biome-ignore lint/suspicious/noArrayIndexKey: no stable key available */}
+                      // biome-ignore lint/suspicious/noArrayIndexKey: no stable key available
                       <div key={i} className="bg-[var(--bg-secondary)] rounded-lg p-3">
                         <div className="flex items-start justify-between gap-2 mb-1">
                           <div className="font-medium text-sm">{s.title}</div>

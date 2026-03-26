@@ -5,6 +5,7 @@ import { Card } from '../ui/card';
 import { Progress } from '../ui/progress';
 import { ROADMAP_PRIORITY_COLORS } from '../../../shared/constants';
 import type { PhaseCardProps } from './types';
+import type { RoadmapFeature } from '../../../shared/types';
 
 export function PhaseCard({
   phase,
@@ -13,22 +14,65 @@ export function PhaseCard({
   onFeatureSelect,
   onConvertToSpec,
   onGoToTask,
-}: PhaseCardProps) {
+}: Readonly<PhaseCardProps>) {
   const completedCount = features.filter((f) => f.status === 'done').length;
   const progress = features.length > 0 ? (completedCount / features.length) * 100 : 0;
+
+  const getStatusClasses = () => {
+    if (phase.status === 'completed') {
+      return 'bg-success/10 text-success';
+    }
+    if (phase.status === 'in_progress') {
+      return 'bg-primary/10 text-primary';
+    }
+    return 'bg-muted text-muted-foreground';
+  };
+
+  const statusClasses = getStatusClasses();
+
+  const getActionButton = (feature: RoadmapFeature) => {
+    if (feature.status === 'done') {
+      return <CheckCircle2 className="h-4 w-4 text-success shrink-0" />;
+    }
+    if (feature.linkedSpecId) {
+      return (
+        <Button
+          variant="ghost"
+          size="sm"
+          className="h-6 px-2"
+          onClick={(e) => {
+            e.stopPropagation();
+            // biome-ignore lint/style/noNonNullAssertion: value is guaranteed by context
+            onGoToTask(feature.linkedSpecId!);
+          }}
+        >
+          <ExternalLink className="h-3 w-3 mr-1" />
+          View Task
+        </Button>
+      );
+    }
+    return (
+      <Button
+        variant="ghost"
+        size="sm"
+        className="h-6 px-2 shrink-0"
+        onClick={(e) => {
+          e.stopPropagation();
+          onConvertToSpec(feature);
+        }}
+      >
+        <Play className="h-3 w-3 mr-1" />
+        Build
+      </Button>
+    );
+  };
 
   return (
     <Card className="p-4">
       <div className="flex items-start justify-between mb-3">
         <div className="flex items-center gap-3">
           <div
-            className={`w-8 h-8 rounded-full flex items-center justify-center ${
-              phase.status === 'completed'
-                ? 'bg-success/10 text-success'
-                : phase.status === 'in_progress'
-                ? 'bg-primary/10 text-primary'
-                : 'bg-muted text-muted-foreground'
-            }`}
+            className={`w-8 h-8 rounded-full flex items-center justify-center ${statusClasses}`}
           >
             {phase.status === 'completed' ? (
               <CheckCircle2 className="h-4 w-4" />
@@ -88,7 +132,7 @@ export function PhaseCard({
         <div className="grid gap-2">
           {features.slice(0, 5).map((feature) => (
             // biome-ignore lint/a11y/noNoninteractiveElementInteractions: interactive handler is intentional
-{/* biome-ignore lint/a11y/useKeyWithClickEvents: keyboard events handled elsewhere */}
+            // biome-ignore lint/a11y/useKeyWithClickEvents: keyboard events handled elsewhere
             <div
               key={feature.id}
               className="flex items-center justify-between p-2 rounded-md bg-muted/50 hover:bg-muted cursor-pointer transition-colors"
@@ -103,39 +147,10 @@ export function PhaseCard({
                 </Badge>
                 <span className="text-sm truncate">{feature.title}</span>
                 {feature.competitorInsightIds && feature.competitorInsightIds.length > 0 && (
-                  <TrendingUp className="h-3 w-3 text-primary flex-shrink-0" />
+                  <TrendingUp className="h-3 w-3 text-primary shrink-0" />
                 )}
               </div>
-              {feature.status === 'done' ? (
-                <CheckCircle2 className="h-4 w-4 text-success flex-shrink-0" />
-              ) : feature.linkedSpecId ? (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="h-6 px-2"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    // biome-ignore lint/style/noNonNullAssertion: value is guaranteed by context
-                    onGoToTask(feature.linkedSpecId!);
-                  }}
-                >
-                  <ExternalLink className="h-3 w-3 mr-1" />
-                  View Task
-                </Button>
-              ) : (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="h-6 px-2 flex-shrink-0"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onConvertToSpec(feature);
-                  }}
-                >
-                  <Play className="h-3 w-3 mr-1" />
-                  Build
-                </Button>
-              )}
+              {getActionButton(feature)}
             </div>
           ))}
           {features.length > 5 && (
@@ -148,6 +163,3 @@ export function PhaseCard({
     </Card>
   );
 }
-
-
-

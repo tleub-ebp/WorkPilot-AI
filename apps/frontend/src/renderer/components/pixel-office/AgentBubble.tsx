@@ -647,7 +647,7 @@ export function AgentBubble({
   })();
 
   return (
-{/* biome-ignore lint/a11y/noNoninteractiveElementInteractions: bubble captures clicks to prevent backdrop close */}
+    // biome-ignore lint/a11y/noNoninteractiveElementInteractions: bubble captures clicks to prevent backdrop close
     <div
       ref={bubbleRef}
       role="dialog"
@@ -661,23 +661,24 @@ export function AgentBubble({
       <div style={{ paddingLeft: arrowLeft, lineHeight: 0 }}>
         <div
           className="w-0 h-0 inline-block"
-          style={
+          style={{
             borderLeft: '10px solid transparent',
             borderRight: '10px solid transparent',
-            borderBottom: `10px solid $color60`,
+            borderBottom: `10px solid ${color}60`,
           }}
         />
       </div>
 
       <div
         className="rounded-2xl shadow-2xl border border-white/10 flex flex-col min-h-0 flex-1"
-        style={
+        style={{
           background: 'linear-gradient(135deg, #1A1A2E 0%, #16213E 100%)',
-          boxShadow: `0 0 0 2px $color40, 0 20px 60px rgba(0,0,0,0.5)`,
+          boxShadow: `0 0 0 2px ${color}40, 0 20px 60px rgba(0,0,0,0.5)`,
+        }}
       >
         <div
           className="flex items-center justify-between px-5 py-4 shrink-0"
-          style=borderBottom: `1px solid ${color}30`, background: `$color15` }}
+          style={{ borderBottom: `1px solid ${color}30`, background: `${color}15` }}
         >
           <div className="flex items-center gap-3 min-w-0">
             <span className="text-2xl shrink-0">{headerEmoji}</span>
@@ -700,7 +701,7 @@ export function AgentBubble({
           <div className="flex items-center gap-2 shrink-0 ml-3">
             <span
               className="text-sm font-mono font-semibold px-3 py-1 rounded-full"
-              style={{ background: `$color20`, color, border: `1px solid $color50` }}
+              style={{ background: `${color}20`, color: color, border: `1px solid ${color}50` }}
             >
               {headerLabel}
             </span>
