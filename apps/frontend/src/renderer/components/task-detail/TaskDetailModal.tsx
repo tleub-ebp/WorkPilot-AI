@@ -36,24 +36,22 @@ import { useProjectStore } from '../../stores/project-store';
 import { TASK_STATUS_LABELS } from '../../../shared/constants';
 import { TaskEditDialog } from '../TaskEditDialog';
 import { useTaskDetail } from './hooks/useTaskDetail';
-import { TaskMetadata } from './TaskMetadata';
+import { TaskMetadata as TaskMetadataComponent } from './TaskMetadata';
 import { TaskWarnings } from './TaskWarnings';
 import { TaskSubtasks } from './TaskSubtasks';
 import { TaskLogs } from './TaskLogs';
 import { TaskFiles } from './TaskFiles';
 import { TaskReview } from './TaskReview';
 import { StreamingSessionButton } from '../streaming/StreamingSessionButton';
-import type { Task, WorktreeCreatePROptions } from '../../../shared/types';
+import type { Task, WorktreeCreatePROptions, TaskMetadata } from '../../../shared/types';
 
 interface TaskDetailModalProps {
   readonly open: boolean;
   readonly task: Task | null;
   readonly onOpenChange: (open: boolean) => void;
-  readonly onSwitchToTerminals?: () => void;
-  readonly onOpenInbuiltTerminal?: (id: string, cwd: string) => void;
 }
 
-const renderTaskStatusBadges = (task: Task, state: any, t: (key: string) => string, getStatusBadgeVariant: (status: string, isStuck: boolean) => "success" | "destructive" | "warning" | "default" | "purple" | "info" | "secondary" | "outline" | "muted" | null | undefined) => {
+const renderTaskStatusBadges = (task: Task, state: ReturnType<typeof import('./hooks/useTaskDetail').useTaskDetail>, t: (key: string) => string, getStatusBadgeVariant: (status: string, isStuck: boolean) => "success" | "destructive" | "warning" | "default" | "purple" | "info" | "secondary" | "outline" | "muted" | null | undefined) => {
   if (state.isStuck) {
     return (
       <Badge variant="warning" className="text-xs flex items-center gap-1 animate-pulse">
@@ -118,7 +116,7 @@ const getReviewReasonBadgeVariant = (reviewReason: string): 'success' | 'destruc
   }
 };
 
-export function TaskDetailModal({ open, task, onOpenChange, onSwitchToTerminals, onOpenInbuiltTerminal }: TaskDetailModalProps) {
+export function TaskDetailModal({ open, task, onOpenChange }: TaskDetailModalProps) {
   // Don't render anything if no task
   if (!task) {
     return null;
@@ -141,7 +139,7 @@ const isFilesTabEnabled = () => {
 };
 
 // Custom hook for task handlers
-function useTaskDetailHandlers(task: Task, state: any, onOpenChange: (open: boolean) => void) {
+function useTaskDetailHandlers(task: Task, state: ReturnType<typeof import('./hooks/useTaskDetail').useTaskDetail>, onOpenChange: (open: boolean) => void) {
   const { t } = useTranslation(['tasks']);
   const { toast } = useToast();
   const activeProject = useProjectStore(s => s.getActiveProject());
@@ -166,7 +164,7 @@ function useTaskDetailHandlers(task: Task, state: any, onOpenChange: (open: bool
     }
     
     const projectProvider = activeProject?.settings?.provider;
-    const taskProvider = (task.metadata as any)?.provider;
+    const taskProvider = (task.metadata as TaskMetadata)?.provider;
     if (projectProvider && taskProvider && projectProvider !== taskProvider) {
       toast({
         title: t('tasks:providerSwitch.title'),
@@ -564,7 +562,7 @@ function TaskDetailModalContent({ open, task, onOpenChange, onCloseTask }: { rea
                   <ScrollArea className="h-full">
                     <div className="p-5 space-y-5 overflow-x-hidden max-w-full">
                       {/* Metadata */}
-                      <TaskMetadata task={task} />
+                      <TaskMetadataComponent task={task} />
 
                       {/* Human Review Section */}
                       {state.needsReview && (

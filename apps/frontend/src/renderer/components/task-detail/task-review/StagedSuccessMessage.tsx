@@ -4,8 +4,8 @@ import { Button } from '../../ui/button';
 import { Textarea } from '../../ui/textarea';
 
 interface StagedSuccessMessageProps {
-  stagedSuccess: string;
-  suggestedCommitMessage?: string;
+  readonly stagedSuccess: string;
+  readonly suggestedCommitMessage?: string;
 }
 
 /**

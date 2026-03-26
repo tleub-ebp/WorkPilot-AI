@@ -6,7 +6,7 @@ import type { Task, WorktreeCreatePROptions } from '../../../shared/types';
 
 interface TaskDetailHandlersProps {
   readonly task: Task;
-  readonly state: any; // TODO: Type this properly from useTaskDetail
+  readonly state: ReturnType<typeof import('./hooks/useTaskDetail').useTaskDetail>;
   readonly onOpenChange: (open: boolean) => void;
 }
 
