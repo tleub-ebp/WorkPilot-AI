@@ -14,12 +14,11 @@ const GITLAB_ISSUE_STATE_LABELS: Record<string, string> = {
   closed: 'Closed'
 };
 
-export function IssueListItem({ issue, isSelected, onClick, onInvestigate }: IssueListItemProps) {
+export function IssueListItem(props: Readonly<IssueListItemProps>) {
+  const { issue, isSelected, onClick, onInvestigate } = props;
   return (
-    <div
-      // biome-ignore lint/a11y/useSemanticElements: custom element maintains accessibility
-      // biome-ignore lint/a11y/useSemanticElements: intentional
-      role="button"
+    // biome-ignore lint/a11y/useSemanticElements: custom element maintains accessibility
+    <div role="button"
       tabIndex={0}
       className={`group p-3 rounded-lg cursor-pointer transition-colors ${
         isSelected

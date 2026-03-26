@@ -4,9 +4,9 @@
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { existsSync, readdirSync } from 'fs';
-import os from 'os';
-import { execFileSync } from 'child_process';
+import { existsSync, readdirSync } from 'node:fs';
+import os from 'node:os';
+import { execFileSync } from 'node:child_process';
 import {
   getToolInfo,
   getToolPathAsync,
@@ -23,7 +23,7 @@ import {
 import { findExecutable, findExecutableAsync } from '../env-utils';
 
 type SpawnOptions = Parameters<(typeof import('../env-utils'))['getSpawnOptions']>[1];
-type MockDirent = import('fs').Dirent<import('node:buffer').NonSharedBuffer>;
+type MockDirent = import('node:fs').Dirent<import('node:buffer').NonSharedBuffer>;
 
 const createDirent = (name: string, isDir: boolean): MockDirent =>
   ({
@@ -46,69 +46,69 @@ vi.mock('electron', () => ({
   }
 }));
 
-// Mock os module
-vi.mock('os', () => ({
-  default: {
-    homedir: vi.fn(() => '/mock/home')
-  }
-}));
-
-// Mock fs module - need to mock both sync and promises
-vi.mock('fs', () => ({
-  existsSync: vi.fn(),
-  readdirSync: vi.fn(),
-  promises: {}
-}));
-
-// Mock child_process for execFileSync, execFile, execSync, and exec (used in validation)
-// execFile and exec need to be promisify-compatible
-// IMPORTANT: execSync and execFileSync share the same mock so tests that set one will affect both
-// This is because validateClaude() uses execSync for .cmd files and execFileSync for others
-vi.mock('child_process', () => {
-  // Shared mock for sync execution - both execFileSync and execSync use this
-  // so when tests call vi.mocked(execFileSync).mockReturnValue(), it affects execSync too
+// Shared mock functions — hoisted so they can be used in both bare and node: prefix mocks
+const {
+  mockHomedir,
+  mockExistsSync,
+  mockReaddirSync,
+  mockExecFileSync,
+  mockExecFile,
+  mockExec,
+} = vi.hoisted(() => {
+  // IMPORTANT: execSync and execFileSync share the same mock so tests that set one will affect both
+  // This is because validateClaude() uses execSync for .cmd files and execFileSync for others
   const sharedSyncMock = vi.fn();
 
-const mockExecFile = vi.fn((_cmd: unknown, _args: unknown, _options: unknown, callback: unknown) => {
-    // Return a minimal ChildProcess-like object
-    const childProcess = {
-      stdout: { on: vi.fn() },
-      stderr: { on: vi.fn() },
-      on: vi.fn()
-    };
-
-    // If callback is provided, call it asynchronously
+  const mockExecFile = vi.fn((_cmd: unknown, _args: unknown, _options: unknown, callback: unknown) => {
+    const childProcess = { stdout: { on: vi.fn() }, stderr: { on: vi.fn() }, on: vi.fn() };
     if (typeof callback === 'function') {
       const cb = callback as (error: Error | null, stdout: string, stderr: string) => void;
       setImmediate(() => cb(null, 'claude-code version 1.0.0\n', ''));
     }
-
-    return childProcess as unknown as import('child_process').ChildProcess;
+    return childProcess;
   });
 
   const mockExec = vi.fn((_cmd: unknown, _options: unknown, callback: unknown) => {
-    // Return a minimal ChildProcess-like object
-    const childProcess = {
-      stdout: { on: vi.fn() },
-      stderr: { on: vi.fn() },
-      on: vi.fn()
-    };
-
-    // If callback is provided, call it asynchronously
+    const childProcess = { stdout: { on: vi.fn() }, stderr: { on: vi.fn() }, on: vi.fn() };
     if (typeof callback === 'function') {
       const cb = callback as (error: Error | null, stdout: string, stderr: string) => void;
       setImmediate(() => cb(null, 'claude-code version 1.0.0\n', ''));
     }
-
-    return childProcess as unknown as import('child_process').ChildProcess;
+    return childProcess;
   });
 
   return {
-    execFileSync: sharedSyncMock,
-    execFile: mockExecFile,
-    execSync: sharedSyncMock,  // Share with execFileSync so tests work for both
-    exec: mockExec
+    mockHomedir: vi.fn(() => '/mock/home'),
+    mockExistsSync: vi.fn(),
+    mockReaddirSync: vi.fn(),
+    mockExecFileSync: sharedSyncMock,
+    mockExecFile,
+    mockExec,
   };
+});
+
+// Mock os module — both bare and node: prefixed (cli-tool-manager.ts uses 'os', test imports 'node:os')
+vi.mock('os', () => ({ default: { homedir: mockHomedir } }));
+vi.mock('node:os', () => ({ default: { homedir: mockHomedir } }));
+
+// Mock fs module — both bare and node: prefixed
+vi.mock('fs', () => {
+  const mod = { existsSync: mockExistsSync, readdirSync: mockReaddirSync, promises: {} };
+  return { ...mod, default: mod };
+});
+vi.mock('node:fs', () => {
+  const mod = { existsSync: mockExistsSync, readdirSync: mockReaddirSync, promises: {} };
+  return { ...mod, default: mod };
+});
+
+// Mock child_process — both bare and node: prefixed
+vi.mock('child_process', () => {
+  const mod = { execFileSync: mockExecFileSync, execFile: mockExecFile, execSync: mockExecFileSync, exec: mockExec };
+  return { ...mod, default: mod };
+});
+vi.mock('node:child_process', () => {
+  const mod = { execFileSync: mockExecFileSync, execFile: mockExecFile, execSync: mockExecFileSync, exec: mockExec };
+  return { ...mod, default: mod };
 });
 
 // Mock env-utils to avoid PATH augmentation complexity
@@ -194,11 +194,11 @@ describe('cli-tool-manager - Claude CLI NVM detection', () => {
       vi.mocked(existsSync).mockImplementation((filePath) => {
         const pathStr = String(filePath);
         // NVM versions directory exists
-        if (pathStr.includes('.nvm/versions/node') || pathStr.includes('.nvm\\versions\\node')) {
+        if (pathStr.includes(String.raw`.nvm/versions/node`) || pathStr.includes(String.raw`.nvm\versions\node`)) {
           return true;
         }
         // Claude CLI exists in v22.17.0
-        if (pathStr.includes('v22.17.0/bin/claude') || pathStr.includes('v22.17.0\\bin\\claude')) {
+        if (pathStr.includes(String.raw`v22.17.0/bin/claude`) || pathStr.includes(String.raw`v22.17.0\bin\claude`)) {
           return true;
         }
         return false;
@@ -232,7 +232,7 @@ describe('cli-tool-manager - Claude CLI NVM detection', () => {
         writable: true
       });
 
-      vi.mocked(os.homedir).mockReturnValue('C:\\Users\\test');
+      vi.mocked(os.homedir).mockReturnValue(String.raw`C:\Users\test`);
       vi.mocked(existsSync).mockReturnValue(false);
       vi.mocked(readdirSync).mockReturnValue([]);
 
@@ -323,9 +323,9 @@ describe('cli-tool-manager - Claude CLI NVM detection', () => {
 
       vi.mocked(existsSync).mockImplementation((filePath) => {
         const pathStr = String(filePath);
-        if (pathStr.includes('.nvm/versions/node') || pathStr.includes('.nvm\\versions\\node')) return true;
+        if (pathStr.includes(String.raw`.nvm/versions/node`) || pathStr.includes(String.raw`.nvm\versions\node`)) return true;
         // Claude exists in all versions
-        if (pathStr.includes('/bin/claude') || pathStr.includes('\\bin\\claude')) return true;
+        if (pathStr.includes('/bin/claude') || pathStr.includes(String.raw`\bin\claude`)) return true;
         return false;
       });
 
@@ -352,7 +352,7 @@ describe('cli-tool-manager - Claude CLI NVM detection', () => {
         writable: true
       });
 
-      vi.mocked(os.homedir).mockReturnValue('C:\\Users\\test');
+      vi.mocked(os.homedir).mockReturnValue(String.raw`C:\Users\test`);
 
       vi.mocked(existsSync).mockImplementation((filePath) => {
         const pathStr = String(filePath);
@@ -380,11 +380,9 @@ describe('cli-tool-manager - Claude CLI NVM detection', () => {
         writable: true
       });
 
-      vi.mocked(os.homedir).mockReturnValue('C:\\Users\\test');
+      vi.mocked(os.homedir).mockReturnValue(String.raw`C:\Users\test`);
       vi.mocked(findExecutable).mockReturnValue(null);
-      vi.mocked(findWindowsExecutableViaWhere).mockReturnValue(
-        'D:\\Tools\\claude.cmd'
-      );
+      vi.mocked(findWindowsExecutableViaWhere).mockReturnValue(String.raw`D:\Tools\claude.cmd`);
       vi.mocked(isSecurePath).mockReturnValueOnce(false);
 
       vi.mocked(existsSync).mockImplementation((filePath) => {
@@ -400,7 +398,7 @@ describe('cli-tool-manager - Claude CLI NVM detection', () => {
       expect(result.found).toBe(false);
       expect(result.source).toBe('fallback');
       expect(execFileSync).not.toHaveBeenCalled();
-      expect(isSecurePath).toHaveBeenCalledWith('D:\\Tools\\claude.cmd');
+      expect(isSecurePath).toHaveBeenCalledWith(String.raw`D:\Tools\claude.cmd`);
     });
 
     it('should detect Claude CLI in Unix .local/bin path', () => {
@@ -408,7 +406,7 @@ describe('cli-tool-manager - Claude CLI NVM detection', () => {
 
       vi.mocked(existsSync).mockImplementation((filePath) => {
         const pathStr = String(filePath);
-        if (pathStr.includes('.local/bin/claude') || pathStr.includes('.local\\bin\\claude')) {
+        if (pathStr.includes('.local/bin/claude') || pathStr.includes(String.raw`.local\bin\claude`)) {
           return true;
         }
         return false;
@@ -460,7 +458,7 @@ describe('cli-tool-manager - Helper Functions', () => {
         writable: true
       });
 
-      const paths = getClaudeDetectionPaths('C:\\Users\\test');
+      const paths = getClaudeDetectionPaths(String.raw`C:\Users\test`);
 
       // Windows paths should include AppData and Program Files
       expect(paths.platformPaths.some(p => p.includes('AppData'))).toBe(true);
@@ -606,15 +604,13 @@ describe('cli-tool-manager - Claude CLI Windows where.exe detection', () => {
   });
 
   it('should detect Claude CLI via where.exe when not in PATH', () => {
-    vi.mocked(os.homedir).mockReturnValue('C:\\Users\\test');
+    vi.mocked(os.homedir).mockReturnValue(String.raw`C:\Users\test`);
 
     // Mock findExecutable returns null (not in PATH)
     vi.mocked(findExecutable).mockReturnValue(null);
 
     // Mock where.exe finds it in nvm-windows location
-    vi.mocked(findWindowsExecutableViaWhere).mockReturnValue(
-      'D:\\Program Files\\nvm4w\\nodejs\\claude.cmd'
-    );
+    vi.mocked(findWindowsExecutableViaWhere).mockReturnValue(String.raw`D:\Program Files\nvm4w\nodejs\claude.cmd`);
 
     // Mock file system checks
     vi.mocked(existsSync).mockImplementation((filePath) => {
@@ -655,13 +651,11 @@ describe('cli-tool-manager - Claude CLI Windows where.exe detection', () => {
   });
 
   it('should validate Claude CLI before returning where.exe path', () => {
-    vi.mocked(os.homedir).mockReturnValue('C:\\Users\\test');
+    vi.mocked(os.homedir).mockReturnValue(String.raw`C:\Users\test`);
 
     vi.mocked(findExecutable).mockReturnValue(null);
 
-    vi.mocked(findWindowsExecutableViaWhere).mockReturnValue(
-      'D:\\Tools\\claude.cmd'
-    );
+    vi.mocked(findWindowsExecutableViaWhere).mockReturnValue(String.raw`D:\Tools\claude.cmd`);
 
     // Mock file system to return false for all paths except where.exe result
     vi.mocked(existsSync).mockImplementation((filePath) => {
@@ -685,7 +679,7 @@ describe('cli-tool-manager - Claude CLI Windows where.exe detection', () => {
   });
 
   it('should fallback to platform paths if where.exe fails', () => {
-    vi.mocked(os.homedir).mockReturnValue('C:\\Users\\test');
+    vi.mocked(os.homedir).mockReturnValue(String.raw`C:\Users\test`);
 
     vi.mocked(findExecutable).mockReturnValue(null);
 
@@ -711,14 +705,12 @@ describe('cli-tool-manager - Claude CLI Windows where.exe detection', () => {
   });
 
   it('should prefer .cmd/.exe paths when where.exe returns multiple results', () => {
-    vi.mocked(os.homedir).mockReturnValue('C:\\Users\\test');
+    vi.mocked(os.homedir).mockReturnValue(String.raw`C:\Users\test`);
 
     vi.mocked(findExecutable).mockReturnValue(null);
 
     // Simulate where.exe returning path with .cmd extension (preferred over no extension)
-    vi.mocked(findWindowsExecutableViaWhere).mockReturnValue(
-      'D:\\Program Files\\nvm4w\\nodejs\\claude.cmd'
-    );
+    vi.mocked(findWindowsExecutableViaWhere).mockReturnValue(String.raw`D:\Program Files\nvm4w\nodejs\claude.cmd`);
 
     vi.mocked(existsSync).mockReturnValue(true);
     vi.mocked(execFileSync).mockReturnValue('claude-code version 1.0.0\n');
@@ -726,12 +718,12 @@ describe('cli-tool-manager - Claude CLI Windows where.exe detection', () => {
     const result = getToolInfo('claude');
 
     expect(result.found).toBe(true);
-    expect(result.path).toBe('D:\\Program Files\\nvm4w\\nodejs\\claude.cmd');
+    expect(result.path).toBe(String.raw`D:\Program Files\nvm4w\nodejs\claude.cmd`);
     expect(result.path).toMatch(/\.(cmd|exe)$/i);
   });
 
   it('should handle where.exe execution errors gracefully', () => {
-    vi.mocked(os.homedir).mockReturnValue('C:\\Users\\test');
+    vi.mocked(os.homedir).mockReturnValue(String.raw`C:\Users\test`);
 
     vi.mocked(findExecutable).mockReturnValue(null);
 
@@ -766,7 +758,7 @@ describe('cli-tool-manager - Claude CLI async Windows where.exe detection', () =
   });
 
   it('should detect Claude CLI via where.exe asynchronously', async () => {
-    vi.mocked(os.homedir).mockReturnValue('C:\\Users\\test');
+    vi.mocked(os.homedir).mockReturnValue(String.raw`C:\Users\test`);
 
     vi.mocked(findExecutableAsync).mockResolvedValue(null);
 
@@ -782,7 +774,7 @@ describe('cli-tool-manager - Claude CLI async Windows where.exe detection', () =
   });
 
   it('should handle async where.exe errors gracefully', async () => {
-    vi.mocked(os.homedir).mockReturnValue('C:\\Users\\test');
+    vi.mocked(os.homedir).mockReturnValue(String.raw`C:\Users\test`);
 
     vi.mocked(findExecutableAsync).mockResolvedValue(null);
 

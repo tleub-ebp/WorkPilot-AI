@@ -15,18 +15,29 @@ vi.mock('../platform', () => ({
   isLinux: vi.fn(() => false),
 }));
 
-vi.mock('fs', () => ({
-  existsSync: vi.fn(() => false),
-  readFileSync: vi.fn(() => ''),
-}));
+vi.mock('fs', () => {
+  const mod = {
+    existsSync: vi.fn(() => false),
+    readFileSync: vi.fn(() => ''),
+    mkdirSync: vi.fn(),
+    renameSync: vi.fn(),
+    unlinkSync: vi.fn(),
+    writeFileSync: vi.fn(),
+    promises: {},
+  };
+  return { ...mod, default: mod };
+});
 
-vi.mock('child_process', () => ({
-  execFileSync: vi.fn(() => ''),
-}));
+vi.mock('child_process', () => {
+  const execFileSync = vi.fn(() => '');
+  const mod = { execFileSync };
+  return { ...mod, default: mod };
+});
 
-vi.mock('os', () => ({
-  homedir: vi.fn(() => '/home/testuser'),
-}));
+vi.mock('os', () => {
+  const mod = { homedir: vi.fn(() => '/home/testuser') };
+  return { ...mod, default: mod };
+});
 
 // Import after mocks are set up
 import {

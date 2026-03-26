@@ -1,3 +1,4 @@
+// @vitest-environment node
 /**
  * Integration tests for subprocess spawning
  * Tests AgentManager spawning Python processes correctly

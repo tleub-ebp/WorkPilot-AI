@@ -293,10 +293,7 @@ export function DesignImportPanel() {
             <ScrollArea className="h-full">
               <div className="space-y-4 pr-4">
                 {/* Image Upload Zone */}
-                // biome-ignore lint/a11y/noNoninteractiveElementInteractions: interactive handler is intentional
-                // biome-ignore lint/a11y/noStaticElementInteractions: interactive handler is intentional
-                // biome-ignore lint/a11y/useKeyWithClickEvents: keyboard events handled elsewhere
-                // biome-ignore lint/a11y/noNoninteractiveElementInteractions lint/a11y/noStaticElementInteractions lint/a11y/useKeyWithClickEvents: intentional
+                {/* biome-ignore lint/a11y/noNoninteractiveElementInteractions lint/a11y/noStaticElementInteractions lint/a11y/useKeyWithClickEvents: interactive handler is intentional */}
                 <div
                   className={`relative border-2 border-dashed rounded-xl p-8 text-center transition-all cursor-pointer ${
                     isDragging

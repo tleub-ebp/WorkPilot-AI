@@ -2,13 +2,18 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import path from 'path';
 
 // Mock fs module before importing the module under test
-vi.mock('fs', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('fs')>();
-  return {
-    ...actual,
+vi.mock('fs', () => {
+  const mod = {
     existsSync: vi.fn(),
     writeFileSync: vi.fn(),
+    readFileSync: vi.fn(() => ''),
+    mkdirSync: vi.fn(),
+    readdirSync: vi.fn(() => []),
+    renameSync: vi.fn(),
+    unlinkSync: vi.fn(),
+    promises: {},
   };
+  return { ...mod, default: mod };
 });
 
 // Mock electron's app module

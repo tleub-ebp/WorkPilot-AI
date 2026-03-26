@@ -1,3 +1,4 @@
+// @vitest-environment node
 import { writeFileSync } from 'fs';
 import { tmpdir } from 'os';
 import path from 'path';

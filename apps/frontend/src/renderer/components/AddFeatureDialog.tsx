@@ -52,20 +52,24 @@ import type {
   RoadmapFeatureStatus,
 } from '../../shared/types';
 
+// Type alias for complexity and impact levels
+type ComplexityLevel = 'low' | 'medium' | 'high';
+type ImpactLevel = 'low' | 'medium' | 'high';
+
 /**
  * Props for the AddFeatureDialog component
  */
 interface AddFeatureDialogProps {
   /** Available phases to select from */
-  phases: RoadmapPhase[];
+  readonly phases: RoadmapPhase[];
   /** Whether the dialog is open */
-  open: boolean;
+  readonly open: boolean;
   /** Callback when the dialog open state changes */
-  onOpenChange: (open: boolean) => void;
+  readonly onOpenChange: (open: boolean) => void;
   /** Optional callback when feature is successfully added, receives the new feature ID */
-  onFeatureAdded?: (featureId: string) => void;
+  readonly onFeatureAdded?: (featureId: string) => void;
   /** Optional default phase ID to pre-select */
-  defaultPhaseId?: string;
+  readonly defaultPhaseId?: string;
 }
 
 // Complexity options (keys for translation)
@@ -97,8 +101,8 @@ export function AddFeatureDialog({
   const [rationale, setRationale] = useState('');
   const [priority, setPriority] = useState<RoadmapFeaturePriority>('should');
   const [phaseId, setPhaseId] = useState<string>('');
-  const [complexity, setComplexity] = useState<'low' | 'medium' | 'high'>('medium');
-  const [impact, setImpact] = useState<'low' | 'medium' | 'high'>('medium');
+  const [complexity, setComplexity] = useState<ComplexityLevel>('medium');
+  const [impact, setImpact] = useState<ImpactLevel>('medium');
 
   // UI state
   const [isSaving, setIsSaving] = useState(false);
@@ -160,7 +164,7 @@ export function AddFeatureDialog({
       const roadmap = useRoadmapStore.getState().roadmap;
       if (roadmap) {
         // Get the project ID from the roadmap
-        const result = await window.electronAPI.saveRoadmap(roadmap.projectId, roadmap);
+        const result = await globalThis.electronAPI.saveRoadmap(roadmap.projectId, roadmap);
         if (!result.success) {
           throw new Error(result.error || 'Failed to save roadmap');
         }
@@ -297,7 +301,7 @@ export function AddFeatureDialog({
               </Label>
               <Select
                 value={complexity}
-                onValueChange={(value) => setComplexity(value as 'low' | 'medium' | 'high')}
+                onValueChange={(value) => setComplexity(value as ComplexityLevel)}
                 disabled={isSaving}
               >
                 <SelectTrigger id="add-feature-complexity">
@@ -320,7 +324,7 @@ export function AddFeatureDialog({
               </Label>
               <Select
                 value={impact}
-                onValueChange={(value) => setImpact(value as 'low' | 'medium' | 'high')}
+                onValueChange={(value) => setImpact(value as ImpactLevel)}
                 disabled={isSaving}
               >
                 <SelectTrigger id="add-feature-impact">

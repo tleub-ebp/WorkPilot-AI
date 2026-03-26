@@ -50,7 +50,8 @@ describe('Smart Estimation Store', () => {
     mockElectronAPI.onSmartEstimationComplete.mockImplementation((callback) => callback);
     mockElectronAPI.onSmartEstimationEvent.mockImplementation((callback) => callback);
     
-    // Don't reset store state here - let each test manage its own state
+    // Reset store state before each test
+    useSmartEstimationStore.getState().reset();
   });
 
   describe('Initial State', () => {
@@ -77,9 +78,9 @@ describe('Smart Estimation Store', () => {
         store.openDialog('Test task description');
       });
 
-      expect(store.isOpen).toBe(true);
-      expect(store.initialTaskDescription).toBe('Test task description');
-      expect(store.phase).toBe('idle');
+      expect(result.current.isOpen).toBe(true);
+      expect(result.current.initialTaskDescription).toBe('Test task description');
+      expect(result.current.phase).toBe('idle');
     });
 
     it('should close dialog and reset state', () => {
@@ -99,10 +100,10 @@ describe('Smart Estimation Store', () => {
         store.closeDialog();
       });
 
-      expect(store.isOpen).toBe(false);
-      expect(store.phase).toBe('idle');
-      expect(store.status).toBe('');
-      expect(store.error).toBe(null);
+      expect(result.current.isOpen).toBe(false);
+      expect(result.current.phase).toBe('idle');
+      expect(result.current.status).toBe('');
+      expect(result.current.error).toBe(null);
     });
 
     it('should reset state completely', () => {
@@ -128,13 +129,13 @@ describe('Smart Estimation Store', () => {
         store.reset();
       });
 
-      expect(store.phase).toBe('idle');
-      expect(store.status).toBe('');
-      expect(store.streamingOutput).toBe('');
-      expect(store.result).toBe(null);
-      expect(store.error).toBe(null);
-      expect(store.isOpen).toBe(false);
-      expect(store.initialTaskDescription).toBe('');
+      expect(result.current.phase).toBe('idle');
+      expect(result.current.status).toBe('');
+      expect(result.current.streamingOutput).toBe('');
+      expect(result.current.result).toBe(null);
+      expect(result.current.error).toBe(null);
+      expect(result.current.isOpen).toBe(false);
+      expect(result.current.initialTaskDescription).toBe('');
     });
   });
 
@@ -147,13 +148,13 @@ describe('Smart Estimation Store', () => {
         store.setPhase('analyzing');
       });
 
-      expect(store.phase).toBe('analyzing');
+      expect(result.current.phase).toBe('analyzing');
 
       act(() => {
         store.setPhase('complete');
       });
 
-      expect(store.phase).toBe('complete');
+      expect(result.current.phase).toBe('complete');
     });
 
     it('should set result and phase to complete', () => {
@@ -173,8 +174,8 @@ describe('Smart Estimation Store', () => {
         store.setResult(mockResult);
       });
 
-      expect(store.result).toEqual(mockResult);
-      expect(store.phase).toBe('complete');
+      expect(result.current.result).toEqual(mockResult);
+      expect(result.current.phase).toBe('complete');
     });
 
     it('should set error and phase to error', () => {
@@ -185,8 +186,8 @@ describe('Smart Estimation Store', () => {
         store.setError('Test error message');
       });
 
-      expect(store.error).toBe('Test error message');
-      expect(store.phase).toBe('error');
+      expect(result.current.error).toBe('Test error message');
+      expect(result.current.phase).toBe('error');
     });
   });
 
@@ -199,7 +200,7 @@ describe('Smart Estimation Store', () => {
         store.setStatus('Analyzing files...');
       });
 
-      expect(store.status).toBe('Analyzing files...');
+      expect(result.current.status).toBe('Analyzing files...');
     });
 
     it('should append to streaming output', () => {
@@ -210,13 +211,13 @@ describe('Smart Estimation Store', () => {
         store.appendStreamingOutput('First chunk');
       });
 
-      expect(store.streamingOutput).toBe('First chunk');
+      expect(result.current.streamingOutput).toBe('First chunk');
 
       act(() => {
         store.appendStreamingOutput('Second chunk');
       });
 
-      expect(store.streamingOutput).toBe('First chunkSecond chunk');
+      expect(result.current.streamingOutput).toBe('First chunkSecond chunk');
     });
   });
 
@@ -248,10 +249,10 @@ describe('Smart Estimation Store', () => {
         'test-project-id',
         'Test task description'
       );
-      expect(store.phase).toBe('analyzing');
-      expect(store.streamingOutput).toBe('');
-      expect(store.error).toBe(null);
-      expect(store.result).toBe(null);
+      expect(result.current.phase).toBe('analyzing');
+      expect(result.current.streamingOutput).toBe('');
+      expect(result.current.error).toBe(null);
+      expect(result.current.result).toBe(null);
     });
 
     it('should not start estimation without task description', () => {
@@ -268,7 +269,7 @@ describe('Smart Estimation Store', () => {
       });
 
       expect(mockElectronAPI.runSmartEstimation).not.toHaveBeenCalled();
-      expect(store.phase).toBe('idle');
+      expect(result.current.phase).toBe('idle');
     });
 
     it('should not start estimation without project ID', () => {
@@ -284,7 +285,7 @@ describe('Smart Estimation Store', () => {
       });
 
       expect(mockElectronAPI.runSmartEstimation).not.toHaveBeenCalled();
-      expect(store.phase).toBe('idle');
+      expect(result.current.phase).toBe('idle');
     });
   });
 
@@ -302,14 +303,14 @@ describe('Smart Estimation Store', () => {
       act(() => {
         store.setStatus('Test status');
       });
-      expect(store.status).toBe('Test status');
+      expect(result.current.status).toBe('Test status');
 
       // Test setError
       act(() => {
         store.setError('Test error');
       });
-      expect(store.error).toBe('Test error');
-      expect(store.phase).toBe('error');
+      expect(result.current.error).toBe('Test error');
+      expect(result.current.phase).toBe('error');
 
       // Test setResult
       const mockResult: SmartEstimationResult = {
@@ -323,23 +324,23 @@ describe('Smart Estimation Store', () => {
       act(() => {
         store.setResult(mockResult);
       });
-      expect(store.result).toEqual(mockResult);
-      expect(store.phase).toBe('complete');
+      expect(result.current.result).toEqual(mockResult);
+      expect(result.current.phase).toBe('complete');
 
       // Test appendStreamingOutput
       act(() => {
         store.reset();
         store.appendStreamingOutput('Chunk 1');
       });
-      expect(store.streamingOutput).toBe('Chunk 1');
+      expect(result.current.streamingOutput).toBe('Chunk 1');
 
       // Reset and test empty error
       act(() => {
         store.reset();
         store.setError('');
       });
-      expect(store.error).toBe('');
-      expect(store.phase).toBe('error');
+      expect(result.current.error).toBe('');
+      expect(result.current.phase).toBe('error');
     });
   });
 
@@ -375,13 +376,13 @@ describe('Smart Estimation Store', () => {
         store.appendStreamingOutput('Stream chunk 1');
       });
 
-      expect(store.streamingOutput).toBe('Stream chunk 1');
+      expect(result.current.streamingOutput).toBe('Stream chunk 1');
 
       act(() => {
         store.appendStreamingOutput('Stream chunk 2');
       });
 
-      expect(store.streamingOutput).toBe('Stream chunk 1Stream chunk 2');
+      expect(result.current.streamingOutput).toBe('Stream chunk 1Stream chunk 2');
     });
 
     it('should handle status updates', () => {
@@ -397,7 +398,7 @@ describe('Smart Estimation Store', () => {
         store.setStatus('Analyzing complexity...');
       });
 
-      expect(store.status).toBe('Analyzing complexity...');
+      expect(result.current.status).toBe('Analyzing complexity...');
     });
 
     it('should handle errors', () => {
@@ -413,8 +414,8 @@ describe('Smart Estimation Store', () => {
         store.setError('Something went wrong');
       });
 
-      expect(store.error).toBe('Something went wrong');
-      expect(store.phase).toBe('error');
+      expect(result.current.error).toBe('Something went wrong');
+      expect(result.current.phase).toBe('error');
     });
 
     it('should handle completion', () => {
@@ -439,8 +440,8 @@ describe('Smart Estimation Store', () => {
         store.setResult(mockResult);
       });
 
-      expect(store.result).toEqual(mockResult);
-      expect(store.phase).toBe('complete');
+      expect(result.current.result).toEqual(mockResult);
+      expect(result.current.phase).toBe('complete');
     });
 
     it('should handle events', () => {
@@ -508,8 +509,8 @@ describe('Smart Estimation Store', () => {
         store.setResult(null as any);
       });
 
-      expect(store.result).toBe(null);
-      expect(store.phase).toBe('complete');
+      expect(result.current.result).toBe(null);
+      expect(result.current.phase).toBe('complete');
     });
 
     it('should handle empty error messages', () => {
@@ -520,8 +521,8 @@ describe('Smart Estimation Store', () => {
         store.setError('');
       });
 
-      expect(store.error).toBe('');
-      expect(store.phase).toBe('error');
+      expect(result.current.error).toBe('');
+      expect(result.current.phase).toBe('error');
     });
   });
 });

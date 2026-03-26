@@ -353,10 +353,7 @@ export function PRFilesModal({ open, onOpenChange, prUrl, taskId }: PRFilesModal
                     key={file.filename}
                     className="border rounded-lg overflow-hidden"
                   >
-                    // biome-ignore lint/a11y/noNoninteractiveElementInteractions: interactive handler is intentional
-                    // biome-ignore lint/a11y/noStaticElementInteractions: interactive handler is intentional
-                    // biome-ignore lint/a11y/useKeyWithClickEvents: keyboard events handled elsewhere
-                    // biome-ignore lint/a11y/noNoninteractiveElementInteractions lint/a11y/noStaticElementInteractions lint/a11y/useKeyWithClickEvents: intentional
+                    {/* biome-ignore lint/a11y/noNoninteractiveElementInteractions lint/a11y/noStaticElementInteractions lint/a11y/useKeyWithClickEvents: interactive handler is intentional */}
                     <div
                       className={cn(
                         "flex items-center justify-between p-3 cursor-pointer hover:bg-muted/50 transition-colors"

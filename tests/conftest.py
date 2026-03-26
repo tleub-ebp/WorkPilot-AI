@@ -77,6 +77,8 @@ _PROTECTED_PACKAGES = [
     "insight_extractor",
     "review",
     "analysis",
+    # QA system
+    "qa",
     # Integrations
     "integrations",
     # Utilities

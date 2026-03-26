@@ -26,25 +26,82 @@ function createMockProcess() {
 // Mock child_process - must be BEFORE imports of modules that use it
 const spawnCalls: Array<{ command: string; args: string[]; options: { env: Record<string, string>; cwd?: string; [key: string]: unknown } }> = [];
 
-vi.mock('child_process', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('child_process')>();
+vi.mock('node:child_process', () => {
   const mockSpawn = vi.fn((command: string, args: string[], options: { env: Record<string, string>; cwd?: string; [key: string]: unknown }) => {
     // Record the call for test assertions
     spawnCalls.push({ command, args, options });
     return createMockProcess();
   });
 
-  return {
-    ...actual,
+  const mockExecSync = vi.fn((command: string) => {
+    if (command.includes('git')) {
+      return '/fake/path';
+    }
+    return '';
+  });
+
+  const mod = {
     spawn: mockSpawn,
-    execSync: vi.fn((command: string) => {
-      if (command.includes('git')) {
-        return '/fake/path';
-      }
-      return '';
-    })
+    execSync: mockExecSync,
+    execFileSync: mockExecSync,
+    execFile: vi.fn(),
+    exec: vi.fn(),
+    fork: vi.fn(),
+    spawnSync: vi.fn(),
   };
+  return { ...mod, default: mod };
 });
+
+// Mock fs to avoid browser-external issues in jsdom
+vi.mock('node:fs', () => {
+  const mod = {
+    existsSync: vi.fn((inputPath: string) => {
+      // Normalize path separators for cross-platform compatibility
+      const normalizedPath = inputPath.replace(/\\/g, '/');
+      // Return true for the fake auto-build path and its expected files
+      if (normalizedPath === '/fake/auto-build' ||
+          normalizedPath === '/fake/auto-build/runners' ||
+          normalizedPath === '/fake/auto-build/runners/spec_runner.py') {
+        return true;
+      }
+      return false;
+    }),
+    readFileSync: vi.fn(() => ''),
+    mkdirSync: vi.fn(),
+    writeFileSync: vi.fn(),
+    renameSync: vi.fn(),
+    unlinkSync: vi.fn(),
+    readdirSync: vi.fn(() => []),
+    promises: {},
+  };
+  return { ...mod, default: mod };
+});
+
+// Mock os to avoid browser-external issues in jsdom
+vi.mock('node:os', () => {
+  const mod = { homedir: vi.fn(() => '/mock/home'), userInfo: vi.fn(() => ({ username: 'testuser' })) };
+  return { ...mod, default: mod };
+});
+
+// Mock claude-profile modules that import 'fs' (browser-external in jsdom)
+vi.mock('../claude-profile/token-refresh', () => ({
+  ensureValidToken: vi.fn(),
+  markAgentRunning: vi.fn(),
+  markAgentStopped: vi.fn(),
+}));
+
+vi.mock('../claude-profile/credential-utils', () => ({
+  clearKeychainCache: vi.fn(),
+  getStoredCredentials: vi.fn(),
+  storeCredentials: vi.fn(),
+}));
+
+vi.mock('../claude-profile/profile-selection-lock', () => ({
+  getProfileSelectionLock: vi.fn(() => ({
+    acquire: vi.fn(),
+    release: vi.fn(),
+  })),
+}));
 
 // Mock project-initializer to avoid child_process.execSync issues
 vi.mock('../project-initializer', () => ({
@@ -74,8 +131,24 @@ vi.mock('../claude-profile-manager', () => ({
     ensureProfileDir: vi.fn(),
     readProfile: vi.fn(),
     writeProfile: vi.fn(),
-    deleteProfile: vi.fn()
+    deleteProfile: vi.fn(),
+    getActiveProfile: vi.fn(() => null),
+    listProfiles: vi.fn(() => []),
+    setActiveProfile: vi.fn(),
   }))
+}));
+
+// Mock credential-manager to avoid browser-external issues in jsdom
+vi.mock('../services/credential-manager', () => ({
+  credentialManager: {
+    getEnvironmentVariables: vi.fn(() => ({})),
+    getActiveCredential: vi.fn(() => null),
+    on: vi.fn(),
+    off: vi.fn(),
+    emit: vi.fn(),
+  },
+  detectWindsurfLocalToken: vi.fn(() => Promise.resolve({ success: false })),
+  readWindsurfCachedPlanInfo: vi.fn(() => Promise.resolve({ success: false })),
 }));
 
 // Mock dependencies
@@ -138,26 +211,6 @@ vi.mock('../cli-tool-manager', () => ({
 vi.mock('../env-utils', () => ({
   getAugmentedEnv: vi.fn(() => ({ ...process.env }))
 }));
-
-// Mock fs.existsSync for getAutoBuildSourcePath path validation
-vi.mock('fs', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('fs')>();
-  return {
-    ...actual,
-    existsSync: vi.fn((inputPath: string) => {
-      // Normalize path separators for cross-platform compatibility
-      // path.join() uses backslashes on Windows, so we normalize to forward slashes
-      const normalizedPath = inputPath.replace(/\\/g, '/');
-      // Return true for the fake auto-build path and its expected files
-      if (normalizedPath === '/fake/auto-build' ||
-          normalizedPath === '/fake/auto-build/runners' ||
-          normalizedPath === '/fake/auto-build/runners/spec_runner.py') {
-        return true;
-      }
-      return false;
-    })
-  };
-});
 
 // Import AFTER all mocks are set up
 import { AgentProcessManager } from './agent-process';
