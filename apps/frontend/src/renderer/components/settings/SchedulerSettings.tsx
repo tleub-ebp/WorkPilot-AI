@@ -88,7 +88,7 @@ export function SchedulerSettings() {
             <div className="space-y-1">
               <div className="flex items-center justify-between">
                 <label
-                  // biome-ignore lint/a11y/noLabelWithoutControl: intentional
+                  htmlFor="check-interval"
                   className="text-xs font-medium text-muted-foreground"
                 >
                   {t('tasks.settings.checkInterval.label')}
@@ -96,6 +96,7 @@ export function SchedulerSettings() {
                 <span className="text-xs font-mono tabular-nums text-foreground">{checkInterval}s</span>
               </div>
               <input
+                id="check-interval"
                 type="range" min={5} max={120} step={5}
                 value={checkInterval}
                 onChange={(e) => setCheckInterval(Number(e.target.value))}

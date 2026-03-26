@@ -492,9 +492,12 @@ export function JiraSidePanel({
 
     return (
       <div className="p-4 space-y-2">
-        {filteredItems.map((item, index) => (
+        {filteredItems.map((item) => (
+          // biome-ignore lint/a11y/noNoninteractiveElementInteractions: draggable item with toggle
+          // biome-ignore lint/a11y/noStaticElementInteractions: draggable item with toggle
+          // biome-ignore lint/a11y/useKeyWithClickEvents: keyboard handled at parent level
           <div
-            key={index}
+            key={item.id}
             className={cn(
               "flex items-start gap-3 p-3 rounded-md border transition-all cursor-pointer",
               "hover:bg-muted/50",

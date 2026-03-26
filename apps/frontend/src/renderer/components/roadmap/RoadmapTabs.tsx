@@ -95,6 +95,7 @@ export function RoadmapTabs({
                 <div className="space-y-2">
                   {features.map((feature: RoadmapFeature) => (
                     // biome-ignore lint/a11y/noNoninteractiveElementInteractions: interactive handler is intentional
+                    // biome-ignore lint/a11y/noStaticElementInteractions: interactive handler is intentional
                     // biome-ignore lint/a11y/useKeyWithClickEvents: keyboard events handled elsewhere
                     <div
                       key={feature.id}
