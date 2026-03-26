@@ -8,7 +8,7 @@
  * @vitest-environment jsdom
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { renderHook, act } from '@testing-library/react';
+import { renderHook, act, render, fireEvent } from '@testing-library/react';
 import { useTerminalFileDrop } from '../terminal/useTerminalFileDrop';
 import { escapeShellArg, parseFileReferenceDrop, type FileReferenceDropData } from '../../../shared/utils/shell-escape';
 
@@ -20,49 +20,64 @@ beforeEach(() => {
   vi.clearAllMocks();
 });
 
-describe('useTerminalFileDrop Hook', () => {
-  // Helper to create mock DragEvent with file reference data
-  function createMockDragEvent(
-    fileRefData: FileReferenceDropData | null,
-    options: {
-      types?: string[];
-      relatedTarget?: Node | null;
-      currentTarget?: { contains: (node: Node | null) => boolean };
-    } = {}
-  ): React.DragEvent<HTMLDivElement> {
-    const types = options.types ?? (fileRefData ? ['application/json'] : []);
-    const getData = vi.fn((type: string): string => {
-      if (type === 'application/json' && fileRefData) {
-        return JSON.stringify(fileRefData);
+// Helper to create mock DataTransfer
+function createMockDataTransfer(jsonData: object | null): DataTransfer {
+  return {
+    types: ['application/json'],
+    getData: vi.fn((type: string) => {
+      if (type === 'application/json' && jsonData) {
+        return JSON.stringify(jsonData);
       }
       return '';
-    });
+    }),
+    setData: vi.fn(),
+    effectAllowed: 'none'
+  } as unknown as DataTransfer;
+}
 
-    return {
-      dataTransfer: {
-        types,
-        getData,
-        setData: vi.fn(),
-        effectAllowed: 'none' as DataTransfer['effectAllowed'],
-        dropEffect: 'none' as DataTransfer['dropEffect']
-      } as unknown as DataTransfer,
-      preventDefault: vi.fn(),
-      stopPropagation: vi.fn(),
-      relatedTarget: options.relatedTarget ?? null,
-      currentTarget: options.currentTarget ?? { contains: () => false }
-    } as unknown as React.DragEvent<HTMLDivElement>;
-  }
+// Helper to create file reference drag data (matches FileTreeItem format)
+function createFileReferenceDragData(path: string, name: string, isDirectory = false): FileReferenceDropData {
+  return {
+    type: 'file-reference',
+    path,
+    name,
+    isDirectory
+  };
+}
 
-  // Helper to create file reference drag data (matches FileTreeItem format)
-  function createFileReferenceDragData(path: string, name: string, isDirectory = false): FileReferenceDropData {
-    return {
-      type: 'file-reference',
-      path,
-      name,
-      isDirectory
-    };
-  }
+// Helper to create mock DragEvent with file reference data
+function createMockDragEvent(
+  fileRefData: FileReferenceDropData | null,
+  options: {
+    types?: string[];
+    relatedTarget?: Node | null;
+    currentTarget?: { contains: (node: Node | null) => boolean };
+  } = {}
+): React.DragEvent<HTMLDivElement> {
+  const types = options.types ?? (fileRefData ? ['application/json'] : []);
+  const getData = vi.fn((type: string): string => {
+    if (type === 'application/json' && fileRefData) {
+      return JSON.stringify(fileRefData);
+    }
+    return '';
+  });
 
+  return {
+    dataTransfer: {
+      types,
+      getData,
+      setData: vi.fn(),
+      effectAllowed: 'none' as DataTransfer['effectAllowed'],
+      dropEffect: 'none' as DataTransfer['dropEffect']
+    } as unknown as DataTransfer,
+    preventDefault: vi.fn(),
+    stopPropagation: vi.fn(),
+    relatedTarget: options.relatedTarget ?? null,
+    currentTarget: options.currentTarget ?? { contains: () => false }
+  } as unknown as React.DragEvent<HTMLDivElement>;
+}
+
+describe('useTerminalFileDrop Hook', () => {
   describe('handleNativeDrop - File Path Insertion', () => {
     it('should call sendTerminalInput with escaped file path when dropping valid file reference', () => {
       const { result } = renderHook(() =>
@@ -526,21 +541,6 @@ describe('useTerminalFileDrop Hook', () => {
 });
 
 describe('parseFileReferenceDrop Utility', () => {
-  // Helper to create mock DataTransfer
-  function createMockDataTransfer(jsonData: object | null): DataTransfer {
-    return {
-      types: ['application/json'],
-      getData: vi.fn((type: string) => {
-        if (type === 'application/json' && jsonData) {
-          return JSON.stringify(jsonData);
-        }
-        return '';
-      }),
-      setData: vi.fn(),
-      effectAllowed: 'none'
-    } as unknown as DataTransfer;
-  }
-
   it('should parse valid file reference data', () => {
     const dataTransfer = createMockDataTransfer({
       type: 'file-reference',
@@ -697,7 +697,6 @@ describe('escapeShellArg Utility', () => {
  * This approach follows the same pattern as useImageUpload.fileref.test.ts
  * and ensures the actual drop handling logic is tested, not duplicated.
  */
-import { render, fireEvent } from '@testing-library/react';
 import React from 'react';
 
 describe('Terminal File Drop - Component Integration', () => {
@@ -708,7 +707,7 @@ describe('Terminal File Drop - Component Integration', () => {
   });
 
   // Minimal component that uses the hook exactly like Terminal.tsx does
-  function TestDropZone({ terminalId }: { terminalId: string }) {
+  function TestDropZone({ terminalId }: { readonly terminalId: string }) {
     const { isNativeDragOver, handleNativeDragOver, handleNativeDragLeave, handleNativeDrop } =
       useTerminalFileDrop({
         terminalId,
@@ -716,7 +715,7 @@ describe('Terminal File Drop - Component Integration', () => {
       });
 
     return (
-{/* biome-ignore lint/a11y/noStaticElementInteractions: interactive handler is intentional */}
+      // biome-ignore lint/a11y/noStaticElementInteractions: interactive handler is intentional
       <div
         data-testid="drop-zone"
         onDragOver={handleNativeDragOver}

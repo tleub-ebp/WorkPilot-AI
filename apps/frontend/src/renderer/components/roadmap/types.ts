@@ -44,11 +44,11 @@ export interface RoadmapEmptyStateProps {
 }
 
 export interface RoadmapTabsProps {
-  roadmap: Roadmap;
-  activeTab: string;
-  onTabChange: (tab: string) => void;
-  onFeatureSelect: (feature: RoadmapFeature) => void;
-  onConvertToSpec: (feature: RoadmapFeature) => void;
-  onGoToTask: (specId: string) => void;
-  onSave?: () => void;
+  readonly roadmap: Roadmap;
+  readonly activeTab: string;
+  readonly onTabChange: (tab: string) => void;
+  readonly onFeatureSelect: (feature: RoadmapFeature) => void;
+  readonly onConvertToSpec: (feature: RoadmapFeature) => void;
+  readonly onGoToTask: (specId: string) => void;
+  readonly onSave?: () => void;
 }
