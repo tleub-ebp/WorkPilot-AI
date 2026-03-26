@@ -384,11 +384,14 @@ class TestFigmaConnector:
         from pathlib import Path
         
         # Add the src directory to Python path for proper imports
-        src_path = Path(__file__).parent.parent.parent / "src"
+        # Use absolute path from project root to handle different working directories
+        import os
+        project_root = Path(__file__).parent.parent.parent
+        src_path = project_root / "src"
         if str(src_path) not in sys.path:
             sys.path.insert(0, str(src_path))
         
-        from connectors.figma_connector import FigmaConnector
+        from src.connectors.figma_connector import FigmaConnector
 
         result = FigmaConnector.parse_figma_url(
             "https://www.figma.com/file/abc123def/My-Design"
@@ -403,11 +406,14 @@ class TestFigmaConnector:
         from pathlib import Path
         
         # Add the src directory to Python path for proper imports
-        src_path = Path(__file__).parent.parent.parent / "src"
+        # Use absolute path from project root to handle different working directories
+        import os
+        project_root = Path(__file__).parent.parent.parent
+        src_path = project_root / "src"
         if str(src_path) not in sys.path:
             sys.path.insert(0, str(src_path))
         
-        from connectors.figma_connector import FigmaConnector
+        from src.connectors.figma_connector import FigmaConnector
 
         result = FigmaConnector.parse_figma_url(
             "https://www.figma.com/design/abc123def/Title?node-id=1%3A2"
@@ -422,11 +428,14 @@ class TestFigmaConnector:
         from pathlib import Path
         
         # Add the src directory to Python path for proper imports
-        src_path = Path(__file__).parent.parent.parent / "src"
+        # Use absolute path from project root to handle different working directories
+        import os
+        project_root = Path(__file__).parent.parent.parent
+        src_path = project_root / "src"
         if str(src_path) not in sys.path:
             sys.path.insert(0, str(src_path))
         
-        from connectors.figma_connector import FigmaConnector
+        from src.connectors.figma_connector import FigmaConnector
 
         result = FigmaConnector.parse_figma_url("https://google.com")
         assert result is None
@@ -437,11 +446,14 @@ class TestFigmaConnector:
         from pathlib import Path
         
         # Add the src directory to Python path for proper imports
-        src_path = Path(__file__).parent.parent.parent / "src"
+        # Use absolute path from project root to handle different working directories
+        import os
+        project_root = Path(__file__).parent.parent.parent
+        src_path = project_root / "src"
         if str(src_path) not in sys.path:
             sys.path.insert(0, str(src_path))
         
-        from connectors.figma_connector import FigmaConnector
+        from src.connectors.figma_connector import FigmaConnector
 
         with patch.dict("os.environ", {}, clear=True):
             import os
@@ -455,11 +467,14 @@ class TestFigmaConnector:
         from pathlib import Path
         
         # Add the src directory to Python path for proper imports
-        src_path = Path(__file__).parent.parent.parent / "src"
+        # Use absolute path from project root to handle different working directories
+        import os
+        project_root = Path(__file__).parent.parent.parent
+        src_path = project_root / "src"
         if str(src_path) not in sys.path:
             sys.path.insert(0, str(src_path))
         
-        from connectors.figma_connector import FigmaConnector
+        from src.connectors.figma_connector import FigmaConnector
 
         connector = FigmaConnector(access_token="test-token-123")
         assert connector.is_configured() is True
@@ -470,11 +485,14 @@ class TestFigmaConnector:
         from pathlib import Path
         
         # Add the src directory to Python path for proper imports
-        src_path = Path(__file__).parent.parent.parent / "src"
+        # Use absolute path from project root to handle different working directories
+        import os
+        project_root = Path(__file__).parent.parent.parent
+        src_path = project_root / "src"
         if str(src_path) not in sys.path:
             sys.path.insert(0, str(src_path))
         
-        from connectors.figma_connector import FigmaConnector
+        from src.connectors.figma_connector import FigmaConnector
 
         assert FigmaConnector._to_token_name("Color/Primary/500") == "color-primary-500"
         assert FigmaConnector._to_token_name("Font Size/Base") == "font-size-base"
