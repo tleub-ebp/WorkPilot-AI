@@ -1,4 +1,4 @@
-import * as React from 'react';
+﻿import * as React from 'react';
 import { Check, ChevronDown, Search } from 'lucide-react';
 import { cn } from '../../lib/utils';
 import { Popover, PopoverContent, PopoverTrigger } from './popover';
@@ -238,7 +238,7 @@ const Combobox = React.forwardRef<HTMLButtonElement, ComboboxProps>(
                   return (
                     <React.Fragment key={option.value}>
                       {/* Group header */}
-                      {/* biome-ignore lint/a11y/useSemanticElements: custom element maintains accessibility */}
+                      // biome-ignore lint/a11y/useSemanticElements: custom element maintains accessibility 
                       {showGroupHeader && (
                         <div
                           role="presentation"
@@ -301,3 +301,4 @@ const Combobox = React.forwardRef<HTMLButtonElement, ComboboxProps>(
 Combobox.displayName = 'Combobox';
 
 export { Combobox };
+

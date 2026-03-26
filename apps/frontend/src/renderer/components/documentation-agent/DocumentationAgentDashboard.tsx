@@ -1,4 +1,4 @@
-import React from 'react';
+﻿import React from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   useDocumentationAgentStore,
@@ -28,11 +28,11 @@ const DOC_TYPE_LABELS: Record<DocTypeKey, string> = {
 };
 
 const DOC_TYPE_ICONS: Record<DocTypeKey, string> = {
-  readme: '📄',
-  api: '🔌',
-  contribution: '🤝',
-  docstrings: '💬',
-  diagrams: '📊',
+  readme: 'ðŸ“„',
+  api: 'ðŸ”Œ',
+  contribution: 'ðŸ¤',
+  docstrings: 'ðŸ’¬',
+  diagrams: 'ðŸ“Š',
 };
 
 export function DocumentationAgentDashboard(): React.ReactElement {
@@ -120,7 +120,7 @@ export function DocumentationAgentDashboard(): React.ReactElement {
             </label>
 
             // biome-ignore lint/a11y/noLabelWithoutControl: label association is implicit
-            // biome-ignore lint/a11y/noLabelWithoutControl: intentional
+{/* biome-ignore lint/a11y/noLabelWithoutControl: intentional  */}
             <label className="block text-xs font-medium text-[var(--text-secondary)] mb-1">
               Output directory (optional)
             </label>
@@ -161,7 +161,7 @@ export function DocumentationAgentDashboard(): React.ReactElement {
           {phase !== 'idle' && (
             <div className="px-4 py-2 bg-[var(--bg-secondary)] border-b border-[var(--border-color)] flex items-center gap-2 text-sm text-[var(--text-secondary)]">
               {isRunning && (
-                // biome-ignore lint/a11y/noSvgWithoutTitle: SVG is decorative
+// biome-ignore lint/a11y/noSvgWithoutTitle: SVG is decorative 
                 <svg className="animate-spin w-4 h-4 text-[var(--accent)] shrink-0" fill="none" viewBox="0 0 24 24">
                   <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                   <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
@@ -169,7 +169,7 @@ export function DocumentationAgentDashboard(): React.ReactElement {
               )}
               <span>{PHASE_LABELS[phase]}</span>
               {status && status !== PHASE_LABELS[phase] && (
-                <span className="ml-1">— {status}</span>
+                <span className="ml-1">â€” {status}</span>
               )}
             </div>
           )}
@@ -185,11 +185,11 @@ export function DocumentationAgentDashboard(): React.ReactElement {
           {isComplete && result && (
             <div className="p-4 border-b border-[var(--border-color)]">
               <div className="flex items-center gap-3 mb-3">
-                <span className="text-2xl">📚</span>
+                <span className="text-2xl">ðŸ“š</span>
                 <div>
                   <h3 className="font-medium">Documentation Generated</h3>
                   <p className="text-sm text-[var(--text-secondary)]">
-                    {result.doc_types_processed.length} types • {result.generated_files.length} files created
+                    {result.doc_types_processed.length} types â€¢ {result.generated_files.length} files created
                   </p>
                 </div>
               </div>
@@ -251,7 +251,7 @@ export function DocumentationAgentDashboard(): React.ReactElement {
             ) : phase === 'idle' ? (
               <div className="flex items-center justify-center h-full text-center">
                 <div>
-                  <div className="text-5xl mb-4">📝</div>
+                  <div className="text-5xl mb-4">ðŸ“</div>
                   <h3 className="text-lg font-medium mb-2">Documentation Agent</h3>
                   <p className="text-sm text-[var(--text-secondary)] max-w-sm">
                     Select documentation types and click Generate Docs to automatically
@@ -268,3 +268,6 @@ export function DocumentationAgentDashboard(): React.ReactElement {
 }
 
 export default DocumentationAgentDashboard;
+
+
+

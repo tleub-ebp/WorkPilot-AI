@@ -1,4 +1,4 @@
-import { useState } from 'react';
+﻿import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Bug, FolderOpen, Copy, FileText, RefreshCw, Loader2, Check, AlertCircle, Shield } from 'lucide-react';
 import { Button } from '../ui/button';
@@ -200,8 +200,8 @@ export function DebugSettings() {
                 </h4>
                 <div className="space-y-1 max-h-48 overflow-y-auto">
                   {debugInfo.recentErrors.map((error, index) => (
-                    // biome-ignore lint/suspicious/noArrayIndexKey: no stable key available
-                    <div key={index} className="text-xs font-mono text-muted-foreground bg-muted/30 px-2 py-1 rounded">
+                // biome-ignore lint/suspicious/noArrayIndexKey: no stable key available
+                <div key={index} className="text-xs font-mono text-muted-foreground bg-muted/30 px-2 py-1 rounded">
                       {error}
                     </div>
                   ))}
@@ -231,3 +231,6 @@ export function DebugSettings() {
     </SettingsSection>
   );
 }
+
+
+

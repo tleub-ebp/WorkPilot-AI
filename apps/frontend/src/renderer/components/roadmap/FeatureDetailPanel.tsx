@@ -1,4 +1,4 @@
-import { useState } from 'react';
+﻿import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   ChevronRight,
@@ -131,7 +131,7 @@ export function FeatureDetailPanel({
             </h3>
             <div className="space-y-2">
               {feature.userStories.map((story, i) => (
-                // biome-ignore lint/suspicious/noArrayIndexKey: no stable key available
+{/* biome-ignore lint/suspicious/noArrayIndexKey: no stable key available  */}
                 <div key={i} className="text-sm p-2 bg-muted/50 rounded-md italic">
                   "{story}"
                 </div>
@@ -149,7 +149,7 @@ export function FeatureDetailPanel({
             </h3>
             <ul className="space-y-1">
               {feature.acceptanceCriteria.map((criterion, i) => (
-                // biome-ignore lint/suspicious/noArrayIndexKey: no stable key available
+// biome-ignore lint/suspicious/noArrayIndexKey: no stable key available 
                 <li key={i} className="text-sm flex items-start gap-2">
                   <Circle className="h-3 w-3 mt-1.5 shrink-0" />
                   <span>{criterion}</span>
@@ -219,7 +219,7 @@ export function FeatureDetailPanel({
       {feature.linkedSpecId ? (
         <div className="shrink-0 p-4 border-t border-border">
           // biome-ignore lint/style/noNonNullAssertion: value is guaranteed by context
-          // biome-ignore lint/style/noNonNullAssertion: intentional
+{/* biome-ignore lint/style/noNonNullAssertion: intentional  */}
           <Button className="w-full" onClick={() => onGoToTask(feature.linkedSpecId!)}>
             <ExternalLink className="h-4 w-4 mr-2" />
             Go to Task
@@ -263,3 +263,6 @@ export function FeatureDetailPanel({
     </div>
   );
 }
+
+
+

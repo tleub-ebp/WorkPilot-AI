@@ -1,4 +1,4 @@
-import { useCallback, useRef, useState, type DragEvent, type ChangeEvent } from 'react';
+﻿import { useCallback, useRef, useState, type DragEvent, type ChangeEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   Image as ImageIcon,
@@ -51,20 +51,20 @@ const PHASE_CONFIG: Record<PipelinePhase, { icon: React.ElementType; labelKey: s
 };
 
 const FRAMEWORK_OPTIONS: { value: FrameworkType; labelKey: string; icon: string }[] = [
-  { value: 'react', labelKey: 'frameworks.react', icon: '⚛️' },
-  { value: 'angular', labelKey: 'frameworks.angular', icon: '🅰️' },
-  { value: 'vue', labelKey: 'frameworks.vue', icon: '💚' },
-  { value: 'nextjs', labelKey: 'frameworks.nextjs', icon: '▲' },
-  { value: 'nuxt', labelKey: 'frameworks.nuxt', icon: '💚' },
-  { value: 'svelte', labelKey: 'frameworks.svelte', icon: '🔥' },
+  { value: 'react', labelKey: 'frameworks.react', icon: 'âš›ï¸' },
+  { value: 'angular', labelKey: 'frameworks.angular', icon: 'ðŸ…°ï¸' },
+  { value: 'vue', labelKey: 'frameworks.vue', icon: 'ðŸ’š' },
+  { value: 'nextjs', labelKey: 'frameworks.nextjs', icon: 'â–²' },
+  { value: 'nuxt', labelKey: 'frameworks.nuxt', icon: 'ðŸ’š' },
+  { value: 'svelte', labelKey: 'frameworks.svelte', icon: 'ðŸ”¥' },
 ];
 
 const SOURCE_TYPE_OPTIONS: { value: DesignSourceType; labelKey: string; icon: string }[] = [
-  { value: 'screenshot', labelKey: 'sourceTypes.screenshot', icon: '📸' },
-  { value: 'figma', labelKey: 'sourceTypes.figma', icon: '🎨' },
-  { value: 'wireframe', labelKey: 'sourceTypes.wireframe', icon: '📐' },
-  { value: 'whiteboard', labelKey: 'sourceTypes.whiteboard', icon: '📋' },
-  { value: 'photo', labelKey: 'sourceTypes.photo', icon: '📷' },
+  { value: 'screenshot', labelKey: 'sourceTypes.screenshot', icon: 'ðŸ“¸' },
+  { value: 'figma', labelKey: 'sourceTypes.figma', icon: 'ðŸŽ¨' },
+  { value: 'wireframe', labelKey: 'sourceTypes.wireframe', icon: 'ðŸ“' },
+  { value: 'whiteboard', labelKey: 'sourceTypes.whiteboard', icon: 'ðŸ“‹' },
+  { value: 'photo', labelKey: 'sourceTypes.photo', icon: 'ðŸ“·' },
 ];
 
 const LANGUAGE_COLORS: Record<string, string> = {
@@ -81,7 +81,7 @@ const LANGUAGE_COLORS: Record<string, string> = {
 };
 
 /**
- * DesignImportPanel — Design-to-Code Pipeline UI (inline page version).
+ * DesignImportPanel â€” Design-to-Code Pipeline UI (inline page version).
  *
  * Upload a design (screenshot, Figma, wireframe, whiteboard photo) and
  * generate production-ready code with visual tests in one click.
@@ -293,7 +293,7 @@ export function DesignImportPanel() {
             <ScrollArea className="h-full">
               <div className="space-y-4 pr-4">
                 {/* Image Upload Zone */}
-                {/* biome-ignore lint/a11y/noNoninteractiveElementInteractions lint/a11y/noStaticElementInteractions lint/a11y/useKeyWithClickEvents: interactive handler is intentional */}
+{/* biome-ignore lint/a11y/noNoninteractiveElementInteractions lint/a11y/noStaticElementInteractions lint/a11y/useKeyWithClickEvents: interactive handler is intentional  */}
                 <div
                   className={`relative border-2 border-dashed rounded-xl p-8 text-center transition-all cursor-pointer ${
                     isDragging
@@ -354,7 +354,7 @@ export function DesignImportPanel() {
                 {/* Figma URL Input */}
                 <div className="space-y-1.5">
                   // biome-ignore lint/a11y/noLabelWithoutControl: label association is implicit
-                  // biome-ignore lint/a11y/noLabelWithoutControl: intentional
+{/* biome-ignore lint/a11y/noLabelWithoutControl: intentional  */}
                   <label className="text-sm font-medium flex items-center gap-1.5">
                     <Palette className="h-4 w-4" />
                     {t('upload.figmaUrl')}
@@ -374,7 +374,7 @@ export function DesignImportPanel() {
                 {/* Framework Selection */}
                 <div className="space-y-1.5">
                   // biome-ignore lint/a11y/noLabelWithoutControl: label association is implicit
-                  // biome-ignore lint/a11y/noLabelWithoutControl: intentional
+{/* biome-ignore lint/a11y/noLabelWithoutControl: intentional  */}
                   <label className="text-sm font-medium">{t('upload.targetFramework')}</label>
                   <div className="grid grid-cols-3 sm:grid-cols-6 gap-2">
                     {FRAMEWORK_OPTIONS.map((fw) => (
@@ -398,7 +398,7 @@ export function DesignImportPanel() {
                 {/* Source Type */}
                 <div className="space-y-1.5">
                   // biome-ignore lint/a11y/noLabelWithoutControl: label association is implicit
-                  // biome-ignore lint/a11y/noLabelWithoutControl: intentional
+{/* biome-ignore lint/a11y/noLabelWithoutControl: intentional  */}
                   <label className="text-sm font-medium">{t('upload.sourceType')}</label>
                   <div className="flex gap-2 flex-wrap">
                     {SOURCE_TYPE_OPTIONS.map((st) => (
@@ -436,7 +436,7 @@ export function DesignImportPanel() {
                       {/* Design System Path */}
                       <div className="space-y-1">
                         // biome-ignore lint/a11y/noLabelWithoutControl: label association is implicit
-                        // biome-ignore lint/a11y/noLabelWithoutControl: intentional
+{/* biome-ignore lint/a11y/noLabelWithoutControl: intentional  */}
                         <label className="text-xs font-medium">{t('upload.designSystemPath')}</label>
                         <input
                           type="text"
@@ -450,7 +450,7 @@ export function DesignImportPanel() {
                       {/* Visual Tests Toggle */}
                       <div className="flex items-center justify-between">
                         // biome-ignore lint/a11y/noLabelWithoutControl: label association is implicit
-                        // biome-ignore lint/a11y/noLabelWithoutControl: intentional
+{/* biome-ignore lint/a11y/noLabelWithoutControl: intentional  */}
                         <label className="text-xs font-medium">{t('upload.generateVisualTests')}</label>
                         <button
                           type="button"
@@ -468,7 +468,7 @@ export function DesignImportPanel() {
                       {/* Custom Instructions */}
                       <div className="space-y-1">
                         // biome-ignore lint/a11y/noLabelWithoutControl: label association is implicit
-                        // biome-ignore lint/a11y/noLabelWithoutControl: intentional
+{/* biome-ignore lint/a11y/noLabelWithoutControl: intentional  */}
                         <label className="text-xs font-medium">{t('upload.customInstructions')}</label>
                         <textarea
                           placeholder={t('upload.customInstructionsPlaceholder')}
@@ -784,7 +784,7 @@ export function DesignImportPanel() {
             <>
               <Check className="h-3.5 w-3.5 text-green-500" />
               <span>
-                {result.generated_files.length} {t('footer.files')} • {result.visual_tests.length} {t('footer.tests')} • {result.duration_seconds.toFixed(1)}s
+                {result.generated_files.length} {t('footer.files')} â€¢ {result.visual_tests.length} {t('footer.tests')} â€¢ {result.duration_seconds.toFixed(1)}s
               </span>
             </>
           )}
@@ -826,3 +826,6 @@ export function DesignImportPanel() {
     </div>
   );
 }
+
+
+

@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from "react";
+﻿import React, { useCallback, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 
 const API_BASE = import.meta.env?.VITE_BACKEND_URL ?? '';
@@ -28,7 +28,7 @@ export const ProviderManager: React.FC<{ selected: string }> = ({ selected }) =>
   const [claudeModels, setClaudeModels] = useState<string[]>([]);
   const [claudeAuthChecked, setClaudeAuthChecked] = useState(false);
 
-  // Ajout d'un état pour l'erreur
+  // Ajout d'un Ã©tat pour l'erreur
   const [claudeModelsError, setClaudeModelsError] = useState<string>("");
   const [_providersError, setProvidersError] = useState<string>("");
 
@@ -83,7 +83,7 @@ export const ProviderManager: React.FC<{ selected: string }> = ({ selected }) =>
         setProviders([]);
         setStatus({});
         setConfigs([]);
-        setProvidersError(`Erreur lors de la récupération des providers: ${err.message}`);
+        setProvidersError(`Erreur lors de la rÃ©cupÃ©ration des providers: ${err.message}`);
       })
       .finally(() => {
         setIsLoadingProviders(false);
@@ -197,7 +197,7 @@ export const ProviderManager: React.FC<{ selected: string }> = ({ selected }) =>
         if (data.error) {
           setClaudeModelsError(data.error);
         } else {
-          setClaudeModelsError((data.models?.length === 0) ? `Aucun modèle disponible pour le provider «${selected}».` : "");
+          setClaudeModelsError((data.models?.length === 0) ? `Aucun modÃ¨le disponible pour le provider Â«${selected}Â».` : "");
         }
       })
       .catch((err) => {
@@ -315,24 +315,24 @@ export const ProviderManager: React.FC<{ selected: string }> = ({ selected }) =>
   return (
     <div>
       <h2>{t('providers:title', 'Gestion des providers LLM')}</h2>
-      {/* Affichage état Claude Code comme UsageIndicator */}
+      {/* Affichage Ã©tat Claude Code comme UsageIndicator */}
       {claudeAuthChecked && (
         <div style={{ marginBottom: 12 }}>
-          <b>{t('providers:claudeCodeState', 'État Claude Code')}&nbsp;:</b>
+          <b>{t('providers:claudeCodeState', 'Ã‰tat Claude Code')}&nbsp;:</b>
           {activeClaudeProfile?.isAuthenticated ? (
             <span style={{ color: 'green', marginLeft: 8 }}>
-              {t('providers:authenticated', 'Authentifié')} ({activeClaudeProfile.profileName || activeClaudeProfile.profileEmail})
+              {t('providers:authenticated', 'AuthentifiÃ©')} ({activeClaudeProfile.profileName || activeClaudeProfile.profileEmail})
             </span>
           ) : (
             <span style={{ color: 'orange', marginLeft: 8 }}>
-              {t('providers:notAuthenticated', 'Non authentifié')}
+              {t('providers:notAuthenticated', 'Non authentifiÃ©')}
             </span>
           )}
         </div>
       )}
       {selected && (
         <div style={{ marginTop: 16, border: "1px solid #ccc", padding: 12 }}>
-          <h4>{t('providers:availableModels', 'Modèles disponibles pour «' + selected + '»', { provider: selected })}</h4>
+          <h4>{t('providers:availableModels', 'ModÃ¨les disponibles pour Â«' + selected + 'Â»', { provider: selected })}</h4>
           {(() => {
             if (isLoadingModels) {
               return <span style={{ color: 'blue' }}>{t('common:loading', 'Chargement...')}</span>;
@@ -355,13 +355,13 @@ export const ProviderManager: React.FC<{ selected: string }> = ({ selected }) =>
             }
             
             return (
-              <span style={{ color: 'orange' }}>{t('providers:noModels', 'Aucun modèle détecté ou chargement...')}</span>
+              <span style={{ color: 'orange' }}>{t('providers:noModels', 'Aucun modÃ¨le dÃ©tectÃ© ou chargement...')}</span>
             );
           })()}
         </div>
       )}
       <div>
-        <h3>{t('providers:savedConfigs', 'Configurations enregistrées :')}</h3>
+        <h3>{t('providers:savedConfigs', 'Configurations enregistrÃ©es :')}</h3>
         {isLoadingConfigs ? (
           <span style={{ color: 'blue' }}>{t('common:loading', 'Chargement...')}</span>
         ) : (
@@ -376,12 +376,12 @@ export const ProviderManager: React.FC<{ selected: string }> = ({ selected }) =>
         <>
           {isLoadingCapabilities ? (
             <div style={{ marginTop: 16, border: "1px solid #ccc", padding: 12 }}>
-              <h3>{t('providers:providerCapabilities', 'Capacités du provider «' + selected + '» :', { provider: selected })}</h3>
+              <h3>{t('providers:providerCapabilities', 'CapacitÃ©s du provider Â«' + selected + 'Â» :', { provider: selected })}</h3>
               <span style={{ color: 'blue' }}>{t('common:loading', 'Chargement...')}</span>
             </div>
           ) : capabilities && (
             <div>
-              <h3>{t('providers:providerCapabilities', 'Capacités du provider «' + selected + '» :', { provider: selected })}</h3>
+              <h3>{t('providers:providerCapabilities', 'CapacitÃ©s du provider Â«' + selected + 'Â» :', { provider: selected })}</h3>
               <pre
                 style={{
                   background: "#f5f5f5",
@@ -394,16 +394,16 @@ export const ProviderManager: React.FC<{ selected: string }> = ({ selected }) =>
           )}
           {isLoadingSchema ? (
             <div style={{ marginTop: 16, border: "1px solid #ccc", padding: 12 }}>
-              <h4>{t('providers:configureProvider', 'Configurer «' + selected + '»', { provider: selected })}</h4>
+              <h4>{t('providers:configureProvider', 'Configurer Â«' + selected + 'Â»', { provider: selected })}</h4>
               <span style={{ color: 'blue' }}>{t('common:loading', 'Chargement...')}</span>
             </div>
           ) : schema && (
             <div style={{ marginTop: 16, border: "1px solid #ccc", padding: 12 }}>
-              <h4>{t('providers:configureProvider', 'Configurer «' + selected + '»', { provider: selected })}</h4>
+              <h4>{t('providers:configureProvider', 'Configurer Â«' + selected + 'Â»', { provider: selected })}</h4>
               {Object.entries(schema).map(([k, v]) => (
                 <div key={k} style={{ marginBottom: 8 }}>
                   // biome-ignore lint/a11y/noLabelWithoutControl: label association is implicit
-                  // biome-ignore lint/a11y/noLabelWithoutControl: intentional
+{/* biome-ignore lint/a11y/noLabelWithoutControl: intentional  */}
                   <label>{t(`providers:configField_${k}`, k, { field: k })} ({String(v)})</label>
                   <input
                     type="text"
@@ -430,7 +430,7 @@ export const ProviderManager: React.FC<{ selected: string }> = ({ selected }) =>
             </div>
           )}
           <div style={{ marginTop: 16, border: "1px solid #ccc", padding: 12 }}>
-            <h4>{t('providers:generateWithProvider', 'Générer avec «' + selected + '»', { provider: selected })}</h4>
+            <h4>{t('providers:generateWithProvider', 'GÃ©nÃ©rer avec Â«' + selected + 'Â»', { provider: selected })}</h4>
             <input
               type="text"
               value={prompt}
@@ -440,7 +440,7 @@ export const ProviderManager: React.FC<{ selected: string }> = ({ selected }) =>
               disabled={isGenerating}
             />
             <button type="button" onClick={generate} style={{ marginLeft: 8 }} disabled={isGenerating || !prompt.trim()}>
-              {isGenerating ? t('common:generating', 'Génération...') : t('common:generate', 'Générer')}
+              {isGenerating ? t('common:generating', 'GÃ©nÃ©ration...') : t('common:generate', 'GÃ©nÃ©rer')}
             </button>
             {generation && (
               <pre style={{ background: "#f5f5f5", padding: 8 }}>
@@ -453,3 +453,5 @@ export const ProviderManager: React.FC<{ selected: string }> = ({ selected }) =>
     </div>
   );
 };
+
+

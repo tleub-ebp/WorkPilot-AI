@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, useCallback } from 'react';
+﻿import { useState, useRef, useEffect, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ChevronDown, ChevronRight, FileCode, AlertTriangle, Loader2, CheckCircle2, XCircle, Clock } from 'lucide-react';
 import { Progress } from '../../ui/progress';
@@ -207,15 +207,17 @@ export function MergeProgressOverlay({ mergeProgress, logEntries }: MergeProgres
             >
               <div className="space-y-1">
                 {logEntries.map((entry, idx) => (
-                  // biome-ignore lint/suspicious/noArrayIndexKey: no stable key available
-                  <div key={idx} className="flex gap-2 text-xs font-mono">
-                    <span className="text-muted-foreground shrink-0">
-                      {new Date(entry.timestamp).toLocaleTimeString()}
-                    </span>
-                    <span className={cn(LOG_TYPE_COLORS[entry.type])}>
-                      {entry.message}
-                    </span>
-                  </div>
+                  <>
+                    {/* biome-ignore lint/suspicious/noArrayIndexKey: no stable key available  */}
+                    <div key={idx} className="flex gap-2 text-xs font-mono">
+                      <span className="text-muted-foreground shrink-0">
+                        {new Date(entry.timestamp).toLocaleTimeString()}
+                      </span>
+                      <span className={cn(LOG_TYPE_COLORS[entry.type])}>
+                        {entry.message}
+                      </span>
+                    </div>
+                  </>
                 ))}
               </div>
             </div>
@@ -225,3 +227,6 @@ export function MergeProgressOverlay({ mergeProgress, logEntries }: MergeProgres
     </div>
   );
 }
+
+
+

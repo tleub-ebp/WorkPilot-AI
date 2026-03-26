@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+﻿import { useState, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   BookOpen,
@@ -228,7 +228,7 @@ export function DocumentationView({ projectId }: DocumentationViewProps) {
         <Card>
           <CardContent className="p-5 space-y-3">
             // biome-ignore lint/a11y/noLabelWithoutControl: label association is implicit
-            // biome-ignore lint/a11y/noLabelWithoutControl: intentional
+{/* biome-ignore lint/a11y/noLabelWithoutControl: intentional  */}
             <label className="text-sm font-medium text-foreground">{t('documentation:coverage.checkLabel')}</label>
             <div className="flex gap-2">
               <Input
@@ -257,7 +257,7 @@ export function DocumentationView({ projectId }: DocumentationViewProps) {
         <Card>
           <CardContent className="p-5 space-y-3">
             // biome-ignore lint/a11y/noLabelWithoutControl: label association is implicit
-            // biome-ignore lint/a11y/noLabelWithoutControl: intentional
+{/* biome-ignore lint/a11y/noLabelWithoutControl: intentional  */}
             <label className="text-sm font-medium text-foreground">{t('documentation:readme.generateLabel')}</label>
             <div className="flex gap-2">
               <Input
@@ -379,3 +379,6 @@ export function DocumentationView({ projectId }: DocumentationViewProps) {
     </ScrollArea>
   );
 }
+
+
+

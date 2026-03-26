@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, type DragEvent, type KeyboardEvent } from 'react';
+﻿import { useState, useRef, useEffect, type DragEvent, type KeyboardEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ChevronRight, ChevronDown, Folder, File, FileCode, FileJson, FileText, FileImage, Loader2 } from 'lucide-react';
 import { cn } from '../lib/utils';
@@ -134,7 +134,7 @@ export function FileTreeItem({
     dragImage.className = 'flex items-center gap-2 bg-card border border-primary rounded-md px-3 py-2 shadow-lg text-sm';
 
     const iconSpan = document.createElement('span');
-    iconSpan.textContent = node.isDirectory ? '📁' : '📄';
+    iconSpan.textContent = node.isDirectory ? 'ðŸ“' : 'ðŸ“„';
 
     const nameSpan = document.createElement('span');
     nameSpan.textContent = node.name;
@@ -164,11 +164,11 @@ export function FileTreeItem({
   const _handleSelectFolder = (e: React.MouseEvent) => {
     e.stopPropagation();
     if (node.isDirectory) {
-      onSelectFolder?.(node.path); // Appelle onSelectFolder avec le chemin du dossier si défini
+      onSelectFolder?.(node.path); // Appelle onSelectFolder avec le chemin du dossier si dÃ©fini
     }
   };
 
-  // Ajoute un effet visuel sur le dossier sélectionné
+  // Ajoute un effet visuel sur le dossier sÃ©lectionnÃ©
   const isSelected = selectedFolder === node.path;
 
   // Determine which icon to show in the expand/collapse button
@@ -185,7 +185,7 @@ export function FileTreeItem({
   return (
     // biome-ignore lint/a11y/noNoninteractiveElementInteractions: interactive handler is intentional
     // biome-ignore lint/a11y/noStaticElementInteractions: interactive handler is intentional
-    // biome-ignore lint/a11y/useAriaPropsSupportedByRole: ARIA attributes are valid for this role
+// biome-ignore lint/a11y/useAriaPropsSupportedByRole: ARIA attributes are valid for this role
     <div
       role={node.isDirectory ? 'button' : undefined}
       tabIndex={node.isDirectory ? 0 : undefined}
@@ -198,7 +198,7 @@ export function FileTreeItem({
         'hover:bg-accent/50 transition-colors',
         node.isDirectory && 'focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-1',
         isDragging && 'opacity-50 bg-accent ring-2 ring-primary',
-        isSelected && 'bg-primary text-white' // Highlight si sélectionné
+        isSelected && 'bg-primary text-white' // Highlight si sÃ©lectionnÃ©
       )}
       style={{ paddingLeft: `${depth * 12 + 8}px` }}
       onClick={handleClick}
@@ -242,3 +242,5 @@ export function FileTreeItem({
     </div>
   );
 }
+
+

@@ -1,4 +1,4 @@
-import { useTranslation } from 'react-i18next';
+﻿import { useTranslation } from 'react-i18next';
 import * as DialogPrimitive from '@radix-ui/react-dialog';
 import { useToast } from '../../hooks/use-toast';
 import { Separator } from '../ui/separator';
@@ -646,7 +646,7 @@ function TaskDetailModalContent({ open, task, onOpenChange, onSwitchToTerminals,
             <AlertDialogDescription asChild>
               <div className="text-sm text-muted-foreground space-y-3">
                 // biome-ignore lint/security/noDangerouslySetInnerHtml: content is sanitized before use
-                // biome-ignore lint/security/noDangerouslySetInnerHtml: intentional
+// biome-ignore lint/security/noDangerouslySetInnerHtml: intentional 
                 <p dangerouslySetInnerHTML={{ __html: t('tasks:modal.delete.confirmMessage', { title: task.title.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'), interpolation: { escapeValue: false } }) }} />
                 <p className="text-destructive">
                   {t('tasks:modal.delete.warningMessage')}
@@ -687,3 +687,4 @@ function TaskDetailModalContent({ open, task, onOpenChange, onSwitchToTerminals,
     </TooltipProvider>
   );
 }
+

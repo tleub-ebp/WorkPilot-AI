@@ -69,5 +69,15 @@
     "title": "Claude Authentication Required",
     "description": "A Claude Code OAuth token is required to generate AI-powered feature ideas."
   },
-  "noIdeas": "No ideas to display"
+  "noIdeas": "No ideas to display",
+  "performanceDetails": {
+    "impact": "Impact",
+    "effort": "Effort",
+    "category": "Category",
+    "currentState": "Current State",
+    "expectedImprovement": "Expected Improvement",
+    "implementation": "Implementation",
+    "affectedAreas": "Affected Areas",
+    "tradeoffs": "Tradeoffs"
+  }
 }

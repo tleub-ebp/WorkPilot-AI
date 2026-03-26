@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+﻿import { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { 
   Check, 
@@ -39,7 +39,7 @@ import type { SmartEstimationResult } from '../../stores/smart-estimation-store'
 import { useProjectStore } from '../../stores/project-store';
 
 /**
- * SmartEstimationDialog — AI-powered task complexity estimation dialog.
+ * SmartEstimationDialog â€” AI-powered task complexity estimation dialog.
  *
  * Shows a dialog where users can enter a task description and receive
  * an intelligent complexity score based on historical build data.
@@ -402,9 +402,9 @@ function ResultView({
           <CardContent>
             <ul className="space-y-2">
               {result.reasoning.map((reason, i) => (
-                // biome-ignore lint/suspicious/noArrayIndexKey: no stable key available
+// biome-ignore lint/suspicious/noArrayIndexKey: no stable key available 
                 <li key={`reason-${i}`} className="flex items-start gap-2 text-sm">
-                  <span className="text-primary mt-1.5 shrink-0">•</span>
+                  <span className="text-primary mt-1.5 shrink-0">â€¢</span>
                   <span>{reason}</span>
                 </li>
               ))}
@@ -425,9 +425,9 @@ function ResultView({
           <CardContent>
             <ul className="space-y-2">
               {result.risk_factors.map((risk, i) => (
-                // biome-ignore lint/suspicious/noArrayIndexKey: no stable key available
+// biome-ignore lint/suspicious/noArrayIndexKey: no stable key available 
                 <li key={`risk-${i}`} className="flex items-start gap-2 text-sm">
-                  <span className="text-orange-500 mt-1.5 shrink-0">⚠</span>
+                  <span className="text-orange-500 mt-1.5 shrink-0">âš </span>
                   <span>{risk}</span>
                 </li>
               ))}
@@ -448,9 +448,9 @@ function ResultView({
           <CardContent>
             <ul className="space-y-2">
               {result.recommendations.map((rec, i) => (
-                // biome-ignore lint/suspicious/noArrayIndexKey: no stable key available
+// biome-ignore lint/suspicious/noArrayIndexKey: no stable key available 
                 <li key={`rec-${i}`} className="flex items-start gap-2 text-sm">
-                  <span className="text-blue-500 mt-1.5 shrink-0">💡</span>
+                  <span className="text-blue-500 mt-1.5 shrink-0">ðŸ’¡</span>
                   <span>{rec}</span>
                 </li>
               ))}
@@ -471,7 +471,7 @@ function ResultView({
           <CardContent>
             <div className="space-y-3">
               {result.similar_tasks.slice(0, 3).map((task, i) => (
-                // biome-ignore lint/suspicious/noArrayIndexKey: no stable key available
+{/* biome-ignore lint/suspicious/noArrayIndexKey: no stable key available  */}
                 <div key={`task-${i}`} className="border rounded-lg p-3">
                   <div className="flex items-center justify-between mb-2">
                     <span className="font-medium text-sm">{task.spec_name}</span>
@@ -486,8 +486,8 @@ function ResultView({
                   </div>
                   <div className="text-xs text-muted-foreground">
                     {Math.round(task.similarity_score * 100)}% similar
-                    {task.duration_hours && ` • ${task.duration_hours.toFixed(1)}h`}
-                    {task.cost_usd && ` • $${task.cost_usd.toFixed(2)}`}
+                    {task.duration_hours && ` â€¢ ${task.duration_hours.toFixed(1)}h`}
+                    {task.cost_usd && ` â€¢ $${task.cost_usd.toFixed(2)}`}
                   </div>
                 </div>
               ))}
@@ -500,3 +500,6 @@ function ResultView({
 }
 
 export default SmartEstimationDialog;
+
+
+

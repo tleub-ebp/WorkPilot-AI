@@ -1,4 +1,4 @@
-import { useState, useCallback, useMemo } from 'react';
+﻿import { useState, useCallback, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   Wand2,
@@ -185,7 +185,7 @@ export function RefactoringView({ projectId }: RefactoringViewProps) {
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 // biome-ignore lint/a11y/noLabelWithoutControl: label association is implicit
-                // biome-ignore lint/a11y/noLabelWithoutControl: intentional
+{/* biome-ignore lint/a11y/noLabelWithoutControl: intentional  */}
                 <label className="text-sm font-medium text-foreground">
                   {primaryLanguage
                     ? t('refactoring:input.labelWithLanguage', { language: primaryLanguage })
@@ -338,7 +338,7 @@ export function RefactoringView({ projectId }: RefactoringViewProps) {
                   const rcfg = RISK_CONFIG[risk] || RISK_CONFIG.low;
 
                   return (
-                    // biome-ignore lint/suspicious/noArrayIndexKey: no stable key available
+{/* biome-ignore lint/suspicious/noArrayIndexKey: no stable key available */}
                     <div key={idx} className="rounded-lg border border-border p-4 space-y-2">
                       <div className="flex items-center gap-3">
                         <FileCode2 className="h-4 w-4 text-primary shrink-0" />
@@ -367,3 +367,6 @@ export function RefactoringView({ projectId }: RefactoringViewProps) {
     </ScrollArea>
   );
 }
+
+
+

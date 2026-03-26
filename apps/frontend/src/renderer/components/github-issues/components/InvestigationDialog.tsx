@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+﻿import { useEffect, useState } from 'react';
 import { Sparkles, Loader2, CheckCircle2, MessageCircle } from 'lucide-react';
 import { Button } from '../../ui/button';
 import { Progress } from '../../ui/progress';
@@ -22,6 +22,99 @@ interface GitHubComment {
   created_at: string;
   updated_at: string;
 }
+
+// Helper component for loading state
+const CommentsLoadingState = () => (
+  <div className="flex items-center justify-center py-8">
+    <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+  </div>
+);
+
+// Helper component for error state
+const CommentsErrorState = ({ error }: { error: string }) => (
+  <div className="rounded-lg bg-destructive/10 border border-destructive/30 p-4">
+    <p className="text-sm text-destructive font-medium">Failed to load comments</p>
+    <p className="text-xs text-destructive/80 mt-1">{error}</p>
+  </div>
+);
+
+// Helper component for comments list
+const CommentsList = ({
+  comments,
+  selectedCommentIds,
+  toggleComment,
+  toggleAllComments,
+}: {
+  comments: GitHubComment[];
+  selectedCommentIds: number[];
+  toggleComment: (id: number) => void;
+  toggleAllComments: () => void;
+}) => (
+  <div className="space-y-2 flex-1 min-h-0 flex flex-col">
+    <div className="flex items-center justify-between">
+      <h4 className="text-sm font-medium flex items-center gap-2">
+        <MessageCircle className="h-4 w-4" />
+        Select Comments to Include ({selectedCommentIds.length}/{comments.length})
+      </h4>
+      <Button
+        variant="ghost"
+        size="sm"
+        onClick={toggleAllComments}
+        className="text-xs"
+      >
+        {selectedCommentIds.length === comments.length ? 'Deselect All' : 'Select All'}
+      </Button>
+    </div>
+    <ScrollArea
+      className="flex min-h-0 border rounded-md"
+      viewportClassName="h-auto"
+    >
+      <div className="p-2 space-y-2">
+        {comments.map((comment) => (
+          <>
+            {/* biome-ignore lint/a11y/noNoninteractiveElementInteractions: interactive handler is intentional */}
+            {/* biome-ignore lint/a11y/noStaticElementInteractions: interactive handler is intentional */}
+            {/* biome-ignore lint/a11y/useKeyWithClickEvents: keyboard events handled elsewhere  */}
+            <div
+              key={comment.id}
+              className="flex gap-3 p-3 rounded-lg border border-border bg-card hover:bg-accent/50 transition-colors cursor-pointer"
+              onClick={() => toggleComment(comment.id)}
+            >
+              <Checkbox
+                checked={selectedCommentIds.includes(comment.id)}
+                onCheckedChange={() => toggleComment(comment.id)}
+                onClick={(e) => e.stopPropagation()}
+              />
+              <div className="flex-1 space-y-1 min-w-0">
+                <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                  <span className="font-medium">{comment.user.login}</span>
+                  <span>•</span>
+                  <span>{formatDate(comment.created_at)}</span>
+                </div>
+                <p className="text-sm text-foreground whitespace-pre-wrap wrap-break-word line-clamp-3">
+                  {comment.body}
+                </p>
+              </div>
+            </div>
+          </>
+        ))}
+      </div>
+    </ScrollArea>
+  </div>
+);
+
+// Helper component for no comments state
+const NoCommentsState = () => (
+  <div className="rounded-lg border border-border bg-muted/30 p-4">
+    <h4 className="text-sm font-medium mb-2">The task will include:</h4>
+    <ul className="text-sm text-muted-foreground space-y-1">
+      <li>• Issue title and description</li>
+      <li>• Link back to the GitHub issue</li>
+      <li>• Labels and metadata from the issue</li>
+      <li>• No comments (this issue has no comments)</li>
+    </ul>
+  </div>
+);
 
 export function InvestigationDialog({
   open,
@@ -47,7 +140,7 @@ export function InvestigationDialog({
       setSelectedCommentIds([]);
       setFetchCommentsError(null);
 
-      window.electronAPI.getIssueComments(projectId, selectedIssue.number)
+      globalThis.electronAPI.getIssueComments(projectId, selectedIssue.number)
         .then((result: { success: boolean; data?: GitHubComment[] }) => {
           if (!isMounted) return;
           if (result.success && result.data) {
@@ -119,76 +212,28 @@ export function InvestigationDialog({
             </p>
 
             {/* Comments section */}
-            {loadingComments ? (
-              <div className="flex items-center justify-center py-8">
-                <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-              </div>
-            ) : fetchCommentsError ? (
-              <div className="rounded-lg bg-destructive/10 border border-destructive/30 p-4">
-                <p className="text-sm text-destructive font-medium">Failed to load comments</p>
-                <p className="text-xs text-destructive/80 mt-1">{fetchCommentsError}</p>
-              </div>
-            ) : comments.length > 0 ? (
-              <div className="space-y-2 flex-1 min-h-0 flex flex-col">
-                <div className="flex items-center justify-between">
-                  <h4 className="text-sm font-medium flex items-center gap-2">
-                    <MessageCircle className="h-4 w-4" />
-                    Select Comments to Include ({selectedCommentIds.length}/{comments.length})
-                  </h4>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={toggleAllComments}
-                    className="text-xs"
-                  >
-                    {selectedCommentIds.length === comments.length ? 'Deselect All' : 'Select All'}
-                  </Button>
-                </div>
-                <ScrollArea
-                  className="flex min-h-0 border rounded-md"
-                  viewportClassName="h-auto"
-                >
-                  <div className="p-2 space-y-2">
-                    {comments.map((comment) => (
-                      // biome-ignore lint/a11y/noNoninteractiveElementInteractions: interactive handler is intentional
-                      // biome-ignore lint/a11y/noStaticElementInteractions: interactive handler is intentional
-                      // biome-ignore lint/a11y/useKeyWithClickEvents: keyboard events handled elsewhere
-                      <div
-                        key={comment.id}
-                        className="flex gap-3 p-3 rounded-lg border border-border bg-card hover:bg-accent/50 transition-colors cursor-pointer"
-                        onClick={() => toggleComment(comment.id)}
-                      >
-                        <Checkbox
-                          checked={selectedCommentIds.includes(comment.id)}
-                          onCheckedChange={() => toggleComment(comment.id)}
-                          onClick={(e) => e.stopPropagation()}
-                        />
-                        <div className="flex-1 space-y-1 min-w-0">
-                          <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                            <span className="font-medium">{comment.user.login}</span>
-                            <span>•</span>
-                            <span>{formatDate(comment.created_at)}</span>
-                          </div>
-                          <p className="text-sm text-foreground whitespace-pre-wrap break-words line-clamp-3">
-                            {comment.body}
-                          </p>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </ScrollArea>
-              </div>
-            ) : (
-              <div className="rounded-lg border border-border bg-muted/30 p-4">
-                <h4 className="text-sm font-medium mb-2">The task will include:</h4>
-                <ul className="text-sm text-muted-foreground space-y-1">
-                  <li>• Issue title and description</li>
-                  <li>• Link back to the GitHub issue</li>
-                  <li>• Labels and metadata from the issue</li>
-                  <li>• No comments (this issue has no comments)</li>
-                </ul>
-              </div>
-            )}
+            {(() => {
+              if (loadingComments) {
+                return <CommentsLoadingState />;
+              }
+              
+              if (fetchCommentsError) {
+                return <CommentsErrorState error={fetchCommentsError} />;
+              }
+              
+              if (comments.length > 0) {
+                return (
+                  <CommentsList
+                    comments={comments}
+                    selectedCommentIds={selectedCommentIds}
+                    toggleComment={toggleComment}
+                    toggleAllComments={toggleAllComments}
+                  />
+                );
+              }
+              
+              return <NoCommentsState />;
+            })()}
           </div>
         ) : (
           <div className="space-y-4">
@@ -243,3 +288,6 @@ export function InvestigationDialog({
     </Dialog>
   );
 }
+
+
+

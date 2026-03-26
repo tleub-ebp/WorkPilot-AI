@@ -69,5 +69,15 @@
     "title": "Authentification Claude requise",
     "description": "Un token OAuth Claude Code est requis pour générer des idées de fonctionnalités."
   },
-  "noIdeas": "Aucune idée à afficher"
+  "noIdeas": "Aucune idée à afficher",
+  "performanceDetails": {
+    "impact": "Impact",
+    "effort": "Effort",
+    "category": "Catégorie",
+    "currentState": "État actuel",
+    "expectedImprovement": "Amélioration attendue",
+    "implementation": "Implémentation",
+    "affectedAreas": "Zones affectées",
+    "tradeoffs": "Compromis"
+  }
 }

@@ -1,4 +1,4 @@
-import {
+﻿import {
   Gauge,
   Box,
   Database,
@@ -18,9 +18,10 @@ import {
   PERFORMANCE_CATEGORY_LABELS
 } from '../../../../shared/constants';
 import type { PerformanceOptimizationIdea } from '../../../../shared/types';
+import { useTranslation } from 'react-i18next';
 
 interface PerformanceOptimizationDetailsProps {
-  idea: PerformanceOptimizationIdea;
+  readonly idea: PerformanceOptimizationIdea;
 }
 
 // Get an icon for the performance category
@@ -40,6 +41,8 @@ function getCategoryIcon(category: string) {
 }
 
 export function PerformanceOptimizationDetails({ idea }: PerformanceOptimizationDetailsProps) {
+  const { t } = useTranslation('ideation');
+  
   return (
     <>
       {/* Metrics */}
@@ -48,13 +51,13 @@ export function PerformanceOptimizationDetails({ idea }: PerformanceOptimization
           <div className={`text-lg font-semibold ${IDEATION_IMPACT_COLORS[idea.impact]}`}>
             {idea.impact}
           </div>
-          <div className="text-xs text-muted-foreground">Impact</div>
+          <div className="text-xs text-muted-foreground">{t('performanceDetails.impact')}</div>
         </Card>
         <Card className="p-3 text-center">
           <div className={`text-lg font-semibold ${IDEATION_EFFORT_COLORS[idea.estimatedEffort]}`}>
             {idea.estimatedEffort}
           </div>
-          <div className="text-xs text-muted-foreground">Effort</div>
+          <div className="text-xs text-muted-foreground">{t('performanceDetails.effort')}</div>
         </Card>
       </div>
 
@@ -62,7 +65,7 @@ export function PerformanceOptimizationDetails({ idea }: PerformanceOptimization
       <div>
         <h3 className="text-sm font-medium mb-2 flex items-center gap-2">
           {getCategoryIcon(idea.category)}
-          Category
+          {t('performanceDetails.category')}
         </h3>
         <Badge variant="outline">
           {PERFORMANCE_CATEGORY_LABELS[idea.category]}
@@ -74,7 +77,7 @@ export function PerformanceOptimizationDetails({ idea }: PerformanceOptimization
         <div>
           <h3 className="text-sm font-medium mb-2 flex items-center gap-2">
             <AlertCircle className="h-4 w-4" />
-            Current State
+            {t('performanceDetails.currentState')}
           </h3>
           <p className="text-sm text-muted-foreground">{idea.currentMetric}</p>
         </div>
@@ -84,7 +87,7 @@ export function PerformanceOptimizationDetails({ idea }: PerformanceOptimization
       <div>
         <h3 className="text-sm font-medium mb-2 flex items-center gap-2">
           <TrendingUp className="h-4 w-4 text-success" />
-          Expected Improvement
+          {t('performanceDetails.expectedImprovement')}
         </h3>
         <p className="text-sm text-muted-foreground">{idea.expectedImprovement}</p>
       </div>
@@ -93,7 +96,7 @@ export function PerformanceOptimizationDetails({ idea }: PerformanceOptimization
       <div>
         <h3 className="text-sm font-medium mb-2 flex items-center gap-2">
           <Wrench className="h-4 w-4" />
-          Implementation
+          {t('performanceDetails.implementation')}
         </h3>
         <p className="text-sm text-muted-foreground whitespace-pre-line">{idea.implementation}</p>
       </div>
@@ -103,12 +106,11 @@ export function PerformanceOptimizationDetails({ idea }: PerformanceOptimization
         <div>
           <h3 className="text-sm font-medium mb-2 flex items-center gap-2">
             <FileCode className="h-4 w-4" />
-            Affected Areas
+            {t('performanceDetails.affectedAreas')}
           </h3>
           <ul className="space-y-1">
-            {idea.affectedAreas.map((area, i) => (
-              // biome-ignore lint/suspicious/noArrayIndexKey: no stable key available
-              <li key={i} className="text-sm font-mono text-muted-foreground">
+            {idea.affectedAreas.map((area) => (
+              <li key={area} className="text-sm font-mono text-muted-foreground">
                 {area}
               </li>
             ))}
@@ -121,7 +123,7 @@ export function PerformanceOptimizationDetails({ idea }: PerformanceOptimization
         <div>
           <h3 className="text-sm font-medium mb-2 flex items-center gap-2">
             <AlertTriangle className="h-4 w-4 text-warning" />
-            Tradeoffs
+            {t('performanceDetails.tradeoffs')}
           </h3>
           <p className="text-sm text-muted-foreground">{idea.tradeoffs}</p>
         </div>
@@ -129,3 +131,4 @@ export function PerformanceOptimizationDetails({ idea }: PerformanceOptimization
     </>
   );
 }
+
