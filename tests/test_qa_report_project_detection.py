@@ -41,6 +41,14 @@ def cleanup_mocked_modules():
     cleanup_qa_report_mocks()
 
 
+@pytest.fixture
+def project_dir(tmp_path: Path) -> Path:
+    """Create a temporary project directory."""
+    project = tmp_path / "project"
+    project.mkdir()
+    return project
+
+
 # =============================================================================
 # TEST DISCOVERY TESTS
 # =============================================================================
