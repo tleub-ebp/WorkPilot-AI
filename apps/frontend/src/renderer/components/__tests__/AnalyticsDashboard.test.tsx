@@ -104,11 +104,13 @@ describe('AnalyticsDashboard', () => {
   it('switches to Costs tab', async () => {
     render(<AnalyticsDashboard projectPath="/test/project" />);
 
+    // Wait for data to fully load before switching tabs
     await waitFor(() => {
-      expect(screen.getByText('Costs')).toBeInTheDocument();
+      expect(screen.getByText('Build Analytics')).toBeInTheDocument();
     });
 
-    fireEvent.click(screen.getByText('Costs'));
+    // Radix UI Tabs triggers on mouseDown, not click
+    fireEvent.mouseDown(screen.getByText('Costs'));
 
     await waitFor(() => {
       expect(screen.getByText('Cost by Provider')).toBeInTheDocument();
@@ -119,11 +121,13 @@ describe('AnalyticsDashboard', () => {
   it('switches to Performance tab', async () => {
     render(<AnalyticsDashboard projectPath="/test/project" />);
 
+    // Wait for data to fully load before switching tabs
     await waitFor(() => {
-      expect(screen.getByText('Performance')).toBeInTheDocument();
+      expect(screen.getByText('Build Analytics')).toBeInTheDocument();
     });
 
-    fireEvent.click(screen.getByText('Performance'));
+    // Radix UI Tabs triggers on mouseDown, not click
+    fireEvent.mouseDown(screen.getByText('Performance'));
 
     await waitFor(() => {
       expect(screen.getByText('Tokens by Provider')).toBeInTheDocument();
@@ -164,8 +168,9 @@ describe('AnalyticsDashboard', () => {
 
     render(<AnalyticsDashboard projectPath="/test/project" />);
 
+    // Component uses allSettled so shows generic error message (not individual error text)
     await waitFor(() => {
-      expect(screen.getByText('Network error')).toBeInTheDocument();
+      expect(screen.getByText('Error Loading Analytics')).toBeInTheDocument();
       expect(screen.getByText('Retry')).toBeInTheDocument();
     });
   });
@@ -191,17 +196,16 @@ describe('AnalyticsDashboard', () => {
     });
   });
 
-  it('shows no data placeholder when API returns no cost/snapshot', async () => {
+  it('shows error state when both API calls return failure', async () => {
     mockGetCostSummary.mockResolvedValue({ success: false });
     mockGetDashboardSnapshot.mockResolvedValue({ success: false });
 
     render(<AnalyticsDashboard projectPath="/test/project" />);
 
-    // Should not error - both failed but not thrown → shows dashboard with zeros
+    // When both return success:false, component treats it as an error (bothFailed=true)
     await waitFor(() => {
-      expect(screen.getByText('Build Analytics')).toBeInTheDocument();
-      // With no data, total tasks = 0
-      expect(screen.getAllByText('0').length).toBeGreaterThan(0);
+      expect(screen.getByText('Error Loading Analytics')).toBeInTheDocument();
+      expect(screen.getByText('Retry')).toBeInTheDocument();
     });
   });
 });

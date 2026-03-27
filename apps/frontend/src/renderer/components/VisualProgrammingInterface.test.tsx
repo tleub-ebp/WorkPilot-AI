@@ -43,6 +43,23 @@ vi.mock('reactflow', async () => {
 
 vi.mock('file-saver', () => ({ saveAs: vi.fn() }));
 
+vi.mock('@/stores/visual-to-code-store', () => ({
+  useVisualToCodeStore: () => ({
+    canvasNodes: [{ id: '1', position: { x: 250, y: 5 }, data: { label: 'New Flowchart' }, type: 'editable' }],
+    canvasEdges: [],
+    canvasDiagramType: 'flowchart',
+    setCanvasNodes: () => {
+      // Mock function for testing
+    },
+    setCanvasEdges: () => {
+      // Mock function for testing
+    },
+    setCanvasDiagramType: () => {
+      // Mock function for testing
+    },
+  }),
+}));
+
 import { CanvasPanel } from './visual-to-code/CanvasPanel';
 
 describe('CanvasPanel', () => {

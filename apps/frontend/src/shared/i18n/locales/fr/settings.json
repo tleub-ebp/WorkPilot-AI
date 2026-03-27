@@ -754,13 +754,17 @@
       "preset": "Choisir un preset de fournisseur"
     },
     "presets": {
-      "anthropic": "Anthropic (Claude)",
+      "anthropic": "Anthropic",
       "copilot": "GitHub Copilot",
       "gemini": "Gemini (Google)",
       "grok": "Grok (xAI)",
       "mistral": "Mistral AI",
       "openai": "OpenAI",
-      "windsurf": "Windsurf (Codeium)"
+      "windsurf": "Windsurf (Codeium)",
+      "groq": "Groq",
+      "ollama": "Ollama",
+      "cohere": "Cohere",
+      "openrouter": "OpenRouter"
     },
     "setActive": {
       "label": "Définir actif",
