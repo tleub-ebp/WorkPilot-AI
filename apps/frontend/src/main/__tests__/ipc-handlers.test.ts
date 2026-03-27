@@ -1,3 +1,4 @@
+// @vitest-environment node
 /**
  * Unit tests for IPC handlers
  * Tests all IPC communication patterns between main and renderer processes
@@ -54,6 +55,20 @@ vi.mock('fs', () => {
   return {
     ...mockFs,
     default: mockFs,
+  };
+});
+
+// Mock node:fs to control existsSync for project-handlers (which uses 'node:fs')
+// Only mock existsSync; keep all other functions real so setup/cleanup still works.
+vi.mock('node:fs', async (importActual) => {
+  const actual = await importActual<typeof import('node:fs')>();
+  const mockExistsSync = vi.fn((p: string) =>
+    p.includes('ipc-handlers-test') && p.includes('test-project')
+  );
+  return {
+    ...actual,
+    existsSync: mockExistsSync,
+    default: { ...actual, existsSync: mockExistsSync },
   };
 });
 
@@ -279,6 +294,9 @@ describe("IPC Handlers", { timeout: 30000 }, () => {
       // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
       const fs = await vi.importMock('fs') as any;
       fs.existsSync.mockReturnValue(false);
+      // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
+      const nodeFs = await vi.importMock('node:fs') as any;
+      nodeFs.existsSync.mockReturnValue(false);
       
       const { setupIpcHandlers } = await import("../ipc-handlers");
       setupIpcHandlers(

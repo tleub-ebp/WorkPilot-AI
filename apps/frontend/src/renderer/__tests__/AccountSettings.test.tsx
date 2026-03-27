@@ -24,8 +24,8 @@ describe('AccountSettings basic functionality', () => {
       <AccountSettings settings={settings} onSettingsChange={onSettingsChange} isOpen={isOpen} connector={defaultConnector} />
     );
     
-    // Should have an add button
-    expect(screen.getByRole('button', { name: /buttons\.add/i })).toBeDefined();
+    // Should have an add button (tCommon('buttons.add') resolves to "Add")
+    expect(screen.getByRole('button', { name: /^Add$/i })).toBeDefined();
   });
 
   it('shows input field when add button is clicked', () => {
@@ -33,12 +33,12 @@ describe('AccountSettings basic functionality', () => {
       <AccountSettings settings={settings} onSettingsChange={onSettingsChange} isOpen={isOpen} connector={defaultConnector} />
     );
     
-    // Click add button
-    const addButton = screen.getByRole('button', { name: /buttons\.add/i });
+    // Click add button (tCommon('buttons.add') resolves to "Add")
+    const addButton = screen.getByRole('button', { name: /^Add$/i });
     fireEvent.click(addButton);
-    
-    // Should show input field
-    expect(screen.getByPlaceholderText(/accounts\.claudeCode\.accountNamePlaceholder/i)).toBeDefined();
+
+    // Should show input field (t('accounts.claudeCode.accountNamePlaceholder') resolves to "Account name (e.g., Work, Personal)")
+    expect(screen.getByPlaceholderText(/Account name/i)).toBeDefined();
   });
 });
 

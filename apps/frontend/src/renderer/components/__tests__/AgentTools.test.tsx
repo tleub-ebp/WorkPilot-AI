@@ -9,14 +9,26 @@ import { describe, it, expect, vi } from 'vitest';
 import { DEFAULT_AGENT_PROFILES, DEFAULT_PHASE_MODELS, DEFAULT_FEATURE_MODELS, DEFAULT_FEATURE_THINKING } from '../../../shared/constants/models';
 import { resolveAgentSettings, } from '../../hooks';
 
-// Mock electronAPI
-global.window.electronAPI = {
-  getProjectEnv: vi.fn().mockResolvedValue({ success: true, data: null }),
-  updateProjectEnv: vi.fn().mockResolvedValue({ success: true }),
-  checkMcpHealth: vi.fn().mockResolvedValue({ success: true, data: null }),
-  testMcpConnection: vi.fn().mockResolvedValue({ success: true, data: null }),
-// biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
-} as any;
+// Mock electronAPI with proper typing
+const mockGetProjectEnv = vi.fn().mockResolvedValue({ success: true, data: null });
+const mockUpdateProjectEnv = vi.fn().mockResolvedValue({ success: true });
+const mockCheckMcpHealth = vi.fn().mockResolvedValue({ success: true, data: null });
+const mockTestMcpConnection = vi.fn().mockResolvedValue({ success: true, data: null });
+
+interface ElectronAPIMock {
+  getProjectEnv: typeof mockGetProjectEnv;
+  updateProjectEnv: typeof mockUpdateProjectEnv;
+  checkMcpHealth: typeof mockCheckMcpHealth;
+  testMcpConnection: typeof mockTestMcpConnection;
+  [key: string]: unknown;
+}
+
+(globalThis as unknown as { electronAPI?: ElectronAPIMock }).electronAPI = {
+  getProjectEnv: mockGetProjectEnv,
+  updateProjectEnv: mockUpdateProjectEnv,
+  checkMcpHealth: mockCheckMcpHealth,
+  testMcpConnection: mockTestMcpConnection,
+};
 
 describe('AgentTools - Agent Profile Resolution', () => {
   describe('Profile Selection', () => {
@@ -109,7 +121,7 @@ describe('AgentTools - Agent Profile Resolution', () => {
 
       const profile = DEFAULT_AGENT_PROFILES.find(p => p.id === selectedProfileId) || DEFAULT_AGENT_PROFILES[0];
       const profilePhaseModels = profile.phaseModels || DEFAULT_PHASE_MODELS;
-      const phaseModels = customPhaseModels || profilePhaseModels;
+      const phaseModels = customPhaseModels ?? profilePhaseModels;
 
       // Should resolve to auto profile's opus models
       expect(phaseModels.spec).toBe('opus');
@@ -141,7 +153,7 @@ describe('AgentTools - Agent Profile Resolution', () => {
 
     it('should default to auto profile when selectedProfileId is undefined', () => {
       const selectedProfileId = undefined;
-      const effectiveProfileId = selectedProfileId || 'auto';
+      const effectiveProfileId = selectedProfileId ?? 'auto';
 
       const profile = DEFAULT_AGENT_PROFILES.find(p => p.id === effectiveProfileId) || DEFAULT_AGENT_PROFILES[0];
 
@@ -258,7 +270,7 @@ describe('AgentTools - Agent Profile Resolution', () => {
         { type: 'feature', feature: 'utility' },
         resolvedSettings
       );
-      expect(utilityAgent.model).toBe('claude-haiku-4-5-20251001');
+      expect(utilityAgent.model).toBe('claude-haiku-4-6');
       expect(utilityAgent.thinking).toBe('low');
     });
 
@@ -292,7 +304,7 @@ describe('AgentTools - Agent Profile Resolution', () => {
       // The fix is to resolve the selected profile first
       const profile = DEFAULT_AGENT_PROFILES.find(p => p.id === selectedProfileId) || DEFAULT_AGENT_PROFILES[0];
       const profilePhaseModels = profile.phaseModels || DEFAULT_PHASE_MODELS;
-      const phaseModels = customPhaseModels || profilePhaseModels;
+      const phaseModels = customPhaseModels ?? profilePhaseModels;
 
       // Should be opus (from auto profile), NOT sonnet (from DEFAULT_PHASE_MODELS)
       expect(phaseModels.spec).toBe('opus');
