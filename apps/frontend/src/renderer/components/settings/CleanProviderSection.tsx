@@ -538,7 +538,7 @@ export function CleanProviderSection({
   // Synchronize providersState with providers (avoid infinite loop)
   useEffect(() => {
     setProvidersState(providers);
-  }, [providers.length, providers]);
+  }, [providers]);
 
   // Auto-test configured providers that have never been tested (runs after providers load)
   useEffect(() => {

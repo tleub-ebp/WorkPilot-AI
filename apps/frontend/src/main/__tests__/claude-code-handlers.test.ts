@@ -93,7 +93,7 @@ vi.mock('child_process', () => ({
 
 // Mock global fetch
 const mockFetch = vi.fn();
-global.fetch = mockFetch;
+globalThis.fetch = mockFetch;
 
 // Import after mocks are set up
 import { IPC_CHANNELS } from '../../shared/constants';

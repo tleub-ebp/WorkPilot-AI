@@ -3,6 +3,9 @@
  * This file sets up the test environment without importing vitest directly
  */
 
+import '@testing-library/jest-dom/vitest';
+import '../shared/i18n';
+
 // Mock localStorage for tests that need it
 const createLocalStorageMock = () => {
   let store: Record<string, string> = {};

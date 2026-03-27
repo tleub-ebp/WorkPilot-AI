@@ -1,0 +1,43 @@
+diff --git a/dist/index.mjs b/dist/index.mjs
+index 7dd9172a7228d70a25f708d0fd577cfc69ea15a8..2fea42ef7308ee179abb74f7347ac962ff2ab34b 100644
+--- a/dist/index.mjs
++++ b/dist/index.mjs
+@@ -32,7 +32,37 @@ function composeRefs(...refs) {
+   };
+ }
+ function useComposedRefs(...refs) {
+-  return React.useCallback(composeRefs(...refs), refs);
++  // Fix for React 19: store refs in a ref so the callback identity stays stable
++  // even when inline arrow functions (e.g. `(node) => setState(node)`) change on
++  // every parent render. The original `React.useCallback(fn, refs)` creates a new
++  // callback whenever any ref identity changes, which causes React 19's synchronous
++  // flushSpawnedWork to loop: detach calls setState(null) → re-render → new inline
++  // fn → new callback → detach again → infinite loop.
++  const refsRef = React.useRef(refs);
++  refsRef.current = refs;
++  return React.useCallback((node) => {
++    const currentRefs = refsRef.current;
++    let hasCleanup = false;
++    const cleanups = currentRefs.map((ref) => {
++      const cleanup = setRef(ref, node);
++      if (!hasCleanup && typeof cleanup == "function") {
++        hasCleanup = true;
++      }
++      return cleanup;
++    });
++    if (hasCleanup) {
++      return () => {
++        for (let i = 0; i < currentRefs.length; i++) {
++          const cleanup = cleanups[i];
++          if (typeof cleanup == "function") {
++            cleanup();
++          } else {
++            setRef(currentRefs[i], null);
++          }
++        }
++      };
++    }
++  }, []); // stable — intentionally no deps
+ }
+ export {
+   composeRefs,

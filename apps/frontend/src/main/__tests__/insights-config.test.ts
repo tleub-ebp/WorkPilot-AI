@@ -1,7 +1,7 @@
 /**
  * @vitest-environment node
  */
-import path from 'path';
+import path from 'node:path';
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { InsightsConfig } from '../insights/config';
 

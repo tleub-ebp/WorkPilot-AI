@@ -4,7 +4,7 @@
  */
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { EventEmitter } from "node:events";
-import { writeFileSync, mkdirSync } from "node:fs";
+import { writeFileSync, mkdirSync, rmSync, existsSync } from "node:fs";
 import path from "node:path";
 
 // Test data directory
@@ -165,13 +165,9 @@ function setupTestProject(): void {
 
 // Cleanup test directories
 async function cleanupTestDirs(): Promise<void> {
-  // For testing, we don't actually need to clean up the directories
-  // The mock rmSync will handle this if needed
   try {
-    // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
-    const fs = await vi.importMock('fs') as any;
-    if (fs.rmSync) {
-      fs.rmSync(TEST_DIR, { recursive: true, force: true });
+    if (existsSync(TEST_DIR)) {
+      rmSync(TEST_DIR, { recursive: true, force: true });
     }
   } catch {
     // Ignore cleanup errors in tests
