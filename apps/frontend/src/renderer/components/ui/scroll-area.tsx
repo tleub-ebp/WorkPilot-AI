@@ -1,15 +1,27 @@
 import * as React from 'react';
-import * as ScrollAreaPrimitive from '@radix-ui/react-scroll-area';
 import { cn } from '../../lib/utils';
 
+/**
+ * Custom scroll area that avoids Radix's ScrollAreaRoot/ScrollAreaScrollbar
+ * components, which trigger a React 19 "Maximum update depth exceeded" loop.
+ *
+ * Root cause: Radix 1.2.x uses `useComposedRefs(forwardedRef, (node) => setState(node))`
+ * with an inline arrow function, creating a new composed ref on every render.
+ * React 19's synchronous `flushSpawnedWork` then re-flushes the setState call
+ * triggered during ref attachment, creating an infinite loop.
+ *
+ * Fix: replace with plain divs + native CSS scrollbar styling.
+ * The viewport div keeps `data-radix-scroll-area-viewport=""` so that existing
+ * DOM queries (`element.closest('[data-radix-scroll-area-viewport]')`) still work.
+ */
 const ScrollArea = React.forwardRef<
   HTMLDivElement,
-  React.ComponentPropsWithoutRef<typeof ScrollAreaPrimitive.Root> & {
+  React.HTMLAttributes<HTMLDivElement> & {
     viewportClassName?: string;
     onViewportRef?: (element: HTMLDivElement | null) => void;
   }
 >(({ className, children, viewportClassName, onViewportRef, ...props }, ref) => {
-  const viewportRef = React.useCallback(
+  const viewportCallbackRef = React.useCallback(
     (element: HTMLDivElement | null) => {
       onViewportRef?.(element);
     },
@@ -17,42 +29,33 @@ const ScrollArea = React.forwardRef<
   );
 
   return (
-    <ScrollAreaPrimitive.Root
-      ref={ref}
-      className={cn('relative overflow-hidden', className)}
-      {...props}
-    >
-      <ScrollAreaPrimitive.Viewport
-        ref={viewportRef}
-        className={cn('h-full w-full rounded-[inherit]', viewportClassName)}
+    <div ref={ref} className={cn('relative overflow-hidden', className)} {...props}>
+      <div
+        ref={viewportCallbackRef}
+        data-radix-scroll-area-viewport=""
+        className={cn(
+          'h-full w-full rounded-[inherit] overflow-auto',
+          // Thin, themed scrollbar — Chrome/Safari
+          '[&::-webkit-scrollbar]:w-2.5 [&::-webkit-scrollbar]:h-2.5',
+          '[&::-webkit-scrollbar-track]:transparent',
+          '[&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-border',
+          // Firefox
+          '[scrollbar-width:thin]',
+          viewportClassName
+        )}
       >
         {children}
-      </ScrollAreaPrimitive.Viewport>
-      <ScrollBar />
-      <ScrollAreaPrimitive.Corner />
-    </ScrollAreaPrimitive.Root>
+      </div>
+    </div>
   );
 });
-ScrollArea.displayName = ScrollAreaPrimitive.Root.displayName;
+ScrollArea.displayName = 'ScrollArea';
 
+// Kept for API compatibility; scrollbars are now rendered natively via CSS on the viewport.
 const ScrollBar = React.forwardRef<
   HTMLDivElement,
-  React.ComponentPropsWithoutRef<typeof ScrollAreaPrimitive.ScrollAreaScrollbar>
->(({ className, orientation = 'vertical', ...props }, ref) => (
-  <ScrollAreaPrimitive.ScrollAreaScrollbar
-    ref={ref}
-    orientation={orientation}
-    className={cn(
-      'flex touch-none select-none transition-colors',
-      orientation === 'vertical' && 'h-full w-2.5 border-l border-l-transparent p-px',
-      orientation === 'horizontal' && 'h-2.5 flex-col border-t border-t-transparent p-px',
-      className
-    )}
-    {...props}
-  >
-    <ScrollAreaPrimitive.ScrollAreaThumb className="relative flex-1 rounded-full bg-border" />
-  </ScrollAreaPrimitive.ScrollAreaScrollbar>
-));
-ScrollBar.displayName = ScrollAreaPrimitive.ScrollAreaScrollbar.displayName;
+  React.HTMLAttributes<HTMLDivElement> & { orientation?: 'vertical' | 'horizontal' }
+>((_props, _ref) => null);
+ScrollBar.displayName = 'ScrollBar';
 
 export { ScrollArea, ScrollBar };

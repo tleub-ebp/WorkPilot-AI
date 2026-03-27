@@ -35,7 +35,9 @@ export function GlobalAutoSwitching({ settings, onSettingsChange, isOpen, provid
   const { t } = useTranslation('settings');
   const { toast } = useToast();
   const { profiles: apiProfiles, activeProfileId: activeApiProfileId } = useSettingsStore();
-  const { profiles: claudeProfiles, activeProfileId: activeClaudeProfileId } = useClaudeProfileStore();
+  // Select only the fields we need to avoid re-renders from unrelated store changes (e.g. isLoading)
+  const claudeProfiles = useClaudeProfileStore((s) => s.profiles);
+  const activeClaudeProfileId = useClaudeProfileStore((s) => s.activeProfileId);
   const [isLoading, setIsLoading] = useState(false);
   
   // Priority order state
@@ -244,16 +246,14 @@ export function GlobalAutoSwitching({ settings, onSettingsChange, isOpen, provid
     return filteredList;
   };
 
-  // Load unified accounts when dependencies change
+  // Load unified accounts when the underlying data changes.
+  // NOTE: Do NOT put `buildUnifiedAccounts` itself in the deps array — it is a
+  // plain function recreated on every render, which would cause the effect to fire
+  // every render → setUnifiedAccounts → re-render → new function → infinite loop.
+  // biome-ignore lint/correctness/useExhaustiveDependencies: deps are the data buildUnifiedAccounts reads
   useEffect(() => {
-    const loadUnifiedAccounts = async () => {
-      const accounts = await buildUnifiedAccounts();
-      setUnifiedAccounts(accounts);
-    };
-    
-    loadUnifiedAccounts();
-  // biome-ignore lint/correctness/useExhaustiveDependencies: intentional dependency omission
-  }, [buildUnifiedAccounts]);
+    buildUnifiedAccounts().then(setUnifiedAccounts);
+  }, [claudeProfiles, activeClaudeProfileId, activeApiProfileId, authenticatedProviders, providerStatus, priorityOrder, apiProfiles]);
 
   // Load priority order from ClaudeProfileManager
   const loadPriorityOrder = async () => {

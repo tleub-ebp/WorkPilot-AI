@@ -3,9 +3,9 @@
  * Tests atomic writes, backup recovery, race condition prevention, and write serialization
  */
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { mkdirSync, mkdtempSync, writeFileSync, rmSync, existsSync, readFileSync } from 'fs';
-import path from 'path';
-import os from 'os';
+import { mkdirSync, mkdtempSync, writeFileSync, rmSync, existsSync, readFileSync } from 'node:fs';
+import path from 'node:path';
+import os from 'node:os';
 
 // Test directories - use secure temporary directory with unique suffix
 // This prevents symlink attacks and race conditions compared to predictable /tmp paths
@@ -108,9 +108,11 @@ describe('TerminalSessionStore', () => {
       rmSync(SESSIONS_DIR, { recursive: true, force: true });
 
       const { TerminalSessionStore } = await import('../terminal-session-store');
-      new TerminalSessionStore();
+      const store = new TerminalSessionStore();
 
       expect(existsSync(SESSIONS_DIR)).toBe(true);
+      // Verify the store is properly initialized
+      expect(store.getAllSessions().version).toBe(2);
     });
 
     it('should initialize with empty data when no store file exists', async () => {
@@ -249,11 +251,13 @@ describe('TerminalSessionStore', () => {
       writeFileSync(STORE_PATH, 'corrupted');
 
       const { TerminalSessionStore } = await import('../terminal-session-store');
-      new TerminalSessionStore();
+      const store = new TerminalSessionStore();
 
       // Main file should now be valid
       const mainContent = JSON.parse(readFileSync(STORE_PATH, 'utf-8'));
       expect(mainContent.version).toBe(2);
+      // Verify the store is properly initialized after recovery
+      expect(store.getAllSessions().version).toBe(2);
     });
 
     it('should start fresh if both main and backup are corrupted', async () => {

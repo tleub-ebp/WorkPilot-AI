@@ -3,9 +3,9 @@
  * Tests logging functionality, debug info collection, and cross-platform compatibility
  */
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { mkdirSync, mkdtempSync, writeFileSync, rmSync, existsSync } from 'fs';
-import { tmpdir } from 'os';
-import path from 'path';
+import { mkdirSync, mkdtempSync, writeFileSync, rmSync, existsSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import path from 'node:path';
 
 // Use secure temp directory with random suffix to prevent symlink attacks
 // These will be initialized in beforeEach with mkdtempSync
@@ -134,7 +134,7 @@ describe('Application Logger', () => {
 
       const info = getSystemInfo();
 
-      expect(parseInt(info.cpuCores, 10)).toBeGreaterThan(0);
+      expect(Number.parseInt(info.cpuCores, 10)).toBeGreaterThan(0);
     });
   });
 

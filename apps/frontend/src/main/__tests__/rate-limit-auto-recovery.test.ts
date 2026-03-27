@@ -3,7 +3,7 @@
  * Tests the complete flow: rate limit detection → account swap → task restart
  */
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { EventEmitter } from 'events';
+import { EventEmitter } from 'node:events';
 
 // Mock data
 const mockProfiles = {
@@ -46,9 +46,7 @@ function createMockProfileManager(options: {
   const activeId = options.activeProfileId || 'profile-mai';
   const profiles = options.profiles || mockProfiles;
   const settings = options.autoSwitchSettings || mockAutoSwitchSettings;
-  const bestProfile = options.bestAvailableProfile !== undefined
-    ? options.bestAvailableProfile
-    : profiles.mu;
+  const bestProfile = options.bestAvailableProfile ?? profiles.mu;
 
   return {
     getActiveProfile: vi.fn(() => profiles[activeId === 'profile-mai' ? 'mai' : 'mu']),
@@ -64,6 +62,66 @@ function createMockProfileManager(options: {
     getProfileToken: vi.fn(() => 'decrypted-token'),
     getActiveProfileToken: vi.fn(() => 'decrypted-token')
   };
+}
+
+/**
+ * Simulates the flow in agent-process.ts lines 274-327
+ */
+function simulateRateLimitRecovery(
+  output: string,
+  exitCode: number,
+  profileManager: ReturnType<typeof createMockProfileManager>
+): {
+  rateLimitDetected: boolean;
+  autoSwapped: boolean;
+  taskRestarted: boolean;
+  modalShown: boolean;
+  swappedToProfile?: { id: string; name: string };
+} {
+  const result = {
+    rateLimitDetected: false,
+    autoSwapped: false,
+    taskRestarted: false,
+    modalShown: false,
+    swappedToProfile: undefined as { id: string; name: string } | undefined
+  };
+
+  // Only check rate limit if process failed
+  if (exitCode !== 0) {
+    // Simulate detectRateLimit
+    const rateLimitPattern = /Limit reached\s*[·•]\s*resets\s+(.+?)(?:\s*$|\n)/im;
+    const rateIndicators = [/rate\s*limit/i, /usage\s*limit/i, /limit\s*reached/i];
+
+    const isRateLimited = rateLimitPattern.test(output) ||
+      rateIndicators.some(p => p.test(output));
+
+    if (isRateLimited) {
+      result.rateLimitDetected = true;
+
+      const settings = profileManager.getAutoSwitchSettings();
+
+      if (settings.enabled && settings.autoSwitchOnRateLimit) {
+        const bestProfile = profileManager.getBestAvailableProfile('current-profile');
+
+        if (bestProfile) {
+          // Auto-swap
+          profileManager.setActiveProfile(bestProfile.id);
+          result.autoSwapped = true;
+          result.swappedToProfile = { id: bestProfile.id, name: bestProfile.name };
+          result.taskRestarted = true;
+          result.modalShown = true; // Notification modal
+        } else {
+          // No alternative - show manual modal
+          result.modalShown = true;
+        }
+      } else {
+        // Auto-switch disabled - show manual modal
+        result.modalShown = true;
+      }
+    }
+  }
+
+  return result;
 }
 
 describe('Rate Limit Auto-Recovery Integration', () => {
@@ -207,66 +265,6 @@ Stack trace follows`;
   });
 
   describe('Auto-Recovery Flow Simulation', () => {
-    /**
-     * Simulates the flow in agent-process.ts lines 274-327
-     */
-    function simulateRateLimitRecovery(
-      output: string,
-      exitCode: number,
-      profileManager: ReturnType<typeof createMockProfileManager>
-    ): {
-      rateLimitDetected: boolean;
-      autoSwapped: boolean;
-      taskRestarted: boolean;
-      modalShown: boolean;
-      swappedToProfile?: { id: string; name: string };
-    } {
-      const result = {
-        rateLimitDetected: false,
-        autoSwapped: false,
-        taskRestarted: false,
-        modalShown: false,
-        swappedToProfile: undefined as { id: string; name: string } | undefined
-      };
-
-      // Only check rate limit if process failed
-      if (exitCode !== 0) {
-        // Simulate detectRateLimit
-        const rateLimitPattern = /Limit reached\s*[·•]\s*resets\s+(.+?)(?:\s*$|\n)/im;
-        const rateIndicators = [/rate\s*limit/i, /usage\s*limit/i, /limit\s*reached/i];
-
-        const isRateLimited = rateLimitPattern.test(output) ||
-          rateIndicators.some(p => p.test(output));
-
-        if (isRateLimited) {
-          result.rateLimitDetected = true;
-
-          const settings = profileManager.getAutoSwitchSettings();
-
-          if (settings.enabled && settings.autoSwitchOnRateLimit) {
-            const bestProfile = profileManager.getBestAvailableProfile('current-profile');
-
-            if (bestProfile) {
-              // Auto-swap
-              profileManager.setActiveProfile(bestProfile.id);
-              result.autoSwapped = true;
-              result.swappedToProfile = { id: bestProfile.id, name: bestProfile.name };
-              result.taskRestarted = true;
-              result.modalShown = true; // Notification modal
-            } else {
-              // No alternative - show manual modal
-              result.modalShown = true;
-            }
-          } else {
-            // Auto-switch disabled - show manual modal
-            result.modalShown = true;
-          }
-        }
-      }
-
-      return result;
-    }
-
     it('should auto-swap and restart when all conditions met', () => {
       const result = simulateRateLimitRecovery(
         'Limit reached · resets Dec 17 at 6am',

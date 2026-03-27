@@ -1,5 +1,5 @@
-import { EventEmitter } from 'events';
-import path from 'path';
+import { EventEmitter } from 'node:events';
+import path from 'node:path';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { IPC_CHANNELS } from '../../shared/constants';
 const {
@@ -42,6 +42,38 @@ vi.mock('../project-store', () => ({
 }));
 
 vi.mock('child_process', () => {
+  const mockExecFile = vi.fn(
+    (
+      _cmd: string,
+      _args: string[],
+      _options: Record<string, unknown>,
+      callback?: (error: Error | null, stdout: string, stderr: string) => void
+    ) => {
+      // Return a minimal ChildProcess-like object
+      const childProcess = {
+        stdout: { on: vi.fn() },
+        stderr: { on: vi.fn() },
+        on: vi.fn()
+      };
+
+      // If callback is provided, call it asynchronously
+      if (typeof callback === 'function') {
+        setImmediate(() => callback(null, '', ''));
+      }
+
+      return childProcess as unknown;
+    }
+  );
+
+  const mod = {
+    spawn: spawnMock,
+    execFileSync: vi.fn(),
+    execFile: mockExecFile,
+  };
+  return { ...mod, default: mod };
+});
+
+vi.mock('node:child_process', () => {
   const mockExecFile = vi.fn(
     (
       _cmd: string,

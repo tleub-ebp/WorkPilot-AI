@@ -218,7 +218,7 @@ describe('AgentTools - Agent Profile Resolution', () => {
         { type: 'feature', feature: 'insights' },
         resolvedSettings
       );
-      expect(insightsAgent.model).toBe('claude-sonnet-4-5-20250929');
+      expect(insightsAgent.model).toBe('claude-sonnet-4-6');
       expect(insightsAgent.thinking).toBe('medium');
 
       // Ideation feature agent (defaults to opus)
