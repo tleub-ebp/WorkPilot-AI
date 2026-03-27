@@ -6,3 +6,6 @@ onlyBuiltDependencies:
   - better-sqlite3
   - electron
   - node-pty
+
+patchedDependencies:
+  '@radix-ui/react-compose-refs': patches/@radix-ui__react-compose-refs.patch

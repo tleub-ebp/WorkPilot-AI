@@ -111,9 +111,9 @@ export function Insights({ projectId }: InsightsProps) {
   const [taskCreated, setTaskCreated] = useState<Set<string>>(new Set());
   const [showSidebar, setShowSidebar] = useState(true);
   const [isUserAtBottom, setIsUserAtBottom] = useState(true);
-  const [viewportEl, setViewportEl] = useState<HTMLElement | null>(null);
 
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
+  const scrollAreaRef = useRef<HTMLDivElement>(null);
 
   // Scroll threshold in pixels - user is considered "at bottom" if within this distance
   const SCROLL_BOTTOM_THRESHOLD = 100;
@@ -124,22 +124,16 @@ export function Insights({ projectId }: InsightsProps) {
     return scrollHeight - scrollTop - clientHeight <= SCROLL_BOTTOM_THRESHOLD;
   }, []);
 
-  // Handle scroll events to track user position
-  const handleScroll = useCallback(() => {
-    if (viewportEl) {
-      setIsUserAtBottom(checkIfAtBottom(viewportEl));
-    }
-  }, [viewportEl, checkIfAtBottom]);
-
-  // Set up scroll listener and check initial position when viewport becomes available
+  // Set up scroll listener and check initial position after mount
   useEffect(() => {
-    if (viewportEl) {
-      // Check initial scroll position
-      setIsUserAtBottom(checkIfAtBottom(viewportEl));
-      viewportEl.addEventListener('scroll', handleScroll, { passive: true });
-      return () => viewportEl.removeEventListener('scroll', handleScroll);
-    }
-  }, [viewportEl, handleScroll, checkIfAtBottom]);
+    // Find the Radix ScrollArea viewport via DOM query to avoid setState-in-ref loops
+    const viewport = scrollAreaRef.current?.querySelector('[data-radix-scroll-area-viewport]') as HTMLElement | null;
+    if (!viewport) return;
+    setIsUserAtBottom(checkIfAtBottom(viewport));
+    const onScroll = () => setIsUserAtBottom(checkIfAtBottom(viewport));
+    viewport.addEventListener('scroll', onScroll, { passive: true });
+    return () => viewport.removeEventListener('scroll', onScroll);
+  }, [checkIfAtBottom]);
 
   // Load session and set up listeners on mount
   useEffect(() => {
@@ -152,10 +146,11 @@ export function Insights({ projectId }: InsightsProps) {
   // This allows users to scroll up to read previous messages without being
   // yanked back down during streaming responses
   useEffect(() => {
-    if (isUserAtBottom && viewportEl) {
-      viewportEl.scrollTop = viewportEl.scrollHeight;
+    if (isUserAtBottom) {
+      const viewport = scrollAreaRef.current?.querySelector('[data-radix-scroll-area-viewport]') as HTMLElement | null;
+      if (viewport) viewport.scrollTop = viewport.scrollHeight;
     }
-  }, [isUserAtBottom, viewportEl]);
+  }, [isUserAtBottom]);
 
   // Focus textarea on mount
   useEffect(() => {
@@ -309,8 +304,8 @@ export function Insights({ projectId }: InsightsProps) {
 
       {/* Messages */}
       <ScrollArea
+        ref={scrollAreaRef}
         className="flex-1 px-6 py-4"
-        onViewportRef={setViewportEl}
       >
         {messages.length === 0 && !streamingContent ? (
           <div className="flex h-full flex-col items-center justify-center text-center">
