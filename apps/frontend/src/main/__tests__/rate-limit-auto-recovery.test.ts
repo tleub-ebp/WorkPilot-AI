@@ -46,7 +46,7 @@ function createMockProfileManager(options: {
   const activeId = options.activeProfileId || 'profile-mai';
   const profiles = options.profiles || mockProfiles;
   const settings = options.autoSwitchSettings || mockAutoSwitchSettings;
-  const bestProfile = options.bestAvailableProfile ?? profiles.mu;
+  const bestProfile = options.bestAvailableProfile === undefined ? profiles.mu : options.bestAvailableProfile;
 
   return {
     getActiveProfile: vi.fn(() => profiles[activeId === 'profile-mai' ? 'mai' : 'mu']),

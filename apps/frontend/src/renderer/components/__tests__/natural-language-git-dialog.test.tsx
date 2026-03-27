@@ -12,6 +12,7 @@ vi.mock('@/stores/project-store');
 vi.mock('react-i18next', () => ({
   useTranslation: () => ({
     t: (key: string) => key,
+    i18n: { language: 'en' },
   }),
 }));
 
@@ -44,7 +45,10 @@ describe('NaturalLanguageGitDialog', () => {
     // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
     (useNaturalLanguageGitStore as any).mockReturnValue(mockStore);
     // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
-    (useProjectStore as any).mockReturnValue(mockProjectStore);
+    (useProjectStore as any).mockImplementation((selector: (s: typeof mockProjectStore) => unknown) => {
+      if (typeof selector === 'function') return selector(mockProjectStore);
+      return mockProjectStore;
+    });
   });
 
   afterEach(() => {
@@ -134,7 +138,7 @@ describe('NaturalLanguageGitDialog', () => {
     render(<NaturalLanguageGitDialog />);
     
     expect(screen.getByText('naturalLanguageGit:result.streamingOutput')).toBeInTheDocument();
-    expect(screen.getByText('Processing...\nAnalyzing...')).toBeInTheDocument();
+    expect(screen.getByText(/Processing\.\.\..*Analyzing\.\.\./s)).toBeInTheDocument();
   });
 
   it('should show result when complete', () => {
@@ -153,7 +157,7 @@ describe('NaturalLanguageGitDialog', () => {
     expect(screen.getByText('naturalLanguageGit:result.explanation')).toBeInTheDocument();
     expect(screen.getByText('Shows the working tree status')).toBeInTheDocument();
     expect(screen.getByText('naturalLanguageGit:result.executionOutput')).toBeInTheDocument();
-    expect(screen.getByText('On branch main\nnothing to commit')).toBeInTheDocument();
+    expect(screen.getByText(/On branch main.*nothing to commit/s)).toBeInTheDocument();
     expect(screen.getByText('naturalLanguageGit:result.executionSuccess')).toBeInTheDocument();
     expect(screen.getByText('naturalLanguageGit:actions.newCommand')).toBeInTheDocument();
   });

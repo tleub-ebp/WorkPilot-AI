@@ -475,6 +475,125 @@
       "deleting": "Deleting..."
     }
   },
+  "apiProfiles": {
+    "addButton": "Add Profile",
+    "presets": {
+      "anthropic": "Anthropic",
+      "copilot": "GitHub Copilot",
+      "openai": "OpenAI",
+      "mistral": "Mistral AI",
+      "grok": "Grok (xAI)",
+      "gemini": "Gemini (Google)",
+      "windsurf": "Windsurf (Codeium)",
+      "groq": "Groq",
+      "ollama": "Ollama",
+      "cohere": "Cohere",
+      "openrouter": "OpenRouter"
+    },
+    "fields": {
+      "name": "Name",
+      "preset": "Preset",
+      "baseUrl": "Base URL",
+      "apiKey": "API Key"
+    },
+    "placeholders": {
+      "name": "My Custom API",
+      "preset": "Choose a provider preset",
+      "baseUrl": "https://api.anthropic.com",
+      "apiKey": "sk-ant-..."
+    },
+    "hints": {
+      "preset": "Presets fill the base URL; you still need to paste your API key.",
+      "baseUrl": "Example: https://api.anthropic.com or http://localhost:8080"
+    },
+    "validation": {
+      "nameRequired": "Name is required",
+      "baseUrlRequired": "Base URL is required",
+      "baseUrlInvalid": "Invalid URL format (must be http:// or https://)",
+      "apiKeyRequired": "API Key is required",
+      "apiKeyInvalid": "Invalid API Key format"
+    },
+    "actions": {
+      "save": "Save Profile",
+      "saving": "Saving...",
+      "cancel": "Cancel",
+      "changeKey": "Change",
+      "cancelKeyChange": "Cancel"
+    },
+    "testConnection": {
+      "label": "Test Connection",
+      "testing": "Testing...",
+      "success": "Connection Successful",
+      "failure": "Connection Failed"
+    },
+    "models": {
+      "title": "Optional: Model Name Mappings",
+      "description": "Select models from your API provider. Leave blank to use defaults.",
+      "defaultLabel": "Default Model (Optional)",
+      "haikuLabel": "Haiku Model (Optional)",
+      "sonnetLabel": "Sonnet Model (Optional)",
+      "opusLabel": "Opus Model (Optional)",
+      "defaultPlaceholder": "e.g., claude-sonnet-4-5-20250929",
+      "haikuPlaceholder": "e.g., claude-haiku-4-5-20251001",
+      "sonnetPlaceholder": "e.g., claude-sonnet-4-5-20250929",
+      "opusPlaceholder": "e.g., claude-opus-4-5-20251101"
+    },
+    "empty": {
+      "title": "No API profiles configured",
+      "description": "Create a profile to configure custom API endpoints for your builds.",
+      "action": "Create First Profile"
+    },
+    "switchToOauth": {
+      "label": "Switch to OAuth",
+      "loading": "Switching..."
+    },
+    "activeBadge": "Active",
+    "customModels": "Custom models: {{models}}",
+    "setActive": {
+      "label": "Set Active",
+      "loading": "Setting..."
+    },
+    "tooltips": {
+      "edit": "Edit profile",
+      "deleteActive": "Switch to OAuth before deleting",
+      "deleteInactive": "Delete profile"
+    },
+    "deleteAriaLabel": "Delete profile {{name}}",
+    "toast": {
+      "create": {
+        "title": "Profile created",
+        "description": "\"{{name}}\" has been added successfully."
+      },
+      "update": {
+        "title": "Profile updated",
+        "description": "\"{{name}}\" has been updated successfully."
+      },
+      "delete": {
+        "title": "Profile deleted",
+        "description": "\"{{name}}\" has been removed.",
+        "errorTitle": "Failed to delete profile",
+        "errorFallback": "An error occurred while deleting the profile."
+      },
+      "switch": {
+        "oauthTitle": "Switched to OAuth",
+        "oauthDescription": "Now using OAuth authentication",
+        "profileTitle": "Profile activated",
+        "profileDescription": "Now using {{name}}",
+        "errorTitle": "Failed to switch authentication",
+        "errorFallback": "An error occurred while switching authentication method."
+      }
+    },
+    "dialog": {
+      "createTitle": "Add API Profile",
+      "editTitle": "Edit Profile",
+      "description": "Configure a custom Anthropic-compatible API endpoint for your builds.",
+      "deleteTitle": "Delete Profile?",
+      "deleteDescription": "Are you sure you want to delete \"{{name}}\"? This action cannot be undone.",
+      "cancel": "Cancel",
+      "delete": "Delete",
+      "deleting": "Deleting..."
+    }
+  },
   "modelSelect": {
     "placeholder": "Select a model or type manually",
     "placeholderManual": "Enter model name (e.g., claude-sonnet-4-5-20250929)",
@@ -1854,174 +1973,174 @@
       "total": "{{count}} total",
       "configured": "{{count}} configured",
       "errors": "{{count}} errors"
-  },
-  "actions": {
-    "refresh": "Refresh",
-    "add": "Add"
-  }
-},
-"collaboration": {
-  "title": "Collaboration",
-  "description": "Multi-user collaboration settings"
-},
-"copilot": {
-  "switchInstallation": "Switch Installation",
-  "versionUnknown": "version unknown",
-  "active": "Active",
-  "viewCopilotCliDocs": "View GitHub Copilot CLI Docs",
-  "updateCopilotCli": "Update GitHub Copilot CLI?",
-  "updateDescription": "This will update the GitHub Copilot CLI tool. A new terminal will open in the \"Terminaux Agent\" page to run the update command.",
-  "updateAvailable": "GitHub Copilot CLI Update Available",
-  "copilotCliUpdateAvailable": "Copilot CLI update available",
-  "autoUpdateDescription": "A new version of GitHub Copilot CLI is available. Would you like to open a terminal and update it automatically?",
-  "openTerminalAndUpdate": "Open Terminal & Update",
-  "switchGhCliInstallation": "Switch gh CLI installation?",
-  "switchDescription": "Switching installations will use a different gh binary for Copilot CLI.",
-  "switch": "Switch",
-  "checkingInstallationMethod": "Checking installation method...",
-  "updatingViaNpm": "Updating via npm...",
-  "updatingViaHomebrew": "Updating via Homebrew...",
-  "updatingViaWinget": "Updating via WinGet...",
-  "updatingViaChocolatey": "Updating via Chocolatey...",
-  "updatingViaScoop": "Updating via Scoop...",
-  "installingViaScript": "Installing via script...",
-  "updatingGitHubCli": "Updating GitHub CLI...",
-  "updatingGitHubCopilotCli": "Updating GitHub Copilot CLI...",
-  "manualDownloadRequired": "Manual download required. Please visit https://cli.github.com/",
-  "checkingCopilotCli": "Checking Copilot CLI...",
-  "copilotCliUpToDate": "Copilot CLI is up to date",
-  "copilotCliExtensionNotInstalled": "Copilot CLI extension not installed",
-  "gitHubCliNotFound": "GitHub CLI (gh) not found — required for Copilot",
-  "errorCheckingCopilotCli": "Error checking Copilot CLI",
-  "loadingInstallations": "Loading installations...",
-  "failedToLoadInstallations": "Failed to load installations",
-  "selectInstallation": "Select installation",
-  "installed": "Installed",
-  "extensionNotInstalled": "Extension not installed",
-  "gitHubCliNotFoundShort": "GitHub CLI not found",
-  "checking": "Checking...",
-  "error": "Error",
-  "llmRouter": {
-    "title": "LLM Router",
-    "description": "Configure intelligent provider routing with fallback chains, A/B testing, and strategy-based selection.",
-    "routingStrategy": {
-      "title": "Default Routing Strategy",
-      "description": "How the router selects a provider when multiple are available.",
-      "bestPerformance": "Best Performance",
-      "bestPerformanceDescription": "Prioritize quality score",
-      "cheapest": "Cheapest",
-      "cheapestDescription": "Minimize cost per task",
-      "lowestLatency": "Lowest Latency",
-      "lowestLatencyDescription": "Fastest response time",
-      "roundRobin": "Round Robin",
-      "roundRobinDescription": "Distribute evenly"
     },
-    "registeredProviders": {
-      "title": "Registered Providers",
-      "description": "Providers available for routing. Configure accounts in Settings > Accounts.",
-      "table": {
-        "providerModel": "Provider / Model",
-        "capabilities": "Capabilities",
-        "priority": "Priority",
-        "status": "Status"
+    "actions": {
+      "refresh": "Refresh",
+      "add": "Add"
+    }
+  },
+  "collaboration": {
+    "title": "Collaboration",
+    "description": "Multi-user collaboration settings"
+  },
+  "copilot": {
+    "switchInstallation": "Switch Installation",
+    "versionUnknown": "version unknown",
+    "active": "Active",
+    "viewCopilotCliDocs": "View GitHub Copilot CLI Docs",
+    "updateCopilotCli": "Update GitHub Copilot CLI?",
+    "updateDescription": "This will update the GitHub Copilot CLI tool. A new terminal will open in the \"Terminaux Agent\" page to run the update command.",
+    "updateAvailable": "GitHub Copilot CLI Update Available",
+    "copilotCliUpdateAvailable": "Copilot CLI update available",
+    "autoUpdateDescription": "A new version of GitHub Copilot CLI is available. Would you like to open a terminal and update it automatically?",
+    "openTerminalAndUpdate": "Open Terminal & Update",
+    "switchGhCliInstallation": "Switch gh CLI installation?",
+    "switchDescription": "Switching installations will use a different gh binary for Copilot CLI.",
+    "switch": "Switch",
+    "checkingInstallationMethod": "Checking installation method...",
+    "updatingViaNpm": "Updating via npm...",
+    "updatingViaHomebrew": "Updating via Homebrew...",
+    "updatingViaWinget": "Updating via WinGet...",
+    "updatingViaChocolatey": "Updating via Chocolatey...",
+    "updatingViaScoop": "Updating via Scoop...",
+    "installingViaScript": "Installing via script...",
+    "updatingGitHubCli": "Updating GitHub CLI...",
+    "updatingGitHubCopilotCli": "Updating GitHub Copilot CLI...",
+    "manualDownloadRequired": "Manual download required. Please visit https://cli.github.com/",
+    "checkingCopilotCli": "Checking Copilot CLI...",
+    "copilotCliUpToDate": "Copilot CLI is up to date",
+    "copilotCliExtensionNotInstalled": "Copilot CLI extension not installed",
+    "gitHubCliNotFound": "GitHub CLI (gh) not found — required for Copilot",
+    "errorCheckingCopilotCli": "Error checking Copilot CLI",
+    "loadingInstallations": "Loading installations...",
+    "failedToLoadInstallations": "Failed to load installations",
+    "selectInstallation": "Select installation",
+    "installed": "Installed",
+    "extensionNotInstalled": "Extension not installed",
+    "gitHubCliNotFoundShort": "GitHub CLI not found",
+    "checking": "Checking...",
+    "error": "Error",
+    "llmRouter": {
+      "title": "LLM Router",
+      "description": "Configure intelligent provider routing with fallback chains, A/B testing, and strategy-based selection.",
+      "routingStrategy": {
+        "title": "Default Routing Strategy",
+        "description": "How the router selects a provider when multiple are available.",
+        "bestPerformance": "Best Performance",
+        "bestPerformanceDescription": "Prioritize quality score",
+        "cheapest": "Cheapest",
+        "cheapestDescription": "Minimize cost per task",
+        "lowestLatency": "Lowest Latency",
+        "lowestLatencyDescription": "Fastest response time",
+        "roundRobin": "Round Robin",
+        "roundRobinDescription": "Distribute evenly"
       },
-      "status": {
-        "active": "Active",
-        "disabled": "Disabled",
-        "local": "local"
+      "registeredProviders": {
+        "title": "Registered Providers",
+        "description": "Providers available for routing. Configure accounts in Settings > Accounts.",
+        "table": {
+          "providerModel": "Provider / Model",
+          "capabilities": "Capabilities",
+          "priority": "Priority",
+          "status": "Status"
+        },
+        "status": {
+          "active": "Active",
+          "disabled": "Disabled",
+          "local": "local"
+        }
+      },
+      "fallbackChains": {
+        "title": "Fallback Chains",
+        "description": "If the primary provider is rate-limited or unavailable, the router automatically falls back to the next in the chain."
+      },
+      "abTesting": {
+        "title": "A/B Testing",
+        "description": "Compare two providers on the same task type. The router alternates between them and tracks quality, latency, and cost.",
+        "noActiveTests": "No active A/B tests",
+        "createTest": "Create a test from the Command Palette or from the task detail view."
       }
     },
-    "fallbackChains": {
-      "title": "Fallback Chains",
-      "description": "If the primary provider is rate-limited or unavailable, the router automatically falls back to the next in the chain."
+    "memoryLifecycle": {
+      "title": "Memory Lifecycle Manager",
+      "description": "Manage Graphiti memory — pruning, retention policies, freshness control",
+      "status": "Status",
+      "episodeCount": "Episodes stored",
+      "diskUsage": "Disk usage",
+      "retentionDays": "Retention (days)",
+      "maxEpisodes": "Max episodes",
+      "pruneStrategy": "Prune strategy",
+      "autoPrune": "Auto-prune",
+      "runPrune": "Run Prune Now",
+      "export": "Export Memories",
+      "pruneStrategies": {
+        "lru": "LRU (least recently used)",
+        "oldest": "Oldest first",
+        "duplicates": "Duplicates only"
+      }
     },
-    "abTesting": {
-      "title": "A/B Testing",
-      "description": "Compare two providers on the same task type. The router alternates between them and tracks quality, latency, and cost.",
-      "noActiveTests": "No active A/B tests",
-      "createTest": "Create a test from the Command Palette or from the task detail view."
-    }
-  },
-  "memoryLifecycle": {
-    "title": "Memory Lifecycle Manager",
-    "description": "Manage Graphiti memory — pruning, retention policies, freshness control",
-    "status": "Status",
-    "episodeCount": "Episodes stored",
-    "diskUsage": "Disk usage",
-    "retentionDays": "Retention (days)",
-    "maxEpisodes": "Max episodes",
-    "pruneStrategy": "Prune strategy",
-    "autoPrune": "Auto-prune",
-    "runPrune": "Run Prune Now",
-    "export": "Export Memories",
-    "pruneStrategies": {
-      "lru": "LRU (least recently used)",
-      "oldest": "Oldest first",
-      "duplicates": "Duplicates only"
-    }
-  },
-  "cicdTriggers": {
-    "title": "CI/CD Deployment Triggers",
-    "description": "Automatically trigger deployment pipelines after agent creates a PR",
-    "provider": "Provider",
-    "enabled": "Auto-trigger enabled",
-    "triggerOnPr": "Trigger on PR creation",
-    "triggerOnMerge": "Trigger on merge",
-    "recentRuns": "Recent pipeline runs",
-    "triggerNow": "Trigger Now",
-    "noRuns": "No pipeline runs yet",
-    "providers": {
-      "github": "GitHub Actions",
-      "gitlab": "GitLab CI",
-      "azure": "Azure DevOps",
-      "jenkins": "Jenkins"
+    "cicdTriggers": {
+      "title": "CI/CD Deployment Triggers",
+      "description": "Automatically trigger deployment pipelines after agent creates a PR",
+      "provider": "Provider",
+      "enabled": "Auto-trigger enabled",
+      "triggerOnPr": "Trigger on PR creation",
+      "triggerOnMerge": "Trigger on merge",
+      "recentRuns": "Recent pipeline runs",
+      "triggerNow": "Trigger Now",
+      "noRuns": "No pipeline runs yet",
+      "providers": {
+        "github": "GitHub Actions",
+        "gitlab": "GitLab CI",
+        "azure": "Azure DevOps",
+        "jenkins": "Jenkins"
+      },
+      "runStatus": {
+        "pending": "Pending",
+        "triggered": "Triggered",
+        "running": "Running",
+        "success": "Success",
+        "failed": "Failed"
+      }
     },
-    "runStatus": {
-      "pending": "Pending",
-      "triggered": "Triggered",
-      "running": "Running",
-      "success": "Success",
-      "failed": "Failed"
-    }
-  },
-  "crossLangTranslation": {
-    "title": "Cross-Language Translation",
-    "description": "AI-powered code translation between programming languages",
-    "sourceLang": "Source language",
-    "targetLang": "Target language",
-    "inputCode": "Input code",
-    "outputCode": "Translated code",
-    "translate": "Translate",
-    "cancel": "Cancel",
-    "history": "Translation history",
-    "clearHistory": "Clear history",
-    "preserveComments": "Preserve comments",
-    "generateTests": "Generate tests",
-    "noHistory": "No translations yet",
-    "status": {
-      "pending": "Pending",
-      "complete": "Complete",
-      "failed": "Failed"
-    }
-  },
-  "specApproval": {
-    "title": "Spec Approval Workflow",
-    "description": "Review and approve AI-generated specifications before execution",
-    "pendingSpecs": "Pending approval",
-    "history": "Approval history",
-    "approve": "Approve",
-    "reject": "Reject",
-    "requestChanges": "Request Changes",
-    "amendments": "Amendments (optional)",
-    "feedback": "Feedback",
-    "noPending": "No specs awaiting approval",
-    "specContent": "Spec content",
-    "status": {
-      "pending": "Pending",
-      "approved": "Approved",
-      "rejected": "Rejected",
-      "changes_requested": "Changes requested"
+    "crossLangTranslation": {
+      "title": "Cross-Language Translation",
+      "description": "AI-powered code translation between programming languages",
+      "sourceLang": "Source language",
+      "targetLang": "Target language",
+      "inputCode": "Input code",
+      "outputCode": "Translated code",
+      "translate": "Translate",
+      "cancel": "Cancel",
+      "history": "Translation history",
+      "clearHistory": "Clear history",
+      "preserveComments": "Preserve comments",
+      "generateTests": "Generate tests",
+      "noHistory": "No translations yet",
+      "status": {
+        "pending": "Pending",
+        "complete": "Complete",
+        "failed": "Failed"
+      }
+    },
+    "specApproval": {
+      "title": "Spec Approval Workflow",
+      "description": "Review and approve AI-generated specifications before execution",
+      "pendingSpecs": "Pending approval",
+      "history": "Approval history",
+      "approve": "Approve",
+      "reject": "Reject",
+      "requestChanges": "Request Changes",
+      "amendments": "Amendments (optional)",
+      "feedback": "Feedback",
+      "noPending": "No specs awaiting approval",
+      "specContent": "Spec content",
+      "status": {
+        "pending": "Pending",
+        "approved": "Approved",
+        "rejected": "Rejected",
+        "changes_requested": "Changes requested"
+      }
     }
   }
-}
 }
