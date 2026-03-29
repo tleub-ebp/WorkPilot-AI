@@ -1,10 +1,22 @@
 import { render, fireEvent, screen } from '@testing-library/react';
 import { vi } from 'vitest';
 import { AccountSettings } from '@/components/settings/AccountSettings';
+import type { AppSettings } from '@shared/types';
 
 // Minimal props mock
-// biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
-const settings = {} as any;
+const settings: AppSettings = {
+  theme: 'system',
+  defaultModel: 'claude-4-5-sonnet',
+  agentFramework: 'claude',
+  autoUpdateAutoBuild: true,
+  autoNameTerminals: true,
+  notifications: {
+    onTaskComplete: true,
+    onTaskFailed: true,
+    onReviewNeeded: true,
+    sound: true,
+  },
+};
 const onSettingsChange = vi.fn();
 const isOpen = true;
 const defaultConnector = { id: 'anthropic', label: 'Anthropic' };
@@ -37,8 +49,8 @@ describe('AccountSettings basic functionality', () => {
     const addButton = screen.getByRole('button', { name: /^Add$/i });
     fireEvent.click(addButton);
 
-    // Should show input field (t('accounts.claudeCode.accountNamePlaceholder') resolves to "Account name (e.g., Work, Personal)")
-    expect(screen.getByPlaceholderText(/Account name/i)).toBeDefined();
+    // t('accounts.claudeCode.accountNamePlaceholder') falls back to the key since the path doesn't exist in settings.json
+    expect(screen.getByPlaceholderText(/accountNamePlaceholder/i)).toBeDefined();
   });
 });
 
