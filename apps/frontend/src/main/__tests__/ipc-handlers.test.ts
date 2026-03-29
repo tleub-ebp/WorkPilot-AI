@@ -7,6 +7,8 @@ import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { EventEmitter } from "node:events";
 import { writeFileSync, mkdirSync, rmSync, existsSync } from "node:fs";
 import path from "node:path";
+// biome-ignore lint/suspicious/noExplicitAny: mocked fs module for test assertions
+import * as fsMock from 'fs';
 
 // Test data directory
 const TEST_DIR = path.join('..', '..', 'tmp', 'ipc-handlers-test');
@@ -58,17 +60,23 @@ vi.mock('fs', () => {
   };
 });
 
-// Mock node:fs to control existsSync for project-handlers (which uses 'node:fs')
-// Only mock existsSync; keep all other functions real so setup/cleanup still works.
+// Mock node:fs — keep real writeFileSync/mkdirSync/rmSync for test setup/cleanup,
+// but mock existsSync, readFileSync, readdirSync so handler code can be controlled.
+// Note: in Vitest node env, 'fs' and 'node:fs' resolve to the same module so this
+// mock applies to both import specifiers.
 vi.mock('node:fs', async (importActual) => {
   const actual = await importActual<typeof import('node:fs')>();
   const mockExistsSync = vi.fn((p: string) =>
     p.includes('ipc-handlers-test') && p.includes('test-project')
   );
+  const mockReadFileSync = vi.fn();
+  const mockReaddirSync = vi.fn(() => []);
   return {
     ...actual,
     existsSync: mockExistsSync,
-    default: { ...actual, existsSync: mockExistsSync },
+    readFileSync: mockReadFileSync,
+    readdirSync: mockReaddirSync,
+    default: { ...actual, existsSync: mockExistsSync, readFileSync: mockReadFileSync, readdirSync: mockReaddirSync },
   };
 });
 
@@ -495,7 +503,7 @@ describe("IPC Handlers", { timeout: 30000 }, () => {
 
     it("should return empty array for project with no specs", async () => {
       // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
-      const fs = await vi.importMock('fs') as any;
+      const fs = fsMock as any;
       fs.existsSync.mockImplementation((path: string) => {
         return path === TEST_PROJECT_PATH;
       });
@@ -522,7 +530,7 @@ describe("IPC Handlers", { timeout: 30000 }, () => {
 
     it("should return tasks when specs exist", async () => {
       // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
-      const fs = await vi.importMock('fs') as any;
+      const fs = fsMock as any;
       fs.existsSync.mockImplementation((path: string) => {
         // Return true for TEST_PROJECT_PATH and any .workpilot paths
         if (path === TEST_PROJECT_PATH) return true;

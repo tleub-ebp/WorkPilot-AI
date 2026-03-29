@@ -142,9 +142,14 @@ describe('StreamingSession', () => {
 
   it('renders the streaming session interface', () => {
     render(<StreamingSession {...mockProps} />);
-    
+
     expect(screen.getByText('Live Coding Session')).toBeInTheDocument();
     expect(screen.getByText('Offline')).toBeInTheDocument();
+
+    // Default tab is "events"; switch to Chat tab to find the chat input
+    // Radix UI Tabs triggers on mouseDown
+    fireEvent.mouseDown(screen.getByText('Chat'));
+
     expect(screen.getByPlaceholderText('Type your message...')).toBeInTheDocument();
     expect(screen.getByText('Send')).toBeInTheDocument();
   });
@@ -225,7 +230,8 @@ describe('StreamingSession', () => {
     }
 
     await waitFor(() => {
-      expect(screen.getByText(/Thinking.*Analyzing the code structure/)).toBeInTheDocument();
+      // currentStatus = thinking.slice(0, 80); use exact match to avoid matching JSON in events list
+      expect(screen.getByText('Analyzing the code structure...')).toBeInTheDocument();
     });
   });
 
@@ -350,19 +356,23 @@ describe('StreamingSession', () => {
     }
 
     await waitFor(() => {
-      expect(screen.getByText(/Thinking.*Analyzing the code structure/)).toBeInTheDocument();
+      // currentStatus = thinking.slice(0, 80); use exact match to avoid matching JSON in events list
+      expect(screen.getByText('Analyzing the code structure and planning the implementation')).toBeInTheDocument();
     });
   });
 
   it('sends chat messages when form is submitted', async () => {
     render(<StreamingSession {...mockProps} />);
-    
+
     // Force WebSocket connection
     MockWebSocket.triggerConnection();
-    
+
     await waitFor(() => {
       expect(screen.getByText('Live')).toBeInTheDocument();
     });
+
+    // Default tab is "events"; switch to Chat tab (Radix UI triggers on mouseDown)
+    fireEvent.mouseDown(screen.getByText('Chat'));
 
     const messageInput = screen.getByPlaceholderText('Type your message...');
     const sendButton = screen.getByText('Send');
@@ -473,8 +483,9 @@ describe('StreamingSession', () => {
     }
 
     // Should not crash and should display recent events
+    // currentStatus = thinking.slice(0, 80); use exact match to avoid matching JSON in events list
     await waitFor(() => {
-      expect(screen.getByText(/Thinking.*Thinking step 149/)).toBeInTheDocument();
+      expect(screen.getByText('Thinking step 149')).toBeInTheDocument();
     });
   });
 
