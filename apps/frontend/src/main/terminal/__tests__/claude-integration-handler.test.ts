@@ -112,8 +112,8 @@ function mockPlatform(platform: 'win32' | 'darwin' | 'linux') {
  */
 function getPathPrefixExpectation(platform: 'win32' | 'darwin' | 'linux', pathValue: string): string {
   if (platform === 'win32') {
-    // Windows: set "PATH=value" &&
-    return `set "PATH=${pathValue}" && `;
+    // Windows: set "PATH=value;%PATH%" && (prepends to existing PATH via %PATH%)
+    return `set "PATH=${pathValue};%PATH%" && `;
   }
   // Unix/macOS: PATH='value' '
   return `PATH='${pathValue}' `;

@@ -32,12 +32,12 @@ describe('ProjectInitModal', () => {
         defaultProvider="anthropic"
       />
     );
-    expect(getByText('Initialisation du projet "MonProjetTest"')).toBeTruthy();
-    expect(getByLabelText('Description du projet')).toBeTruthy();
-    expect(getByText('Fournisseur IA')).toBeTruthy();
+    expect(getByText(/Project initialization/i)).toBeTruthy();
+    expect(getByLabelText('Project description')).toBeTruthy();
+    expect(getByText('AI model provider')).toBeTruthy();
     expect((getByTestId('provider-select') as HTMLSelectElement).value).toBe('anthropic');
-    expect(getByText('Nom du projet:')).toBeTruthy();
-    expect(getByText('Modèle sélectionné:')).toBeTruthy();
+    expect(getByText(/Project name:/i)).toBeTruthy();
+    expect(getByText(/Selected model:/i)).toBeTruthy();
   });
 
   it('appelle onConfirm avec la description et le provider', () => {
@@ -53,9 +53,9 @@ describe('ProjectInitModal', () => {
         defaultProvider="anthropic"
       />
     );
-    fireEvent.change(getByLabelText('Description du projet'), { target: { value: 'Ma super app' } });
+    fireEvent.change(getByLabelText('Project description'), { target: { value: 'Ma super app' } });
     fireEvent.change(getByTestId('provider-select'), { target: { value: 'openai' } });
-    fireEvent.click(getByText('Créer le projet "MonProjetTest"'));
+    fireEvent.click(getByText(/Create project/i));
     expect(onConfirm).toHaveBeenCalledWith('Ma super app', 'openai');
   });
 });
