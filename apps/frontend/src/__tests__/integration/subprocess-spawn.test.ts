@@ -7,6 +7,22 @@
  * v16 missing exports) are NOT related to changes in this file. This test file focuses on
  * subprocess spawning and AgentManager functionality only.
  */
+
+// Mock Electron BEFORE any other imports since AgentManager imports agent-process which imports electron
+vi.mock('electron', () => ({
+  app: {
+    getAppPath: vi.fn(() => '/fake/app/path'),
+    getPath: vi.fn((name: string) => {
+      const paths: Record<string, string> = {
+        userData: '/tmp/test-app-data',
+        home: '/tmp/test-home',
+        temp: '/tmp'
+      };
+      return paths[name] || '/tmp';
+    })
+  }
+}));
+
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { EventEmitter } from 'events';
 import { mkdirSync, rmSync, existsSync, writeFileSync, mkdtempSync } from 'fs';

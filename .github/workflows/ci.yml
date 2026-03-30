@@ -44,7 +44,7 @@ permissions:
 
 jobs:
   # --------------------------------------------------------------------------
-  # Python Backend Tests - Optimized Matrix (4 jobs instead of 6)
+  # Python Backend Tests - Python 3.13 version on all platforms
   # --------------------------------------------------------------------------
   test-python:
     name: test-python (${{ matrix.python-version }}, ${{ matrix.os }})
@@ -53,17 +53,14 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        # 3.12 on all OS for cross-platform coverage
-        # 3.13 on Linux only for compatibility check (saves 2 jobs)
+        # 3.13 on all OS for latest version coverage
         include:
-          - os: ubuntu-latest
-            python-version: '3.12'
           - os: ubuntu-latest
             python-version: '3.13'
           - os: windows-latest
-            python-version: '3.12'
+            python-version: '3.13'
           - os: macos-latest
-            python-version: '3.12'
+            python-version: '3.13'
 
     steps:
       - name: Checkout repository
@@ -88,8 +85,8 @@ jobs:
           fi
           pytest ../../tests/ -v --tb=short -x
 
-      - name: Run coverage (Linux + Python 3.12 only)
-        if: matrix.os == 'ubuntu-latest' && matrix.python-version == '3.12'
+      - name: Run coverage (Linux + Python 3.13 only)
+        if: matrix.os == 'ubuntu-latest' && matrix.python-version == '3.13'
         working-directory: apps/backend
         shell: bash
         env:
@@ -99,7 +96,7 @@ jobs:
           pytest ../../tests/ -v --cov=. --cov-report=xml --cov-report=term-missing --cov-fail-under=10
 
       - name: Upload coverage to Codecov
-        if: matrix.os == 'ubuntu-latest' && matrix.python-version == '3.12'
+        if: matrix.os == 'ubuntu-latest' && matrix.python-version == '3.13'
         uses: codecov/codecov-action@v4
         with:
           file: ./apps/backend/coverage.xml

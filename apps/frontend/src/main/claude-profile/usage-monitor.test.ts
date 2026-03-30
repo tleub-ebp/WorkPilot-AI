@@ -4,6 +4,28 @@
  * Red phase - write failing tests first
  */
 
+// Mock child_process before any imports that use it
+vi.mock('node:child_process', () => ({
+  spawn: vi.fn(() => {
+    const mockProcess = {
+      stdout: {
+        on: vi.fn()
+      },
+      stderr: {
+        on: vi.fn()
+      },
+      on: vi.fn((event: string, callback: (code?: number) => void) => {
+        if (event === 'close') {
+          // Simulate CLI failure immediately with non-zero exit code
+          callback(1);
+        }
+      }),
+      kill: vi.fn()
+    };
+    return mockProcess;
+  })
+}));
+
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { detectProvider, getUsageEndpoint, UsageMonitor, getUsageMonitor } from './usage-monitor';
 import type { ApiProvider } from './usage-monitor';
