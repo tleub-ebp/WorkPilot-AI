@@ -28,7 +28,8 @@ import {
   AlertTriangle,
   Pencil,
   X,
-  GitPullRequest
+  GitPullRequest,
+  GitMerge
 } from 'lucide-react';
 import { cn, calculateProgress} from '../../lib/utils';
 import { startTask, stopTask, submitReview, recoverStuckTask, deleteTask, useTaskStore } from '../../stores/task-store';
@@ -43,6 +44,7 @@ import { TaskLogs } from './TaskLogs';
 import { TaskFiles } from './TaskFiles';
 import { TaskReview } from './TaskReview';
 import { StreamingSessionButton } from '../streaming/StreamingSessionButton';
+import { SyncFromBranchDialog } from './task-review/SyncFromBranchDialog';
 import type { Task, WorktreeCreatePROptions, TaskMetadata } from '../../../shared/types';
 
 interface TaskDetailModalProps {
@@ -480,6 +482,18 @@ function TaskDetailModalContent({ open, task, onOpenChange, onCloseTask }: { rea
                   )}
                 </div>
                 <div className="flex items-center gap-1 shrink-0 electron-no-drag">
+                  {/* Sync from branch — available whenever a worktree exists */}
+                  {(task.status === 'in_progress' || task.status === 'human_review' || task.status === 'ai_review') && (
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      title={t('tasks:modal.actions.syncFromBranch')}
+                      className="hover:bg-primary/10 hover:text-primary transition-colors"
+                      onClick={() => state.setShowSyncDialog(true)}
+                    >
+                      <GitMerge className="h-4 w-4" />
+                    </Button>
+                  )}
                   <Button
                     variant="ghost"
                     size="icon"
@@ -718,6 +732,16 @@ function TaskDetailModalContent({ open, task, onOpenChange, onCloseTask }: { rea
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Sync from Branch Dialog */}
+      {state.selectedProject?.path && (
+        <SyncFromBranchDialog
+          open={state.showSyncDialog}
+          task={task}
+          projectPath={state.selectedProject.path}
+          onOpenChange={state.setShowSyncDialog}
+        />
+      )}
     </TooltipProvider>
   );
 }

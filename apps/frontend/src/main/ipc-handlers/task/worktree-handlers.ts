@@ -3484,4 +3484,114 @@ export function registerWorktreeHandlers(
       }
     }
   );
+
+  /**
+   * Merge or rebase the worktree branch from any specified source branch.
+   * Useful for pulling in changes that landed on the base/main branch after the task was created.
+   */
+  ipcMain.handle(
+    IPC_CHANNELS.TASK_WORKTREE_SYNC_FROM_BRANCH,
+    async (_, taskId: string, sourceBranch: string, strategy: 'merge' | 'rebase'): Promise<IPCResult<import('../../../shared/types').WorktreeSyncResult>> => {
+      try {
+        const { task, project } = findTaskAndProject(taskId);
+        if (!task || !project) {
+          return { success: false, error: 'Task not found' };
+        }
+
+        const worktreePath = findTaskWorktree(project.path, task.specId);
+        if (!worktreePath) {
+          return { success: false, error: 'No worktree found for this task. The task must be running or in review.' };
+        }
+
+        // Validate branch name
+        if (!sourceBranch || !GIT_BRANCH_REGEX.test(sourceBranch)) {
+          return { success: false, error: `Invalid branch name: ${sourceBranch}` };
+        }
+
+        const git = getToolPath('git');
+        const isolatedEnv = getIsolatedGitEnv();
+
+        // Fetch latest refs in the main project so the branch ref is up-to-date
+        try {
+          spawnSync(git, ['fetch', '--prune'], {
+            cwd: project.path,
+            encoding: 'utf-8',
+            env: isolatedEnv,
+            timeout: 30000
+          });
+        } catch {
+          // Fetch failure is non-fatal (e.g. offline) — continue with local refs
+        }
+
+        // Run merge or rebase in the worktree
+        const gitArgs = strategy === 'rebase'
+          ? ['rebase', sourceBranch]
+          : ['merge', '--no-edit', sourceBranch];
+
+        const result = spawnSync(git, gitArgs, {
+          cwd: worktreePath,
+          encoding: 'utf-8',
+          env: isolatedEnv,
+          timeout: 60000
+        });
+
+        if (result.status === 0) {
+          return {
+            success: true,
+            data: {
+              success: true,
+              message: strategy === 'rebase'
+                ? `Worktree successfully rebased onto ${sourceBranch}`
+                : `${sourceBranch} successfully merged into worktree`
+            }
+          };
+        }
+
+        // Non-zero exit — check for conflicts
+        const output = (result.stdout || '') + (result.stderr || '');
+        const conflictLines = output
+          .split('\n')
+          .filter(l => l.startsWith('CONFLICT') || l.includes('conflict'))
+          .map(l => l.replace(/^CONFLICT \([^)]+\):\s*/, '').trim())
+          .filter(Boolean);
+
+        // Abort the failed operation to restore the worktree to a clean state
+        try {
+          const abortArgs = strategy === 'rebase' ? ['rebase', '--abort'] : ['merge', '--abort'];
+          spawnSync(git, abortArgs, {
+            cwd: worktreePath,
+            encoding: 'utf-8',
+            env: isolatedEnv,
+            timeout: 15000
+          });
+        } catch {
+          // Abort failure is non-fatal
+        }
+
+        if (conflictLines.length > 0) {
+          return {
+            success: false,
+            error: `${strategy === 'rebase' ? 'Rebase' : 'Merge'} resulted in conflicts. Resolve them manually in the worktree.`,
+            data: {
+              success: false,
+              message: `Conflicts detected with ${sourceBranch}`,
+              hasConflicts: true,
+              conflictFiles: conflictLines
+            }
+          };
+        }
+
+        return {
+          success: false,
+          error: stripAnsiCodes(output.trim()) || `${strategy} failed with exit code ${result.status}`
+        };
+      } catch (error) {
+        console.error('[SYNC_FROM_BRANCH] Exception:', error);
+        return {
+          success: false,
+          error: error instanceof Error ? error.message : 'Sync failed'
+        };
+      }
+    }
+  );
 }

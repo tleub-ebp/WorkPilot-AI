@@ -174,5 +174,31 @@
     "alreadyExisted": "existait déjà",
     "noWorktree": "Aucun arbre de travail trouvé pour cette tâche",
     "resultsDescriptionWithSkipped": "{{success}} réussies, {{skipped}} ignorées, {{failed}} échouées"
+  },
+  "syncBranch": {
+    "title": "Synchroniser depuis une branche",
+    "description": "Intégrer les changements d'une autre branche dans le worktree de « {{branch}} ».",
+    "sourceBranchLabel": "Branche source",
+    "selectBranch": "Sélectionner une branche...",
+    "searchBranch": "Rechercher des branches...",
+    "noBranchFound": "Aucune branche trouvée",
+    "loadingBranches": "Chargement des branches...",
+    "strategyLabel": "Stratégie",
+    "strategies": {
+      "merge": {
+        "label": "Merge",
+        "description": "Créer un commit de fusion dans le worktree"
+      },
+      "rebase": {
+        "label": "Rebase",
+        "description": "Rejouer les commits du worktree au-dessus de la branche source"
+      }
+    },
+    "syncButton": "{{strategy}}",
+    "syncing": "Synchronisation...",
+    "moreConflicts": "+ {{count}} autres",
+    "errors": {
+      "unknown": "Une erreur inattendue s'est produite lors de la synchronisation"
+    }
   }
 }

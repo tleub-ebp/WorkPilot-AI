@@ -8,11 +8,16 @@ Provides:
    dependencies.  This pollutes the module cache and causes *other*
    test files to fail with "'core' is not a package" errors.
 
+   Some connector test files also replace ``sys.modules["src.connectors"]``
+   with a plain ``type('Package', (), {})()`` object (not a MagicMock).
+   These fake entries are cleaned up the same way.
+
 2. Reusable fixtures for creating mock Azure DevOps API clients,
    sample API response objects, and pre-configured connector instances.
 """
 
 import sys
+import types as _types
 from datetime import datetime
 from pathlib import Path
 from types import SimpleNamespace
@@ -88,20 +93,30 @@ _PROTECTED_PACKAGES = [
 
 
 def _clean_mock_modules() -> None:
-    """Remove any MagicMock entries from sys.modules for protected packages.
+    """Remove fake or MagicMock entries from sys.modules for protected packages.
 
     This allows subsequent imports to find the real packages on disk
-    instead of hitting a MagicMock that cannot resolve sub-modules.
+    instead of hitting a MagicMock or a plain ``type(...)`` fake object
+    that cannot resolve sub-modules.
+
+    Handles two kinds of pollution:
+    - ``sys.modules[name] = MagicMock()`` — caught by the protected-packages list.
+    - ``sys.modules["src.connectors"] = type('Package', (), {})()`` — caught by
+      the non-ModuleType check for the ``src.connectors`` namespace.
     """
     keys_to_remove = []
     for key, mod in sys.modules.items():
-        if not isinstance(mod, MagicMock):
-            continue
-        # Check if this key belongs to a protected package
-        for pkg in _PROTECTED_PACKAGES:
-            if key == pkg or key.startswith(pkg + "."):
-                keys_to_remove.append(key)
-                break
+        # Remove MagicMocks for protected packages
+        if isinstance(mod, MagicMock):
+            for pkg in _PROTECTED_PACKAGES:
+                if key == pkg or key.startswith(pkg + "."):
+                    keys_to_remove.append(key)
+                    break
+        # Remove plain fake objects (not real ModuleType) under src.connectors
+        elif not isinstance(mod, _types.ModuleType) and (
+            key == "src.connectors" or key.startswith("src.connectors.")
+        ):
+            keys_to_remove.append(key)
     for key in keys_to_remove:
         del sys.modules[key]
 

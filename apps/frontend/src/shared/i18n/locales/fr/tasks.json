@@ -26,7 +26,8 @@
     "moveTo": "Déplacer vers",
     "taskActions": "Actions de la tâche",
     "selectTask": "Sélectionner la tâche : {{title}}",
-    "preview": "Aperçu"
+    "preview": "Aperçu",
+    "syncFromBranch": "Synchroniser depuis une branche"
   },
   "confirmDelete": {
     "title": "Supprimer la tâche",
@@ -414,7 +415,8 @@
       "deleteTask": "Supprimer la tâche",
       "close": "Fermer",
       "watchLive": "Regarder en direct",
-      "activating": "Activation..."
+      "activating": "Activation...",
+      "syncFromBranch": "Synchroniser depuis une branche"
     },
     "badges": {
       "stuck": "Bloqué",
