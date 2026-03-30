@@ -56,7 +56,6 @@ try {
   // In CI, use a simple fallback to avoid detection issues
   if (process.env.CI) {
     DETECTED_PYTHON_CMD = isWindows() ? 'python' : 'python3';
-    console.log('[TEST] CI mode detected, using Python fallback:', DETECTED_PYTHON_CMD);
   } else {
     DETECTED_PYTHON_CMD = findPythonCommand() || 'python';
   }
@@ -85,7 +84,6 @@ const mockProcess = Object.assign(new EventEmitter(), {
 
 // Add error handling for CI environment
 const originalConsoleError = console.error;
-const originalConsoleLog = console.log;
 
 // Suppress console noise in CI to make tests more reliable
 if (process.env.CI) {
@@ -98,27 +96,11 @@ if (process.env.CI) {
       message.includes('Setting GITHUB_CLI_PATH:') ||
       message.includes('Provider env vars from CredentialManager:') ||
       message.includes('Derived git-bash path:') ||
-      message.includes('Setting CLAUDE_CODE_GIT_BASH_PATH:') ||
-      message.includes('[TEST] CI mode detected')
-    ) {
-      return; // Suppress these messages in CI
-    }
-    originalConsoleError(...args);
-  };
-
-  console.log = (...args: unknown[]) => {
-    // Suppress certain logs in CI
-    const message = typeof args[0] === 'string' ? args[0] : JSON.stringify(args[0]);
-    if (
-      message.includes('Setting CLAUDE_CLI_PATH:') ||
-      message.includes('Setting GITHUB_CLI_PATH:') ||
-      message.includes('Provider env vars from CredentialManager:') ||
-      message.includes('Derived git-bash path:') ||
       message.includes('Setting CLAUDE_CODE_GIT_BASH_PATH:')
     ) {
       return; // Suppress these messages in CI
     }
-    originalConsoleLog(...args);
+    originalConsoleError(...args);
   };
 }
 
@@ -265,7 +247,7 @@ describe('Subprocess Spawn Integration', () => {
 
       // Add extra safety check for CI
       if (process.env.CI) {
-        console.log('[TEST] Starting spec creation test in CI mode');
+        // CI mode detected - additional safety measures enabled
       }
 
       try {
