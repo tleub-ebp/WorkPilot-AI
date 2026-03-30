@@ -185,7 +185,7 @@ vi.mock('../../main/platform', () => ({
   getEnvVar: vi.fn((name: string) => process.env[name]),
   findExecutable: vi.fn(() => null),
   getPlatformDescription: vi.fn(() => 'Linux (x64)'),
-  killProcessGracefully: vi.fn(() => {}) // Mock implementation for CI
+  killProcessGracefully: vi.fn(() => { return; }) // Mock implementation for CI
 }));
 
 // Mock python-env-manager for ensurePythonEnvReady (ACS-254)
