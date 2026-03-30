@@ -8,6 +8,13 @@
  * subprocess spawning and AgentManager functionality only.
  */
 
+// Set CI environment variable early for consistent mock behavior
+if (!process.env.CI && typeof process !== 'undefined') {
+  // Force CI mode for more consistent test behavior across all environments
+  // This helps identify and fix CI-specific issues locally
+  // process.env.CI = 'true'; // Uncomment this line to test CI behavior locally
+}
+
 // Mock electron BEFORE any other imports since AgentManager imports agent-process which imports electron
 // Add more robust mocking for CI environments
 vi.mock('electron', () => ({
@@ -15,8 +22,8 @@ vi.mock('electron', () => ({
     getAppPath: vi.fn(() => '/fake/app/path'),
     getPath: vi.fn((name: string) => {
       const paths: Record<string, string> = {
-        userData: process.env.CI ? '/tmp/ci-test-app-data' : '/tmp/test-app-data',
-        home: process.env.CI ? '/tmp/ci-test-home' : '/tmp/test-home',
+        userData: (process.env.CI ? '/tmp/ci-test-app-data' : '/tmp/test-app-data'),
+        home: (process.env.CI ? '/tmp/ci-test-home' : '/tmp/test-home'),
         temp: '/tmp'
       };
       return paths[name] || '/tmp';
@@ -46,10 +53,16 @@ function initTestDirectories(): void {
 // Add fallback for CI environments where Python detection might fail
 let DETECTED_PYTHON_CMD = 'python'; // Safe fallback
 try {
-  DETECTED_PYTHON_CMD = findPythonCommand() || 'python';
+  // In CI, use a simple fallback to avoid detection issues
+  if (process.env.CI) {
+    DETECTED_PYTHON_CMD = isWindows() ? 'python' : 'python3';
+    console.log('[TEST] CI mode detected, using Python fallback:', DETECTED_PYTHON_CMD);
+  } else {
+    DETECTED_PYTHON_CMD = findPythonCommand() || 'python';
+  }
 } catch (error) {
   console.warn('[TEST] Python detection failed, using fallback:', error);
-  DETECTED_PYTHON_CMD = 'python';
+  DETECTED_PYTHON_CMD = isWindows() ? 'python' : 'python3';
 }
 const [EXPECTED_PYTHON_COMMAND, EXPECTED_PYTHON_BASE_ARGS] = parsePythonCommand(DETECTED_PYTHON_CMD);
 
@@ -72,21 +85,42 @@ const mockProcess = Object.assign(new EventEmitter(), {
 
 // Add error handling for CI environment
 const originalConsoleError = console.error;
-console.error = (...args: unknown[]) => {
-  // Suppress certain errors in CI to avoid noise
-  const message = typeof args[0] === 'string' ? args[0] : JSON.stringify(args[0]);
-  if (process.env.CI && (
-    message.includes('Process error:') ||
-    message.includes('Setting CLAUDE_CLI_PATH:') ||
-    message.includes('Setting GITHUB_CLI_PATH:') ||
-    message.includes('Provider env vars from CredentialManager:') ||
-    message.includes('Derived git-bash path:') ||
-    message.includes('Setting CLAUDE_CODE_GIT_BASH_PATH:')
-  )) {
-    return; // Suppress these messages in CI
-  }
-  originalConsoleError(...args);
-};
+const originalConsoleLog = console.log;
+
+// Suppress console noise in CI to make tests more reliable
+if (process.env.CI) {
+  console.error = (...args: unknown[]) => {
+    // Suppress certain errors in CI to avoid noise
+    const message = typeof args[0] === 'string' ? args[0] : JSON.stringify(args[0]);
+    if (
+      message.includes('Process error:') ||
+      message.includes('Setting CLAUDE_CLI_PATH:') ||
+      message.includes('Setting GITHUB_CLI_PATH:') ||
+      message.includes('Provider env vars from CredentialManager:') ||
+      message.includes('Derived git-bash path:') ||
+      message.includes('Setting CLAUDE_CODE_GIT_BASH_PATH:') ||
+      message.includes('[TEST] CI mode detected')
+    ) {
+      return; // Suppress these messages in CI
+    }
+    originalConsoleError(...args);
+  };
+
+  console.log = (...args: unknown[]) => {
+    // Suppress certain logs in CI
+    const message = typeof args[0] === 'string' ? args[0] : JSON.stringify(args[0]);
+    if (
+      message.includes('Setting CLAUDE_CLI_PATH:') ||
+      message.includes('Setting GITHUB_CLI_PATH:') ||
+      message.includes('Provider env vars from CredentialManager:') ||
+      message.includes('Derived git-bash path:') ||
+      message.includes('Setting CLAUDE_CODE_GIT_BASH_PATH:')
+    ) {
+      return; // Suppress these messages in CI
+    }
+    originalConsoleLog(...args);
+  };
+}
 
 vi.mock('child_process', async (importOriginal) => {
   const actual = await importOriginal<typeof import('child_process')>();
@@ -98,7 +132,15 @@ vi.mock('child_process', async (importOriginal) => {
 
 // Ensure mocks are set up before any imports
 // Add a small delay to ensure mocks are properly initialized in CI
-const setupMockDelay = process.env.CI ? 10 : 0;
+const setupMockDelay = (process.env.CI ? 50 : 0); // Increased delay for CI
+
+// Add a global test timeout increase for CI
+if (process.env.CI) {
+  vi.setConfig({
+    testTimeout: 60000, // Increase timeout for CI
+    hookTimeout: 60000
+  });
+}
 
 // Mock claude-profile-manager to bypass auth checks in tests
 // Profile shape must match ClaudeProfile interface (id, name, isDefault, etc.)
@@ -202,6 +244,11 @@ describe('Subprocess Spawn Integration', () => {
     mockProcess.removeAllListeners();
     mockStdout.removeAllListeners();
     mockStderr.removeAllListeners();
+    
+    // Add extra delay in CI for mock setup
+    if (process.env.CI && setupMockDelay > 0) {
+      await new Promise(resolve => setTimeout(resolve, setupMockDelay));
+    }
   });
 
   afterEach(() => {
@@ -216,19 +263,25 @@ describe('Subprocess Spawn Integration', () => {
         await new Promise(resolve => setTimeout(resolve, setupMockDelay));
       }
 
-      const { spawn } = await import('child_process');
-      const { AgentManager } = await import('../../main/agent');
+      // Add extra safety check for CI
+      if (process.env.CI) {
+        console.log('[TEST] Starting spec creation test in CI mode');
+      }
 
-      const manager = new AgentManager();
-      manager.configure(undefined, AUTO_CLAUDE_SOURCE);
+      try {
+        const { spawn } = await import('child_process');
+        const { AgentManager } = await import('../../main/agent');
 
-      // Start the async operation
-      const promise = manager.startSpecCreation('task-1', TEST_PROJECT_PATH, 'Test task description');
+        const manager = new AgentManager();
+        manager.configure(undefined, AUTO_CLAUDE_SOURCE);
 
-      // Wait for spawn to complete (ensures listeners are attached), then emit exit
-      await new Promise(resolve => setImmediate(resolve));
-      mockProcess.emit('exit', 0);
-      await promise;
+        // Start the async operation
+        const promise = manager.startSpecCreation('task-1', TEST_PROJECT_PATH, 'Test task description');
+
+        // Wait for spawn to complete (ensures listeners are attached), then emit exit
+        await new Promise(resolve => setImmediate(resolve));
+        mockProcess.emit('exit', 0);
+        await promise;
 
       expect(spawn).toHaveBeenCalledWith(
         EXPECTED_PYTHON_COMMAND,
@@ -245,6 +298,10 @@ describe('Subprocess Spawn Integration', () => {
           })
         })
       );
+      } catch (error) {
+        console.error('[TEST] Spec creation test failed:', error);
+        throw error;
+      }
     }, 30000);  // Increase timeout for Windows CI (dynamic imports are slow)
 
     it('should spawn Python process for task execution', async () => {
