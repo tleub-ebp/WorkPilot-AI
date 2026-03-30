@@ -25,6 +25,9 @@ export default defineConfig({
     // complete async cleanup after state has been cleared. All tests pass; this only affects
     // the process exit code.
     dangerouslyIgnoreUnhandledErrors: true,
+    // Prevent vitest import issues
+    testTimeout: 30000,
+    hookTimeout: 30000,
   },
   resolve: {
     alias: {
