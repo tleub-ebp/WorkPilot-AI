@@ -36,7 +36,7 @@ AnthropicProvider = import_module_from_file("src.connectors.llm_anthropic", conn
     (OpenAIProvider, {"api_key": "sk-test", "model": "gpt-3.5-turbo"}, False),
     (ClaudeProvider, {"api_key": "sk-test", "model": "claude-3-sonnet-20240229"}, True),
     (OllamaProvider, {"model": "llama2"}, False),
-    (GoogleLLMProvider, {"api_key": "test", "model": "gemini-2.0-flash"}, False),
+    (GoogleLLMProvider, {"api_key": "test", "model": "gemini-2.0-flash"}, True),
     (AnthropicProvider, {"api_key": "sk-ant-test", "model": "claude-3-sonnet-20240229"}, True),
 ])
 def test_provider_instantiation_and_validation(provider_cls, kwargs, should_validate):
