@@ -6,6 +6,22 @@
  */
 
 /// @vitest/environment node
+
+// Mock Electron BEFORE any other imports since agent-process.ts imports it
+vi.mock('electron', () => ({
+  app: {
+    getAppPath: vi.fn(() => '/fake/app/path'),
+    getPath: vi.fn((name: string) => {
+      const paths: Record<string, string> = {
+        userData: '/tmp/test-app-data',
+        home: '/tmp/test-home',
+        temp: '/tmp'
+      };
+      return paths[name] || '/tmp';
+    })
+  }
+}));
+
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { EventEmitter } from 'events';
 
@@ -182,12 +198,6 @@ vi.mock('../python-env-manager', () => ({
     getPythonEnv: vi.fn(() => ({}))
   },
   getConfiguredPythonPath: vi.fn(() => 'python3')
-}));
-
-vi.mock('electron', () => ({
-  app: {
-    getAppPath: vi.fn(() => '/fake/app/path')
-  }
 }));
 
 // Mock cli-tool-manager to avoid blocking tool detection on Windows
