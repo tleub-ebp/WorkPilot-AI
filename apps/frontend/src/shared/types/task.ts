@@ -472,6 +472,13 @@ export interface WorktreeDiscardResult {
   message: string;
 }
 
+export interface WorktreeSyncResult {
+  success: boolean;
+  message: string;
+  hasConflicts?: boolean;
+  conflictFiles?: string[];
+}
+
 /**
  * Options for creating a PR from a worktree
  */

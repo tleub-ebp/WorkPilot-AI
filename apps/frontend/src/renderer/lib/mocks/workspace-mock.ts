@@ -78,6 +78,14 @@ export const workspaceMock = {
     }
   }),
 
+  syncWorktreeFromBranch: async (_taskId: string, _sourceBranch: string, _strategy: 'merge' | 'rebase') => ({
+    success: true,
+    data: {
+      success: true,
+      message: 'Worktree synced successfully (mock)'
+    }
+  }),
+
   clearStagedState: async () => ({
     success: true,
     data: { cleared: true }

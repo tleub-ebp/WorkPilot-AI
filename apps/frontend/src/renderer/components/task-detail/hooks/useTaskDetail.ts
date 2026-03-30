@@ -93,6 +93,7 @@ export function useTaskDetail({ task }: UseTaskDetailOptions) {
   const [showConflictDialog, setShowConflictDialog] = useState(false);
   const [showPRDialog, setShowPRDialog] = useState(false);
   const [isCreatingPR, setIsCreatingPR] = useState(false);
+  const [showSyncDialog, setShowSyncDialog] = useState(false);
 
   const selectedProject = useProjectStore((state) => state.getSelectedProject());
   const logOrder = useSettingsStore(s => s.settings.logOrder);
@@ -511,6 +512,7 @@ export function useTaskDetail({ task }: UseTaskDetailOptions) {
     showConflictDialog,
     showPRDialog,
     isCreatingPR,
+    showSyncDialog,
     isLoadingPlan,
 
     // Setters
@@ -546,6 +548,7 @@ export function useTaskDetail({ task }: UseTaskDetailOptions) {
     setShowConflictDialog,
     setShowPRDialog,
     setIsCreatingPR,
+    setShowSyncDialog,
 
     // Handlers
     handleLogsScroll,

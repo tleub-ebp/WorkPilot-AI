@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, memo, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Play, Square, Clock, Zap, Target, Shield, Gauge, Palette, FileCode, Bug, Wrench, Loader2, AlertTriangle, RotateCcw, Archive, GitPullRequest, MoreVertical, X, FileText, Monitor } from 'lucide-react';
+import { Play, Square, Clock, Zap, Target, Shield, Gauge, Palette, FileCode, Bug, Wrench, Loader2, AlertTriangle, RotateCcw, Archive, GitPullRequest, MoreVertical, X, FileText, Monitor, GitMerge } from 'lucide-react';
 import { Card, CardContent } from './ui/card';
 import { Badge } from './ui/badge';
 import { Button } from './ui/button';
@@ -37,6 +37,7 @@ import { useTaskStore, startTask, stopTask, checkTaskRunning, recoverStuckTask, 
 import { useProjectStore } from '../stores/project-store';
 import type { Task, TaskCategory, ReviewReason, TaskStatus } from '../../shared/types';
 import {useFormatRelativeTime} from "@/hooks/useFormatRelativeTime";
+import { SyncFromBranchDialog } from './task-detail/task-review/SyncFromBranchDialog';
 
 // Category icon mapping
 const CategoryIcon: Record<TaskCategory, typeof Zap> = {
@@ -628,6 +629,7 @@ export const TaskCard = memo(function TaskCard({
   const formatRelativeTime = useFormatRelativeTime();
   const [isStuck, setIsStuck] = useState(false);
   const [isRecovering, setIsRecovering] = useState(false);
+  const [showSyncDialog, setShowSyncDialog] = useState(false);
   const stuckIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const deleteButtonRef = useRef<HTMLButtonElement | null>(null);
   const cardRef = useRef<HTMLDivElement | null>(null);
@@ -965,6 +967,17 @@ export const TaskCard = memo(function TaskCard({
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" onClick={(e) => e.stopPropagation()}>
+                  {(task.status === 'in_progress' || task.status === 'human_review' || task.status === 'ai_review') && (
+                    <>
+                      <DropdownMenuItem
+                        onClick={(e) => { e.stopPropagation(); setShowSyncDialog(true); }}
+                      >
+                        <GitMerge className="mr-2 h-4 w-4" />
+                        {t('tasks:actions.syncFromBranch')}
+                      </DropdownMenuItem>
+                      <DropdownMenuSeparator />
+                    </>
+                  )}
                   <DropdownMenuLabel>{t('actions.moveTo')}</DropdownMenuLabel>
                   <DropdownMenuSeparator />
                   {statusMenuItems}
@@ -978,6 +991,16 @@ export const TaskCard = memo(function TaskCard({
         {/* Close flex container for selectable mode */}
         </div>
       </CardContent>
+
+      {/* Sync from Branch Dialog — inline so it doesn't require opening the full modal */}
+      {currentProject?.path && (
+        <SyncFromBranchDialog
+          open={showSyncDialog}
+          task={task}
+          projectPath={currentProject.path}
+          onOpenChange={setShowSyncDialog}
+        />
+      )}
     </Card>
   );
 }, taskCardPropsAreEqual);
