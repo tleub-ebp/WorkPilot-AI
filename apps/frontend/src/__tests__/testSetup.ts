@@ -102,7 +102,13 @@ if (typeof globalThis !== 'undefined') {
     updateAPIProfile: () => Promise.resolve({ success: true }),
     deleteAPIProfile: () => Promise.resolve({ success: true }),
     setActiveAPIProfile: () => Promise.resolve({ success: true }),
-    testConnection: () => Promise.resolve({ success: true })
+    testConnection: () => Promise.resolve({ success: true }),
+    // Claude profile methods
+    getClaudeProfiles: () => Promise.resolve({ success: true, data: [] }),
+    // Auto-switch settings methods
+    getAutoSwitchSettings: () => Promise.resolve({ success: true, data: {} }),
+    // Account priority order methods
+    getAccountPriorityOrder: () => Promise.resolve({ success: true, data: [] })
   };
 }
 
