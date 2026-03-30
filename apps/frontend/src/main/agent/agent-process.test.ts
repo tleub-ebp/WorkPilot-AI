@@ -5,6 +5,7 @@
  * Story 2.3: Env Var Injection - AC1, AC2, AC3, AC4
  */
 
+/// @vitest/environment node
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { EventEmitter } from 'events';
 

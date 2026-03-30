@@ -2,7 +2,7 @@ import { ipcMain, nativeImage } from 'electron';
 import { IPC_CHANNELS, AUTO_BUILD_PATHS, getSpecsDir } from '../../../shared/constants';
 import type { IPCResult, Task, TaskMetadata } from '../../../shared/types';
 import path from 'path';
-import { existsSync, readFileSync, writeFileSync, mkdirSync, readdirSync, Dirent } from 'fs';
+import { existsSync, readFileSync, writeFileSync, mkdirSync, readdirSync, statSync, Dirent } from 'fs';
 import { projectStore } from '../../project-store';
 import { titleGenerator } from '../../title-generator';
 import { AgentManager } from '../../agent';
@@ -90,8 +90,21 @@ export function registerTaskCRUDHandlers(agentManager: AgentManager): void {
       let specNumber = 1;
       if (existsSync(specsDir)) {
         const existingDirs = readdirSync(specsDir, { withFileTypes: true })
-          .filter((d: Dirent) => d.isDirectory())
-          .map((d: Dirent) => d.name);
+          .filter((d: Dirent | string) => {
+            // Handle both Dirent objects and string fallbacks
+            if (typeof d === 'string') {
+              // If it's a string, check if it's a directory by using statSync
+              const fullPath = path.join(specsDir, d);
+              try {
+                return statSync(fullPath).isDirectory();
+              } catch {
+                return false;
+              }
+            }
+            // If it's a Dirent object, use isDirectory method
+            return typeof d.isDirectory === 'function' && d.isDirectory();
+          })
+          .map((d: Dirent | string) => typeof d === 'string' ? d : d.name);
 
         // Extract numbers from spec directory names (e.g., "001-feature" -> 1)
         const existingNumbers = existingDirs
