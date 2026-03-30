@@ -387,9 +387,8 @@ class TestFigmaConnector:
         # Use absolute path from project root to handle different working directories
         import os
         project_root = Path(__file__).parent.parent.parent
-        src_path = project_root / "src"
-        if str(src_path) not in sys.path:
-            sys.path.insert(0, str(src_path))
+        if str(project_root) not in sys.path:
+            sys.path.insert(0, str(project_root))
         
         from src.connectors.figma_connector import FigmaConnector
 
@@ -409,9 +408,8 @@ class TestFigmaConnector:
         # Use absolute path from project root to handle different working directories
         import os
         project_root = Path(__file__).parent.parent.parent
-        src_path = project_root / "src"
-        if str(src_path) not in sys.path:
-            sys.path.insert(0, str(src_path))
+        if str(project_root) not in sys.path:
+            sys.path.insert(0, str(project_root))
         
         from src.connectors.figma_connector import FigmaConnector
 
@@ -431,9 +429,8 @@ class TestFigmaConnector:
         # Use absolute path from project root to handle different working directories
         import os
         project_root = Path(__file__).parent.parent.parent
-        src_path = project_root / "src"
-        if str(src_path) not in sys.path:
-            sys.path.insert(0, str(src_path))
+        if str(project_root) not in sys.path:
+            sys.path.insert(0, str(project_root))
         
         from src.connectors.figma_connector import FigmaConnector
 
@@ -449,9 +446,8 @@ class TestFigmaConnector:
         # Use absolute path from project root to handle different working directories
         import os
         project_root = Path(__file__).parent.parent.parent
-        src_path = project_root / "src"
-        if str(src_path) not in sys.path:
-            sys.path.insert(0, str(src_path))
+        if str(project_root) not in sys.path:
+            sys.path.insert(0, str(project_root))
         
         from src.connectors.figma_connector import FigmaConnector
 
@@ -470,9 +466,8 @@ class TestFigmaConnector:
         # Use absolute path from project root to handle different working directories
         import os
         project_root = Path(__file__).parent.parent.parent
-        src_path = project_root / "src"
-        if str(src_path) not in sys.path:
-            sys.path.insert(0, str(src_path))
+        if str(project_root) not in sys.path:
+            sys.path.insert(0, str(project_root))
         
         from src.connectors.figma_connector import FigmaConnector
 
@@ -488,9 +483,8 @@ class TestFigmaConnector:
         # Use absolute path from project root to handle different working directories
         import os
         project_root = Path(__file__).parent.parent.parent
-        src_path = project_root / "src"
-        if str(src_path) not in sys.path:
-            sys.path.insert(0, str(src_path))
+        if str(project_root) not in sys.path:
+            sys.path.insert(0, str(project_root))
         
         from src.connectors.figma_connector import FigmaConnector
 
