@@ -979,12 +979,14 @@ def configure_sdk_authentication(config_dir: str | None = None) -> None:
                    - OAuth mode: requires CLAUDE_CODE_OAUTH_TOKEN (from Keychain or env)
     """
     # SAFETY NET (Bug #11): If both ANTHROPIC_BASE_URL and CLAUDE_CODE_OAUTH_TOKEN
-    # are present, OAuth mode should take precedence. The CLI's default OAuth endpoint
-    # is different from api.anthropic.com, which does NOT support OAuth bearer tokens.
-    # Remove ANTHROPIC_BASE_URL and ANTHROPIC_AUTH_TOKEN to let OAuth work correctly.
+    # are present WITHOUT an explicit API key, OAuth mode should take precedence.
+    # The CLI's default OAuth endpoint is different from api.anthropic.com, which
+    # does NOT support OAuth bearer tokens.
+    # Exception: when ANTHROPIC_AUTH_TOKEN is also set, API profile mode wins.
     if (
         os.environ.get("ANTHROPIC_BASE_URL", "").strip()
         and os.environ.get("CLAUDE_CODE_OAUTH_TOKEN", "").strip()
+        and not os.environ.get("ANTHROPIC_AUTH_TOKEN", "").strip()
     ):
         stale_url = os.environ.get("ANTHROPIC_BASE_URL", "")
         logger.warning(

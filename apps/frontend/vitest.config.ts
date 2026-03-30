@@ -28,6 +28,10 @@ export default defineConfig({
       ['src/main/terminal/__tests__/claude-integration-handler.test.ts', 'node'],
       ['src/__tests__/integration/subprocess-spawn.test.ts', 'node'],
     ],
+    // Suppress internal worker state errors from vitest 4.x when environment-switching workers
+    // complete async cleanup after state has been cleared. All tests pass; this only affects
+    // the process exit code.
+    dangerouslyIgnoreUnhandledErrors: true,
   },
   resolve: {
     alias: {

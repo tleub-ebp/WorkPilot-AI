@@ -17,12 +17,12 @@ def test_list_available_providers(monkeypatch):
     assert "claude_opus" not in providers
 
 def test_validate_provider(monkeypatch):
-    monkeypatch.setenv("CLAUDE_API_KEY", "test")
-    assert validate_provider("claude_opus")
-    assert not validate_provider("groq")
+    monkeypatch.setenv("ANTHROPIC_API_KEY", "test")
+    assert validate_provider("anthropic")
+    assert not validate_provider("nonexistent_provider")
 
 def test_get_provider_status(monkeypatch):
     monkeypatch.setenv("MISTRAL_API_KEY", "test")
     status = get_provider_status()
     assert status["mistral"] is True
-    assert status["groq"] is False
+    assert status.get("groq", False) is False

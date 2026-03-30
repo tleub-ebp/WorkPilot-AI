@@ -366,19 +366,19 @@ class JSToCSharpTransformer:
         content = content.replace(".toUpperCase(", ".ToUpper(")
 
         # .toLowerCase() -> .ToLower()
-        content = content.replace(r"\.toLowerCase\(", ".ToLower(", content)
+        content = content.replace(".toLowerCase(", ".ToLower(")
 
         # .trim() -> .Trim()
-        content = content.replace(r"\.trim\(", ".Trim(", content)
+        content = content.replace(".trim(", ".Trim(")
 
         # .split() -> .Split()
-        content = content.replace(r"\.split\(", ".Split(", content)
+        content = content.replace(".split(", ".Split(")
 
         # .replace() -> .Replace()
-        content = content.replace(r"\.replace\(", ".Replace(", content)
+        content = content.replace(".replace(", ".Replace(")
 
         # .includes() -> .Contains()
-        content = content.replace(r"\.includes\(", ".Contains(", content)
+        content = content.replace(".includes(", ".Contains(")
 
         return content
 
