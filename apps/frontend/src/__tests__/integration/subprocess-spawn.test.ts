@@ -8,18 +8,20 @@
  * subprocess spawning and AgentManager functionality only.
  */
 
-// Mock Electron BEFORE any other imports since AgentManager imports agent-process which imports electron
+// Mock electron BEFORE any other imports since AgentManager imports agent-process which imports electron
+// Add more robust mocking for CI environments
 vi.mock('electron', () => ({
   app: {
     getAppPath: vi.fn(() => '/fake/app/path'),
     getPath: vi.fn((name: string) => {
       const paths: Record<string, string> = {
-        userData: '/tmp/test-app-data',
-        home: '/tmp/test-home',
+        userData: process.env.CI ? '/tmp/ci-test-app-data' : '/tmp/test-app-data',
+        home: process.env.CI ? '/tmp/ci-test-home' : '/tmp/test-home',
         temp: '/tmp'
       };
       return paths[name] || '/tmp';
-    })
+    }),
+    isPackaged: false // Ensure we're in development mode for tests
   }
 }));
 
@@ -41,7 +43,14 @@ function initTestDirectories(): void {
 }
 
 // Detect the Python command that will actually be used
-const DETECTED_PYTHON_CMD = findPythonCommand() || 'python';
+// Add fallback for CI environments where Python detection might fail
+let DETECTED_PYTHON_CMD = 'python'; // Safe fallback
+try {
+  DETECTED_PYTHON_CMD = findPythonCommand() || 'python';
+} catch (error) {
+  console.warn('[TEST] Python detection failed, using fallback:', error);
+  DETECTED_PYTHON_CMD = 'python';
+}
 const [EXPECTED_PYTHON_COMMAND, EXPECTED_PYTHON_BASE_ARGS] = parsePythonCommand(DETECTED_PYTHON_CMD);
 
 // Mock child_process spawn
@@ -61,6 +70,24 @@ const mockProcess = Object.assign(new EventEmitter(), {
   })
 });
 
+// Add error handling for CI environment
+const originalConsoleError = console.error;
+console.error = (...args: unknown[]) => {
+  // Suppress certain errors in CI to avoid noise
+  const message = typeof args[0] === 'string' ? args[0] : JSON.stringify(args[0]);
+  if (process.env.CI && (
+    message.includes('Process error:') ||
+    message.includes('Setting CLAUDE_CLI_PATH:') ||
+    message.includes('Setting GITHUB_CLI_PATH:') ||
+    message.includes('Provider env vars from CredentialManager:') ||
+    message.includes('Derived git-bash path:') ||
+    message.includes('Setting CLAUDE_CODE_GIT_BASH_PATH:')
+  )) {
+    return; // Suppress these messages in CI
+  }
+  originalConsoleError(...args);
+};
+
 vi.mock('child_process', async (importOriginal) => {
   const actual = await importOriginal<typeof import('child_process')>();
   return {
@@ -68,6 +95,10 @@ vi.mock('child_process', async (importOriginal) => {
     spawn: vi.fn(() => mockProcess)
   };
 });
+
+// Ensure mocks are set up before any imports
+// Add a small delay to ensure mocks are properly initialized in CI
+const setupMockDelay = process.env.CI ? 10 : 0;
 
 // Mock claude-profile-manager to bypass auth checks in tests
 // Profile shape must match ClaudeProfile interface (id, name, isDefault, etc.)
@@ -180,6 +211,11 @@ describe('Subprocess Spawn Integration', () => {
 
   describe('AgentManager', () => {
     it('should spawn Python process for spec creation', async () => {
+      // Add delay for CI mock initialization
+      if (setupMockDelay > 0) {
+        await new Promise(resolve => setTimeout(resolve, setupMockDelay));
+      }
+
       const { spawn } = await import('child_process');
       const { AgentManager } = await import('../../main/agent');
 
@@ -212,6 +248,11 @@ describe('Subprocess Spawn Integration', () => {
     }, 30000);  // Increase timeout for Windows CI (dynamic imports are slow)
 
     it('should spawn Python process for task execution', async () => {
+      // Add delay for CI mock initialization
+      if (setupMockDelay > 0) {
+        await new Promise(resolve => setTimeout(resolve, setupMockDelay));
+      }
+
       const { spawn } = await import('child_process');
       const { AgentManager } = await import('../../main/agent');
 
@@ -241,6 +282,11 @@ describe('Subprocess Spawn Integration', () => {
     }, 30000);  // Increase timeout for Windows CI (dynamic imports are slow)
 
     it('should spawn Python process for QA process', async () => {
+      // Add delay for CI mock initialization
+      if (setupMockDelay > 0) {
+        await new Promise(resolve => setTimeout(resolve, setupMockDelay));
+      }
+
       const { spawn } = await import('child_process');
       const { AgentManager } = await import('../../main/agent');
 
@@ -271,6 +317,11 @@ describe('Subprocess Spawn Integration', () => {
     }, 30000);  // Increase timeout for Windows CI (dynamic imports are slow)
 
     it('should accept parallel options without affecting spawn args', async () => {
+      // Add delay for CI mock initialization
+      if (setupMockDelay > 0) {
+        await new Promise(resolve => setTimeout(resolve, setupMockDelay));
+      }
+
       // Note: --parallel was removed from run.py CLI - parallel execution is handled internally by the agent
       const { spawn } = await import('child_process');
       const { AgentManager } = await import('../../main/agent');
@@ -302,6 +353,11 @@ describe('Subprocess Spawn Integration', () => {
     }, 30000);  // Increase timeout for Windows CI (dynamic imports are slow)
 
     it('should emit log events from stdout', async () => {
+      // Add delay for CI mock initialization
+      if (setupMockDelay > 0) {
+        await new Promise(resolve => setTimeout(resolve, setupMockDelay));
+      }
+
       const { AgentManager } = await import('../../main/agent');
 
       const manager = new AgentManager();
@@ -318,6 +374,11 @@ describe('Subprocess Spawn Integration', () => {
     }, 30000);  // Increase timeout for Windows CI (dynamic imports are slow)
 
     it('should emit log events from stderr', async () => {
+      // Add delay for CI mock initialization
+      if (setupMockDelay > 0) {
+        await new Promise(resolve => setTimeout(resolve, setupMockDelay));
+      }
+
       const { AgentManager } = await import('../../main/agent');
 
       const manager = new AgentManager();
@@ -334,6 +395,11 @@ describe('Subprocess Spawn Integration', () => {
     }, 30000);  // Increase timeout for Windows CI (dynamic imports are slow)
 
     it('should emit exit event when process exits', async () => {
+      // Add delay for CI mock initialization
+      if (setupMockDelay > 0) {
+        await new Promise(resolve => setTimeout(resolve, setupMockDelay));
+      }
+
       const { AgentManager } = await import('../../main/agent');
 
       const manager = new AgentManager();
@@ -351,6 +417,11 @@ describe('Subprocess Spawn Integration', () => {
     }, 30000);  // Increase timeout for Windows CI (dynamic imports are slow)
 
     it('should emit error event when process errors', async () => {
+      // Add delay for CI mock initialization
+      if (setupMockDelay > 0) {
+        await new Promise(resolve => setTimeout(resolve, setupMockDelay));
+      }
+
       const { AgentManager } = await import('../../main/agent');
 
       const manager = new AgentManager();
@@ -367,6 +438,11 @@ describe('Subprocess Spawn Integration', () => {
     }, 30000);  // Increase timeout for Windows CI (dynamic imports are slow)
 
     it('should kill task and remove from tracking', async () => {
+      // Add delay for CI mock initialization
+      if (setupMockDelay > 0) {
+        await new Promise(resolve => setTimeout(resolve, setupMockDelay));
+      }
+
       const { AgentManager } = await import('../../main/agent');
 
       const manager = new AgentManager();
@@ -388,6 +464,11 @@ describe('Subprocess Spawn Integration', () => {
     }, 30000);  // Increase timeout for Windows CI (dynamic imports are slow)
 
     it('should return false when killing non-existent task', async () => {
+      // Add delay for CI mock initialization
+      if (setupMockDelay > 0) {
+        await new Promise(resolve => setTimeout(resolve, setupMockDelay));
+      }
+
       const { AgentManager } = await import('../../main/agent');
 
       const manager = new AgentManager();
@@ -397,6 +478,11 @@ describe('Subprocess Spawn Integration', () => {
     }, 30000);  // Increase timeout for Windows CI (dynamic imports are slow)
 
     it('should track running tasks', async () => {
+      // Add delay for CI mock initialization
+      if (setupMockDelay > 0) {
+        await new Promise(resolve => setTimeout(resolve, setupMockDelay));
+      }
+
       const { AgentManager } = await import('../../main/agent');
 
       const manager = new AgentManager();
@@ -429,6 +515,11 @@ describe('Subprocess Spawn Integration', () => {
     }, 15000);
 
     it('should use configured Python path', async () => {
+      // Add delay for CI mock initialization
+      if (setupMockDelay > 0) {
+        await new Promise(resolve => setTimeout(resolve, setupMockDelay));
+      }
+
       const { spawn } = await import('child_process');
       const { AgentManager } = await import('../../main/agent');
 
@@ -445,6 +536,11 @@ describe('Subprocess Spawn Integration', () => {
     }, 30000);  // Increase timeout for Windows CI (dynamic imports are slow)
 
     it('should kill all running tasks', async () => {
+      // Add delay for CI mock initialization
+      if (setupMockDelay > 0) {
+        await new Promise(resolve => setTimeout(resolve, setupMockDelay));
+      }
+
       const { AgentManager } = await import('../../main/agent');
 
       const manager = new AgentManager();
@@ -467,6 +563,11 @@ describe('Subprocess Spawn Integration', () => {
     }, 10000);  // Increase timeout for Windows CI
 
     it('should allow sequential execution of same task', async () => {
+      // Add delay for CI mock initialization
+      if (setupMockDelay > 0) {
+        await new Promise(resolve => setTimeout(resolve, setupMockDelay));
+      }
+
       const { AgentManager } = await import('../../main/agent');
 
       const manager = new AgentManager();
