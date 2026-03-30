@@ -20,7 +20,14 @@ export default defineConfig({
       '@sentry/electron/renderer': resolve(__dirname, 'src/__mocks__/sentry-electron-renderer.ts')
     },
     // Setup files for test environment - use setupFiles to avoid vitest import issues
-    setupFiles: ['./src/__tests__/testSetup.ts']
+    setupFiles: ['./src/__tests__/testSetup.ts'],
+    // Pre-assign node environment for tests that need it, avoiding worker state conflicts
+    environmentMatchGlobs: [
+      ['src/main/__tests__/ipc-handlers.test.ts', 'node'],
+      ['src/main/__tests__/insights-config.test.ts', 'node'],
+      ['src/main/terminal/__tests__/claude-integration-handler.test.ts', 'node'],
+      ['src/__tests__/integration/subprocess-spawn.test.ts', 'node'],
+    ],
   },
   resolve: {
     alias: {
