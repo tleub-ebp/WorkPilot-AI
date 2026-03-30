@@ -103,12 +103,19 @@ class QualityScorer:
 
     def score_pr(
         self,
-        changed_files: list[str],
+        pr_diff_or_files: str | list[str] = "",
+        changed_files: list[str] | None = None,
+        pr_description: str = "",
     ) -> QualityScore:
         """Score une Pull Request complète."""
         self.issues = []
 
-        for file_path in changed_files:
+        files_to_analyze = (
+            changed_files
+            if changed_files is not None
+            else (pr_diff_or_files if isinstance(pr_diff_or_files, list) else [])
+        )
+        for file_path in files_to_analyze:
             self._analyze_file(file_path)
 
         overall_score = self._calculate_score()
