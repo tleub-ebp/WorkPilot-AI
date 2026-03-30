@@ -26,7 +26,8 @@
     "moveTo": "Move to",
     "taskActions": "Task actions",
     "selectTask": "Select task: {{title}}",
-    "preview": "Preview"
+    "preview": "Preview",
+    "syncFromBranch": "Sync from branch"
   },
   "confirmDelete": {
     "title": "Delete Task",
@@ -414,7 +415,8 @@
       "deleteTask": "Delete Task",
       "close": "Close",
       "watchLive": "Watch Live",
-      "activating": "Activating..."
+      "activating": "Activating...",
+      "syncFromBranch": "Sync from branch"
     },
     "badges": {
       "stuck": "Stuck",

@@ -174,5 +174,31 @@
     "alreadyExisted": "already existed",
     "noWorktree": "No worktree found for this task",
     "resultsDescriptionWithSkipped": "{{success}} succeeded, {{skipped}} skipped, {{failed}} failed"
+  },
+  "syncBranch": {
+    "title": "Sync from Branch",
+    "description": "Bring changes from another branch into the worktree for \"{{branch}}\".",
+    "sourceBranchLabel": "Source branch",
+    "selectBranch": "Select a branch...",
+    "searchBranch": "Search branches...",
+    "noBranchFound": "No branch found",
+    "loadingBranches": "Loading branches...",
+    "strategyLabel": "Strategy",
+    "strategies": {
+      "merge": {
+        "label": "Merge",
+        "description": "Create a merge commit in the worktree"
+      },
+      "rebase": {
+        "label": "Rebase",
+        "description": "Replay worktree commits on top of the source branch"
+      }
+    },
+    "syncButton": "{{strategy}}",
+    "syncing": "Syncing...",
+    "moreConflicts": "+ {{count}} more",
+    "errors": {
+      "unknown": "An unexpected error occurred during sync"
+    }
   }
 }

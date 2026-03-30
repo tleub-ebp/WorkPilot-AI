@@ -698,6 +698,119 @@ export class AppEmulatorService extends EventEmitter {
   }
 
   /**
+   * Ensure Node.js project dependencies are installed.
+   * Runs `{packageManager} install` if package.json exists but node_modules is missing.
+   */
+  private ensureDependenciesInstalled(projectDir: string, label?: string): Promise<void> {
+    const prefix = label ? `[${label}] ` : '';
+    const packageJsonPath = path.join(projectDir, 'package.json');
+    const nodeModulesPath = path.join(projectDir, 'node_modules');
+
+    if (!existsSync(packageJsonPath)) return Promise.resolve();
+    if (existsSync(nodeModulesPath)) return Promise.resolve();
+
+    const pm = this.detectPackageManager(projectDir);
+    const isWindows = process.platform === 'win32';
+
+    this.emit('status', `${prefix}Installing dependencies with ${pm}...`);
+    this.emit('output', `${prefix}node_modules not found — running "${pm} install"...`);
+
+    return new Promise<void>((resolve, reject) => {
+      const proc = spawn(pm, ['install'], {
+        cwd: projectDir,
+        env: process.env as Record<string, string>,
+        shell: isWindows ? true : undefined,
+        stdio: ['ignore', 'pipe', 'pipe'],
+      });
+      proc.stdout?.on('data', (data: Buffer) => {
+        for (const line of data.toString('utf-8').split('\n')) {
+          if (line.trim()) this.emit('output', `${prefix}${line}`);
+        }
+      });
+      proc.stderr?.on('data', (data: Buffer) => {
+        for (const line of data.toString('utf-8').split('\n')) {
+          if (line.trim()) this.emit('output', `${prefix}${line}`);
+        }
+      });
+      proc.on('error', (err) => reject(new Error(`${prefix}Failed to run "${pm} install": ${err.message}`)));
+      proc.on('close', (code) => {
+        if (code === 0) {
+          this.emit('output', `${prefix}Dependencies installed successfully.`);
+          resolve();
+        } else {
+          reject(new Error(`${prefix}"${pm} install" exited with code ${code}`));
+        }
+      });
+    });
+  }
+
+  /**
+   * Ensure Python project dependencies are installed.
+   * Skips if a virtual environment already exists.
+   * Supports: pip (requirements.txt), poetry, uv, pipenv.
+   */
+  private ensurePythonDependenciesInstalled(projectDir: string, label?: string): Promise<void> {
+    const prefix = label ? `[${label}] ` : '';
+
+    // If a virtual environment already exists, assume deps are installed.
+    const venvMarkers = ['.venv', 'venv', 'env', '.env'];
+    const hasVenv = venvMarkers.some(d =>
+      existsSync(path.join(projectDir, d, 'lib')) ||    // Unix
+      existsSync(path.join(projectDir, d, 'Lib'))       // Windows
+    );
+    if (hasVenv) return Promise.resolve();
+
+    // Detect Python package manager by lock/config files (most specific first).
+    const hasPoetryLock = existsSync(path.join(projectDir, 'poetry.lock'));
+    const hasUvLock = existsSync(path.join(projectDir, 'uv.lock'));
+    const hasPipfileLock = existsSync(path.join(projectDir, 'Pipfile.lock'));
+    const hasRequirements = existsSync(path.join(projectDir, 'requirements.txt'));
+    const hasPyproject = existsSync(path.join(projectDir, 'pyproject.toml'));
+
+    let installCmd: string | null = null;
+    if (hasPoetryLock) installCmd = 'poetry install';
+    else if (hasUvLock) installCmd = 'uv sync';
+    else if (hasPipfileLock) installCmd = 'pipenv install';
+    else if (hasRequirements) installCmd = 'pip install -r requirements.txt';
+    else if (hasPyproject) installCmd = 'pip install -e .';
+
+    if (!installCmd) return Promise.resolve();
+
+    const isWindows = process.platform === 'win32';
+    this.emit('status', `${prefix}Installing Python dependencies...`);
+    this.emit('output', `${prefix}No virtual environment found — running "${installCmd}"...`);
+
+    return new Promise<void>((resolve, reject) => {
+      const [cmd, ...args] = installCmd?.split(' ') || [];
+      const proc = spawn(cmd, args, {
+        cwd: projectDir,
+        env: process.env as Record<string, string>,
+        shell: isWindows ? true : undefined,
+        stdio: ['ignore', 'pipe', 'pipe'],
+      });
+      proc.stdout?.on('data', (data: Buffer) => {
+        for (const line of data.toString('utf-8').split('\n')) {
+          if (line.trim()) this.emit('output', `${prefix}${line}`);
+        }
+      });
+      proc.stderr?.on('data', (data: Buffer) => {
+        for (const line of data.toString('utf-8').split('\n')) {
+          if (line.trim()) this.emit('output', `${prefix}${line}`);
+        }
+      });
+      proc.on('error', (err) => reject(new Error(`${prefix}Failed to run "${installCmd}": ${err.message}`)));
+      proc.on('close', (code) => {
+        if (code === 0) {
+          this.emit('output', `${prefix}Python dependencies installed successfully.`);
+          resolve();
+        } else {
+          reject(new Error(`${prefix}"${installCmd}" exited with code ${code}`));
+        }
+      });
+    });
+  }
+
+  /**
    * Fallback: Detect project type via Python runner.
    */
   private detectProjectViaPython(projectDir: string): Promise<AppEmulatorConfig> {
@@ -804,6 +917,25 @@ export class AppEmulatorService extends EventEmitter {
     // Must run from real path (not junction) so TypeScript & webpack use the same paths.
     if (config.framework === 'angular') {
       await this.patchAngularWebpack(rawDir);
+    }
+
+    // Ensure Node.js dependencies are installed before starting the dev server.
+    try {
+      await this.ensureDependenciesInstalled(projectDir);
+    } catch (err) {
+      this.emit('error', String(err));
+      return;
+    }
+
+    // Ensure Python dependencies are installed before starting the dev server.
+    const PYTHON_FRAMEWORKS = new Set(['django', 'fastapi', 'flask', 'streamlit', 'python']);
+    if (PYTHON_FRAMEWORKS.has(config.framework)) {
+      try {
+        await this.ensurePythonDependenciesInstalled(projectDir);
+      } catch (err) {
+        this.emit('error', String(err));
+        return;
+      }
     }
 
     if (!config.startCommand) {
@@ -988,6 +1120,12 @@ export class AppEmulatorService extends EventEmitter {
       if (svc.framework === 'angular') {
         await this.patchAngularWebpack(svc.projectDir);
       }
+      try {
+        await this.ensureDependenciesInstalled(svc.projectDir, svc.label);
+        await this.ensurePythonDependenciesInstalled(svc.projectDir, svc.label);
+      } catch (err) {
+        this.emit('output', `[${svc.label}] ${String(err)}`);
+      }
       const proc = spawn(cmd, args, {
         cwd: svc.projectDir,
         env: {
@@ -1027,6 +1165,14 @@ export class AppEmulatorService extends EventEmitter {
     // Patch @ngtools/webpack for the %20 bug if primary is Angular.
     if (primary.framework === 'angular') {
       await this.patchAngularWebpack(primary.projectDir);
+    }
+    try {
+      await this.ensureDependenciesInstalled(primary.projectDir, primary.label);
+      await this.ensurePythonDependenciesInstalled(primary.projectDir, primary.label);
+    } catch (err) {
+      this.emit('error', String(err));
+      this.startingInProgress = false;
+      return;
     }
     const primaryProc = spawn(primaryCmd, primaryArgs, {
       cwd: primary.projectDir,

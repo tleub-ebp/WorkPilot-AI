@@ -37,6 +37,7 @@ import type {
   WorktreeDiff,
   WorktreeMergeResult,
   WorktreeDiscardResult,
+  WorktreeSyncResult,
   WorktreeListResult,
   WorktreeCreatePROptions,
   WorktreeCreatePRResult,
@@ -233,6 +234,7 @@ export interface ElectronAPI {
   getPRDetails: (prNumber: number, taskId?: string) => Promise<IPCResult<PRDetailsResult>>;
   discardWorktree: (taskId: string, skipStatusChange?: boolean) => Promise<IPCResult<WorktreeDiscardResult>>;
   discardOrphanedWorktree: (projectId: string, specName: string) => Promise<IPCResult<WorktreeDiscardResult>>;
+  syncWorktreeFromBranch: (taskId: string, sourceBranch: string, strategy: 'merge' | 'rebase') => Promise<IPCResult<WorktreeSyncResult>>;
   clearStagedState: (taskId: string) => Promise<IPCResult<{ cleared: boolean }>>;
   listWorktrees: (projectId: string, options?: { includeStats?: boolean }) => Promise<IPCResult<WorktreeListResult>>;
   worktreeOpenInIDE: (worktreePath: string, ide: SupportedIDE, customPath?: string) => Promise<IPCResult<{ opened: boolean }>>;
