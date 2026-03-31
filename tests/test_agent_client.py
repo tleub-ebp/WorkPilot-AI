@@ -476,9 +476,11 @@ class TestCopilotAgentClient:
 
         client._http_client = mock_session
 
-        messages = []
-        async for msg in client.receive_response():
-            messages.append(msg)
+        # Mock the token method to bypass authentication
+        with patch.object(client, '_get_copilot_token', return_value="mock_token"):
+            messages = []
+            async for msg in client.receive_response():
+                messages.append(msg)
 
         assert len(messages) == 1
         assert messages[0].role == MessageRole.SYSTEM
