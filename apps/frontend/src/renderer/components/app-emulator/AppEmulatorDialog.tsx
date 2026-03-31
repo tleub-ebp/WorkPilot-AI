@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   Loader2,
@@ -103,15 +103,26 @@ function classifyLogLine(line: string): string {
   return '';
 }
 
+/** Clean ANSI escape codes from text */
+function cleanAnsiCodes(text: string): string {
+  // Remove ANSI escape codes (both actual escape codes and text representations like [32m)
+  return text
+    .replace(/\\x1b\\[[0-9;]*m/g, '') // Actual ANSI escape codes
+    .replace(/\[(?:[0-9]+;?)*m/g, '') // Text representations like [32m, [1m, etc.
+    .replace(/\[(?:[0-9]+;?)*[A-Za-z]/g, ''); // Other ANSI sequences
+}
+
 /** Render log text with per-line color highlighting based on log level. */
 function renderColorizedContent(text: string) {
-  return text.split('\n').map((line, i) => (
-    <>
-      {/* biome-ignore lint/suspicious/noArrayIndexKey: no stable key available */}
-      <span key={i} className={`block ${classifyLogLine(line)}`}>
+  // Clean ANSI codes first to prevent display issues
+  const cleanText = cleanAnsiCodes(text);
+  
+  return cleanText.split('\n').map((line, i) => (
+    <React.Fragment key={`line-${i}-${line.slice(0, 20)}`}>
+      <span className={`block ${classifyLogLine(line)}`}>
         {line}
       </span>
-    </>
+    </React.Fragment>
   ));
 }
 
