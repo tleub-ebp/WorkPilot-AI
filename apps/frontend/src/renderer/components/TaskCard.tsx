@@ -996,11 +996,12 @@ export const TaskCard = memo(function TaskCard({
 
       {/* Sync from Branch Dialog — stopPropagation wrapper prevents card onClick from firing */}
       {currentProject?.path && (
-        // biome-ignore lint/a11y/noStaticElementInteractions: wrapper to prevent event bubbling to card
         <div
           onClick={(e) => e.stopPropagation()}
+          onKeyDown={(e) => e.stopPropagation()}
           onMouseDown={(e) => e.stopPropagation()}
           onPointerDown={(e) => e.stopPropagation()}
+          role="presentation"
         >
           <SyncFromBranchDialog
             open={showSyncDialog}
