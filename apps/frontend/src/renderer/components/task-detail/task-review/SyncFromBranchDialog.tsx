@@ -11,8 +11,7 @@ import {
 } from '../../ui/dialog';
 import { Button } from '../../ui/button';
 import { Label } from '../../ui/label';
-import { Combobox } from '../../ui/combobox';
-import { buildBranchOptions } from '../../../lib/branch-utils';
+import { cn } from '../../../lib/utils';
 import type { Task } from '../../../../shared/types';
 
 type Strategy = 'merge' | 'rebase';
@@ -33,8 +32,9 @@ export function SyncFromBranchDialog({
   const { t } = useTranslation(['taskReview', 'common']);
   const [sourceBranch, setSourceBranch] = useState('');
   const [strategy, setStrategy] = useState<Strategy>('merge');
-  const [branches, setBranches] = useState<{ name: string; displayName: string; type: 'local' | 'remote' }[]>([]);
+  const [branches, setBranches] = useState<string[]>([]);
   const [isLoadingBranches, setIsLoadingBranches] = useState(false);
+  const [branchLoadError, setBranchLoadError] = useState<string | null>(null);
   const [isSyncing, setIsSyncing] = useState(false);
   const [result, setResult] = useState<{ success: boolean; message: string; conflictFiles?: string[] } | null>(null);
 
@@ -44,21 +44,34 @@ export function SyncFromBranchDialog({
       setResult(null);
       setSourceBranch('');
       setIsSyncing(false);
+      setBranchLoadError(null);
+      return;
+    }
+
+    if (!projectPath) {
+      setBranchLoadError('Project path is not available');
       return;
     }
 
     let isMounted = true;
     setIsLoadingBranches(true);
+    setBranchLoadError(null);
+    setBranches([]);
 
-    globalThis.electronAPI.getGitBranchesWithInfo(projectPath)
+    window.electronAPI.getGitBranches(projectPath)
       .then((res) => {
         if (!isMounted) return;
-        if (res.success && res.data) {
+        if (res.success && res.data && res.data.length > 0) {
           setBranches(res.data);
+        } else if (!res.success) {
+          setBranchLoadError(res.error || 'Failed to load branches');
+        } else {
+          setBranchLoadError('No branches found in this repository');
         }
       })
       .catch((err: unknown) => {
-        console.error('[SyncFromBranchDialog] Failed to fetch branches:', err);
+        if (!isMounted) return;
+        setBranchLoadError(err instanceof Error ? err.message : 'Failed to load branches');
       })
       .finally(() => {
         if (isMounted) setIsLoadingBranches(false);
@@ -66,8 +79,6 @@ export function SyncFromBranchDialog({
 
     return () => { isMounted = false; };
   }, [open, projectPath]);
-
-  const branchOptions = buildBranchOptions(branches, { t });
 
   const handleSync = async () => {
     if (!sourceBranch) return;
@@ -97,9 +108,13 @@ export function SyncFromBranchDialog({
 
   const canSync = !!sourceBranch && !isSyncing && !result?.success;
 
+  // Split branches into local and remote for the optgroup
+  const localBranches = branches.filter(b => !b.startsWith('origin/') && !b.startsWith('upstream/'));
+  const remoteBranches = branches.filter(b => b.startsWith('origin/') || b.startsWith('upstream/'));
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[480px]">
+      <DialogContent className="sm:max-w-[640px]">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <GitMerge className="h-5 w-5 text-primary" />
@@ -111,22 +126,50 @@ export function SyncFromBranchDialog({
         </DialogHeader>
 
         <div className="space-y-4 py-2">
-          {/* Source branch selector */}
+          {/* Source branch selector — native <select> to avoid Popover/Dialog focus-trap conflicts */}
           <div className="space-y-2">
             <Label htmlFor="sync-source-branch">
               {t('taskReview:syncBranch.sourceBranchLabel')}
             </Label>
-            <Combobox
+            <select
               id="sync-source-branch"
               value={sourceBranch}
-              onValueChange={setSourceBranch}
-              options={branchOptions}
-              placeholder={isLoadingBranches ? t('taskReview:syncBranch.loadingBranches') : t('taskReview:syncBranch.selectBranch')}
-              searchPlaceholder={t('taskReview:syncBranch.searchBranch')}
-              emptyMessage={t('taskReview:syncBranch.noBranchFound')}
+              onChange={(e) => setSourceBranch(e.target.value)}
               disabled={isLoadingBranches || isSyncing}
-              className="w-full"
-            />
+              className={cn(
+                'flex h-10 w-full rounded-lg border border-border bg-card px-3 py-2 text-sm text-foreground',
+                'focus:outline-none focus:ring-2 focus:ring-ring focus:border-primary',
+                'disabled:cursor-not-allowed disabled:opacity-50',
+                'transition-colors duration-200',
+                !sourceBranch && 'text-muted-foreground'
+              )}
+            >
+              <option value="" disabled>
+                {isLoadingBranches
+                  ? t('taskReview:syncBranch.loadingBranches')
+                  : t('taskReview:syncBranch.selectBranch')}
+              </option>
+              {localBranches.length > 0 && (
+                <optgroup label="Local">
+                  {localBranches.map((b) => (
+                    <option key={b} value={b}>{b}</option>
+                  ))}
+                </optgroup>
+              )}
+              {remoteBranches.length > 0 && (
+                <optgroup label="Remote">
+                  {remoteBranches.map((b) => (
+                    <option key={b} value={b}>{b}</option>
+                  ))}
+                </optgroup>
+              )}
+            </select>
+            {branchLoadError && (
+              <p className="text-xs text-destructive flex items-center gap-1">
+                <AlertTriangle className="h-3 w-3 shrink-0" />
+                {branchLoadError}
+              </p>
+            )}
           </div>
 
           {/* Strategy selector */}
@@ -137,11 +180,12 @@ export function SyncFromBranchDialog({
                 type="button"
                 onClick={() => setStrategy('merge')}
                 disabled={isSyncing}
-                className={`flex items-start gap-2 rounded-lg border p-3 text-left transition-colors ${
+                className={cn(
+                  'flex items-start gap-2 rounded-lg border p-3 text-left transition-colors',
                   strategy === 'merge'
                     ? 'border-primary bg-primary/10 text-foreground'
                     : 'border-border bg-background text-muted-foreground hover:border-primary/50 hover:bg-muted/50'
-                }`}
+                )}
               >
                 <GitMerge className="h-4 w-4 mt-0.5 shrink-0" />
                 <div>
@@ -153,11 +197,12 @@ export function SyncFromBranchDialog({
                 type="button"
                 onClick={() => setStrategy('rebase')}
                 disabled={isSyncing}
-                className={`flex items-start gap-2 rounded-lg border p-3 text-left transition-colors ${
+                className={cn(
+                  'flex items-start gap-2 rounded-lg border p-3 text-left transition-colors',
                   strategy === 'rebase'
                     ? 'border-primary bg-primary/10 text-foreground'
                     : 'border-border bg-background text-muted-foreground hover:border-primary/50 hover:bg-muted/50'
-                }`}
+                )}
               >
                 <GitBranch className="h-4 w-4 mt-0.5 shrink-0" />
                 <div>
@@ -170,18 +215,17 @@ export function SyncFromBranchDialog({
 
           {/* Result feedback */}
           {result && (
-            <div className={`flex items-start gap-2 p-3 rounded-lg border ${
-              result.success
-                ? 'bg-success/10 border-success/20'
-                : 'bg-destructive/10 border-destructive/20'
-            }`}>
+            <div className={cn(
+              'flex items-start gap-2 p-3 rounded-lg border',
+              result.success ? 'bg-success/10 border-success/20' : 'bg-destructive/10 border-destructive/20'
+            )}>
               {result.success ? (
                 <CheckCircle className="h-4 w-4 text-success mt-0.5 shrink-0" />
               ) : (
                 <AlertTriangle className="h-4 w-4 text-destructive mt-0.5 shrink-0" />
               )}
               <div className="flex-1 min-w-0">
-                <p className={`text-sm font-medium ${result.success ? 'text-success' : 'text-destructive'}`}>
+                <p className={cn('text-sm font-medium', result.success ? 'text-success' : 'text-destructive')}>
                   {result.message}
                 </p>
                 {result.conflictFiles && result.conflictFiles.length > 0 && (

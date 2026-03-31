@@ -4,7 +4,7 @@ import { useToast } from '../../hooks/use-toast';
 import { Separator } from '../ui/separator';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/tabs';
 import { ScrollArea } from '../ui/scroll-area';
-import { TooltipProvider } from '../ui/tooltip';
+import { TooltipProvider, Tooltip, TooltipContent, TooltipTrigger } from '../ui/tooltip';
 import { Badge } from '../ui/badge';
 import { Button } from '../ui/button';
 import { Progress } from '../ui/progress';
@@ -230,6 +230,8 @@ function TaskDetailModalContent({ open, task, onOpenChange, onCloseTask }: { rea
   const { t } = useTranslation(['tasks']);
   const state = useTaskDetail({ task });
   const activeProject = useProjectStore(s => s.getActiveProject());
+  const allProjects = useProjectStore(s => s.projects);
+  const taskProject = allProjects.find(p => p.id === task.projectId);
   const showFilesTab = isFilesTabEnabled();
   const progressPercent = calculateProgress(task.subtasks);
   const completedSubtasks = task.subtasks.filter(s => s.status === 'completed').length;
@@ -482,17 +484,23 @@ function TaskDetailModalContent({ open, task, onOpenChange, onCloseTask }: { rea
                   )}
                 </div>
                 <div className="flex items-center gap-1 shrink-0 electron-no-drag">
-                  {/* Sync from branch — available whenever a worktree exists */}
-                  {(task.status === 'in_progress' || task.status === 'human_review' || task.status === 'ai_review') && (
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      title={t('tasks:modal.actions.syncFromBranch')}
-                      className="hover:bg-primary/10 hover:text-primary transition-colors"
-                      onClick={() => state.setShowSyncDialog(true)}
-                    >
-                      <GitMerge className="h-4 w-4" />
-                    </Button>
+                  {/* Sync from branch — available for any status that may have a worktree */}
+                  {task.status !== 'done' && (
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="hover:bg-primary/10 hover:text-primary transition-colors"
+                          onClick={() => state.setShowSyncDialog(true)}
+                        >
+                          <GitMerge className="h-4 w-4" />
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent side="bottom">
+                        {t('tasks:modal.actions.syncFromBranch')}
+                      </TooltipContent>
+                    </Tooltip>
                   )}
                   <Button
                     variant="ghost"
@@ -734,11 +742,11 @@ function TaskDetailModalContent({ open, task, onOpenChange, onCloseTask }: { rea
       </AlertDialog>
 
       {/* Sync from Branch Dialog */}
-      {state.selectedProject?.path && (
+      {(taskProject?.path || activeProject?.path) && (
         <SyncFromBranchDialog
           open={state.showSyncDialog}
           task={task}
-          projectPath={state.selectedProject.path}
+          projectPath={(taskProject?.path || activeProject?.path) as string}
           onOpenChange={state.setShowSyncDialog}
         />
       )}
