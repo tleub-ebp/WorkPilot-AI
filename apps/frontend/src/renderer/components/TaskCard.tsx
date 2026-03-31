@@ -787,6 +787,8 @@ export const TaskCard = memo(function TaskCard({
   };
 
   const handleCardClick = (e: React.MouseEvent) => {
+    // Don't open task modal while sync dialog is open (prevents portal event leak)
+    if (showSyncDialog) return;
     // If delete functionality is available, don't open the task when clicking near the delete button
     if (onDelete) {
       // Get the click coordinates relative to the card
@@ -967,10 +969,10 @@ export const TaskCard = memo(function TaskCard({
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" onClick={(e) => e.stopPropagation()}>
-                  {(task.status === 'in_progress' || task.status === 'human_review' || task.status === 'ai_review') && (
+                  {task.status !== 'done' && (
                     <>
                       <DropdownMenuItem
-                        onClick={(e) => { e.stopPropagation(); setShowSyncDialog(true); }}
+                        onClick={(e) => { e.stopPropagation(); e.preventDefault(); setShowSyncDialog(true); }}
                       >
                         <GitMerge className="mr-2 h-4 w-4" />
                         {t('tasks:actions.syncFromBranch')}
@@ -992,14 +994,21 @@ export const TaskCard = memo(function TaskCard({
         </div>
       </CardContent>
 
-      {/* Sync from Branch Dialog — inline so it doesn't require opening the full modal */}
+      {/* Sync from Branch Dialog — stopPropagation wrapper prevents card onClick from firing */}
       {currentProject?.path && (
-        <SyncFromBranchDialog
-          open={showSyncDialog}
-          task={task}
-          projectPath={currentProject.path}
-          onOpenChange={setShowSyncDialog}
-        />
+        // biome-ignore lint/a11y/noStaticElementInteractions: wrapper to prevent event bubbling to card
+        <div
+          onClick={(e) => e.stopPropagation()}
+          onMouseDown={(e) => e.stopPropagation()}
+          onPointerDown={(e) => e.stopPropagation()}
+        >
+          <SyncFromBranchDialog
+            open={showSyncDialog}
+            task={task}
+            projectPath={currentProject.path}
+            onOpenChange={setShowSyncDialog}
+          />
+        </div>
       )}
     </Card>
   );
