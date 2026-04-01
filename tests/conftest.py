@@ -16,6 +16,7 @@ Provides:
    sample API response objects, and pre-configured connector instances.
 """
 
+import importlib
 import sys
 import types as _types
 from datetime import datetime
@@ -25,10 +26,54 @@ from unittest.mock import MagicMock
 
 import pytest
 
+# Constants for git initialization
+INITIAL_BRANCH_MAIN = "--initial-branch=main"
+GIT_CONFIG_USER_EMAIL = "user.email"
+GIT_CONFIG_USER_NAME = "user.name"
+INITIAL_COMMIT_MESSAGE = "Initial commit"
+
 # Add the project root to the Python path
 _PROJECT_ROOT = str(Path(__file__).parent.parent)
 if _PROJECT_ROOT not in sys.path:
     sys.path.insert(0, _PROJECT_ROOT)
+
+# Add the backend root to sys.path so that `core`, `review`, etc. can be
+# imported directly (without the `apps.backend.` prefix).
+# Insert at position 1 (not 0) so that project-root "src.*" imports keep
+# precedence — azure_devops tests rely on ``from src.config.settings import Settings``.
+_BACKEND_ROOT = str(Path(__file__).parent.parent / "apps" / "backend")
+if _BACKEND_ROOT not in sys.path:
+    sys.path.insert(1, _BACKEND_ROOT)
+
+# ---------------------------------------------------------------------------
+# Save real module objects BEFORE any test-file collection can pollute them.
+#
+# Several test files (test_spec_phases.py, test_qa_loop.py, …) inject
+# ``sys.modules["core.platform"] = MagicMock()`` at *module level* during
+# collection.  That replaces M1 (the real module) in the cache.  Later, when
+# an unrelated test uses ``@patch("core.platform.is_windows", …)``, mock.patch
+# looks up ``sys.modules["core.platform"]`` and gets a *new* module M2 (after
+# our cleanup deleted the MagicMock), so the patch is applied to M2 — but the
+# already-imported function objects (e.g. ``get_path_delimiter``) still hold
+# a reference to M1's ``__dict__``.  Patching M2 has no effect on M1.
+#
+# The fix: save M1 right now (before any collection happens) and RESTORE it
+# in the cleanup hook instead of deleting it.  That way sys.modules always
+# points to M1, and @patch always patches the object the functions reference.
+# ---------------------------------------------------------------------------
+_MODULES_TO_PRESERVE = [
+    "core",
+    "core.platform",
+    "core.auth",
+    "review",
+    "review.state",
+]
+_real_modules: dict[str, _types.ModuleType] = {}
+for _mod_name in _MODULES_TO_PRESERVE:
+    try:
+        _real_modules[_mod_name] = importlib.import_module(_mod_name)
+    except Exception:
+        pass
 
 # ---------------------------------------------------------------------------
 # Backend packages that are frequently polluted by MagicMock in test files.
@@ -84,12 +129,32 @@ _PROTECTED_PACKAGES = [
     "analysis",
     # QA system
     "qa",
+    "qa_loop",
     # Integrations
     "integrations",
     # Utilities
     "rate_limiter",
     "file_lock",
 ]
+
+
+# Modules that must always be evicted (even if they're real ModuleType objects)
+# because they import from protected packages at module level and their bound
+# names become stale after a protected package mock is cleaned up.
+# For example, qa_loop.get_iteration_history was bound to mock_qa.get_iteration_history
+# when qa was a MagicMock; evicting qa_loop forces a fresh re-import with real bindings.
+# qa.criteria imports from `progress` which is frequently mocked; evicting it lets
+# test files that mock progress get the correct is_build_complete binding.
+_DEPENDENT_EVICT = {
+    "qa_loop",
+    "qa.criteria",
+    "qa.report",
+    "qa.loop",
+    # models.py imports locked_json_write from file_lock; test_context_gatherer.py
+    # patches file_lock.locked_json_write with a MagicMock, so models.py cached
+    # with the mock binding must be evicted before test_github_pr_e2e.py runs.
+    "models",
+}
 
 
 def _clean_mock_modules() -> None:
@@ -103,6 +168,8 @@ def _clean_mock_modules() -> None:
     - ``sys.modules[name] = MagicMock()`` — caught by the protected-packages list.
     - ``sys.modules["src.connectors"] = type('Package', (), {})()`` — caught by
       the non-ModuleType check for the ``src.connectors`` namespace.
+    - Real modules listed in _DEPENDENT_EVICT — evicted unconditionally so they
+      are re-imported fresh after their dependencies are cleaned up.
     """
     keys_to_remove = []
     for key, mod in sys.modules.items():
@@ -117,8 +184,17 @@ def _clean_mock_modules() -> None:
             key == "src.connectors" or key.startswith("src.connectors.")
         ):
             keys_to_remove.append(key)
+        # Unconditionally evict dependent modules so they re-import with fresh bindings
+        elif key in _DEPENDENT_EVICT:
+            keys_to_remove.append(key)
     for key in keys_to_remove:
-        del sys.modules[key]
+        if key in _real_modules:
+            # Restore the original real module object so that @patch decorators
+            # in test files always patch the same object that imported functions
+            # reference (function.__globals__ points to M1's dict, not M2's).
+            sys.modules[key] = _real_modules[key]
+        else:
+            del sys.modules[key]
 
 
 def pytest_collectstart(collector) -> None:
@@ -126,6 +202,24 @@ def pytest_collectstart(collector) -> None:
 
     This hook fires before each collector (test file) is imported, giving
     us a chance to clean up mocks left by previously-collected files.
+    """
+    _clean_mock_modules()
+
+
+def pytest_runtest_setup(item) -> None:
+    """Remove MagicMock pollution from sys.modules before each test runs.
+
+    Some test files inject ``sys.modules[name] = MagicMock()`` at module
+    level during *collection*.  The ``pytest_collectstart`` hook only fires
+    before collection, so by the time tests *execute* those mocks are still
+    present and break ``@patch`` decorators in unrelated test files (e.g.
+    test_platform.py whose ``@patch("core.platform.is_windows", ...)`` ends
+    up patching a MagicMock instead of the real module).
+
+    Running the same cleanup before every test ensures that mocks injected
+    during collection are evicted before any test that doesn't own them runs.
+    Test files that rely on those mocks (spec_phases, qa_loop, etc.) have
+    already imported their targets at module level, so this cleanup is safe.
     """
     _clean_mock_modules()
 
@@ -158,20 +252,20 @@ def temp_git_repo(tmp_path):
     }
 
     subprocess.run(
-        ["git", "init", "--initial-branch=main"],
+        ["git", "init", INITIAL_BRANCH_MAIN],
         cwd=repo,
         env={**subprocess.os.environ, **env},
         capture_output=True,
         check=True,
     )
     subprocess.run(
-        ["git", "config", "user.email", TEST_EMAIL],
+        ["git", "config", GIT_CONFIG_USER_EMAIL, TEST_EMAIL],
         cwd=repo,
         capture_output=True,
         check=True,
     )
     subprocess.run(
-        ["git", "config", "user.name", "Test"],
+        ["git", "config", GIT_CONFIG_USER_NAME, "Test"],
         cwd=repo,
         capture_output=True,
         check=True,
@@ -182,7 +276,7 @@ def temp_git_repo(tmp_path):
     readme.write_text("# Test repo\n")
     subprocess.run(["git", "add", "."], cwd=repo, capture_output=True, check=True)
     subprocess.run(
-        ["git", "commit", "-m", "Initial commit"],
+        ["git", "commit", "-m", INITIAL_COMMIT_MESSAGE],
         cwd=repo,
         env={**subprocess.os.environ, **env},
         capture_output=True,
@@ -636,20 +730,20 @@ def temp_project(tmp_path):
     merged_env = {**subprocess.os.environ, **env}
 
     subprocess.run(
-        ["git", "init", "--initial-branch=main"],
+        ["git", "init", INITIAL_BRANCH_MAIN],
         cwd=repo,
         env=merged_env,
         capture_output=True,
         check=True,
     )
     subprocess.run(
-        ["git", "config", "user.email", TEST_EMAIL],
+        ["git", "config", GIT_CONFIG_USER_EMAIL, TEST_EMAIL],
         cwd=repo,
         capture_output=True,
         check=True,
     )
     subprocess.run(
-        ["git", "config", "user.name", "Test"],
+        ["git", "config", GIT_CONFIG_USER_NAME, "Test"],
         cwd=repo,
         capture_output=True,
         check=True,
@@ -668,7 +762,7 @@ def temp_project(tmp_path):
 
     subprocess.run(["git", "add", "."], cwd=repo, capture_output=True, check=True)
     subprocess.run(
-        ["git", "commit", "-m", "Initial commit"],
+        ["git", "commit", "-m", INITIAL_COMMIT_MESSAGE],
         cwd=repo,
         env=merged_env,
         capture_output=True,
@@ -932,20 +1026,20 @@ def temp_project_dir(tmp_path):
     merged_env = {**subprocess.os.environ, **env}
 
     subprocess.run(
-        ["git", "init", "--initial-branch=main"],
+        ["git", "init", INITIAL_BRANCH_MAIN],
         cwd=project,
         env=merged_env,
         capture_output=True,
         check=True,
     )
     subprocess.run(
-        ["git", "config", "user.email", TEST_EMAIL],
+        ["git", "config", GIT_CONFIG_USER_EMAIL, TEST_EMAIL],
         cwd=project,
         capture_output=True,
         check=True,
     )
     subprocess.run(
-        ["git", "config", "user.name", "Test"],
+        ["git", "config", GIT_CONFIG_USER_NAME, "Test"],
         cwd=project,
         capture_output=True,
         check=True,
@@ -956,7 +1050,7 @@ def temp_project_dir(tmp_path):
     readme.write_text("# Test Project\n")
     subprocess.run(["git", "add", "."], cwd=project, capture_output=True, check=True)
     subprocess.run(
-        ["git", "commit", "-m", "Initial commit"],
+        ["git", "commit", "-m", INITIAL_COMMIT_MESSAGE],
         cwd=project,
         env=merged_env,
         capture_output=True,

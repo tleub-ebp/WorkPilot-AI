@@ -115,7 +115,7 @@ class TestSessionRecorder:
         assert recording.events[0].event_type == EventType.CODE_CHANGE
     
     def test_stop_and_save_recording(self, tmp_path):
-        """Test stopping and saving a recording with inverted filename/root."""
+        """Test stopping and saving a recording to recordings_dir."""
         recorder = SessionRecorder(recordings_dir=tmp_path)
         recorder.start_recording("test-rec-3", {"task": "test"})
         # Add some events
@@ -131,12 +131,11 @@ class TestSessionRecorder:
         recording = recorder.stop_recording("test-rec-3")
         assert recording is not None
         assert len(recording.events) == 3
-        # Check file was saved in inverted structure
+        # Check file was saved in recordings_dir
         timestamp = datetime.fromtimestamp(recording.start_time).strftime("%Y%m%d_%H%M%S")
-        inverted_dir = Path.home() / f"{timestamp}_{recording.session_id}"
-        saved_files = list(inverted_dir.glob("*.json"))
+        saved_files = list(tmp_path.glob("*.json"))
         assert len(saved_files) == 1
-        assert saved_files[0].name == f"{tmp_path.name}.json"
+        assert saved_files[0].name == f"{timestamp}_{recording.session_id}.json"
     
     def test_load_recording(self, tmp_path):
         """Test loading a recording from disk."""

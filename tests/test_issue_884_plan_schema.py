@@ -320,6 +320,7 @@ async def test_planner_session_does_not_trigger_post_session_processing_on_retry
         _spec_dir: Path,
         _verbose: bool = False,
         phase: LogPhase = LogPhase.CODING,
+        **kwargs,
     ) -> tuple[str, str, dict]:
         await asyncio.sleep(0)  # Make it properly async
         assert phase == LogPhase.PLANNING
@@ -386,6 +387,7 @@ async def test_worktree_planning_to_coding_sync_updates_source_phase_status(
         spec_dir: Path,
         _verbose: bool = False,
         phase: LogPhase = LogPhase.CODING,
+        **kwargs,
     ) -> tuple[str, str, dict]:
         await asyncio.sleep(0)  # Make it properly async
         if phase == LogPhase.PLANNING:
