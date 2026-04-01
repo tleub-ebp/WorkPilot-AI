@@ -419,9 +419,7 @@ class TestPhaseRequirements:
         assert (spec_dir / "requirements.json").exists()
 
         # Verify content
-        import aiofiles
-        async with aiofiles.open(spec_dir / "requirements.json") as f:
-            content = await f.read()
+        content = (spec_dir / "requirements.json").read_text()
         req = json.loads(content)
         assert req["task_description"] == "Add user authentication"
 
@@ -512,9 +510,9 @@ class TestPhaseContext:
         )
 
         with patch(
-            "spec.context.run_context_discovery", return_value=(False, "Failed")
+            "apps.backend.spec.context.run_context_discovery", return_value=(False, "Failed")
         ):
-            with patch("spec.context.create_minimal_context") as mock_minimal:
+            with patch("apps.backend.spec.context.create_minimal_context") as mock_minimal:
                 result = await executor.phase_context()
 
         mock_minimal.assert_called_once()
@@ -568,9 +566,7 @@ class TestPhaseQuickSpec:
 
         # Agent creates spec.md on success
         async def agent_side_effect(*args, **kwargs):
-            import aiofiles
-            async with aiofiles.open(spec_dir / "spec.md", "w") as f:
-                await f.write("# Generated Spec")
+            (spec_dir / "spec.md").write_text("# Generated Spec")
             return (True, "Done")
 
         agent_fn = AsyncMock(side_effect=agent_side_effect)
@@ -696,9 +692,7 @@ class TestPhaseSpecWriting:
         (spec_dir / "spec.md").write_text("Invalid spec")
 
         async def agent_side_effect(*args, **kwargs):
-            import aiofiles
-            async with aiofiles.open(spec_dir / "spec.md", "w") as f:
-                await f.write("# Valid Spec\n\n## Overview\n")
+            (spec_dir / "spec.md").write_text("# Valid Spec\n\n## Overview\n")
             return (True, "Done")
 
         agent_fn = AsyncMock(side_effect=agent_side_effect)

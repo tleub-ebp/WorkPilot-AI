@@ -47,6 +47,36 @@ _RUNNERS_GITHUB = _BACKEND / "runners" / "github"
 if str(_RUNNERS_GITHUB) not in sys.path:
     sys.path.insert(0, str(_RUNNERS_GITHUB))
 
+# Pre-load specific services.* modules so imports resolve correctly regardless
+# of whether sys.modules["services"] is set to apps/backend/services or not.
+# - services.recovery comes from apps/backend/services/ (used by agents.session)
+# - services.agent_utils, services.category_utils, etc. come from runners/github/services/
+#   (used by parallel_orchestrator_reviewer and parallel_followup_reviewer)
+import importlib.util as _ilu
+
+
+def _load_service_mod(name: str, path: str) -> None:
+    if name not in sys.modules:
+        _spec = _ilu.spec_from_file_location(name, path, submodule_search_locations=[])
+        _mod = _ilu.module_from_spec(_spec)
+        sys.modules[name] = _mod
+        _spec.loader.exec_module(_mod)
+
+
+_load_service_mod("services.recovery", str(_BACKEND / "services" / "recovery.py"))
+
+_GH_SERVICES = _BACKEND / "runners" / "github" / "services"
+for _svc_mod in [
+    "agent_utils",
+    "category_utils",
+    "io_utils",
+    "pydantic_models",
+    "pr_worktree_manager",
+    "sdk_utils",
+    "response_parsers",
+]:
+    _load_service_mod(f"services.{_svc_mod}", str(_GH_SERVICES / f"{_svc_mod}.py"))
+
 for _pkg, _subpath in [
     ("runners", "runners"),
     ("runners.github", "runners/github"),

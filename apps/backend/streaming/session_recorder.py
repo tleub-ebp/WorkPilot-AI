@@ -118,15 +118,12 @@ class SessionRecorder:
         return recording
 
     def save_recording(self, recording: SessionRecording) -> Path:
-        """Save a recording to disk with inverted filename/root."""
+        """Save a recording to disk."""
         timestamp = datetime.fromtimestamp(recording.start_time).strftime(
             "%Y%m%d_%H%M%S"
         )
-        # Inversion: recordings_dir devient le nom du fichier, filename devient le dossier
-        filename = f"{timestamp}_{recording.session_id}"
-        inverted_dir = Path.home() / filename
-        inverted_dir.mkdir(parents=True, exist_ok=True)
-        filepath = inverted_dir / f"{self._recordings_dir.name}.json"
+        filename = f"{timestamp}_{recording.session_id}.json"
+        filepath = self._recordings_dir / filename
 
         with open(filepath, "w") as f:
             json.dump(recording.to_dict(), f, indent=2)

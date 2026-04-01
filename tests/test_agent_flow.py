@@ -244,6 +244,7 @@ class TestPostSessionProcessing:
             }
             mock_memory.return_value = (True, "file")
 
+            commit_before = get_latest_commit(project_dir)
             # Run async function using asyncio.run()
             async def run_test():
                 return await post_session_processing(
@@ -296,6 +297,7 @@ class TestPostSessionProcessing:
             }
             mock_memory.return_value = (True, "file")
 
+            commit_before = get_latest_commit(project_dir)
             # Run async function using asyncio.run()
             async def run_test():
                 return await post_session_processing(
@@ -349,6 +351,7 @@ class TestPostSessionProcessing:
             }
             mock_memory.return_value = (True, "file")
 
+            commit_before = get_latest_commit(project_dir)
             # Run async function using asyncio.run()
             async def run_test():
                 return await post_session_processing(
@@ -551,7 +554,7 @@ class TestHandoffDataPreservation:
         subtask = {
             "id": "subtask-1",
             "description": "Test subtask",
-            "files_to_modify": [{"path": "app/main.py", "reason": "Add feature"}],
+            "files_to_modify": ["app/main.py"],
         }
         subtask_file = spec_dir / "subtask-1.json"
         subtask_file.write_text(json.dumps(subtask, indent=2))

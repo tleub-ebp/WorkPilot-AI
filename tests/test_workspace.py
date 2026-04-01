@@ -573,8 +573,8 @@ class TestRebaseDetection:
         """_check_git_conflicts detects when spec branch is behind base branch (ACS-224)."""
         from core.workspace import _check_git_conflicts
 
-        # Create a spec branch
-        spec_branch = "auto-claude/test-spec"
+        # Create a spec branch (must match the prefix used by _check_git_conflicts)
+        spec_branch = "workpilot/test-spec"
         subprocess.run(
             ["git", "checkout", "-b", spec_branch],
             cwd=temp_git_repo,
@@ -619,7 +619,7 @@ class TestRebaseDetection:
         from core.workspace import _check_git_conflicts
 
         # Create a spec branch that's ahead (not behind)
-        spec_branch = "auto-claude/test-spec"
+        spec_branch = "workpilot/test-spec"
         subprocess.run(
             ["git", "checkout", "-b", spec_branch],
             cwd=temp_git_repo,
@@ -652,8 +652,8 @@ class TestRebaseDetection:
         """_check_git_conflicts correctly counts multiple commits behind (ACS-224)."""
         from core.workspace import _check_git_conflicts
 
-        # Create a spec branch
-        spec_branch = "auto-claude/test-spec"
+        # Create a spec branch (must match the prefix used by _check_git_conflicts)
+        spec_branch = "workpilot/test-spec"
         subprocess.run(
             ["git", "checkout", "-b", spec_branch],
             cwd=temp_git_repo,
@@ -699,8 +699,8 @@ class TestRebaseSpecBranch:
         """_rebase_spec_branch successfully rebases clean branch (ACS-224)."""
         from core.workspace import _rebase_spec_branch
 
-        # Create a spec branch
-        spec_branch = "auto-claude/test-spec"
+        # Create a spec branch (must match the prefix used by _rebase_spec_branch)
+        spec_branch = "workpilot/test-spec"
         subprocess.run(
             ["git", "checkout", "-b", spec_branch],
             cwd=temp_git_repo,
@@ -769,8 +769,8 @@ class TestRebaseSpecBranch:
         """_rebase_spec_branch handles conflicts by aborting and returning False (ACS-224)."""
         from core.workspace import _rebase_spec_branch
 
-        # Create a spec branch
-        spec_branch = "auto-claude/test-spec"
+        # Create a spec branch (must match the prefix used by _rebase_spec_branch)
+        spec_branch = "workpilot/test-spec"
         subprocess.run(
             ["git", "checkout", "-b", spec_branch],
             cwd=temp_git_repo,
@@ -855,8 +855,8 @@ class TestRebaseSpecBranch:
         """_rebase_spec_branch returns True when spec branch is already up-to-date (ACS-224)."""
         from core.workspace import _rebase_spec_branch
 
-        # Create a spec branch and add a commit
-        spec_branch = "auto-claude/test-spec"
+        # Create a spec branch and add a commit (must match the prefix used by _rebase_spec_branch)
+        spec_branch = "workpilot/test-spec"
         subprocess.run(
             ["git", "checkout", "-b", spec_branch],
             cwd=temp_git_repo,
@@ -938,8 +938,8 @@ class TestRebaseIntegration:
         """_check_git_conflicts correctly detects diverged branches (ACS-224)."""
         from core.workspace import _check_git_conflicts
 
-        # Create a spec branch
-        spec_branch = "auto-claude/test-spec"
+        # Create a spec branch (must match the prefix used by _check_git_conflicts)
+        spec_branch = "workpilot/test-spec"
         subprocess.run(
             ["git", "checkout", "-b", spec_branch],
             cwd=temp_git_repo,
