@@ -211,9 +211,12 @@ class TestCreateAgentClient:
         assert client.model == "gpt-4o"
         assert client.provider_name() == "copilot"
 
-    def test_invalid_provider_falls_back_to_claude(self, tmp_path):
+    @patch("core.client.create_client")
+    def test_invalid_provider_falls_back_to_claude(self, mock_create_client, tmp_path):
         """Invalid provider should fall back to Claude SDK."""
         from core.client import create_agent_client
+
+        mock_create_client.return_value = MagicMock()
 
         # Should not raise an error, but fall back to Claude
         client = create_agent_client(
@@ -222,7 +225,7 @@ class TestCreateAgentClient:
             model="test",
             provider="invalid_provider",
         )
-        
+
         # Should return a ClaudeAgentClient due to fallback
         assert isinstance(client, ClaudeAgentClient)
 
