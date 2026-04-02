@@ -660,7 +660,11 @@ class TestGeneratorAgent:
         from core.model_config import get_utility_model_config
         from core.simple_client import create_simple_client
 
-        ensure_claude_code_oauth_token()
+        try:
+            ensure_claude_code_oauth_token()
+        except ValueError as exc:
+            logger.warning("Claude authentication not available: %s", exc)
+            return f"error: {exc}"
         model, thinking_budget = get_utility_model_config(
             default_model="claude-sonnet-4-6"
         )
