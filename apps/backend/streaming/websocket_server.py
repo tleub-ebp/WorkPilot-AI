@@ -14,8 +14,13 @@ from typing import Any
 import psutil
 
 try:
+    import warnings
+
     import websockets
-    from websockets.server import WebSocketServerProtocol
+
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore", DeprecationWarning)
+        from websockets.server import WebSocketServerProtocol
 
     WEBSOCKETS_AVAILABLE = True
 except ImportError:
