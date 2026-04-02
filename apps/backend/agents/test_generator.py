@@ -662,18 +662,18 @@ class TestGeneratorAgent:
 
         try:
             ensure_claude_code_oauth_token()
+            model, thinking_budget = get_utility_model_config(
+                default_model="claude-sonnet-4-6"
+            )
+
+            client = create_simple_client(
+                agent_type="batch_analysis",
+                model=model,
+                max_thinking_tokens=thinking_budget,
+            )
         except ValueError as exc:
             logger.warning("Claude authentication not available: %s", exc)
             return f"error: {exc}"
-        model, thinking_budget = get_utility_model_config(
-            default_model="claude-sonnet-4-6"
-        )
-
-        client = create_simple_client(
-            agent_type="batch_analysis",
-            model=model,
-            max_thinking_tokens=thinking_budget,
-        )
 
         response_text = ""
         try:
