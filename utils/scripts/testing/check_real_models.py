@@ -1,7 +1,6 @@
 import asyncio
 import httpx
 import json
-import logging
 
 class RealWindsurfMCPChecker:
     def __init__(self, oauth_token):
@@ -82,7 +81,7 @@ class RealWindsurfMCPChecker:
         return capabilities_map.get(model_id, ["chat"])
 
 async def main():
-    oauth_token = "REDACTED_WINDSURF_TOKEN"
+    oauth_token = os.getenv('WINDSURF_OAUTH_TOKEN', 'REDACTED_FOR_SECURITY')
     
     checker = RealWindsurfMCPChecker(oauth_token)
     accessible_models = await checker.check_real_access()
@@ -94,7 +93,7 @@ async def main():
     accessible_paid = [k for k, v in accessible_models.items() if v["access"] == "paid" and v["status"] == "accessible"]
     accessible_free = [k for k, v in accessible_models.items() if v["access"] == "free" and v["status"] == "accessible"]
     
-    print(f"\n📊 Votre accès réel:")
+    print("\n📊 Votre accès réel:")
     print(f"  💳 Modèles payants accessibles: {len(accessible_paid)}")
     if accessible_paid:
         print(f"     🎉 {', '.join(accessible_paid)}")

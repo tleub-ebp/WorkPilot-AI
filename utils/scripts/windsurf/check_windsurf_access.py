@@ -1,12 +1,11 @@
 import asyncio
 import httpx
-import json
 import os
 
 async def check_windsurf_real_access():
     """Vérifie l'accès réel aux modèles Windsurf via API"""
     
-    oauth_token = "REDACTED_WINDSURF_TOKEN"
+    oauth_token = os.getenv('WINDSURF_OAUTH_TOKEN', 'REDACTED_FOR_SECURITY')
     
     print("🔍 Vérification de votre accès Windsurf entreprise...")
     
@@ -29,21 +28,30 @@ async def _check_oauth_token(oauth_token: str) -> None:
             )
             
             if response.status_code == 200:
-                user_info = response.json()
-                print("✅ Token valide !")
-                print(f"👤 User: {user_info.get('email', 'N/A')}")
-                print(f"🏢 Plan: {user_info.get('plan', 'N/A')}")
-                print(f"📊 Permissions: {list(user_info.get('permissions', []))}")
+                _display_user_info(response.json())
             else:
-                print(f"❌ Erreur token: {response.status_code}")
-                print(f"Response: {response.text}")
+                _display_token_error(response)
                 
     except Exception as e:
         print(f"❌ Erreur API: {e}")
 
 
+def _display_user_info(user_info: dict) -> None:
+    """Affiche les informations utilisateur"""
+    print("✅ Token valide !")
+    print(f"👤 User: {user_info.get('email', 'N/A')}")
+    print(f"🏢 Plan: {user_info.get('plan', 'N/A')}")
+    print(f"📊 Permissions: {list(user_info.get('permissions', []))}")
+
+
+def _display_token_error(response) -> None:
+    """Affiche les erreurs de token"""
+    print(f"❌ Erreur token: {response.status_code}")
+    print(f"Response: {response.text}")
+
+
 async def _test_model_endpoints(oauth_token: str) -> None:
-    """Test différents endpoints pour lister les modèles"""
+    """Teste différents endpoints de modèles"""
     print("\n2️⃣ Test des endpoints modèles...")
     
     endpoints_to_test = [
@@ -54,11 +62,11 @@ async def _test_model_endpoints(oauth_token: str) -> None:
     ]
     
     for endpoint in endpoints_to_test:
-        await _test_single_model_endpoint(endpoint, oauth_token)
+        await _test_single_endpoint(endpoint, oauth_token)
 
 
-async def _test_single_model_endpoint(endpoint: str, oauth_token: str) -> None:
-    """Test un seul endpoint de modèles"""
+async def _test_single_endpoint(endpoint: str, oauth_token: str) -> None:
+    """Teste un seul endpoint de modèle"""
     try:
         async with httpx.AsyncClient() as client:
             headers = {"Authorization": f"Bearer {oauth_token}"}
@@ -68,7 +76,7 @@ async def _test_single_model_endpoint(endpoint: str, oauth_token: str) -> None:
             print(f"   Status: {response.status_code}")
             
             if response.status_code == 200:
-                _handle_successful_model_response(response)
+                _display_model_info(response.json())
             else:
                 print(f"   ❌ Erreur: {response.text[:100]}")
                 
@@ -76,10 +84,8 @@ async def _test_single_model_endpoint(endpoint: str, oauth_token: str) -> None:
         print(f"   ❌ Exception: {str(e)[:50]}...")
 
 
-def _handle_successful_model_response(response) -> None:
-    """Gère une réponse réussie de l'endpoint modèle"""
-    models = response.json()
-    
+def _display_model_info(models) -> None:
+    """Affiche les informations des modèles"""
     if isinstance(models, dict) and 'data' in models:
         model_count = len(models['data'])
         model_names = [m.get('id', m.get('name', 'N/A')) for m in models['data'][:5]]
@@ -93,12 +99,11 @@ def _handle_successful_model_response(response) -> None:
 
 
 async def _test_chat_access(oauth_token: str) -> None:
-    """Test l'accès aux endpoints de chat"""
+    """Teste l'accès aux endpoints de chat"""
     print("\n3️⃣ Test d'accès chat...")
     
     try:
         headers = {"Authorization": f"Bearer {oauth_token}", "Content-Type": "application/json"}
-        
         chat_payload = {
             "model": "premier",
             "messages": [{"role": "user", "content": "Hello, test message"}],
@@ -112,36 +117,27 @@ async def _test_chat_access(oauth_token: str) -> None:
         ]
         
         await _test_chat_endpoints(chat_endpoints, headers, chat_payload)
-                    
+        
     except Exception as e:
         print(f"❌ Erreur chat test: {e}")
 
 
 async def _test_chat_endpoints(chat_endpoints: list, headers: dict, chat_payload: dict) -> None:
-    """Test les différents endpoints de chat"""
-    async with httpx.AsyncClient() as client:
-        for endpoint in chat_endpoints:
-            if await _test_single_chat_endpoint(client, endpoint, headers, chat_payload):
-                break
-
-
-async def _test_single_chat_endpoint(client, endpoint: str, headers: dict, chat_payload: dict) -> bool:
-    """Test un seul endpoint de chat, retourne True si succès"""
-    try:
-        response = await client.post(endpoint, headers=headers, json=chat_payload, timeout=10)
-        print(f"\n💬 Chat test - {endpoint}")
-        print(f"   Status: {response.status_code}")
-        
-        if response.status_code == 200:
-            print("   ✅ Accès chat confirmé !")
-            return True
-        else:
-            print(f"   ❌ Erreur: {response.text[:100]}")
-            
-    except Exception as e:
-        print(f"   ❌ Exception: {str(e)[:50]}...")
-    
-    return False
-
+    """Teste les endpoints de chat"""
+    for endpoint in chat_endpoints:
+        try:
+            async with httpx.AsyncClient() as client:
+                response = await client.post(endpoint, headers=headers, json=chat_payload, timeout=10)
+                print(f"\n💬 Chat test - {endpoint}")
+                print(f"   Status: {response.status_code}")
+                
+                if response.status_code == 200:
+                    print("   ✅ Accès chat confirmé !")
+                    break
+                else:
+                    print(f"   ❌ Erreur: {response.text[:100]}")
+                    
+        except Exception as e:
+            print(f"   ❌ Exception: {str(e)[:50]}...")
 if __name__ == "__main__":
     asyncio.run(check_windsurf_real_access())
