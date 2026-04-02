@@ -21,7 +21,10 @@ class MigrationCache:
 
     def __init__(self, cache_dir: str):
         self.cache_dir = Path(cache_dir)
-        self.cache_dir.mkdir(parents=True, exist_ok=True)
+        try:
+            self.cache_dir.mkdir(parents=True, exist_ok=True)
+        except OSError:
+            self.cache_dir = None
         self.memory_cache: dict[str, TransformationResult] = {}
         self.ttl_hours = 24  # Cache valid for 24 hours
 
@@ -41,6 +44,8 @@ class MigrationCache:
             return self.memory_cache[key]
 
         # Check disk cache
+        if self.cache_dir is None:
+            return None
         cache_file = self.cache_dir / f"{key}.pkl"
         if cache_file.exists():
             # Check if cache is still valid
@@ -66,6 +71,8 @@ class MigrationCache:
         self.memory_cache[key] = result
 
         # Update disk cache
+        if self.cache_dir is None:
+            return
         cache_file = self.cache_dir / f"{key}.pkl"
         try:
             with open(cache_file, "wb") as f:
@@ -78,6 +85,8 @@ class MigrationCache:
         cleared = 0
         cutoff_time = datetime.now() - timedelta(hours=older_than_hours or 0)
 
+        if self.cache_dir is None:
+            return cleared
         for cache_file in self.cache_dir.glob("*.pkl"):
             try:
                 if older_than_hours is None:
@@ -98,6 +107,13 @@ class MigrationCache:
 
     def get_stats(self) -> dict[str, Any]:
         """Get cache statistics."""
+        if self.cache_dir is None:
+            return {
+                "memory_entries": len(self.memory_cache),
+                "disk_entries": 0,
+                "total_size_mb": 0,
+                "cache_dir": None,
+            }
         disk_files = list(self.cache_dir.glob("*.pkl"))
         total_size = sum(f.stat().st_size for f in disk_files)
 
@@ -163,12 +179,15 @@ class IncrementalMigration:
         self.state_file = (
             self.project_dir / ".workpilot" / "migration" / "incremental_state.json"
         )
-        self.state_file.parent.mkdir(parents=True, exist_ok=True)
+        try:
+            self.state_file.parent.mkdir(parents=True, exist_ok=True)
+        except OSError:
+            self.state_file = None
         self.state = self._load_state()
 
     def _load_state(self) -> dict[str, Any]:
         """Load incremental migration state."""
-        if self.state_file.exists():
+        if self.state_file is not None and self.state_file.exists():
             try:
                 with open(self.state_file) as f:
                     return json.load(f)
@@ -184,6 +203,8 @@ class IncrementalMigration:
 
     def _save_state(self) -> None:
         """Save incremental migration state."""
+        if self.state_file is None:
+            return
         self.state["last_updated"] = datetime.now().isoformat()
 
         try:

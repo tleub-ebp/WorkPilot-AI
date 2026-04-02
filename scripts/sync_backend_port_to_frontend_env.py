@@ -1,13 +1,24 @@
-import os
 from pathlib import Path
-from dotenv import dotenv_values
 
 # Chemins des fichiers .env
 ROOT_ENV = Path(__file__).parent.parent / ".env-files" / ".env"
 FRONTEND_ENV = Path(__file__).parent.parent / "apps" / "frontend" / ".env-files" / ".env"
 
-# Charge la variable BACKEND_PORT du .env racine
-root_env_vars = dotenv_values(ROOT_ENV)
+# Charge la variable BACKEND_PORT du .env racine (sans dépendance externe)
+def parse_env_file(path):
+    values = {}
+    if not path.exists():
+        return values
+    with open(path, "r", encoding="utf-8") as f:
+        for line in f:
+            line = line.strip()
+            if not line or line.startswith("#") or "=" not in line:
+                continue
+            key, _, value = line.partition("=")
+            values[key.strip()] = value.strip().strip('"').strip("'")
+    return values
+
+root_env_vars = parse_env_file(ROOT_ENV)
 backend_port = root_env_vars.get("BACKEND_PORT", "9000")
 
 # Prépare la ligne à écrire dans le .env frontend
