@@ -1,7 +1,6 @@
 import asyncio
 import json
 import os
-
 import httpx
 
 
@@ -21,8 +20,8 @@ class RealWindsurfMCPChecker:
         # Test des modèles payants un par un
         models_to_test = [
             {"id": "premier", "name": "Windsurf Premier", "expected_access": "paid"},
-            {"id": "gpt-4o", "name": "GPT-4o", "expected_access": "paid"},
-            {"id": "claude-3.5-sonnet", "name": "Claude 3.5 Sonnet", "expected_access": "paid"},
+            {"id": "gpt-5.4", "name": "GPT-5.4", "expected_access": "paid"},
+            {"id": "claude-4.6-sonnet", "name": "Claude 4.6 Sonnet", "expected_access": "paid"},
             {"id": "gemini-1.5-pro", "name": "Gemini 1.5 Pro", "expected_access": "paid"},
             {"id": "base", "name": "Windsurf Base", "expected_access": "free"},
             {"id": "llama-3.1-70b", "name": "Llama 3.1 70B", "expected_access": "free"}
