@@ -146,8 +146,8 @@ class TestSmartEstimationRunner:
             with patch('runners.smart_estimation_runner.datetime') as mock_datetime:
                 mock_dt = Mock()
                 mock_dt.isoformat.return_value = '2023-01-01T00:00:00'
-                mock_datetime.utcnow.return_value = mock_dt
-                
+                mock_datetime.now.return_value = mock_dt
+
                 runner._emit_event('test_event', {'data': 'test_data'})
 
         # Verify print was called with correct format
@@ -167,12 +167,12 @@ class TestSmartEstimationRunner:
         with patch('runners.smart_estimation_runner.datetime') as mock_datetime:
             mock_dt = Mock()
             mock_dt.isoformat.return_value = '2023-01-01T12:00:00'
-            mock_datetime.utcnow.return_value = mock_dt
-            
+            mock_datetime.now.return_value = mock_dt
+
             timestamp = runner._get_timestamp()
-            
+
             assert timestamp == '2023-01-01T12:00:00'
-            mock_datetime.utcnow.assert_called_once()
+            mock_datetime.now.assert_called_once()
 
 
 class TestSmartEstimationRunnerCLI:
