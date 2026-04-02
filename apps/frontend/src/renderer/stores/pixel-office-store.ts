@@ -1,11 +1,12 @@
 import { create } from 'zustand';
 import type { Terminal } from './terminal-store';
 import type { Task, ExecutionPhase } from '../../shared/types/task';
+import type { SubtaskNode, SubtaskState as SwarmSubtaskState, Wave } from '../../shared/types/swarm';
 
 // ── Types ────────────────────────────────────────────────────
 
 export type AgentActivity = 'idle' | 'typing' | 'reading' | 'running' | 'waiting' | 'pending' | 'exited';
-export type PixelAgentType = 'terminal' | 'task';
+export type PixelAgentType = 'terminal' | 'task' | 'swarm';
 
 export interface PixelAgent {
   id: string;                  // Terminal ID or Task ID
@@ -27,6 +28,9 @@ export interface PixelAgent {
   speechBubbleTimer?: number;  // Auto-dismiss timer
   // Waiting queue fields
   waitingIndex?: number;       // Position in the waiting queue (pending/planning tasks only)
+  // Swarm fields
+  swarmWaveIndex?: number;     // Wave this agent belongs to (swarm mode)
+  swarmSubtaskId?: string;     // Subtask ID (swarm mode)
 }
 
 export interface PixelOfficeSettings {
@@ -44,6 +48,8 @@ interface PixelOfficeState {
 
   // Actions
   syncAll: (terminals: Terminal[], tasks: Task[]) => void;
+  /** Sync swarm agents from wave/subtask data */
+  syncSwarmAgents: (nodes: Record<string, SubtaskNode>, currentWave: number) => void;
   /** @deprecated use syncAll */
   syncFromTerminals: (terminals: Terminal[]) => void;
   selectAgent: (id: string | null) => void;
@@ -86,6 +92,20 @@ function mapTaskToActivity(task: Task): AgentActivity {
 const ACTIVE_TASK_STATUSES = new Set<Task['status']>([
   'in_progress', 'ai_review', 'human_review', 'error', 'backlog',
 ]);
+
+/** Map swarm subtask state to pixel agent activity */
+function mapSwarmStateToActivity(state: SwarmSubtaskState): AgentActivity {
+  switch (state) {
+    case 'pending':
+    case 'queued':   return 'pending';
+    case 'running':  return 'typing';
+    case 'completed': return 'idle';
+    case 'failed':   return 'exited';
+    case 'retrying': return 'running';
+    case 'skipped':  return 'exited';
+    default:         return 'waiting';
+  }
+}
 
 // ── Agent builder helpers ─────────────────────────────────────
 
@@ -181,6 +201,62 @@ export const usePixelOfficeStore = create<PixelOfficeState>((set, get) => ({
     }
 
     set({ agents: newAgents, nextCharacterIndex: nextIdx });
+  },
+
+  syncSwarmAgents: (nodes: Record<string, SubtaskNode>, currentWave: number) => {
+    const state = get();
+    // Keep non-swarm agents, replace swarm agents
+    const nonSwarmAgents = state.agents.filter(a => a.type !== 'swarm');
+    const existingSwarmMap = new Map(
+      state.agents.filter(a => a.type === 'swarm').map(a => [a.id, a]),
+    );
+    let nextIdx = state.nextCharacterIndex;
+    let seatIndex = nonSwarmAgents.length;
+    let waitingIdx = 0;
+    const swarmAgents: PixelAgent[] = [];
+
+    for (const [subtaskId, node] of Object.entries(nodes)) {
+      const agentId = `swarm:${subtaskId}`;
+      const existing = existingSwarmMap.get(agentId);
+      const activity = mapSwarmStateToActivity(node.state);
+      const isPending = activity === 'pending';
+      const name = shortTitle(node.description || subtaskId);
+
+      if (existing) {
+        swarmAgents.push({
+          ...existing,
+          name,
+          fullName: node.description || subtaskId,
+          activity,
+          swarmWaveIndex: node.waveIndex,
+          swarmSubtaskId: subtaskId,
+          ...(isPending ? { seatIndex: -1, waitingIndex: waitingIdx } : {}),
+        });
+      } else {
+        swarmAgents.push({
+          id: agentId,
+          type: 'swarm',
+          name,
+          fullName: node.description || subtaskId,
+          characterIndex: nextIdx % 6,
+          activity,
+          seatIndex: isPending ? -1 : seatIndex,
+          waitingIndex: isPending ? waitingIdx : undefined,
+          isClaudeMode: true,
+          swarmWaveIndex: node.waveIndex,
+          swarmSubtaskId: subtaskId,
+        });
+        nextIdx++;
+        if (!isPending) seatIndex++;
+      }
+
+      if (isPending) waitingIdx++;
+    }
+
+    set({
+      agents: [...nonSwarmAgents, ...swarmAgents],
+      nextCharacterIndex: nextIdx,
+    });
   },
 
   /** @deprecated use syncAll */
