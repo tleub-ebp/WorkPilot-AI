@@ -9,7 +9,10 @@ class GoogleLLMProvider(BaseLLMProvider):
 
     def connect(self) -> None:
         try:
-            import google.generativeai as genai
+            import warnings
+            with warnings.catch_warnings():
+                warnings.simplefilter("ignore", FutureWarning)
+                import google.generativeai as genai
         except ImportError:
             raise ImportError("google-generativeai package is required. Install with: pip install google-generativeai")
         genai.configure(api_key=self.api_key)

@@ -31,7 +31,7 @@ class IntentFeedback:
     detected_confidence: float
     actual_category: IntentCategory  # User correction
     feedback_timestamp: str = field(
-        default_factory=lambda: datetime.utcnow().isoformat()
+        default_factory=lambda: datetime.now(timezone.utc).isoformat()
     )
     user_notes: str = ""
     project_id: str = ""
@@ -72,7 +72,9 @@ class ProjectPatterns:
     common_intents: dict[str, int] = field(default_factory=dict)
     accuracy_by_category: dict[str, float] = field(default_factory=dict)
     common_keywords: dict[str, list[str]] = field(default_factory=dict)
-    last_updated: str = field(default_factory=lambda: datetime.utcnow().isoformat())
+    last_updated: str = field(
+        default_factory=lambda: datetime.now(timezone.utc).isoformat()
+    )
 
     def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary."""
