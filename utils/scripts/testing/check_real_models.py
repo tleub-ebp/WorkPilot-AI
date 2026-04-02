@@ -1,6 +1,9 @@
 import asyncio
-import httpx
 import json
+import os
+
+import httpx
+
 
 class RealWindsurfMCPChecker:
     def __init__(self, oauth_token):

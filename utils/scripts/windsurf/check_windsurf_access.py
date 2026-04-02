@@ -1,6 +1,8 @@
 import asyncio
-import httpx
 import os
+
+import httpx
+
 
 async def check_windsurf_real_access():
     """Vérifie l'accès réel aux modèles Windsurf via API"""
