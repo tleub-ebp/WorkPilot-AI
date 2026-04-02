@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import type { Terminal } from './terminal-store';
 import type { Task, ExecutionPhase } from '../../shared/types/task';
-import type { SubtaskNode, SubtaskState as SwarmSubtaskState, Wave } from '../../shared/types/swarm';
+import type { SubtaskNode, SubtaskState as SwarmSubtaskState } from '../../shared/types/swarm';
 
 // ── Types ────────────────────────────────────────────────────
 
@@ -107,6 +107,69 @@ function mapSwarmStateToActivity(state: SwarmSubtaskState): AgentActivity {
   }
 }
 
+// ── Helper functions for swarm agent sync ─────────────────────────────
+
+interface ExtractedSwarmAgents {
+  nonSwarmAgents: PixelAgent[];
+  existingSwarmMap: Map<string, PixelAgent>;
+}
+
+function extractSwarmAgents(agents: PixelAgent[]): ExtractedSwarmAgents {
+  const nonSwarmAgents = agents.filter(a => a.type !== 'swarm');
+  const existingSwarmMap = new Map(
+    agents.filter(a => a.type === 'swarm').map(a => [a.id, a]),
+  );
+  return { nonSwarmAgents, existingSwarmMap };
+}
+
+interface AgentDataResult {
+  agent: PixelAgent;
+  isNew: boolean;
+  isPending: boolean;
+}
+
+function createAgentData(
+  subtaskId: string,
+  node: SubtaskNode,
+  existingSwarmMap: Map<string, PixelAgent>,
+  nextIdx: number,
+  seatIndex: number,
+  waitingIdx: number,
+): AgentDataResult {
+  const agentId = `swarm:${subtaskId}`;
+  const existing = existingSwarmMap.get(agentId);
+  const activity = mapSwarmStateToActivity(node.state);
+  const isPending = activity === 'pending';
+  const name = shortTitle(node.description || subtaskId);
+  const isNew = !existing;
+
+  const agent: PixelAgent = existing
+    ? {
+        ...existing,
+        name,
+        fullName: node.description || subtaskId,
+        activity,
+        swarmWaveIndex: node.waveIndex,
+        swarmSubtaskId: subtaskId,
+        ...(isPending ? { seatIndex: -1, waitingIndex: waitingIdx } : {}),
+      }
+    : {
+        id: agentId,
+        type: 'swarm',
+        name,
+        fullName: node.description || subtaskId,
+        characterIndex: nextIdx % 6,
+        activity,
+        seatIndex: isPending ? -1 : seatIndex,
+        waitingIndex: isPending ? waitingIdx : undefined,
+        isClaudeMode: true,
+        swarmWaveIndex: node.waveIndex,
+        swarmSubtaskId: subtaskId,
+      };
+
+  return { agent, isNew, isPending };
+}
+
 // ── Agent builder helpers ─────────────────────────────────────
 
 function shortTitle(title: string): string {
@@ -203,54 +266,22 @@ export const usePixelOfficeStore = create<PixelOfficeState>((set, get) => ({
     set({ agents: newAgents, nextCharacterIndex: nextIdx });
   },
 
-  syncSwarmAgents: (nodes: Record<string, SubtaskNode>, currentWave: number) => {
+  syncSwarmAgents: (nodes: Record<string, SubtaskNode>) => {
     const state = get();
-    // Keep non-swarm agents, replace swarm agents
-    const nonSwarmAgents = state.agents.filter(a => a.type !== 'swarm');
-    const existingSwarmMap = new Map(
-      state.agents.filter(a => a.type === 'swarm').map(a => [a.id, a]),
-    );
+    const { nonSwarmAgents, existingSwarmMap } = extractSwarmAgents(state.agents);
+    
     let nextIdx = state.nextCharacterIndex;
     let seatIndex = nonSwarmAgents.length;
     let waitingIdx = 0;
     const swarmAgents: PixelAgent[] = [];
 
     for (const [subtaskId, node] of Object.entries(nodes)) {
-      const agentId = `swarm:${subtaskId}`;
-      const existing = existingSwarmMap.get(agentId);
-      const activity = mapSwarmStateToActivity(node.state);
-      const isPending = activity === 'pending';
-      const name = shortTitle(node.description || subtaskId);
-
-      if (existing) {
-        swarmAgents.push({
-          ...existing,
-          name,
-          fullName: node.description || subtaskId,
-          activity,
-          swarmWaveIndex: node.waveIndex,
-          swarmSubtaskId: subtaskId,
-          ...(isPending ? { seatIndex: -1, waitingIndex: waitingIdx } : {}),
-        });
-      } else {
-        swarmAgents.push({
-          id: agentId,
-          type: 'swarm',
-          name,
-          fullName: node.description || subtaskId,
-          characterIndex: nextIdx % 6,
-          activity,
-          seatIndex: isPending ? -1 : seatIndex,
-          waitingIndex: isPending ? waitingIdx : undefined,
-          isClaudeMode: true,
-          swarmWaveIndex: node.waveIndex,
-          swarmSubtaskId: subtaskId,
-        });
-        nextIdx++;
-        if (!isPending) seatIndex++;
-      }
-
-      if (isPending) waitingIdx++;
+      const agentData = createAgentData(subtaskId, node, existingSwarmMap, nextIdx, seatIndex, waitingIdx);
+      swarmAgents.push(agentData.agent);
+      
+      if (agentData.isNew && !agentData.isPending) seatIndex++;
+      if (agentData.isPending) waitingIdx++;
+      if (agentData.isNew) nextIdx++;
     }
 
     set({

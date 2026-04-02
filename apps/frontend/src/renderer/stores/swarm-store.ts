@@ -3,9 +3,7 @@ import type {
   SwarmConfig,
   SwarmPhase,
   SwarmStatus,
-  SubtaskNode,
   SubtaskState,
-  Wave,
   ParallelismStats,
   SwarmAnalysisEvent,
   SwarmSubtaskEvent,
@@ -106,7 +104,7 @@ export const useSwarmStore = create<SwarmState & SwarmActions>()((set, get) => (
   analyzeSpec: async (specId) => {
     set({ isAnalyzing: true, error: null, analysisStats: null });
     try {
-      const result = await window.electronAPI.swarm.analyze(specId, get().config);
+      const result = await globalThis.electronAPI.swarm.analyze(specId, get().config);
       if (result?.parallelismStats) {
         set({
           analysisStats: result.parallelismStats,
@@ -124,7 +122,7 @@ export const useSwarmStore = create<SwarmState & SwarmActions>()((set, get) => (
   startSwarm: async (specId) => {
     set({ isExecuting: true, error: null, subtaskLogs: {} });
     try {
-      await window.electronAPI.swarm.start(specId, get().config);
+      await globalThis.electronAPI.swarm.start(specId, get().config);
     } catch (err) {
       set({
         error: err instanceof Error ? err.message : String(err),
@@ -135,7 +133,7 @@ export const useSwarmStore = create<SwarmState & SwarmActions>()((set, get) => (
 
   cancelSwarm: async () => {
     try {
-      await window.electronAPI.swarm.cancel();
+      await globalThis.electronAPI.swarm.cancel();
     } catch {
       // Best effort
     }
