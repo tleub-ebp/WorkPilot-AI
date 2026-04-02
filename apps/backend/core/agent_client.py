@@ -581,11 +581,11 @@ class CopilotAgentClient(AgentClient):
         """
         import time
 
-        import aiohttp
-
         # Return cached token if still valid (60-second safety buffer)
         if self._copilot_token and time.time() < self._copilot_token_expires_at - 60:
             return self._copilot_token
+
+        import aiohttp
 
         if not self.github_token:
             raise ValueError(

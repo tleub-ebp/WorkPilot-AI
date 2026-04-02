@@ -16,6 +16,10 @@ export default defineConfig({
     // Mock Electron modules for unit tests
     alias: {
       electron: resolve(__dirname, 'src/__mocks__/electron.ts'),
+      // electron-log requires the electron binary at module load time via CJS require('electron').
+      // In CI, electron is installed with --ignore-scripts so the binary is absent and index.js throws.
+      // Aliasing at the vitest level prevents any test from ever loading the real electron-log.
+      'electron-log/main.js': resolve(__dirname, 'src/__mocks__/electron-log-main.ts'),
       '@sentry/electron/main': resolve(__dirname, 'src/__mocks__/sentry-electron-main.ts'),
       '@sentry/electron/renderer': resolve(__dirname, 'src/__mocks__/sentry-electron-renderer.ts')
     },
