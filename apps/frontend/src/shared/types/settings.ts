@@ -339,6 +339,10 @@ export interface AppSettings {
   providerFilterStatus?: 'all' | 'configured' | 'unconfigured' | 'errors';
   providerSortBy?: 'name' | 'category' | 'status' | 'usage';
   providerSearchQuery?: string;
+  // Context Mesh — Cross-Project Intelligence
+  contextMeshEnabled?: boolean;
+  // Live Development Companion — Real-time pair programming
+  liveCompanionEnabled?: boolean;
 }
 
 // WorkPilot AI Source Environment Configuration

@@ -1,40 +1,43 @@
 {
-  "$schema": "https://biomejs.dev/schemas/1.5.2/schema.json",
-  "organizeImports": true,
-  "linter": {
-    "enabled": true,
-    "rules": {
-      "recommended": true,
-      "a11y": {
-        "noAriaUnsupportedElements": "error",
-        "noBlankTarget": "error",
-        "noDistractingElements": "error",
-        "noHeaderScope": "error",
-        "noNoninteractiveElementToInteractiveRole": "warn",
-        "noNoninteractiveTabindex": "warn",
-        "noPositiveTabindex": "error",
-        "noRedundantAlt": "warn",
-        "noRedundantRoles": "warn",
-        "noSvgWithoutTitle": "warn",
-        "useAltText": "error",
-        "useAnchorContent": "error",
-        "useAriaActivedescendantWithTabindex": "warn",
-        "useAriaPropsForRole": "warn",
-        "useButtonType": "warn",
-        "useHeadingContent": "error",
-        "useHtmlLang": "error",
-        "useIframeTitle": "error",
-        "useKeyWithClickEvents": "warn",
-        "useKeyWithMouseEvents": "warn",
-        "useMediaCaption": "warn",
-        "useValidAnchor": "error",
-        "useValidAriaProps": "error",
-        "useValidAriaRole": "error",
-        "useValidAriaValues": "error"
-      }
-    }
-  },
-  "formatter": {
-    "enabled": true
-  }
+	"root": false,
+	"$schema": "https://biomejs.dev/schemas/2.4.10/schema.json",
+	"assist": { "actions": { "source": { "organizeImports": "on" } } },
+	"linter": {
+		"enabled": true,
+		"rules": {
+			"recommended": true,
+			"a11y": {
+				"noAriaUnsupportedElements": "error",
+				"noDistractingElements": "error",
+				"noHeaderScope": "error",
+				"noNoninteractiveElementToInteractiveRole": "warn",
+				"noNoninteractiveTabindex": "warn",
+				"noPositiveTabindex": "error",
+				"noRedundantAlt": "warn",
+				"noRedundantRoles": "warn",
+				"noSvgWithoutTitle": "warn",
+				"useAltText": "error",
+				"useAnchorContent": "error",
+				"useAriaActivedescendantWithTabindex": "warn",
+				"useAriaPropsForRole": "warn",
+				"useButtonType": "warn",
+				"useHeadingContent": "error",
+				"useHtmlLang": "error",
+				"useIframeTitle": "error",
+				"useKeyWithClickEvents": "warn",
+				"useKeyWithMouseEvents": "warn",
+				"useMediaCaption": "warn",
+				"useValidAnchor": "error",
+				"useValidAriaProps": "error",
+				"useValidAriaRole": "error",
+				"useValidAriaValues": "error"
+			},
+			"security": {
+				"noBlankTarget": "error"
+			}
+		}
+	},
+	"formatter": {
+		"enabled": true
+	}
 }

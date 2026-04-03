@@ -51,5 +51,5 @@ def test_provider_validation():
     provider.connect()
     assert provider.validate()
     provider2 = DummyProvider(key="invalid")
-    with pytest.raises(Exception):
+    with pytest.raises((ValueError, ConnectionError, RuntimeError)):
         provider2.connect()

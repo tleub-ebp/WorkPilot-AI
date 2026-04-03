@@ -1,0 +1,78 @@
+{
+  "title": "Compagnon en direct",
+  "description": "Compagnon IA en temps reel qui surveille votre code, detecte les problemes pendant que vous codez, et propose une prise en charge intelligente quand vous etes bloque.",
+  "state": {
+    "active": "Actif",
+    "inactive": "Inactif",
+    "watching": "Surveillance de {{project}}",
+    "changesDetected": "{{count}} modification(s) detectee(s)",
+    "suggestionsGenerated": "{{count}} suggestion(s)",
+    "takeoversPending": "{{count}} prise(s) en charge en attente"
+  },
+  "suggestions": {
+    "title": "Suggestions",
+    "empty": "Aucune suggestion active. Le compagnon analysera les modifications pendant que vous codez.",
+    "confidence": "{{value}}% de confiance",
+    "relatedFiles": "Fichiers lies",
+    "codeFix": "Correction suggeree",
+    "types": {
+      "bug_detection": "Bug detecte",
+      "duplicate_code": "Code duplique",
+      "missing_update": "Mise a jour manquante",
+      "contract_violation": "Violation de contrat",
+      "performance_issue": "Probleme de performance",
+      "security_issue": "Probleme de securite",
+      "missing_test": "Test manquant",
+      "refactor_opportunity": "Opportunite de refactoring",
+      "import_suggestion": "Suggestion d'import",
+      "convention_mismatch": "Non-conformite de convention",
+      "general": "General"
+    },
+    "priorities": {
+      "critical": "Critique",
+      "high": "Haute",
+      "medium": "Moyenne",
+      "low": "Basse",
+      "info": "Info"
+    }
+  },
+  "takeover": {
+    "title": "Prise en charge IA",
+    "proposal": "L'IA veut aider",
+    "reason": "Raison",
+    "inactivity": "Inactivite detectee sur {{file}} ({{duration}})",
+    "accept": "Laisser l'IA aider",
+    "decline": "Non merci",
+    "inProgress": "L'IA travaille sur {{file}}...",
+    "completed": "L'IA a termine le travail sur {{file}}"
+  },
+  "config": {
+    "title": "Parametres du compagnon",
+    "enabled": "Activer le compagnon en direct",
+    "suggestions": "Activer les suggestions",
+    "takeover": "Activer la detection de prise en charge",
+    "debounce": "Delai d'analyse (ms)",
+    "inactivityThreshold": "Seuil d'inactivite (secondes)",
+    "minConfidence": "Confiance minimale",
+    "maxSuggestionsPerFile": "Max suggestions par fichier"
+  },
+  "actions": {
+    "start": "Demarrer le compagnon",
+    "stop": "Arreter le compagnon",
+    "dismiss": "Rejeter",
+    "apply": "Appliquer la correction",
+    "viewDetails": "Voir les details",
+    "close": "Fermer"
+  },
+  "fileChange": {
+    "created": "Cree",
+    "modified": "Modifie",
+    "deleted": "Supprime",
+    "renamed": "Renomme"
+  },
+  "errors": {
+    "noProject": "Veuillez selectionner un projet avant de demarrer le compagnon.",
+    "startFailed": "Impossible de demarrer le compagnon en direct. Verifiez que chokidar est disponible.",
+    "analysisFailed": "L'analyse a echoue pour {{file}}."
+  }
+}

@@ -1,0 +1,134 @@
+{
+  "title": "Context Mesh",
+  "description": "Cross-project intelligence that detects patterns, generates an engineering handbook, and transfers skills across all your projects.",
+  "tabs": {
+    "overview": "Overview",
+    "patterns": "Patterns",
+    "handbook": "Handbook",
+    "transfers": "Skill Transfers",
+    "recommendations": "Recommendations",
+    "projects": "Projects"
+  },
+  "overview": {
+    "projects": "Registered Projects",
+    "patterns": "Cross-Project Patterns",
+    "handbookEntries": "Handbook Entries",
+    "skillTransfers": "Skill Transfers",
+    "activeRecommendations": "Active Recommendations",
+    "pendingTransfers": "Pending Transfers"
+  },
+  "patterns": {
+    "title": "Cross-Project Patterns ({{count}})",
+    "confidence": "Confidence",
+    "occurrences": "{{count}} occurrence(s)",
+    "sourceProjects": "Found in",
+    "targetProjects": "Applicable to",
+    "migrationHint": "Migration hint",
+    "codeExample": "Code example",
+    "adoptionRate": "{{rate}}% adoption"
+  },
+  "handbook": {
+    "title": "Engineering Handbook ({{count}})",
+    "domain": "Domain",
+    "rationale": "Decision rationale",
+    "sourceProjects": "From projects",
+    "tags": "Tags",
+    "version": "v{{version}}"
+  },
+  "transfers": {
+    "title": "Skill Transfers ({{count}})",
+    "source": "Learned in",
+    "targets": "Applicable to",
+    "framework": "Framework/API",
+    "convention": "Convention details",
+    "confidence": "Confidence",
+    "statusPending": "Pending",
+    "statusAccepted": "Accepted",
+    "statusDismissed": "Dismissed"
+  },
+  "recommendations": {
+    "title": "Recommendations ({{count}})",
+    "source": "Based on",
+    "target": "For project",
+    "relevance": "Relevance",
+    "phase": "Phase",
+    "action": "Suggested action",
+    "types": {
+      "pattern_reuse": "Pattern Reuse",
+      "convention_adoption": "Convention Adoption",
+      "bug_prevention": "Bug Prevention",
+      "divergence_alert": "Divergence Alert",
+      "complexity_estimate": "Complexity Estimate",
+      "skill_transfer": "Skill Transfer"
+    }
+  },
+  "projects": {
+    "title": "Registered Projects ({{count}})",
+    "techStack": "Tech stack",
+    "languages": "Languages",
+    "frameworks": "Frameworks",
+    "lastAnalyzed": "Last analyzed",
+    "patternCount": "{{count}} pattern(s)",
+    "never": "Never",
+    "addProject": "Add Project",
+    "removeProject": "Remove"
+  },
+  "categories": {
+    "architecture": "Architecture",
+    "auth": "Authentication",
+    "api_design": "API Design",
+    "state_management": "State Management",
+    "testing": "Testing",
+    "deployment": "Deployment",
+    "error_handling": "Error Handling",
+    "security": "Security",
+    "performance": "Performance",
+    "naming_convention": "Naming Convention",
+    "project_structure": "Project Structure",
+    "database": "Database",
+    "logging": "Logging",
+    "ci_cd": "CI/CD",
+    "other": "Other"
+  },
+  "domains": {
+    "auth": "Authentication",
+    "api_design": "API Design",
+    "state_management": "State Management",
+    "testing": "Testing",
+    "deployment": "Deployment",
+    "security": "Security",
+    "performance": "Performance",
+    "database": "Database",
+    "frontend": "Frontend",
+    "backend": "Backend",
+    "devops": "DevOps",
+    "general": "General"
+  },
+  "status": {
+    "analyzing": "Analyzing projects...",
+    "complete": "Analysis complete. Knowledge graph updated."
+  },
+  "actions": {
+    "analyze": "Run Analysis",
+    "reanalyze": "Re-analyze",
+    "stop": "Stop Analysis",
+    "accept": "Accept",
+    "dismiss": "Dismiss",
+    "apply": "Apply",
+    "delete": "Delete",
+    "close": "Close"
+  },
+  "empty": {
+    "title": "No cross-project data yet",
+    "description": "Register at least two projects and run an analysis to discover cross-project patterns.",
+    "noPatterns": "No patterns detected yet. Run an analysis to discover cross-project patterns.",
+    "noHandbook": "No handbook entries yet. Run an analysis to auto-generate your engineering handbook.",
+    "noTransfers": "No skill transfers identified yet.",
+    "noRecommendations": "No active recommendations.",
+    "noProjects": "No projects registered. Add your projects to start building cross-project intelligence."
+  },
+  "errors": {
+    "analysisRequired": "At least two projects must be registered to run analysis.",
+    "analysisFailed": "Analysis failed. Please check your LLM credentials and try again."
+  }
+}

@@ -1,60 +1,60 @@
 {
-  "name": "workpilot-ai",
-  "version": "1.0.0",
-  "description": "Autonomous multi-agent coding framework",
-  "license": "AGPL-3.0",
-  "author": "WorkPilot AI Team",
-  "workspaces": [
-    "apps/*",
-    "libs/*"
-  ],
-  "scripts": {
-    "install:backend": "node scripts/install-backend.js",
-    "install:frontend": "cd apps/frontend && pnpm install",
-    "install:all": "pnpm run install:backend && pnpm run install:frontend",
-    "start": "cd apps/frontend && pnpm run build && pnpm run start",
-    "dev": "concurrently \"pnpm --filter ./apps/backend dev\" \"pnpm --filter ./apps/frontend dev\"",
-    "dev:debug": "cd apps/frontend && pnpm run dev:debug",
-    "dev:mcp": "cd apps/frontend && pnpm run dev:mcp",
-    "build": "cd apps/frontend && pnpm run build",
-    "lint": "cd apps/frontend && pnpm run lint",
-    "test": "cd apps/frontend && pnpm test",
-    "test:backend": "node scripts/test-backend.js",
-    "package": "cd apps/frontend && pnpm run package",
-    "package:mac": "cd apps/frontend && pnpm run package:mac",
-    "package:win": "cd apps/frontend && pnpm run package:win",
-    "package:linux": "cd apps/frontend && pnpm run package:linux",
-    "merge-upstream": "node scripts/merge-upstream.js",
-    "validate:upstream": "node scripts/validate-upstream-setup.js"
-  },
-  "engines": {
-    "node": ">=20.0.0",
-    "pnpm": ">=8.0.0"
-  },
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/tleub-ebp/WorkPilot-AI.git"
-  },
-  "keywords": [
-    "ai",
-    "claude",
-    "autonomous",
-    "coding",
-    "agents",
-    "electron"
-  ],
-  "devDependencies": {
-    "concurrently": "^8.2.2",
-    "electron-vite": "5.0.0",
-    "jsdom": "^27.4.0"
-  },
-  "dependencies": {
-    "@lydell/node-pty": "^1.1.0",
-    "@lydell/node-pty-darwin-arm64": "1.2.0-beta.10",
-    "lucide-react": "^0.562.0",
-    "unzipper": "^0.10.11"
-  },
-  "overrides": {
-    "@electron/rebuild": "4.0.2"
-  }
+	"name": "workpilot-ai",
+	"version": "1.0.0",
+	"description": "Autonomous multi-agent coding framework",
+	"license": "AGPL-3.0",
+	"author": "WorkPilot AI Team",
+	"workspaces": [
+		"apps/*",
+		"libs/*"
+	],
+	"scripts": {
+		"install:backend": "node scripts/install-backend.js",
+		"install:frontend": "cd apps/frontend && pnpm install",
+		"install:all": "pnpm run install:backend && pnpm run install:frontend",
+		"start": "cd apps/frontend && pnpm run build && pnpm run start",
+		"dev": "concurrently \"pnpm --filter ./apps/backend dev\" \"pnpm --filter ./apps/frontend dev\"",
+		"dev:debug": "cd apps/frontend && pnpm run dev:debug",
+		"dev:mcp": "cd apps/frontend && pnpm run dev:mcp",
+		"build": "cd apps/frontend && pnpm run build",
+		"lint": "cd apps/frontend && pnpm run lint",
+		"test": "cd apps/frontend && pnpm test",
+		"test:backend": "node scripts/test-backend.js",
+		"package": "cd apps/frontend && pnpm run package",
+		"package:mac": "cd apps/frontend && pnpm run package:mac",
+		"package:win": "cd apps/frontend && pnpm run package:win",
+		"package:linux": "cd apps/frontend && pnpm run package:linux",
+		"merge-upstream": "node scripts/merge-upstream.js",
+		"validate:upstream": "node scripts/validate-upstream-setup.js"
+	},
+	"engines": {
+		"node": ">=20.0.0",
+		"pnpm": ">=8.0.0"
+	},
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/tleub-ebp/WorkPilot-AI.git"
+	},
+	"keywords": [
+		"ai",
+		"claude",
+		"autonomous",
+		"coding",
+		"agents",
+		"electron"
+	],
+	"devDependencies": {
+		"concurrently": "^8.2.2",
+		"electron-vite": "5.0.0",
+		"jsdom": "^27.4.0"
+	},
+	"dependencies": {
+		"@lydell/node-pty": "^1.1.0",
+		"@lydell/node-pty-darwin-arm64": "1.2.0-beta.10",
+		"lucide-react": "^0.562.0",
+		"unzipper": "^0.10.11"
+	},
+	"overrides": {
+		"@electron/rebuild": "4.0.2"
+	}
 }

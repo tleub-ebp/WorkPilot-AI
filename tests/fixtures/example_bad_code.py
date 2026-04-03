@@ -13,6 +13,9 @@ def very_complex_function(x, y, z):
                                     return i * y * z
                                 i += 1
     return 0
+def some_operation():
+    pass
+
 try:
     some_operation()
 except Exception:  # MEDIUM: Bare except

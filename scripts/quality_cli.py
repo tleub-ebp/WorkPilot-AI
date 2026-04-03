@@ -25,7 +25,6 @@ from pathlib import Path
 # Ajouter le backend au path
 sys.path.insert(0, str(Path(__file__).parent.parent / "apps" / "backend"))
 
-from cli.quality_commands import handle_quality_score_command
 
 
 def ensure_grepai():

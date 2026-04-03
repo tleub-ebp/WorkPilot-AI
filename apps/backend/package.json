@@ -1,11 +1,11 @@
 {
-  "name": "work-pilot-ai-backend",
-  "version": "1.0.0",
-  "description": "Backend for WorkPilot AI",
-  "main": "run.py",
-  "scripts": {
-    "dev": "node dev-server.js",
-    "start": "node start-backend.js",
-    "start-full": "node start-backend.js"
-  }
+	"name": "work-pilot-ai-backend",
+	"version": "1.0.0",
+	"description": "Backend for WorkPilot AI",
+	"main": "run.py",
+	"scripts": {
+		"dev": "node dev-server.js",
+		"start": "node start-backend.js",
+		"start-full": "node start-backend.js"
+	}
 }

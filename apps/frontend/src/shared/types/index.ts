@@ -25,5 +25,11 @@ export * from './mcp-marketplace';
 // Multi-Repo Orchestration types
 export * from './multi-repo';
 
+// Context Mesh types (Cross-Project Intelligence)
+export * from './context-mesh';
+
+// Live Companion types (Real-time pair programming)
+export * from './live-companion';
+
 // IPC types (must be last to use types from other modules)
 export * from './ipc';

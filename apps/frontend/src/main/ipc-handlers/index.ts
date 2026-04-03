@@ -74,6 +74,7 @@ import { registerCostHandlers } from './cost-handlers';
 import { registerVisualProgrammingHandlers, setupVisualProgrammingEventForwarding } from './visual-programming-handlers';
 import { registerCodePlaygroundHandlers, setupCodePlaygroundEventForwarding } from './code-playground-handlers';
 import { registerContextMeshHandlers } from './context-mesh-handlers';
+import { registerLiveCompanionHandlers } from './live-companion-handlers';
 
 // Re-export all handler registration functions using export...from syntax
 export { registerProjectHandlers } from './project-handlers';
@@ -138,6 +139,7 @@ export { registerCostHandlers } from './cost-handlers';
 export { registerVisualProgrammingHandlers, setupVisualProgrammingEventForwarding } from './visual-programming-handlers';
 export { registerCodePlaygroundHandlers, setupCodePlaygroundEventForwarding } from './code-playground-handlers';
 export { registerContextMeshHandlers } from './context-mesh-handlers';
+export { registerLiveCompanionHandlers } from './live-companion-handlers';
 
 /**
  * Setup all IPC handlers across all domains
@@ -351,6 +353,9 @@ export function setupIpcHandlers(
 
   // Context Mesh handlers (Cross-Project Intelligence)
   registerContextMeshHandlers(getMainWindow);
+
+  // Live Development Companion handlers (Real-time pair programming)
+  registerLiveCompanionHandlers(getMainWindow);
 
   console.warn('[IPC] All handler modules registered successfully');
 }

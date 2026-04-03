@@ -1,0 +1,78 @@
+{
+  "title": "Live Companion",
+  "description": "Real-time AI companion that watches your code, detects issues as you type, and proposes intelligent takeover when you're stuck.",
+  "state": {
+    "active": "Active",
+    "inactive": "Inactive",
+    "watching": "Watching {{project}}",
+    "changesDetected": "{{count}} change(s) detected",
+    "suggestionsGenerated": "{{count}} suggestion(s)",
+    "takeoversPending": "{{count}} takeover(s) pending"
+  },
+  "suggestions": {
+    "title": "Suggestions",
+    "empty": "No active suggestions. Companion will analyze changes as you code.",
+    "confidence": "{{value}}% confidence",
+    "relatedFiles": "Related files",
+    "codeFix": "Suggested fix",
+    "types": {
+      "bug_detection": "Bug Detected",
+      "duplicate_code": "Duplicate Code",
+      "missing_update": "Missing Update",
+      "contract_violation": "Contract Violation",
+      "performance_issue": "Performance Issue",
+      "security_issue": "Security Issue",
+      "missing_test": "Missing Test",
+      "refactor_opportunity": "Refactor Opportunity",
+      "import_suggestion": "Import Suggestion",
+      "convention_mismatch": "Convention Mismatch",
+      "general": "General"
+    },
+    "priorities": {
+      "critical": "Critical",
+      "high": "High",
+      "medium": "Medium",
+      "low": "Low",
+      "info": "Info"
+    }
+  },
+  "takeover": {
+    "title": "AI Takeover",
+    "proposal": "AI wants to help",
+    "reason": "Reason",
+    "inactivity": "Inactivity detected on {{file}} ({{duration}})",
+    "accept": "Let AI help",
+    "decline": "No thanks",
+    "inProgress": "AI is working on {{file}}...",
+    "completed": "AI completed work on {{file}}"
+  },
+  "config": {
+    "title": "Companion Settings",
+    "enabled": "Enable Live Companion",
+    "suggestions": "Enable suggestions",
+    "takeover": "Enable takeover detection",
+    "debounce": "Analysis debounce (ms)",
+    "inactivityThreshold": "Inactivity threshold (seconds)",
+    "minConfidence": "Minimum confidence",
+    "maxSuggestionsPerFile": "Max suggestions per file"
+  },
+  "actions": {
+    "start": "Start Companion",
+    "stop": "Stop Companion",
+    "dismiss": "Dismiss",
+    "apply": "Apply Fix",
+    "viewDetails": "View Details",
+    "close": "Close"
+  },
+  "fileChange": {
+    "created": "Created",
+    "modified": "Modified",
+    "deleted": "Deleted",
+    "renamed": "Renamed"
+  },
+  "errors": {
+    "noProject": "Please select a project before starting the companion.",
+    "startFailed": "Failed to start the Live Companion. Check if chokidar is available.",
+    "analysisFailed": "Analysis failed for {{file}}."
+  }
+}

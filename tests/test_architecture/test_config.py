@@ -153,7 +153,7 @@ class TestInferArchitectureConfig:
         assert result is not None
         assert result.inferred is True
         assert len(result.layers) > 0
-        layer_names = [l.name for l in result.layers]
+        layer_names = [layer.name for layer in result.layers]
         assert "presentation" in layer_names
 
     def test_infer_django_project(self, tmp_project):
@@ -171,7 +171,7 @@ class TestInferArchitectureConfig:
 
         assert result is not None
         assert result.inferred is True
-        layer_names = [l.name for l in result.layers]
+        layer_names = [layer.name for layer in result.layers]
         assert "views" in layer_names
         assert "models" in layer_names
 
@@ -189,7 +189,7 @@ class TestInferArchitectureConfig:
         result = infer_architecture_config(tmp_project, project_index)
 
         assert result is not None
-        layer_names = [l.name for l in result.layers]
+        layer_names = [layer.name for layer in result.layers]
         assert "routes" in layer_names
         assert "services" in layer_names
 
@@ -234,7 +234,7 @@ class TestInferArchitectureConfig:
         result = infer_architecture_config(tmp_project, {})
 
         assert result is not None
-        layer_names = [l.name for l in result.layers]
+        layer_names = [layer.name for layer in result.layers]
         assert "presentation" in layer_names
         assert "domain" in layer_names
         assert "infrastructure" in layer_names

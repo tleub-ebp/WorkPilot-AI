@@ -825,4 +825,23 @@ export const IPC_CHANNELS = {
   // Team Sync events (main -> renderer)
   TEAM_SYNC_SERVER_STATUS: 'teamSync:serverStatus',
   TEAM_SYNC_SYNC_PROGRESS: 'teamSync:syncProgress',
+
+  // Live Development Companion — Real-time pair programming
+  LIVE_COMPANION_START: 'liveCompanion:start',
+  LIVE_COMPANION_STOP: 'liveCompanion:stop',
+  LIVE_COMPANION_GET_STATE: 'liveCompanion:getState',
+  LIVE_COMPANION_GET_SUGGESTIONS: 'liveCompanion:getSuggestions',
+  LIVE_COMPANION_DISMISS_SUGGESTION: 'liveCompanion:dismissSuggestion',
+  LIVE_COMPANION_APPLY_SUGGESTION: 'liveCompanion:applySuggestion',
+  LIVE_COMPANION_GET_TAKEOVERS: 'liveCompanion:getTakeovers',
+  LIVE_COMPANION_ACCEPT_TAKEOVER: 'liveCompanion:acceptTakeover',
+  LIVE_COMPANION_DECLINE_TAKEOVER: 'liveCompanion:declineTakeover',
+  LIVE_COMPANION_GET_CONFIG: 'liveCompanion:getConfig',
+  LIVE_COMPANION_UPDATE_CONFIG: 'liveCompanion:updateConfig',
+  // Live Companion events (main -> renderer)
+  LIVE_COMPANION_STATE_CHANGED: 'liveCompanion:stateChanged',
+  LIVE_COMPANION_SUGGESTION: 'liveCompanion:suggestion',
+  LIVE_COMPANION_TAKEOVER_PROPOSAL: 'liveCompanion:takeoverProposal',
+  LIVE_COMPANION_FILE_CHANGE: 'liveCompanion:fileChange',
+  LIVE_COMPANION_ERROR: 'liveCompanion:error',
 } as const;

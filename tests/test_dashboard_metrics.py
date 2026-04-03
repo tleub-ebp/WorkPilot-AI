@@ -335,7 +335,7 @@ class TestDashboardMetricsExport:
 
     def test_export_csv_has_rows(self):
         output = self.dashboard.export_report("p", fmt="csv")
-        lines = [l for l in output.strip().split("\n") if l]
+        lines = [line for line in output.strip().split("\n") if line]
         assert len(lines) > 5  # header + multiple data rows
 
     def test_export_empty_project(self):

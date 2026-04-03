@@ -214,14 +214,14 @@ namespace {project_name}.Infrastructure.Data
         }}
         
         // Ajouter les DbSets ici
-        // public DbSet<{entity_name}> {entity_name}s {{ get; set; }}
+        // public DbSet<{{entity_name}}> {{entity_name}}s {{ get; set; }}
         
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {{
             base.OnModelCreating(modelBuilder);
             
             // Configurer les entités ici
-            // modelBuilder.ApplyConfiguration(new {entity_name}Configuration());
+            // modelBuilder.ApplyConfiguration(new {{entity_name}}Configuration());
         }}
     }}
 }}

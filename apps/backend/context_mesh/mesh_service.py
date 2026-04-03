@@ -307,9 +307,9 @@ class ContextMeshService:
                 try:
                     lines = req_file.read_text(encoding="utf-8").strip().splitlines()
                     deps = [
-                        l.split("==")[0].split(">=")[0].strip()
-                        for l in lines[:20]
-                        if l.strip() and not l.startswith("#")
+                        line.split("==")[0].split(">=")[0].strip()
+                        for line in lines[:20]
+                        if line.strip() and not line.startswith("#")
                     ]
                     section += f"- Python deps: {', '.join(deps)}\n"
                 except Exception:
