@@ -114,8 +114,11 @@ export type SettingsTheme =
   | 'system';           // Système & Maintenance
 
 // Configuration des thèmes de paramètres avec leurs sections
-// biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
-const createSettingsThemes = (t: any): Record<SettingsTheme, { 
+const createSettingsThemes = (t: {
+  (key: string): string;
+  (key: string, fallback: string): string;
+  (key: string, options: Record<string, unknown>): string;
+}): Record<SettingsTheme, { 
   title: string; 
   icon: React.ElementType; 
   color: string;
@@ -171,8 +174,8 @@ const createSettingsThemes = (t: any): Record<SettingsTheme, {
       { id: 'devtools', icon: Code, label: 'Outils de développement', type: 'app' },
       { id: 'paths', icon: FolderOpen, label: 'Chemins', type: 'app' },
       { id: 'agent', icon: Bot, label: 'Agent', type: 'app' },
-      { id: 'swarm-mode', icon: Zap, label: 'Swarm Mode', type: 'app' },
-      { id: 'continuous-ai', icon: Activity, label: 'IA Continue', type: 'app' }
+      { id: 'swarm-mode', icon: Zap, label: t('swarm:title', 'Swarm Mode'), type: 'app' },
+      { id: 'continuous-ai', icon: Activity, label: t('continuousAI:title', 'Continuous AI'), type: 'app' }
     ],
     description: 'Outils de développement et configuration',
     priority: 4
@@ -209,7 +212,7 @@ const createSettingsThemes = (t: any): Record<SettingsTheme, {
  */
 export function AppSettingsDialog(props: AppSettingsDialogProps) {
   const { open, onOpenChange, initialSection, initialProjectSection, initialProjectId, onRerunWizard } = props;
-  const { t } = useTranslation('settings');
+  const { t } = useTranslation(['settings', 'swarm', 'continuousAI']);
   const { settings, setSettings, isSaving, error, saveSettings, revertTheme, commitTheme } = useSettings();
   const [version, setVersion] = useState<string>('');
 
