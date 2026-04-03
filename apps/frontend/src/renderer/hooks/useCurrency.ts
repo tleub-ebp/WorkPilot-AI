@@ -32,7 +32,7 @@ async function fetchEurRate(): Promise<number> {
 
   fetchPromise = (async () => {
     try {
-      const res = await fetch('https://api.frankfurter.app/latest?from=USD&to=EUR');
+      const res = await fetch('https://api.frankfurter.dev/v1/latest?from=USD&to=EUR');
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const data = await res.json();
       const rate = data?.rates?.EUR;
