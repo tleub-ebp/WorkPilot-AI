@@ -4,11 +4,11 @@ import { cn } from "../lib/utils";
 import type { ColorTheme, ColorThemeDefinition, Mode } from "./types";
 
 interface ThemeSelectorProps {
-	colorTheme: ColorTheme;
-	mode: Mode;
-	onColorThemeChange: (theme: ColorTheme) => void;
-	onModeToggle: () => void;
-	themes: ColorThemeDefinition[];
+	readonly colorTheme: ColorTheme;
+	readonly mode: Mode;
+	readonly onColorThemeChange: (theme: ColorTheme) => void;
+	readonly onModeToggle: () => void;
+	readonly themes: ColorThemeDefinition[];
 }
 
 export function ThemeSelector({
@@ -28,6 +28,7 @@ export function ThemeSelector({
 			{/* Color Theme Dropdown */}
 			<div className="relative">
 				<button
+					type="button"
 					onClick={() => setIsOpen(!isOpen)}
 					className="flex items-center gap-2 px-3 py-2 rounded-lg bg-(--color-background-secondary) hover:bg-(--color-border-default) transition-colors"
 				>
@@ -53,13 +54,22 @@ export function ThemeSelector({
 
 				{isOpen && (
 					<>
-						<div
-							className="fixed inset-0 z-40"
+						<button
+							type="button"
+							tabIndex={0}
+							className="fixed inset-0 z-40 bg-transparent border-none cursor-default"
 							onClick={() => setIsOpen(false)}
+							onKeyDown={(e) => {
+								if (e.key === "Enter" || e.key === " ") {
+									setIsOpen(false);
+								}
+							}}
+							aria-label="Close theme selector"
 						/>
 						<div className="absolute top-full right-0 mt-2 w-64 p-2 bg-(--color-surface-card) rounded-lg shadow-lg border border-(--color-border-default) z-50">
 							{themes.map((theme) => (
 								<button
+									type="button"
 									key={theme.id}
 									onClick={() => {
 										onColorThemeChange(theme.id);
@@ -100,6 +110,7 @@ export function ThemeSelector({
 
 			{/* Light/Dark Toggle */}
 			<button
+				type="button"
 				onClick={onModeToggle}
 				className="p-2 rounded-lg bg-(--color-background-secondary) hover:bg-(--color-border-default) transition-colors"
 				aria-label={`Switch to ${mode === "light" ? "dark" : "light"} mode`}

@@ -7,9 +7,9 @@
  * Usage: node scripts/validate-upstream-setup.js
  */
 
-const fs = require("fs");
-const path = require("path");
-const { execSync } = require("child_process");
+const fs = require("node:fs");
+const path = require("node:path");
+const { execSync } = require("node:child_process");
 
 const ROOT_DIR = path.resolve(__dirname, "..");
 const COLORS = {
@@ -86,7 +86,6 @@ class Validator {
 			});
 
 			const hasOrigin = remotes.includes("origin");
-			const hasUpstream = remotes.includes("upstream") || true; // Upstream is optional initially
 
 			this.check(
 				"origin remote exists",
@@ -99,11 +98,11 @@ class Validator {
 			} else if (hasOrigin) {
 				this.log("  ⚠ origin points to different URL", "warning");
 			}
-		} catch (e) {
+		} catch (error) {
 			this.check(
 				"git configured",
 				false,
-				"Git not available or not configured",
+				`Git not available or not configured: ${error.message}`,
 			);
 		}
 
@@ -125,10 +124,10 @@ class Validator {
 					this.check(
 						`${script} is executable`,
 						isExecutable,
-						"Run: chmod +x " + script,
+						`Run: chmod +x ${script}`,
 					);
-				} catch (e) {
-					this.log(`  ⚠ Could not check ${script} permissions`, "warning");
+				} catch (error) {
+					this.log(`  ⚠ Could not check ${script} permissions: ${error.message}`, "warning");
 				}
 			}
 		});
@@ -140,10 +139,10 @@ class Validator {
 		try {
 			const pkgPath = path.join(ROOT_DIR, "package.json");
 			const pkg = JSON.parse(fs.readFileSync(pkgPath, "utf-8"));
-			const hasMergeScript = pkg.scripts && pkg.scripts["merge-upstream"];
+			const hasMergeScript = pkg.scripts?.["merge-upstream"];
 			this.check("merge-upstream script in package.json", hasMergeScript);
-		} catch (e) {
-			this.log("  ⚠ Could not read package.json", "warning");
+		} catch (error) {
+			this.log(`  ⚠ Could not read package.json: ${error.message}`, "warning");
 		}
 
 		console.log("");
@@ -158,8 +157,8 @@ class Validator {
 			const hasSync = readme.includes("Syncing with Upstream");
 
 			this.check("README mentions upstream sync", hasMergeRef || hasSync);
-		} catch (e) {
-			this.log("  ⚠ Could not check README.md", "warning");
+		} catch (error) {
+			this.log(`  ⚠ Could not check README.md: ${error.message}`, "warning");
 		}
 
 		console.log("");
