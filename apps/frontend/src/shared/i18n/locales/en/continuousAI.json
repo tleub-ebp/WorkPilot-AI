@@ -8,6 +8,8 @@
   "running": "Running",
   "stopped": "Stopped",
 
+  "infoBanner": "Continuous AI uses your active AI profile. It works with any LLM provider configured in your account settings (Anthropic, OpenAI, z.ai, etc.).",
+
   "budget": {
     "title": "Daily Budget",
     "spent": "Spent today: ${{amount}}",

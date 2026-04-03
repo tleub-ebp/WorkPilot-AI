@@ -6,7 +6,7 @@ import {
   Shield,
   MessageSquare,
   GitPullRequest,
-  DollarSign,
+  Coins,
   Clock,
   ChevronDown,
   Info,
@@ -17,7 +17,11 @@ import { Switch } from '../ui/switch';
 import { Label } from '../ui/label';
 import { SettingsSection } from './SettingsSection';
 import { useContinuousAIStore } from '../../stores/continuous-ai-store';
+import { useCurrency } from '../../hooks/useCurrency';
 import { cn } from '@/lib/utils';
+
+// Type alias for module keys to avoid union type repetition
+type ModuleKey = 'cicd_watcher' | 'dependency_sentinel' | 'issue_responder' | 'pr_reviewer';
 
 /**
  * Continuous AI settings panel.
@@ -28,6 +32,7 @@ import { cn } from '@/lib/utils';
 export function ContinuousAISettings() {
   const { t } = useTranslation(['continuousAI', 'common']);
   const { config, setConfig, setModuleConfig } = useContinuousAIStore();
+  const { format, convert, toUsd } = useCurrency();
   const [expandedModule, setExpandedModule] = useState<string | null>(null);
 
   const toggleModule = (key: string) => {
@@ -98,7 +103,7 @@ export function ContinuousAISettings() {
           <div className="flex items-start gap-2.5 rounded-lg border border-blue-500/20 bg-blue-500/5 p-3">
             <Info className="h-4 w-4 text-blue-500 mt-0.5 shrink-0" />
             <p className="text-xs text-blue-600 dark:text-blue-400 leading-relaxed">
-              Continuous AI uses your active AI profile. It works with any LLM provider configured in your account settings (Anthropic, OpenAI, z.ai, etc.).
+              {t('continuousAI:infoBanner')}
             </p>
           </div>
         )}
@@ -109,11 +114,11 @@ export function ContinuousAISettings() {
             <div className="space-y-2.5 rounded-lg border border-border p-4">
               <div className="flex items-center justify-between">
                 <Label className="text-sm font-medium flex items-center gap-2">
-                  <DollarSign className="h-3.5 w-3.5 text-primary" />
+                  <Coins className="h-3.5 w-3.5 text-primary" />
                   {t('continuousAI:budget.title')}
                 </Label>
                 <span className="text-sm font-mono tabular-nums bg-muted px-2 py-0.5 rounded">
-                  ${config.dailyBudgetUsd}
+                  {format(config.dailyBudgetUsd)}
                 </span>
               </div>
               <input
@@ -121,15 +126,15 @@ export function ContinuousAISettings() {
                 min={1}
                 max={50}
                 step={1}
-                value={config.dailyBudgetUsd}
-                onChange={(e) => setConfig({ dailyBudgetUsd: Number.parseInt(e.target.value, 10) })}
+                value={Math.round(convert(config.dailyBudgetUsd))}
+                onChange={(e) => setConfig({ dailyBudgetUsd: toUsd(Number.parseInt(e.target.value, 10)) })}
                 className="w-full accent-primary"
               />
               <div className="flex justify-between text-[10px] text-muted-foreground px-0.5">
-                <span>$1</span>
-                <span>$10</span>
-                <span>$25</span>
-                <span>$50</span>
+                <span>{format(1)}</span>
+                <span>{format(10)}</span>
+                <span>{format(25)}</span>
+                <span>{format(50)}</span>
               </div>
             </div>
 
@@ -151,7 +156,7 @@ export function ContinuousAISettings() {
                     className={cn(
                       'rounded-lg border transition-colors',
                       moduleConfig.enabled
-                        ? 'border-primary/30 bg-primary/[0.02]'
+                        ? 'border-primary/30 bg-primary/2'
                         : 'border-border'
                     )}
                   >
@@ -183,7 +188,7 @@ export function ContinuousAISettings() {
                       </button>
                       <Switch
                         checked={moduleConfig.enabled}
-                        onCheckedChange={(v) => setModuleConfig(mod.key as 'cicd_watcher' | 'dependency_sentinel' | 'issue_responder' | 'pr_reviewer', { enabled: v })}
+                        onCheckedChange={(v) => setModuleConfig(mod.key, { enabled: v })}
                       />
                     </div>
 
@@ -200,7 +205,7 @@ export function ContinuousAISettings() {
                             </Label>
                             <select
                               value={moduleConfig.pollIntervalSeconds}
-                              onChange={(e) => setModuleConfig(mod.key as 'cicd_watcher' | 'dependency_sentinel' | 'issue_responder' | 'pr_reviewer', {
+                              onChange={(e) => setModuleConfig(mod.key, {
                                 pollIntervalSeconds: Number.parseInt(e.target.value, 10),
                               })}
                               className="w-full rounded-md border border-input bg-background px-2 py-1.5 text-xs"
@@ -225,7 +230,7 @@ export function ContinuousAISettings() {
                               min={1}
                               max={50}
                               value={moduleConfig.maxActionsPerHour}
-                              onChange={(e) => setModuleConfig(mod.key as 'cicd_watcher' | 'dependency_sentinel' | 'issue_responder' | 'pr_reviewer', {
+                              onChange={(e) => setModuleConfig(mod.key, {
                                 maxActionsPerHour: Number.parseInt(e.target.value, 10) || 1,
                               })}
                               className="w-full rounded-md border border-input bg-background px-2 py-1.5 text-xs font-mono"
@@ -241,7 +246,7 @@ export function ContinuousAISettings() {
                           </Label>
                           <Switch
                             checked={moduleConfig.autoAct}
-                            onCheckedChange={(v) => setModuleConfig(mod.key as 'cicd_watcher' | 'dependency_sentinel' | 'issue_responder' | 'pr_reviewer', { autoAct: v })}
+                            onCheckedChange={(v) => setModuleConfig(mod.key, { autoAct: v })}
                           />
                         </div>
 
@@ -255,7 +260,7 @@ export function ContinuousAISettings() {
                             <input
                               type="time"
                               value={moduleConfig.quietHoursStart}
-                              onChange={(e) => setModuleConfig(mod.key as 'cicd_watcher' | 'dependency_sentinel' | 'issue_responder' | 'pr_reviewer', {
+                              onChange={(e) => setModuleConfig(mod.key, {
                                 quietHoursStart: e.target.value,
                               })}
                               className="rounded-md border border-input bg-background px-2 py-1 text-xs"
@@ -264,7 +269,7 @@ export function ContinuousAISettings() {
                             <input
                               type="time"
                               value={moduleConfig.quietHoursEnd}
-                              onChange={(e) => setModuleConfig(mod.key as 'cicd_watcher' | 'dependency_sentinel' | 'issue_responder' | 'pr_reviewer', {
+                              onChange={(e) => setModuleConfig(mod.key, {
                                 quietHoursEnd: e.target.value,
                               })}
                               className="rounded-md border border-input bg-background px-2 py-1 text-xs"

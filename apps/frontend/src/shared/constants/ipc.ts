@@ -792,6 +792,27 @@ export const IPC_CHANNELS = {
   PAIR_PROGRAMMING_ERROR: 'pairProgramming:error',
   PAIR_PROGRAMMING_COMPLETE: 'pairProgramming:complete',
 
+  // Context Mesh — Cross-Project Intelligence
+  CONTEXT_MESH_GET_PROJECTS: 'contextMesh:getProjects',
+  CONTEXT_MESH_REGISTER_PROJECT: 'contextMesh:registerProject',
+  CONTEXT_MESH_UNREGISTER_PROJECT: 'contextMesh:unregisterProject',
+  CONTEXT_MESH_GET_PATTERNS: 'contextMesh:getPatterns',
+  CONTEXT_MESH_DELETE_PATTERN: 'contextMesh:deletePattern',
+  CONTEXT_MESH_GET_HANDBOOK: 'contextMesh:getHandbook',
+  CONTEXT_MESH_DELETE_HANDBOOK_ENTRY: 'contextMesh:deleteHandbookEntry',
+  CONTEXT_MESH_GET_SKILL_TRANSFERS: 'contextMesh:getSkillTransfers',
+  CONTEXT_MESH_UPDATE_TRANSFER_STATUS: 'contextMesh:updateTransferStatus',
+  CONTEXT_MESH_GET_RECOMMENDATIONS: 'contextMesh:getRecommendations',
+  CONTEXT_MESH_UPDATE_RECOMMENDATION_STATUS: 'contextMesh:updateRecommendationStatus',
+  CONTEXT_MESH_GET_SUMMARY: 'contextMesh:getSummary',
+  CONTEXT_MESH_RUN_ANALYSIS: 'contextMesh:runAnalysis',
+  CONTEXT_MESH_STOP_ANALYSIS: 'contextMesh:stopAnalysis',
+  // Context Mesh events (main -> renderer)
+  CONTEXT_MESH_STATUS: 'contextMesh:status',
+  CONTEXT_MESH_STREAM_CHUNK: 'contextMesh:streamChunk',
+  CONTEXT_MESH_COMPLETE: 'contextMesh:complete',
+  CONTEXT_MESH_ERROR: 'contextMesh:error',
+
   // Team Knowledge Sync (Feature 31) — Shared Graphiti memory across team members
   TEAM_SYNC_GET_STATUS: 'teamSync:getStatus',
   TEAM_SYNC_PUSH: 'teamSync:push',

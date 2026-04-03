@@ -8,6 +8,8 @@
   "running": "En cours",
   "stopped": "Arrêté",
 
+  "infoBanner": "L'IA Continue utilise votre profil IA actif. Elle fonctionne avec n'importe quel fournisseur LLM configuré dans vos paramètres de compte (Anthropic, OpenAI, z.ai, etc.).",
+
   "budget": {
     "title": "Budget quotidien",
     "spent": "Dépensé aujourd'hui : ${{amount}}",

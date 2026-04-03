@@ -53,6 +53,8 @@ import enApiExplorer from './locales/en/apiExplorer.json';
 import enPipelineGenerator from './locales/en/pipelineGenerator.json';
 import enVisualToCode from './locales/en/visualToCode.json';
 import enQualityScore from './locales/en/qualityScore.json';
+import enSwarm from './locales/en/swarm.json';
+import enContinuousAI from './locales/en/continuousAI.json';
 
 // Import French translation resources
 import frAppEmulator from './locales/fr/appEmulator.json';
@@ -106,6 +108,8 @@ import frApiExplorer from './locales/fr/apiExplorer.json';
 import frPipelineGenerator from './locales/fr/pipelineGenerator.json';
 import frVisualToCode from './locales/fr/visualToCode.json';
 import frQualityScore from './locales/fr/qualityScore.json';
+import frSwarm from './locales/fr/swarm.json';
+import frContinuousAI from './locales/fr/continuousAI.json';
 
 export const defaultNS = 'common';
 
@@ -162,6 +166,8 @@ export const resources = {
     pipelineGenerator: enPipelineGenerator,
     visualToCode: enVisualToCode,
     qualityScore: enQualityScore,
+    swarm: enSwarm,
+    continuousAI: enContinuousAI,
   },
   fr: {
     appEmulator: frAppEmulator,
@@ -215,6 +221,8 @@ export const resources = {
     pipelineGenerator: frPipelineGenerator,
     visualToCode: frVisualToCode,
     qualityScore: frQualityScore,
+    swarm: frSwarm,
+    continuousAI: frContinuousAI,
   }
 } as const;
 
@@ -277,6 +285,8 @@ i18n
       'pipelineGenerator',
       'visualToCode',
       'qualityScore',
+      'swarm',
+      'continuousAI',
     ],
     interpolation: {
       escapeValue: false 

@@ -9,6 +9,8 @@
   "analyzing": "Analyzing dependencies...",
   "executing": "Executing swarm...",
 
+  "infoBanner": "Swarm Mode uses your active AI profile. It works with any LLM provider configured in your account settings (Anthropic, OpenAI, z.ai, etc.).",
+
   "config": {
     "title": "Swarm Configuration",
     "maxParallel": "Max Parallel Agents",

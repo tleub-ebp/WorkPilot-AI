@@ -58,7 +58,7 @@ export function SwarmModeSettings() {
           <div className="flex items-start gap-2.5 rounded-lg border border-blue-500/20 bg-blue-500/5 p-3">
             <Info className="h-4 w-4 text-blue-500 mt-0.5 shrink-0" />
             <p className="text-xs text-blue-600 dark:text-blue-400 leading-relaxed">
-              {t('swarm:config.title')} — Swarm Mode uses your active AI profile. It works with any LLM provider configured in your account settings (Anthropic, OpenAI, z.ai, etc.).
+              {t('swarm:infoBanner')}
             </p>
           </div>
         )}

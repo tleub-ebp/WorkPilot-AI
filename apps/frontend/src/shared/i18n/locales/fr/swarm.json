@@ -9,6 +9,8 @@
   "analyzing": "Analyse des dépendances...",
   "executing": "Exécution de l'essaim...",
 
+  "infoBanner": "Le Mode Essaim utilise votre profil IA actif. Il fonctionne avec n'importe quel fournisseur LLM configuré dans vos paramètres de compte (Anthropic, OpenAI, z.ai, etc.).",
+
   "config": {
     "title": "Configuration de l'essaim",
     "maxParallel": "Agents parallèles max",
