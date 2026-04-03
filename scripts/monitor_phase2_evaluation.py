@@ -185,15 +185,19 @@ class Phase2Monitor:
         if len(self.data_points) > 1:
             self._display_trends()
     
+    def _print_budget_indicator(self, label, value):
+        """Print a budget indicator with standard thresholds."""
+        if value < 70:
+            print(f"  🔴 {label}: {value:.1f}% (HIGH USAGE)")
+        elif value < 90:
+            print(f"  🟡 {label}: {value:.1f}% (NORMAL)")
+        else:
+            print(f"  🟢 {label}: {value:.1f}% (GOOD)")
+
     def _print_status_indicator(self, label, value):
         """Print a status indicator."""
         if label == "Global Budget":
-            if value < 70:
-                print(f"  🔴 {label}: {value:.1f}% (HIGH USAGE)")
-            elif value < 90:
-                print(f"  🟡 {label}: {value:.1f}% (NORMAL)")
-            else:
-                print(f"  🟢 {label}: {value:.1f}% (GOOD)")
+            self._print_budget_indicator(label, value)
         elif label == "Global Success Rate":
             if value < 80:
                 print(f"  🔴 {label}: {value:.1f}% (LOW)")
@@ -202,19 +206,9 @@ class Phase2Monitor:
             else:
                 print(f"  🟢 {label}: {value:.1f}% (HIGH)")
         elif label == "Runtime Budget":
-            if value < 70:
-                print(f"  🔴 {label}: {value:.1f}% (HIGH USAGE)")
-            elif value < 90:
-                print(f"  🟡 {label}: {value:.1f}% (NORMAL)")
-            else:
-                print(f"  🟢 {label}: {value:.1f}% (GOOD)")
+            self._print_budget_indicator(label, value)
         elif label == "Client Budget":
-            if value < 70:
-                print(f"  🔴 {label}: {value:.1f}% (HIGH USAGE)")
-            elif value < 90:
-                print(f"  🟡 {label}: {value:.1f}% (NORMAL)")
-            else:
-                print(f"  🟢 {label}: {value:.1f}% (GOOD)")
+            self._print_budget_indicator(label, value)
         elif label in ["Runtime Efficiency", "Client Efficiency"]:
             if value < 70:
                 print(f"  🔴 {label}: {value:.1f}% (LOW)")
@@ -355,37 +349,52 @@ class Phase2Monitor:
     
     def _get_alerts_count(self):
         """Get count of triggered alerts."""
-        alerts_count = 0
-        
         if not self.data_points:
             return 0
         
+        alerts_count = 0
         for point in self.data_points:
-            if point['global_stats']['budget_utilization'] > 90:
-                alerts_count += 1
-            
-            if point['runtime_stats']['budget_utilization'] > 90:
-                alerts_count += 1
-            
-            if point['client_stats']['budget_utilization'] > 90:
-                alerts_count += 1
-            
-            if point['global_stats']['success_rate'] < 0.85:
-                alerts_count += 1
-            
-            if point['runtime_stats']['success_rate'] < 0.85:
-                alerts_count += 1
-            
-            if point['client_stats']['success_rate'] < 0.85:
-                alerts_count += 1
-            
-            if point['runtime_stats']['efficiency_score'] < 0.7:
-                alerts_count += 1
-            
-            if point['client_stats']['efficiency_score'] < 0.7:
-                alerts_count += 1
+            alerts_count += self._count_budget_alerts(point)
+            alerts_count += self._count_performance_alerts(point)
         
         return alerts_count
+    
+    def _count_budget_alerts(self, point):
+        """Count budget-related alerts for a data point."""
+        count = 0
+        
+        # Budget utilization alerts (> 90%)
+        budget_threshold = 0.90
+        if point['global_stats']['budget_utilization'] > budget_threshold:
+            count += 1
+        if point['runtime_stats']['budget_utilization'] > budget_threshold:
+            count += 1
+        if point['client_stats']['budget_utilization'] > budget_threshold:
+            count += 1
+        
+        return count
+    
+    def _count_performance_alerts(self, point):
+        """Count performance-related alerts for a data point."""
+        count = 0
+        
+        # Success rate alerts (< 85%)
+        success_threshold = 0.85
+        if point['global_stats']['success_rate'] < success_threshold:
+            count += 1
+        if point['runtime_stats']['success_rate'] < success_threshold:
+            count += 1
+        if point['client_stats']['success_rate'] < success_threshold:
+            count += 1
+        
+        # Efficiency alerts (< 70%)
+        efficiency_threshold = 0.70
+        if point['runtime_stats']['efficiency_score'] < efficiency_threshold:
+            count += 1
+        if point['client_stats']['efficiency_score'] < efficiency_threshold:
+            count += 1
+        
+        return count
     
     def stop_monitoring(self):
         """Stop the monitoring loop."""
