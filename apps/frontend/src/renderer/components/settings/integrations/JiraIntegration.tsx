@@ -35,7 +35,12 @@ export function JiraIntegration({
   updateEnvConfig,
   showJiraToken,
   setShowJiraToken,
-}: JiraIntegrationProps) {
+}: {
+  readonly envConfig: ProjectEnvConfig | null;
+  readonly updateEnvConfig: (updates: Partial<ProjectEnvConfig>) => void;
+  readonly showJiraToken: boolean;
+  readonly setShowJiraToken: React.Dispatch<React.SetStateAction<boolean>>;
+}) {
   const { t } = useTranslation(['settings', 'common']);
   const [isTestingConnection, setIsTestingConnection] = useState(false);
   const [connectionStatus, setConnectionStatus] = useState<JiraSyncStatus | null>(null);
@@ -60,29 +65,25 @@ export function JiraIntegration({
 
     try {
       // Test connection via IPC if available, otherwise show mock status
-      // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
-      if (window.electronAPI && typeof (window.electronAPI as any).testJiraConnection === 'function') {
-        // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
-        const result = await (window.electronAPI as any).testJiraConnection({
+      if (globalThis.electronAPI && typeof globalThis.electronAPI.jiraTestConnection === 'function') {
+        const result = await globalThis.electronAPI.jiraTestConnection({
           instanceUrl: jiraInstanceUrl,
           email: jiraEmail,
           apiToken: jiraApiToken,
         });
         setConnectionStatus(result.data || { connected: false, error: result.error });
-      } else {
+      } else if (jiraInstanceUrl && jiraEmail && jiraApiToken) {
         // IPC not wired yet — provide feedback to user
-        if (jiraInstanceUrl && jiraEmail && jiraApiToken) {
-          setConnectionStatus({
-            connected: true,
-            instanceUrl: jiraInstanceUrl,
-            projectKey: jiraProjectKey || undefined,
-          });
-        } else {
-          setConnectionStatus({
-            connected: false,
-            error: t('jira.fillAllFields', { ns: 'settings' }),
-          });
-        }
+        setConnectionStatus({
+          connected: true,
+          instanceUrl: jiraInstanceUrl,
+          projectKey: jiraProjectKey || undefined,
+        });
+      } else {
+        setConnectionStatus({
+          connected: false,
+          error: t('jira.fillAllFields', { ns: 'settings' }),
+        });
       }
     } catch (err) {
       setConnectionStatus({

@@ -37,6 +37,17 @@ declare global {
       // Generic invoke method
       invoke: (channel: string, ...args: unknown[]) => Promise<unknown>;
 
+      // Jira API methods
+      jiraTestConnection: (config: {
+        instanceUrl: string;
+        email: string;
+        apiToken: string;
+      }) => Promise<{
+        success: boolean;
+        data?: JiraSyncStatus;
+        error?: string;
+      }>;
+
       // Self-Healing API
       selfHealing: {
         getDashboard(projectPath: string): Promise<{ success: boolean; data?: unknown }>;
@@ -64,6 +75,15 @@ declare global {
   }
   
   var DEBUG: boolean;
+}
+
+interface JiraSyncStatus {
+  connected: boolean;
+  instanceUrl?: string;
+  projectKey?: string;
+  issueCount?: number;
+  lastSyncedAt?: string;
+  error?: string;
 }
 
 // Electron webview JSX element type

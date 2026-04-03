@@ -256,10 +256,10 @@ export function AzureDevOpsIntegration({
                 {isCheckingAzureDevOps && (
                   <Loader2 className="h-4 w-4 animate-spin text-primary" />
                 )}
-                {azureDevOpsConnectionStatus?.connected && !isCheckingAzureDevOps && (
+                {!isCheckingAzureDevOps && azureDevOpsConnectionStatus?.connected && (
                   <CheckCircle2 className="h-4 w-4 text-success" />
                 )}
-                {azureDevOpsConnectionStatus?.connected === false && !isCheckingAzureDevOps && (
+                {!isCheckingAzureDevOps && (azureDevOpsConnectionStatus?.connected === false || !azureDevOpsConnectionStatus) && (
                   <AlertCircle className="h-4 w-4 text-destructive" />
                 )}
                 <button
