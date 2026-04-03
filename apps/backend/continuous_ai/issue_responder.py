@@ -16,6 +16,7 @@ Uses the existing GitHub integration (gh CLI) and smart estimation runner.
 
 from __future__ import annotations
 
+import asyncio
 import json
 import logging
 import subprocess
@@ -286,17 +287,31 @@ class IssueResponder:
 
         if label:
             try:
-                result = subprocess.run(
-                    ["gh", "issue", "edit", str(issue_number), "--add-label", label],
+                # Use async subprocess instead of blocking subprocess.run
+                process = await asyncio.create_subprocess_exec(
+                    "gh",
+                    "issue",
+                    "edit",
+                    str(issue_number),
+                    "--add-label",
+                    label,
                     cwd=str(self.project_dir),
-                    capture_output=True,
+                    stdout=asyncio.subprocess.PIPE,
+                    stderr=asyncio.subprocess.PIPE,
                     text=True,
-                    timeout=15,
                 )
-                if result.returncode == 0:
+
+                _, stderr = await asyncio.wait_for(process.communicate(), timeout=15)
+
+                if process.returncode == 0:
                     results.append(f"Added label: {label}")
-            except (FileNotFoundError, subprocess.TimeoutExpired):
+                else:
+                    logger.warning("Failed to add label: %s", stderr)
+
+            except (FileNotFoundError, asyncio.TimeoutError):
                 pass
+            except Exception as e:
+                logger.error("Error adding label: %s", e)
 
         return {
             "success": True,
