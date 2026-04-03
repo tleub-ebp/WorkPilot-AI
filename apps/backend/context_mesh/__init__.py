@@ -16,15 +16,15 @@ Modules:
 
 from .types import (
     ContextMeshConfig,
-    CrossProjectPattern,
-    HandbookEntry,
-    HandbookDomain,
-    SkillTransfer,
     ContextualRecommendation,
-    RecommendationType,
+    CrossProjectPattern,
+    HandbookDomain,
+    HandbookEntry,
     MeshAnalysisReport,
     PatternCategory,
     ProjectSummary,
+    RecommendationType,
+    SkillTransfer,
 )
 
 __all__ = [
