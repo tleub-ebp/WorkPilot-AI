@@ -16,6 +16,7 @@ from src.connectors.jira.exceptions import (
     JiraAPIError,
     JiraError,
     JiraIssueNotFoundError,
+    JiraProjectNotFoundError,
 )
 from src.connectors.jira.models import JiraIssue, JiraProject
 

@@ -23,10 +23,8 @@ sys.path.insert(0, str(project_root))
 
 try:
     from apps.backend.core.optimization import TokenTracker
-    from apps.backend.core.optimization.phase2_evaluation import (
-        Phase2DecisionFramework,
-        RiskAssessment,
-    )
+    # Phase2DecisionFramework and RiskAssessment are available but not used in this monitor
+    print("✅ Optimization modules imported successfully")
 except ImportError as e:
     print(f"❌ Error importing optimization modules: {e}")
     print("Make sure the optimization module is properly installed.")

@@ -28,8 +28,9 @@ project_root = Path(__file__).parent.parent
 sys.path.insert(0, str(project_root))
 
 try:
-    from apps.backend.core.optimization import TokenTracker
+    # TokenTracker is available but not used in this evaluation runner
     from apps.backend.core.optimization.phase2_evaluation import AutomatedDataCollector
+    print("✅ Phase 2 evaluation modules imported successfully")
 except ImportError as e:
     print(f"❌ Error importing optimization modules: {e}")
     print("Make sure the optimization module is properly installed.")

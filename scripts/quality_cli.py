@@ -35,8 +35,8 @@ def ensure_grepai():
     ], check=True)
 
 
-def handle_quality_score_command(args):
-    """Gère la commande de score qualité."""
+def _handle_quality_score_command_local(args):
+    """Gère la commande de score qualité (implémentation locale)."""
     from review.quality_scorer import QualityScorer
 
     from src.connectors.base import GrepaiConnector

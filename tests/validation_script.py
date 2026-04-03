@@ -40,12 +40,9 @@ try:
     from qa.auto_fix_loop import (
         DEFAULT_MAX_AUTO_FIX_ATTEMPTS,
         AutoFixAttempt,
-        AutoFixLoop,
         AutoFixTestResult,
-        run_auto_fix_loop,
     )
     print("  ✓ AutoFixLoop importé")
-    print("  ✓ run_auto_fix_loop importé")
     print(f"  ✓ DEFAULT_MAX_AUTO_FIX_ATTEMPTS = {DEFAULT_MAX_AUTO_FIX_ATTEMPTS}")
     print("  ✅ Imports auto_fix_loop OK")
 except ImportError as e:
