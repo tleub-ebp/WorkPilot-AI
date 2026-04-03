@@ -5,7 +5,10 @@ export function ProfileCard() {
 	return (
 		<Card className="w-[280px]">
 			<div className="flex justify-end mb-4">
-				<button className="p-1 hover:bg-(--color-background-secondary) rounded transition-colors">
+				<button
+					type="button"
+					className="p-1 hover:bg-(--color-background-secondary) rounded transition-colors"
+				>
 					<MoreVertical className="w-5 h-5 text-(--color-text-tertiary)" />
 				</button>
 			</div>

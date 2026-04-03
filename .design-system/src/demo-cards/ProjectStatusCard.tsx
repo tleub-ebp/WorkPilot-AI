@@ -6,7 +6,10 @@ export function ProjectStatusCard() {
 		<Card className="w-[380px]">
 			<div className="flex justify-between items-start mb-4">
 				<ProgressCircle value={43} size="md" />
-				<button className="p-1 hover:bg-(--color-background-secondary) rounded transition-colors">
+				<button
+					type="button"
+					className="p-1 hover:bg-(--color-background-secondary) rounded transition-colors"
+				>
 					<MoreVertical className="w-5 h-5 text-(--color-text-tertiary)" />
 				</button>
 			</div>

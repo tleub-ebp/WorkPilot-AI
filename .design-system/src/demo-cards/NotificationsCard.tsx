@@ -34,7 +34,10 @@ export function NotificationsCard() {
 							</Button>
 						</div>
 					</div>
-					<button className="p-1 hover:bg-(--color-background-secondary) rounded self-start transition-colors">
+					<button
+						type="button"
+						className="p-1 hover:bg-(--color-background-secondary) rounded self-start transition-colors"
+					>
 						<MoreVertical className="w-4 h-4 text-(--color-text-tertiary)" />
 					</button>
 				</div>
@@ -50,7 +53,10 @@ export function NotificationsCard() {
 							changed status of task in "Magma project"
 						</p>
 					</div>
-					<button className="p-1 hover:bg-(--color-background-secondary) rounded self-start transition-colors">
+					<button
+						type="button"
+						className="p-1 hover:bg-(--color-background-secondary) rounded self-start transition-colors"
+					>
 						<MoreVertical className="w-4 h-4 text-(--color-text-tertiary)" />
 					</button>
 				</div>

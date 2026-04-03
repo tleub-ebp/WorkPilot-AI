@@ -1,0 +1,13 @@
+# Ignore Tailwind v4 CSS files that use @theme directive
+.design-system/src/styles.css
+
+# Ignore Python virtual environment files
+.venv/
+
+# Ignore node_modules
+node_modules/
+
+# Ignore build artifacts
+dist/
+build/
+out/

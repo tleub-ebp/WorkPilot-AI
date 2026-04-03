@@ -12,8 +12,8 @@ export function TeamMembersCard() {
 	return (
 		<Card className="w-[320px]" padding={false}>
 			<div className="divide-y divide-(--color-border-default)">
-				{members.map((member, i) => (
-					<div key={i} className="p-4 flex items-center gap-3">
+				{members.map((member) => (
+					<div key={member.name} className="p-4 flex items-center gap-3">
 						<Avatar name={member.name} />
 						<div className="flex-1">
 							<p className="text-heading-small">{member.name}</p>
@@ -21,10 +21,16 @@ export function TeamMembersCard() {
 								{member.role}
 							</p>
 						</div>
-						<button className="p-1 hover:bg-(--color-background-secondary) rounded transition-colors">
+						<button
+							type="button"
+							className="p-1 hover:bg-(--color-background-secondary) rounded transition-colors"
+						>
 							<MoreVertical className="w-4 h-4 text-(--color-text-tertiary)" />
 						</button>
-						<button className="p-2 bg-(--color-semantic-error-light) text-(--color-semantic-error) rounded-md hover:opacity-80 transition-opacity">
+						<button
+							type="button"
+							className="p-2 bg-(--color-semantic-error-light) text-(--color-semantic-error) rounded-md hover:opacity-80 transition-opacity"
+						>
 							<MessageSquare className="w-4 h-4" />
 						</button>
 					</div>
@@ -43,7 +49,7 @@ export function TeamMembersCard() {
 				<div className="px-2 py-1 bg-[#003087] text-white text-xs font-bold rounded">
 					PayPal
 				</div>
-				<div className="w-8 h-8 bg-gradient-to-r from-red-500 to-yellow-500 rounded-full" />
+				<div className="w-8 h-8 bg-linear-to-r from-red-500 to-yellow-500 rounded-full" />
 			</div>
 		</Card>
 	);
