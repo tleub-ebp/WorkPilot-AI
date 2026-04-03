@@ -4,13 +4,13 @@ Intégration principale entre BMAD et les capacités autonomous
 Fournit une interface unifiée pour les workflows hybrides
 """
 
-import os
 import json
 from datetime import datetime
-from typing import Dict, List, Any, Optional, Callable
 from pathlib import Path
+from typing import Any
 
 from ide_detector import IDEDetector
+
 try:
     from hybrid_memory_manager import HybridMemoryManager
 except ImportError:
@@ -75,7 +75,7 @@ class HybridIntegration:
             print(f"IDE detection failed: {e}")
             self.integration_state["ide_detected"] = False
     
-    def enhance_workflow(self, workflow_name: str, workflow_data: Dict[str, Any]) -> Dict[str, Any]:
+    def enhance_workflow(self, workflow_name: str, workflow_data: dict[str, Any]) -> dict[str, Any]:
         """
         Améliore un workflow avec les capacités hybrides
         
@@ -123,7 +123,7 @@ class HybridIntegration:
         
         return enhancement_levels.get(workflow_name, "medium")
     
-    def _get_autonomous_capabilities(self, workflow_name: str) -> List[str]:
+    def _get_autonomous_capabilities(self, workflow_name: str) -> list[str]:
         """Retourne les capacités autonomous pour un workflow"""
         base_capabilities = [
             "parallel_analysis",
@@ -161,7 +161,7 @@ class HybridIntegration:
         
         return base_capabilities + workflow_specific.get(workflow_name, [])
     
-    def _get_ide_adaptations(self, workflow_name: str) -> List[str]:
+    def _get_ide_adaptations(self, workflow_name: str) -> list[str]:
         """Retourne les adaptations IDE pour un workflow"""
         ide_name = self.integration_state.get("ide_info", {}).get("ide_name", "generic")
         
@@ -196,7 +196,7 @@ class HybridIntegration:
         
         return base_adaptations + ide_specific.get(ide_name, [])
     
-    def _get_memory_integrations(self, workflow_name: str) -> List[str]:
+    def _get_memory_integrations(self, workflow_name: str) -> list[str]:
         """Retourne les intégrations mémoire pour un workflow"""
         base_integrations = [
             "pattern_storage",
@@ -230,7 +230,7 @@ class HybridIntegration:
         
         return base_integrations + workflow_specific.get(workflow_name, [])
     
-    def execute_hybrid_workflow(self, workflow_name: str, context: Dict[str, Any] = None) -> Dict[str, Any]:
+    def execute_hybrid_workflow(self, workflow_name: str, context: dict[str, Any] = None) -> dict[str, Any]:
         """
         Exécute un workflow hybride complet avec conformité BMAD garantie
         
@@ -292,7 +292,7 @@ class HybridIntegration:
         
         return results
     
-    def _perform_autonomous_pre_analysis(self, workflow_name: str, context: Dict[str, Any]) -> Dict[str, Any]:
+    def _perform_autonomous_pre_analysis(self, workflow_name: str, context: dict[str, Any]) -> dict[str, Any]:
         """Effectue la pré-analyse autonomous"""
         
         # Analyser le contexte
@@ -319,7 +319,7 @@ class HybridIntegration:
             "autonomous_insights": self._generate_autonomous_insights(workflow_name, context, patterns)
         }
     
-    def _perform_ide_adaptations(self, workflow_name: str, context: Dict[str, Any]) -> Dict[str, Any]:
+    def _perform_ide_adaptations(self, workflow_name: str, context: dict[str, Any]) -> dict[str, Any]:
         """Effectue les adaptations IDE"""
         
         ide_info = self.integration_state.get("ide_info", {})
@@ -340,7 +340,7 @@ class HybridIntegration:
             "ide_specific_features": ide_info.get("features", {})
         }
     
-    def _execute_bmad_workflow(self, workflow_name: str, context: Dict[str, Any]) -> Dict[str, Any]:
+    def _execute_bmad_workflow(self, workflow_name: str, context: dict[str, Any]) -> dict[str, Any]:
         """Exécute le workflow BMAD en respectant la conformité
         
         AMÉLIORATION BMAD : Utilise toujours workflow.xml core
@@ -370,7 +370,7 @@ class HybridIntegration:
         
         return bmad_results
     
-    def _perform_hybrid_post_processing(self, workflow_name: str, bmad_results: Dict[str, Any], context: Dict[str, Any]) -> Dict[str, Any]:
+    def _perform_hybrid_post_processing(self, workflow_name: str, bmad_results: dict[str, Any], context: dict[str, Any]) -> dict[str, Any]:
         """Effectue le post-traitement hybride"""
         
         # Analyser les résultats BMAD
@@ -389,7 +389,7 @@ class HybridIntegration:
             "hybrid_enhancements": self._get_hybrid_enhancements(workflow_name)
         }
     
-    def _store_in_memory(self, workflow_name: str, post_processing: Dict[str, Any]) -> Dict[str, Any]:
+    def _store_in_memory(self, workflow_name: str, post_processing: dict[str, Any]) -> dict[str, Any]:
         """Stocke les résultats dans la mémoire hybride"""
         
         decision_data = {
@@ -411,7 +411,7 @@ class HybridIntegration:
         }
     
     # Méthodes utilitaires
-    def _analyze_project_structure(self) -> Dict[str, Any]:
+    def _analyze_project_structure(self) -> dict[str, Any]:
         """Analyse la structure du projet"""
         return {
             "root_path": str(self.project_root),
@@ -421,7 +421,7 @@ class HybridIntegration:
             "has_windsurf": (self.project_root / ".windsurf").exists()
         }
     
-    def _find_existing_artifacts(self, workflow_name: str) -> List[str]:
+    def _find_existing_artifacts(self, workflow_name: str) -> list[str]:
         """Trouve les artefacts existants pertinents"""
         artifacts = []
         
@@ -439,12 +439,12 @@ class HybridIntegration:
         if output_dir.exists():
             for file_pattern in expected_files:
                 artifacts.extend([
-                    str(f) for f in output_dir.glob(f"*" + file_pattern)
+                    str(f) for f in output_dir.glob("*" + file_pattern)
                 ])
         
         return artifacts
     
-    def _assess_complexity(self, workflow_name: str, context: Dict[str, Any]) -> str:
+    def _assess_complexity(self, workflow_name: str, context: dict[str, Any]) -> str:
         """Évalue la complexité du workflow"""
         complexity_levels = {
             "bmad-bmm-create-prd": "medium",
@@ -455,7 +455,7 @@ class HybridIntegration:
         
         return complexity_levels.get(workflow_name, "medium")
     
-    def _estimate_resources(self, workflow_name: str) -> Dict[str, Any]:
+    def _estimate_resources(self, workflow_name: str) -> dict[str, Any]:
         """Estime les ressources nécessaires"""
         resource_estimates = {
             "bmad-bmm-create-prd": {"time_minutes": 60, "agents": 2},
@@ -466,7 +466,7 @@ class HybridIntegration:
         
         return resource_estimates.get(workflow_name, {"time_minutes": 30, "agents": 1})
     
-    def _infer_decision_type(self, context: Dict[str, Any]) -> str:
+    def _infer_decision_type(self, context: dict[str, Any]) -> str:
         """Déduit le type de décision"""
         context_str = str(context)
         
@@ -483,7 +483,7 @@ class HybridIntegration:
         
         return "generic"
     
-    def _generate_autonomous_insights(self, workflow_name: str, context: Dict[str, Any], patterns: List[Dict[str, Any]]) -> List[str]:
+    def _generate_autonomous_insights(self, workflow_name: str, context: dict[str, Any], patterns: list[dict[str, Any]]) -> list[str]:
         """Génère des insights autonomes"""
         insights = []
         
@@ -491,7 +491,7 @@ class HybridIntegration:
         if patterns:
             top_patterns = patterns[:3]
             insights.append(f"Found {len(patterns)} similar {workflow_name} patterns")
-            insights.append(f"Best practices from patterns with quality > 0.8")
+            insights.append("Best practices from patterns with quality > 0.8")
         
         # Insights basés sur le contexte
         if context.get("project_structure"):
@@ -502,11 +502,11 @@ class HybridIntegration:
         
         return insights
     
-    def _adapt_communication_style(self, ide_info: Dict[str, Any]) -> str:
+    def _adapt_communication_style(self, ide_info: dict[str, Any]) -> str:
         """Adapte le style de communication"""
         return ide_info.get("communication_style", "neutral")
     
-    def _adapt_output_format(self, ide_info: Dict[str, Any], workflow_name: str) -> str:
+    def _adapt_output_format(self, ide_info: dict[str, Any], workflow_name: str) -> str:
         """Adapte le format de sortie"""
         base_format = ide_info.get("output_format", "markdown")
         
@@ -520,7 +520,7 @@ class HybridIntegration:
         
         return workflow_formats.get(workflow_name, base_format)
     
-    def _optimize_for_features(self, ide_info: Dict[str, Any], workflow_name: str) -> List[str]:
+    def _optimize_for_features(self, ide_info: dict[str, Any], workflow_name: str) -> list[str]:
         """Optimise pour les fonctionnalités de l'IDE"""
         features = ide_info.get("features", {})
         optimizations = []
@@ -547,7 +547,7 @@ class HybridIntegration:
         
         return workflow_paths.get(workflow_name, workflow_name)
     
-    def _get_expected_outputs(self, workflow_name: str) -> List[str]:
+    def _get_expected_outputs(self, workflow_name: str) -> list[str]:
         """Obtient les sorties attendues du workflow"""
         output_patterns = {
             "bmad-bmm-create-prd": ["PRD.md"],
@@ -558,7 +558,7 @@ class HybridIntegration:
         
         return output_patterns.get(workflow_name, [])
     
-    def _analyze_bmad_results(self, bmad_results: Dict[str, Any]) -> Dict[str, Any]:
+    def _analyze_bmad_results(self, bmad_results: dict[str, Any]) -> dict[str, Any]:
         """Analyse les résultats BMAD"""
         return {
             "workflow_status": bmad_results.get("status", "unknown"),
@@ -567,7 +567,7 @@ class HybridIntegration:
             "quality_indicators": self._assess_result_quality(bmad_results)
         }
     
-    def _generate_quality_metrics(self, workflow_name: str, bmad_results: Dict[str, Any]) -> Dict[str, Any]:
+    def _generate_quality_metrics(self, workflow_name: str, bmad_results: dict[str, Any]) -> dict[str, Any]:
         """Génère des métriques de qualité"""
         return {
             "workflow_completion": bmad_results.get("status") == "completed",
@@ -576,7 +576,7 @@ class HybridIntegration:
             "hybrid_enhancement_applied": True
         }
     
-    def _generate_improvement_recommendations(self, workflow_name: str, bmad_results: Dict[str, Any]) -> List[str]:
+    def _generate_improvement_recommendations(self, workflow_name: str, bmad_results: dict[str, Any]) -> list[str]:
         """Génère des recommandations d'amélioration"""
         recommendations = []
         
@@ -589,7 +589,7 @@ class HybridIntegration:
         
         return recommendations
     
-    def _get_hybrid_enhancements(self, workflow_name: str) -> List[str]:
+    def _get_hybrid_enhancements(self, workflow_name: str) -> list[str]:
         """Retourne les améliorations hybrides appliquées"""
         return [
             "autonomous_pre_analysis_applied",
@@ -600,7 +600,7 @@ class HybridIntegration:
             "post_processing_enhanced"
         ]
     
-    def _assess_result_quality(self, results: Dict[str, Any]) -> str:
+    def _assess_result_quality(self, results: dict[str, Any]) -> str:
         """Évalue la qualité des résultats"""
         if results.get("status") == "completed":
             return "high"
@@ -609,7 +609,7 @@ class HybridIntegration:
         else:
             return "low"
     
-    def _assess_output_quality(self, results: Dict[str, Any]) -> str:
+    def _assess_output_quality(self, results: dict[str, Any]) -> str:
         """Évalue la qualité des sorties"""
         outputs = results.get("outputs", [])
         
@@ -636,7 +636,7 @@ class HybridIntegration:
         """Obtient le temps d'exécution"""
         return datetime.now().isoformat()
     
-    def get_integration_status(self) -> Dict[str, Any]:
+    def get_integration_status(self) -> dict[str, Any]:
         """Retourne le statut de l'intégration"""
         return self.integration_state
     
@@ -645,7 +645,7 @@ class HybridIntegration:
         available_workflows = self._get_available_workflows()
         return workflow_name in available_workflows
     
-    def get_bmad_compliance_report(self) -> Dict[str, Any]:
+    def get_bmad_compliance_report(self) -> dict[str, Any]:
         """Génère un rapport de conformité BMAD détaillé"""
         return {
             "overall_score": 0.91,
@@ -674,7 +674,7 @@ class HybridIntegration:
             "last_updated": datetime.now().isoformat()
         }
     
-    def get_available_workflows(self) -> List[str]:
+    def get_available_workflows(self) -> list[str]:
         """Retourne la liste des workflows BMAD disponibles
         
         CONFORMITÉ BMAD : Charge depuis module-help.csv officiel
@@ -687,7 +687,7 @@ class HybridIntegration:
         if module_help_path.exists():
             try:
                 import csv
-                with open(module_help_path, 'r', encoding='utf-8') as f:
+                with open(module_help_path, encoding='utf-8') as f:
                     reader = csv.DictReader(f)
                     for row in reader:
                         if row.get('module') == 'bmm' and row.get('command'):
@@ -704,7 +704,7 @@ class HybridIntegration:
         
         return available
     
-    def _find_workflow_file(self, workflow_name: str) -> Optional[Path]:
+    def _find_workflow_file(self, workflow_name: str) -> Path | None:
         """Trouve le fichier d'un workflow"""
         workflow_path = self._get_workflow_path(workflow_name)
         workflow_file = self.project_root / "_bmad" / workflow_path
@@ -714,7 +714,7 @@ class HybridIntegration:
         
         return None
     
-    def create_hybrid_workflow_session(self, workflow_name: str, context: Dict[str, Any] = None) -> str:
+    def create_hybrid_workflow_session(self, workflow_name: str, context: dict[str, Any] = None) -> str:
         """
         Crée une session de workflow hybride
         

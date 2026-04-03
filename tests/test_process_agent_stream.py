@@ -14,15 +14,14 @@ Covers:
 - Error handling in stream processing
 """
 
+import importlib.util
 import sys
+import types
+from pathlib import Path as _Path
 from types import SimpleNamespace
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
-
-import importlib.util
-import types
-from pathlib import Path as _Path
 
 # Mock claude_agent_sdk before any imports that transitively need it
 _mock_sdk = MagicMock()
@@ -71,7 +70,6 @@ from core.agent_client import (
     CopilotAgentClient,
     MessageRole,
 )
-
 
 # =============================================================================
 # Helpers

@@ -9,11 +9,12 @@ Tests the SonarQube connector including:
 - Building project summaries
 """
 
+import sys
+from pathlib import Path
 from unittest.mock import MagicMock, patch
 
 import pytest
-from pathlib import Path
-import sys
+
 
 # Helper function to import modules directly
 def import_module_direct(module_name, file_path):
@@ -52,7 +53,7 @@ if "src.connectors" not in sys.modules:
     sys.modules["src.connectors"] = type('Package', (), {})()
 connectors_package = sys.modules["src.connectors"]
 if not hasattr(connectors_package, 'sonarqube'):
-    setattr(connectors_package, 'sonarqube', sonarqube_package)
+    connectors_package.sonarqube = sonarqube_package
 
 # Now import connector
 SonarQubeConnector = import_module_direct("SonarQubeConnector", str(connector_path)).SonarQubeConnector

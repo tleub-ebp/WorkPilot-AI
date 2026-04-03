@@ -11,9 +11,10 @@ import asyncio
 import json
 import subprocess
 import sys
-import time
 import tempfile
+import time
 from pathlib import Path
+
 import websockets
 from websockets.client import WebSocketClientProtocol
 
@@ -63,7 +64,7 @@ This spec tests the complete streaming pipeline from agent execution to WebSocke
 
 ## Requirements
 1. Agent should emit thinking events
-2. Agent should emit response events  
+2. Agent should emit response events
 3. Agent should emit file change events
 4. Events should be broadcast via WebSocket
 5. Frontend should receive events in real-time
@@ -80,14 +81,14 @@ This spec tests the complete streaming pipeline from agent execution to WebSocke
             "phaseModels": {
                 "spec": "haiku",
                 "planning": "haiku",
-                "coding": "haiku", 
+                "coding": "haiku",
                 "qa": "haiku"
             }
         }))
         
         self.project_dir = project_dir
         self.spec_dir = spec_dir
-        print(f"✅ Test environment created")
+        print("✅ Test environment created")
 
     async def start_websocket_server(self):
         """Start WebSocket server for testing."""
@@ -383,7 +384,7 @@ if __name__ == "__main__":
         for client in self.websocket_clients:
             try:
                 await client.close()
-            except:
+            except Exception:
                 pass
         
         # Stop server process

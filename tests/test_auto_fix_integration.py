@@ -15,11 +15,11 @@ def test_imports():
 
     try:
         from qa.auto_fix_loop import (
-            AutoFixLoop,
-            run_auto_fix_loop,
             DEFAULT_MAX_AUTO_FIX_ATTEMPTS,
-            AutoFixTestResult,
             AutoFixAttempt,
+            AutoFixLoop,
+            AutoFixTestResult,
+            run_auto_fix_loop,
         )
         print("✓ auto_fix_loop imports OK")
     except ImportError as e:
@@ -30,10 +30,10 @@ def test_imports():
         from qa.auto_fix_metrics import (
             AutoFixMetricsTracker,
             AutoFixStats,
-            get_auto_fix_stats,
-            record_auto_fix_run,
             get_auto_fix_dashboard_data,
+            get_auto_fix_stats,
             print_auto_fix_summary,
+            record_auto_fix_run,
         )
         print("✓ auto_fix_metrics imports OK")
     except ImportError as e:
@@ -42,9 +42,9 @@ def test_imports():
 
     try:
         from qa import (
-            run_auto_fix_loop,
-            AutoFixLoop,
             DEFAULT_MAX_AUTO_FIX_ATTEMPTS,
+            AutoFixLoop,
+            run_auto_fix_loop,
         )
         print("✓ qa package exports OK")
     except ImportError as e:
@@ -53,9 +53,9 @@ def test_imports():
 
     try:
         from qa_loop import (
-            run_auto_fix_loop,
-            AutoFixLoop,
             DEFAULT_MAX_AUTO_FIX_ATTEMPTS,
+            AutoFixLoop,
+            run_auto_fix_loop,
         )
         print("✓ qa_loop facade exports OK")
     except ImportError as e:
@@ -67,7 +67,7 @@ def test_classes():
     print("\nTesting class instantiation...")
 
     try:
-        from qa.auto_fix_loop import AutoFixTestResult, AutoFixAttempt
+        from qa.auto_fix_loop import AutoFixAttempt, AutoFixTestResult
 
         # Test AutoFixTestResult
         result = AutoFixTestResult(
@@ -102,6 +102,7 @@ def test_metrics():
 
     try:
         import tempfile
+
         from qa.auto_fix_metrics import AutoFixMetricsTracker, AutoFixStats
 
         # Create temp spec dir
@@ -148,6 +149,7 @@ def test_error_patterns():
 
     try:
         import tempfile
+
         from qa.auto_fix_loop import AutoFixLoop, AutoFixTestResult
 
         with tempfile.TemporaryDirectory() as tmpdir:
@@ -207,6 +209,7 @@ def test_test_count_parsing():
 
     try:
         import tempfile
+
         from qa.auto_fix_loop import AutoFixLoop
 
         with tempfile.TemporaryDirectory() as tmpdir:

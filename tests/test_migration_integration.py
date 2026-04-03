@@ -3,23 +3,29 @@ Integration tests for Feature #20 - Auto-Migration Engine
 Tests the complete migration pipeline with all components
 """
 
-import pytest
-import tempfile
 import json
+import tempfile
 from pathlib import Path
 from unittest.mock import Mock, patch
 
-from apps.backend.migration.orchestrator import MigrationOrchestrator
-from apps.backend.migration.transformer import TransformationEngine
+import pytest
+
 from apps.backend.migration.analyzer import StackAnalyzer
+from apps.backend.migration.models import (
+    MigrationContext,
+    MigrationPhase,
+    MigrationPlan,
+    MigrationState,
+    MigrationStep,
+    RiskLevel,
+    StackInfo,
+)
+from apps.backend.migration.orchestrator import MigrationOrchestrator
 from apps.backend.migration.planner import MigrationPlanner
 from apps.backend.migration.reporter import MigrationReporter
-from apps.backend.migration.validator import MigrationValidator
 from apps.backend.migration.rollback import RollbackManager
-from apps.backend.migration.models import (
-    MigrationContext, MigrationPlan, MigrationPhase, MigrationStep,
-    StackInfo, MigrationState, RiskLevel
-)
+from apps.backend.migration.transformer import TransformationEngine
+from apps.backend.migration.validator import MigrationValidator
 from tests.migration_fixtures import TEST_FIXTURES
 
 
@@ -326,7 +332,7 @@ class TestTransformerEngineIntegration:
         summary = engine.apply_transformations(dry_run=False)
 
         assert summary['applied'] >= 0
-        assert summary['dry_run'] == False
+        assert not summary['dry_run']
 
 
 class TestReporterIntegration:

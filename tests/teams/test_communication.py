@@ -6,9 +6,9 @@ Tests the message bus, debate threads, and consensus detection.
 """
 
 import sys
+import time
 from pathlib import Path
 from tempfile import TemporaryDirectory
-import time
 
 # Add backend to path BEFORE any imports
 backend_path = Path(__file__).parent.parent.parent / "apps" / "backend"
@@ -17,11 +17,17 @@ if str(backend_path) not in sys.path:
 
 # Mock dependencies before importing
 from unittest.mock import MagicMock
+
 sys.modules['claude_agent_sdk'] = MagicMock()
 sys.modules['core.client'] = MagicMock()
 sys.modules['debug'] = MagicMock()
 
-from teams.communication import AgentMessage, CommunicationBus, DebateThread, MessageType
+from teams.communication import (
+    AgentMessage,
+    CommunicationBus,
+    DebateThread,
+    MessageType,
+)
 
 
 class TestCommunicationBus:
@@ -65,11 +71,11 @@ class TestCommunicationBus:
             thread = bus.create_thread("Test")
             
             bus.post_message(
-                thread.thread_id, "architect", "Architect", 
+                thread.thread_id, "architect", "Architect",
                 MessageType.PROPOSAL, "Use REST"
             )
             bus.post_message(
-                thread.thread_id, "security", "Security", 
+                thread.thread_id, "security", "Security",
                 MessageType.CHALLENGE, "What about auth?"
             )
             

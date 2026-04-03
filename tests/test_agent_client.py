@@ -13,9 +13,9 @@ Unit tests for core/agent_client.py covering:
 
 import asyncio
 import sys
+from pathlib import Path
 from types import SimpleNamespace
 from unittest.mock import AsyncMock, MagicMock, patch
-from pathlib import Path
 
 import pytest
 
@@ -42,7 +42,6 @@ from core.agent_client import (
     MessageRole,
     SubagentDefinition,
 )
-
 
 # =============================================================================
 # Dataclass / Enum Tests

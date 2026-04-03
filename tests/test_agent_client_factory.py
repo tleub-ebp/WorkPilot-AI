@@ -38,7 +38,6 @@ if "claude_agent_sdk" not in sys.modules:
 from core.agent_client import AgentClient, ClaudeAgentClient, CopilotAgentClient
 from core.client import _get_active_provider
 
-
 # =============================================================================
 # _get_active_provider() Tests
 # =============================================================================

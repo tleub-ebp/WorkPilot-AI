@@ -6,6 +6,7 @@ import subprocess
 import sys
 from pathlib import Path
 
+
 def run_test(name, script):
     """Execute un script de test."""
     print(f"\n{'=' * 70}")

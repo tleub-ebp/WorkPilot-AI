@@ -105,7 +105,7 @@ def main():
             print(f"  Error getting issue details: {e}")
         
         # Example: Search issues using JQL
-        print(f"\n🔎 Searching issues with custom JQL...")
+        print("\n🔎 Searching issues with custom JQL...")
         
         try:
             # Search for high priority issues
@@ -128,7 +128,7 @@ def main():
         print(f"\n❌ Error: {e}")
         print("\n💡 Make sure you have set the required environment variables:")
         print("   - JIRA_URL")
-        print("   - JIRA_EMAIL") 
+        print("   - JIRA_EMAIL")
         print("   - JIRA_API_TOKEN")
         print("   - JIRA_PROJECT (optional)")
 

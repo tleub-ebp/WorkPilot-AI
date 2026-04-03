@@ -24,7 +24,8 @@ import {
   CalendarClock,
   Sparkles,
   ChevronRight,
-  MessageSquare
+  MessageSquare,
+  Activity
 } from 'lucide-react';
 import {
   FullScreenDialog,
@@ -54,6 +55,8 @@ import { CleanProviderSection } from './CleanProviderSection';
 import { SandboxSettings } from './SandboxSettings';
 import { AnomalyDetectionSettings } from './AnomalyDetectionSettings';
 import { SchedulerSettings } from './SchedulerSettings';
+import { SwarmModeSettings } from './SwarmModeSettings';
+import { ContinuousAISettings } from './ContinuousAISettings';
 
 // GitLab icon component (lucide-react doesn't have one)
 function GitLabIcon({ className }: { readonly className?: string }) {
@@ -97,7 +100,8 @@ export type AppSection =
   // Sécurité & Performance
   | 'sandbox' | 'anomaly-detection' | 'memory'
   // Système & Maintenance
-  | 'updates' | 'notifications' | 'debug' | 'scheduler';
+  | 'updates' | 'notifications' | 'debug' | 'scheduler'
+  | 'swarm-mode' | 'continuous-ai';
 
 export type ProjectSettingsSection = 'general' | 'azure-devops' | 'jira' | 'github' | 'gitlab' | 'linear' | 'teams' | 'memory';
 
@@ -166,7 +170,9 @@ const createSettingsThemes = (t: any): Record<SettingsTheme, {
     sections: [
       { id: 'devtools', icon: Code, label: 'Outils de développement', type: 'app' },
       { id: 'paths', icon: FolderOpen, label: 'Chemins', type: 'app' },
-      { id: 'agent', icon: Bot, label: 'Agent', type: 'app' }
+      { id: 'agent', icon: Bot, label: 'Agent', type: 'app' },
+      { id: 'swarm-mode', icon: Zap, label: 'Swarm Mode', type: 'app' },
+      { id: 'continuous-ai', icon: Activity, label: 'IA Continue', type: 'app' }
     ],
     description: 'Outils de développement et configuration',
     priority: 4
@@ -345,6 +351,10 @@ export function AppSettingsDialog(props: AppSettingsDialogProps) {
         return <AnomalyDetectionSettings />;
       case 'scheduler':
         return <SchedulerSettings />;
+      case 'swarm-mode':
+        return <SwarmModeSettings />;
+      case 'continuous-ai':
+        return <ContinuousAISettings />;
       default:
         return null;
     }

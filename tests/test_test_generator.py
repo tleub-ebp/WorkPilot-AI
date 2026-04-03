@@ -24,7 +24,6 @@ from apps.backend.agents.test_generator import (
     TestGeneratorAgent,
 )
 
-
 # ── CodeAnalyzer tests ──────────────────────────────────────────
 
 

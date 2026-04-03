@@ -16,12 +16,12 @@ DailySummary, models and exceptions.
 - NotificationsConnector stats: 2
 """
 
+import importlib.util
 import json
 import sys
-import importlib.util
-from pathlib import Path
-from unittest.mock import patch, MagicMock
 from datetime import datetime, timezone
+from pathlib import Path
+from unittest.mock import MagicMock, patch
 
 import pytest
 

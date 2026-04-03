@@ -4,10 +4,7 @@ Script pour trouver et extraire le token OAuth Windsurf
 """
 
 import os
-import json
-import sqlite3
-import base64
-from pathlib import Path
+
 
 def find_windsurf_token():
     """Cherche le token OAuth Windsurf dans les fichiers locaux"""
@@ -57,7 +54,7 @@ def search_in_file(file_path):
         # Patterns de token à chercher
         patterns = [
             b'access_token',
-            b'oauth_token', 
+            b'oauth_token',
             b'windsurf_token',
             b'codeium_token',
             b'Bearer',

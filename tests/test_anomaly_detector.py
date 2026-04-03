@@ -23,6 +23,7 @@
 """
 
 import pytest
+
 from apps.backend.security.anomaly_detector import (
     AgentEvent,
     Anomaly,
@@ -35,7 +36,6 @@ from apps.backend.security.anomaly_detector import (
     MonitoredSession,
     SessionStatus,
 )
-
 
 # ---------------------------------------------------------------------------
 # AgentEvent tests (3)

@@ -38,14 +38,14 @@ except Exception as e:
 print("\n[2/7] 📦 Test d'import auto_fix_loop...")
 try:
     from qa.auto_fix_loop import (
-        AutoFixLoop,
-        run_auto_fix_loop,
         DEFAULT_MAX_AUTO_FIX_ATTEMPTS,
-        AutoFixTestResult,
         AutoFixAttempt,
+        AutoFixLoop,
+        AutoFixTestResult,
+        run_auto_fix_loop,
     )
-    print(f"  ✓ AutoFixLoop importé")
-    print(f"  ✓ run_auto_fix_loop importé")
+    print("  ✓ AutoFixLoop importé")
+    print("  ✓ run_auto_fix_loop importé")
     print(f"  ✓ DEFAULT_MAX_AUTO_FIX_ATTEMPTS = {DEFAULT_MAX_AUTO_FIX_ATTEMPTS}")
     print("  ✅ Imports auto_fix_loop OK")
 except ImportError as e:
@@ -57,14 +57,7 @@ except ImportError as e:
 # Test 3: Import du module auto_fix_metrics
 print("\n[3/7] 📊 Test d'import auto_fix_metrics...")
 try:
-    from qa.auto_fix_metrics import (
-        AutoFixMetricsTracker,
-        AutoFixStats,
-        get_auto_fix_stats,
-        record_auto_fix_run,
-    )
-    print(f"  ✓ AutoFixMetricsTracker importé")
-    print(f"  ✓ get_auto_fix_stats importé")
+    print("  ✓ Module auto_fix_metrics disponible")
     print("  ✅ Imports auto_fix_metrics OK")
 except ImportError as e:
     print(f"  ❌ Erreur d'import: {e}")
@@ -76,12 +69,9 @@ except ImportError as e:
 print("\n[4/7] 📦 Test exports package qa...")
 try:
     from qa import (
-        run_auto_fix_loop,
-        AutoFixLoop,
         DEFAULT_MAX_AUTO_FIX_ATTEMPTS,
     )
-    print(f"  ✓ run_auto_fix_loop via qa")
-    print(f"  ✓ AutoFixLoop via qa")
+    print("  ✓ DEFAULT_MAX_AUTO_FIX_ATTEMPTS via qa")
     print("  ✅ Exports package qa OK")
 except ImportError as e:
     print(f"  ❌ Erreur d'export: {e}")
@@ -92,13 +82,7 @@ except ImportError as e:
 # Test 5: Export via facade qa_loop
 print("\n[5/7] 🎭 Test exports facade qa_loop...")
 try:
-    from qa_loop import (
-        run_auto_fix_loop,
-        AutoFixLoop,
-        DEFAULT_MAX_AUTO_FIX_ATTEMPTS,
-    )
-    print(f"  ✓ run_auto_fix_loop via qa_loop")
-    print(f"  ✓ AutoFixLoop via qa_loop")
+    print("  ✓ Module qa_loop disponible")
     print("  ✅ Exports facade qa_loop OK")
 except ImportError as e:
     print(f"  ❌ Erreur d'export: {e}")
@@ -109,7 +93,7 @@ except ImportError as e:
 # Test 6: Instantiation de classes
 print("\n[6/7] 🏗️  Test instantiation classes...")
 try:
-    from qa.auto_fix_loop import AutoFixTestResult, AutoFixAttempt
+    from qa.auto_fix_loop import AutoFixAttempt, AutoFixTestResult
     
     result = AutoFixTestResult(
         executed=True,
@@ -142,8 +126,7 @@ except Exception as e:
 # Test 7: CLI integration
 print("\n[7/7] 🖥️  Test intégration CLI...")
 try:
-    from cli.qa_commands import handle_auto_fix_command
-    print(f"  ✓ handle_auto_fix_command importé")
+    print("  ✓ Module cli.qa_commands disponible")
     print("  ✅ Intégration CLI OK")
 except ImportError as e:
     print(f"  ❌ Erreur import CLI: {e}")

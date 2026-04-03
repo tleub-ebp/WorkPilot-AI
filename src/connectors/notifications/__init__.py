@@ -6,21 +6,21 @@ with support for slash commands, daily summaries, and security alerts.
 Feature 4.3 — Intégration Slack / Microsoft Teams.
 """
 
+from src.connectors.notifications.connector import NotificationsConnector
 from src.connectors.notifications.exceptions import (
-    NotificationError,
     NotificationAuthenticationError,
     NotificationConfigurationError,
     NotificationDeliveryError,
+    NotificationError,
 )
 from src.connectors.notifications.models import (
+    DailySummary,
     NotificationChannel,
-    NotificationPriority,
     NotificationEvent,
+    NotificationPriority,
     NotificationResult,
     SlashCommand,
-    DailySummary,
 )
-from src.connectors.notifications.connector import NotificationsConnector
 
 __all__ = [
     "NotificationsConnector",

@@ -1,5 +1,7 @@
+from typing import Any
+
 from .llm_base import BaseLLMProvider
-from typing import Any, Dict
+
 
 class GoogleLLMProvider(BaseLLMProvider):
     def __init__(self, api_key: str, model: str = "gemini-2.0-flash"):
@@ -32,10 +34,10 @@ class GoogleLLMProvider(BaseLLMProvider):
         response = self._model.generate_content([{"role": "user", "parts": [prompt]}])
         return response.text if hasattr(response, "text") else str(response)
 
-    def get_capabilities(self) -> Dict[str, Any]:
+    def get_capabilities(self) -> dict[str, Any]:
         return {"models": [self.model], "provider": "google"}
 
-    def get_config_schema(self) -> Dict[str, Any]:
+    def get_config_schema(self) -> dict[str, Any]:
         return {"api_key": "str", "model": "str"}
 
     @classmethod

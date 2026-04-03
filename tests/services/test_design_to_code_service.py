@@ -2,12 +2,13 @@
 Tests for Design-to-Code Service
 """
 
-import pytest
-import math
-from unittest.mock import AsyncMock, Mock, patch, MagicMock
-import sys
 import json
+import math
+import sys
 from pathlib import Path
+from unittest.mock import AsyncMock, MagicMock, Mock, patch
+
+import pytest
 
 # Add the apps/backend directory to the Python path
 backend_path = Path(__file__).parent.parent.parent / "apps" / "backend"
@@ -16,17 +17,17 @@ root_path = Path(__file__).parent.parent.parent
 sys.path.insert(0, str(root_path))
 
 from services.design_to_code_service import (
+    ComponentSpec,
+    DesignSourceType,
+    DesignSpec,
     DesignToCodeService,
     DesignTokenExtractor,
-    VisualTestGenerator,
-    DesignSpec,
-    ComponentSpec,
+    FrameworkType,
     GeneratedFile,
-    VisualTest,
     PipelinePhase,
     PipelineResult,
-    FrameworkType,
-    DesignSourceType,
+    VisualTest,
+    VisualTestGenerator,
 )
 
 
@@ -380,12 +381,11 @@ class TestFigmaConnector:
 
     def test_parse_figma_file_url(self):
         """Should parse standard Figma file URLs."""
-        import sys
-        from pathlib import Path
-        
         # Add the src directory to Python path for proper imports
         # Use absolute path from project root to handle different working directories
         import os
+        import sys
+        from pathlib import Path
         project_root = Path(__file__).parent.parent.parent
         if str(project_root) not in sys.path:
             sys.path.insert(0, str(project_root))
@@ -401,12 +401,11 @@ class TestFigmaConnector:
 
     def test_parse_figma_design_url_with_node(self):
         """Should parse Figma design URL with node-id."""
-        import sys
-        from pathlib import Path
-        
         # Add the src directory to Python path for proper imports
         # Use absolute path from project root to handle different working directories
         import os
+        import sys
+        from pathlib import Path
         project_root = Path(__file__).parent.parent.parent
         if str(project_root) not in sys.path:
             sys.path.insert(0, str(project_root))
@@ -422,12 +421,11 @@ class TestFigmaConnector:
 
     def test_parse_invalid_url(self):
         """Should return None for non-Figma URLs."""
-        import sys
-        from pathlib import Path
-        
         # Add the src directory to Python path for proper imports
         # Use absolute path from project root to handle different working directories
         import os
+        import sys
+        from pathlib import Path
         project_root = Path(__file__).parent.parent.parent
         if str(project_root) not in sys.path:
             sys.path.insert(0, str(project_root))
@@ -439,12 +437,11 @@ class TestFigmaConnector:
 
     def test_is_configured_without_token(self):
         """Should report not configured when no token."""
-        import sys
-        from pathlib import Path
-        
         # Add the src directory to Python path for proper imports
         # Use absolute path from project root to handle different working directories
         import os
+        import sys
+        from pathlib import Path
         project_root = Path(__file__).parent.parent.parent
         if str(project_root) not in sys.path:
             sys.path.insert(0, str(project_root))
@@ -459,12 +456,11 @@ class TestFigmaConnector:
 
     def test_is_configured_with_token(self):
         """Should report configured when token is present."""
-        import sys
-        from pathlib import Path
-        
         # Add the src directory to Python path for proper imports
         # Use absolute path from project root to handle different working directories
         import os
+        import sys
+        from pathlib import Path
         project_root = Path(__file__).parent.parent.parent
         if str(project_root) not in sys.path:
             sys.path.insert(0, str(project_root))
@@ -476,12 +472,11 @@ class TestFigmaConnector:
 
     def test_token_name_conversion(self):
         """Should convert Figma style names to token names."""
-        import sys
-        from pathlib import Path
-        
         # Add the src directory to Python path for proper imports
         # Use absolute path from project root to handle different working directories
         import os
+        import sys
+        from pathlib import Path
         project_root = Path(__file__).parent.parent.parent
         if str(project_root) not in sys.path:
             sys.path.insert(0, str(project_root))

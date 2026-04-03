@@ -5,12 +5,13 @@ Créer une clé API Windsurf à partir du token OAuth
 
 import os
 
+
 def create_windsurf_api_key():
     """Créer une clé API Windsurf compatible avec l'interface"""
     
     # Lire le token OAuth existant
     if os.path.exists(".env.windsurf"):
-        with open(".env.windsurf", "r") as f:
+        with open(".env.windsurf") as f:
             for line in f:
                 if line.startswith("WINDSURF_OAUTH_TOKEN="):
                     oauth_token = line.split("=", 1)[1].strip()
@@ -26,8 +27,8 @@ def create_windsurf_api_key():
                         f_out.write("# Source: C:\\Users\\thomas.leberre\\AppData\\Roaming\\Windsurf\\User\\History\\60c608b0\\fWhx.ps1\n")
                     
                     print(f"✅ Clé API Windsurf créée: {api_key}")
-                    print(f"✅ Token OAuth préservé")
-                    print(f"✅ Fichier .env.windsurf mis à jour")
+                    print("✅ Token OAuth préservé")
+                    print("✅ Fichier .env.windsurf mis à jour")
                     
                     return api_key
     

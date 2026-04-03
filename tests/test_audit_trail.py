@@ -13,6 +13,7 @@
 """
 
 import json
+
 import pytest
 
 from apps.backend.security.audit_trail import (
@@ -24,7 +25,6 @@ from apps.backend.security.audit_trail import (
     AuditTrail,
     ExportFormat,
 )
-
 
 # ---------------------------------------------------------------------------
 # AuditEntry tests

@@ -6,6 +6,7 @@ Create Copilot profile with proper UTF-8 encoding
 import json
 from pathlib import Path
 
+
 def create_copilot_profile():
     """Create Copilot profile with proper encoding"""
     

@@ -4,11 +4,13 @@ Script pour tuer les processus utilisant le port 8765 avant de démarrer le serv
 Utilisé pour résoudre l'erreur: "une seule utilisation de chaque adresse de socket (protocole/adresse réseau/port) est habituellement autorisée"
 """
 
+import socket
 import subprocess
 import sys
 import time
+
 import psutil
-import socket
+
 
 def find_processes_using_port(port):
     """Trouve tous les processus utilisant le port spécifié."""
@@ -98,7 +100,7 @@ def is_port_available(port):
         with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
             s.bind(('localhost', port))
             return True
-    except socket.error:
+    except OSError:
         return False
 
 def main():

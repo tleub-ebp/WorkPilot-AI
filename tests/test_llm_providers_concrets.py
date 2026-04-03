@@ -2,10 +2,11 @@
 Tests d'intégration pour les providers LLM concrets (OpenAI, Claude, Ollama, Google, Anthropic).
 Utilise des clés factices et vérifie la robustesse de l'instanciation et de la validation.
 """
-import pytest
-import sys
 import importlib.util
+import sys
 from pathlib import Path
+
+import pytest
 
 # S'assurer que la racine du projet est dans le chemin
 project_root = Path(__file__).parent.parent

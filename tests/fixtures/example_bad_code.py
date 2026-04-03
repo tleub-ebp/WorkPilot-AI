@@ -15,6 +15,6 @@ def very_complex_function(x, y, z):
     return 0
 try:
     some_operation()
-except:  # MEDIUM: Bare except
+except Exception:  # MEDIUM: Bare except
     pass
 eval("dangerous_code")  # HIGH: eval() dangereux

@@ -3,14 +3,15 @@ Unit tests for migration transformers
 Tests individual transformer functionality
 """
 
-import pytest
-from pathlib import Path
 import tempfile
+from pathlib import Path
 
-from apps.backend.migration.transformers.react_to_vue import ReactToVueTransformer
+import pytest
+
 from apps.backend.migration.transformers.database import DatabaseTransformer
-from apps.backend.migration.transformers.python import PythonTransformer
 from apps.backend.migration.transformers.js_to_ts import JSToTypeScriptTransformer
+from apps.backend.migration.transformers.python import PythonTransformer
+from apps.backend.migration.transformers.react_to_vue import ReactToVueTransformer
 from tests.migration_fixtures import TEST_FIXTURES
 
 
@@ -320,7 +321,9 @@ class TestReactToAngularTransformer:
 
     def test_detect_react_component(self, temp_project):
         """Test React component detection."""
-        from apps.backend.migration.transformers.react_to_angular import ReactToAngularTransformer
+        from apps.backend.migration.transformers.react_to_angular import (
+            ReactToAngularTransformer,
+        )
 
         transformer = ReactToAngularTransformer(temp_project)
 
@@ -332,7 +335,9 @@ class TestReactToAngularTransformer:
 
     def test_convert_props_to_inputs(self, temp_project):
         """Test props to @Input conversion."""
-        from apps.backend.migration.transformers.react_to_angular import ReactToAngularTransformer
+        from apps.backend.migration.transformers.react_to_angular import (
+            ReactToAngularTransformer,
+        )
 
         transformer = ReactToAngularTransformer(temp_project)
 
@@ -345,7 +350,9 @@ class TestReactToAngularTransformer:
 
     def test_transform_state_to_properties(self, temp_project):
         """Test state to properties conversion."""
-        from apps.backend.migration.transformers.react_to_angular import ReactToAngularTransformer
+        from apps.backend.migration.transformers.react_to_angular import (
+            ReactToAngularTransformer,
+        )
 
         transformer = ReactToAngularTransformer(temp_project)
 
@@ -357,7 +364,9 @@ class TestReactToAngularTransformer:
 
     def test_transform_hooks_to_lifecycle(self, temp_project):
         """Test hooks to lifecycle conversion."""
-        from apps.backend.migration.transformers.react_to_angular import ReactToAngularTransformer
+        from apps.backend.migration.transformers.react_to_angular import (
+            ReactToAngularTransformer,
+        )
 
         transformer = ReactToAngularTransformer(temp_project)
 
@@ -369,8 +378,11 @@ class TestReactToAngularTransformer:
 
     def test_full_react_to_angular_transformation(self, temp_project):
         """Test full React to Angular transformation."""
-        from apps.backend.migration.transformers.react_to_angular import ReactToAngularTransformer
         from pathlib import Path
+
+        from apps.backend.migration.transformers.react_to_angular import (
+            ReactToAngularTransformer,
+        )
 
         project_path = Path(temp_project)
 
@@ -399,7 +411,9 @@ class TestJSToCSharpTransformer:
 
     def test_type_mappings(self, temp_project):
         """Test type system conversions."""
-        from apps.backend.migration.transformers.js_to_csharp import JSToCSharpTransformer
+        from apps.backend.migration.transformers.js_to_csharp import (
+            JSToCSharpTransformer,
+        )
 
         transformer = JSToCSharpTransformer(temp_project)
 
@@ -410,7 +424,9 @@ class TestJSToCSharpTransformer:
 
     def test_transform_imports_to_using(self, temp_project):
         """Test import to using statement conversion."""
-        from apps.backend.migration.transformers.js_to_csharp import JSToCSharpTransformer
+        from apps.backend.migration.transformers.js_to_csharp import (
+            JSToCSharpTransformer,
+        )
 
         transformer = JSToCSharpTransformer(temp_project)
 
@@ -422,7 +438,9 @@ class TestJSToCSharpTransformer:
 
     def test_transform_variables(self, temp_project):
         """Test variable declaration conversion."""
-        from apps.backend.migration.transformers.js_to_csharp import JSToCSharpTransformer
+        from apps.backend.migration.transformers.js_to_csharp import (
+            JSToCSharpTransformer,
+        )
 
         transformer = JSToCSharpTransformer(temp_project)
 
@@ -434,7 +452,9 @@ class TestJSToCSharpTransformer:
 
     def test_transform_template_literals(self, temp_project):
         """Test template literal conversion."""
-        from apps.backend.migration.transformers.js_to_csharp import JSToCSharpTransformer
+        from apps.backend.migration.transformers.js_to_csharp import (
+            JSToCSharpTransformer,
+        )
 
         transformer = JSToCSharpTransformer(temp_project)
 
@@ -446,7 +466,9 @@ class TestJSToCSharpTransformer:
 
     def test_transform_array_methods(self, temp_project):
         """Test array method conversion."""
-        from apps.backend.migration.transformers.js_to_csharp import JSToCSharpTransformer
+        from apps.backend.migration.transformers.js_to_csharp import (
+            JSToCSharpTransformer,
+        )
 
         transformer = JSToCSharpTransformer(temp_project)
 
@@ -460,7 +482,9 @@ class TestJSToCSharpTransformer:
 
     def test_transform_string_methods(self, temp_project):
         """Test string method conversion."""
-        from apps.backend.migration.transformers.js_to_csharp import JSToCSharpTransformer
+        from apps.backend.migration.transformers.js_to_csharp import (
+            JSToCSharpTransformer,
+        )
 
         transformer = JSToCSharpTransformer(temp_project)
 
@@ -473,8 +497,11 @@ class TestJSToCSharpTransformer:
 
     def test_full_js_to_csharp_transformation(self, temp_project):
         """Test full JavaScript to C# transformation."""
-        from apps.backend.migration.transformers.js_to_csharp import JSToCSharpTransformer
         from pathlib import Path
+
+        from apps.backend.migration.transformers.js_to_csharp import (
+            JSToCSharpTransformer,
+        )
 
         project_path = Path(temp_project)
 
@@ -503,8 +530,9 @@ class TestIntegrationNewTransformers:
 
     def test_react_to_angular_full_pipeline(self, temp_project):
         """Test full React to Angular pipeline."""
-        from apps.backend.migration.transformer import TransformationEngine
         from pathlib import Path
+
+        from apps.backend.migration.transformer import TransformationEngine
 
         project_path = Path(temp_project)
 
@@ -531,8 +559,9 @@ export default Button
 
     def test_js_to_csharp_full_pipeline(self, temp_project):
         """Test full JavaScript to C# pipeline."""
-        from apps.backend.migration.transformer import TransformationEngine
         from pathlib import Path
+
+        from apps.backend.migration.transformer import TransformationEngine
 
         project_path = Path(temp_project)
 
@@ -567,7 +596,9 @@ class TestNewTransformerErrors:
 
     def test_react_to_angular_missing_file(self, temp_project):
         """Test handling of missing files."""
-        from apps.backend.migration.transformers.react_to_angular import ReactToAngularTransformer
+        from apps.backend.migration.transformers.react_to_angular import (
+            ReactToAngularTransformer,
+        )
 
         transformer = ReactToAngularTransformer(temp_project)
         results = transformer.transform_files(["nonexistent.jsx"])
@@ -577,8 +608,11 @@ class TestNewTransformerErrors:
 
     def test_js_to_csharp_invalid_syntax(self, temp_project):
         """Test handling of invalid JavaScript."""
-        from apps.backend.migration.transformers.js_to_csharp import JSToCSharpTransformer
         from pathlib import Path
+
+        from apps.backend.migration.transformers.js_to_csharp import (
+            JSToCSharpTransformer,
+        )
 
         project_path = Path(temp_project)
         test_file = project_path / "broken.js"

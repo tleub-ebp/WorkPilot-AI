@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
 """Script to run all backend tests with proper Python path configuration."""
 
-import sys
 import os
 import subprocess
+import sys
+
 
 def setup_environment():
     """Set up Python path and environment for tests."""

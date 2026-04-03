@@ -8,12 +8,11 @@ Tests the work item client lifecycle including:
 - Filtering of None entries from error_policy='omit' responses
 """
 
+import os
+import sys
 from unittest.mock import MagicMock
 
 import pytest
-
-import sys
-import os
 
 from src.connectors.azure_devops.exceptions import (
     APIError,

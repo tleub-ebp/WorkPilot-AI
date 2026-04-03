@@ -6,6 +6,7 @@ Update Copilot profile with latest models
 import json
 from pathlib import Path
 
+
 def update_copilot_profile():
     """Update Copilot profile with latest models"""
     
@@ -15,7 +16,7 @@ def update_copilot_profile():
     # Latest models from PROVIDER_MODELS_MAP
     latest_models = [
         "gpt-5.2",
-        "gpt-5", 
+        "gpt-5",
         "o3",
         "claude-opus-4-6",
         "claude-sonnet-4-5",
@@ -26,7 +27,7 @@ def update_copilot_profile():
     ]
     
     # Read existing profiles
-    with open(profiles_file, 'r', encoding='utf-8') as f:
+    with open(profiles_file, encoding='utf-8') as f:
         profiles_data = json.load(f)
     
     # Update Copilot profile models

@@ -17,6 +17,7 @@
 """
 
 import pytest
+
 from apps.backend.ui.keyboard_shortcuts import (
     DEFAULT_SHORTCUTS,
     KeyboardShortcut,
@@ -24,7 +25,6 @@ from apps.backend.ui.keyboard_shortcuts import (
     ShortcutManager,
     normalize_keys,
 )
-
 
 # ---------------------------------------------------------------------------
 # KeyboardShortcut tests (3)

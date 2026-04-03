@@ -2,21 +2,22 @@
 Tests for Smart Estimation Service
 """
 
-import pytest
-from unittest.mock import Mock, patch, MagicMock
-from datetime import datetime, timedelta
 import sys
+from datetime import datetime, timedelta
 from pathlib import Path
+from unittest.mock import MagicMock, Mock, patch
+
+import pytest
 
 # Add the apps/backend directory to the Python path
 backend_path = Path(__file__).parent.parent.parent / "apps" / "backend"
 sys.path.insert(0, str(backend_path))
 
 from services.smart_estimation_service import (
+    EstimationResult,
     SmartEstimationService,
     TaskComplexityFactors,
-    EstimationResult,
-    get_smart_estimation_service
+    get_smart_estimation_service,
 )
 
 
@@ -132,7 +133,7 @@ class TestSmartEstimationService:
 
     def test_infer_complexity_from_metrics(self, service):
         """Test complexity inference from build metrics"""
-        from analytics.database_schema import Build, BuildPhase, QAResult, BuildStatus
+        from analytics.database_schema import Build, BuildPhase, BuildStatus, QAResult
 
         # Create mock build with high complexity metrics
         build = Mock()

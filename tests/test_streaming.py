@@ -4,10 +4,11 @@ Tests for Streaming Development Mode
 
 import asyncio
 import json
-import pytest
 import sys
-from pathlib import Path
 from datetime import datetime
+from pathlib import Path
+
+import pytest
 
 # Configure pytest-asyncio
 pytest_plugins = ('pytest_asyncio',)
@@ -16,11 +17,11 @@ pytest_plugins = ('pytest_asyncio',)
 sys.path.insert(0, str(Path(__file__).parent.parent / "apps" / "backend"))
 
 from streaming import (
-    StreamingManager,
-    StreamingEvent,
     EventType,
     SessionRecorder,
     StreamingAgentWrapper,
+    StreamingEvent,
+    StreamingManager,
 )
 
 

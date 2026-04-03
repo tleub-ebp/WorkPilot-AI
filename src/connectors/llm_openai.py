@@ -1,5 +1,7 @@
+from typing import Any
+
 from .llm_base import BaseLLMProvider
-from typing import Any, Dict
+
 
 class OpenAIProvider(BaseLLMProvider):
     def __init__(self, api_key: str, model: str = "gpt-3.5-turbo", base_url: str = "https://api.openai.com/v1"):
@@ -37,10 +39,10 @@ class OpenAIProvider(BaseLLMProvider):
         except Exception:
             raise
 
-    def get_capabilities(self) -> Dict[str, Any]:
+    def get_capabilities(self) -> dict[str, Any]:
         return {"models": [self.model], "provider": "openai"}
 
-    def get_config_schema(self) -> Dict[str, Any]:
+    def get_config_schema(self) -> dict[str, Any]:
         return {"api_key": "str", "model": "str", "base_url": "str (optional)"}
 
     @classmethod

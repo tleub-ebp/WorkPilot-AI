@@ -1,11 +1,12 @@
 """
 Tests unitaires pour la découverte, la configuration et la sélection des providers LLM (multi-provider, mock inclus).
 """
-import os
-import pytest
-import sys
 import importlib.util
+import os
+import sys
 from pathlib import Path
+
+import pytest
 
 # S'assurer que la racine du projet est dans le chemin
 project_root = Path(__file__).parent.parent
@@ -33,7 +34,7 @@ BaseLLMProvider = import_module_from_file("src.connectors.llm_base", connectors_
 llm_config = import_module_from_file("src.connectors.llm_config", connectors_dir / "llm_config.py")
 sys.modules["src.connectors.llm_config"] = llm_config
 save_provider_config, load_provider_config, delete_provider_config, list_provider_configs = (
-    llm_config.save_provider_config, llm_config.load_provider_config, 
+    llm_config.save_provider_config, llm_config.load_provider_config,
     llm_config.delete_provider_config, llm_config.list_provider_configs
 )
 

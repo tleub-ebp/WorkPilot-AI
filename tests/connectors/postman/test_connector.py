@@ -11,11 +11,12 @@ Tests the Postman connector including:
 - Collection summary
 """
 
+import sys
+from pathlib import Path
 from unittest.mock import MagicMock, patch
 
 import pytest
-from pathlib import Path
-import sys
+
 
 # Helper function to import modules directly
 def import_module_direct(module_name, file_path):
@@ -54,7 +55,7 @@ if "src.connectors" not in sys.modules:
     sys.modules["src.connectors"] = type('Package', (), {})()
 connectors_package = sys.modules["src.connectors"]
 if not hasattr(connectors_package, 'postman'):
-    setattr(connectors_package, 'postman', postman_package)
+    connectors_package.postman = postman_package
 
 # Now import connector
 PostmanConnector = import_module_direct("PostmanConnector", str(connector_path)).PostmanConnector

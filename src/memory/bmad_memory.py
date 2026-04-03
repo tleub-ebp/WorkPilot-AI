@@ -4,14 +4,12 @@ Système de mémoire persistante pour les agents hybrides autonomous+BMAD
 Combine l'exécution autonome avec la structuration agile de BMAD
 """
 
-import json
-import os
-import time
-from datetime import datetime, timedelta
-from typing import Dict, List, Any, Optional, Union
-from dataclasses import dataclass, asdict
-from pathlib import Path
 import hashlib
+import json
+from dataclasses import asdict, dataclass
+from datetime import datetime, timedelta
+from pathlib import Path
+from typing import Any
 
 
 @dataclass
@@ -21,12 +19,12 @@ class MemoryEntry:
     timestamp: datetime
     agent_type: str  # 'ebp', 'bmm', 'hybrid'
     agent_name: str
-    context: Dict[str, Any]
+    context: dict[str, Any]
     decision: str
     rationale: str
     quality_score: float
-    tags: List[str]
-    related_entries: List[str] = None
+    tags: list[str]
+    related_entries: list[str] = None
     
     def __post_init__(self):
         if self.related_entries is None:
@@ -40,11 +38,11 @@ class PerformanceMemory:
     timestamp: datetime
     scenario: str
     optimization: str
-    results: Dict[str, float]
-    ebp_analysis: Dict[str, Any]
+    results: dict[str, float]
+    ebp_analysis: dict[str, Any]
     bmm_workflow: str
     quality_score: float
-    applicable_contexts: List[str]
+    applicable_contexts: list[str]
 
 
 @dataclass
@@ -54,12 +52,12 @@ class ArchitectureMemory:
     timestamp: datetime
     component: str
     decision: str
-    ebp_autonomous_analysis: Dict[str, Any]
+    ebp_autonomous_analysis: dict[str, Any]
     bmm_structured_workflow: str
     rationale: str
-    stakeholders: List[str]
+    stakeholders: list[str]
     quality_score: float
-    impact_assessment: Dict[str, Any]
+    impact_assessment: dict[str, Any]
 
 
 @dataclass
@@ -69,11 +67,11 @@ class WorkflowMemory:
     timestamp: datetime
     workflow_type: str
     duration: timedelta
-    participants: List[str]
-    outcomes: List[str]
-    autonomous_contributions: List[str]
-    success_metrics: Dict[str, float]
-    lessons_learned: List[str]
+    participants: list[str]
+    outcomes: list[str]
+    autonomous_contributions: list[str]
+    success_metrics: dict[str, float]
+    lessons_learned: list[str]
 
 
 class BMADMemorySystem:
@@ -91,11 +89,11 @@ class BMADMemorySystem:
         self.index_file = self.memory_path / "index.json"
         
         # Structures de mémoire
-        self.entries: List[MemoryEntry] = []
-        self.performance_patterns: List[PerformanceMemory] = []
-        self.architecture_decisions: List[ArchitectureMemory] = []
-        self.workflow_history: List[WorkflowMemory] = []
-        self.search_index: Dict[str, List[str]] = {}
+        self.entries: list[MemoryEntry] = []
+        self.performance_patterns: list[PerformanceMemory] = []
+        self.architecture_decisions: list[ArchitectureMemory] = []
+        self.workflow_history: list[WorkflowMemory] = []
+        self.search_index: dict[str, list[str]] = {}
         
         # Charger mémoire existante
         self.load_memory()
@@ -104,7 +102,7 @@ class BMADMemorySystem:
         """Charge la mémoire depuis les fichiers"""
         try:
             if self.entries_file.exists():
-                with open(self.entries_file, 'r', encoding='utf-8') as f:
+                with open(self.entries_file, encoding='utf-8') as f:
                     data = json.load(f)
                     self.entries = [
                         MemoryEntry(
@@ -126,7 +124,7 @@ class BMADMemorySystem:
             
         try:
             if self.performance_file.exists():
-                with open(self.performance_file, 'r', encoding='utf-8') as f:
+                with open(self.performance_file, encoding='utf-8') as f:
                     data = json.load(f)
                     self.performance_patterns = [
                         PerformanceMemory(
@@ -147,7 +145,7 @@ class BMADMemorySystem:
             
         try:
             if self.architecture_file.exists():
-                with open(self.architecture_file, 'r', encoding='utf-8') as f:
+                with open(self.architecture_file, encoding='utf-8') as f:
                     data = json.load(f)
                     self.architecture_decisions = [
                         ArchitectureMemory(
@@ -169,7 +167,7 @@ class BMADMemorySystem:
             
         try:
             if self.workflows_file.exists():
-                with open(self.workflows_file, 'r', encoding='utf-8') as f:
+                with open(self.workflows_file, encoding='utf-8') as f:
                     data = json.load(f)
                     self.workflow_history = [
                         WorkflowMemory(
@@ -190,7 +188,7 @@ class BMADMemorySystem:
             
         try:
             if self.index_file.exists():
-                with open(self.index_file, 'r', encoding='utf-8') as f:
+                with open(self.index_file, encoding='utf-8') as f:
                     self.search_index = json.load(f)
         except Exception as e:
             print(f"Erreur chargement index: {e}")
@@ -309,7 +307,7 @@ class BMADMemorySystem:
         for entry in self.entries:
             self.update_search_index(entry)
     
-    def search(self, query: str, agent_type: str = None, limit: int = 10) -> List[MemoryEntry]:
+    def search(self, query: str, agent_type: str = None, limit: int = 10) -> list[MemoryEntry]:
         """Recherche dans la mémoire"""
         query_words = query.lower().split()
         matching_ids = set()
@@ -340,7 +338,7 @@ class BMADMemorySystem:
         
         return matching_entries[:limit]
     
-    def get_similar_performance_patterns(self, scenario: str, threshold: float = 0.8) -> List[PerformanceMemory]:
+    def get_similar_performance_patterns(self, scenario: str, threshold: float = 0.8) -> list[PerformanceMemory]:
         """Trouve des patterns de performance similaires"""
         similar_patterns = []
         scenario_words = set(scenario.lower().split())
@@ -362,8 +360,8 @@ class BMADMemorySystem:
         
         return similar_patterns
     
-    def get_architecture_decisions(self, component: str = None, 
-                                 agent_type: str = None) -> List[ArchitectureMemory]:
+    def get_architecture_decisions(self, component: str = None,
+                                 agent_type: str = None) -> list[ArchitectureMemory]:
         """Récupère les décisions architecturales"""
         decisions = self.architecture_decisions
         
@@ -375,8 +373,8 @@ class BMADMemorySystem:
         
         return sorted(decisions, key=lambda x: x.timestamp, reverse=True)
     
-    def get_workflow_history(self, workflow_type: str = None, 
-                           days_back: int = 30) -> List[WorkflowMemory]:
+    def get_workflow_history(self, workflow_type: str = None,
+                           days_back: int = 30) -> list[WorkflowMemory]:
         """Récupère l'historique des workflows"""
         cutoff_date = datetime.now() - timedelta(days=days_back)
         workflows = [w for w in self.workflow_history if w.timestamp >= cutoff_date]
@@ -386,7 +384,7 @@ class BMADMemorySystem:
         
         return sorted(workflows, key=lambda x: x.timestamp, reverse=True)
     
-    def get_memory_statistics(self) -> Dict[str, Any]:
+    def get_memory_statistics(self) -> dict[str, Any]:
         """Retourne des statistiques sur la mémoire"""
         now = datetime.now()
         week_ago = now - timedelta(days=7)
@@ -442,7 +440,7 @@ class BMADMemorySystem:
                 for tag in entry.tags:
                     tag_counts[tag] = tag_counts.get(tag, 0) + 1
             
-            stats["top_tags"] = sorted(tag_counts.items(), 
+            stats["top_tags"] = sorted(tag_counts.items(),
                                      key=lambda x: x[1], reverse=True)[:10]
         
         # Scenarios de performance les plus fréquents
@@ -478,8 +476,8 @@ class BMADMemorySystem:
 
 # Fonctions utilitaires pour créer des entrées de mémoire
 def create_hybrid_entry(agent_name: str, decision: str, rationale: str,
-                       context: Dict[str, Any], quality_score: float,
-                       tags: List[str] = None) -> MemoryEntry:
+                       context: dict[str, Any], quality_score: float,
+                       tags: list[str] = None) -> MemoryEntry:
     """Crée une entrée de mémoire hybride"""
     entry_id = hashlib.sha256(
         f"{agent_name}{decision}{datetime.now().isoformat()}".encode()
@@ -499,7 +497,7 @@ def create_hybrid_entry(agent_name: str, decision: str, rationale: str,
 
 
 def create_performance_memory(scenario: str, optimization: str,
-                           results: Dict[str, float], ebp_analysis: Dict[str, Any],
+                           results: dict[str, float], ebp_analysis: dict[str, Any],
                            bmm_workflow: str, quality_score: float) -> PerformanceMemory:
     """Crée une mémoire de performance"""
     pattern_id = hashlib.md5(

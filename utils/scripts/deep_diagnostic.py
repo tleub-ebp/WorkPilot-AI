@@ -4,8 +4,10 @@ Deep diagnostic of Copilot integration issues
 """
 
 import json
-import requests
 from pathlib import Path
+
+import requests
+
 
 def diagnose_copilot_integration():
     """Complete diagnostic of Copilot integration"""
@@ -22,7 +24,7 @@ def diagnose_copilot_integration():
         return False
     
     try:
-        with open(profiles_file, 'r', encoding='utf-8') as f:
+        with open(profiles_file, encoding='utf-8') as f:
             profiles_data = json.load(f)
     except Exception as e:
         print(f"❌ Error reading profiles file: {e}")
@@ -81,7 +83,7 @@ def diagnose_copilot_integration():
     print("✅ Provider correctly detected as Copilot")
     
     # 4. Check backend connectivity
-    print(f"\n4. 🌐 Testing backend connectivity...")
+    print("\n4. 🌐 Testing backend connectivity...")
     try:
         response = requests.get('http://localhost:9000/providers/usage/copilot', timeout=5)
         print(f"   Status: {response.status_code}")
@@ -99,7 +101,7 @@ def diagnose_copilot_integration():
         return False
     
     # 5. Check if UsageMonitor would be called
-    print(f"\n5. 🔄 UsageMonitor execution flow:")
+    print("\n5. 🔄 UsageMonitor execution flow:")
     print("   ✅ Active profile is Copilot")
     print("   ✅ Provider detected as Copilot")
     print("   ✅ Backend is accessible")
@@ -109,7 +111,7 @@ def diagnose_copilot_integration():
 
 def check_known_providers():
     """Check if Copilot is in known providers list"""
-    print(f"\n6. 📋 Checking known providers...")
+    print("\n6. 📋 Checking known providers...")
     
     # This simulates the KNOWN_PROVIDERS check in UsageIndicator
     known_providers = {'anthropic', 'openai', 'ollama', 'copilot'}
@@ -128,7 +130,7 @@ if __name__ == "__main__":
     integration_ok = diagnose_copilot_integration()
     providers_ok = check_known_providers()
     
-    print(f"\n🎯 Summary:")
+    print("\n🎯 Summary:")
     if integration_ok and providers_ok:
         print("✅ All checks passed!")
         print("\n💡 If you still see 'Données d'utilisation non disponibles':")

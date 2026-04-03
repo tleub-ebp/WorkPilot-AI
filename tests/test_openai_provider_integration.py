@@ -1,8 +1,9 @@
-import os
-import pytest
-import sys
 import importlib.util
+import os
+import sys
 from pathlib import Path
+
+import pytest
 
 # S'assurer que la racine du projet est dans le chemin
 project_root = Path(__file__).parent.parent
@@ -26,6 +27,7 @@ sys.modules["src.connectors.llm_base"] = llm_base
 OpenAIProvider = import_module_from_file("src.connectors.llm_openai", connectors_dir / "llm_openai.py").OpenAIProvider
 
 import requests
+
 
 @pytest.mark.integration
 @pytest.mark.skipif(

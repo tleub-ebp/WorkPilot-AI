@@ -17,7 +17,6 @@ from apps.backend.scheduling.auto_detector import (
     SecurityVulnerabilitySource,
 )
 
-
 # ── DetectionFinding tests ─────────────────────────────────────────
 
 

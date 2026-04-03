@@ -1,8 +1,8 @@
 ﻿#!/usr/bin/env python3
 """Quick test to verify quality_scorer.py is properly encoded"""
 
-from pathlib import Path
 import sys
+from pathlib import Path
 
 target = Path(__file__).parent.parent / "apps" / "backend" / "review" / "quality_scorer.py"
 
@@ -24,11 +24,13 @@ try:
     
     # Try to import it
     sys.path.insert(0, str(Path(__file__).parent.parent / "apps" / "backend"))
-    from review.quality_scorer import QualityScorer, QualityScore, QualityIssue, QualityCategory, IssueSeverity
+    from review.quality_scorer import (
+        QualityScorer,
+    )
     
     print("✓ File is valid Python!")
     print(f"✓ QualityScorer class: {QualityScorer}")
-    print(f"✓ All imports successful")
+    print("✓ All imports successful")
     sys.exit(0)
     
 except Exception as e:

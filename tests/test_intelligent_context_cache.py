@@ -9,25 +9,38 @@ Tests semantic analysis, freshness scoring, git invalidation, and API endpoints.
 import json
 import shutil
 import sys
-import pytest
 import tempfile
 import time
 from pathlib import Path
-from unittest.mock import Mock, patch, MagicMock
-from typing import Dict, Any
+from typing import Any, dict
+from unittest.mock import MagicMock, Mock, patch
+
+import pytest
+
+from apps.backend.services.cache_freshness_system import (
+    FreshnessCalculator,
+    FreshnessMetrics,
+    InvalidationEngine,
+    InvalidationRule,
+)
+from apps.backend.services.context_cache_integration import (
+    AgentWorkflowIntegrator,
+    ContextCacheIntegrator,
+    ContextRequest,
+    ContextResponse,
+)
+from apps.backend.services.git_cache_invalidation import (
+    GitBasedCacheInvalidator,
+    GitChangeEvent,
+    GitRepositoryMonitor,
+)
 
 # Import the modules to test
 from apps.backend.services.intelligent_context_cache import (
-    IntelligentContextCache, CacheConfig, ContextCacheEntry, SemanticHasher
-)
-from apps.backend.services.cache_freshness_system import (
-    FreshnessCalculator, FreshnessMetrics, InvalidationEngine, InvalidationRule
-)
-from apps.backend.services.git_cache_invalidation import (
-    GitRepositoryMonitor, GitBasedCacheInvalidator, GitChangeEvent
-)
-from apps.backend.services.context_cache_integration import (
-    ContextCacheIntegrator, AgentWorkflowIntegrator, ContextRequest, ContextResponse
+    CacheConfig,
+    ContextCacheEntry,
+    IntelligentContextCache,
+    SemanticHasher,
 )
 
 
@@ -372,6 +385,7 @@ class TestFreshnessCalculator:
     def cache_entry(self, temp_project):
         """Create a sample cache entry using the actual git commit hash."""
         import subprocess
+
         from apps.backend.services.intelligent_context_cache import ContextCacheEntry
 
         # Get the real current commit from the temp git repo
@@ -823,8 +837,8 @@ requests==2.25.0
     def test_end_to_end_caching(self, temp_project):
         """Test complete end-to-end caching workflow."""
         # Create unique temp directory to avoid conflicts
-        import uuid
         import shutil
+        import uuid
         unique_suffix = str(uuid.uuid4())[:8]
         unique_project = temp_project / f"test_integration_{unique_suffix}"
         unique_project.mkdir(exist_ok=True)
@@ -907,8 +921,8 @@ requests==2.25.0
     def test_git_invalidation_integration(self, temp_project):
         """Test git-based cache invalidation."""
         # Create unique temp directory to avoid conflicts
-        import uuid
         import shutil
+        import uuid
         unique_suffix = str(uuid.uuid4())[:8]
         unique_project = temp_project / f"test_git_invalidation_{unique_suffix}"
         unique_project.mkdir(exist_ok=True)
@@ -993,9 +1007,9 @@ class TestCachePerformance:
     
     def test_cache_performance(self, temp_project):
         """Test cache performance with many entries."""
+        import shutil
         import time
         import uuid
-        import shutil
 
         # Create unique temp directory to avoid conflicts
         unique_suffix = str(uuid.uuid4())[:8]

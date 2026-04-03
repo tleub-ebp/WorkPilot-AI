@@ -4,7 +4,7 @@ Check if our modifications are in the compiled JavaScript code
 """
 
 import os
-import json
+
 
 def check_compiled_js():
     """Check if our modifications are in the compiled JS"""
@@ -19,7 +19,7 @@ def check_compiled_js():
         return False
     
     try:
-        with open(main_js_path, 'r', encoding='utf-8') as f:
+        with open(main_js_path, encoding='utf-8') as f:
             content = f.read()
         
         # Check for our key modifications in the compiled code
@@ -61,7 +61,7 @@ def check_process_restart():
     # Check if there are any Electron processes running
     try:
         import subprocess
-        result = subprocess.run(['tasklist', '/FI', 'IMAGENAME eq electron.exe'], 
+        result = subprocess.run(['tasklist', '/FI', 'IMAGENAME eq electron.exe'],
                               capture_output=True, text=True, shell=True)
         
         if 'electron.exe' in result.stdout:

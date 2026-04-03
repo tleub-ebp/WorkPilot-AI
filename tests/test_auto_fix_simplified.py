@@ -2,10 +2,11 @@
 """
 Tests simplifiés pour auto-fix loop - sans dépendances externes
 """
-import sys
 import json
-from pathlib import Path
+import sys
 import tempfile
+from pathlib import Path
+
 import pytest
 
 # Add backend to path
@@ -16,9 +17,9 @@ sys.path.insert(0, str(backend_dir))
 def test_basic_imports():
     from qa.auto_fix_loop import (
         DEFAULT_MAX_AUTO_FIX_ATTEMPTS,
+        AutoFixAttempt,
         AutoFixLoop,
         AutoFixTestResult,
-        AutoFixAttempt,
     )
     assert DEFAULT_MAX_AUTO_FIX_ATTEMPTS > 0
 
@@ -53,7 +54,7 @@ def test_create_instance():
 
 
 def test_dataclasses():
-    from qa.auto_fix_loop import AutoFixTestResult, AutoFixAttempt
+    from qa.auto_fix_loop import AutoFixAttempt, AutoFixTestResult
     result = AutoFixTestResult(
         executed=True,
         passed=False,

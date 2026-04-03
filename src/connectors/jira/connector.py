@@ -15,10 +15,6 @@ import logging
 from typing import Any
 
 from src.connectors.jira.client import JiraClient
-from src.connectors.jira.exceptions import (
-    JiraAPIError,
-    JiraConfigurationError,
-)
 from src.connectors.jira.models import (
     JiraComment,
     JiraIssue,
@@ -546,8 +542,8 @@ class JiraConnector:
         """
         title = qa_result.get("title", "QA Failure")
         description_parts = [
-            f"**QA Failure Report**",
-            f"",
+            "**QA Failure Report**",
+            "",
             qa_result.get("description", ""),
         ]
 

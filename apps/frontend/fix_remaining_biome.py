@@ -8,8 +8,8 @@ Two main issues to fix:
    Move comment to before the element and inline role= with the opening tag.
 """
 
-import re
 import os
+import re
 import subprocess
 
 FRONTEND_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -143,7 +143,7 @@ def add_usesemanticelements_before_element(content):
 def fix_file(filepath):
     """Apply all fixes to a file."""
     try:
-        with open(filepath, 'r', encoding='utf-8', errors='replace') as f:
+        with open(filepath, encoding='utf-8', errors='replace') as f:
             content = f.read()
     except Exception as e:
         print(f'ERROR reading {filepath}: {e}')

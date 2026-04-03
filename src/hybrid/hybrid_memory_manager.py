@@ -4,15 +4,14 @@ Intégration du système de mémoire BMAD avec les capacités autonomous
 Fournit une interface unifiée pour la mémoire persistante hybride
 """
 
-import os
-import json
-import time
-from datetime import datetime, timedelta
-from typing import Dict, List, Any, Optional
-from pathlib import Path
 import hashlib
+import json
+from datetime import datetime
+from pathlib import Path
+from typing import Any
 
 from ide_detector import IDEDetector
+
 try:
     from memory.bmad_memory import BMADMemorySystem
 except ImportError:
@@ -42,12 +41,12 @@ class HybridMemoryManager:
         # Méta-données
         self.session_id = self._generate_session_id()
         
-    def _load_hybrid_config(self) -> Dict[str, Any]:
+    def _load_hybrid_config(self) -> dict[str, Any]:
         """Charge la configuration hybride"""
         config_path = self.project_root / "_bmad" / "_config" / "hybrid-config.json"
         
         if config_path.exists():
-            with open(config_path, 'r', encoding='utf-8') as f:
+            with open(config_path, encoding='utf-8') as f:
                 return json.load(f)
         
         # Configuration par défaut
@@ -66,7 +65,7 @@ class HybridMemoryManager:
         ide_name = self.ide_info.get('ide_name', 'generic')
         return hashlib.sha256(f"{timestamp}_{ide_name}".encode()).hexdigest()[:16]
     
-    def store_decision(self, decision_type: str, decision_data: Dict[str, Any]) -> str:
+    def store_decision(self, decision_type: str, decision_data: dict[str, Any]) -> str:
         """
         Stocke une décision dans la mémoire hybride
         
@@ -103,7 +102,7 @@ class HybridMemoryManager:
         else:
             return self._store_generic_decision(enhanced_data)
     
-    def _store_architecture_decision(self, data: Dict[str, Any]) -> str:
+    def _store_architecture_decision(self, data: dict[str, Any]) -> str:
         """Stocke une décision architecturale"""
         from ..memory.bmad_memory import ArchitectureMemory
         
@@ -124,7 +123,7 @@ class HybridMemoryManager:
             self.bmad_memory.add_architecture_decision(decision)
         return decision.decision_id
     
-    def _store_implementation_decision(self, data: Dict[str, Any]) -> str:
+    def _store_implementation_decision(self, data: dict[str, Any]) -> str:
         """Stocke une décision d'implémentation"""
         if not self.bmad_memory:
             return "no_memory_system"
@@ -152,7 +151,7 @@ class HybridMemoryManager:
             self.bmad_memory.add_entry(entry)
         return entry.id
     
-    def _store_sprint_decision(self, data: Dict[str, Any]) -> str:
+    def _store_sprint_decision(self, data: dict[str, Any]) -> str:
         """Stocke une décision de sprint"""
         if not self.bmad_memory:
             return "no_memory_system"
@@ -180,7 +179,7 @@ class HybridMemoryManager:
             self.bmad_memory.add_entry(entry)
         return entry.id
     
-    def _store_generic_decision(self, data: Dict[str, Any]) -> str:
+    def _store_generic_decision(self, data: dict[str, Any]) -> str:
         """Stocke une décision générique"""
         if not self.bmad_memory:
             return "no_memory_system"
@@ -207,7 +206,7 @@ class HybridMemoryManager:
             self.bmad_memory.add_entry(entry)
         return entry.id
     
-    def retrieve_patterns(self, pattern_type: str, context: Dict[str, Any] = None) -> List[Dict[str, Any]]:
+    def retrieve_patterns(self, pattern_type: str, context: dict[str, Any] = None) -> list[dict[str, Any]]:
         """
         Récupère les patterns pertinents de la mémoire
         
@@ -230,7 +229,7 @@ class HybridMemoryManager:
         else:
             return self._retrieve_generic_patterns(context)
     
-    def _retrieve_architecture_patterns(self, context: Dict[str, Any] = None) -> List[Dict[str, Any]]:
+    def _retrieve_architecture_patterns(self, context: dict[str, Any] = None) -> list[dict[str, Any]]:
         """Récupère les patterns architecturaux"""
         if not self.bmad_memory:
             return []
@@ -260,7 +259,7 @@ class HybridMemoryManager:
         patterns.sort(key=lambda x: (x["quality_score"], x["timestamp"]), reverse=True)
         return patterns
     
-    def _retrieve_implementation_patterns(self, context: Dict[str, Any] = None) -> List[Dict[str, Any]]:
+    def _retrieve_implementation_patterns(self, context: dict[str, Any] = None) -> list[dict[str, Any]]:
         """Récupère les patterns d'implémentation"""
         if not self.bmad_memory:
             return []
@@ -288,7 +287,7 @@ class HybridMemoryManager:
         
         return patterns
     
-    def _retrieve_sprint_patterns(self, context: Dict[str, Any] = None) -> List[Dict[str, Any]]:
+    def _retrieve_sprint_patterns(self, context: dict[str, Any] = None) -> list[dict[str, Any]]:
         """Récupère les patterns de sprint"""
         if not self.bmad_memory:
             return []
@@ -315,7 +314,7 @@ class HybridMemoryManager:
         
         return patterns
     
-    def _retrieve_generic_patterns(self, context: Dict[str, Any] = None) -> List[Dict[str, Any]]:
+    def _retrieve_generic_patterns(self, context: dict[str, Any] = None) -> list[dict[str, Any]]:
         """Récupère les patterns génériques"""
         if not self.bmad_memory:
             return []
@@ -345,7 +344,7 @@ class HybridMemoryManager:
         
         return patterns
     
-    def get_recommendations(self, current_context: Dict[str, Any]) -> List[Dict[str, Any]]:
+    def get_recommendations(self, current_context: dict[str, Any]) -> list[dict[str, Any]]:
         """
         Génère des recommandations basées sur la mémoire et le contexte actuel
         
@@ -389,7 +388,7 @@ class HybridMemoryManager:
         
         return recommendations
     
-    def _infer_decision_type(self, context: Dict[str, Any]) -> str:
+    def _infer_decision_type(self, context: dict[str, Any]) -> str:
         """Déduit le type de décision nécessaire basé sur le contexte"""
         context_str = str(context).lower()
         
@@ -402,7 +401,7 @@ class HybridMemoryManager:
         else:
             return "generic"
     
-    def _check_pattern_applicability(self, pattern: Dict[str, Any], current_context: Dict[str, Any]) -> bool:
+    def _check_pattern_applicability(self, pattern: dict[str, Any], current_context: dict[str, Any]) -> bool:
         """Vérifie si un pattern est applicable au contexte actuel"""
         # Vérifier la compatibilité IDE
         if pattern.get("ide_specific", False):
@@ -418,7 +417,7 @@ class HybridMemoryManager:
         # Vérifier la pertinence du contexte
         return True
     
-    def _get_ide_recommendations(self, context: Dict[str, Any]) -> List[Dict[str, Any]]:
+    def _get_ide_recommendations(self, context: dict[str, Any]) -> list[dict[str, Any]]:
         """Génère des recommandations spécifiques à l'IDE"""
         ide_recommendations = []
         
@@ -444,7 +443,7 @@ class HybridMemoryManager:
         
         return ide_recommendations
     
-    def _calculate_quality_score(self, data: Dict[str, Any]) -> float:
+    def _calculate_quality_score(self, data: dict[str, Any]) -> float:
         """Calcule un score de qualité pour les données"""
         score = 0.0
         
@@ -476,7 +475,7 @@ class HybridMemoryManager:
         session_id = self.session_id
         return hashlib.md5(f"{timestamp}_{session_id}".encode()).hexdigest()[:16]
     
-    def get_memory_statistics(self) -> Dict[str, Any]:
+    def get_memory_statistics(self) -> dict[str, Any]:
         """Retourne des statistiques sur la mémoire hybride"""
         if self.bmad_memory:
             bmad_stats = self.bmad_memory.get_memory_statistics()

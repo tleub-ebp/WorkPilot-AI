@@ -5,7 +5,6 @@ Configuration management for JIRA integration.
 """
 
 import os
-from typing import Optional
 
 
 class Settings:
@@ -13,10 +12,10 @@ class Settings:
 
     def __init__(
         self,
-        server_url: Optional[str] = None,
-        username: Optional[str] = None,
-        api_token: Optional[str] = None,
-        project: Optional[str] = None,
+        server_url: str | None = None,
+        username: str | None = None,
+        api_token: str | None = None,
+        project: str | None = None,
     ):
         """Initialize JIRA settings.
 

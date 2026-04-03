@@ -1,5 +1,7 @@
+from typing import Any
+
 from .llm_base import BaseLLMProvider
-from typing import Any, Dict
+
 
 class AnthropicProvider(BaseLLMProvider):
     def __init__(self, api_key: str, model: str = "claude-3-sonnet-20240229"):
@@ -31,10 +33,10 @@ class AnthropicProvider(BaseLLMProvider):
         )
         return response.content[0].text if hasattr(response, "content") and response.content else str(response)
 
-    def get_capabilities(self) -> Dict[str, Any]:
+    def get_capabilities(self) -> dict[str, Any]:
         return {"models": [self.model], "provider": "anthropic"}
 
-    def get_config_schema(self) -> Dict[str, Any]:
+    def get_config_schema(self) -> dict[str, Any]:
         return {"api_key": "str", "model": "str"}
 
     @classmethod

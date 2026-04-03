@@ -16,8 +16,8 @@ FileChange, TimelineEntry, and export/import functionality.
 """
 
 import json
-import sys
 import os
+import sys
 from pathlib import Path
 
 import pytest
@@ -36,7 +36,6 @@ from apps.backend.agents.session_history import (
     SessionStatus,
     TimelineEntry,
 )
-
 
 # -----------------------------------------------------------------------
 # SessionAction

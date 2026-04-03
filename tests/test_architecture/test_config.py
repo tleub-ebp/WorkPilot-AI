@@ -4,13 +4,13 @@ Tests for architecture/config.py — config loading and inference.
 
 import json
 import os
+
+# Add backend to sys.path for imports
+import sys
 import tempfile
 from pathlib import Path
 
 import pytest
-
-# Add backend to sys.path for imports
-import sys
 
 sys.path.insert(0, str(Path(__file__).parent.parent.parent / "apps" / "backend"))
 

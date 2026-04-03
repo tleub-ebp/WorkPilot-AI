@@ -15,6 +15,7 @@
 """
 
 import json
+
 import pytest
 
 from apps.backend.agents.migration_agent import (
@@ -31,7 +32,6 @@ from apps.backend.agents.migration_agent import (
     StackAnalyzer,
     StepRisk,
 )
-
 
 # ---------------------------------------------------------------------------
 # DetectedDependency tests

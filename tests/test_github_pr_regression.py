@@ -24,7 +24,6 @@ if str(_backend_dir) not in sys.path:
 from core.git_provider import detect_git_provider
 from worktree import PullRequestResult, WorktreeInfo, WorktreeManager
 
-
 # ============================================================================
 # Fixtures
 # ============================================================================

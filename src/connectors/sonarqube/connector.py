@@ -14,11 +14,6 @@ import logging
 from typing import Any
 
 from src.connectors.sonarqube.client import SonarQubeClient
-from src.connectors.sonarqube.exceptions import (
-    SonarQubeAPIError,
-    SonarQubeConfigurationError,
-    SonarQubeError,
-)
 from src.connectors.sonarqube.models import (
     QualityGateStatus,
     SonarIssue,

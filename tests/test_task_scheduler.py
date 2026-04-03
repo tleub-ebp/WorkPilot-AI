@@ -19,7 +19,6 @@ from apps.backend.scheduling.scheduler import (
     TaskStatus,
 )
 
-
 # ── CronExpression tests ───────────────────────────────────────────
 
 

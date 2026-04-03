@@ -15,10 +15,6 @@ import logging
 from typing import Any
 
 from src.connectors.postman.client import PostmanClient
-from src.connectors.postman.exceptions import (
-    PostmanAPIError,
-    PostmanConfigurationError,
-)
 from src.connectors.postman.models import (
     PostmanCollection,
     PostmanCollectionRun,
@@ -337,7 +333,7 @@ class PostmanConnector:
                             "    pm.expect(pm.response.code).to.be.within(200, 299);",
                             "});",
                             "",
-                            f"pm.test('Response time is acceptable', function () {{",
+                            "pm.test('Response time is acceptable', function () {",
                             "    pm.expect(pm.response.responseTime).to.be.below(2000);",
                             "});",
                         ],

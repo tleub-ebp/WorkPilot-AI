@@ -7,7 +7,8 @@ pour utiliser des providers personnalisés via LLM Gateway.
 """
 
 import logging
-from typing import Any, Dict, Optional
+from typing import Any
+
 from .llm_base import BaseLLMProvider
 
 logger = logging.getLogger(__name__)
@@ -61,7 +62,7 @@ class CursorProvider(BaseLLMProvider):
             logger.error(f"Cursor generation failed: {e}")
             raise
 
-    def get_capabilities(self) -> Dict[str, Any]:
+    def get_capabilities(self) -> dict[str, Any]:
         """Retourne les capacités du provider Cursor."""
         return {
             "models": [
@@ -86,7 +87,7 @@ class CursorProvider(BaseLLMProvider):
             "llm_gateway_support": True
         }
 
-    def get_config_schema(self) -> Dict[str, Any]:
+    def get_config_schema(self) -> dict[str, Any]:
         """Retourne le schéma de configuration pour Cursor."""
         return {
             "api_key": "str (required)",

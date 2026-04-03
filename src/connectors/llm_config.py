@@ -4,8 +4,9 @@ Permet l'enregistrement, la récupération et la validation des paramètres prov
 """
 import json
 import logging
-from typing import Dict, Any, Optional
 from pathlib import Path
+from typing import Any
+
 from apps.backend.core.auth import get_auth_token
 
 logger = logging.getLogger(__name__)
@@ -21,7 +22,7 @@ CONFIG_FILE = Path.home() / ".work_pilot_ai_llm_providers.json"
 class ProviderConfig:
     """Configuration class for LLM providers."""
     
-    def __init__(self, provider: str, model: str, api_key: Optional[str] = None, base_url: Optional[str] = None, **kwargs):
+    def __init__(self, provider: str, model: str, api_key: str | None = None, base_url: str | None = None, **kwargs):
         self.provider = provider
         self.model = model
         self.api_key = api_key
@@ -31,7 +32,7 @@ class ProviderConfig:
             setattr(self, key, value)
     
     @classmethod
-    def load_provider_config(cls, phase: str, spec_dir: str, cli_provider: Optional[str] = None, cli_model: Optional[str] = None):
+    def load_provider_config(cls, phase: str, spec_dir: str, cli_provider: str | None = None, cli_model: str | None = None):
         """Load provider configuration from various sources.
         
         Priority:
@@ -65,21 +66,21 @@ class ProviderConfig:
         # or in the saved provider config file
         return cls(provider=provider, model=model)
 
-def save_provider_config(name: str, config: Dict[str, Any]) -> None:
+def save_provider_config(name: str, config: dict[str, Any]) -> None:
     """Enregistre la configuration d'un provider (clé API, endpoint, etc.)."""
     all_configs = load_all_provider_configs()
     all_configs[name] = config
     with open(CONFIG_FILE, "w", encoding="utf-8") as f:
         json.dump(all_configs, f, indent=2)
 
-def load_provider_config(name: str) -> Dict[str, Any] | None:
+def load_provider_config(name: str) -> dict[str, Any] | None:
     """Charge la configuration d'un provider donné."""
     all_configs = load_all_provider_configs()
     return all_configs.get(name)
 
-def load_all_provider_configs() -> Dict[str, Any]:
+def load_all_provider_configs() -> dict[str, Any]:
     if CONFIG_FILE.exists():
-        with open(CONFIG_FILE, "r", encoding="utf-8") as f:
+        with open(CONFIG_FILE, encoding="utf-8") as f:
             return json.load(f)
     return {}
 

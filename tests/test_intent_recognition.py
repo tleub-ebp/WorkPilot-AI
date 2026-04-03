@@ -16,6 +16,7 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
+from apps.backend.implementation_plan import WorkflowType
 from apps.backend.intent import (
     Intent,
     IntentAnalysis,
@@ -23,10 +24,9 @@ from apps.backend.intent import (
     IntentConfidence,
     IntentFeedback,
     IntentLearner,
-    IntentRecommender,
     IntentRecognizer,
+    IntentRecommender,
 )
-from apps.backend.implementation_plan import WorkflowType
 
 
 class TestIntentModels:

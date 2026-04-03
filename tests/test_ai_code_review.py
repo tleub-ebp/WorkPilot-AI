@@ -17,8 +17,8 @@ ReviewRule, diff parsing, static analysis, scoring, and LLM integration.
 - AICodeReviewer stats: 3
 """
 
-import sys
 import os
+import sys
 from unittest.mock import MagicMock
 
 import pytest
@@ -26,18 +26,17 @@ import pytest
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 from apps.backend.review.ai_code_review import (
-    AICodeReviewer,
     BUILTIN_RULES,
+    AICodeReviewer,
     DiffFile,
     ReviewCategory,
     ReviewComment,
     ReviewResult,
     ReviewRule,
     ReviewSeverity,
-    parse_unified_diff,
     _detect_language,
+    parse_unified_diff,
 )
-
 
 # -----------------------------------------------------------------------
 # Sample diffs for testing

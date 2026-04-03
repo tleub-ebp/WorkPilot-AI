@@ -8,8 +8,8 @@ Nécessite une authentification via GitHub CLI (gh) ou token GitHub avec les per
 import json
 import logging
 import subprocess
-from typing import Dict, Any, Optional
-from datetime import datetime, timedelta
+from datetime import datetime
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -22,7 +22,7 @@ class CopilotUsageConnector:
     Copilot au niveau de l'organisation ou de l'entreprise.
     """
 
-    def __init__(self, gh_token: Optional[str] = None):
+    def __init__(self, gh_token: str | None = None):
         """
         Initialise le connecteur Copilot.
         
@@ -36,14 +36,14 @@ class CopilotUsageConnector:
         """Trouve l'exécutable GitHub CLI."""
         try:
             result = subprocess.run(
-                ["which", "gh"], 
-                capture_output=True, 
-                text=True, 
+                ["which", "gh"],
+                capture_output=True,
+                text=True,
                 timeout=5
             )
             if result.returncode == 0:
                 return result.stdout.strip()
-        except:
+        except Exception:
             pass
         
         # Fallback sur "gh" (doit être dans le PATH)
@@ -86,7 +86,7 @@ class CopilotUsageConnector:
             logger.error(error_msg)
             raise RuntimeError(error_msg)
         except FileNotFoundError as e:
-            error_msg = f"GitHub CLI (gh) not found. Install from https://cli.github.com/"
+            error_msg = "GitHub CLI (gh) not found. Install from https://cli.github.com/"
             logger.error(error_msg)
             raise RuntimeError(error_msg)
 
@@ -108,7 +108,7 @@ class CopilotUsageConnector:
                 raise RuntimeError("GitHub CLI not authenticated. Run 'gh auth login'")
             raise
 
-    def get_copilot_enterprise_usage(self, days: int = 28) -> Dict[str, Any]:
+    def get_copilot_enterprise_usage(self, days: int = 28) -> dict[str, Any]:
         """
         Récupère les métriques d'utilisation Copilot au niveau de l'entreprise.
         
@@ -128,7 +128,7 @@ class CopilotUsageConnector:
 
             # Récupérer les entreprises de l'utilisateur
             enterprises_result = self._run_gh_command([
-                "api", 
+                "api",
                 "user/enterprises",
                 "--jq", ".[].slug"
             ])
@@ -149,7 +149,7 @@ class CopilotUsageConnector:
                 try:
                     # Utiliser le bon endpoint pour les métriques d'entreprise
                     usage_result = self._run_gh_command([
-                        "api", 
+                        "api",
                         f"/enterprises/{enterprise}/copilot/metrics/reports/enterprise-1-day",
                         "--method", "GET",
                         "-f", f"day={yesterday}"
@@ -179,7 +179,7 @@ class CopilotUsageConnector:
             # Fallback sur les métriques d'organisation
             return self.get_copilot_organization_usage(days)
 
-    def _download_report(self, report_url: str) -> Dict[str, Any]:
+    def _download_report(self, report_url: str) -> dict[str, Any]:
         """
         Télécharge et analyse un rapport Copilot depuis une URL signée.
         
@@ -208,7 +208,7 @@ class CopilotUsageConnector:
             logger.error(f"Failed to download report from {report_url}: {e}")
             raise RuntimeError(f"Failed to download report: {e}")
 
-    def get_copilot_organization_usage(self, days: int = 28) -> Dict[str, Any]:
+    def get_copilot_organization_usage(self, days: int = 28) -> dict[str, Any]:
         """
         Récupère les métriques d'utilisation Copilot au niveau de l'organisation.
         
@@ -224,7 +224,7 @@ class CopilotUsageConnector:
         try:
             # Récupérer les organisations de l'utilisateur
             orgs_result = self._run_gh_command([
-                "api", 
+                "api",
                 "user/orgs",
                 "--jq", ".[].login"
             ])
@@ -248,7 +248,7 @@ class CopilotUsageConnector:
                 try:
                     # Utiliser le bon endpoint pour les métriques d'organisation
                     usage_result = self._run_gh_command([
-                        "api", 
+                        "api",
                         f"/orgs/{org}/copilot/metrics/reports/organization-1-day",
                         "--method", "GET",
                         "-f", f"day={yesterday}"
@@ -283,7 +283,7 @@ class CopilotUsageConnector:
             if permission_errors:
                 raise RuntimeError(f"Insufficient permissions: {permission_errors[0]}")
             elif not_found_errors:
-                raise RuntimeError(f"No Copilot usage data found for any organization")
+                raise RuntimeError("No Copilot usage data found for any organization")
             else:
                 raise RuntimeError("No Copilot usage data found for any organization")
             
@@ -291,7 +291,7 @@ class CopilotUsageConnector:
             logger.error(f"Failed to get organization usage: {e}")
             raise
 
-    def get_copilot_usage_summary(self) -> Dict[str, Any]:
+    def get_copilot_usage_summary(self) -> dict[str, Any]:
         """
         Récupère un résumé des métriques d'utilisation Copilot.
         
@@ -347,7 +347,7 @@ class CopilotUsageConnector:
                 "available": False
             }
 
-    def _format_usage_data(self, raw_data: Dict[str, Any], level: str, org_name: str = None) -> Dict[str, Any]:
+    def _format_usage_data(self, raw_data: dict[str, Any], level: str, org_name: str = None) -> dict[str, Any]:
         """
         Formate les données brutes d'utilisation en un format standardisé.
         
@@ -407,7 +407,7 @@ class CopilotUsageConnector:
         }
 
 
-def get_copilot_usage_metrics() -> Dict[str, Any]:
+def get_copilot_usage_metrics() -> dict[str, Any]:
     """
     Point d'entrée principal pour récupérer les métriques d'utilisation Copilot.
     

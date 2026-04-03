@@ -4,8 +4,8 @@ Script to create a Copilot API profile for testing
 """
 
 import json
-import os
 from pathlib import Path
+
 
 def create_copilot_profile():
     """Create a Copilot profile in the profiles file"""
@@ -21,7 +21,7 @@ def create_copilot_profile():
     
     # Read existing profiles
     try:
-        with open(profiles_file, 'r', encoding='utf-8') as f:
+        with open(profiles_file, encoding='utf-8') as f:
             profiles_data = json.load(f)
     except Exception as e:
         print(f"❌ Error reading profiles file: {e}")
@@ -65,7 +65,7 @@ def create_copilot_profile():
         with open(profiles_file, 'w', encoding='utf-8') as f:
             json.dump(profiles_data, f, indent=2, ensure_ascii=False)
         
-        print(f"✅ Created Copilot profile:")
+        print("✅ Created Copilot profile:")
         print(f"   ID: {copilot_profile['id']}")
         print(f"   Name: {copilot_profile['name']}")
         print(f"   Base URL: {copilot_profile['baseUrl']}")

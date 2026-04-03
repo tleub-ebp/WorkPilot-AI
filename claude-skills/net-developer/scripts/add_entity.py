@@ -8,10 +8,9 @@ Usage:
     python scripts/add_entity.py --name "Customer" --properties "string:Name,string:Email,DateTime:CreatedAt" --project "MyApp"
 """
 
-import os
-import re
 import argparse
 from pathlib import Path
+
 
 def parse_properties(properties_string):
     """Parse la chaîne de propriétés et retourne une liste de (type, nom)."""
@@ -244,7 +243,7 @@ def update_db_context(project_dir, project_name, entity_name):
         create_db_context(project_dir, project_name)
     
     # Lire le contenu existant
-    with open(app_context_file, "r") as f:
+    with open(app_context_file) as f:
         content = f.read()
     
     # Ajouter le DbSet
@@ -528,7 +527,7 @@ def update_dependency_injection(project_dir, project_name, entity_name):
 def update_program_cs(program_file, project_name, entity_name):
     """Met à jour le fichier Program.cs pour l'injection de dépendances."""
     
-    with open(program_file, "r") as f:
+    with open(program_file) as f:
         content = f.read()
     
     # Ajouter les using nécessaires
@@ -642,7 +641,7 @@ def main():
         print("1. Vérifiez et ajustez les fichiers générés")
         print("2. Ajoutez les migrations EF Core si nécessaire:")
         print(f"   dotnet ef migrations add Add{entity_name}Entity")
-        print(f"   dotnet ef database update")
+        print("   dotnet ef database update")
         print("3. Exécutez les tests pour vérifier:")
         print("   dotnet test")
         

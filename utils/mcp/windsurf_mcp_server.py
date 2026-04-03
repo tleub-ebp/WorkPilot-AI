@@ -7,23 +7,14 @@ Permet d'utiliser les modèles Windsurf (Base Model, Premier, etc.) via MCP
 import asyncio
 import json
 import logging
-from typing import Any, Dict, List, Optional
+from typing import Any
+
 from mcp.server import Server
 from mcp.server.models import InitializationOptions
 from mcp.server.stdio import stdio_server
 from mcp.types import (
-    CallToolRequest,
     CallToolResult,
-    GetPromptRequest,
-    GetPromptResult,
-    ListPromptsRequest,
-    ListPromptsResult,
-    ListResourcesRequest,
-    ListResourcesResult,
-    ListToolsRequest,
     ListToolsResult,
-    Prompt,
-    Resource,
     TextContent,
     Tool,
 )
@@ -54,7 +45,7 @@ class WindsurfMCPServer:
                             "properties": {
                                 "prompt": {"type": "string", "description": "Le prompt à envoyer"},
                                 "model": {
-                                    "type": "string", 
+                                    "type": "string",
                                     "enum": ["swe-1.5", "claude-opus-4.6", "claude-sonnet-4.6", "gpt-5.2-low-thinking", "swe-1.5-fast", "claude-sonnet-4.5"],
                                     "description": "Modèle à utiliser",
                                     "default": "claude-sonnet-4.6"
@@ -83,7 +74,7 @@ class WindsurfMCPServer:
             )
         
         @self.server.call_tool()
-        async def call_tool(name: str, arguments: Dict[str, Any]) -> CallToolResult:
+        async def call_tool(name: str, arguments: dict[str, Any]) -> CallToolResult:
             """Exécute un outil MCP"""
             try:
                 if name == "windsurf_chat":
@@ -101,7 +92,7 @@ class WindsurfMCPServer:
                     isError=True
                 )
     
-    async def _windsurf_chat(self, args: Dict[str, Any]) -> CallToolResult:
+    async def _windsurf_chat(self, args: dict[str, Any]) -> CallToolResult:
         """Chat avec les modèles Windsurf - Appel API réel"""
         prompt = args.get("prompt", "")
         model = args.get("model", "claude-sonnet-4.6")
@@ -115,7 +106,6 @@ class WindsurfMCPServer:
         try:
             # Importer les bibliothèques nécessaires
             import aiohttp
-            import json
             
             # Vérifier le token OAuth
             if not self.oauth_token:
@@ -131,7 +121,7 @@ class WindsurfMCPServer:
                 "https://api.openai.com/v1/chat/completions",  # OpenAI
                 "https://api.anthropic.com/v1/messages",       # Anthropic/Claude
                 "https://api.windsurf.com/v1/chat/completions",
-                "https://windsurf.com/api/v1/chat/completions", 
+                "https://windsurf.com/api/v1/chat/completions",
                 "https://api.codeium.com/v1/chat/completions",
                 "https://server.codeium.com/api/v1/chat/completions"
             ]
@@ -182,9 +172,6 @@ class WindsurfMCPServer:
                 
                 # Si aucune URL n'a fonctionné, essayer avec le backend local
                 try:
-                    # Utiliser le provider Windsurf du backend local
-                    from apps.backend.services.provider_registry import provider_registry
-                    
                     # Simuler une réponse via le backend local
                     return CallToolResult(
                         content=[TextContent(type="text", text=f"[Modèle: {model}] Hello! Je suis le modèle {model} de Windsurf. Je suis un agent d'ingénierie logicielle prêt à vous aider. Comment puis-je vous assister aujourd'hui ?")]
@@ -206,7 +193,7 @@ class WindsurfMCPServer:
                 isError=True
             )
     
-    async def _windsurf_models(self, args: Dict[str, Any]) -> CallToolResult:
+    async def _windsurf_models(self, args: dict[str, Any]) -> CallToolResult:
         """Liste les modèles disponibles dans l'IDE"""
         
         # Modèles correspondants à ceux de l'IDE Windsurf/Cascade
@@ -221,7 +208,7 @@ class WindsurfMCPServer:
             "claude-opus-4.6": {
                 "name": "Claude Opus 4.6",
                 "description": "Modèle Anthropic flagship - Intelligence supérieure",
-                "access": "enterprise", 
+                "access": "enterprise",
                 "status": "accessible",
                 "capabilities": ["chat", "code", "reasoning", "analysis", "vision"]
             },
@@ -229,7 +216,7 @@ class WindsurfMCPServer:
                 "name": "Claude Sonnet 4.6",
                 "description": "Modèle Anthropic avancé - Équilibre performance/vitesse",
                 "access": "enterprise",
-                "status": "accessible", 
+                "status": "accessible",
                 "capabilities": ["chat", "code", "reasoning", "analysis"]
             },
             "gpt-5.2-low-thinking": {
@@ -259,7 +246,7 @@ class WindsurfMCPServer:
             content=[TextContent(type="text", text=json.dumps(ide_models, indent=2))]
         )
     
-    async def _windsurf_status(self, args: Dict[str, Any]) -> CallToolResult:
+    async def _windsurf_status(self, args: dict[str, Any]) -> CallToolResult:
         """Vérifie le statut"""
         # TODO: Vérifier réellement le statut via API
         status = {

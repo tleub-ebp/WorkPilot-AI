@@ -17,13 +17,12 @@ Verification checklist:
 """
 
 import inspect
+import os
+import sys
 from dataclasses import fields as dataclass_fields
 from unittest.mock import MagicMock
 
 import pytest
-
-import sys
-import os
 
 from src.config.settings import Settings
 

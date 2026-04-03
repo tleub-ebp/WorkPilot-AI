@@ -77,7 +77,7 @@ Pour chaque wave :
 2. **Spawn des agents** — Un processus Python par sous-tâche, chacun exécutant `run_autonomous_agent()` avec le contexte de sa sous-tâche uniquement
 3. **Monitoring temps réel** — Suivi de progression via les marqueurs `__EXEC_PHASE__` stdout
 4. **Gestion des échecs** — Si un agent échoue, retry automatique ou marquage pour exécution séquentielle dans la wave suivante
-5. **Rate limit coordination** — Répartition intelligente des agents sur les profils Claude disponibles via `getRunningTasksByProfile()`
+5. **Rate limit coordination** — Répartition intelligente des agents sur les profils disponibles du LLM choisi (Claude, OpenAI, Github Copilot, Gemini, Windsurf, etc...) via `getRunningTasksByProfile()`
 
 ### Merge Coordinator
 
@@ -258,6 +258,7 @@ Transformer le système Agent Replay existant (recorder: 669 lignes, store: 457 
 - UI de timeline interactive (composant React)
 - Fork engine (re-créer le contexte agent à partir d'un checkpoint)
 - Decision scoring algorithm
+- Ajout d'un toggle dans les settings afin d'activer/désactiver la feature
 
 ---
 
@@ -295,23 +296,23 @@ Exploiter le système Graphiti (3000+ lignes) pour créer une **intelligence cro
 ### Architecture Graphiti étendue
 
 ```
-┌─────────────────────────────────────────┐
-│              Context Mesh                │
-│                                          │
-│  ┌─────────┐  ┌─────────┐  ┌─────────┐ │
+┌───────────────────────────────────────────┐
+│               Context Mesh                │
+│                                           │
+│  ┌──────────┐  ┌──────────┐  ┌──────────┐ │
 │  │Project A │  │Project B │  │Project C │ │
 │  │ Graphiti │  │ Graphiti │  │ Graphiti │ │
 │  │  Graph   │  │  Graph   │  │  Graph   │ │
 │  └────┬─────┘  └────┬─────┘  └────┬─────┘ │
-│       │              │              │       │
-│       └──────┬───────┴──────┬───────┘       │
-│              ▼              ▼               │
-│  ┌───────────────────────────────────────┐ │
-│  │       Cross-Project Knowledge Graph    │ │
-│  │  Patterns │ Conventions │ Decisions    │ │
-│  │  Skills   │ Failures   │ Preferences  │ │
-│  └───────────────────────────────────────┘ │
-└─────────────────────────────────────────────┘
+│       │             │             │       │
+│       └──────┬──────┴──────┬──────┘       │
+│              ▼             ▼              │
+│  ┌──────────────────────────────────────┐ │
+│  │       Cross-Project Knowledge Graph  │ │
+│  │  Patterns │ Conventions │ Decisions  │ │
+│  │  Skills   │ Failures   │ Preferences │ │
+│  └──────────────────────────────────────┘ │
+└───────────────────────────────────────────┘
 ```
 
 ### Infrastructure existante
@@ -327,6 +328,7 @@ Exploiter le système Graphiti (3000+ lignes) pour créer une **intelligence cro
 - Pattern matcher cross-projet
 - Engineering handbook generator
 - UI pour visualiser et naviguer le knowledge graph
+- Ajout d'un toggle dans les settings afin d'activer/désactiver la feature
 
 ---
 
@@ -373,21 +375,26 @@ Transformer le pair programming actuel (768 lignes, pas de file-watching) en un 
 ### Architecture
 
 ```
-┌─────────────────────────────────────────────────┐
-│              Live Companion Engine                │
-│                                                   │
-│  ┌────────────┐  ┌──────────────┐  ┌───────────┐│
-│  │ File Watch  │  │  Incremental │  │ Suggestion ││
-│  │ Service     │──│  Analyzer    │──│ Engine     ││
-│  │ (chokidar)  │  │  (debounced) │  │ (Claude)   ││
-│  └────────────┘  └──────────────┘  └───────────┘│
-│        │                │                 │       │
-│        ▼                ▼                 ▼       │
-│  ┌────────────┐  ┌──────────────┐  ┌───────────┐│
-│  │ LSP Bridge  │  │  Takeover    │  │ Notif     ││
-│  │             │  │  Detector    │  │ Manager   ││
-│  └────────────┘  └──────────────┘  └───────────┘│
-└─────────────────────────────────────────────────┘
+┌────────────────────────────────────────────────────┐
+│              Live Companion Engine                 │
+│                                                    │
+│  ┌─────────────┐  ┌──────────────┐  ┌────────────┐ │
+│  │ File Watch  │  │  Incremental │  │ Suggestion │ │
+│  │ Service     │──│  Analyzer    │──│ Engine     │ │
+│  │ (chokidar)  │  │  (debounced) │  │ (Claude,   │ │
+│  │             │  │              │  │ ChatGPT,   │ │
+│  │             │  │              │  │ Copilot,   │ │
+│  │             │  │              │  │ WindSurf,  │ │
+│  │             │  │              │  │ Gemini,    | |
+|  |             |  |              |  | etc...)    │ │
+│  └─────────────┘  └──────────────┘  └────────────┘ │
+│        │                 │                │        │
+│        ▼                 ▼                ▼        │
+│  ┌─────────────┐  ┌──────────────┐  ┌────────────┐ │
+│  │ LSP Bridge  │  │  Takeover    │  │ Notif      │ │
+│  │             │  │  Detector    │  │ Manager    │ │
+│  └─────────────┘  └──────────────┘  └────────────┘ │
+└────────────────────────────────────────────────────┘
 ```
 
 ### Infrastructure existante
@@ -405,6 +412,7 @@ Transformer le pair programming actuel (768 lignes, pas de file-watching) en un 
 - Takeover detector (inactivité + complexité du code)
 - LSP bridge pour context sémantique
 - UI non-intrusive pour les suggestions (toast/sidebar)
+- Ajout d'un toggle dans les settings afin d'activer/désactiver la feature
 
 ---
 

@@ -101,6 +101,6 @@ if __name__ == "__main__":
     print("4. Check the console output")
     print("\n💡 Expected output:")
     print("- ✅ window.electronAPI available")
-    print("- ✅ requestUsageUpdate available") 
+    print("- ✅ requestUsageUpdate available")
     print("- 📥 Response from UsageMonitor with data or error")
     print("- 📨 Usage update event (if successful)")

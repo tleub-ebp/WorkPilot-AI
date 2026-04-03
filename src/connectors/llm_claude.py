@@ -1,5 +1,7 @@
+from typing import Any
+
 from .llm_base import BaseLLMProvider
-from typing import Any, Dict
+
 
 class ClaudeProvider(BaseLLMProvider):
     def __init__(self, api_key: str, model: str = "claude-3-sonnet-20240229"):
@@ -9,7 +11,7 @@ class ClaudeProvider(BaseLLMProvider):
 
     def connect(self) -> None:
         try:
-            from claude_agent_sdk import ClaudeSDKClient, ClaudeAgentOptions
+            from claude_agent_sdk import ClaudeAgentOptions, ClaudeSDKClient
         except ImportError:
             raise ImportError("claude-agent-sdk package is required. Install with: pip install claude-agent-sdk")
         self._ClaudeSDKClient = ClaudeSDKClient
@@ -36,10 +38,10 @@ class ClaudeProvider(BaseLLMProvider):
         response = client.query_sync(prompt)
         return response["content"] if isinstance(response, dict) and "content" in response else str(response)
 
-    def get_capabilities(self) -> Dict[str, Any]:
+    def get_capabilities(self) -> dict[str, Any]:
         return {"models": [self.model], "provider": "claude"}
 
-    def get_config_schema(self) -> Dict[str, Any]:
+    def get_config_schema(self) -> dict[str, Any]:
         return {"api_key": "str", "model": "str"}
 
     @classmethod

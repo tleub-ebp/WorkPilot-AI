@@ -1,5 +1,6 @@
 import requests
 
+
 class GrepaiClient:
     def __init__(self, base_url="http://localhost:9000"):
         self.base_url = base_url

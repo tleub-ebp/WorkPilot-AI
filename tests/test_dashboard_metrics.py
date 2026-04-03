@@ -17,8 +17,8 @@ MergeRecord, DashboardSnapshot, and export functionality.
 """
 
 import json
-import sys
 import os
+import sys
 
 import pytest
 
@@ -36,7 +36,6 @@ from apps.backend.scheduling.dashboard_metrics import (
     TaskStatus,
     TokenRecord,
 )
-
 
 # -----------------------------------------------------------------------
 # TaskRecord

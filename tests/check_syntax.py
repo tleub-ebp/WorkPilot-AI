@@ -4,11 +4,12 @@ Syntax checker for auto-fix loop files
 import sys
 from pathlib import Path
 
+
 def check_syntax(filepath):
     """Check Python file for syntax errors."""
     try:
         # Use utf-8-sig to automatically handle and strip BOM
-        with open(filepath, 'r', encoding='utf-8-sig') as f:
+        with open(filepath, encoding='utf-8-sig') as f:
             source_code = f.read()
         compile(source_code, str(filepath), 'exec')
         print(f"✓ {filepath.name} - syntaxe OK")

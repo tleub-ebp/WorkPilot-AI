@@ -7,6 +7,7 @@ import subprocess
 import sys
 from pathlib import Path
 
+
 def run_command(cmd, description, cwd=None):
     """Execute une commande et retourne le résultat."""
     print(f"\n{'='*80}")

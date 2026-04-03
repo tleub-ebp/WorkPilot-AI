@@ -12,7 +12,7 @@ def check_compiled_code():
     usage_monitor_file = "C:\\Users\\thomas.leberre\\Repositories\\WorkPilot-AI\\apps\\frontend\\src\\main\\claude-profile\\usage-monitor.ts"
     
     try:
-        with open(usage_monitor_file, 'r', encoding='utf-8') as f:
+        with open(usage_monitor_file, encoding='utf-8') as f:
             content = f.read()
         
         # Check for our key modifications

@@ -4,11 +4,11 @@ Permet d'auto-détecter les connecteurs installés/configurés (pattern plugin).
 """
 import importlib
 import pkgutil
-from typing import List, Type
+
 from .llm_base import BaseLLMProvider
 
 
-def discover_llm_providers() -> List[Type[BaseLLMProvider]]:
+def discover_llm_providers() -> list[type[BaseLLMProvider]]:
     """Retourne la liste des classes de providers LLM disponibles dynamiquement."""
     import src.connectors
     providers = []
@@ -22,7 +22,7 @@ def discover_llm_providers() -> List[Type[BaseLLMProvider]]:
     return providers
 
 
-def get_provider_by_name(name: str) -> Type[BaseLLMProvider] | None:
+def get_provider_by_name(name: str) -> type[BaseLLMProvider] | None:
     """Retourne la classe provider correspondant au nom donné."""
     for provider_cls in discover_llm_providers():
         if provider_cls.get_name() == name:

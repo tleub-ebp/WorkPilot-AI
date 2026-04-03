@@ -4,11 +4,10 @@ Détecte l'IDE actuel et adapte le comportement en conséquence
 Compatible avec Claude Code, GitHub Copilot, Cursor, Windsurf, etc.
 """
 
+import json
 import os
 import re
-from typing import Dict, Optional, List
 from pathlib import Path
-import json
 
 
 class IDEDetector:
@@ -89,7 +88,7 @@ class IDEDetector:
             }
         }
     
-    def detect_ide(self, project_path: str = None) -> Dict[str, any]:
+    def detect_ide(self, project_path: str = None) -> dict[str, any]:
         """
         Détecte l'IDE actuel basé sur plusieurs indicateurs
         
@@ -138,7 +137,7 @@ class IDEDetector:
             'recommendations': self._get_recommendations(detected_ide)
         }
     
-    def _check_environment(self) -> List[str]:
+    def _check_environment(self) -> list[str]:
         """Vérifie les variables d'environnement"""
         indicators = []
         
@@ -156,7 +155,7 @@ class IDEDetector:
         
         return indicators
     
-    def _check_config_files(self, project_path: str) -> List[str]:
+    def _check_config_files(self, project_path: str) -> list[str]:
         """Vérifie les fichiers de configuration"""
         indicators = []
         
@@ -185,7 +184,7 @@ class IDEDetector:
         
         return indicators
     
-    def _check_running_processes(self) -> List[str]:
+    def _check_running_processes(self) -> list[str]:
         """Vérifie les processus en cours"""
         indicators = []
         
@@ -212,7 +211,7 @@ class IDEDetector:
         
         return indicators
     
-    def _check_project_structure(self, project_path: str) -> List[str]:
+    def _check_project_structure(self, project_path: str) -> list[str]:
         """Vérifie la structure du projet pour des indices"""
         indicators = []
         
@@ -233,7 +232,7 @@ class IDEDetector:
         
         return indicators
     
-    def _check_temp_files(self, project_path: str) -> List[str]:
+    def _check_temp_files(self, project_path: str) -> list[str]:
         """Vérifie les fichiers temporaires"""
         indicators = []
         
@@ -252,7 +251,7 @@ class IDEDetector:
         
         return indicators
     
-    def _analyze_indicators(self, indicators: List[str]) -> str:
+    def _analyze_indicators(self, indicators: list[str]) -> str:
         """Analyse les indicateurs pour déterminer l'IDE"""
         
         scores = {}
@@ -276,7 +275,7 @@ class IDEDetector:
         
         return 'generic'
     
-    def _calculate_confidence(self, indicators: List[str], detected_ide: str) -> float:
+    def _calculate_confidence(self, indicators: list[str], detected_ide: str) -> float:
         """Calcule la confiance dans la détection"""
         
         if detected_ide == 'generic':
@@ -304,7 +303,7 @@ class IDEDetector:
         
         return confidence
     
-    def _get_recommendations(self, ide_name: str) -> List[str]:
+    def _get_recommendations(self, ide_name: str) -> list[str]:
         """Retourne des recommandations spécifiques à l'IDE"""
         
         recommendations = {
@@ -342,7 +341,7 @@ class IDEDetector:
         
         return recommendations.get(ide_name, recommendations['generic'])
     
-    def adapt_communication_style(self, ide_info: Dict[str, any], content: str) -> str:
+    def adapt_communication_style(self, ide_info: dict[str, any], content: str) -> str:
         """Adapte le style de communication selon l'IDE détecté"""
         
         style = ide_info.get('communication_style', 'neutral')

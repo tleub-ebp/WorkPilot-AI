@@ -16,8 +16,8 @@ TemplateCategory, builtin templates, rendering, and YAML import/export.
 - Builtin templates validation: 4
 """
 
-import sys
 import os
+import sys
 import tempfile
 from datetime import datetime, timezone
 
@@ -32,7 +32,6 @@ from apps.backend.scheduling.task_templates import (
     TemplateCategory,
     TemplateVariable,
 )
-
 
 # -----------------------------------------------------------------------
 # TemplateVariable

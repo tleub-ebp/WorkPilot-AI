@@ -7,7 +7,12 @@ import pytest
 backend_path = Path(__file__).parent.parent / "apps" / "backend"
 sys.path.insert(0, str(backend_path))
 
-from services.provider_registry import list_available_providers, validate_provider, get_provider_status
+from services.provider_registry import (
+    get_provider_status,
+    list_available_providers,
+    validate_provider,
+)
+
 
 def test_list_available_providers(monkeypatch):
     monkeypatch.setenv("OPENAI_API_KEY", "sk-test")

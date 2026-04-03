@@ -94,7 +94,7 @@ def mock_is_build_complete(spec_dir: Path) -> bool:
         return False
     
     try:
-        with open(plan_file, 'r') as f:
+        with open(plan_file) as f:
             plan = json.load(f)
     except (json.JSONDecodeError, OSError):
         return False
@@ -118,6 +118,7 @@ backend_path = Path(__file__).parent.parent / "apps" / "backend"
 sys.path.insert(0, str(backend_path))
 
 # Import qa functions directly from the criteria module to avoid mocking issues
+from qa import MAX_QA_ITERATIONS
 from qa.criteria import (
     get_qa_iteration_count,
     get_qa_signoff_status,
@@ -129,7 +130,6 @@ from qa.criteria import (
     should_run_fixes,
     should_run_qa,
 )
-from qa import MAX_QA_ITERATIONS
 
 
 # Cleanup fixture to restore original modules after all tests in this module

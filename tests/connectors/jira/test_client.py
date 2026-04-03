@@ -7,12 +7,13 @@ Tests the Jira HTTP client including:
 - Error handling and exception mapping
 """
 
-from unittest.mock import MagicMock, patch, PropertyMock
+import sys
+from pathlib import Path
+from unittest.mock import MagicMock, PropertyMock, patch
 
 import pytest
 import requests
-from pathlib import Path
-import sys
+
 
 # Helper function to import modules directly
 def import_module_direct(module_name, file_path):

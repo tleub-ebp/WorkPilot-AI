@@ -3,8 +3,6 @@
 Check and fix localStorage provider selection
 """
 
-import json
-from pathlib import Path
 
 def check_provider_context():
     """Check what provider is currently selected"""

@@ -13,7 +13,7 @@ Mode 2 (REST Fallback): Uses the OpenAI-compatible REST API at
 import asyncio
 import logging
 import os
-from typing import Any, Dict
+from typing import Any
 
 from .llm_base import BaseLLMProvider
 
@@ -45,7 +45,10 @@ class WindsurfProvider(BaseLLMProvider):
         """Establish connection — tries local gRPC first, then REST."""
         # Try Mode 1: Local gRPC
         try:
-            from integrations.windsurf_proxy.auth import discover_credentials, is_windsurf_running
+            from integrations.windsurf_proxy.auth import (
+                discover_credentials,
+                is_windsurf_running,
+            )
 
             if is_windsurf_running():
                 self._credentials = discover_credentials()
@@ -140,7 +143,7 @@ class WindsurfProvider(BaseLLMProvider):
             logger.error(f"Windsurf REST generation failed: {e}")
             raise
 
-    def get_capabilities(self) -> Dict[str, Any]:
+    def get_capabilities(self) -> dict[str, Any]:
         """Return provider capabilities."""
         return {
             "models": [
@@ -169,7 +172,7 @@ class WindsurfProvider(BaseLLMProvider):
             "modes": ["grpc_local", "rest_remote"],
         }
 
-    def get_config_schema(self) -> Dict[str, Any]:
+    def get_config_schema(self) -> dict[str, Any]:
         """Return configuration schema."""
         return {
             "api_key": "str (optional — auto-detected from Windsurf IDE or env var WINDSURF_API_KEY)",

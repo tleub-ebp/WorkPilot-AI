@@ -25,7 +25,6 @@ from apps.backend.scheduling.local_model_manager import (
     _post_json,
 )
 
-
 # ── RuntimeStatus tests ───────────────────────────────────────────
 
 

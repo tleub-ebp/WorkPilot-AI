@@ -4,9 +4,13 @@ Tests: FeedbackEntry (5), FeedbackPattern (3), FeedbackCollector (17), PromptOpt
 """
 
 import json
+
 import pytest
 
 from apps.backend.agents.feedback_learning import (
+    CATEGORY_PROMPT_RULES,
+    PHASE_PROMPT_RULES,
+    AgentPhase,
     FeedbackCategory,
     FeedbackCollector,
     FeedbackEntry,
@@ -16,11 +20,7 @@ from apps.backend.agents.feedback_learning import (
     PatternType,
     PromptAdjustment,
     PromptOptimizer,
-    CATEGORY_PROMPT_RULES,
-    PHASE_PROMPT_RULES,
-    AgentPhase,
 )
-
 
 # ---------------------------------------------------------------------------
 # FeedbackEntry tests

@@ -4,9 +4,7 @@ Script pour trouver manuellement le token Windsurf OAuth
 """
 
 import os
-import json
-import base64
-from pathlib import Path
+
 
 def search_windsurf_token():
     """Recherche approfondie du token Windsurf OAuth"""
@@ -47,7 +45,7 @@ def search_file_for_token(file_path):
         # Convertir en texte si possible
         try:
             content_str = content.decode('utf-8', errors='ignore')
-        except:
+        except Exception:
             return
         
         # Patterns de recherche
@@ -96,7 +94,7 @@ def save_token(token, source_file):
         # Créer un script de test
         test_script = os.path.join(os.getcwd(), "test_windsurf_token.py")
         with open(test_script, "w") as f:
-            f.write(f'''#!/usr/bin/env python3
+            f.write('''#!/usr/bin/env python3
 import os
 
 # Charger le token Windsurf
@@ -104,7 +102,7 @@ with open(".env.windsurf", "r") as f:
     for line in f:
         if line.startswith("WINDSURF_OAUTH_TOKEN="):
             token = line.split("=", 1)[1].strip()
-            print(f"Token Windsurf: {{token[:20]}}...{{token[-10:]}}")
+            print(f"Token Windsurf: {token[:20]}...{token[-10:]}")
             
             # Tester avec l'intégration
             os.environ["WINDSURF_OAUTH_TOKEN"] = token
@@ -115,7 +113,7 @@ with open(".env.windsurf", "r") as f:
             
             # Vérifier le statut
             status = registry.check_provider_status("windsurf")
-            print(f"Status Windsurf: {{status}}")
+            print(f"Status Windsurf: {status}")
             
             break
 ''')

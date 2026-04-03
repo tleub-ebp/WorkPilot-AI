@@ -4,9 +4,10 @@ Script pour connecter le compte Windsurf dans la page "Comptes"
 Vérifie la configuration et active le provider Windsurf
 """
 
+import json
 import os
 import sys
-import json
+
 import requests
 
 # Ajouter le répertoire du backend au path
@@ -23,7 +24,7 @@ def check_windsurf_config():
     
     if os.path.exists(token_file):
         print(f"✅ Fichier {token_file} trouvé")
-        with open(token_file, 'r') as f:
+        with open(token_file) as f:
             for line in f:
                 if line.startswith('WINDSURF_OAUTH_TOKEN='):
                     oauth_token = line.split('=', 1)[1].strip()
@@ -114,7 +115,7 @@ def activate_windsurf_account():
     config_file = os.path.join(os.path.dirname(__file__), '..', '..', '..', 'utils', 'config', 'configured_providers.json')
     
     if os.path.exists(config_file):
-        with open(config_file, 'r') as f:
+        with open(config_file) as f:
             config = json.load(f)
         
         # Le fichier a une structure {"providers": [...]}
@@ -164,7 +165,7 @@ def test_windsurf_models():
         # Vérifier le statut du provider Windsurf
         status = provider_registry.check_provider_status("windsurf")
         
-        print(f"📊 Statut Windsurf:")
+        print("📊 Statut Windsurf:")
         print(f"   • Available: {status.available}")
         print(f"   • Authenticated: {status.authenticated}")
         if status.error:

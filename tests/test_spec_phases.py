@@ -707,8 +707,8 @@ class TestPhaseSpecWriting:
         class MockResult:
             valid: bool
             checkpoint: str = "spec_document"
-            errors: Optional[list] = None
-            fixes: Optional[list] = None
+            errors: list | None = None
+            fixes: list | None = None
 
             def __post_init__(self):
                 self.errors = self.errors or []

@@ -8,13 +8,12 @@ Tests the repository client lifecycle including:
 - AzureDevOpsError passthrough for all operations
 """
 
+import os
+import sys
 from types import SimpleNamespace
 from unittest.mock import MagicMock
 
 import pytest
-
-import sys
-import os
 
 from src.connectors.azure_devops.exceptions import (
     APIError,

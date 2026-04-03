@@ -22,8 +22,8 @@ RefactoringResult, and all smell detection heuristics.
 - RefactoringAgent — stats: 4
 """
 
-import sys
 import os
+import sys
 
 import pytest
 
@@ -40,7 +40,6 @@ from apps.backend.agents.refactorer import (
     SmellSeverity,
     SmellType,
 )
-
 
 # -----------------------------------------------------------------------
 # CodeSmell

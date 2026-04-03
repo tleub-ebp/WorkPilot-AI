@@ -8,12 +8,12 @@ Usage:
     python scripts/create_project.py --name "ECommerce" --type webapi --framework net8.0 --database sqlserver
 """
 
-import os
+import argparse
 import shlex
 import subprocess
-import argparse
 import sys
 from pathlib import Path
+
 
 def run_command(command, cwd=None):
     """Exécute une commande et retourne le résultat."""

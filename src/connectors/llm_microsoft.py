@@ -1,5 +1,7 @@
+from typing import Any
+
 from .llm_base import BaseLLMProvider
-from typing import Any, Dict
+
 
 class MicrosoftAzureProvider(BaseLLMProvider):
     def __init__(self, api_key: str, model: str = "gpt-4", endpoint: str = "https://api.openai.azure.com/v1"):
@@ -34,10 +36,10 @@ class MicrosoftAzureProvider(BaseLLMProvider):
         )
         return response.choices[0].message["content"]
 
-    def get_capabilities(self) -> Dict[str, Any]:
+    def get_capabilities(self) -> dict[str, Any]:
         return {"models": [self.model], "provider": "microsoft"}
 
-    def get_config_schema(self) -> Dict[str, Any]:
+    def get_config_schema(self) -> dict[str, Any]:
         return {"api_key": "str", "model": "str", "endpoint": "str"}
 
     @classmethod

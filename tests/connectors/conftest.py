@@ -1,9 +1,8 @@
 """
 pytest configuration for connector tests
 """
-import sys
-import os
 import importlib.util
+import sys
 from pathlib import Path
 
 # Add the project root to the Python path for connector tests

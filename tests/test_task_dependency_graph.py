@@ -19,6 +19,7 @@
 """
 
 import pytest
+
 from apps.backend.scheduling.task_dependency_graph import (
     CriticalPath,
     DependencyEdge,
@@ -27,7 +28,6 @@ from apps.backend.scheduling.task_dependency_graph import (
     TaskNode,
     TaskNodeStatus,
 )
-
 
 # ---------------------------------------------------------------------------
 # TaskNode tests (3)

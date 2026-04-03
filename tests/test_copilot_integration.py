@@ -12,17 +12,16 @@ pipeline works correctly for both Claude and Copilot paths:
 """
 
 import asyncio
+import importlib.util
 import os
 import sys
+import types as _types
 from pathlib import Path
+from pathlib import Path as _Path
 from types import SimpleNamespace
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
-
-import importlib.util
-import types as _types
-from pathlib import Path as _Path
 
 # Mock claude_agent_sdk before any imports that transitively need it
 _mock_sdk = MagicMock()
@@ -110,7 +109,6 @@ from core.agent_client import (
     MessageRole,
     SubagentDefinition,
 )
-
 
 # =============================================================================
 # Integration: Full Claude Path
@@ -447,6 +445,7 @@ class TestProcessAgentStreamIntegration:
     async def test_copilot_client_through_process_agent_stream(self):
         """CopilotAgentClient messages should be processed by process_agent_stream."""
         import time
+
         from runners.github.services.sdk_utils import process_agent_stream
 
         client = CopilotAgentClient(model="gpt-4o", github_token="gho_test_oauth")

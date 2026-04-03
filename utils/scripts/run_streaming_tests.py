@@ -8,8 +8,8 @@ Script to run all streaming-related tests.
 
 import subprocess
 import sys
-import os
 from pathlib import Path
+
 
 def run_command(cmd, cwd=None, description=""):
     """Run a command and return success status."""
@@ -60,11 +60,11 @@ def main():
     print("-" * 30)
     
     backend_tests = [
-        (["python", "-m", "pytest", "streaming/test_agent_wrapper.py", "-v"], 
+        (["python", "-m", "pytest", "streaming/test_agent_wrapper.py", "-v"],
          backend_path, "Agent Wrapper Tests"),
-        (["python", "-m", "pytest", "streaming/test_websocket_server.py", "-v"], 
+        (["python", "-m", "pytest", "streaming/test_websocket_server.py", "-v"],
          backend_path, "WebSocket Server Tests"),
-        (["python", "-m", "pytest", "streaming/test_cli_integration.py", "-v"], 
+        (["python", "-m", "pytest", "streaming/test_cli_integration.py", "-v"],
          backend_path, "CLI Integration Tests"),
     ]
     

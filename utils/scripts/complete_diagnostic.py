@@ -4,8 +4,10 @@ Complete diagnostic of the Copilot integration chain
 """
 
 import json
-import requests
 from pathlib import Path
+
+import requests
+
 
 def test_complete_chain():
     """Test the complete integration chain"""
@@ -21,7 +23,7 @@ def test_complete_chain():
         print("❌ Profiles file not found")
         return False
     
-    with open(profiles_file, 'r', encoding='utf-8') as f:
+    with open(profiles_file, encoding='utf-8') as f:
         profiles_data = json.load(f)
     
     active_profile_id = profiles_data.get('activeProfileId')
@@ -48,7 +50,7 @@ def test_complete_chain():
         return False
     
     # Step 3: Check backend connectivity
-    print(f"\n3. 🌐 Testing backend connectivity...")
+    print("\n3. 🌐 Testing backend connectivity...")
     try:
         response = requests.get('http://localhost:9000/providers/usage/copilot', timeout=5)
         if response.status_code == 200:
@@ -64,12 +66,12 @@ def test_complete_chain():
         return False
     
     # Step 4: Simulate the exact getUsageForProvider logic
-    print(f"\n4. 🔄 Simulating getUsageForProvider logic...")
+    print("\n4. 🔄 Simulating getUsageForProvider logic...")
     
     # This simulates the logic in getUsageForProvider
     profiles_file_path = "c:\\Users\\thomas.leberre\\Repositories\\WorkPilot-AI\\configured_providers.json"
     try:
-        with open(profiles_file_path, 'r', encoding='utf-8') as f:
+        with open(profiles_file_path, encoding='utf-8') as f:
             providers_config = json.load(f)
         
         # Find Copilot in configured providers
@@ -90,11 +92,11 @@ def test_complete_chain():
         return False
     
     # Step 5: Check if our modifications are in the compiled code
-    print(f"\n5. 🔍 Checking compiled code modifications...")
+    print("\n5. 🔍 Checking compiled code modifications...")
     
     main_js_path = "c:\\Users\\thomas.leberre\\Repositories\\WorkPilot-AI\\apps\\frontend\\out\\main\\index.js"
     try:
-        with open(main_js_path, 'r', encoding='utf-8') as f:
+        with open(main_js_path, encoding='utf-8') as f:
             compiled_code = f.read()
         
         checks = [
@@ -113,7 +115,7 @@ def test_complete_chain():
         print(f"❌ Error checking compiled code: {e}")
     
     # Step 6: Final diagnosis
-    print(f"\n6. 🎯 Final Diagnosis:")
+    print("\n6. 🎯 Final Diagnosis:")
     print("✅ All components seem correctly configured")
     print("❌ But the frontend still returns data: null")
     print("\n💡 Possible causes:")

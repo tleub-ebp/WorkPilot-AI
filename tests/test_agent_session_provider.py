@@ -13,16 +13,15 @@ Covers:
 - Error handling (concurrency, rate limit, auth, generic)
 """
 
+import importlib.util
 import sys
+import types as _types_mod
 from pathlib import Path
+from pathlib import Path as _Path
 from types import SimpleNamespace
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
-
-import importlib.util
-import types as _types_mod
-from pathlib import Path as _Path
 
 # Add the apps/backend directory to the Python path
 backend_path = Path(__file__).parent.parent / "apps" / "backend"
@@ -55,7 +54,6 @@ from core.agent_client import (
     ContentBlockType,
     MessageRole,
 )
-
 
 # =============================================================================
 # Helpers — minimal AgentClient for testing session runner

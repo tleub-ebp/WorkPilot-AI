@@ -4,12 +4,11 @@ Tests for architecture/import_analyzer.py — import graph building and violatio
 
 import json
 import os
+import sys
 import tempfile
 from pathlib import Path
 
 import pytest
-
-import sys
 
 sys.path.insert(0, str(Path(__file__).parent.parent.parent / "apps" / "backend"))
 

@@ -2,11 +2,17 @@
 Unit tests for SSRF protection in provider_api.py
 """
 
-import pytest
 import ipaddress
 import socket
 from unittest.mock import patch
-from apps.backend.provider_api import validate_url_ssrf, AUTHORIZED_URLS, PRIVATE_IP_RANGES
+
+import pytest
+
+from apps.backend.provider_api import (
+    AUTHORIZED_URLS,
+    PRIVATE_IP_RANGES,
+    validate_url_ssrf,
+)
 
 
 class TestSSRFProtection:

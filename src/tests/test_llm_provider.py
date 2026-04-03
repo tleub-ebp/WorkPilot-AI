@@ -2,12 +2,18 @@
 Tests unitaires pour la découverte, la configuration et la sélection des providers LLM.
 """
 import os
+
 import pytest
+
 from src.connectors.llm_base import BaseLLMProvider
 from src.connectors.llm_config import (
-    save_provider_config, load_provider_config, delete_provider_config, list_provider_configs
+    delete_provider_config,
+    list_provider_configs,
+    load_provider_config,
+    save_provider_config,
 )
 from src.connectors.llm_discovery import discover_llm_providers
+
 
 class DummyProvider(BaseLLMProvider):
     def __init__(self, key=None):

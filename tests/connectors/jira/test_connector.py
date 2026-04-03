@@ -9,11 +9,12 @@ Tests the Jira connector including:
 - Kanban import
 """
 
+import sys
+from pathlib import Path
 from unittest.mock import MagicMock, patch
 
 import pytest
-from pathlib import Path
-import sys
+
 
 # Helper function to import modules directly
 def import_module_direct(module_name, file_path):

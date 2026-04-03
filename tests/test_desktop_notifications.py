@@ -22,6 +22,7 @@
 """
 
 import pytest
+
 from apps.backend.ui.desktop_notifications import (
     DesktopNotification,
     DesktopNotificationManager,
@@ -30,7 +31,6 @@ from apps.backend.ui.desktop_notifications import (
     NotificationType,
     PeriodicSummary,
 )
-
 
 # ---------------------------------------------------------------------------
 # NotificationAction tests (2)

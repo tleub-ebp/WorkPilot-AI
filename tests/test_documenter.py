@@ -21,8 +21,8 @@ ModuleInfo, DocGenerationResult, and all generation formats.
 - DocumentationAgent — stats: 2
 """
 
-import sys
 import os
+import sys
 import tempfile
 
 import pytest
@@ -40,7 +40,6 @@ from apps.backend.agents.documenter import (
     ModuleInfo,
     SymbolDoc,
 )
-
 
 # -----------------------------------------------------------------------
 # SymbolDoc

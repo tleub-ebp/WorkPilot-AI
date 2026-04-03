@@ -10,9 +10,8 @@ Tests the core client lifecycle including:
 - Connection info retrieval
 """
 
-import sys
 import os
-
+import sys
 from unittest.mock import MagicMock, patch
 
 import pytest

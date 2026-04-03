@@ -10,19 +10,21 @@ Usage:
     python scripts/analyze_phase2_results.py [--input FILE] [--output FILE]
 """
 
+import argparse
 import json
 import sys
-import argparse
-from pathlib import Path
 from datetime import datetime
-from collections import defaultdict
+from pathlib import Path
 
 # Add project root to Python path
 project_root = Path(__file__).parent.parent
 sys.path.insert(0, str(project_root))
 
 try:
-    from apps.backend.core.optimization.phase2_evaluation import Phase2DecisionFramework, RiskAssessment
+    from apps.backend.core.optimization.phase2_evaluation import (
+        Phase2DecisionFramework,
+        RiskAssessment,
+    )
 except ImportError as e:
     print(f"❌ Error importing optimization modules: {e}")
     print("Make sure the optimization module is properly installed.")
@@ -54,7 +56,7 @@ class Phase2ResultsAnalyzer:
             print(f"📂 Using latest results file: {self.input_file}")
         
         try:
-            with open(self.input_file, 'r') as f:
+            with open(self.input_file) as f:
                 self.results = json.load(f)
             
             print(f"📂 Loaded evaluation results from: {self.input_file}")

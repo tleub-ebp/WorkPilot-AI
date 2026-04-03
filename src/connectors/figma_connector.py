@@ -20,11 +20,10 @@ Usage:
     image = await connector.export_node_image("file_key", "node_id")
 """
 
-import json
 import logging
 import os
 from dataclasses import dataclass, field
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -37,14 +36,14 @@ class FigmaNode:
     id: str
     name: str
     type: str
-    children: List["FigmaNode"] = field(default_factory=list)
-    styles: Dict[str, Any] = field(default_factory=dict)
-    absolute_bounding_box: Optional[Dict[str, float]] = None
-    fills: List[Dict[str, Any]] = field(default_factory=list)
-    strokes: List[Dict[str, Any]] = field(default_factory=list)
-    effects: List[Dict[str, Any]] = field(default_factory=list)
-    characters: Optional[str] = None  # For TEXT nodes
-    style: Optional[Dict[str, Any]] = None  # Typography style
+    children: list["FigmaNode"] = field(default_factory=list)
+    styles: dict[str, Any] = field(default_factory=dict)
+    absolute_bounding_box: dict[str, float] | None = None
+    fills: list[dict[str, Any]] = field(default_factory=list)
+    strokes: list[dict[str, Any]] = field(default_factory=list)
+    effects: list[dict[str, Any]] = field(default_factory=list)
+    characters: str | None = None  # For TEXT nodes
+    style: dict[str, Any] | None = None  # Typography style
 
 
 @dataclass
@@ -53,7 +52,7 @@ class FigmaDesignToken:
     name: str
     value: str
     category: str  # color, typography, spacing, effect
-    figma_style_key: Optional[str] = None
+    figma_style_key: str | None = None
 
 
 @dataclass
@@ -61,7 +60,7 @@ class FigmaExportResult:
     """Result of exporting an image from Figma."""
     node_id: str
     image_url: str
-    image_data: Optional[str] = None  # base64
+    image_data: str | None = None  # base64
     format: str = "png"
     scale: float = 2.0
 
@@ -77,13 +76,13 @@ class FigmaConnector:
     - Posting comments back to Figma designs
     """
 
-    def __init__(self, access_token: Optional[str] = None):
+    def __init__(self, access_token: str | None = None):
         self.access_token = access_token or os.getenv("FIGMA_ACCESS_TOKEN", "")
         if not self.access_token:
             logger.warning("No Figma access token provided. Figma operations will fail.")
 
     @property
-    def _headers(self) -> Dict[str, str]:
+    def _headers(self) -> dict[str, str]:
         """HTTP headers for Figma API requests."""
         return {
             "X-Figma-Token": self.access_token,
@@ -98,7 +97,7 @@ class FigmaConnector:
     # FILE & NODE OPERATIONS
     # =========================================================================
 
-    async def get_file(self, file_key: str) -> Dict[str, Any]:
+    async def get_file(self, file_key: str) -> dict[str, Any]:
         """
         Get the full Figma file data.
 
@@ -119,8 +118,8 @@ class FigmaConnector:
             return response.json()
 
     async def get_file_nodes(
-        self, file_key: str, node_ids: List[str]
-    ) -> Dict[str, Any]:
+        self, file_key: str, node_ids: list[str]
+    ) -> dict[str, Any]:
         """
         Get specific nodes from a Figma file.
 
@@ -143,7 +142,7 @@ class FigmaConnector:
             response.raise_for_status()
             return response.json()
 
-    async def get_file_styles(self, file_key: str) -> Dict[str, Any]:
+    async def get_file_styles(self, file_key: str) -> dict[str, Any]:
         """
         Get all styles defined in a Figma file.
 
@@ -224,10 +223,10 @@ class FigmaConnector:
     async def export_multiple_nodes(
         self,
         file_key: str,
-        node_ids: List[str],
+        node_ids: list[str],
         format: str = "png",
         scale: float = 2.0,
-    ) -> List[FigmaExportResult]:
+    ) -> list[FigmaExportResult]:
         """Export multiple Figma nodes as images."""
         import httpx
 
@@ -260,7 +259,7 @@ class FigmaConnector:
     # DESIGN TOKEN EXTRACTION
     # =========================================================================
 
-    async def extract_design_tokens(self, file_key: str) -> List[FigmaDesignToken]:
+    async def extract_design_tokens(self, file_key: str) -> list[FigmaDesignToken]:
         """
         Extract design tokens from a Figma file's styles.
 
@@ -272,7 +271,7 @@ class FigmaConnector:
         Returns:
             List of extracted design tokens.
         """
-        tokens: List[FigmaDesignToken] = []
+        tokens: list[FigmaDesignToken] = []
 
         try:
             styles_data = await self.get_file_styles(file_key)
@@ -323,8 +322,8 @@ class FigmaConnector:
         return tokens
 
     async def _resolve_token_values(
-        self, file_key: str, tokens: List[FigmaDesignToken]
-    ) -> List[FigmaDesignToken]:
+        self, file_key: str, tokens: list[FigmaDesignToken]
+    ) -> list[FigmaDesignToken]:
         """Resolve actual values for design tokens by reading the file."""
         try:
             file_data = await self.get_file(file_key)
@@ -352,8 +351,8 @@ class FigmaConnector:
         self,
         file_key: str,
         message: str,
-        node_id: Optional[str] = None,
-    ) -> Dict[str, Any]:
+        node_id: str | None = None,
+    ) -> dict[str, Any]:
         """
         Post a comment on a Figma file or specific node.
 
@@ -369,7 +368,7 @@ class FigmaConnector:
         """
         import httpx
 
-        payload: Dict[str, Any] = {"message": message}
+        payload: dict[str, Any] = {"message": message}
         if node_id:
             # Figma expects client_meta with node_id for positioned comments
             payload["client_meta"] = {"node_id": node_id}
@@ -383,7 +382,7 @@ class FigmaConnector:
             response.raise_for_status()
             return response.json()
 
-    async def get_comments(self, file_key: str) -> List[Dict[str, Any]]:
+    async def get_comments(self, file_key: str) -> list[dict[str, Any]]:
         """Get all comments on a Figma file."""
         import httpx
 
@@ -400,7 +399,7 @@ class FigmaConnector:
     # COMPONENT LISTING
     # =========================================================================
 
-    async def get_file_components(self, file_key: str) -> List[Dict[str, Any]]:
+    async def get_file_components(self, file_key: str) -> list[dict[str, Any]]:
         """
         Get all components defined in a Figma file.
 
@@ -435,7 +434,7 @@ class FigmaConnector:
         )
 
     @staticmethod
-    def parse_figma_url(url: str) -> Optional[Dict[str, str]]:
+    def parse_figma_url(url: str) -> dict[str, str] | None:
         """
         Parse a Figma URL to extract file key and optional node ID.
 
@@ -455,7 +454,7 @@ class FigmaConnector:
         if not match:
             return None
 
-        result: Dict[str, str] = {"file_key": match.group(1)}
+        result: dict[str, str] = {"file_key": match.group(1)}
 
         # Extract node-id from query params
         node_pattern = r"node-id=([^&]+)"

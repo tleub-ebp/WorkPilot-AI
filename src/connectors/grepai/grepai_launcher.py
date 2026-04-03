@@ -1,8 +1,9 @@
 import os
 import subprocess
 import time
-import yaml
+
 import requests
+import yaml
 
 CONFIG_PATH = os.path.join(os.path.dirname(__file__), 'grepai.yaml')
 GREPAI_DIR = os.path.join(os.path.dirname(__file__), 'grepai')

@@ -365,8 +365,9 @@ class TestServerEvents:
         server = CollaborationServer()
         server.connect_user("u-1", "Alice")
         # emit a TASK_UPDATE event manually
-        from realtime_collaboration import RealtimeEvent as RE
         import uuid as _uuid
+
+        from realtime_collaboration import RealtimeEvent as RE
         evt = RE(
             event_id=str(_uuid.uuid4()),
             event_type=EventType.TASK_UPDATE,

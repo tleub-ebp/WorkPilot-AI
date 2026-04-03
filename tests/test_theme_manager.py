@@ -15,6 +15,7 @@
 """
 
 import json
+
 import pytest
 
 from apps.backend.ui.theme_manager import (
@@ -26,7 +27,6 @@ from apps.backend.ui.theme_manager import (
     ThemeMode,
     ThemeSource,
 )
-
 
 # ---------------------------------------------------------------------------
 # ThemeColors tests

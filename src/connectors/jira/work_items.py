@@ -7,7 +7,7 @@ querying issues, retrieving details, and listing backlog items.
 """
 
 import logging
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 import requests
 
@@ -69,10 +69,10 @@ class JiraWorkItemsClient:
     def list_backlog_items(
         self,
         project: str,
-        issue_types: Optional[List[str]] = None,
+        issue_types: list[str] | None = None,
         max_items: int = 100,
-        status_filter: Optional[List[str]] = None,
-    ) -> List[JiraIssue]:
+        status_filter: list[str] | None = None,
+    ) -> list[JiraIssue]:
         """List issues from project backlog.
 
         Args:
@@ -176,7 +176,7 @@ class JiraWorkItemsClient:
         except Exception as e:
             raise JiraAPIError(f"Failed to get issue details: {e}")
 
-    def list_projects(self) -> List[JiraProject]:
+    def list_projects(self) -> list[JiraProject]:
         """List all accessible JIRA projects.
 
         Returns:
@@ -208,8 +208,8 @@ class JiraWorkItemsClient:
         self,
         jql: str,
         max_results: int = 50,
-        fields: Optional[List[str]] = None
-    ) -> List[JiraIssue]:
+        fields: list[str] | None = None
+    ) -> list[JiraIssue]:
         """Search issues using JQL (JIRA Query Language).
 
         Args:
@@ -255,7 +255,7 @@ class JiraWorkItemsClient:
         except Exception as e:
             raise JiraAPIError(f"Failed to search issues: {e}")
 
-    def get_issue_transitions(self, issue_key: str) -> List[Dict[str, Any]]:
+    def get_issue_transitions(self, issue_key: str) -> list[dict[str, Any]]:
         """Get available transitions for an issue.
 
         Args:
@@ -290,7 +290,7 @@ class JiraWorkItemsClient:
         except Exception as e:
             raise JiraAPIError(f"Failed to get issue transitions: {e}")
 
-    def transition_issue(self, issue_key: str, transition_id: str, comment: Optional[str] = None) -> bool:
+    def transition_issue(self, issue_key: str, transition_id: str, comment: str | None = None) -> bool:
         """Transition an issue to a new status.
 
         Args:

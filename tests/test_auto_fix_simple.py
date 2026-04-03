@@ -2,9 +2,10 @@
 """
 Tests auto-fix simplifiés - Version SANS imports externes
 """
-import sys
 import py_compile
+import sys
 from pathlib import Path
+
 import pytest
 
 backend_dir = Path(__file__).parent.parent / "apps" / "backend"

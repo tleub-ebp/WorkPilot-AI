@@ -16,6 +16,7 @@
 """
 
 import pytest
+
 from apps.backend.ui.command_palette import (
     BUILTIN_COMMANDS,
     CommandExecution,
@@ -24,7 +25,6 @@ from apps.backend.ui.command_palette import (
     SearchResult,
     fuzzy_match,
 )
-
 
 # ---------------------------------------------------------------------------
 # PaletteCommand tests (3)

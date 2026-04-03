@@ -12,10 +12,9 @@ from pathlib import Path
 # Add backend to path
 sys.path.insert(0, str(Path(__file__).parent.parent / "apps" / "backend"))
 
+from intent import IntentRecognizer, IntentRecommender
 from rich.console import Console
 from rich.panel import Panel
-
-from intent import IntentRecognizer, IntentRecommender
 
 console = Console()
 
@@ -48,7 +47,7 @@ def demo_task(description: str):
     )
 
     if recs.recommendations:
-        console.print(f"  [bold]Recommendations:[/bold]")
+        console.print("  [bold]Recommendations:[/bold]")
         for rec in recs.recommendations[:2]:
             console.print(f"    • {rec.title}")
 

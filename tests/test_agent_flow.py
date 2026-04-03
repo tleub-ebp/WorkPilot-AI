@@ -1238,8 +1238,8 @@ class TestQAFixerInteraction:
 
     def test_fixer_should_not_run_at_max_iterations(self, test_env):
         """Fixer should not run when max iterations reached."""
-        from qa.criteria import save_implementation_plan, should_run_fixes
         from qa import MAX_QA_ITERATIONS
+        from qa.criteria import save_implementation_plan, should_run_fixes
 
         _, spec_dir, _ = test_env
 
@@ -1512,13 +1512,13 @@ class TestQALoopWorkflow:
 
     def test_qa_workflow_multiple_rejections(self, test_env):
         """Test QA workflow with multiple rejections until max iterations."""
+        from qa import MAX_QA_ITERATIONS
         from qa.criteria import (
             get_qa_iteration_count,
             is_qa_rejected,
             save_implementation_plan,
             should_run_fixes,
         )
-        from qa import MAX_QA_ITERATIONS
 
         _, spec_dir, _ = test_env
 

@@ -11,11 +11,10 @@ Tests the workspace.py module functionality including:
 """
 
 import subprocess
+import sys
 from pathlib import Path
 
 import pytest
-import sys
-from pathlib import Path
 
 # Add backend path to sys.path
 backend_path = Path(__file__).parent.parent / "apps" / "backend"
@@ -29,7 +28,7 @@ from workspace import (
     has_uncommitted_changes,
     setup_workspace,
 )
-from worktree import WorktreeManager, WorktreeError
+from worktree import WorktreeError, WorktreeManager
 
 # Test constant - in the new per-spec architecture, each spec has its own worktree
 # named after the spec itself. This constant is used for test assertions.

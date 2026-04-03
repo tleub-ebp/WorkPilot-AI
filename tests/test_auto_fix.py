@@ -7,6 +7,7 @@ import subprocess
 import sys
 from pathlib import Path
 
+
 def run_test(script_name, description):
     """Exécute un test dans le répertoire courant."""
     print(f"\n{'='*80}")

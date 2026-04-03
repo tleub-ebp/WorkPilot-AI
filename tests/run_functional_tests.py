@@ -8,7 +8,6 @@ import json
 import sys
 import tempfile
 from pathlib import Path
-from unittest.mock import AsyncMock, MagicMock, patch
 
 # Add backend to path (from tests/ folder to backend)
 backend_dir = Path(__file__).parent.parent / "apps" / "backend"
@@ -61,7 +60,7 @@ async def test_complete_workflow():
                 model="test-model",
                 verbose=True
             )
-            print(f"  ✓ Loop créé")
+            print("  ✓ Loop créé")
             print(f"  ✓ Max attempts: {loop.test_info.has_tests if hasattr(loop.test_info, 'has_tests') else 'N/A'}")
         except Exception as e:
             print(f"  ❌ Erreur: {e}")
@@ -187,10 +186,10 @@ async def test_complete_workflow():
                 if "Test Execution Failed" in content and "assertion_failure" in content:
                     print(f"  ✓ Fix request créé: {len(content)} chars")
                 else:
-                    print(f"  ❌ Fix request incomplet")
+                    print("  ❌ Fix request incomplet")
                     return False
             else:
-                print(f"  ❌ Fix request non créé")
+                print("  ❌ Fix request non créé")
                 return False
                 
         except Exception as e:

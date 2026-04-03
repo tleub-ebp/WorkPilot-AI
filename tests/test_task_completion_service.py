@@ -7,11 +7,11 @@ from pathlib import Path
 from unittest.mock import MagicMock, patch
 
 import pytest
-
 from services.task_completion_service import (
     TaskCompletionService,
     create_task_completion_service,
 )
+
 
 @pytest.fixture
 def temp_project_dir():

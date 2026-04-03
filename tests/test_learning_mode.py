@@ -2,15 +2,17 @@
 Tests for Learning Mode module
 """
 
-import pytest
-from pathlib import Path
 from datetime import datetime
+from pathlib import Path
+
+import pytest
+
 from apps.backend.learning import (
+    DocType,
+    DocumentationGenerator,
+    ExplanationLevel,
     LearningMode,
     LearningModeConfig,
-    ExplanationLevel,
-    DocumentationGenerator,
-    DocType
 )
 
 

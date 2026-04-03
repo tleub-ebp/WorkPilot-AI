@@ -18,9 +18,9 @@ Usage:
 """
 
 import argparse
+import subprocess
 import sys
 from pathlib import Path
-import subprocess
 
 # Ajouter le backend au path
 sys.path.insert(0, str(Path(__file__).parent.parent / "apps" / "backend"))
@@ -38,6 +38,7 @@ def ensure_grepai():
 def handle_quality_score_command(args):
     """Gère la commande de score qualité."""
     from review.quality_scorer import QualityScorer
+
     from src.connectors.base import GrepaiConnector
     
     project_dir = Path(args.project_dir or '.')
@@ -50,7 +51,7 @@ def handle_quality_score_command(args):
     score = scorer.score_files(args.files)
     
     # Afficher les résultats
-    print(f"\n✅ Quality Analysis Results")
+    print("\n✅ Quality Analysis Results")
     print("=" * 50)
     print(f"Files analyzed: {len(args.files)}")
     print(f"Total issues found: {score.total_issues}")
@@ -66,8 +67,9 @@ def handle_quality_score_command(args):
 
 def handle_autofix_command(args):
     """Applique des fixes automatiques."""
-    from review.quality_extended import ExtendedQualityScorer
     from review.quality_autofix import AutoFixEngine
+    from review.quality_extended import ExtendedQualityScorer
+
     from src.connectors.base import GrepaiConnector
     
     project_dir = Path(args.project_dir or '.')
@@ -76,7 +78,7 @@ def handle_autofix_command(args):
     scorer = ExtendedQualityScorer(project_dir)
     score = scorer.score_pr("", args.files, "Auto-fix analysis")
     
-    print(f"\n🔧 Auto-Fix Analysis")
+    print("\n🔧 Auto-Fix Analysis")
     print("=" * 50)
     print(f"Total issues found: {score.total_issues}")
     
@@ -106,7 +108,7 @@ def handle_autofix_command(args):
         print("\n⚠️  Use --dry-run to preview or --apply to apply fixes")
         return 1
     
-    print(f"\nResults:")
+    print("\nResults:")
     print(f"  Total fixes: {result['total_fixes']}")
     print(f"  Applied: {result['applied']}")
     print(f"  Skipped: {result['skipped']}")
@@ -125,12 +127,16 @@ def handle_autofix_command(args):
 
 def handle_clones_command(args):
     """Détecte les clones de code."""
-    from review.quality_similarity import detect_clones_in_project, CodeSimilarityDetector
+    from review.quality_similarity import (
+        CodeSimilarityDetector,
+        detect_clones_in_project,
+    )
+
     from src.connectors.base import GrepaiConnector
     
     project_dir = Path(args.project_dir or '.')
     
-    print(f"\n🔍 Code Clone Detection")
+    print("\n🔍 Code Clone Detection")
     print("=" * 50)
     print(f"Project: {project_dir}")
     print(f"Min lines: {args.min_lines}")
@@ -178,11 +184,12 @@ def handle_clones_command(args):
 def handle_performance_command(args):
     """Analyse les problèmes de performance."""
     from review.quality_performance import analyze_project_performance
+
     from src.connectors.base import GrepaiConnector
     
     project_dir = Path(args.project_dir or '.')
     
-    print(f"\n⚡ Performance Analysis")
+    print("\n⚡ Performance Analysis")
     print("=" * 50)
     print(f"Project: {project_dir}")
     print()
@@ -262,7 +269,7 @@ def handle_ml_command(args):
     
     project_dir = Path(args.project_dir or '.')
     
-    print(f"\n🧠 ML Pattern Detection")
+    print("\n🧠 ML Pattern Detection")
     print("=" * 50)
     
     detector = MLPatternDetector(project_dir)
@@ -271,7 +278,7 @@ def handle_ml_command(args):
         print("Learning patterns from codebase...")
         stats = detector.learn_from_codebase()
         
-        print(f"\n✅ Learning complete!")
+        print("\n✅ Learning complete!")
         print(f"  Files analyzed: {stats['files_analyzed']}")
         print(f"  Patterns learned: {stats['patterns_learned']}")
         print(f"  Naming conventions: {stats['naming_conventions']}")
@@ -300,7 +307,7 @@ def handle_coverage_command(args):
     
     project_dir = Path(args.project_dir or '.')
     
-    print(f"\n🧪 Test Coverage Analysis")
+    print("\n🧪 Test Coverage Analysis")
     print("=" * 50)
     
     stats, issues = analyze_project_coverage(project_dir)
@@ -323,7 +330,7 @@ def handle_coverage_command(args):
             print(f"\n{report}")
     else:
         if stats['untested_entities']:
-            print(f"\n⚠️ Untested entities (showing first 10):")
+            print("\n⚠️ Untested entities (showing first 10):")
             for entity in stats['untested_entities'][:10]:
                 print(f"  - {entity['type']}: {entity['name']}")
                 print(f"    {Path(entity['file']).name}:{entity['line']}")

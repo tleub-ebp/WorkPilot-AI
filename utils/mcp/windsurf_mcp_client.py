@@ -6,8 +6,9 @@ Client MCP pour Windsurf - Permet d'utiliser le serveur MCP Windsurf
 import asyncio
 import json
 import logging
-from mcp.client.session import ClientSession
+
 from mcp.client.stdio import stdio_client
+
 
 class WindsurMCPClient:
     def __init__(self):

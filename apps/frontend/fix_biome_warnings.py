@@ -11,9 +11,9 @@ Strategy (mirroring the pattern used by the existing HEAD commit):
 - Deduplication: skip if the same biome-ignore already exists on the previous line
 """
 
-import subprocess
-import re
 import os
+import re
+import subprocess
 from collections import defaultdict
 
 FRONTEND_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -132,7 +132,7 @@ def process_file(abs_path, warns):
     is_jsx_file = ext in JSX_EXTENSIONS
 
     try:
-        with open(abs_path, 'r', encoding='utf-8', errors='replace') as f:
+        with open(abs_path, encoding='utf-8', errors='replace') as f:
             lines = f.readlines()
     except Exception as e:
         print(f'  ERROR reading {abs_path}: {e}')

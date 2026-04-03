@@ -1,5 +1,7 @@
+from typing import Any
+
 from .llm_base import BaseLLMProvider
-from typing import Any, Dict
+
 
 class MistralAIProvider(BaseLLMProvider):
     def __init__(self, api_key: str, model: str = "mistral-large-latest", base_url: str = "https://api.mistral.ai/v1"):
@@ -34,10 +36,10 @@ class MistralAIProvider(BaseLLMProvider):
         )
         return response.choices[0].message["content"]
 
-    def get_capabilities(self) -> Dict[str, Any]:
+    def get_capabilities(self) -> dict[str, Any]:
         return {"models": [self.model], "provider": "mistral"}
 
-    def get_config_schema(self) -> Dict[str, Any]:
+    def get_config_schema(self) -> dict[str, Any]:
         return {"api_key": "str", "model": "str"}
 
     @classmethod

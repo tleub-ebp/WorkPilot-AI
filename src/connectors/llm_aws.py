@@ -1,5 +1,7 @@
+from typing import Any
+
 from .llm_base import BaseLLMProvider
-from typing import Any, Dict
+
 
 class AWSBedrockProvider(BaseLLMProvider):
     def __init__(self, api_key: str, model: str = "anthropic.claude-v2", region: str = "us-east-1"):
@@ -20,10 +22,10 @@ class AWSBedrockProvider(BaseLLMProvider):
         # Placeholder: should be implemented for real AWS Bedrock endpoints
         return "[AWS Bedrock response placeholder]"
 
-    def get_capabilities(self) -> Dict[str, Any]:
+    def get_capabilities(self) -> dict[str, Any]:
         return {"models": [self.model], "provider": "aws"}
 
-    def get_config_schema(self) -> Dict[str, Any]:
+    def get_config_schema(self) -> dict[str, Any]:
         return {"api_key": "str", "model": "str", "region": "str"}
 
     @classmethod

@@ -1,5 +1,7 @@
+from typing import Any
+
 from .llm_base import BaseLLMProvider
-from typing import Any, Dict
+
 
 class OllamaProvider(BaseLLMProvider):
     def __init__(self, model: str = "llama2", base_url: str = "http://localhost:11434"):
@@ -34,10 +36,10 @@ class OllamaProvider(BaseLLMProvider):
         )
         return response.choices[0].message["content"]
 
-    def get_capabilities(self) -> Dict[str, Any]:
+    def get_capabilities(self) -> dict[str, Any]:
         return {"models": [self.model], "provider": "ollama"}
 
-    def get_config_schema(self) -> Dict[str, Any]:
+    def get_config_schema(self) -> dict[str, Any]:
         return {"model": "str", "base_url": "str (optional)"}
 
     @classmethod

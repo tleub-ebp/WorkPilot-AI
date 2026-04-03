@@ -48,10 +48,10 @@ try:
     backend_dir = Path(__file__).parent / "apps" / "backend"
     sys.path.insert(0, str(backend_dir))
     
-    from cli.qa_commands import handle_auto_fix_command
-    
     # Vérifier la signature
     import inspect
+
+    from cli.qa_commands import handle_auto_fix_command
     sig = inspect.signature(handle_auto_fix_command)
     params = list(sig.parameters.keys())
     

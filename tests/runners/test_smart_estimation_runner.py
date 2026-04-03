@@ -2,12 +2,13 @@
 Tests for Smart Estimation Runner
 """
 
-import pytest
-from unittest.mock import Mock, patch, MagicMock
+import argparse
 import json
 import sys
 from pathlib import Path
-import argparse
+from unittest.mock import MagicMock, Mock, patch
+
+import pytest
 
 # Add the apps/backend directory to the Python path
 backend_path = Path(__file__).parent.parent.parent / "apps" / "backend"

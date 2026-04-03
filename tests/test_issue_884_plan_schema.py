@@ -7,10 +7,10 @@ The planner may generate a non-standard implementation_plan.json schema
 execution to get stuck because no "pending" subtasks are detected.
 """
 
+import asyncio
 import importlib
 import json
 import sys
-import asyncio
 from pathlib import Path
 
 import pytest

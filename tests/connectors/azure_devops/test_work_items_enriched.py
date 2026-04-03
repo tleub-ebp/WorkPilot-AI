@@ -6,13 +6,12 @@ Tests the new write operations on AzureWorkItemsClient including:
 - Linking work items (related, hierarchy, with comments, not found)
 """
 
+import os
+import sys
 from types import SimpleNamespace
 from unittest.mock import MagicMock, call
 
 import pytest
-
-import sys
-import os
 
 from src.connectors.azure_devops.exceptions import (
     APIError,

@@ -8,6 +8,7 @@ Tests: ResourceLimits (3), PathRule (3), SecurityViolation (2), Snapshot (2),
 
 import os
 import tempfile
+
 import pytest
 
 from apps.backend.security.sandbox import (
@@ -26,7 +27,6 @@ from apps.backend.security.sandbox import (
     Snapshot,
     ViolationType,
 )
-
 
 # ---------------------------------------------------------------------------
 # ResourceLimits tests
@@ -342,7 +342,7 @@ class TestManagerSnapshots:
             # Rollback
             assert manager.rollback_snapshot(sandbox.sandbox_id, snap_id)
 
-            with open(test_file, "r") as f:
+            with open(test_file) as f:
                 assert f.read() == "original content"
 
     def test_rollback_nonexistent_snapshot(self):
@@ -387,7 +387,7 @@ class TestManagerExecution:
             assert result.rolled_back
 
             # File should be restored
-            with open(test_file, "r") as f:
+            with open(test_file) as f:
                 assert f.read() == "original"
 
     def test_execute_nonexistent_sandbox(self):

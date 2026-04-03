@@ -4,6 +4,7 @@ Test End-to-End du Quality Scorer
 """
 import sys
 from pathlib import Path
+
 import pytest
 
 backend_dir = Path(__file__).parent.parent / "apps" / "backend"
@@ -12,11 +13,11 @@ sys.path.insert(0, str(backend_dir))
 
 def test_quality_scorer_imports():
     from review.quality_scorer import (
-        QualityScorer,
-        QualityScore,
-        QualityIssue,
-        QualityCategory,
         IssueSeverity,
+        QualityCategory,
+        QualityIssue,
+        QualityScore,
+        QualityScorer,
     )
     assert QualityScorer is not None
 

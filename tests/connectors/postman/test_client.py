@@ -7,12 +7,13 @@ Tests the Postman HTTP client including:
 - Error handling and exception mapping
 """
 
+import sys
+from pathlib import Path
 from unittest.mock import MagicMock, patch
 
 import pytest
 import requests
-from pathlib import Path
-import sys
+
 
 # Helper function to import modules directly
 def import_module_direct(module_name, file_path):

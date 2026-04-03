@@ -9,7 +9,7 @@ def parse_env_file(path):
     values = {}
     if not path.exists():
         return values
-    with open(path, "r", encoding="utf-8") as f:
+    with open(path, encoding="utf-8") as f:
         for line in f:
             line = line.strip()
             if not line or line.startswith("#") or "=" not in line:
@@ -30,7 +30,7 @@ FRONTEND_ENV.parent.mkdir(parents=True, exist_ok=True)
 # Lis le .env frontend existant (s'il existe)
 frontend_lines = []
 if FRONTEND_ENV.exists():
-    with open(FRONTEND_ENV, "r", encoding="utf-8") as f:
+    with open(FRONTEND_ENV, encoding="utf-8") as f:
         frontend_lines = f.readlines()
 
 # Remplace ou ajoute la ligne VITE_BACKEND_URL

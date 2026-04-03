@@ -4,13 +4,14 @@ Direct test - check session and send events
 """
 
 import asyncio
-import sys
 import os
+import sys
 
 # Add the backend path to sys.path
 sys.path.append(os.path.join(os.path.dirname(__file__), 'apps', 'backend'))
 
 from streaming.streaming_manager import get_streaming_manager
+
 
 async def direct_test():
     session_id = "004-planning-atelier-s-curiser-l-acc-s-au-dossier-d-un"
@@ -32,8 +33,8 @@ async def direct_test():
         print("✅ FOUND SUBSCRIBERS! SENDING CODE!")
         
         await manager.emit_code_change(
-            session_id, 
-            "DIRECT_TEST.py", 
+            session_id,
+            "DIRECT_TEST.py",
             '''#!/usr/bin/env python3
 """
 🎉 DIRECT TEST! The streaming is working!

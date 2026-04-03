@@ -16,8 +16,8 @@ PairProgrammingPlan, and all interactive workflows.
 - PairProgrammingSession — serialization: 3
 """
 
-import sys
 import os
+import sys
 
 import pytest
 
@@ -34,7 +34,6 @@ from apps.backend.agents.pair_programming import (
     SuggestionStatus,
     UserComment,
 )
-
 
 # -----------------------------------------------------------------------
 # UserComment

@@ -14,6 +14,7 @@ sys.path.insert(0, str(backend_path))
 
 # Mock dependencies
 from unittest.mock import MagicMock
+
 sys.modules['claude_agent_sdk'] = MagicMock()
 sys.modules['core.client'] = MagicMock()
 sys.modules['debug'] = MagicMock()
@@ -22,7 +23,7 @@ print("🔍 Testing Claude Teams components...\n")
 
 # Test 1: Config
 print("1️⃣  Testing TeamConfig...")
-from teams.config import TeamConfig, TeamMode, DebateStrategy
+from teams.config import DebateStrategy, TeamConfig, TeamMode
 
 config = TeamConfig.for_critical_task()
 assert config.mode == TeamMode.COLLABORATIVE
@@ -32,7 +33,7 @@ print("   ✅ TeamConfig works")
 
 # Test 2: Roles
 print("2️⃣  Testing Agent Roles...")
-from teams.roles import AgentRole, get_role_definition, get_active_roles
+from teams.roles import AgentRole, get_active_roles, get_role_definition
 
 architect = get_role_definition(AgentRole.ARCHITECT)
 assert architect.name == "System Architect"
@@ -49,8 +50,9 @@ print("   ✅ Roles work")
 
 # Test 3: Voting
 print("3️⃣  Testing Voting System...")
-from teams.voting import Vote, VoteChoice, VotingSystem, VotingResult
 from tempfile import TemporaryDirectory
+
+from teams.voting import Vote, VoteChoice, VotingResult, VotingSystem
 
 with TemporaryDirectory() as tmpdir:
     voting = VotingSystem(Path(tmpdir))
@@ -97,7 +99,7 @@ print("   ✅ Orchestrator imports successfully")
 
 # Test 6: Package exports
 print("6️⃣  Testing package exports...")
-from teams import ClaudeTeam, TeamConfig, TeamMode, AgentRole
+from teams import AgentRole, ClaudeTeam, TeamConfig, TeamMode
 
 assert ClaudeTeam is not None
 assert TeamConfig is not None
