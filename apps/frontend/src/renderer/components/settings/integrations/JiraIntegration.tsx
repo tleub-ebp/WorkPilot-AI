@@ -17,12 +17,6 @@ interface JiraSyncStatus {
   error?: string;
 }
 
-interface JiraIntegrationProps {
-  envConfig: ProjectEnvConfig | null;
-  updateEnvConfig: (updates: Partial<ProjectEnvConfig>) => void;
-  showJiraToken: boolean;
-  setShowJiraToken: React.Dispatch<React.SetStateAction<boolean>>;
-}
 
 /**
  * Jira Cloud integration settings component.

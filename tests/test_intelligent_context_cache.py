@@ -12,7 +12,7 @@ import sys
 import tempfile
 import time
 from pathlib import Path
-from typing import Any, dict
+from typing import Any
 from unittest.mock import MagicMock, Mock, patch
 
 import pytest
