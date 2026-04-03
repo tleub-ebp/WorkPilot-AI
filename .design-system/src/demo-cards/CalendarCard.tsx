@@ -27,21 +27,20 @@ export function CalendarCard() {
 			<div className="grid grid-cols-7 gap-1 text-center">
 				{days.map((day, i) => (
 					<div
-						key={i}
+						key={day}
 						className="text-label-small text-(--color-text-tertiary) py-2"
 					>
 						{day}
 					</div>
 				))}
 				{dates.flat().map((date, i) => {
-					const isCurrentMonth =
-						(i < 3 && date > 20) || (i > 30 && date < 10) ? false : true;
+					const isCurrentMonth = !((i < 3 && date > 20) || (i > 30 && date < 10));
 					const isSelected = date === 26 && isCurrentMonth;
 					const isToday = date === 16 && isCurrentMonth;
 
 					return (
 						<button
-							key={i}
+							key={`date-${date}-${isCurrentMonth ? 'current' : 'other'}`}
 							className={cn(
 								"w-9 h-9 rounded-md text-body-medium transition-colors",
 								!isCurrentMonth && "text-(--color-text-tertiary)",
