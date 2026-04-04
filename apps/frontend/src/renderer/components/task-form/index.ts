@@ -8,7 +8,7 @@
  * - useImageUpload: Hook for image paste/drop handling
  */
 
-export { TaskModalLayout } from './TaskModalLayout';
-export { TaskFormFields } from './TaskFormFields';
-export { ClassificationFields } from './ClassificationFields';
-export { useImageUpload } from './useImageUpload';
+export { ClassificationFields } from "./ClassificationFields";
+export { TaskFormFields } from "./TaskFormFields";
+export { TaskModalLayout } from "./TaskModalLayout";
+export { useImageUpload } from "./useImageUpload";

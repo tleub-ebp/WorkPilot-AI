@@ -1,41 +1,41 @@
 {
-  "title": "Tableau de bord",
-  "subtitle": "Métriques du projet & KPIs",
-  "kpi": {
-    "totalTasks": {
-      "title": "Total tâches",
-      "completed": "{{count}} terminée",
-      "completed_plural": "{{count}} terminées"
-    },
-    "qaFirstPassRate": {
-      "title": "Taux QA premier passage",
-      "avgScore": "Score moy. : {{score}}"
-    },
-    "totalTokens": {
-      "title": "Total tokens",
-      "totalCost": "{{cost}} coût total"
-    },
-    "autoMerges": {
-      "title": "Fusions auto",
-      "autoManual": "{{auto}} auto / {{manual}} manuel"
-    }
-  },
-  "sections": {
-    "tasksByStatus": "Tâches par statut",
-    "avgCompletionTime": "Temps moyen par complexité",
-    "costByModel": "Coût par modèle",
-    "tokensByProvider": "Tokens par fournisseur",
-    "mergeResolution": "Résolution de fusion"
-  },
-  "empty": {
-    "noTasks": "Aucune tâche",
-    "noCompletionData": "Aucune donnée de complétion",
-    "noCostData": "Aucune donnée de coût",
-    "noTokenData": "Aucune donnée de tokens"
-  },
-  "merge": {
-    "automatic": "Automatique",
-    "manual": "Manuel",
-    "autoResolutionRate": "Taux de résolution auto"
-  }
+	"title": "Tableau de bord",
+	"subtitle": "Métriques du projet & KPIs",
+	"kpi": {
+		"totalTasks": {
+			"title": "Total tâches",
+			"completed": "{{count}} terminée",
+			"completed_plural": "{{count}} terminées"
+		},
+		"qaFirstPassRate": {
+			"title": "Taux QA premier passage",
+			"avgScore": "Score moy. : {{score}}"
+		},
+		"totalTokens": {
+			"title": "Total tokens",
+			"totalCost": "{{cost}} coût total"
+		},
+		"autoMerges": {
+			"title": "Fusions auto",
+			"autoManual": "{{auto}} auto / {{manual}} manuel"
+		}
+	},
+	"sections": {
+		"tasksByStatus": "Tâches par statut",
+		"avgCompletionTime": "Temps moyen par complexité",
+		"costByModel": "Coût par modèle",
+		"tokensByProvider": "Tokens par fournisseur",
+		"mergeResolution": "Résolution de fusion"
+	},
+	"empty": {
+		"noTasks": "Aucune tâche",
+		"noCompletionData": "Aucune donnée de complétion",
+		"noCostData": "Aucune donnée de coût",
+		"noTokenData": "Aucune donnée de tokens"
+	},
+	"merge": {
+		"automatic": "Automatique",
+		"manual": "Manuel",
+		"autoResolutionRate": "Taux de résolution auto"
+	}
 }

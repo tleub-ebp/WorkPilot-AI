@@ -1,55 +1,91 @@
-import { useState, useEffect, useRef, memo, useMemo } from 'react';
-import { useTranslation } from 'react-i18next';
-import { Play, Square, Clock, Zap, Target, Shield, Gauge, Palette, FileCode, Bug, Wrench, Loader2, AlertTriangle, RotateCcw, Archive, GitPullRequest, MoreVertical, X, FileText, Monitor, GitMerge } from 'lucide-react';
-import { Card, CardContent } from './ui/card';
-import { Badge } from './ui/badge';
-import { Button } from './ui/button';
-import { Checkbox } from './ui/checkbox';
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from './ui/dropdown-menu';
-import {cn, sanitizeMarkdownForDisplay} from '../lib/utils';
-import { setPendingTaskDetailTab } from '../lib/task-detail-nav';
-import { PhaseProgressIndicator } from './PhaseProgressIndicator';
-import { StreamingSessionButton } from './streaming/StreamingSessionButton';
+	AlertTriangle,
+	Archive,
+	Bug,
+	Clock,
+	FileCode,
+	FileText,
+	Gauge,
+	GitMerge,
+	GitPullRequest,
+	Loader2,
+	Monitor,
+	MoreVertical,
+	Palette,
+	Play,
+	RotateCcw,
+	Shield,
+	Square,
+	Target,
+	Wrench,
+	X,
+	type Zap,
+} from "lucide-react";
+import { memo, useEffect, useMemo, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
+import { useFormatRelativeTime } from "@/hooks/useFormatRelativeTime";
 import {
-  TASK_CATEGORY_LABELS,
-  TASK_CATEGORY_COLORS,
-  TASK_COMPLEXITY_COLORS,
-  TASK_COMPLEXITY_LABELS,
-  TASK_IMPACT_COLORS,
-  TASK_IMPACT_LABELS,
-  TASK_PRIORITY_COLORS,
-  TASK_PRIORITY_LABELS,
-  EXECUTION_PHASE_LABELS,
-  EXECUTION_PHASE_BADGE_COLORS,
-  TASK_STATUS_COLUMNS,
-  TASK_STATUS_LABELS,
-  JSON_ERROR_PREFIX,
-  JSON_ERROR_TITLE_SUFFIX
-} from '../../shared/constants';
-import { useTaskStore, startTask, stopTask, checkTaskRunning, recoverStuckTask, isIncompleteHumanReview, archiveTasks, hasRecentActivity } from '../stores/task-store';
-import { useProjectStore } from '../stores/project-store';
-import type { Task, TaskCategory, ReviewReason, TaskStatus } from '../../shared/types';
-import {useFormatRelativeTime} from "@/hooks/useFormatRelativeTime";
-import { SyncFromBranchDialog } from './task-detail/task-review/SyncFromBranchDialog';
+	EXECUTION_PHASE_BADGE_COLORS,
+	EXECUTION_PHASE_LABELS,
+	JSON_ERROR_PREFIX,
+	JSON_ERROR_TITLE_SUFFIX,
+	TASK_CATEGORY_COLORS,
+	TASK_CATEGORY_LABELS,
+	TASK_COMPLEXITY_COLORS,
+	TASK_COMPLEXITY_LABELS,
+	TASK_IMPACT_COLORS,
+	TASK_IMPACT_LABELS,
+	TASK_PRIORITY_COLORS,
+	TASK_PRIORITY_LABELS,
+	TASK_STATUS_COLUMNS,
+	TASK_STATUS_LABELS,
+} from "../../shared/constants";
+import type {
+	ReviewReason,
+	Task,
+	TaskCategory,
+	TaskStatus,
+} from "../../shared/types";
+import { setPendingTaskDetailTab } from "../lib/task-detail-nav";
+import { cn, sanitizeMarkdownForDisplay } from "../lib/utils";
+import { useProjectStore } from "../stores/project-store";
+import {
+	archiveTasks,
+	checkTaskRunning,
+	hasRecentActivity,
+	isIncompleteHumanReview,
+	recoverStuckTask,
+	startTask,
+	stopTask,
+	useTaskStore,
+} from "../stores/task-store";
+import { PhaseProgressIndicator } from "./PhaseProgressIndicator";
+import { StreamingSessionButton } from "./streaming/StreamingSessionButton";
+import { SyncFromBranchDialog } from "./task-detail/task-review/SyncFromBranchDialog";
+import { Badge } from "./ui/badge";
+import { Button } from "./ui/button";
+import { Card, CardContent } from "./ui/card";
+import { Checkbox } from "./ui/checkbox";
+import {
+	DropdownMenu,
+	DropdownMenuContent,
+	DropdownMenuItem,
+	DropdownMenuLabel,
+	DropdownMenuSeparator,
+	DropdownMenuTrigger,
+} from "./ui/dropdown-menu";
 
 // Category icon mapping
 const CategoryIcon: Record<TaskCategory, typeof Zap> = {
-  feature: Target,
-  bug_fix: Bug,
-  refactoring: Wrench,
-  documentation: FileCode,
-  security: Shield,
-  performance: Gauge,
-  ui_ux: Palette,
-  infrastructure: Wrench,
-  testing: FileCode
+	feature: Target,
+	bug_fix: Bug,
+	refactoring: Wrench,
+	documentation: FileCode,
+	security: Shield,
+	performance: Gauge,
+	ui_ux: Palette,
+	infrastructure: Wrench,
+	testing: FileCode,
 };
 
 // Catastrophic stuck detection interval (ms).
@@ -59,950 +95,1073 @@ const CategoryIcon: Record<TaskCategory, typeof Zap> = {
 const STUCK_CHECK_INTERVAL_MS = 60_000;
 
 interface TaskCardProps {
-  task: Task;
-  onClick: () => void;
-  onStatusChange?: (newStatus: TaskStatus) => unknown;
-  // Optional selectable mode props for multi-selection
-  isSelectable?: boolean;
-  isSelected?: boolean;
-  onToggleSelect?: () => void;
-  // Optional delete handler
-  onDelete?: () => void;
-  // Optional PR files viewer handler
-  onViewPRFiles?: (prUrl: string, taskId: string) => void;
-  // Optional app preview handler for done, human_review, and ai_review tasks
-  onPreviewApp?: () => void;
+	task: Task;
+	onClick: () => void;
+	onStatusChange?: (newStatus: TaskStatus) => unknown;
+	// Optional selectable mode props for multi-selection
+	isSelectable?: boolean;
+	isSelected?: boolean;
+	onToggleSelect?: () => void;
+	// Optional delete handler
+	onDelete?: () => void;
+	// Optional PR files viewer handler
+	onViewPRFiles?: (prUrl: string, taskId: string) => void;
+	// Optional app preview handler for done, human_review, and ai_review tasks
+	onPreviewApp?: () => void;
 }
 
 // Metadata badges component - extracted to reduce complexity
 interface MetadataBadgesProps {
-  task: Task;
-  isStuck: boolean;
-  isIncomplete: boolean;
-  hasActiveExecution?: boolean;
-  executionPhase?: string;
-  reviewReasonInfo: { label: string; variant: 'success' | 'destructive' | 'warning' } | null;
-  // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
-  t: any;
+	task: Task;
+	isStuck: boolean;
+	isIncomplete: boolean;
+	hasActiveExecution?: boolean;
+	executionPhase?: string;
+	reviewReasonInfo: {
+		label: string;
+		variant: "success" | "destructive" | "warning";
+	} | null;
+	// biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
+	t: any;
 }
 
 const MetadataBadges: React.FC<MetadataBadgesProps> = ({
-  task,
-  isStuck,
-  isIncomplete,
-  hasActiveExecution,
-  executionPhase,
-  reviewReasonInfo,
-  t
+	task,
+	isStuck,
+	isIncomplete,
+	hasActiveExecution,
+	executionPhase,
+	reviewReasonInfo,
+	t,
 }) => {
-  // Extract status badge variant and label for non-done tasks
-  let statusBadgeVariant: "default" | "destructive" | "outline" | "secondary" | "success" | "warning" | "info" | "purple" | "muted";
-  let statusBadgeLabel: string;
+	// Extract status badge variant and label for non-done tasks
+	let statusBadgeVariant:
+		| "default"
+		| "destructive"
+		| "outline"
+		| "secondary"
+		| "success"
+		| "warning"
+		| "info"
+		| "purple"
+		| "muted";
+	let statusBadgeLabel: string;
 
-  if (isStuck) {
-    statusBadgeVariant = 'warning';
-    statusBadgeLabel = t('labels.needsRecovery');
-  } else if (isIncomplete) {
-    statusBadgeVariant = 'warning';
-    statusBadgeLabel = t('labels.needsResume');
-  } else {
-    statusBadgeVariant = getStatusBadgeVariant(task.status);
-    statusBadgeLabel = getStatusLabel(task.status, t);
-  }
+	if (isStuck) {
+		statusBadgeVariant = "warning";
+		statusBadgeLabel = t("labels.needsRecovery");
+	} else if (isIncomplete) {
+		statusBadgeVariant = "warning";
+		statusBadgeLabel = t("labels.needsResume");
+	} else {
+		statusBadgeVariant = getStatusBadgeVariant(task.status);
+		statusBadgeLabel = getStatusLabel(task.status, t);
+	}
 
-  if (!task.metadata && !isStuck && !isIncomplete && !hasActiveExecution && !reviewReasonInfo) {
-    return null;
-  }
+	if (
+		!task.metadata &&
+		!isStuck &&
+		!isIncomplete &&
+		!hasActiveExecution &&
+		!reviewReasonInfo
+	) {
+		return null;
+	}
 
-  return (
-    <div className="mt-2 flex flex-wrap gap-1">
-      {/* Stuck indicator - highest priority */}
-      {isStuck && (
-        <Badge
-          variant="outline"
-          className="text-[10px] px-1.5 py-0.5 flex items-center gap-1 bg-warning/10 text-warning border-warning/30 badge-priority-urgent"
-        >
-          <AlertTriangle className="h-2.5 w-2.5" />
-          {t('labels.stuck')}
-        </Badge>
-      )}
-      
-      {/* Incomplete indicator - task in human_review but no subtasks completed */}
-      {isIncomplete && !isStuck && (
-        <Badge
-          variant="outline"
-          className="text-[10px] px-1.5 py-0.5 flex items-center gap-1 bg-orange-500/10 text-orange-400 border-orange-500/30"
-        >
-          <AlertTriangle className="h-2.5 w-2.5" />
-          {t('labels.incomplete')}
-        </Badge>
-      )}
-      
-      {/* Archived indicator - task has been released */}
-      {task.metadata?.archivedAt && (
-        <Badge
-          variant="outline"
-          className="text-[10px] px-1.5 py-0.5 flex items-center gap-1 bg-muted text-muted-foreground border-border"
-        >
-          <Archive className="h-2.5 w-2.5" />
-          {t('status.archived')}
-        </Badge>
-      )}
-      
-      {/* Execution phase badge - shown when actively running */}
-      {hasActiveExecution && executionPhase && !isStuck && !isIncomplete && (
-        <Badge
-          variant="outline"
-          className={cn(
-            'text-[10px] px-1.5 py-0.5 flex items-center gap-1',
-            EXECUTION_PHASE_BADGE_COLORS[executionPhase]
-          )}
-        >
-          <Loader2 className="h-2.5 w-2.5 animate-spin" />
-          {EXECUTION_PHASE_LABELS[executionPhase]}
-        </Badge>
-      )}
-      
-      {/* Status badge - hide when execution phase badge is showing */}
-      {!hasActiveExecution && (
-        task.status === 'done' ? (
-          <Badge
-            variant={getStatusBadgeVariant(task.status)}
-            className="text-[10px] px-1.5 py-0.5"
-          >
-            {getStatusLabel(task.status, t)}
-          </Badge>
-        ) : (
-          <Badge
-            variant={statusBadgeVariant}
-            className="text-[10px] px-1.5 py-0.5"
-          >
-            {statusBadgeLabel}
-          </Badge>
-        )
-      )}
-      
-      {/* Review reason badge - explains why task needs human review */}
-      {reviewReasonInfo && !isStuck && !isIncomplete && (
-        <Badge
-          variant={reviewReasonInfo.variant}
-          className="text-[10px] px-1.5 py-0.5"
-        >
-          {reviewReasonInfo.label}
-        </Badge>
-      )}
-      
-      {/* Category badge with icon */}
-      {task.metadata?.category && (
-        <Badge
-          variant="outline"
-          className={cn('text-[10px] px-1.5 py-0', TASK_CATEGORY_COLORS[task.metadata.category])}
-        >
-          {CategoryIcon[task.metadata.category] && (
-            (() => {
-              const Icon = CategoryIcon[task.metadata.category];
-              return <Icon className="h-2.5 w-2.5 mr-0.5" />;
-            })()
-          )}
-          {TASK_CATEGORY_LABELS[task.metadata.category]}
-        </Badge>
-      )}
-      
-      {/* Impact badge - high visibility for important tasks */}
-      {task.metadata?.impact && (task.metadata.impact === 'high' || task.metadata.impact === 'critical') && (
-        <Badge
-          variant="outline"
-          className={cn('text-[10px] px-1.5 py-0', TASK_IMPACT_COLORS[task.metadata.impact])}
-        >
-          {TASK_IMPACT_LABELS[task.metadata.impact]}
-        </Badge>
-      )}
-      
-      {/* Complexity badge */}
-      {task.metadata?.complexity && (
-        <Badge
-          variant="outline"
-          className={cn('text-[10px] px-1.5 py-0', TASK_COMPLEXITY_COLORS[task.metadata.complexity])}
-        >
-          {TASK_COMPLEXITY_LABELS[task.metadata.complexity]}
-        </Badge>
-      )}
-      
-      {/* Priority badge - only show urgent/high */}
-      {task.metadata?.priority && (task.metadata.priority === 'urgent' || task.metadata.priority === 'high') && (
-        <Badge
-          variant="outline"
-          className={cn('text-[10px] px-1.5 py-0', TASK_PRIORITY_COLORS[task.metadata.priority])}
-        >
-          {TASK_PRIORITY_LABELS[task.metadata.priority]}
-        </Badge>
-      )}
-      
-      {/* Security severity - always show */}
-      {task.metadata?.securitySeverity && (
-        <Badge
-          variant="outline"
-          className={cn('text-[10px] px-1.5 py-0', TASK_IMPACT_COLORS[task.metadata.securitySeverity])}
-        >
-          {task.metadata.securitySeverity} {t('metadata.severity')}
-        </Badge>
-      )}
-    </div>
-  );
+	return (
+		<div className="mt-2 flex flex-wrap gap-1">
+			{/* Stuck indicator - highest priority */}
+			{isStuck && (
+				<Badge
+					variant="outline"
+					className="text-[10px] px-1.5 py-0.5 flex items-center gap-1 bg-warning/10 text-warning border-warning/30 badge-priority-urgent"
+				>
+					<AlertTriangle className="h-2.5 w-2.5" />
+					{t("labels.stuck")}
+				</Badge>
+			)}
+
+			{/* Incomplete indicator - task in human_review but no subtasks completed */}
+			{isIncomplete && !isStuck && (
+				<Badge
+					variant="outline"
+					className="text-[10px] px-1.5 py-0.5 flex items-center gap-1 bg-orange-500/10 text-orange-400 border-orange-500/30"
+				>
+					<AlertTriangle className="h-2.5 w-2.5" />
+					{t("labels.incomplete")}
+				</Badge>
+			)}
+
+			{/* Archived indicator - task has been released */}
+			{task.metadata?.archivedAt && (
+				<Badge
+					variant="outline"
+					className="text-[10px] px-1.5 py-0.5 flex items-center gap-1 bg-muted text-muted-foreground border-border"
+				>
+					<Archive className="h-2.5 w-2.5" />
+					{t("status.archived")}
+				</Badge>
+			)}
+
+			{/* Execution phase badge - shown when actively running */}
+			{hasActiveExecution && executionPhase && !isStuck && !isIncomplete && (
+				<Badge
+					variant="outline"
+					className={cn(
+						"text-[10px] px-1.5 py-0.5 flex items-center gap-1",
+						EXECUTION_PHASE_BADGE_COLORS[executionPhase],
+					)}
+				>
+					<Loader2 className="h-2.5 w-2.5 animate-spin" />
+					{EXECUTION_PHASE_LABELS[executionPhase]}
+				</Badge>
+			)}
+
+			{/* Status badge - hide when execution phase badge is showing */}
+			{!hasActiveExecution &&
+				(task.status === "done" ? (
+					<Badge
+						variant={getStatusBadgeVariant(task.status)}
+						className="text-[10px] px-1.5 py-0.5"
+					>
+						{getStatusLabel(task.status, t)}
+					</Badge>
+				) : (
+					<Badge
+						variant={statusBadgeVariant}
+						className="text-[10px] px-1.5 py-0.5"
+					>
+						{statusBadgeLabel}
+					</Badge>
+				))}
+
+			{/* Review reason badge - explains why task needs human review */}
+			{reviewReasonInfo && !isStuck && !isIncomplete && (
+				<Badge
+					variant={reviewReasonInfo.variant}
+					className="text-[10px] px-1.5 py-0.5"
+				>
+					{reviewReasonInfo.label}
+				</Badge>
+			)}
+
+			{/* Category badge with icon */}
+			{task.metadata?.category && (
+				<Badge
+					variant="outline"
+					className={cn(
+						"text-[10px] px-1.5 py-0",
+						TASK_CATEGORY_COLORS[task.metadata.category],
+					)}
+				>
+					{CategoryIcon[task.metadata.category] &&
+						(() => {
+							const Icon = CategoryIcon[task.metadata.category];
+							return <Icon className="h-2.5 w-2.5 mr-0.5" />;
+						})()}
+					{TASK_CATEGORY_LABELS[task.metadata.category]}
+				</Badge>
+			)}
+
+			{/* Impact badge - high visibility for important tasks */}
+			{task.metadata?.impact &&
+				(task.metadata.impact === "high" ||
+					task.metadata.impact === "critical") && (
+					<Badge
+						variant="outline"
+						className={cn(
+							"text-[10px] px-1.5 py-0",
+							TASK_IMPACT_COLORS[task.metadata.impact],
+						)}
+					>
+						{TASK_IMPACT_LABELS[task.metadata.impact]}
+					</Badge>
+				)}
+
+			{/* Complexity badge */}
+			{task.metadata?.complexity && (
+				<Badge
+					variant="outline"
+					className={cn(
+						"text-[10px] px-1.5 py-0",
+						TASK_COMPLEXITY_COLORS[task.metadata.complexity],
+					)}
+				>
+					{TASK_COMPLEXITY_LABELS[task.metadata.complexity]}
+				</Badge>
+			)}
+
+			{/* Priority badge - only show urgent/high */}
+			{task.metadata?.priority &&
+				(task.metadata.priority === "urgent" ||
+					task.metadata.priority === "high") && (
+					<Badge
+						variant="outline"
+						className={cn(
+							"text-[10px] px-1.5 py-0",
+							TASK_PRIORITY_COLORS[task.metadata.priority],
+						)}
+					>
+						{TASK_PRIORITY_LABELS[task.metadata.priority]}
+					</Badge>
+				)}
+
+			{/* Security severity - always show */}
+			{task.metadata?.securitySeverity && (
+				<Badge
+					variant="outline"
+					className={cn(
+						"text-[10px] px-1.5 py-0",
+						TASK_IMPACT_COLORS[task.metadata.securitySeverity],
+					)}
+				>
+					{task.metadata.securitySeverity} {t("metadata.severity")}
+				</Badge>
+			)}
+		</div>
+	);
 };
 
 // Action buttons component - extracted to reduce complexity
 interface ActionButtonsProps {
-  isStuck: boolean;
-  isRecovering: boolean;
-  isIncomplete: boolean;
-  isRunning: boolean;
-  task: Task;
-  // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
-  currentProject?: any;
-  onViewPRFiles?: (prUrl: string, taskId: string) => void;
-  onPreviewApp?: () => void;
-  handleRecover: (e: React.MouseEvent) => void;
-  handleStartStop: (e: React.MouseEvent) => void;
-  handleViewPR: (e: React.MouseEvent) => void;
-  handleArchive: (e: React.MouseEvent) => void;
-  statusMenuItems: React.ReactNode;
-  // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
-  t: any;
+	isStuck: boolean;
+	isRecovering: boolean;
+	isIncomplete: boolean;
+	isRunning: boolean;
+	task: Task;
+	// biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
+	currentProject?: any;
+	onViewPRFiles?: (prUrl: string, taskId: string) => void;
+	onPreviewApp?: () => void;
+	handleRecover: (e: React.MouseEvent) => void;
+	handleStartStop: (e: React.MouseEvent) => void;
+	handleViewPR: (e: React.MouseEvent) => void;
+	handleArchive: (e: React.MouseEvent) => void;
+	statusMenuItems: React.ReactNode;
+	// biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
+	t: any;
 }
 
 const ActionButtons: React.FC<ActionButtonsProps> = ({
-  isStuck,
-  isRecovering,
-  isIncomplete,
-  isRunning,
-  task,
-  currentProject,
-  onViewPRFiles,
-  onPreviewApp,
-  handleRecover,
-  handleStartStop,
-  handleViewPR,
-  handleArchive,
-  // biome-ignore lint/correctness/noUnusedFunctionParameters: parameter kept for API compatibility
-  statusMenuItems,
-  t
+	isStuck,
+	isRecovering,
+	isIncomplete,
+	isRunning,
+	task,
+	currentProject,
+	onViewPRFiles,
+	onPreviewApp,
+	handleRecover,
+	handleStartStop,
+	handleViewPR,
+	handleArchive,
+	// biome-ignore lint/correctness/noUnusedFunctionParameters: parameter kept for API compatibility
+	statusMenuItems,
+	t,
 }) => {
-  if (isStuck) {
-    return (
-      <Button
-        variant="warning"
-        size="sm"
-        className="h-7 px-2.5"
-        onClick={handleRecover}
-        disabled={isRecovering}
-      >
-        {isRecovering ? (
-          <>
-            <Loader2 className="mr-1.5 h-3 w-3 animate-spin" />
-            {t('labels.recovering')}
-          </>
-        ) : (
-          <>
-            <RotateCcw className="mr-1.5 h-3 w-3" />
-            {t('actions.recover')}
-          </>
-        )}
-      </Button>
-    );
-  }
+	if (isStuck) {
+		return (
+			<Button
+				variant="warning"
+				size="sm"
+				className="h-7 px-2.5"
+				onClick={handleRecover}
+				disabled={isRecovering}
+			>
+				{isRecovering ? (
+					<>
+						<Loader2 className="mr-1.5 h-3 w-3 animate-spin" />
+						{t("labels.recovering")}
+					</>
+				) : (
+					<>
+						<RotateCcw className="mr-1.5 h-3 w-3" />
+						{t("actions.recover")}
+					</>
+				)}
+			</Button>
+		);
+	}
 
-  if (isIncomplete) {
-    return (
-      <Button
-        variant="default"
-        size="sm"
-        className="h-7 px-2.5"
-        onClick={handleStartStop}
-      >
-        <Play className="mr-1.5 h-3 w-3" />
-        {t('actions.resume')}
-      </Button>
-    );
-  }
+	if (isIncomplete) {
+		return (
+			<Button
+				variant="default"
+				size="sm"
+				className="h-7 px-2.5"
+				onClick={handleStartStop}
+			>
+				<Play className="mr-1.5 h-3 w-3" />
+				{t("actions.resume")}
+			</Button>
+		);
+	}
 
-  if (task.status === 'done' && task.metadata?.prUrl) {
-    return (
-      <div className="flex gap-1">
-        {onPreviewApp && (
-          <Button
-            variant="ghost"
-            size="sm"
-            className="h-7 px-2 cursor-pointer"
-            onClick={(e) => { e.stopPropagation(); onPreviewApp(); }}
-            title={t('tooltips.previewApp')}
-          >
-            <Monitor className="h-3 w-3" />
-          </Button>
-        )}
-        {task.metadata?.prUrl && (
-          <Button
-            variant="ghost"
-            size="sm"
-            className="h-7 px-2 cursor-pointer"
-            onClick={handleViewPR}
-            title={t('tooltips.viewPR')}
-          >
-            <GitPullRequest className="h-3 w-3" />
-          </Button>
-        )}
-        {task.metadata?.prUrl && onViewPRFiles && (
-          <Button
-            variant="outline"
-            size="sm"
-            className="h-7 px-2 hover:bg-primary/10 transition-colors"
-            onClick={() => task.metadata?.prUrl && onViewPRFiles(task.metadata.prUrl, task.id)}
-            title={t('tooltips.viewPRFiles')}
-          >
-            <FileText className="h-3 w-3 mr-1" />
-            {t('tasks:prFiles.short')}
-          </Button>
-        )}
-        {!task.metadata?.archivedAt && (
-          <Button
-            variant="ghost"
-            size="sm"
-            className="h-7 px-2 cursor-pointer"
-            onClick={handleArchive}
-            title={t('tooltips.archiveTask')}
-          >
-            <Archive className="h-3 w-3" />
-          </Button>
-        )}
-      </div>
-    );
-  }
+	if (task.status === "done" && task.metadata?.prUrl) {
+		return (
+			<div className="flex gap-1">
+				{onPreviewApp && (
+					<Button
+						variant="ghost"
+						size="sm"
+						className="h-7 px-2 cursor-pointer"
+						onClick={(e) => {
+							e.stopPropagation();
+							onPreviewApp();
+						}}
+						title={t("tooltips.previewApp")}
+					>
+						<Monitor className="h-3 w-3" />
+					</Button>
+				)}
+				{task.metadata?.prUrl && (
+					<Button
+						variant="ghost"
+						size="sm"
+						className="h-7 px-2 cursor-pointer"
+						onClick={handleViewPR}
+						title={t("tooltips.viewPR")}
+					>
+						<GitPullRequest className="h-3 w-3" />
+					</Button>
+				)}
+				{task.metadata?.prUrl && onViewPRFiles && (
+					<Button
+						variant="outline"
+						size="sm"
+						className="h-7 px-2 hover:bg-primary/10 transition-colors"
+						onClick={() =>
+							task.metadata?.prUrl &&
+							onViewPRFiles(task.metadata.prUrl, task.id)
+						}
+						title={t("tooltips.viewPRFiles")}
+					>
+						<FileText className="h-3 w-3 mr-1" />
+						{t("tasks:prFiles.short")}
+					</Button>
+				)}
+				{!task.metadata?.archivedAt && (
+					<Button
+						variant="ghost"
+						size="sm"
+						className="h-7 px-2 cursor-pointer"
+						onClick={handleArchive}
+						title={t("tooltips.archiveTask")}
+					>
+						<Archive className="h-3 w-3" />
+					</Button>
+				)}
+			</div>
+		);
+	}
 
-  if (task.status === 'done' && !task.metadata?.archivedAt) {
-    return (
-      <div className="flex gap-1">
-        {onPreviewApp && (
-          <Button
-            variant="ghost"
-            size="sm"
-            className="h-7 px-2 cursor-pointer"
-            onClick={(e) => { e.stopPropagation(); onPreviewApp(); }}
-            title={t('tooltips.previewApp')}
-          >
-            <Monitor className="h-3 w-3" />
-          </Button>
-        )}
-        <Button
-          variant="ghost"
-          size="sm"
-          className="h-7 px-2.5 hover:bg-muted-foreground/10"
-          onClick={handleArchive}
-          title={t('tooltips.archiveTask')}
-        >
-          <Archive className="mr-1.5 h-3 w-3" />
-          {t('actions.archive')}
-        </Button>
-      </div>
-    );
-  }
+	if (task.status === "done" && !task.metadata?.archivedAt) {
+		return (
+			<div className="flex gap-1">
+				{onPreviewApp && (
+					<Button
+						variant="ghost"
+						size="sm"
+						className="h-7 px-2 cursor-pointer"
+						onClick={(e) => {
+							e.stopPropagation();
+							onPreviewApp();
+						}}
+						title={t("tooltips.previewApp")}
+					>
+						<Monitor className="h-3 w-3" />
+					</Button>
+				)}
+				<Button
+					variant="ghost"
+					size="sm"
+					className="h-7 px-2.5 hover:bg-muted-foreground/10"
+					onClick={handleArchive}
+					title={t("tooltips.archiveTask")}
+				>
+					<Archive className="mr-1.5 h-3 w-3" />
+					{t("actions.archive")}
+				</Button>
+			</div>
+		);
+	}
 
-  // Preview button for human_review tasks (validate rendering before PR approval)
-  if (task.status === 'human_review') {
-    return (
-      <div className="flex gap-1">
-        {onPreviewApp && (
-          <Button
-            variant="ghost"
-            size="sm"
-            className="h-7 px-2 cursor-pointer"
-            onClick={(e) => { e.stopPropagation(); onPreviewApp(); }}
-            title={t('tooltips.previewApp')}
-          >
-            <Monitor className="h-3 w-3" />
-          </Button>
-        )}
-      </div>
-    );
-  }
+	// Preview button for human_review tasks (validate rendering before PR approval)
+	if (task.status === "human_review") {
+		return (
+			<div className="flex gap-1">
+				{onPreviewApp && (
+					<Button
+						variant="ghost"
+						size="sm"
+						className="h-7 px-2 cursor-pointer"
+						onClick={(e) => {
+							e.stopPropagation();
+							onPreviewApp();
+						}}
+						title={t("tooltips.previewApp")}
+					>
+						<Monitor className="h-3 w-3" />
+					</Button>
+				)}
+			</div>
+		);
+	}
 
-  // Preview button for ai_review tasks (inspect rendering during AI validation)
-  if (task.status === 'ai_review') {
-    return (
-      <div className="flex gap-1">
-        {onPreviewApp && (
-          <Button
-            variant="ghost"
-            size="sm"
-            className="h-7 px-2 cursor-pointer"
-            onClick={(e) => { e.stopPropagation(); onPreviewApp(); }}
-            title={t('tooltips.previewApp')}
-          >
-            <Monitor className="h-3 w-3" />
-          </Button>
-        )}
-      </div>
-    );
-  }
+	// Preview button for ai_review tasks (inspect rendering during AI validation)
+	if (task.status === "ai_review") {
+		return (
+			<div className="flex gap-1">
+				{onPreviewApp && (
+					<Button
+						variant="ghost"
+						size="sm"
+						className="h-7 px-2 cursor-pointer"
+						onClick={(e) => {
+							e.stopPropagation();
+							onPreviewApp();
+						}}
+						title={t("tooltips.previewApp")}
+					>
+						<Monitor className="h-3 w-3" />
+					</Button>
+				)}
+			</div>
+		);
+	}
 
-  if (task.status === 'backlog' || task.status === 'queue' || task.status === 'in_progress') {
-    return (
-      <>
-        {isRunning && !isStuck && currentProject?.path && (
-          <StreamingSessionButton
-            taskId={task.id}
-            projectPath={currentProject.path}
-          />
-        )}
-        <Button
-          variant={isRunning ? 'destructive' : 'default'}
-          size="sm"
-          className="h-7 px-2.5"
-          onClick={handleStartStop}
-        >
-          {isRunning ? (
-            <>
-              <Square className="mr-1.5 h-3 w-3" />
-              {t('actions.stop')}
-            </>
-          ) : (
-            <>
-              <Play className="mr-1.5 h-3 w-3" />
-              {t('actions.start')}
-            </>
-          )}
-        </Button>
-      </>
-    );
-  }
+	if (
+		task.status === "backlog" ||
+		task.status === "queue" ||
+		task.status === "in_progress"
+	) {
+		return (
+			<>
+				{isRunning && !isStuck && currentProject?.path && (
+					<StreamingSessionButton
+						taskId={task.id}
+						projectPath={currentProject.path}
+					/>
+				)}
+				<Button
+					variant={isRunning ? "destructive" : "default"}
+					size="sm"
+					className="h-7 px-2.5"
+					onClick={handleStartStop}
+				>
+					{isRunning ? (
+						<>
+							<Square className="mr-1.5 h-3 w-3" />
+							{t("actions.stop")}
+						</>
+					) : (
+						<>
+							<Play className="mr-1.5 h-3 w-3" />
+							{t("actions.start")}
+						</>
+					)}
+				</Button>
+			</>
+		);
+	}
 
-  return null;
+	return null;
 };
 
 // Utility functions - moved outside component to reduce complexity
-const getStatusBadgeVariant = (status: string): "default" | "destructive" | "outline" | "secondary" | "success" | "warning" | "info" | "purple" | "muted" => {
-  switch (status) {
-    case 'in_progress':
-      return 'info';
-    case 'ai_review':
-      return 'warning';
-    case 'human_review':
-      return 'purple';
-    case 'done':
-      return 'success';
-    default:
-      return 'secondary';
-  }
+const getStatusBadgeVariant = (
+	status: string,
+):
+	| "default"
+	| "destructive"
+	| "outline"
+	| "secondary"
+	| "success"
+	| "warning"
+	| "info"
+	| "purple"
+	| "muted" => {
+	switch (status) {
+		case "in_progress":
+			return "info";
+		case "ai_review":
+			return "warning";
+		case "human_review":
+			return "purple";
+		case "done":
+			return "success";
+		default:
+			return "secondary";
+	}
 };
 
-// biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
-const getReviewReasonLabel = (reason?: ReviewReason, t?: any): { label: string; variant: 'success' | 'destructive' | 'warning' } | null => {
-  if (!reason || !t) return null;
-  switch (reason) {
-    case 'completed':
-      return { label: t('reviewReason.completed'), variant: 'success' };
-    case 'errors':
-      return { label: t('reviewReason.hasErrors'), variant: 'destructive' };
-    case 'qa_rejected':
-      return { label: t('reviewReason.qaIssues'), variant: 'warning' };
-    case 'plan_review':
-      return { label: t('reviewReason.approvePlan'), variant: 'warning' };
-    case 'stopped':
-      return { label: t('reviewReason.stopped'), variant: 'warning' };
-    default:
-      return null;
-  }
+const getReviewReasonLabel = (
+	reason?: ReviewReason,
+	t?: any,
+): { label: string; variant: "success" | "destructive" | "warning" } | null => {
+	if (!reason || !t) return null;
+	switch (reason) {
+		case "completed":
+			return { label: t("reviewReason.completed"), variant: "success" };
+		case "errors":
+			return { label: t("reviewReason.hasErrors"), variant: "destructive" };
+		case "qa_rejected":
+			return { label: t("reviewReason.qaIssues"), variant: "warning" };
+		case "plan_review":
+			return { label: t("reviewReason.approvePlan"), variant: "warning" };
+		case "stopped":
+			return { label: t("reviewReason.stopped"), variant: "warning" };
+		default:
+			return null;
+	}
 };
 
 // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
 const getStatusLabel = (status: string, t?: any): string => {
-  if (!t) return status;
-  switch (status) {
-    case 'in_progress':
-      return t('labels.running');
-    case 'ai_review':
-      return t('labels.aiReview');
-    case 'human_review':
-      return t('labels.needsReview');
-    case 'done':
-      return t('status.complete');
-    default:
-      return t('labels.pending');
-  }
+	if (!t) return status;
+	switch (status) {
+		case "in_progress":
+			return t("labels.running");
+		case "ai_review":
+			return t("labels.aiReview");
+		case "human_review":
+			return t("labels.needsReview");
+		case "done":
+			return t("status.complete");
+		default:
+			return t("labels.pending");
+	}
 };
 
 const isDeleteAreaClick = (e: React.MouseEvent, rect: DOMRect): boolean => {
-  const x = e.clientX - rect.left;
-  const y = e.clientY - rect.top;
-  const deleteArea = { x: rect.width - 32, y: 0, width: 32, height: 32 };
-  return x >= deleteArea.x && x <= deleteArea.x + deleteArea.width &&
-         y >= deleteArea.y && y <= deleteArea.y + deleteArea.height;
+	const x = e.clientX - rect.left;
+	const y = e.clientY - rect.top;
+	const deleteArea = { x: rect.width - 32, y: 0, width: 32, height: 32 };
+	return (
+		x >= deleteArea.x &&
+		x <= deleteArea.x + deleteArea.width &&
+		y >= deleteArea.y &&
+		y <= deleteArea.y + deleteArea.height
+	);
 };
 
 const isDeleteAreaMouseDown = (e: React.MouseEvent, rect: DOMRect): boolean => {
-  const x = e.clientX - rect.left;
-  const y = e.clientY - rect.top;
-  const deleteArea = { x: rect.width - 50, y: 0, width: 50, height: 40 };
-  return x >= deleteArea.x && x <= deleteArea.x + deleteArea.width &&
-         y >= deleteArea.y && y <= deleteArea.y + deleteArea.height;
+	const x = e.clientX - rect.left;
+	const y = e.clientY - rect.top;
+	const deleteArea = { x: rect.width - 50, y: 0, width: 50, height: 40 };
+	return (
+		x >= deleteArea.x &&
+		x <= deleteArea.x + deleteArea.width &&
+		y >= deleteArea.y &&
+		y <= deleteArea.y + deleteArea.height
+	);
 };
 
 // Custom comparator for React.memo - only re-render when relevant task data changes
-function taskCardPropsAreEqual(prevProps: TaskCardProps, nextProps: TaskCardProps): boolean {
-  const prevTask = prevProps.task;
-  const nextTask = nextProps.task;
+function taskCardPropsAreEqual(
+	prevProps: TaskCardProps,
+	nextProps: TaskCardProps,
+): boolean {
+	const prevTask = prevProps.task;
+	const nextTask = nextProps.task;
 
-  // Fast path: same reference (include selectable props)
-  if (
-    prevTask === nextTask &&
-    prevProps.onClick === nextProps.onClick &&
-    prevProps.onStatusChange === nextProps.onStatusChange &&
-    prevProps.isSelectable === nextProps.isSelectable &&
-    prevProps.isSelected === nextProps.isSelected &&
-    prevProps.onToggleSelect === nextProps.onToggleSelect &&
-    prevProps.onViewPRFiles === nextProps.onViewPRFiles &&
-    prevProps.onDelete === nextProps.onDelete &&
-    prevProps.onPreviewApp === nextProps.onPreviewApp
-  ) {
-    return true;
-  }
+	// Fast path: same reference (include selectable props)
+	if (
+		prevTask === nextTask &&
+		prevProps.onClick === nextProps.onClick &&
+		prevProps.onStatusChange === nextProps.onStatusChange &&
+		prevProps.isSelectable === nextProps.isSelectable &&
+		prevProps.isSelected === nextProps.isSelected &&
+		prevProps.onToggleSelect === nextProps.onToggleSelect &&
+		prevProps.onViewPRFiles === nextProps.onViewPRFiles &&
+		prevProps.onDelete === nextProps.onDelete &&
+		prevProps.onPreviewApp === nextProps.onPreviewApp
+	) {
+		return true;
+	}
 
-  // Check selectable props first (cheap comparison)
-  if (
-    prevProps.isSelectable !== nextProps.isSelectable ||
-    prevProps.isSelected !== nextProps.isSelected
-  ) {
-    return false;
-  }
+	// Check selectable props first (cheap comparison)
+	if (
+		prevProps.isSelectable !== nextProps.isSelectable ||
+		prevProps.isSelected !== nextProps.isSelected
+	) {
+		return false;
+	}
 
-  // Compare only the fields that affect rendering
-  const isEqual = (
-    prevTask.id === nextTask.id &&
-    prevTask.status === nextTask.status &&
-    prevTask.title === nextTask.title &&
-    prevTask.description === nextTask.description &&
-    prevTask.updatedAt === nextTask.updatedAt &&
-    prevTask.reviewReason === nextTask.reviewReason &&
-    prevTask.executionProgress?.phase === nextTask.executionProgress?.phase &&
-    prevTask.executionProgress?.phaseProgress === nextTask.executionProgress?.phaseProgress &&
-    prevTask.subtasks.length === nextTask.subtasks.length &&
-    prevTask.metadata?.category === nextTask.metadata?.category &&
-    prevTask.metadata?.complexity === nextTask.metadata?.complexity &&
-    prevTask.metadata?.archivedAt === nextTask.metadata?.archivedAt &&
-    prevTask.metadata?.prUrl === nextTask.metadata?.prUrl &&
-    // Check if any subtask statuses changed (compare all subtasks)
-    prevTask.subtasks.every((s, i) => s.status === nextTask.subtasks[i]?.status)
-  );
+	// Compare only the fields that affect rendering
+	const isEqual =
+		prevTask.id === nextTask.id &&
+		prevTask.status === nextTask.status &&
+		prevTask.title === nextTask.title &&
+		prevTask.description === nextTask.description &&
+		prevTask.updatedAt === nextTask.updatedAt &&
+		prevTask.reviewReason === nextTask.reviewReason &&
+		prevTask.executionProgress?.phase === nextTask.executionProgress?.phase &&
+		prevTask.executionProgress?.phaseProgress ===
+			nextTask.executionProgress?.phaseProgress &&
+		prevTask.subtasks.length === nextTask.subtasks.length &&
+		prevTask.metadata?.category === nextTask.metadata?.category &&
+		prevTask.metadata?.complexity === nextTask.metadata?.complexity &&
+		prevTask.metadata?.archivedAt === nextTask.metadata?.archivedAt &&
+		prevTask.metadata?.prUrl === nextTask.metadata?.prUrl &&
+		// Check if any subtask statuses changed (compare all subtasks)
+		prevTask.subtasks.every(
+			(s, i) => s.status === nextTask.subtasks[i]?.status,
+		);
 
-  // Only log when actually re-rendering (reduces noise significantly)
-  // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
-  if ((globalThis as any).DEBUG && !isEqual) {
-    const changes: string[] = [];
-    if (prevTask.status !== nextTask.status) changes.push(`status: ${prevTask.status} -> ${nextTask.status}`);
-    if (prevTask.executionProgress?.phase !== nextTask.executionProgress?.phase) {
-      changes.push(`phase: ${prevTask.executionProgress?.phase} -> ${nextTask.executionProgress?.phase}`);
-    }
-    if (prevTask.subtasks.length !== nextTask.subtasks.length) {
-      changes.push(`subtasks: ${prevTask.subtasks.length} -> ${nextTask.subtasks.length}`);
-    }
-    
-    if (changes.length > 0) {
-      // biome-ignore lint/suspicious/noConsole: logging retained for debugging
-      console.log(`TaskCard ${nextTask.id} re-rendering due to: ${changes.join(', ')}`);
-    }
-  }
+	// Only log when actually re-rendering (reduces noise significantly)
+	// biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
+	if ((globalThis as any).DEBUG && !isEqual) {
+		const changes: string[] = [];
+		if (prevTask.status !== nextTask.status)
+			changes.push(`status: ${prevTask.status} -> ${nextTask.status}`);
+		if (
+			prevTask.executionProgress?.phase !== nextTask.executionProgress?.phase
+		) {
+			changes.push(
+				`phase: ${prevTask.executionProgress?.phase} -> ${nextTask.executionProgress?.phase}`,
+			);
+		}
+		if (prevTask.subtasks.length !== nextTask.subtasks.length) {
+			changes.push(
+				`subtasks: ${prevTask.subtasks.length} -> ${nextTask.subtasks.length}`,
+			);
+		}
 
-  return isEqual;
+		if (changes.length > 0) {
+			console.log(
+				`TaskCard ${nextTask.id} re-rendering due to: ${changes.join(", ")}`,
+			);
+		}
+	}
+
+	return isEqual;
 }
 
 export const TaskCard = memo(function TaskCard({
-  task,
-  onClick,
-  onStatusChange,
-  isSelectable,
-  isSelected,
-  onToggleSelect,
-  onDelete,
-  onViewPRFiles,
-  onPreviewApp
+	task,
+	onClick,
+	onStatusChange,
+	isSelectable,
+	isSelected,
+	onToggleSelect,
+	onDelete,
+	onViewPRFiles,
+	onPreviewApp,
 }: TaskCardProps) {
-  const { t } = useTranslation(['tasks', 'errors']);
-  const formatRelativeTime = useFormatRelativeTime();
-  const [isStuck, setIsStuck] = useState(false);
-  const [isRecovering, setIsRecovering] = useState(false);
-  const [showSyncDialog, setShowSyncDialog] = useState(false);
-  const stuckIntervalRef = useRef<NodeJS.Timeout | null>(null);
-  const deleteButtonRef = useRef<HTMLButtonElement | null>(null);
-  const cardRef = useRef<HTMLDivElement | null>(null);
+	const { t } = useTranslation(["tasks", "errors"]);
+	const formatRelativeTime = useFormatRelativeTime();
+	const [isStuck, setIsStuck] = useState(false);
+	const [isRecovering, setIsRecovering] = useState(false);
+	const [showSyncDialog, setShowSyncDialog] = useState(false);
+	const stuckIntervalRef = useRef<NodeJS.Timeout | null>(null);
+	const deleteButtonRef = useRef<HTMLButtonElement | null>(null);
+	const cardRef = useRef<HTMLDivElement | null>(null);
 
-  // ── Spotlight (jump-to from Pixel Office) ─────────────────
-  const [isSpotlit, setIsSpotlit] = useState(false);
-  const jumpToTaskId = useTaskStore((s) => s.jumpToTaskId);
-  const clearJump    = useTaskStore((s) => s.clearJump);
+	// ── Spotlight (jump-to from Pixel Office) ─────────────────
+	const [isSpotlit, setIsSpotlit] = useState(false);
+	const jumpToTaskId = useTaskStore((s) => s.jumpToTaskId);
+	const clearJump = useTaskStore((s) => s.clearJump);
 
-  useEffect(() => {
-    if (jumpToTaskId !== task.id) return;
-    // Small delay so the Kanban view has time to mount before scrolling
-    const scrollTimer = setTimeout(() => {
-      cardRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'nearest' });
-      setIsSpotlit(true);
-      clearJump();
-    }, 120);
-    const clearTimer = setTimeout(() => setIsSpotlit(false), 120 + 2200); // 3 × 0.7s animation
-    return () => { clearTimeout(scrollTimer); clearTimeout(clearTimer); };
-  }, [jumpToTaskId, task.id, clearJump]);
+	useEffect(() => {
+		if (jumpToTaskId !== task.id) return;
+		// Small delay so the Kanban view has time to mount before scrolling
+		const scrollTimer = setTimeout(() => {
+			cardRef.current?.scrollIntoView({
+				behavior: "smooth",
+				block: "center",
+				inline: "nearest",
+			});
+			setIsSpotlit(true);
+			clearJump();
+		}, 120);
+		const clearTimer = setTimeout(() => setIsSpotlit(false), 120 + 2200); // 3 × 0.7s animation
+		return () => {
+			clearTimeout(scrollTimer);
+			clearTimeout(clearTimer);
+		};
+	}, [jumpToTaskId, task.id, clearJump]);
 
-  // Get project details from store to access projectPath
-  const projects = useProjectStore((state) => state.projects);
-  const currentProject = projects.find((p) => p.id === task.projectId);
+	// Get project details from store to access projectPath
+	const projects = useProjectStore((state) => state.projects);
+	const currentProject = projects.find((p) => p.id === task.projectId);
 
-  const isRunning = task.status === 'in_progress';
-  const executionPhase = task.executionProgress?.phase;
-  const hasActiveExecution = executionPhase && executionPhase !== 'idle' && executionPhase !== 'complete' && executionPhase !== 'failed';
+	const isRunning = task.status === "in_progress";
+	const executionPhase = task.executionProgress?.phase;
+	const hasActiveExecution =
+		executionPhase &&
+		executionPhase !== "idle" &&
+		executionPhase !== "complete" &&
+		executionPhase !== "failed";
 
-  // Check if task is in human_review but has no completed subtasks (crashed/incomplete)
-  const isIncomplete = isIncompleteHumanReview(task);
+	// Check if task is in human_review but has no completed subtasks (crashed/incomplete)
+	const isIncomplete = isIncompleteHumanReview(task);
 
-  // Memoize expensive computations to avoid running on every render
-  // Truncate description for card display - full description shown in modal
-  // Handle JSON error tasks with i18n
-  const sanitizedDescription = useMemo(() => {
-    if (!task.description) return null;
-    // Check for JSON error marker and use i18n
-    if (task.description.startsWith(JSON_ERROR_PREFIX)) {
-      const errorMessage = task.description.slice(JSON_ERROR_PREFIX.length);
-      const translatedDesc = t('errors:task.jsonError.description', { error: errorMessage });
-      return sanitizeMarkdownForDisplay(translatedDesc, 120);
-    }
-    return sanitizeMarkdownForDisplay(task.description, 120);
-  }, [task.description, t]);
+	// Memoize expensive computations to avoid running on every render
+	// Truncate description for card display - full description shown in modal
+	// Handle JSON error tasks with i18n
+	const sanitizedDescription = useMemo(() => {
+		if (!task.description) return null;
+		// Check for JSON error marker and use i18n
+		if (task.description.startsWith(JSON_ERROR_PREFIX)) {
+			const errorMessage = task.description.slice(JSON_ERROR_PREFIX.length);
+			const translatedDesc = t("errors:task.jsonError.description", {
+				error: errorMessage,
+			});
+			return sanitizeMarkdownForDisplay(translatedDesc, 120);
+		}
+		return sanitizeMarkdownForDisplay(task.description, 120);
+	}, [task.description, t]);
 
-  // Memoize title with JSON error suffix handling
-  const displayTitle = useMemo(() => {
-    if (task.title.endsWith(JSON_ERROR_TITLE_SUFFIX)) {
-      const baseName = task.title.slice(0, -JSON_ERROR_TITLE_SUFFIX.length);
-      return `${baseName} ${t('errors:task.jsonError.titleSuffix')}`;
-    }
-    return task.title;
-  }, [task.title, t]);
+	// Memoize title with JSON error suffix handling
+	const displayTitle = useMemo(() => {
+		if (task.title.endsWith(JSON_ERROR_TITLE_SUFFIX)) {
+			const baseName = task.title.slice(0, -JSON_ERROR_TITLE_SUFFIX.length);
+			return `${baseName} ${t("errors:task.jsonError.titleSuffix")}`;
+		}
+		return task.title;
+	}, [task.title, t]);
 
-  // Memoize relative time (recalculates only when updatedAt changes)
-  const relativeTime = useMemo(
-    () => formatRelativeTime(task.updatedAt),
-    [task.updatedAt, formatRelativeTime]
-  );
+	// Memoize relative time (recalculates only when updatedAt changes)
+	const relativeTime = useMemo(
+		() => formatRelativeTime(task.updatedAt),
+		[task.updatedAt, formatRelativeTime],
+	);
 
-  // Memoize status menu items to avoid recreating on every render
-  const statusMenuItems = useMemo(() => {
-    if (!onStatusChange) return null;
-    return TASK_STATUS_COLUMNS.filter(status => status !== task.status).map((status) => (
-      <DropdownMenuItem
-        key={status}
-        onClick={() => onStatusChange(status)}
-      >
-        {t(TASK_STATUS_LABELS[status])}
-      </DropdownMenuItem>
-    ));
-  }, [task.status, onStatusChange, t]);
+	// Memoize status menu items to avoid recreating on every render
+	const statusMenuItems = useMemo(() => {
+		if (!onStatusChange) return null;
+		return TASK_STATUS_COLUMNS.filter((status) => status !== task.status).map(
+			(status) => (
+				<DropdownMenuItem key={status} onClick={() => onStatusChange(status)}>
+					{t(TASK_STATUS_LABELS[status])}
+				</DropdownMenuItem>
+			),
+		);
+	}, [task.status, onStatusChange, t]);
 
-  // Catastrophic stuck detection — last-resort safety net.
-  // XState handles all normal transitions via PROCESS_EXITED events.
-  // This only fires if XState somehow fails to transition after 60s with no activity.
-  useEffect(() => {
-    if (!isRunning) {
-      setIsStuck(false);
-      if (stuckIntervalRef.current) {
-        clearInterval(stuckIntervalRef.current);
-        stuckIntervalRef.current = null;
-      }
-      return;
-    }
+	// Catastrophic stuck detection — last-resort safety net.
+	// XState handles all normal transitions via PROCESS_EXITED events.
+	// This only fires if XState somehow fails to transition after 60s with no activity.
+	useEffect(() => {
+		if (!isRunning) {
+			setIsStuck(false);
+			if (stuckIntervalRef.current) {
+				clearInterval(stuckIntervalRef.current);
+				stuckIntervalRef.current = null;
+			}
+			return;
+		}
 
-    stuckIntervalRef.current = setInterval(() => {
-      // If any activity (status, progress, logs) was recorded recently, task is alive
-      if (hasRecentActivity(task.id)) {
-        setIsStuck(false);
-        return;
-      }
+		stuckIntervalRef.current = setInterval(() => {
+			// If any activity (status, progress, logs) was recorded recently, task is alive
+			if (hasRecentActivity(task.id)) {
+				setIsStuck(false);
+				return;
+			}
 
-      // No activity for 60s — verify process is actually gone
-      checkTaskRunning(task.id).then((actuallyRunning) => {
-        // Re-check activity in case something arrived while the IPC was in flight
-        if (hasRecentActivity(task.id)) {
-          setIsStuck(false);
-        } else {
-          setIsStuck(!actuallyRunning);
-        }
-      });
-    }, STUCK_CHECK_INTERVAL_MS);
+			// No activity for 60s — verify process is actually gone
+			checkTaskRunning(task.id).then((actuallyRunning) => {
+				// Re-check activity in case something arrived while the IPC was in flight
+				if (hasRecentActivity(task.id)) {
+					setIsStuck(false);
+				} else {
+					setIsStuck(!actuallyRunning);
+				}
+			});
+		}, STUCK_CHECK_INTERVAL_MS);
 
-    return () => {
-      if (stuckIntervalRef.current) {
-        clearInterval(stuckIntervalRef.current);
-      }
-    };
-  }, [task.id, isRunning]);
+		return () => {
+			if (stuckIntervalRef.current) {
+				clearInterval(stuckIntervalRef.current);
+			}
+		};
+	}, [task.id, isRunning]);
 
-  const handleStartStop = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    if (isRunning && !isStuck) {
-      stopTask(task.id);
-    } else {
-      startTask(task.id);
-    }
-  };
+	const handleStartStop = (e: React.MouseEvent) => {
+		e.stopPropagation();
+		if (isRunning && !isStuck) {
+			stopTask(task.id);
+		} else {
+			startTask(task.id);
+		}
+	};
 
-  const handleRecover = async (e: React.MouseEvent) => {
-    e.stopPropagation();
-    setIsRecovering(true);
-    // Auto-restart the task after recovery (no need to click Start again)
-    const result = await recoverStuckTask(task.id, { autoRestart: true });
-    if (result.success) {
-      setIsStuck(false);
-    }
-    setIsRecovering(false);
-  };
+	const handleRecover = async (e: React.MouseEvent) => {
+		e.stopPropagation();
+		setIsRecovering(true);
+		// Auto-restart the task after recovery (no need to click Start again)
+		const result = await recoverStuckTask(task.id, { autoRestart: true });
+		if (result.success) {
+			setIsStuck(false);
+		}
+		setIsRecovering(false);
+	};
 
-  const handleArchive = async (e: React.MouseEvent) => {
-    e.stopPropagation();
-    const result = await archiveTasks(task.projectId, [task.id]);
-    if (!result.success) {
-      console.error('[TaskCard] Failed to archive task:', task.id, result.error);
-    }
-  };
+	const handleArchive = async (e: React.MouseEvent) => {
+		e.stopPropagation();
+		const result = await archiveTasks(task.projectId, [task.id]);
+		if (!result.success) {
+			console.error(
+				"[TaskCard] Failed to archive task:",
+				task.id,
+				result.error,
+			);
+		}
+	};
 
-  const handleViewPR = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
-    if (task.metadata?.prUrl && (globalThis as any).electronAPI?.openExternal) {
-      // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
-      (globalThis as any).electronAPI.openExternal(task.metadata.prUrl);
-    }
-  };
+	const handleViewPR = (e: React.MouseEvent) => {
+		e.stopPropagation();
+		// biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
+		if (task.metadata?.prUrl && (globalThis as any).electronAPI?.openExternal) {
+			// biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
+			(globalThis as any).electronAPI.openExternal(task.metadata.prUrl);
+		}
+	};
 
-  const handleDelete = async (e: React.MouseEvent) => {
-    e.stopPropagation();
-    if (onDelete) {
-      onDelete();
-    }
-  };
+	const handleDelete = async (e: React.MouseEvent) => {
+		e.stopPropagation();
+		if (onDelete) {
+			onDelete();
+		}
+	};
 
-  const handleCardClick = (e: React.MouseEvent) => {
-    // Don't open task modal while sync dialog is open (prevents portal event leak)
-    if (showSyncDialog) return;
-    // If delete functionality is available, don't open the task when clicking near the delete button
-    if (onDelete) {
-      // Get the click coordinates relative to the card
-      const rect = cardRef.current?.getBoundingClientRect();
-      if (rect && isDeleteAreaClick(e, rect)) {
-        return; // Don't open the task if clicking in the delete area
-      }
-    }
-    // Open task details on click
-    onClick();
-  };
+	const handleCardClick = (e: React.MouseEvent) => {
+		// Don't open task modal while sync dialog is open (prevents portal event leak)
+		if (showSyncDialog) return;
+		// If delete functionality is available, don't open the task when clicking near the delete button
+		if (onDelete) {
+			// Get the click coordinates relative to the card
+			const rect = cardRef.current?.getBoundingClientRect();
+			if (rect && isDeleteAreaClick(e, rect)) {
+				return; // Don't open the task if clicking in the delete area
+			}
+		}
+		// Open task details on click
+		onClick();
+	};
 
-  const handlePlanClick = () => {
-    setPendingTaskDetailTab('subtasks');
-    onClick();
-  };
+	const handlePlanClick = () => {
+		setPendingTaskDetailTab("subtasks");
+		onClick();
+	};
 
+	// When executionPhase is 'complete', always show 'completed' badge regardless of reviewReason
+	// This ensures the user sees "Complete" when the task finished successfully
+	const effectiveReviewReason: ReviewReason | undefined =
+		executionPhase === "complete" ? "completed" : task.reviewReason;
+	const reviewReasonInfo =
+		task.status === "human_review"
+			? getReviewReasonLabel(effectiveReviewReason, t)
+			: null;
 
-  // When executionPhase is 'complete', always show 'completed' badge regardless of reviewReason
-  // This ensures the user sees "Complete" when the task finished successfully
-  const effectiveReviewReason: ReviewReason | undefined =
-    executionPhase === 'complete' ? 'completed' : task.reviewReason;
-  const reviewReasonInfo = task.status === 'human_review' ? getReviewReasonLabel(effectiveReviewReason, t) : null;
+	const isArchived = !!task.metadata?.archivedAt;
 
-  const isArchived = !!task.metadata?.archivedAt;
-  
-  // Check if task was imported from Azure DevOps
-  const isFromAzureDevOps = !!(task.metadata?.azureDevOpsIdentifier || task.metadata?.azureDevOpsUrl);
+	// Check if task was imported from Azure DevOps
+	const isFromAzureDevOps = !!(
+		task.metadata?.azureDevOpsIdentifier || task.metadata?.azureDevOpsUrl
+	);
 
-  return (
-    <Card
-      role="option"
-      aria-label={displayTitle}
-      aria-selected={isSelectable ? isSelected : undefined}
-      tabIndex={0}
-      onKeyDown={(e) => {
-        if (e.key === 'Enter' || e.key === ' ') {
-          e.preventDefault();
-          onClick();
-        }
-      }}
-      ref={cardRef}
-      className={cn(
-        'card-surface task-card-enhanced cursor-pointer relative group',
-        isRunning && !isStuck && 'ring-2 ring-primary border-primary task-running-pulse',
-        isStuck && 'ring-2 ring-warning border-warning task-stuck-pulse',
-        isArchived && 'opacity-60 hover:opacity-80',
-        isSelectable && isSelected && 'ring-2 ring-ring border-ring bg-accent/10',
-        isFromAzureDevOps && 'azure-devops-task',
-        isSpotlit && 'ring-2 task-spotlight' // violet spotlight on jump-to
-      )}
-      onClick={handleCardClick}
-      onMouseDown={(e) => {
-        // Additional mouse down handler to catch events early
-        if (onDelete) {
-          const rect = cardRef.current?.getBoundingClientRect();
-          if (rect && isDeleteAreaMouseDown(e, rect)) {
-            e.preventDefault();
-            e.stopPropagation();
-          }
-        }
-      }}
-    >
-      <CardContent className="p-3">
-        {/* Delete button - positioned at the top right, outside the content flow */}
-        {onDelete && (
-          <Button
-            ref={deleteButtonRef}
-            variant="ghost"
-            size="sm"
-            className="absolute top-2 right-2 h-6 w-6 p-0 opacity-0 group-hover:opacity-100 transition-opacity hover:bg-destructive/10 hover:text-destructive z-50"
-            title={t('actions.delete')}
-            onClick={(e) => {
-              e.preventDefault();
-              e.stopPropagation();
-              handleDelete(e);
-            }}
-          >
-            <X className="h-4 w-4" />
-          </Button>
-        )}
-        <div className={cn(
-          isSelectable ? 'flex gap-2' : 'w-full'
-        )}>
-          {/* Checkbox for selectable mode - stops event propagation */}
-          {isSelectable && (
-            <div className="shrink-0 pt-0.5">
-              <Checkbox
-                checked={isSelected}
-                onCheckedChange={onToggleSelect}
-                onClick={(e) => e.stopPropagation()}
-                aria-label={t('tasks:actions.selectTask', { title: displayTitle })}
-              />
-            </div>
-          )}
+	return (
+		<Card
+			role="option"
+			aria-label={displayTitle}
+			aria-selected={isSelectable ? isSelected : undefined}
+			tabIndex={0}
+			onKeyDown={(e) => {
+				if (e.key === "Enter" || e.key === " ") {
+					e.preventDefault();
+					onClick();
+				}
+			}}
+			ref={cardRef}
+			className={cn(
+				"card-surface task-card-enhanced cursor-pointer relative group",
+				isRunning &&
+					!isStuck &&
+					"ring-2 ring-primary border-primary task-running-pulse",
+				isStuck && "ring-2 ring-warning border-warning task-stuck-pulse",
+				isArchived && "opacity-60 hover:opacity-80",
+				isSelectable &&
+					isSelected &&
+					"ring-2 ring-ring border-ring bg-accent/10",
+				isFromAzureDevOps && "azure-devops-task",
+				isSpotlit && "ring-2 task-spotlight", // violet spotlight on jump-to
+			)}
+			onClick={handleCardClick}
+			onMouseDown={(e) => {
+				// Additional mouse down handler to catch events early
+				if (onDelete) {
+					const rect = cardRef.current?.getBoundingClientRect();
+					if (rect && isDeleteAreaMouseDown(e, rect)) {
+						e.preventDefault();
+						e.stopPropagation();
+					}
+				}
+			}}
+		>
+			<CardContent className="p-3">
+				{/* Delete button - positioned at the top right, outside the content flow */}
+				{onDelete && (
+					<Button
+						ref={deleteButtonRef}
+						variant="ghost"
+						size="sm"
+						className="absolute top-2 right-2 h-6 w-6 p-0 opacity-0 group-hover:opacity-100 transition-opacity hover:bg-destructive/10 hover:text-destructive z-50"
+						title={t("actions.delete")}
+						onClick={(e) => {
+							e.preventDefault();
+							e.stopPropagation();
+							handleDelete(e);
+						}}
+					>
+						<X className="h-4 w-4" />
+					</Button>
+				)}
+				<div className={cn(isSelectable ? "flex gap-2" : "w-full")}>
+					{/* Checkbox for selectable mode - stops event propagation */}
+					{isSelectable && (
+						<div className="shrink-0 pt-0.5">
+							<Checkbox
+								checked={isSelected}
+								onCheckedChange={onToggleSelect}
+								onClick={(e) => e.stopPropagation()}
+								aria-label={t("tasks:actions.selectTask", {
+									title: displayTitle,
+								})}
+							/>
+						</div>
+					)}
 
-          <div className={cn(
-            'flex-1 min-w-0',
-            !isSelectable && 'w-full'
-          )}>
-            {/* Title - full width, no wrapper */}
-            <h3
-              className="font-semibold text-sm text-foreground line-clamp-2 leading-snug"
-              title={displayTitle}
-            >
-              {displayTitle}
-            </h3>
+					<div className={cn("flex-1 min-w-0", !isSelectable && "w-full")}>
+						{/* Title - full width, no wrapper */}
+						<h3
+							className="font-semibold text-sm text-foreground line-clamp-2 leading-snug"
+							title={displayTitle}
+						>
+							{displayTitle}
+						</h3>
 
-        {/* Description - sanitized to handle markdown content (memoized) */}
-        {sanitizedDescription && (
-          <p className="mt-2 text-xs text-muted-foreground line-clamp-2">
-            {sanitizedDescription}
-          </p>
-        )}
+						{/* Description - sanitized to handle markdown content (memoized) */}
+						{sanitizedDescription && (
+							<p className="mt-2 text-xs text-muted-foreground line-clamp-2">
+								{sanitizedDescription}
+							</p>
+						)}
 
-        {/* Metadata badges */}
-        <MetadataBadges
-          task={task}
-          isStuck={isStuck}
-          isIncomplete={isIncomplete}
-          hasActiveExecution={hasActiveExecution}
-          executionPhase={executionPhase}
-          reviewReasonInfo={reviewReasonInfo}
-          t={t}
-        />
+						{/* Metadata badges */}
+						<MetadataBadges
+							task={task}
+							isStuck={isStuck}
+							isIncomplete={isIncomplete}
+							hasActiveExecution={hasActiveExecution}
+							executionPhase={executionPhase}
+							reviewReasonInfo={reviewReasonInfo}
+							t={t}
+						/>
 
-        {/* Progress section - Phase-aware with animations */}
-        {(task.subtasks.length > 0 || hasActiveExecution || isRunning || isStuck) && (
-          <div className="mt-3">
-            <PhaseProgressIndicator
-              phase={executionPhase}
-              subtasks={task.subtasks}
-              phaseProgress={task.executionProgress?.phaseProgress}
-              isStuck={isStuck}
-              isRunning={isRunning}
-              onPlanClick={task.subtasks.length > 0 ? handlePlanClick : undefined}
-            />
-          </div>
-        )}
+						{/* Progress section - Phase-aware with animations */}
+						{(task.subtasks.length > 0 ||
+							hasActiveExecution ||
+							isRunning ||
+							isStuck) && (
+							<div className="mt-3">
+								<PhaseProgressIndicator
+									phase={executionPhase}
+									subtasks={task.subtasks}
+									phaseProgress={task.executionProgress?.phaseProgress}
+									isStuck={isStuck}
+									isRunning={isRunning}
+									onPlanClick={
+										task.subtasks.length > 0 ? handlePlanClick : undefined
+									}
+								/>
+							</div>
+						)}
 
-        {/* Footer */}
-        <div className="mt-3 flex items-center justify-between">
-          <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-            <Clock className="h-3 w-3" />
-            <span>{relativeTime}</span>
-          </div>
+						{/* Footer */}
+						<div className="mt-3 flex items-center justify-between">
+							<div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+								<Clock className="h-3 w-3" />
+								<span>{relativeTime}</span>
+							</div>
 
-          <div className="flex items-center gap-1.5">
-            <ActionButtons
-              isStuck={isStuck}
-              isRecovering={isRecovering}
-              isIncomplete={isIncomplete}
-              isRunning={isRunning}
-              task={task}
-              currentProject={currentProject}
-              onViewPRFiles={onViewPRFiles}
-              onPreviewApp={onPreviewApp}
-              handleRecover={handleRecover}
-              handleStartStop={handleStartStop}
-              handleViewPR={handleViewPR}
-              handleArchive={handleArchive}
-              statusMenuItems={statusMenuItems}
-              t={t}
-            />
+							<div className="flex items-center gap-1.5">
+								<ActionButtons
+									isStuck={isStuck}
+									isRecovering={isRecovering}
+									isIncomplete={isIncomplete}
+									isRunning={isRunning}
+									task={task}
+									currentProject={currentProject}
+									onViewPRFiles={onViewPRFiles}
+									onPreviewApp={onPreviewApp}
+									handleRecover={handleRecover}
+									handleStartStop={handleStartStop}
+									handleViewPR={handleViewPR}
+									handleArchive={handleArchive}
+									statusMenuItems={statusMenuItems}
+									t={t}
+								/>
 
-            {/* Move to menu for keyboard accessibility */}
-            {statusMenuItems && (
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="h-7 w-7 p-0"
-                    onClick={(e) => e.stopPropagation()}
-                    aria-label={t('actions.taskActions')}
-                  >
-                    <MoreVertical className="h-4 w-4" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" onClick={(e) => e.stopPropagation()}>
-                  {task.status !== 'done' && (
-                    <>
-                      <DropdownMenuItem
-                        onClick={(e) => { e.stopPropagation(); e.preventDefault(); setShowSyncDialog(true); }}
-                      >
-                        <GitMerge className="mr-2 h-4 w-4" />
-                        {t('tasks:actions.syncFromBranch')}
-                      </DropdownMenuItem>
-                      <DropdownMenuSeparator />
-                    </>
-                  )}
-                  <DropdownMenuLabel>{t('actions.moveTo')}</DropdownMenuLabel>
-                  <DropdownMenuSeparator />
-                  {statusMenuItems}
-                </DropdownMenuContent>
-              </DropdownMenu>
-            )}
-          </div>
-        </div>
-        {/* Close content wrapper for selectable mode */}
-        </div>
-        {/* Close flex container for selectable mode */}
-        </div>
-      </CardContent>
+								{/* Move to menu for keyboard accessibility */}
+								{statusMenuItems && (
+									<DropdownMenu>
+										<DropdownMenuTrigger asChild>
+											<Button
+												variant="ghost"
+												size="sm"
+												className="h-7 w-7 p-0"
+												onClick={(e) => e.stopPropagation()}
+												aria-label={t("actions.taskActions")}
+											>
+												<MoreVertical className="h-4 w-4" />
+											</Button>
+										</DropdownMenuTrigger>
+										<DropdownMenuContent
+											align="end"
+											onClick={(e) => e.stopPropagation()}
+										>
+											{task.status !== "done" && (
+												<>
+													<DropdownMenuItem
+														onClick={(e) => {
+															e.stopPropagation();
+															e.preventDefault();
+															setShowSyncDialog(true);
+														}}
+													>
+														<GitMerge className="mr-2 h-4 w-4" />
+														{t("tasks:actions.syncFromBranch")}
+													</DropdownMenuItem>
+													<DropdownMenuSeparator />
+												</>
+											)}
+											<DropdownMenuLabel>
+												{t("actions.moveTo")}
+											</DropdownMenuLabel>
+											<DropdownMenuSeparator />
+											{statusMenuItems}
+										</DropdownMenuContent>
+									</DropdownMenu>
+								)}
+							</div>
+						</div>
+						{/* Close content wrapper for selectable mode */}
+					</div>
+					{/* Close flex container for selectable mode */}
+				</div>
+			</CardContent>
 
-      {/* Sync from Branch Dialog */}
-      {currentProject?.path && (
-        <SyncFromBranchDialog
-          open={showSyncDialog}
-          task={task}
-          projectPath={currentProject.path}
-          onOpenChange={setShowSyncDialog}
-        />
-      )}
-    </Card>
-  );
+			{/* Sync from Branch Dialog */}
+			{currentProject?.path && (
+				<SyncFromBranchDialog
+					open={showSyncDialog}
+					task={task}
+					projectPath={currentProject.path}
+					onOpenChange={setShowSyncDialog}
+				/>
+			)}
+		</Card>
+	);
 }, taskCardPropsAreEqual);

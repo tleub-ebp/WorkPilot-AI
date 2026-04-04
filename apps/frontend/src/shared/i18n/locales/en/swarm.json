@@ -1,83 +1,83 @@
 {
-  "title": "Swarm Mode",
-  "subtitle": "Multi-Agent Parallel Execution",
-  "enable": "Enable Swarm Mode",
-  "disable": "Disable Swarm Mode",
-  "analyze": "Analyze Dependencies",
-  "start": "Start Swarm",
-  "cancel": "Cancel Swarm",
-  "analyzing": "Analyzing dependencies...",
-  "executing": "Executing swarm...",
+	"title": "Swarm Mode",
+	"subtitle": "Multi-Agent Parallel Execution",
+	"enable": "Enable Swarm Mode",
+	"disable": "Disable Swarm Mode",
+	"analyze": "Analyze Dependencies",
+	"start": "Start Swarm",
+	"cancel": "Cancel Swarm",
+	"analyzing": "Analyzing dependencies...",
+	"executing": "Executing swarm...",
 
-  "infoBanner": "Swarm Mode uses your active AI profile. It works with any LLM provider configured in your account settings (Anthropic, OpenAI, z.ai, etc.).",
+	"infoBanner": "Swarm Mode uses your active AI profile. It works with any LLM provider configured in your account settings (Anthropic, OpenAI, z.ai, etc.).",
 
-  "config": {
-    "title": "Swarm Configuration",
-    "maxParallel": "Max Parallel Agents",
-    "maxParallelDesc": "Maximum number of agents running simultaneously per wave",
-    "failFast": "Fail Fast",
-    "failFastDesc": "Stop the entire swarm on the first subtask failure",
-    "maxRetries": "Max Retries Per Subtask",
-    "mergeAfterWave": "Merge After Each Wave",
-    "mergeAfterWaveDesc": "Semantically merge results between waves",
-    "aiMerge": "AI-Assisted Merge",
-    "aiMergeDesc": "Use AI to resolve ambiguous merge conflicts",
-    "dryRun": "Dry Run",
-    "dryRunDesc": "Analyze and execute without writing merged files"
-  },
+	"config": {
+		"title": "Swarm Configuration",
+		"maxParallel": "Max Parallel Agents",
+		"maxParallelDesc": "Maximum number of agents running simultaneously per wave",
+		"failFast": "Fail Fast",
+		"failFastDesc": "Stop the entire swarm on the first subtask failure",
+		"maxRetries": "Max Retries Per Subtask",
+		"mergeAfterWave": "Merge After Each Wave",
+		"mergeAfterWaveDesc": "Semantically merge results between waves",
+		"aiMerge": "AI-Assisted Merge",
+		"aiMergeDesc": "Use AI to resolve ambiguous merge conflicts",
+		"dryRun": "Dry Run",
+		"dryRunDesc": "Analyze and execute without writing merged files"
+	},
 
-  "analysis": {
-    "title": "Dependency Analysis",
-    "totalSubtasks": "Total Subtasks",
-    "totalWaves": "Waves",
-    "maxParallelism": "Max Parallelism",
-    "avgParallelism": "Avg Parallelism",
-    "speedupEstimate": "Est. Speedup",
-    "noParallelism": "No parallelism possible — all subtasks are sequential",
-    "waveBreakdown": "Wave Breakdown"
-  },
+	"analysis": {
+		"title": "Dependency Analysis",
+		"totalSubtasks": "Total Subtasks",
+		"totalWaves": "Waves",
+		"maxParallelism": "Max Parallelism",
+		"avgParallelism": "Avg Parallelism",
+		"speedupEstimate": "Est. Speedup",
+		"noParallelism": "No parallelism possible — all subtasks are sequential",
+		"waveBreakdown": "Wave Breakdown"
+	},
 
-  "status": {
-    "initializing": "Initializing",
-    "analyzingDependencies": "Analyzing Dependencies",
-    "executingWave": "Executing Wave {{current}}/{{total}}",
-    "mergingWave": "Merging Wave {{current}}",
-    "complete": "Complete",
-    "failed": "Failed",
-    "cancelled": "Cancelled"
-  },
+	"status": {
+		"initializing": "Initializing",
+		"analyzingDependencies": "Analyzing Dependencies",
+		"executingWave": "Executing Wave {{current}}/{{total}}",
+		"mergingWave": "Merging Wave {{current}}",
+		"complete": "Complete",
+		"failed": "Failed",
+		"cancelled": "Cancelled"
+	},
 
-  "wave": {
-    "title": "Wave {{index}}",
-    "subtasks": "{{count}} subtask(s)",
-    "running": "Running",
-    "completed": "Completed",
-    "failed": "Failed",
-    "merging": "Merging..."
-  },
+	"wave": {
+		"title": "Wave {{index}}",
+		"subtasks": "{{count}} subtask(s)",
+		"running": "Running",
+		"completed": "Completed",
+		"failed": "Failed",
+		"merging": "Merging..."
+	},
 
-  "subtask": {
-    "pending": "Pending",
-    "queued": "Queued",
-    "running": "Running",
-    "completed": "Completed",
-    "failed": "Failed",
-    "retrying": "Retrying (attempt {{attempt}}/{{max}})",
-    "skipped": "Skipped"
-  },
+	"subtask": {
+		"pending": "Pending",
+		"queued": "Queued",
+		"running": "Running",
+		"completed": "Completed",
+		"failed": "Failed",
+		"retrying": "Retrying (attempt {{attempt}}/{{max}})",
+		"skipped": "Skipped"
+	},
 
-  "results": {
-    "title": "Swarm Results",
-    "completedCount": "{{completed}}/{{total}} subtasks completed",
-    "failedCount": "{{count}} subtask(s) failed",
-    "duration": "Duration: {{seconds}}s",
-    "speedup": "Actual speedup: {{factor}}x"
-  },
+	"results": {
+		"title": "Swarm Results",
+		"completedCount": "{{completed}}/{{total}} subtasks completed",
+		"failedCount": "{{count}} subtask(s) failed",
+		"duration": "Duration: {{seconds}}s",
+		"speedup": "Actual speedup: {{factor}}x"
+	},
 
-  "errors": {
-    "noPlan": "No implementation plan found",
-    "analysisFailedGeneric": "Dependency analysis failed",
-    "startFailed": "Failed to start swarm execution",
-    "processError": "Swarm process error: {{error}}"
-  }
+	"errors": {
+		"noPlan": "No implementation plan found",
+		"analysisFailedGeneric": "Dependency analysis failed",
+		"startFailed": "Failed to start swarm execution",
+		"processError": "Swarm process error: {{error}}"
+	}
 }

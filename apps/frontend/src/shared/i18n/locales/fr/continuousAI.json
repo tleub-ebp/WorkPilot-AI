@@ -1,89 +1,89 @@
 {
-  "title": "IA Continue",
-  "subtitle": "Daemon de fond toujours actif",
-  "enable": "Activer l'IA Continue",
-  "disable": "Désactiver l'IA Continue",
-  "start": "Démarrer le daemon",
-  "stop": "Arrêter le daemon",
-  "running": "En cours",
-  "stopped": "Arrêté",
+	"title": "IA Continue",
+	"subtitle": "Daemon de fond toujours actif",
+	"enable": "Activer l'IA Continue",
+	"disable": "Désactiver l'IA Continue",
+	"start": "Démarrer le daemon",
+	"stop": "Arrêter le daemon",
+	"running": "En cours",
+	"stopped": "Arrêté",
 
-  "infoBanner": "L'IA Continue utilise votre profil IA actif. Elle fonctionne avec n'importe quel fournisseur LLM configuré dans vos paramètres de compte (Anthropic, OpenAI, z.ai, etc.).",
+	"infoBanner": "L'IA Continue utilise votre profil IA actif. Elle fonctionne avec n'importe quel fournisseur LLM configuré dans vos paramètres de compte (Anthropic, OpenAI, z.ai, etc.).",
 
-  "budget": {
-    "title": "Budget quotidien",
-    "spent": "Dépensé aujourd'hui : ${{amount}}",
-    "remaining": "Restant : ${{amount}}",
-    "exceeded": "Budget dépassé — daemon en pause"
-  },
+	"budget": {
+		"title": "Budget quotidien",
+		"spent": "Dépensé aujourd'hui : ${{amount}}",
+		"remaining": "Restant : ${{amount}}",
+		"exceeded": "Budget dépassé — daemon en pause"
+	},
 
-  "modules": {
-    "title": "Modules",
-    "cicdWatcher": {
-      "title": "Surveillance CI/CD",
-      "description": "Surveille les pipelines CI/CD et corrige automatiquement les échecs",
-      "autoFix": "Correction automatique des échecs",
-      "autoCreatePr": "Création automatique de PR de correction",
-      "watchedWorkflows": "Workflows surveillés (vide = tous)"
-    },
-    "dependencySentinel": {
-      "title": "Sentinelle des dépendances",
-      "description": "Scanne les dépendances vulnérables et applique les correctifs",
-      "autoPatchMinor": "Correctif auto pour versions mineures/patch",
-      "autoPatchMajor": "Correctif auto pour versions majeures",
-      "packageManagers": "Gestionnaires de paquets à scanner"
-    },
-    "issueResponder": {
-      "title": "Répondeur d'issues",
-      "description": "Trie automatiquement les issues et investigue les bugs",
-      "autoTriage": "Triage automatique (label + classification)",
-      "autoInvestigate": "Investigation automatique des bugs",
-      "autoCreateSpecs": "Création automatique de specs pour les features",
-      "labelsToWatch": "Labels à surveiller (vide = tous)"
-    },
-    "prReviewer": {
-      "title": "Réviseur de PR",
-      "description": "Revue automatique des PR externes avant la revue humaine",
-      "autoApproveTrivial": "Approbation auto des PR triviales",
-      "reviewExternalOnly": "Réviser uniquement les PR externes",
-      "postComments": "Poster des commentaires de revue sur la PR"
-    }
-  },
+	"modules": {
+		"title": "Modules",
+		"cicdWatcher": {
+			"title": "Surveillance CI/CD",
+			"description": "Surveille les pipelines CI/CD et corrige automatiquement les échecs",
+			"autoFix": "Correction automatique des échecs",
+			"autoCreatePr": "Création automatique de PR de correction",
+			"watchedWorkflows": "Workflows surveillés (vide = tous)"
+		},
+		"dependencySentinel": {
+			"title": "Sentinelle des dépendances",
+			"description": "Scanne les dépendances vulnérables et applique les correctifs",
+			"autoPatchMinor": "Correctif auto pour versions mineures/patch",
+			"autoPatchMajor": "Correctif auto pour versions majeures",
+			"packageManagers": "Gestionnaires de paquets à scanner"
+		},
+		"issueResponder": {
+			"title": "Répondeur d'issues",
+			"description": "Trie automatiquement les issues et investigue les bugs",
+			"autoTriage": "Triage automatique (label + classification)",
+			"autoInvestigate": "Investigation automatique des bugs",
+			"autoCreateSpecs": "Création automatique de specs pour les features",
+			"labelsToWatch": "Labels à surveiller (vide = tous)"
+		},
+		"prReviewer": {
+			"title": "Réviseur de PR",
+			"description": "Revue automatique des PR externes avant la revue humaine",
+			"autoApproveTrivial": "Approbation auto des PR triviales",
+			"reviewExternalOnly": "Réviser uniquement les PR externes",
+			"postComments": "Poster des commentaires de revue sur la PR"
+		}
+	},
 
-  "config": {
-    "pollInterval": "Intervalle de vérification",
-    "maxActionsPerHour": "Actions max par heure",
-    "autoAct": "Agir automatiquement",
-    "quietHours": "Heures calmes",
-    "quietHoursStart": "Début",
-    "quietHoursEnd": "Fin"
-  },
+	"config": {
+		"pollInterval": "Intervalle de vérification",
+		"maxActionsPerHour": "Actions max par heure",
+		"autoAct": "Agir automatiquement",
+		"quietHours": "Heures calmes",
+		"quietHoursStart": "Début",
+		"quietHoursEnd": "Fin"
+	},
 
-  "actions": {
-    "title": "Actions récentes",
-    "pending": "Approbations en attente",
-    "approve": "Approuver",
-    "reject": "Rejeter",
-    "noActions": "Aucune action pour le moment",
-    "noPending": "Aucune approbation en attente"
-  },
+	"actions": {
+		"title": "Actions récentes",
+		"pending": "Approbations en attente",
+		"approve": "Approuver",
+		"reject": "Rejeter",
+		"noActions": "Aucune action pour le moment",
+		"noPending": "Aucune approbation en attente"
+	},
 
-  "status": {
-    "idle": "Inactif",
-    "polling": "Vérification...",
-    "acting": "Exécution d'une action...",
-    "error": "Erreur",
-    "cooldown": "En refroidissement",
-    "disabled": "Désactivé",
-    "lastPoll": "Dernière vérification : {{time}}",
-    "actionsThisHour": "{{count}} actions cette heure",
-    "totalActions": "{{count}} actions au total"
-  },
+	"status": {
+		"idle": "Inactif",
+		"polling": "Vérification...",
+		"acting": "Exécution d'une action...",
+		"error": "Erreur",
+		"cooldown": "En refroidissement",
+		"disabled": "Désactivé",
+		"lastPoll": "Dernière vérification : {{time}}",
+		"actionsThisHour": "{{count}} actions cette heure",
+		"totalActions": "{{count}} actions au total"
+	},
 
-  "errors": {
-    "startFailed": "Échec du démarrage du daemon",
-    "stopFailed": "Échec de l'arrêt du daemon",
-    "approveFailed": "Échec de l'approbation de l'action",
-    "noPython": "Environnement Python non configuré"
-  }
+	"errors": {
+		"startFailed": "Échec du démarrage du daemon",
+		"stopFailed": "Échec de l'arrêt du daemon",
+		"approveFailed": "Échec de l'approbation de l'action",
+		"noPython": "Environnement Python non configuré"
+	}
 }

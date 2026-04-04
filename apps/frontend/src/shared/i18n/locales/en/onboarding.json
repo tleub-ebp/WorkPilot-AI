@@ -1,253 +1,253 @@
 {
-  "wizard": {
-    "title": "Setup Wizard",
-    "description": "Configure your WorkPilot AI environment in a few simple steps",
-    "helpText": "This wizard will help you set up your environment in just a few steps. You can configure your AI provider tokens, set up memory features, and create your first task."
-  },
-  "welcome": {
-    "title": "Welcome to WorkPilot AI",
-    "subtitle": "Build software autonomously with AI-powered agents",
-    "getStarted": "Get Started",
-    "skip": "Skip Setup",
-    "features": {
-      "aiPowered": {
-        "title": "AI-Powered Development",
-        "description": "Generate code and build features using AI-powered agents"
-      },
-      "specDriven": {
-        "title": "Spec-Driven Workflow",
-        "description": "Define tasks with clear specifications and let WorkPilot AI handle the implementation"
-      },
-      "memory": {
-        "title": "Memory & Context",
-        "description": "Persistent memory across sessions with Graphiti"
-      },
-      "parallel": {
-        "title": "Parallel Execution",
-        "description": "Run multiple agents in parallel for faster development cycles"
-      }
-    }
-  },
-  "oauth": {
-    "title": "AI Authentication",
-    "description": "Connect your AI provider account to enable AI features",
-    "configureTitle": "Configure AI Authentication",
-    "addAccountsDesc": "Add your AI provider accounts to enable AI features",
-    "multiAccountInfo": "Add multiple AI provider subscriptions to automatically switch between them when you hit rate limits.",
-    "noAccountsYet": "No accounts configured yet",
-    "badges": {
-      "default": "Default",
-      "active": "Active",
-      "authenticated": "Authenticated",
-      "needsAuth": "Needs Auth"
-    },
-    "buttons": {
-      "authenticate": "Authenticate",
-      "setActive": "Set Active",
-      "rename": "Rename",
-      "delete": "Delete",
-      "add": "Add",
-      "adding": "Adding...",
-      "showToken": "Show Token",
-      "hideToken": "Hide Token",
-      "copyToken": "Copy Token",
-      "back": "Back",
-      "continue": "Continue",
-      "skip": "Skip"
-    },
-    "labels": {
-      "accountName": "Account name",
-      "namePlaceholder": "Profile name (e.g., Work, Personal)",
-      "tokenLabel": "OAuth Token",
-      "tokenPlaceholder": "Enter token here",
-      "tokenHint": "Paste the token shown in your terminal after completing OAuth login."
-    },
-    "keychainTitle": "Secure Storage",
-    "keychainDescription": "Your tokens are encrypted using your system's keychain. You may see a password prompt from macOS — click \"Always Allow\" to avoid seeing it again.",
-    "toast": {
-      "authSuccess": "Profile authenticated successfully",
-      "authSuccessWithEmail": "Account: {{email}}",
-      "authSuccessGeneric": "Authentication complete. You can now use this profile.",
-      "authStartFailed": "Failed to start authentication",
-      "addProfileFailed": "Failed to add profile",
-      "tokenSaved": "Token saved",
-      "tokenSavedDescription": "Your token has been saved successfully.",
-      "tokenSaveFailed": "Failed to save token",
-      "tryAgain": "Please try again."
-    },
-    "alerts": {
-      "profileCreatedAuthFailed": "Profile created but failed to prepare authentication: {{error}}",
-      "authPrepareFailed": "Failed to prepare authentication: {{error}}",
-      "authStartFailedMessage": "Failed to start authentication. Please try again."
-    }
-  },
-  "memory": {
-    "title": "Memory",
-    "description": "Configure persistent cross-session memory for agents",
-    "contextDescription": "WorkPilot AI Memory helps remember context across your coding sessions",
-    "enableMemory": "Enable Memory",
-    "enableMemoryDescription": "Persistent cross-session memory using LadybugDB (embedded database)",
-    "memoryDisabledInfo": "Memory is disabled. Session insights will be stored in local files only. Enable Memory for persistent cross-session context with semantic search.",
-    "enableAgentAccess": "Enable Agent Memory Access",
-    "enableAgentAccessDescription": "Allow agents to search and add to the knowledge graph via MCP",
-    "mcpServerUrl": "Graphiti MCP Server URL",
-    "mcpServerUrlDescription": "URL of the Graphiti MCP server for agent memory access",
-    "embeddingProvider": "Embedding Provider",
-    "embeddingProviderDescription": "Provider for semantic search (optional - keyword search works without)",
-    "selectEmbeddingModel": "Select Embedding Model",
-    "openaiApiKey": "OpenAI API Key",
-    "openaiApiKeyDescription": "Required for OpenAI embeddings",
-    "openaiGetKey": "Get your key from",
-    "voyageApiKey": "Voyage AI API Key",
-    "voyageApiKeyDescription": "Required for Voyage AI embeddings",
-    "voyageEmbeddingModel": "Embedding Model",
-    "googleApiKey": "Google AI API Key",
-    "googleApiKeyDescription": "Required for Google AI embeddings",
-    "azureConfig": "Azure OpenAI Configuration",
-    "azureApiKey": "API Key",
-    "azureBaseUrl": "Base URL",
-    "azureEmbeddingDeployment": "Embedding Deployment Name",
-    "memoryInfo": "Memory stores discoveries, patterns, and insights about your codebase so future sessions start with context already loaded. No Docker required - uses an embedded database.",
-    "learnMore": "Learn more about Memory",
-    "back": "Back",
-    "skip": "Skip",
-    "saving": "Saving...",
-    "saveAndContinue": "Save & Continue",
-    "providers": {
-      "ollama": "Ollama (Local - Free)",
-      "openai": "OpenAI",
-      "voyage": "Voyage AI",
-      "google": "Google AI",
-      "azure": "Azure OpenAI"
-    },
-    "ollamaConfig": "Ollama Configuration",
-    "checking": "Checking...",
-    "connected": "Connected",
-    "notRunning": "Not running",
-    "baseUrl": "Base URL",
-    "embeddingModel": "Embedding Model",
-    "embeddingDim": "Embedding Dimension",
-    "embeddingDimDescription": "Required for Ollama embeddings (e.g., 768 for nomic-embed-text)",
-    "modelRecommendation": "Recommended: qwen3-embedding:4b (balanced), :8b (quality), :0.6b (fast)"
-  },
-  "completion": {
-    "title": "You're All Set!",
-    "subtitle": "WorkPilot AI is ready to help you build amazing software",
-    "setupComplete": "Setup Complete",
-    "setupCompleteDescription": "Your environment is configured and ready. You can start creating tasks immediately or explore the application at your own pace.",
-    "whatsNext": "What's Next?",
-    "createTask": {
-      "title": "Create a Task",
-      "description": "Start by creating your first task to see WorkPilot AI in action.",
-      "action": "Open Task Creator"
-    },
-    "customizeSettings": {
-      "title": "Customize Settings",
-      "description": "Fine-tune your preferences, configure integrations, or re-run this wizard.",
-      "action": "Open Settings"
-    },
-    "exploreDocs": {
-      "title": "Explore Documentation",
-      "description": "Learn more about advanced features, best practices, and troubleshooting."
-    },
-    "finish": "Finish & Start Building",
-    "rerunHint": "You can always re-run this wizard from Settings → Application"
-  },
-  "steps": {
-    "welcome": "Welcome",
-    "authChoice": "Auth Method",
-    "auth": "Auth",
-    "cli": "CLI",
-    "devtools": "Dev Tools",
-    "privacy": "Privacy",
-    "memory": "Memory",
-    "done": "Done"
-  },
-  "privacy": {
-    "title": "Help Improve WorkPilot AI",
-    "subtitle": "Anonymous error reporting helps us fix bugs faster",
-    "whatWeCollect": {
-      "title": "What we collect",
-      "crashReports": "Crash reports and error stack traces",
-      "errorMessages": "Error messages (with file paths anonymized)",
-      "appVersion": "App version and platform info"
-    },
-    "whatWeNeverCollect": {
-      "title": "What we never collect",
-      "code": "Your code or project files",
-      "filenames": "Full file paths (usernames are masked)",
-      "apiKeys": "API keys or tokens",
-      "personalData": "Personal information or usage data"
-    },
-    "toggle": {
-      "label": "Send anonymous error reports",
-      "description": "Help us identify and fix issues"
-    }
-  },
-  "cli": {
-    "title": "AI CLI",
-    "description": "Install or update the AI CLI to enable AI-powered features",
-    "detecting": "Checking AI CLI installation...",
-    "info": {
-      "title": "What is AI CLI?",
-      "description": "AI CLI is the official CLI that powers WorkPilot AI's AI features. It provides secure authentication and direct access to AI models."
-    },
-    "status": {
-      "installed": "Installed",
-      "outdated": "Update Available",
-      "notFound": "Not Installed"
-    },
-    "version": {
-      "current": "Current Version",
-      "latest": "Latest Version"
-    },
-    "install": {
-      "button": "Install AI CLI",
-      "updating": "Update AI CLI",
-      "inProgress": "Installing...",
-      "success": "Installation command sent to terminal. Please complete the installation there.",
-      "instructions": "The installer will open in your terminal. Follow the prompts to complete installation."
-    },
-    "learnMore": "Learn more about AI CLI"
-  },
-  "devtools": {
-    "title": "Developer Tools",
-    "description": "Choose your preferred IDE and terminal for working with WorkPilot AI worktrees",
-    "detecting": "Detecting installed tools...",
-    "detectAgain": "Detect Again",
-    "whyConfigure": "Why configure these?",
-    "whyConfigureDescription": "When WorkPilot AI builds features in isolated worktrees, you can open them directly in your preferred IDE or terminal to test and review changes.",
-    "ide": {
-      "label": "Preferred IDE",
-      "description": "WorkPilot AI will open worktrees in this editor",
-      "customPath": "Custom IDE Path"
-    },
-    "terminal": {
-      "label": "Preferred Terminal",
-      "description": "WorkPilot AI will open terminal sessions here",
-      "customPath": "Custom Terminal Path"
-    },
-    "detectedSummary": "Detected on your system:",
-    "noToolsDetected": "No additional tools detected (VS Code and system terminal will be used)",
-    "custom": "Custom...",
-    "saveAndContinue": "Save & Continue"
-  },
-  "ollama": {
-    "notInstalled": {
-      "title": "Ollama not installed",
-      "description": "Ollama provides free, local embedding models for semantic search. Install it with one click to enable this feature.",
-      "installSuccess": "Installation started in your terminal. Complete the installation there, then click Retry.",
-      "installButton": "Install Ollama",
-      "installing": "Installing...",
-      "retry": "Retry",
-      "learnMore": "Learn more",
-      "fallbackNote": "Memory will still work with keyword search even without Ollama."
-    },
-    "notRunning": {
-      "title": "Ollama not running",
-      "description": "Ollama is installed but not running. Start Ollama to use local embedding models.",
-      "retry": "Retry",
-      "fallbackNote": "Memory will still work with keyword search even without embeddings."
-    }
-  }
+	"wizard": {
+		"title": "Setup Wizard",
+		"description": "Configure your WorkPilot AI environment in a few simple steps",
+		"helpText": "This wizard will help you set up your environment in just a few steps. You can configure your AI provider tokens, set up memory features, and create your first task."
+	},
+	"welcome": {
+		"title": "Welcome to WorkPilot AI",
+		"subtitle": "Build software autonomously with AI-powered agents",
+		"getStarted": "Get Started",
+		"skip": "Skip Setup",
+		"features": {
+			"aiPowered": {
+				"title": "AI-Powered Development",
+				"description": "Generate code and build features using AI-powered agents"
+			},
+			"specDriven": {
+				"title": "Spec-Driven Workflow",
+				"description": "Define tasks with clear specifications and let WorkPilot AI handle the implementation"
+			},
+			"memory": {
+				"title": "Memory & Context",
+				"description": "Persistent memory across sessions with Graphiti"
+			},
+			"parallel": {
+				"title": "Parallel Execution",
+				"description": "Run multiple agents in parallel for faster development cycles"
+			}
+		}
+	},
+	"oauth": {
+		"title": "AI Authentication",
+		"description": "Connect your AI provider account to enable AI features",
+		"configureTitle": "Configure AI Authentication",
+		"addAccountsDesc": "Add your AI provider accounts to enable AI features",
+		"multiAccountInfo": "Add multiple AI provider subscriptions to automatically switch between them when you hit rate limits.",
+		"noAccountsYet": "No accounts configured yet",
+		"badges": {
+			"default": "Default",
+			"active": "Active",
+			"authenticated": "Authenticated",
+			"needsAuth": "Needs Auth"
+		},
+		"buttons": {
+			"authenticate": "Authenticate",
+			"setActive": "Set Active",
+			"rename": "Rename",
+			"delete": "Delete",
+			"add": "Add",
+			"adding": "Adding...",
+			"showToken": "Show Token",
+			"hideToken": "Hide Token",
+			"copyToken": "Copy Token",
+			"back": "Back",
+			"continue": "Continue",
+			"skip": "Skip"
+		},
+		"labels": {
+			"accountName": "Account name",
+			"namePlaceholder": "Profile name (e.g., Work, Personal)",
+			"tokenLabel": "OAuth Token",
+			"tokenPlaceholder": "Enter token here",
+			"tokenHint": "Paste the token shown in your terminal after completing OAuth login."
+		},
+		"keychainTitle": "Secure Storage",
+		"keychainDescription": "Your tokens are encrypted using your system's keychain. You may see a password prompt from macOS — click \"Always Allow\" to avoid seeing it again.",
+		"toast": {
+			"authSuccess": "Profile authenticated successfully",
+			"authSuccessWithEmail": "Account: {{email}}",
+			"authSuccessGeneric": "Authentication complete. You can now use this profile.",
+			"authStartFailed": "Failed to start authentication",
+			"addProfileFailed": "Failed to add profile",
+			"tokenSaved": "Token saved",
+			"tokenSavedDescription": "Your token has been saved successfully.",
+			"tokenSaveFailed": "Failed to save token",
+			"tryAgain": "Please try again."
+		},
+		"alerts": {
+			"profileCreatedAuthFailed": "Profile created but failed to prepare authentication: {{error}}",
+			"authPrepareFailed": "Failed to prepare authentication: {{error}}",
+			"authStartFailedMessage": "Failed to start authentication. Please try again."
+		}
+	},
+	"memory": {
+		"title": "Memory",
+		"description": "Configure persistent cross-session memory for agents",
+		"contextDescription": "WorkPilot AI Memory helps remember context across your coding sessions",
+		"enableMemory": "Enable Memory",
+		"enableMemoryDescription": "Persistent cross-session memory using LadybugDB (embedded database)",
+		"memoryDisabledInfo": "Memory is disabled. Session insights will be stored in local files only. Enable Memory for persistent cross-session context with semantic search.",
+		"enableAgentAccess": "Enable Agent Memory Access",
+		"enableAgentAccessDescription": "Allow agents to search and add to the knowledge graph via MCP",
+		"mcpServerUrl": "Graphiti MCP Server URL",
+		"mcpServerUrlDescription": "URL of the Graphiti MCP server for agent memory access",
+		"embeddingProvider": "Embedding Provider",
+		"embeddingProviderDescription": "Provider for semantic search (optional - keyword search works without)",
+		"selectEmbeddingModel": "Select Embedding Model",
+		"openaiApiKey": "OpenAI API Key",
+		"openaiApiKeyDescription": "Required for OpenAI embeddings",
+		"openaiGetKey": "Get your key from",
+		"voyageApiKey": "Voyage AI API Key",
+		"voyageApiKeyDescription": "Required for Voyage AI embeddings",
+		"voyageEmbeddingModel": "Embedding Model",
+		"googleApiKey": "Google AI API Key",
+		"googleApiKeyDescription": "Required for Google AI embeddings",
+		"azureConfig": "Azure OpenAI Configuration",
+		"azureApiKey": "API Key",
+		"azureBaseUrl": "Base URL",
+		"azureEmbeddingDeployment": "Embedding Deployment Name",
+		"memoryInfo": "Memory stores discoveries, patterns, and insights about your codebase so future sessions start with context already loaded. No Docker required - uses an embedded database.",
+		"learnMore": "Learn more about Memory",
+		"back": "Back",
+		"skip": "Skip",
+		"saving": "Saving...",
+		"saveAndContinue": "Save & Continue",
+		"providers": {
+			"ollama": "Ollama (Local - Free)",
+			"openai": "OpenAI",
+			"voyage": "Voyage AI",
+			"google": "Google AI",
+			"azure": "Azure OpenAI"
+		},
+		"ollamaConfig": "Ollama Configuration",
+		"checking": "Checking...",
+		"connected": "Connected",
+		"notRunning": "Not running",
+		"baseUrl": "Base URL",
+		"embeddingModel": "Embedding Model",
+		"embeddingDim": "Embedding Dimension",
+		"embeddingDimDescription": "Required for Ollama embeddings (e.g., 768 for nomic-embed-text)",
+		"modelRecommendation": "Recommended: qwen3-embedding:4b (balanced), :8b (quality), :0.6b (fast)"
+	},
+	"completion": {
+		"title": "You're All Set!",
+		"subtitle": "WorkPilot AI is ready to help you build amazing software",
+		"setupComplete": "Setup Complete",
+		"setupCompleteDescription": "Your environment is configured and ready. You can start creating tasks immediately or explore the application at your own pace.",
+		"whatsNext": "What's Next?",
+		"createTask": {
+			"title": "Create a Task",
+			"description": "Start by creating your first task to see WorkPilot AI in action.",
+			"action": "Open Task Creator"
+		},
+		"customizeSettings": {
+			"title": "Customize Settings",
+			"description": "Fine-tune your preferences, configure integrations, or re-run this wizard.",
+			"action": "Open Settings"
+		},
+		"exploreDocs": {
+			"title": "Explore Documentation",
+			"description": "Learn more about advanced features, best practices, and troubleshooting."
+		},
+		"finish": "Finish & Start Building",
+		"rerunHint": "You can always re-run this wizard from Settings → Application"
+	},
+	"steps": {
+		"welcome": "Welcome",
+		"authChoice": "Auth Method",
+		"auth": "Auth",
+		"cli": "CLI",
+		"devtools": "Dev Tools",
+		"privacy": "Privacy",
+		"memory": "Memory",
+		"done": "Done"
+	},
+	"privacy": {
+		"title": "Help Improve WorkPilot AI",
+		"subtitle": "Anonymous error reporting helps us fix bugs faster",
+		"whatWeCollect": {
+			"title": "What we collect",
+			"crashReports": "Crash reports and error stack traces",
+			"errorMessages": "Error messages (with file paths anonymized)",
+			"appVersion": "App version and platform info"
+		},
+		"whatWeNeverCollect": {
+			"title": "What we never collect",
+			"code": "Your code or project files",
+			"filenames": "Full file paths (usernames are masked)",
+			"apiKeys": "API keys or tokens",
+			"personalData": "Personal information or usage data"
+		},
+		"toggle": {
+			"label": "Send anonymous error reports",
+			"description": "Help us identify and fix issues"
+		}
+	},
+	"cli": {
+		"title": "AI CLI",
+		"description": "Install or update the AI CLI to enable AI-powered features",
+		"detecting": "Checking AI CLI installation...",
+		"info": {
+			"title": "What is AI CLI?",
+			"description": "AI CLI is the official CLI that powers WorkPilot AI's AI features. It provides secure authentication and direct access to AI models."
+		},
+		"status": {
+			"installed": "Installed",
+			"outdated": "Update Available",
+			"notFound": "Not Installed"
+		},
+		"version": {
+			"current": "Current Version",
+			"latest": "Latest Version"
+		},
+		"install": {
+			"button": "Install AI CLI",
+			"updating": "Update AI CLI",
+			"inProgress": "Installing...",
+			"success": "Installation command sent to terminal. Please complete the installation there.",
+			"instructions": "The installer will open in your terminal. Follow the prompts to complete installation."
+		},
+		"learnMore": "Learn more about AI CLI"
+	},
+	"devtools": {
+		"title": "Developer Tools",
+		"description": "Choose your preferred IDE and terminal for working with WorkPilot AI worktrees",
+		"detecting": "Detecting installed tools...",
+		"detectAgain": "Detect Again",
+		"whyConfigure": "Why configure these?",
+		"whyConfigureDescription": "When WorkPilot AI builds features in isolated worktrees, you can open them directly in your preferred IDE or terminal to test and review changes.",
+		"ide": {
+			"label": "Preferred IDE",
+			"description": "WorkPilot AI will open worktrees in this editor",
+			"customPath": "Custom IDE Path"
+		},
+		"terminal": {
+			"label": "Preferred Terminal",
+			"description": "WorkPilot AI will open terminal sessions here",
+			"customPath": "Custom Terminal Path"
+		},
+		"detectedSummary": "Detected on your system:",
+		"noToolsDetected": "No additional tools detected (VS Code and system terminal will be used)",
+		"custom": "Custom...",
+		"saveAndContinue": "Save & Continue"
+	},
+	"ollama": {
+		"notInstalled": {
+			"title": "Ollama not installed",
+			"description": "Ollama provides free, local embedding models for semantic search. Install it with one click to enable this feature.",
+			"installSuccess": "Installation started in your terminal. Complete the installation there, then click Retry.",
+			"installButton": "Install Ollama",
+			"installing": "Installing...",
+			"retry": "Retry",
+			"learnMore": "Learn more",
+			"fallbackNote": "Memory will still work with keyword search even without Ollama."
+		},
+		"notRunning": {
+			"title": "Ollama not running",
+			"description": "Ollama is installed but not running. Start Ollama to use local embedding models.",
+			"retry": "Retry",
+			"fallbackNote": "Memory will still work with keyword search even without embeddings."
+		}
+	}
 }

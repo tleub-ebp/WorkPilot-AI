@@ -17,8 +17,8 @@ const WARN_COOLDOWN_MS = 5000; // 5 seconds between warnings per channel
  * @returns true if within cooldown (should skip warning), false if cooldown expired
  */
 function isWithinCooldown(channel: string): boolean {
-  const lastWarn = warnTimestamps.get(channel) ?? 0;
-  return Date.now() - lastWarn < WARN_COOLDOWN_MS;
+	const lastWarn = warnTimestamps.get(channel) ?? 0;
+	return Date.now() - lastWarn < WARN_COOLDOWN_MS;
 }
 
 /**
@@ -26,41 +26,41 @@ function isWithinCooldown(channel: string): boolean {
  * Enforces a hard cap of 100 entries to prevent unbounded memory growth.
  */
 function recordWarning(channel: string): void {
-  warnTimestamps.set(channel, Date.now());
+	warnTimestamps.set(channel, Date.now());
 
-  // Prune if more than 100 entries to free memory
-  if (warnTimestamps.size > 100) {
-    const now = Date.now();
+	// Prune if more than 100 entries to free memory
+	if (warnTimestamps.size > 100) {
+		const now = Date.now();
 
-    // First, remove expired entries
-    for (const [ch, ts] of warnTimestamps.entries()) {
-      if (now - ts >= WARN_COOLDOWN_MS) {
-        warnTimestamps.delete(ch);
-      }
-    }
+		// First, remove expired entries
+		for (const [ch, ts] of warnTimestamps.entries()) {
+			if (now - ts >= WARN_COOLDOWN_MS) {
+				warnTimestamps.delete(ch);
+			}
+		}
 
-    // If still over 100 entries, remove oldest (Map preserves insertion order)
-    if (warnTimestamps.size > 100) {
-      const entriesToRemove = warnTimestamps.size - 100;
-      let removed = 0;
-      for (const ch of warnTimestamps.keys()) {
-        warnTimestamps.delete(ch);
-        if (++removed >= entriesToRemove) {
-          break;
-        }
-      }
-    }
-  }
+		// If still over 100 entries, remove oldest (Map preserves insertion order)
+		if (warnTimestamps.size > 100) {
+			const entriesToRemove = warnTimestamps.size - 100;
+			let removed = 0;
+			for (const ch of warnTimestamps.keys()) {
+				warnTimestamps.delete(ch);
+				if (++removed >= entriesToRemove) {
+					break;
+				}
+			}
+		}
+	}
 }
 
 /**
  * Log a warning with cooldown protection
  */
 function logWarningWithCooldown(message: string, channel: string): void {
-  if (!isWithinCooldown(channel)) {
-    console.warn(message);
-    recordWarning(channel);
-  }
+	if (!isWithinCooldown(channel)) {
+		console.warn(message);
+		recordWarning(channel);
+	}
 }
 
 /**
@@ -86,77 +86,89 @@ function logWarningWithCooldown(message: string, channel: string): void {
  * ```
  */
 export function safeSendToRenderer(
-  getMainWindow: () => BrowserWindow | null,
-  channel: string,
-  ...args: unknown[]
+	getMainWindow: () => BrowserWindow | null,
+	channel: string,
+	...args: unknown[]
 ): boolean {
-  try {
-    const mainWindow = getMainWindow();
-    if (!mainWindow) {
-      return false;
-    }
+	try {
+		const mainWindow = getMainWindow();
+		if (!mainWindow) {
+			return false;
+		}
 
-    // Check if window is destroyed
-    if (mainWindow.isDestroyed()) {
-      logWarningWithCooldown(`[safeSendToRenderer] Skipping send to destroyed window: ${channel}`, channel);
-      return false;
-    }
+		// Check if window is destroyed
+		if (mainWindow.isDestroyed()) {
+			logWarningWithCooldown(
+				`[safeSendToRenderer] Skipping send to destroyed window: ${channel}`,
+				channel,
+			);
+			return false;
+		}
 
-    // Check if webContents is destroyed
-    if (!mainWindow.webContents || mainWindow.webContents.isDestroyed()) {
-      logWarningWithCooldown(`[safeSendToRenderer] Skipping send to destroyed webContents: ${channel}`, channel);
-      return false;
-    }
+		// Check if webContents is destroyed
+		if (!mainWindow.webContents || mainWindow.webContents.isDestroyed()) {
+			logWarningWithCooldown(
+				`[safeSendToRenderer] Skipping send to destroyed webContents: ${channel}`,
+				channel,
+			);
+			return false;
+		}
 
-    // All checks passed - safe to send
-    mainWindow.webContents.send(channel, ...args);
-    return true;
-  } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : String(error);
+		// All checks passed - safe to send
+		mainWindow.webContents.send(channel, ...args);
+		return true;
+	} catch (error) {
+		const errorMessage = error instanceof Error ? error.message : String(error);
 
-    // Handle disposal errors with cooldown protection
-    if (errorMessage.includes("disposed") || errorMessage.includes("destroyed")) {
-      logWarningWithCooldown(`[safeSendToRenderer] Frame disposed, skipping send: ${channel}`, channel);
-    } else {
-      console.error(`[safeSendToRenderer] Error sending to renderer:`, error);
-    }
-    return false;
-  }
+		// Handle disposal errors with cooldown protection
+		if (
+			errorMessage.includes("disposed") ||
+			errorMessage.includes("destroyed")
+		) {
+			logWarningWithCooldown(
+				`[safeSendToRenderer] Frame disposed, skipping send: ${channel}`,
+				channel,
+			);
+		} else {
+			console.error(`[safeSendToRenderer] Error sending to renderer:`, error);
+		}
+		return false;
+	}
 }
 
 /**
  * Clear the warning timestamps Map (for testing only)
  */
 export function _clearWarnTimestampsForTest(): void {
-  warnTimestamps.clear();
+	warnTimestamps.clear();
 }
 
 /**
  * Parse .env file into key-value object
  */
 export function parseEnvFile(content: string): Record<string, string> {
-  const result: Record<string, string> = {};
-  // Use /\r?\n/ to handle both \n (Unix) and \r\n (Windows) line endings
-  const lines = content.split(/\r?\n/);
+	const result: Record<string, string> = {};
+	// Use /\r?\n/ to handle both \n (Unix) and \r\n (Windows) line endings
+	const lines = content.split(/\r?\n/);
 
-  for (const line of lines) {
-    const trimmed = line.trim();
-    // Skip empty lines and comments
-    if (!trimmed || trimmed.startsWith("#")) continue;
+	for (const line of lines) {
+		const trimmed = line.trim();
+		// Skip empty lines and comments
+		if (!trimmed || trimmed.startsWith("#")) continue;
 
-    const equalsIndex = trimmed.indexOf("=");
-    if (equalsIndex > 0) {
-      const key = trimmed.substring(0, equalsIndex).trim();
-      let value = trimmed.substring(equalsIndex + 1).trim();
-      // Remove quotes if present
-      if (
-        (value.startsWith('"') && value.endsWith('"')) ||
-        (value.startsWith("'") && value.endsWith("'"))
-      ) {
-        value = value.slice(1, -1);
-      }
-      result[key] = value;
-    }
-  }
-  return result;
+		const equalsIndex = trimmed.indexOf("=");
+		if (equalsIndex > 0) {
+			const key = trimmed.substring(0, equalsIndex).trim();
+			let value = trimmed.substring(equalsIndex + 1).trim();
+			// Remove quotes if present
+			if (
+				(value.startsWith('"') && value.endsWith('"')) ||
+				(value.startsWith("'") && value.endsWith("'"))
+			) {
+				value = value.slice(1, -1);
+			}
+			result[key] = value;
+		}
+	}
+	return result;
 }

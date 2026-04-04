@@ -1,14 +1,14 @@
 {
-  "title": "LLM Providers Management",
-  "claudeCodeState": "Claude Code State",
-  "authenticated": "Authenticated",
-  "notAuthenticated": "Not authenticated",
-  "availableModels": "Available models for \"{{provider}}\"",
-  "modelError": "{{error}}",
-  "noModels": "No models detected or loading...",
-  "savedConfigs": "Saved configurations:",
-  "providerCapabilities": "Provider \"{{provider}}\" capabilities:",
-  "configureProvider": "Configure \"{{provider}}\"",
-  "generateWithProvider": "Generate with \"{{provider}}\"",
-  "promptPlaceholder": "Prompt..."
+	"title": "LLM Providers Management",
+	"claudeCodeState": "Claude Code State",
+	"authenticated": "Authenticated",
+	"notAuthenticated": "Not authenticated",
+	"availableModels": "Available models for \"{{provider}}\"",
+	"modelError": "{{error}}",
+	"noModels": "No models detected or loading...",
+	"savedConfigs": "Saved configurations:",
+	"providerCapabilities": "Provider \"{{provider}}\" capabilities:",
+	"configureProvider": "Configure \"{{provider}}\"",
+	"generateWithProvider": "Generate with \"{{provider}}\"",
+	"promptPlaceholder": "Prompt..."
 }

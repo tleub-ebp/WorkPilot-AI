@@ -2,18 +2,18 @@
  * Streaming Integration Tests
  * ==========================
  * End-to-end integration tests for the streaming live coding functionality.
- * 
+ *
  * NOTE: These tests are currently disabled due to Python environment issues.
  * They require a properly configured Python environment with the streaming backend.
  */
 
-import { describe, it, expect, } from 'vitest';
+import { describe, expect, it } from "vitest";
 
 // Skip these tests for now
-describe.skip('Streaming Integration Tests', () => {
-  it('should be skipped due to Python environment issues', () => {
-    expect(true).toBe(true);
-  });
+describe.skip("Streaming Integration Tests", () => {
+	it("should be skipped due to Python environment issues", () => {
+		expect(true).toBe(true);
+	});
 });
 
 // Original test code is preserved below for when the environment is fixed

@@ -41,41 +41,46 @@
  * - Check that xterm.refresh() is called after options update
  */
 
-import { useTerminalFontSettingsStore } from '../stores/terminal-font-settings-store';
+import { useTerminalFontSettingsStore } from "../stores/terminal-font-settings-store";
 
 /**
  * Simulate a store change and verify all terminals update
  * This is for automated testing in a test environment
  */
 export async function verifyTerminalSubscription(): Promise<boolean> {
-  // Get initial settings
-  const initialSettings = useTerminalFontSettingsStore.getState();
+	// Get initial settings
+	const initialSettings = useTerminalFontSettingsStore.getState();
 
-  try {
-    // Change font size
-    useTerminalFontSettingsStore.getState().setFontSize(20);
+	try {
+		// Change font size
+		useTerminalFontSettingsStore.getState().setFontSize(20);
 
-    // Wait for updates to propagate
-    await new Promise((resolve) => setTimeout(resolve, 200));
+		// Wait for updates to propagate
+		await new Promise((resolve) => setTimeout(resolve, 200));
 
-    // Verify the store updated
-    const updatedSettings = useTerminalFontSettingsStore.getState();
-    if (updatedSettings.fontSize !== 20) {
-      console.error('Store did not update font size');
-      return false;
-    }
-    return true;
-  } catch (error) {
-    console.error('❌ Terminal font settings subscription verification failed:', error);
-    return false;
-  } finally {
-    // Always reset to original, even if an error occurred
-    try {
-      useTerminalFontSettingsStore.getState().setFontSize(initialSettings.fontSize);
-    } catch (resetError) {
-      console.error('Failed to reset font size:', resetError);
-    }
-  }
+		// Verify the store updated
+		const updatedSettings = useTerminalFontSettingsStore.getState();
+		if (updatedSettings.fontSize !== 20) {
+			console.error("Store did not update font size");
+			return false;
+		}
+		return true;
+	} catch (error) {
+		console.error(
+			"❌ Terminal font settings subscription verification failed:",
+			error,
+		);
+		return false;
+	} finally {
+		// Always reset to original, even if an error occurred
+		try {
+			useTerminalFontSettingsStore
+				.getState()
+				.setFontSize(initialSettings.fontSize);
+		} catch (resetError) {
+			console.error("Failed to reset font size:", resetError);
+		}
+	}
 }
 
 /**
@@ -83,5 +88,5 @@ export async function verifyTerminalSubscription(): Promise<boolean> {
  * This would be used in an integration test with actual xterm instances
  */
 export function verifyMultipleTerminalsUpdate(_terminalCount: number): void {
-  // noop
+	// noop
 }

@@ -10,7 +10,7 @@
 /**
  * Supported platform identifiers
  */
-export type Platform = 'win32' | 'darwin' | 'linux' | 'unknown';
+export type Platform = "win32" | "darwin" | "linux" | "unknown";
 
 /**
  * Get the current platform identifier.
@@ -21,11 +21,11 @@ export type Platform = 'win32' | 'darwin' | 'linux' | 'unknown';
  * @returns The current platform identifier
  */
 export function getCurrentPlatform(): Platform {
-  const p = process.platform;
-  if (p === 'win32' || p === 'darwin' || p === 'linux') {
-    return p;
-  }
-  return 'unknown';
+	const p = process.platform;
+	if (p === "win32" || p === "darwin" || p === "linux") {
+		return p;
+	}
+	return "unknown";
 }
 
 /**
@@ -34,7 +34,7 @@ export function getCurrentPlatform(): Platform {
  * @returns true if running on Windows
  */
 export function isWindows(): boolean {
-  return getCurrentPlatform() === 'win32';
+	return getCurrentPlatform() === "win32";
 }
 
 /**
@@ -43,7 +43,7 @@ export function isWindows(): boolean {
  * @returns true if running on macOS
  */
 export function isMacOS(): boolean {
-  return getCurrentPlatform() === 'darwin';
+	return getCurrentPlatform() === "darwin";
 }
 
 /**
@@ -52,7 +52,7 @@ export function isMacOS(): boolean {
  * @returns true if running on Linux
  */
 export function isLinux(): boolean {
-  return getCurrentPlatform() === 'linux';
+	return getCurrentPlatform() === "linux";
 }
 
 /**
@@ -61,5 +61,5 @@ export function isLinux(): boolean {
  * @returns true if running on a Unix-like platform
  */
 export function isUnix(): boolean {
-  return isMacOS() || isLinux();
+	return isMacOS() || isLinux();
 }

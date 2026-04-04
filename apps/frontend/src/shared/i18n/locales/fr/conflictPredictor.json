@@ -1,59 +1,59 @@
 {
-  "title": "Prédicteur de Conflits",
-  "description": "Détection proactive des conflits entre worktrees et branches",
-  "actions": {
-    "analyzeConflicts": "Analyser les conflits",
-    "cancel": "Annuler",
-    "close": "Fermer",
-    "copy": "Copier le rapport",
-    "copied": "Copié !",
-    "retry": "Réessayer",
-    "reanalyze": "Ré-analyser"
-  },
-  "status": {
-    "analyzing": "Analyse des worktrees...",
-    "analysisFailed": "Analyse échouée",
-    "error": "Erreur",
-    "ready": "Prêt"
-  },
-  "tabs": {
-    "overview": "Aperçu",
-    "conflicts": "Conflits",
-    "files": "Fichiers",
-    "recommendations": "Recommandations"
-  },
-  "result": {
-    "conflicts": "Total des conflits",
-    "riskLevel": "Évaluation des risques",
-    "worktrees": "Worktrees actifs",
-    "worktreesAndBranches": "Worktrees et branches actifs",
-    "recommendations": "Recommandations",
-    "safeMergeOrder": "Ordre de fusion sûr",
-    "safeMergeOrderDesc": "Ordre suggéré pour minimiser les conflits",
-    "highRiskAreas": "Zones à haut risque",
-    "summary": "Résumé",
-    "streamingOutput": "Sortie de débogage",
-    "noConflicts": "Aucun conflit détecté - développement parallèle sûr !",
-    "resolution": "Résolution"
-  },
-  "stats": {
-    "highRisk": "Haut risque",
-    "filesModified": "Fichiers modifiés"
-  },
-  "riskLevels": {
-    "low": "Faible",
-    "medium": "Moyen",
-    "high": "Élevé",
-    "critical": "Critique"
-  },
-  "conflictTypes": {
-    "modification": "Modification",
-    "deletion": "Suppression",
-    "addition": "Ajout",
-    "rename": "Renommage"
-  },
-  "errors": {
-    "noProject": "Veuillez sélectionner un projet",
-    "generic": "Une erreur est survenue lors de l'analyse"
-  }
+	"title": "Prédicteur de Conflits",
+	"description": "Détection proactive des conflits entre worktrees et branches",
+	"actions": {
+		"analyzeConflicts": "Analyser les conflits",
+		"cancel": "Annuler",
+		"close": "Fermer",
+		"copy": "Copier le rapport",
+		"copied": "Copié !",
+		"retry": "Réessayer",
+		"reanalyze": "Ré-analyser"
+	},
+	"status": {
+		"analyzing": "Analyse des worktrees...",
+		"analysisFailed": "Analyse échouée",
+		"error": "Erreur",
+		"ready": "Prêt"
+	},
+	"tabs": {
+		"overview": "Aperçu",
+		"conflicts": "Conflits",
+		"files": "Fichiers",
+		"recommendations": "Recommandations"
+	},
+	"result": {
+		"conflicts": "Total des conflits",
+		"riskLevel": "Évaluation des risques",
+		"worktrees": "Worktrees actifs",
+		"worktreesAndBranches": "Worktrees et branches actifs",
+		"recommendations": "Recommandations",
+		"safeMergeOrder": "Ordre de fusion sûr",
+		"safeMergeOrderDesc": "Ordre suggéré pour minimiser les conflits",
+		"highRiskAreas": "Zones à haut risque",
+		"summary": "Résumé",
+		"streamingOutput": "Sortie de débogage",
+		"noConflicts": "Aucun conflit détecté - développement parallèle sûr !",
+		"resolution": "Résolution"
+	},
+	"stats": {
+		"highRisk": "Haut risque",
+		"filesModified": "Fichiers modifiés"
+	},
+	"riskLevels": {
+		"low": "Faible",
+		"medium": "Moyen",
+		"high": "Élevé",
+		"critical": "Critique"
+	},
+	"conflictTypes": {
+		"modification": "Modification",
+		"deletion": "Suppression",
+		"addition": "Ajout",
+		"rename": "Renommage"
+	},
+	"errors": {
+		"noProject": "Veuillez sélectionner un projet",
+		"generic": "Une erreur est survenue lors de l'analyse"
+	}
 }

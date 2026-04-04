@@ -1,59 +1,59 @@
 {
-  "title": "Conflict Predictor",
-  "description": "Proactive conflict detection between worktrees and branches",
-  "actions": {
-    "analyzeConflicts": "Analyze Conflicts",
-    "cancel": "Cancel",
-    "close": "Close",
-    "copy": "Copy Report",
-    "copied": "Copied!",
-    "retry": "Retry",
-    "reanalyze": "Re-analyze"
-  },
-  "status": {
-    "analyzing": "Analyzing worktrees...",
-    "analysisFailed": "Analysis failed",
-    "error": "Error",
-    "ready": "Ready"
-  },
-  "tabs": {
-    "overview": "Overview",
-    "conflicts": "Conflicts",
-    "files": "Files",
-    "recommendations": "Recommendations"
-  },
-  "result": {
-    "conflicts": "Total Conflicts",
-    "riskLevel": "Risk Assessment",
-    "worktrees": "Active Worktrees",
-    "worktreesAndBranches": "Active Worktrees & Branches",
-    "recommendations": "Recommendations",
-    "safeMergeOrder": "Safe Merge Order",
-    "safeMergeOrderDesc": "Suggested order to minimize conflicts",
-    "highRiskAreas": "High Risk Areas",
-    "summary": "Summary",
-    "streamingOutput": "Debug Output",
-    "noConflicts": "No conflicts detected - safe for parallel development!",
-    "resolution": "Resolution"
-  },
-  "stats": {
-    "highRisk": "High Risk",
-    "filesModified": "Files Modified"
-  },
-  "riskLevels": {
-    "low": "Low",
-    "medium": "Medium",
-    "high": "High",
-    "critical": "Critical"
-  },
-  "conflictTypes": {
-    "modification": "Modification",
-    "deletion": "Deletion",
-    "addition": "Addition",
-    "rename": "Rename"
-  },
-  "errors": {
-    "noProject": "Please select a project",
-    "generic": "An error occurred during analysis"
-  }
+	"title": "Conflict Predictor",
+	"description": "Proactive conflict detection between worktrees and branches",
+	"actions": {
+		"analyzeConflicts": "Analyze Conflicts",
+		"cancel": "Cancel",
+		"close": "Close",
+		"copy": "Copy Report",
+		"copied": "Copied!",
+		"retry": "Retry",
+		"reanalyze": "Re-analyze"
+	},
+	"status": {
+		"analyzing": "Analyzing worktrees...",
+		"analysisFailed": "Analysis failed",
+		"error": "Error",
+		"ready": "Ready"
+	},
+	"tabs": {
+		"overview": "Overview",
+		"conflicts": "Conflicts",
+		"files": "Files",
+		"recommendations": "Recommendations"
+	},
+	"result": {
+		"conflicts": "Total Conflicts",
+		"riskLevel": "Risk Assessment",
+		"worktrees": "Active Worktrees",
+		"worktreesAndBranches": "Active Worktrees & Branches",
+		"recommendations": "Recommendations",
+		"safeMergeOrder": "Safe Merge Order",
+		"safeMergeOrderDesc": "Suggested order to minimize conflicts",
+		"highRiskAreas": "High Risk Areas",
+		"summary": "Summary",
+		"streamingOutput": "Debug Output",
+		"noConflicts": "No conflicts detected - safe for parallel development!",
+		"resolution": "Resolution"
+	},
+	"stats": {
+		"highRisk": "High Risk",
+		"filesModified": "Files Modified"
+	},
+	"riskLevels": {
+		"low": "Low",
+		"medium": "Medium",
+		"high": "High",
+		"critical": "Critical"
+	},
+	"conflictTypes": {
+		"modification": "Modification",
+		"deletion": "Deletion",
+		"addition": "Addition",
+		"rename": "Rename"
+	},
+	"errors": {
+		"noProject": "Please select a project",
+		"generic": "An error occurred during analysis"
+	}
 }

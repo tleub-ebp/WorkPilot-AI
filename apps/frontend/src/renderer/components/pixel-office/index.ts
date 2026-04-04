@@ -1,2 +1,2 @@
-export { PixelOffice } from './PixelOffice';
-export { PixelOfficeCanvas } from './PixelOfficeCanvas';
+export { PixelOffice } from "./PixelOffice";
+export { PixelOfficeCanvas } from "./PixelOfficeCanvas";

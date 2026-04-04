@@ -1,36 +1,36 @@
 {
-  "title": "Pipeline Generator",
-  "description": "Auto-generate complete CI/CD pipelines adapted to your project in seconds.",
-  "project": "Project",
-  "platforms": "CI/CD Platforms",
-  "viewPipeline": "View Pipeline",
-  "detectedStack": "Detected Stack",
-  "lines": "lines",
-  "savedTo": "Saved to",
-  "stackInfo": {
-    "languages": "Languages",
-    "frameworks": "Frameworks",
-    "dockerDetected": "Docker detected"
-  },
-  "status": {
-    "analyzing": "Analyzing project stack...",
-    "generating": "Generating CI/CD pipelines with AI...",
-    "saving": "Saving generated pipelines...",
-    "complete": "Pipelines generated successfully"
-  },
-  "errors": {
-    "noProject": "No project selected. Please select a project before continuing.",
-    "generic": "An error occurred during generation. Please try again."
-  },
-  "actions": {
-    "generate": "Generate Pipelines",
-    "regenerate": "Regenerate",
-    "cancel": "Cancel",
-    "copy": "Copy YAML",
-    "copySuccess": "Copied!"
-  },
-  "emptyState": {
-    "title": "Pipeline Generator",
-    "description": "Select CI/CD platforms and click \"Generate Pipelines\" to automatically analyze your project and generate production-ready pipeline configurations."
-  }
+	"title": "Pipeline Generator",
+	"description": "Auto-generate complete CI/CD pipelines adapted to your project in seconds.",
+	"project": "Project",
+	"platforms": "CI/CD Platforms",
+	"viewPipeline": "View Pipeline",
+	"detectedStack": "Detected Stack",
+	"lines": "lines",
+	"savedTo": "Saved to",
+	"stackInfo": {
+		"languages": "Languages",
+		"frameworks": "Frameworks",
+		"dockerDetected": "Docker detected"
+	},
+	"status": {
+		"analyzing": "Analyzing project stack...",
+		"generating": "Generating CI/CD pipelines with AI...",
+		"saving": "Saving generated pipelines...",
+		"complete": "Pipelines generated successfully"
+	},
+	"errors": {
+		"noProject": "No project selected. Please select a project before continuing.",
+		"generic": "An error occurred during generation. Please try again."
+	},
+	"actions": {
+		"generate": "Generate Pipelines",
+		"regenerate": "Regenerate",
+		"cancel": "Cancel",
+		"copy": "Copy YAML",
+		"copySuccess": "Copied!"
+	},
+	"emptyState": {
+		"title": "Pipeline Generator",
+		"description": "Select CI/CD platforms and click \"Generate Pipelines\" to automatically analyze your project and generate production-ready pipeline configurations."
+	}
 }

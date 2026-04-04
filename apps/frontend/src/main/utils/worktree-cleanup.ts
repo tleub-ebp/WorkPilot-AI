@@ -15,82 +15,90 @@
  * Related issue: https://github.com/AndyMik90/Auto-Claude/issues/1539
  */
 
-import { execFileSync } from 'child_process';
-import { rm } from 'fs/promises';
-import { existsSync } from 'fs';
-import { getToolPath } from '../cli-tool-manager';
-import { getIsolatedGitEnv } from './git-isolation';
-import { getTaskWorktreeDir, isPathWithinBase } from '../worktree-paths';
+import { execFileSync } from "child_process";
+import { existsSync } from "fs";
+import { rm } from "fs/promises";
+import { getToolPath } from "../cli-tool-manager";
+import { getTaskWorktreeDir, isPathWithinBase } from "../worktree-paths";
+import { getIsolatedGitEnv } from "./git-isolation";
 
 /**
  * Options for worktree cleanup operation
  */
 export interface WorktreeCleanupOptions {
-  /** Absolute path to the worktree directory to delete */
-  worktreePath: string;
-  /** Absolute path to the main project directory (for git operations) */
-  projectPath: string;
-  /** Spec ID for generating branch name (e.g., "001-my-feature") */
-  specId: string;
-  /** Custom commit message for auto-commit (default: "Auto-save before deletion") */
-  commitMessage?: string;
-  /** Log prefix for console messages (e.g., "[TASK_DELETE]") */
-  logPrefix?: string;
-  /** Whether to delete the associated branch (default: true) */
-  deleteBranch?: boolean;
-  /** Timeout in milliseconds for git operations (default: 30000) */
-  timeout?: number;
-  /** Maximum retries for directory deletion on Windows (default: 3) */
-  maxRetries?: number;
-  /** Delay between retries in milliseconds (default: 500) */
-  retryDelay?: number;
+	/** Absolute path to the worktree directory to delete */
+	worktreePath: string;
+	/** Absolute path to the main project directory (for git operations) */
+	projectPath: string;
+	/** Spec ID for generating branch name (e.g., "001-my-feature") */
+	specId: string;
+	/** Custom commit message for auto-commit (default: "Auto-save before deletion") */
+	commitMessage?: string;
+	/** Log prefix for console messages (e.g., "[TASK_DELETE]") */
+	logPrefix?: string;
+	/** Whether to delete the associated branch (default: true) */
+	deleteBranch?: boolean;
+	/** Timeout in milliseconds for git operations (default: 30000) */
+	timeout?: number;
+	/** Maximum retries for directory deletion on Windows (default: 3) */
+	maxRetries?: number;
+	/** Delay between retries in milliseconds (default: 500) */
+	retryDelay?: number;
 }
 
 /**
  * Result of the cleanup operation
  */
 export interface WorktreeCleanupResult {
-  /** Whether the cleanup was successful */
-  success: boolean;
-  /** The branch that was deleted (if deleteBranch was true) */
-  branch?: string;
-  /** Whether uncommitted changes were auto-committed */
-  autoCommitted?: boolean;
-  /** Warnings that occurred during cleanup (non-fatal issues) */
-  warnings: string[];
+	/** Whether the cleanup was successful */
+	success: boolean;
+	/** The branch that was deleted (if deleteBranch was true) */
+	branch?: string;
+	/** Whether uncommitted changes were auto-committed */
+	autoCommitted?: boolean;
+	/** Warnings that occurred during cleanup (non-fatal issues) */
+	warnings: string[];
 }
 
 /**
  * Gets the worktree branch name based on spec ID
  */
-function getWorktreeBranch(worktreePath: string, specId: string, timeout: number): string | null {
-  // First try to get branch from the worktree's HEAD
-  if (existsSync(worktreePath)) {
-    try {
-      const branch = execFileSync(getToolPath('git'), ['rev-parse', '--abbrev-ref', 'HEAD'], {
-        cwd: worktreePath,
-        encoding: 'utf-8',
-        env: getIsolatedGitEnv(),
-        timeout
-      }).trim();
+function getWorktreeBranch(
+	worktreePath: string,
+	specId: string,
+	timeout: number,
+): string | null {
+	// First try to get branch from the worktree's HEAD
+	if (existsSync(worktreePath)) {
+		try {
+			const branch = execFileSync(
+				getToolPath("git"),
+				["rev-parse", "--abbrev-ref", "HEAD"],
+				{
+					cwd: worktreePath,
+					encoding: "utf-8",
+					env: getIsolatedGitEnv(),
+					timeout,
+				},
+			).trim();
 
-      if (branch && branch !== 'HEAD') {
-        return branch;
-      }
-    } catch {
-      // Worktree might be corrupted, fall back to naming convention
-    }
-  }
+			if (branch && branch !== "HEAD") {
+				return branch;
+			}
+		} catch {
+			// Worktree might be corrupted, fall back to naming convention
+		}
+	}
 
-  // Fall back to the naming convention: auto-claude/{spec-id}
-  return `auto-claude/${specId}`;
+	// Fall back to the naming convention: auto-claude/{spec-id}
+	return `auto-claude/${specId}`;
 }
 
 /**
  * Delays execution for specified milliseconds
  */
 function delay(ms: number): Promise<void> {
-  return new Promise(resolve => setTimeout(resolve, ms));
+	return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
 /**
@@ -101,33 +109,33 @@ function delay(ms: number): Promise<void> {
  * backoff to handle transient file locks.
  */
 async function deleteDirectoryWithRetry(
-  dirPath: string,
-  maxRetries: number,
-  retryDelay: number,
-  logPrefix: string
+	dirPath: string,
+	maxRetries: number,
+	retryDelay: number,
+	logPrefix: string,
 ): Promise<void> {
-  let lastError: Error | null = null;
+	let lastError: Error | null = null;
 
-  for (let attempt = 1; attempt <= maxRetries; attempt++) {
-    try {
-      await rm(dirPath, { recursive: true, force: true });
-      return; // Success
-    } catch (error) {
-      lastError = error instanceof Error ? error : new Error(String(error));
+	for (let attempt = 1; attempt <= maxRetries; attempt++) {
+		try {
+			await rm(dirPath, { recursive: true, force: true });
+			return; // Success
+		} catch (error) {
+			lastError = error instanceof Error ? error : new Error(String(error));
 
-      if (attempt < maxRetries) {
-        const waitTime = retryDelay * attempt; // Linear backoff
-        console.warn(
-          `${logPrefix} Directory deletion attempt ${attempt}/${maxRetries} failed, ` +
-          `retrying in ${waitTime}ms: ${lastError.message}`
-        );
-        await delay(waitTime);
-      }
-    }
-  }
+			if (attempt < maxRetries) {
+				const waitTime = retryDelay * attempt; // Linear backoff
+				console.warn(
+					`${logPrefix} Directory deletion attempt ${attempt}/${maxRetries} failed, ` +
+						`retrying in ${waitTime}ms: ${lastError.message}`,
+				);
+				await delay(waitTime);
+			}
+		}
+	}
 
-  // All retries exhausted
-  throw lastError || new Error('Failed to delete directory after retries');
+	// All retries exhausted
+	throw lastError || new Error("Failed to delete directory after retries");
 }
 
 /**
@@ -163,145 +171,176 @@ async function deleteDirectoryWithRetry(
  * }
  * ```
  */
-export async function cleanupWorktree(options: WorktreeCleanupOptions): Promise<WorktreeCleanupResult> {
-  const {
-    worktreePath,
-    projectPath,
-    specId,
-    commitMessage = 'Auto-save before deletion',
-    logPrefix = '[WORKTREE_CLEANUP]',
-    deleteBranch = true,
-    timeout = 30000,
-    maxRetries = 3,
-    retryDelay = 500
-  } = options;
+export async function cleanupWorktree(
+	options: WorktreeCleanupOptions,
+): Promise<WorktreeCleanupResult> {
+	const {
+		worktreePath,
+		projectPath,
+		specId,
+		commitMessage = "Auto-save before deletion",
+		logPrefix = "[WORKTREE_CLEANUP]",
+		deleteBranch = true,
+		timeout = 30000,
+		maxRetries = 3,
+		retryDelay = 500,
+	} = options;
 
-  const warnings: string[] = [];
-  let autoCommitted = false;
+	const warnings: string[] = [];
+	let autoCommitted = false;
 
-  // Security: Validate that worktreePath is within the expected worktree directory
-  // This prevents path traversal attacks and accidental deletion of wrong directories
-  const expectedBase = getTaskWorktreeDir(projectPath);
-  if (!isPathWithinBase(worktreePath, expectedBase)) {
-    console.error(`${logPrefix} Security: Path validation failed - worktree path is outside expected directory`);
-    return {
-      success: false,
-      warnings: ['Invalid worktree path']
-    };
-  }
+	// Security: Validate that worktreePath is within the expected worktree directory
+	// This prevents path traversal attacks and accidental deletion of wrong directories
+	const expectedBase = getTaskWorktreeDir(projectPath);
+	if (!isPathWithinBase(worktreePath, expectedBase)) {
+		console.error(
+			`${logPrefix} Security: Path validation failed - worktree path is outside expected directory`,
+		);
+		return {
+			success: false,
+			warnings: ["Invalid worktree path"],
+		};
+	}
 
-  // 1. Get the branch name before we delete the directory
-  const branch = getWorktreeBranch(worktreePath, specId, timeout);
-  console.warn(`${logPrefix} Starting cleanup for worktree: ${worktreePath}`);
-  if (branch) {
-    console.warn(`${logPrefix} Associated branch: ${branch}`);
-  }
+	// 1. Get the branch name before we delete the directory
+	const branch = getWorktreeBranch(worktreePath, specId, timeout);
+	console.warn(`${logPrefix} Starting cleanup for worktree: ${worktreePath}`);
+	if (branch) {
+		console.warn(`${logPrefix} Associated branch: ${branch}`);
+	}
 
-  // 2. Auto-commit any uncommitted changes to preserve work
-  // This ensures the user can recover their work via `git reflog` for ~90 days
-  if (existsSync(worktreePath)) {
-    try {
-      // Check if there are any changes to commit
-      const status = execFileSync(getToolPath('git'), ['status', '--porcelain'], {
-        cwd: worktreePath,
-        encoding: 'utf-8',
-        env: getIsolatedGitEnv(),
-        timeout
-      });
+	// 2. Auto-commit any uncommitted changes to preserve work
+	// This ensures the user can recover their work via `git reflog` for ~90 days
+	if (existsSync(worktreePath)) {
+		try {
+			// Check if there are any changes to commit
+			const status = execFileSync(
+				getToolPath("git"),
+				["status", "--porcelain"],
+				{
+					cwd: worktreePath,
+					encoding: "utf-8",
+					env: getIsolatedGitEnv(),
+					timeout,
+				},
+			);
 
-      if (status.trim()) {
-        // There are uncommitted changes - commit them before deletion
-        console.warn(`${logPrefix} Found uncommitted changes, auto-committing...`);
+			if (status.trim()) {
+				// There are uncommitted changes - commit them before deletion
+				console.warn(
+					`${logPrefix} Found uncommitted changes, auto-committing...`,
+				);
 
-        execFileSync(getToolPath('git'), ['add', '-A'], {
-          cwd: worktreePath,
-          encoding: 'utf-8',
-          env: getIsolatedGitEnv(),
-          timeout
-        });
+				execFileSync(getToolPath("git"), ["add", "-A"], {
+					cwd: worktreePath,
+					encoding: "utf-8",
+					env: getIsolatedGitEnv(),
+					timeout,
+				});
 
-        execFileSync(getToolPath('git'), ['commit', '-m', commitMessage], {
-          cwd: worktreePath,
-          encoding: 'utf-8',
-          env: getIsolatedGitEnv(),
-          timeout
-        });
+				execFileSync(getToolPath("git"), ["commit", "-m", commitMessage], {
+					cwd: worktreePath,
+					encoding: "utf-8",
+					env: getIsolatedGitEnv(),
+					timeout,
+				});
 
-        console.warn(`${logPrefix} Auto-committed changes before deletion`);
-        autoCommitted = true;
-      }
-    } catch (commitError) {
-      // Non-critical - log and continue with deletion
-      const msg = commitError instanceof Error ? commitError.message : String(commitError);
-      console.warn(`${logPrefix} Failed to auto-commit changes (non-critical): ${msg}`);
-      warnings.push(`Auto-commit failed: ${msg}`);
-    }
-  }
+				console.warn(`${logPrefix} Auto-committed changes before deletion`);
+				autoCommitted = true;
+			}
+		} catch (commitError) {
+			// Non-critical - log and continue with deletion
+			const msg =
+				commitError instanceof Error
+					? commitError.message
+					: String(commitError);
+			console.warn(
+				`${logPrefix} Failed to auto-commit changes (non-critical): ${msg}`,
+			);
+			warnings.push(`Auto-commit failed: ${msg}`);
+		}
+	}
 
-  // 3. Delete the worktree directory manually
-  // This is required because `git worktree remove --force` fails on Windows
-  // when the directory contains untracked files (node_modules, build artifacts, etc.)
-  if (existsSync(worktreePath)) {
-    console.warn(`${logPrefix} Deleting worktree directory...`);
-    try {
-      await deleteDirectoryWithRetry(worktreePath, maxRetries, retryDelay, logPrefix);
-      console.warn(`${logPrefix} Worktree directory deleted successfully`);
-    } catch (deleteError) {
-      // This IS critical - if we can't delete the directory, the cleanup failed
-      const msg = deleteError instanceof Error ? deleteError.message : String(deleteError);
-      console.error(`${logPrefix} Failed to delete worktree directory: ${msg}`);
-      return {
-        success: false,
-        branch: branch || undefined,
-        autoCommitted,
-        warnings: [...warnings, `Directory deletion failed: ${msg}`]
-      };
-    }
-  } else {
-    console.warn(`${logPrefix} Worktree directory already deleted`);
-  }
+	// 3. Delete the worktree directory manually
+	// This is required because `git worktree remove --force` fails on Windows
+	// when the directory contains untracked files (node_modules, build artifacts, etc.)
+	if (existsSync(worktreePath)) {
+		console.warn(`${logPrefix} Deleting worktree directory...`);
+		try {
+			await deleteDirectoryWithRetry(
+				worktreePath,
+				maxRetries,
+				retryDelay,
+				logPrefix,
+			);
+			console.warn(`${logPrefix} Worktree directory deleted successfully`);
+		} catch (deleteError) {
+			// This IS critical - if we can't delete the directory, the cleanup failed
+			const msg =
+				deleteError instanceof Error
+					? deleteError.message
+					: String(deleteError);
+			console.error(`${logPrefix} Failed to delete worktree directory: ${msg}`);
+			return {
+				success: false,
+				branch: branch || undefined,
+				autoCommitted,
+				warnings: [...warnings, `Directory deletion failed: ${msg}`],
+			};
+		}
+	} else {
+		console.warn(`${logPrefix} Worktree directory already deleted`);
+	}
 
-  // 4. Prune git's internal worktree references
-  // After manual deletion, git still thinks the worktree exists in .git/worktrees/
-  // Running prune cleans up these stale references
-  try {
-    execFileSync(getToolPath('git'), ['worktree', 'prune'], {
-      cwd: projectPath,
-      encoding: 'utf-8',
-      env: getIsolatedGitEnv(),
-      timeout
-    });
-    console.warn(`${logPrefix} Git worktree references pruned`);
-  } catch (pruneError) {
-    // Non-critical - the worktree is already gone, prune is just cleanup
-    const msg = pruneError instanceof Error ? pruneError.message : String(pruneError);
-    console.warn(`${logPrefix} Failed to prune worktree references (non-critical): ${msg}`);
-    warnings.push(`Worktree prune failed: ${msg}`);
-  }
+	// 4. Prune git's internal worktree references
+	// After manual deletion, git still thinks the worktree exists in .git/worktrees/
+	// Running prune cleans up these stale references
+	try {
+		execFileSync(getToolPath("git"), ["worktree", "prune"], {
+			cwd: projectPath,
+			encoding: "utf-8",
+			env: getIsolatedGitEnv(),
+			timeout,
+		});
+		console.warn(`${logPrefix} Git worktree references pruned`);
+	} catch (pruneError) {
+		// Non-critical - the worktree is already gone, prune is just cleanup
+		const msg =
+			pruneError instanceof Error ? pruneError.message : String(pruneError);
+		console.warn(
+			`${logPrefix} Failed to prune worktree references (non-critical): ${msg}`,
+		);
+		warnings.push(`Worktree prune failed: ${msg}`);
+	}
 
-  // 5. Delete the branch if requested
-  if (deleteBranch && branch) {
-    try {
-      execFileSync(getToolPath('git'), ['branch', '-D', branch], {
-        cwd: projectPath,
-        encoding: 'utf-8',
-        env: getIsolatedGitEnv(),
-        timeout
-      });
-      console.warn(`${logPrefix} Branch deleted: ${branch}`);
-    } catch (branchError) {
-      // Non-critical - branch might not exist or already deleted
-      const msg = branchError instanceof Error ? branchError.message : String(branchError);
-      console.warn(`${logPrefix} Failed to delete branch (non-critical): ${msg}`);
-      warnings.push(`Branch deletion failed: ${msg}`);
-    }
-  }
+	// 5. Delete the branch if requested
+	if (deleteBranch && branch) {
+		try {
+			execFileSync(getToolPath("git"), ["branch", "-D", branch], {
+				cwd: projectPath,
+				encoding: "utf-8",
+				env: getIsolatedGitEnv(),
+				timeout,
+			});
+			console.warn(`${logPrefix} Branch deleted: ${branch}`);
+		} catch (branchError) {
+			// Non-critical - branch might not exist or already deleted
+			const msg =
+				branchError instanceof Error
+					? branchError.message
+					: String(branchError);
+			console.warn(
+				`${logPrefix} Failed to delete branch (non-critical): ${msg}`,
+			);
+			warnings.push(`Branch deletion failed: ${msg}`);
+		}
+	}
 
-  console.warn(`${logPrefix} Cleanup completed successfully`);
-  return {
-    success: true,
-    branch: branch || undefined,
-    autoCommitted,
-    warnings
-  };
+	console.warn(`${logPrefix} Cleanup completed successfully`);
+	return {
+		success: true,
+		branch: branch || undefined,
+		autoCommitted,
+		warnings,
+	};
 }

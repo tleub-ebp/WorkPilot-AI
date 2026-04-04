@@ -1,69 +1,69 @@
 {
-  "title": "Streaming Development",
-  "dialogTitle": "Live Streaming Session",
-  "dialogDescription": "Watch the AI agent code in real-time",
-  "status": {
-    "live": "LIVE",
-    "offline": "OFFLINE",
-    "connecting": "CONNECTING...",
-    "reconnect": "Reconnect",
-    "initializing": "Initializing...",
-    "sessionStarted": "Session started",
-    "sessionConfirmed": "Session confirmed",
-    "thinking": "Thinking: {{thought}}...",
-    "responding": "Responding..."
-  },
-  "header": {
-    "saveRecording": "Save Recording",
-    "share": "Share",
-    "stopSession": "Stop Session"
-  },
-  "stats": {
-    "files": "{{count}} files",
-    "commands": "Commands:",
-    "tests": "Tests:"
-  },
-  "codeView": {
-    "noFile": "No file selected",
-    "waitingForChanges": "// Waiting for code changes..."
-  },
-  "tabs": {
-    "chat": "Chat",
-    "events": "Events",
-    "timeline": "Timeline"
-  },
-  "chat": {
-    "placeholder": "Type a message to Claude...",
-    "send": "Send"
-  },
-  "timeline": {
-    "comingSoon": "Timeline scrubbing coming soon...",
-    "replayDescription": "Replay sessions at different speeds"
-  },
-  "controls": {
-    "resume": "Resume session",
-    "pause": "Pause session"
-  },
-  "test": {
-    "title": "Streaming Test",
-    "serverRunning": "Server Running",
-    "serverStopped": "Server Stopped",
-    "sessionId": "Session ID",
-    "sessionIdPlaceholder": "Auto-generated or enter custom",
-    "generate": "Generate",
-    "connectionStatus": "Connection Status",
-    "connected": "Connected",
-    "disconnected": "Disconnected",
-    "selectTask": "Select Task",
-    "selectTaskPlaceholder": "Select a task...",
-    "startTaskWithStreaming": "Start Task with Streaming",
-    "startStreamingServer": "Start Streaming Server",
-    "instructions": "Instructions:",
-    "instruction1": "Start the streaming server if not running",
-    "instruction2": "Generate or enter a session ID",
-    "instruction3": "Select a task from backlog/queue",
-    "instruction4": "Click \"Start Task with Streaming\"",
-    "instruction5": "The task will execute with live streaming events",
-    "pleaseSelectTask": "Please select a task"
-  }
+	"title": "Streaming Development",
+	"dialogTitle": "Live Streaming Session",
+	"dialogDescription": "Watch the AI agent code in real-time",
+	"status": {
+		"live": "LIVE",
+		"offline": "OFFLINE",
+		"connecting": "CONNECTING...",
+		"reconnect": "Reconnect",
+		"initializing": "Initializing...",
+		"sessionStarted": "Session started",
+		"sessionConfirmed": "Session confirmed",
+		"thinking": "Thinking: {{thought}}...",
+		"responding": "Responding..."
+	},
+	"header": {
+		"saveRecording": "Save Recording",
+		"share": "Share",
+		"stopSession": "Stop Session"
+	},
+	"stats": {
+		"files": "{{count}} files",
+		"commands": "Commands:",
+		"tests": "Tests:"
+	},
+	"codeView": {
+		"noFile": "No file selected",
+		"waitingForChanges": "// Waiting for code changes..."
+	},
+	"tabs": {
+		"chat": "Chat",
+		"events": "Events",
+		"timeline": "Timeline"
+	},
+	"chat": {
+		"placeholder": "Type a message to Claude...",
+		"send": "Send"
+	},
+	"timeline": {
+		"comingSoon": "Timeline scrubbing coming soon...",
+		"replayDescription": "Replay sessions at different speeds"
+	},
+	"controls": {
+		"resume": "Resume session",
+		"pause": "Pause session"
+	},
+	"test": {
+		"title": "Streaming Test",
+		"serverRunning": "Server Running",
+		"serverStopped": "Server Stopped",
+		"sessionId": "Session ID",
+		"sessionIdPlaceholder": "Auto-generated or enter custom",
+		"generate": "Generate",
+		"connectionStatus": "Connection Status",
+		"connected": "Connected",
+		"disconnected": "Disconnected",
+		"selectTask": "Select Task",
+		"selectTaskPlaceholder": "Select a task...",
+		"startTaskWithStreaming": "Start Task with Streaming",
+		"startStreamingServer": "Start Streaming Server",
+		"instructions": "Instructions:",
+		"instruction1": "Start the streaming server if not running",
+		"instruction2": "Generate or enter a session ID",
+		"instruction3": "Select a task from backlog/queue",
+		"instruction4": "Click \"Start Task with Streaming\"",
+		"instruction5": "The task will execute with live streaming events",
+		"pleaseSelectTask": "Please select a task"
+	}
 }

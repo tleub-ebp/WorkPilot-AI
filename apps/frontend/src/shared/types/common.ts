@@ -4,7 +4,7 @@
 
 // IPC Types
 export interface IPCResult<T = unknown> {
-  success: boolean;
-  data?: T;
-  error?: string;
+	success: boolean;
+	data?: T;
+	error?: string;
 }

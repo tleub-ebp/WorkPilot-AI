@@ -1,1 +1,34 @@
-﻿{"title":"Agent de Refactoring","description":"Détectez les code smells et obtenez des propositions de refactoring","input":{"label":"Code source","labelWithLanguage":"Code source {{language}}","placeholder":"Collez le code source ici à analyser...","placeholderWithLanguage":"Collez le code source {{language}} ici à analyser..."},"actions":{"paste":"Coller","clear":"Effacer","detectSmells":"Détecter les Code Smells","detecting":"Détection...","proposeRefactoring":"Proposer le Refactoring","generating":"Génération..."},"errors":{"detectionFailed":"La détection a échoué","proposalFailed":"La génération de proposition a échoué","networkError":"Erreur réseau"},"smells":{"title":"Code Smells ({{count}})","line":"L{{line}}","measured":"Mesuré :","threshold":"Seuil :"},"proposals":{"title":"Propositions de Refactoring ({{count}})","risk":"Risque","impact":"Impact"}}
+﻿{
+	"title": "Agent de Refactoring",
+	"description": "Détectez les code smells et obtenez des propositions de refactoring",
+	"input": {
+		"label": "Code source",
+		"labelWithLanguage": "Code source {{language}}",
+		"placeholder": "Collez le code source ici à analyser...",
+		"placeholderWithLanguage": "Collez le code source {{language}} ici à analyser..."
+	},
+	"actions": {
+		"paste": "Coller",
+		"clear": "Effacer",
+		"detectSmells": "Détecter les Code Smells",
+		"detecting": "Détection...",
+		"proposeRefactoring": "Proposer le Refactoring",
+		"generating": "Génération..."
+	},
+	"errors": {
+		"detectionFailed": "La détection a échoué",
+		"proposalFailed": "La génération de proposition a échoué",
+		"networkError": "Erreur réseau"
+	},
+	"smells": {
+		"title": "Code Smells ({{count}})",
+		"line": "L{{line}}",
+		"measured": "Mesuré :",
+		"threshold": "Seuil :"
+	},
+	"proposals": {
+		"title": "Propositions de Refactoring ({{count}})",
+		"risk": "Risque",
+		"impact": "Impact"
+	}
+}

@@ -3,16 +3,15 @@
  * Provides clean import paths for onboarding wizard components
  */
 
-export { OnboardingWizard } from './OnboardingWizard';
-export { WelcomeStep } from './WelcomeStep';
-export { AuthChoiceStep } from './AuthChoiceStep';
-export { OAuthStep } from './OAuthStep';
-export { PrivacyStep } from './PrivacyStep';
-export { MemoryStep } from './MemoryStep';
-export { OllamaModelSelector } from './OllamaModelSelector';
-export { FirstSpecStep } from './FirstSpecStep';
-export { CompletionStep } from './CompletionStep';
-export { WizardProgress, type WizardStep } from './WizardProgress';
-
+export { AuthChoiceStep } from "./AuthChoiceStep";
+export { CompletionStep } from "./CompletionStep";
+export { FirstSpecStep } from "./FirstSpecStep";
 // Legacy export for backward compatibility
-export { GraphitiStep } from './GraphitiStep';
+export { GraphitiStep } from "./GraphitiStep";
+export { MemoryStep } from "./MemoryStep";
+export { OAuthStep } from "./OAuthStep";
+export { OllamaModelSelector } from "./OllamaModelSelector";
+export { OnboardingWizard } from "./OnboardingWizard";
+export { PrivacyStep } from "./PrivacyStep";
+export { WelcomeStep } from "./WelcomeStep";
+export { WizardProgress, type WizardStep } from "./WizardProgress";

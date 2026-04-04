@@ -2,14 +2,13 @@
  * Central export for Linear Task Import functionality
  */
 
-// Main component
-export { LinearTaskImportModalRefactored } from './LinearTaskImportModalRefactored';
+// All components
+export * from "./components";
 
 // All hooks
-export * from './hooks';
-
-// All components
-export * from './components';
+export * from "./hooks";
+// Main component
+export { LinearTaskImportModalRefactored } from "./LinearTaskImportModalRefactored";
 
 // Types and constants
-export * from './types';
+export * from "./types";

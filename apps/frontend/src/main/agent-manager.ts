@@ -11,22 +11,21 @@
  *   import { AgentManager } from './agent-manager'
  */
 
-export {
-  AgentManager,
-  AgentState,
-  AgentEvents,
-  AgentProcessManager,
-  AgentQueueManager
-} from './agent';
-
 export type {
-  AgentProcess,
-  ExecutionProgressData,
-  ProcessType,
-  AgentManagerEvents,
-  IdeationConfig,
-  TaskExecutionOptions,
-  SpecCreationMetadata,
-  IdeationProgressData,
-  RoadmapProgressData
-} from './agent';
+	AgentManagerEvents,
+	AgentProcess,
+	ExecutionProgressData,
+	IdeationConfig,
+	IdeationProgressData,
+	ProcessType,
+	RoadmapProgressData,
+	SpecCreationMetadata,
+	TaskExecutionOptions,
+} from "./agent";
+export {
+	AgentEvents,
+	AgentManager,
+	AgentProcessManager,
+	AgentQueueManager,
+	AgentState,
+} from "./agent";

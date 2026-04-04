@@ -1,3 +1,3 @@
-export { useGitLabIssues } from './useGitLabIssues';
-export { useGitLabInvestigation } from './useGitLabInvestigation';
-export { useIssueFiltering } from './useIssueFiltering';
+export { useGitLabInvestigation } from "./useGitLabInvestigation";
+export { useGitLabIssues } from "./useGitLabIssues";
+export { useIssueFiltering } from "./useIssueFiltering";

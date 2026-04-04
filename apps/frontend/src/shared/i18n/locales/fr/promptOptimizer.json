@@ -1,51 +1,51 @@
 {
-  "title": "Optimiseur de Prompts IA",
-  "description": "Améliorez votre prompt avec le contexte du projet et les meilleures pratiques pour de meilleurs résultats IA.",
-  "prompt": {
-    "label": "Votre Prompt",
-    "placeholder": "Entrez le prompt que vous souhaitez optimiser..."
-  },
-  "agentType": {
-    "label": "Type d'Agent",
-    "description": "Sélectionnez le type d'agent pour lequel optimiser",
-    "options": {
-      "general": "Général",
-      "analysis": "Analyse",
-      "coding": "Code",
-      "verification": "Vérification"
-    },
-    "descriptions": {
-      "general": "Optimisation à usage général",
-      "analysis": "Optimisé pour l'analyse et la revue de code",
-      "coding": "Optimisé pour l'implémentation de code",
-      "verification": "Optimisé pour les tests et l'assurance qualité"
-    }
-  },
-  "actions": {
-    "optimize": "Optimiser le Prompt",
-    "optimizing": "Optimisation en cours...",
-    "copy": "Copier le Prompt Optimisé",
-    "copied": "Copié !",
-    "usePrompt": "Utiliser ce Prompt",
-    "tryAgain": "Réessayer",
-    "close": "Fermer"
-  },
-  "status": {
-    "idle": "Prêt à optimiser",
-    "analyzing": "Analyse du prompt et du contexte du projet...",
-    "complete": "Optimisation terminée",
-    "error": "L'optimisation a échoué"
-  },
-  "result": {
-    "title": "Prompt Optimisé",
-    "changes": "Modifications Apportées",
-    "reasoning": "Raisonnement",
-    "noChanges": "Aucune modification nécessaire — votre prompt est déjà bien structuré.",
-    "streamingOutput": "Sortie de l'Optimiseur"
-  },
-  "errors": {
-    "noProject": "Aucun projet sélectionné. Veuillez d'abord sélectionner un projet.",
-    "emptyPrompt": "Veuillez entrer un prompt à optimiser.",
-    "generic": "Une erreur est survenue lors de l'optimisation."
-  }
+	"title": "Optimiseur de Prompts IA",
+	"description": "Améliorez votre prompt avec le contexte du projet et les meilleures pratiques pour de meilleurs résultats IA.",
+	"prompt": {
+		"label": "Votre Prompt",
+		"placeholder": "Entrez le prompt que vous souhaitez optimiser..."
+	},
+	"agentType": {
+		"label": "Type d'Agent",
+		"description": "Sélectionnez le type d'agent pour lequel optimiser",
+		"options": {
+			"general": "Général",
+			"analysis": "Analyse",
+			"coding": "Code",
+			"verification": "Vérification"
+		},
+		"descriptions": {
+			"general": "Optimisation à usage général",
+			"analysis": "Optimisé pour l'analyse et la revue de code",
+			"coding": "Optimisé pour l'implémentation de code",
+			"verification": "Optimisé pour les tests et l'assurance qualité"
+		}
+	},
+	"actions": {
+		"optimize": "Optimiser le Prompt",
+		"optimizing": "Optimisation en cours...",
+		"copy": "Copier le Prompt Optimisé",
+		"copied": "Copié !",
+		"usePrompt": "Utiliser ce Prompt",
+		"tryAgain": "Réessayer",
+		"close": "Fermer"
+	},
+	"status": {
+		"idle": "Prêt à optimiser",
+		"analyzing": "Analyse du prompt et du contexte du projet...",
+		"complete": "Optimisation terminée",
+		"error": "L'optimisation a échoué"
+	},
+	"result": {
+		"title": "Prompt Optimisé",
+		"changes": "Modifications Apportées",
+		"reasoning": "Raisonnement",
+		"noChanges": "Aucune modification nécessaire — votre prompt est déjà bien structuré.",
+		"streamingOutput": "Sortie de l'Optimiseur"
+	},
+	"errors": {
+		"noProject": "Aucun projet sélectionné. Veuillez d'abord sélectionner un projet.",
+		"emptyPrompt": "Veuillez entrer un prompt à optimiser.",
+		"generic": "Une erreur est survenue lors de l'optimisation."
+	}
 }

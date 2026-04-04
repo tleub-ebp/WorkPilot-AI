@@ -11,4 +11,4 @@
  * The main component orchestrates these pieces using the useLinearImportModal hook.
  */
 
-export { LinearTaskImportModalRefactored as LinearTaskImportModal } from './linear-import/LinearTaskImportModalRefactored';
+export { LinearTaskImportModalRefactored as LinearTaskImportModal } from "./linear-import/LinearTaskImportModalRefactored";

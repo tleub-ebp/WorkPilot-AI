@@ -1,83 +1,83 @@
 {
-  "title": "Mode Essaim",
-  "subtitle": "Exécution Multi-Agent Parallèle",
-  "enable": "Activer le Mode Essaim",
-  "disable": "Désactiver le Mode Essaim",
-  "analyze": "Analyser les dépendances",
-  "start": "Lancer l'essaim",
-  "cancel": "Annuler l'essaim",
-  "analyzing": "Analyse des dépendances...",
-  "executing": "Exécution de l'essaim...",
+	"title": "Mode Essaim",
+	"subtitle": "Exécution Multi-Agent Parallèle",
+	"enable": "Activer le Mode Essaim",
+	"disable": "Désactiver le Mode Essaim",
+	"analyze": "Analyser les dépendances",
+	"start": "Lancer l'essaim",
+	"cancel": "Annuler l'essaim",
+	"analyzing": "Analyse des dépendances...",
+	"executing": "Exécution de l'essaim...",
 
-  "infoBanner": "Le Mode Essaim utilise votre profil IA actif. Il fonctionne avec n'importe quel fournisseur LLM configuré dans vos paramètres de compte (Anthropic, OpenAI, z.ai, etc.).",
+	"infoBanner": "Le Mode Essaim utilise votre profil IA actif. Il fonctionne avec n'importe quel fournisseur LLM configuré dans vos paramètres de compte (Anthropic, OpenAI, z.ai, etc.).",
 
-  "config": {
-    "title": "Configuration de l'essaim",
-    "maxParallel": "Agents parallèles max",
-    "maxParallelDesc": "Nombre maximum d'agents exécutés simultanément par vague",
-    "failFast": "Arrêt rapide",
-    "failFastDesc": "Arrêter tout l'essaim à la première erreur de sous-tâche",
-    "maxRetries": "Tentatives max par sous-tâche",
-    "mergeAfterWave": "Fusionner après chaque vague",
-    "mergeAfterWaveDesc": "Fusion sémantique des résultats entre les vagues",
-    "aiMerge": "Fusion assistée par IA",
-    "aiMergeDesc": "Utiliser l'IA pour résoudre les conflits de fusion ambigus",
-    "dryRun": "Simulation",
-    "dryRunDesc": "Analyser et exécuter sans écrire les fichiers fusionnés"
-  },
+	"config": {
+		"title": "Configuration de l'essaim",
+		"maxParallel": "Agents parallèles max",
+		"maxParallelDesc": "Nombre maximum d'agents exécutés simultanément par vague",
+		"failFast": "Arrêt rapide",
+		"failFastDesc": "Arrêter tout l'essaim à la première erreur de sous-tâche",
+		"maxRetries": "Tentatives max par sous-tâche",
+		"mergeAfterWave": "Fusionner après chaque vague",
+		"mergeAfterWaveDesc": "Fusion sémantique des résultats entre les vagues",
+		"aiMerge": "Fusion assistée par IA",
+		"aiMergeDesc": "Utiliser l'IA pour résoudre les conflits de fusion ambigus",
+		"dryRun": "Simulation",
+		"dryRunDesc": "Analyser et exécuter sans écrire les fichiers fusionnés"
+	},
 
-  "analysis": {
-    "title": "Analyse des dépendances",
-    "totalSubtasks": "Sous-tâches totales",
-    "totalWaves": "Vagues",
-    "maxParallelism": "Parallélisme max",
-    "avgParallelism": "Parallélisme moyen",
-    "speedupEstimate": "Accélération estimée",
-    "noParallelism": "Aucun parallélisme possible — toutes les sous-tâches sont séquentielles",
-    "waveBreakdown": "Détail des vagues"
-  },
+	"analysis": {
+		"title": "Analyse des dépendances",
+		"totalSubtasks": "Sous-tâches totales",
+		"totalWaves": "Vagues",
+		"maxParallelism": "Parallélisme max",
+		"avgParallelism": "Parallélisme moyen",
+		"speedupEstimate": "Accélération estimée",
+		"noParallelism": "Aucun parallélisme possible — toutes les sous-tâches sont séquentielles",
+		"waveBreakdown": "Détail des vagues"
+	},
 
-  "status": {
-    "initializing": "Initialisation",
-    "analyzingDependencies": "Analyse des dépendances",
-    "executingWave": "Exécution de la vague {{current}}/{{total}}",
-    "mergingWave": "Fusion de la vague {{current}}",
-    "complete": "Terminé",
-    "failed": "Échoué",
-    "cancelled": "Annulé"
-  },
+	"status": {
+		"initializing": "Initialisation",
+		"analyzingDependencies": "Analyse des dépendances",
+		"executingWave": "Exécution de la vague {{current}}/{{total}}",
+		"mergingWave": "Fusion de la vague {{current}}",
+		"complete": "Terminé",
+		"failed": "Échoué",
+		"cancelled": "Annulé"
+	},
 
-  "wave": {
-    "title": "Vague {{index}}",
-    "subtasks": "{{count}} sous-tâche(s)",
-    "running": "En cours",
-    "completed": "Terminée",
-    "failed": "Échouée",
-    "merging": "Fusion..."
-  },
+	"wave": {
+		"title": "Vague {{index}}",
+		"subtasks": "{{count}} sous-tâche(s)",
+		"running": "En cours",
+		"completed": "Terminée",
+		"failed": "Échouée",
+		"merging": "Fusion..."
+	},
 
-  "subtask": {
-    "pending": "En attente",
-    "queued": "En file d'attente",
-    "running": "En cours",
-    "completed": "Terminée",
-    "failed": "Échouée",
-    "retrying": "Nouvelle tentative ({{attempt}}/{{max}})",
-    "skipped": "Ignorée"
-  },
+	"subtask": {
+		"pending": "En attente",
+		"queued": "En file d'attente",
+		"running": "En cours",
+		"completed": "Terminée",
+		"failed": "Échouée",
+		"retrying": "Nouvelle tentative ({{attempt}}/{{max}})",
+		"skipped": "Ignorée"
+	},
 
-  "results": {
-    "title": "Résultats de l'essaim",
-    "completedCount": "{{completed}}/{{total}} sous-tâches terminées",
-    "failedCount": "{{count}} sous-tâche(s) échouée(s)",
-    "duration": "Durée : {{seconds}}s",
-    "speedup": "Accélération réelle : {{factor}}x"
-  },
+	"results": {
+		"title": "Résultats de l'essaim",
+		"completedCount": "{{completed}}/{{total}} sous-tâches terminées",
+		"failedCount": "{{count}} sous-tâche(s) échouée(s)",
+		"duration": "Durée : {{seconds}}s",
+		"speedup": "Accélération réelle : {{factor}}x"
+	},
 
-  "errors": {
-    "noPlan": "Aucun plan d'implémentation trouvé",
-    "analysisFailedGeneric": "L'analyse des dépendances a échoué",
-    "startFailed": "Échec du lancement de l'essaim",
-    "processError": "Erreur du processus essaim : {{error}}"
-  }
+	"errors": {
+		"noPlan": "Aucun plan d'implémentation trouvé",
+		"analysisFailedGeneric": "L'analyse des dépendances a échoué",
+		"startFailed": "Échec du lancement de l'essaim",
+		"processError": "Erreur du processus essaim : {{error}}"
+	}
 }

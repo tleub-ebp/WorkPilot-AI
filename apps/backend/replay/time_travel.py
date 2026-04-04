@@ -24,7 +24,6 @@ from .models import (
     DecisionScore,
     ForkRequest,
     ForkSession,
-    ReplaySession,
     ReplayStep,
     ReplayStepType,
 )
@@ -290,8 +289,8 @@ class TimeTravelEngine:
     def _get_steps_after_decision(self, session, decision_steps, current_idx, step_idx):
         """Get the steps that occurred after a decision until the next decision."""
         next_decision_idx = (
-            decision_steps[current_idx + 1][0] 
-            if current_idx + 1 < len(decision_steps) 
+            decision_steps[current_idx + 1][0]
+            if current_idx + 1 < len(decision_steps)
             else len(session.steps)
         )
         return session.steps[step_idx + 1 : next_decision_idx]

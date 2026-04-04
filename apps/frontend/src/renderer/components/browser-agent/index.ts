@@ -1,1 +1,1 @@
-export { BrowserAgentDashboard } from './BrowserAgentDashboard';
+export { BrowserAgentDashboard } from "./BrowserAgentDashboard";

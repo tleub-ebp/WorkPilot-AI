@@ -19,4 +19,4 @@
  */
 
 // Re-export the main registration function from the task module
-export { registerTaskHandlers } from './task';
+export { registerTaskHandlers } from "./task";

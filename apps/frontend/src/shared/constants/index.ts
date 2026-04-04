@@ -3,41 +3,30 @@
  * Re-exports from domain-specific constant modules
  */
 
-// Phase event protocol constants (Python ↔ TypeScript)
-export * from './phase-protocol';
-
-// IPC Channel constants
-export * from './ipc';
-
-// IPC Namespace helpers (typed grouped view of IPC channels)
-export * from './ipc-namespaces';
-
-// Task-related constants
-export * from './task';
-
-// Roadmap constants
-export * from './roadmap';
-
-// Ideation constants
-export * from './ideation';
-
+// API profile presets
+export * from "./api-profiles";
 // Changelog constants
-export * from './changelog';
+export * from "./changelog";
+// Configuration and paths
+export * from "./config";
+// GitHub integration constants
+export * from "./github";
+// Ideation constants
+export * from "./ideation";
+// IPC Channel constants
+export * from "./ipc";
+// IPC Namespace helpers (typed grouped view of IPC channels)
+export * from "./ipc-namespaces";
 
 // Model and agent profile constants
-export * from './models';
-
-// Theme constants
-export * from './themes';
-
-// GitHub integration constants
-export * from './github';
-
-// API profile presets
-export * from './api-profiles';
-
-// Configuration and paths
-export * from './config';
-
+export * from "./models";
+// Phase event protocol constants (Python ↔ TypeScript)
+export * from "./phase-protocol";
+// Roadmap constants
+export * from "./roadmap";
 // Spell check configuration
-export * from './spellcheck';
+export * from "./spellcheck";
+// Task-related constants
+export * from "./task";
+// Theme constants
+export * from "./themes";

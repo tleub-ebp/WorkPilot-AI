@@ -1,163 +1,163 @@
 {
-  "sidebar": {
-    "search": "Search endpoints...",
-    "loading": "Loading spec...",
-    "loadError": "Failed to load spec",
-    "noResults": "No endpoints match your search",
-    "endpoints": "endpoints"
-  },
-  "environments": {
-    "title": "Environments",
-    "placeholder": "Environment",
-    "manage": "Manage environments",
-    "addNew": "Add manually",
-    "namePlaceholder": "Environment name",
-    "detect": "Detect from project",
-    "detecting": "Scanning .env files...",
-    "detected": "Detected environments",
-    "importSelected": "Import",
-    "token": "Bearer Token",
-    "tokenPlaceholder": "Paste your JWT or API token",
-    "headers": "Custom Headers"
-  },
-  "actions": {
-    "export": "Export",
-    "cancel": "Cancel",
-    "save": "Save",
-    "add": "Add"
-  },
-  "export": {
-    "title": "Export API Contract",
-    "openapiDesc": "Raw OpenAPI 3.x specification",
-    "postmanDesc": "Import directly into Postman",
-    "markdownDesc": "Human-readable API documentation",
-    "copySpec": "Copy spec to clipboard",
-    "copied": "Copied!",
-    "endpoints": "{{selected}}/{{total}} endpoints selected",
-    "selectAll": "Select all",
-    "deselectAll": "Deselect all"
-  },
-  "detail": {
-    "docs": "Docs",
-    "description": "Description",
-    "parameters": "Parameters",
-    "responses": "Responses",
-    "requestBody": "Request Body",
-    "responseSchema": "Response Schema",
-    "noSchema": "No schema defined for this endpoint"
-  },
-  "request": {
-    "send": "Send",
-    "sending": "Sending...",
-    "params": "Params",
-    "headers": "Headers",
-    "body": "Body",
-    "auth": "Auth",
-    "pathParams": "Path Parameters",
-    "queryParams": "Query Parameters",
-    "noParams": "No parameters for this endpoint",
-    "noHeaders": "No header parameters defined",
-    "fillExample": "Fill with example",
-    "networkError": "Network Error",
-    "addParam": "Add parameter",
-    "addHeader": "Add header",
-    "paramKey": "Parameter",
-    "paramValue": "Value",
-    "headerKey": "Header",
-    "headerValue": "Value",
-    "specHeaders": "Spec-defined headers"
-  },
-  "auth": {
-    "type": "Auth Type",
-    "types": {
-      "inherited": "Inherit from env",
-      "none": "No Auth",
-      "bearer": "Bearer Token",
-      "basic": "Basic Auth",
-      "apikey": "API Key",
-      "oauth2": "OAuth 2.0"
-    },
-    "inheritedFrom": "Using Bearer Token from \"{{env}}\"",
-    "noEnvToken": "No token configured on \"{{env}}\".",
-    "configureEnv": "Configure environment →",
-    "noAuthDesc": "No authorization will be sent with this request.",
-    "token": "Token",
-    "tokenPlaceholder": "Paste your JWT or access token",
-    "bearerHint": "Sent as: Authorization: Bearer <token>",
-    "username": "Username",
-    "usernamePlaceholder": "username",
-    "password": "Password",
-    "basicHint": "Credentials encoded as Base64 in the Authorization header.",
-    "keyName": "Key Name",
-    "keyValue": "Key Value",
-    "keyValuePlaceholder": "your-api-key",
-    "addTo": "Add to",
-    "locationHeader": "Header",
-    "locationQuery": "Query Params",
-    "oauth2": {
-      "grantType": "Grant Type",
-      "grants": {
-        "client_credentials": "Client Credentials",
-        "authorization_code": "Authorization Code (With PKCE)",
-        "password": "Password"
-      },
-      "configureToken": "Configure New Token",
-      "authUrl": "Auth URL",
-      "tokenUrl": "Access Token URL",
-      "clientId": "Client ID",
-      "clientSecret": "Client Secret",
-      "scope": "Scope",
-      "getToken": "Get New Access Token",
-      "openBrowser": "Open Browser to Authenticate",
-      "currentToken": "Current Token",
-      "tokenPlaceholder": "Paste or auto-fill access token",
-      "headerPrefix": "Header Prefix",
-      "missingTokenUrl": "Access Token URL is required.",
-      "tokenError": "Failed to retrieve access token."
-    }
-  },
-  "response": {
-    "body": "Body",
-    "headers": "Headers",
-    "saveToken": "Save as Bearer Token",
-    "saveTokenTitle": "Save the token from this response to the active environment",
-    "tokenSaved": "Token saved!",
-    "format": {
-      "pretty": "Pretty",
-      "raw": "Raw",
-      "preview": "Preview",
-      "languageTitle": "Select rendering language",
-      "lang": {
-        "auto": "Auto",
-        "json": "JSON",
-        "xml": "XML",
-        "html": "HTML",
-        "text": "Text"
-      },
-      "mismatch": "Content cannot be parsed as {{format}}, showing as plain text."
-    }
-  },
-  "empty": {
-    "selectEndpoint": "Select an endpoint",
-    "selectEndpointHint": "Choose an endpoint from the list to view details and test it",
-    "noSpec": "No spec loaded",
-    "noSpecHint": "Enter a valid OpenAPI spec URL above"
-  },
-  "scan": {
-    "button": "Scan Project",
-    "scanning": "Scanning...",
-    "tooltip": "Scan project source code to detect API endpoints (C#, Python, Node.js, Java, Go, Rust, Ruby)",
-    "error": "Failed to scan project routes",
-    "resync": "Resync",
-    "sourceBadge": "Source",
-    "scannedAt": "scanned at {{time}}"
-  },
-  "emulator": {
-    "run": "Run Project",
-    "stop": "Stop Server",
-    "detecting": "Detecting...",
-    "starting": "Starting...",
-    "running": "Running",
-    "noProject": "No active project selected"
-  }
+	"sidebar": {
+		"search": "Search endpoints...",
+		"loading": "Loading spec...",
+		"loadError": "Failed to load spec",
+		"noResults": "No endpoints match your search",
+		"endpoints": "endpoints"
+	},
+	"environments": {
+		"title": "Environments",
+		"placeholder": "Environment",
+		"manage": "Manage environments",
+		"addNew": "Add manually",
+		"namePlaceholder": "Environment name",
+		"detect": "Detect from project",
+		"detecting": "Scanning .env files...",
+		"detected": "Detected environments",
+		"importSelected": "Import",
+		"token": "Bearer Token",
+		"tokenPlaceholder": "Paste your JWT or API token",
+		"headers": "Custom Headers"
+	},
+	"actions": {
+		"export": "Export",
+		"cancel": "Cancel",
+		"save": "Save",
+		"add": "Add"
+	},
+	"export": {
+		"title": "Export API Contract",
+		"openapiDesc": "Raw OpenAPI 3.x specification",
+		"postmanDesc": "Import directly into Postman",
+		"markdownDesc": "Human-readable API documentation",
+		"copySpec": "Copy spec to clipboard",
+		"copied": "Copied!",
+		"endpoints": "{{selected}}/{{total}} endpoints selected",
+		"selectAll": "Select all",
+		"deselectAll": "Deselect all"
+	},
+	"detail": {
+		"docs": "Docs",
+		"description": "Description",
+		"parameters": "Parameters",
+		"responses": "Responses",
+		"requestBody": "Request Body",
+		"responseSchema": "Response Schema",
+		"noSchema": "No schema defined for this endpoint"
+	},
+	"request": {
+		"send": "Send",
+		"sending": "Sending...",
+		"params": "Params",
+		"headers": "Headers",
+		"body": "Body",
+		"auth": "Auth",
+		"pathParams": "Path Parameters",
+		"queryParams": "Query Parameters",
+		"noParams": "No parameters for this endpoint",
+		"noHeaders": "No header parameters defined",
+		"fillExample": "Fill with example",
+		"networkError": "Network Error",
+		"addParam": "Add parameter",
+		"addHeader": "Add header",
+		"paramKey": "Parameter",
+		"paramValue": "Value",
+		"headerKey": "Header",
+		"headerValue": "Value",
+		"specHeaders": "Spec-defined headers"
+	},
+	"auth": {
+		"type": "Auth Type",
+		"types": {
+			"inherited": "Inherit from env",
+			"none": "No Auth",
+			"bearer": "Bearer Token",
+			"basic": "Basic Auth",
+			"apikey": "API Key",
+			"oauth2": "OAuth 2.0"
+		},
+		"inheritedFrom": "Using Bearer Token from \"{{env}}\"",
+		"noEnvToken": "No token configured on \"{{env}}\".",
+		"configureEnv": "Configure environment →",
+		"noAuthDesc": "No authorization will be sent with this request.",
+		"token": "Token",
+		"tokenPlaceholder": "Paste your JWT or access token",
+		"bearerHint": "Sent as: Authorization: Bearer <token>",
+		"username": "Username",
+		"usernamePlaceholder": "username",
+		"password": "Password",
+		"basicHint": "Credentials encoded as Base64 in the Authorization header.",
+		"keyName": "Key Name",
+		"keyValue": "Key Value",
+		"keyValuePlaceholder": "your-api-key",
+		"addTo": "Add to",
+		"locationHeader": "Header",
+		"locationQuery": "Query Params",
+		"oauth2": {
+			"grantType": "Grant Type",
+			"grants": {
+				"client_credentials": "Client Credentials",
+				"authorization_code": "Authorization Code (With PKCE)",
+				"password": "Password"
+			},
+			"configureToken": "Configure New Token",
+			"authUrl": "Auth URL",
+			"tokenUrl": "Access Token URL",
+			"clientId": "Client ID",
+			"clientSecret": "Client Secret",
+			"scope": "Scope",
+			"getToken": "Get New Access Token",
+			"openBrowser": "Open Browser to Authenticate",
+			"currentToken": "Current Token",
+			"tokenPlaceholder": "Paste or auto-fill access token",
+			"headerPrefix": "Header Prefix",
+			"missingTokenUrl": "Access Token URL is required.",
+			"tokenError": "Failed to retrieve access token."
+		}
+	},
+	"response": {
+		"body": "Body",
+		"headers": "Headers",
+		"saveToken": "Save as Bearer Token",
+		"saveTokenTitle": "Save the token from this response to the active environment",
+		"tokenSaved": "Token saved!",
+		"format": {
+			"pretty": "Pretty",
+			"raw": "Raw",
+			"preview": "Preview",
+			"languageTitle": "Select rendering language",
+			"lang": {
+				"auto": "Auto",
+				"json": "JSON",
+				"xml": "XML",
+				"html": "HTML",
+				"text": "Text"
+			},
+			"mismatch": "Content cannot be parsed as {{format}}, showing as plain text."
+		}
+	},
+	"empty": {
+		"selectEndpoint": "Select an endpoint",
+		"selectEndpointHint": "Choose an endpoint from the list to view details and test it",
+		"noSpec": "No spec loaded",
+		"noSpecHint": "Enter a valid OpenAPI spec URL above"
+	},
+	"scan": {
+		"button": "Scan Project",
+		"scanning": "Scanning...",
+		"tooltip": "Scan project source code to detect API endpoints (C#, Python, Node.js, Java, Go, Rust, Ruby)",
+		"error": "Failed to scan project routes",
+		"resync": "Resync",
+		"sourceBadge": "Source",
+		"scannedAt": "scanned at {{time}}"
+	},
+	"emulator": {
+		"run": "Run Project",
+		"stop": "Stop Server",
+		"detecting": "Detecting...",
+		"starting": "Starting...",
+		"running": "Running",
+		"noProject": "No active project selected"
+	}
 }

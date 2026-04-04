@@ -1,453 +1,453 @@
 {
-  "refreshTasks": "Actualiser les tâches",
-  "status": {
-    "backlog": "Backlog",
-    "queue": "File d'attente",
-    "todo": "À faire",
-    "in_progress": "En cours",
-    "review": "Révision",
-    "prCreated": "PR créée",
-    "complete": "Terminé",
-    "archived": "Archivé"
-  },
-  "providerSwitch": {
-    "title": "Provider mis à jour",
-    "description": "La tâche va maintenant s'exécuter avec {{to}} au lieu de {{from}}"
-  },
-  "actions": {
-    "start": "Démarrer",
-    "stop": "Arrêter",
-    "recover": "Récupérer",
-    "resume": "Reprendre",
-    "archive": "Archiver",
-    "delete": "Supprimer",
-    "view": "Voir les détails",
-    "viewPR": "Voir la PR",
-    "moveTo": "Déplacer vers",
-    "taskActions": "Actions de la tâche",
-    "selectTask": "Sélectionner la tâche : {{title}}",
-    "preview": "Aperçu",
-    "syncFromBranch": "Synchroniser depuis une branche"
-  },
-  "confirmDelete": {
-    "title": "Supprimer la tâche",
-    "description": "Êtes-vous sûr de vouloir supprimer la tâche \"{{title}}\" ? Cette action est irréversible.",
-    "irreversibleAction": "Cette action est irréversible.",
-    "warning": "Cette action ne peut pas être annulée. Tous les fichiers de la tâche, y compris la spécification, le plan d'implémentation et tout code généré seront supprimés définitivement du projet.",
-    "cancel": "Annuler",
-    "confirm": "Supprimer définitivement"
-  },
-  "labels": {
-    "running": "En cours",
-    "aiReview": "Révision IA",
-    "needsReview": "À réviser",
-    "pending": "En attente",
-    "stuck": "Bloqué",
-    "incomplete": "Incomplet",
-    "recovering": "Récupération...",
-    "needsRecovery": "Récupération requise",
-    "needsResume": "Reprise requise"
-  },
-  "reviewReason": {
-    "completed": "Terminé",
-    "hasErrors": "Contient des erreurs",
-    "qaIssues": "Problèmes QA",
-    "approvePlan": "Approuver le plan",
-    "plan_review": "Approuver le plan",
-    "stopped": "Arrêté"
-  },
-  "tooltips": {
-    "archiveTask": "Archiver la tâche",
-    "archiveAllDone": "Archiver toutes les tâches terminées",
-    "viewPR": "Ouvrir la pull request dans le navigateur",
-    "viewPRFiles": "Voir les fichiers modifiés",
-    "previewApp": "Prévisualiser l'application"
-  },
-  "prFiles": {
-    "short": "Fichiers"
-  },
-  "creation": {
-    "title": "Créer une nouvelle tâche",
-    "description": "Décrivez ce que vous voulez construire",
-    "placeholder": "Décrivez votre tâche..."
-  },
-  "empty": {
-    "title": "Aucune tâche",
-    "description": "Créez votre première tâche pour commencer"
-  },
-  "statusNotifications": {
-    "view": "Voir",
-    "human_review": {
-      "title": "Prête pour révision"
-    },
-    "done": {
-      "title": "Tâche terminée"
-    },
-    "pr_created": {
-      "title": "PR créée"
-    },
-    "error": {
-      "title": "Tâche échouée"
-    }
-  },
-  "columns": {
-    "backlog": "Planification",
-    "queue": "File d'attente",
-    "in_progress": "En cours",
-    "ai_review": "Révision IA",
-    "human_review": "Révision humaine",
-    "done": "Terminé",
-    "pr_created": "PR créée",
-    "error": "Erreur"
-  },
-  "kanban": {
-    "emptyBacklog": "Aucune tâche planifiée",
-    "emptyBacklogHint": "Ajoutez une tâche pour commencer",
-    "emptyQueue": "La file d'attente est vide",
-    "emptyQueueHint": "Les tâches attendront ici lorsque la limite de tâches parallèles sera atteinte",
-    "emptyInProgress": "Rien en cours",
-    "emptyInProgressHint": "Démarrez une tâche depuis le Backlog",
-    "emptyAiReview": "Aucune tâche en révision",
-    "emptyAiReviewHint": "L'IA révisera les tâches terminées",
-    "emptyHumanReview": "Rien à réviser",
-    "emptyHumanReviewHint": "Les tâches attendent votre approbation ici",
-    "emptyDone": "Aucune tâche terminée",
-    "emptyDoneHint": "Les tâches approuvées apparaissent ici",
-    "emptyDefault": "Aucune tâche",
-    "dropHere": "Déposer ici",
-    "showArchived": "Afficher les archivées",
-    "addTaskAriaLabel": "Ajouter une nouvelle tâche au backlog",
-    "queueAllAriaLabel": "Déplacer toutes les tâches vers la file d'attente",
-    "closeTaskDetailsAriaLabel": "Fermer les détails de la tâche",
-    "editTask": "Modifier la tâche",
-    "cannotEditWhileRunning": "Impossible de modifier pendant l'exécution",
-    "worktreeCleanupTitle": "Nettoyage de l'arbre de travail",
-    "worktreeCleanupStaged": "Cette tâche a été préparée et possède un arbre de travail. Voulez-vous nettoyer l'arbre de travail ?",
-    "worktreeCleanupNotStaged": "Cette tâche possède un arbre de travail avec des changements non fusionnés. Supprimez l'arbre de travail pour marquer comme terminé, ou annulez pour réviser les changements d'abord.",
-    "keepWorktree": "Garder l'arbre de travail",
-    "deleteWorktree": "Supprimer l'arbre de travail & Marquer Terminé",
-    "refreshTasks": "Actualiser les tâches",
-    "queueSettings": "Paramètres de la file d'attente",
-    "orderSaveFailedTitle": "Réorganisation non enregistrée",
-    "orderSaveFailedDescription": "Votre changement d'ordre des tâches a été appliqué mais n'a pas pu être sauvegardé. Il sera perdu lors du rafraîchissement.",
-    "selectAll": "Tout sélectionner",
-    "deselectAll": "Tout désélectionner",
-    "selectedCount": "{{count}} sélectionné(s)",
-    "selectedCountOne": "{{count}} tâche sélectionnée",
-    "selectedCountOther": "{{count}} tâches sélectionnées",
-    "createPRs": "Créer les PRs",
-    "deleteSelected": "Supprimer",
-    "deleteConfirmTitle": "Supprimer les tâches sélectionnées",
-    "deleteConfirmDescription": "Êtes-vous sûr de vouloir supprimer définitivement ces tâches ?",
-    "deleteWarning": "Cette action est irréversible. Tous les fichiers de tâche, y compris le spec, le plan d'implémentation et tout code généré seront définitivement supprimés du projet.",
-    "tasksToDelete": "Tâches à supprimer",
-    "deleteConfirmButton": "Supprimer {{count}} tâches",
-    "deleteSuccess": "{{count}} tâche(s) supprimée(s) avec succès",
-    "deleteSuccessSingle": "Tâche \"{{title}}\" supprimée avec succès",
-    "deleteError": "Échec de la suppression de certaines tâches",
-    "restoreSuccess": "Tâche restaurée avec succès",
-    "restoreError": "Échec de la restauration de la tâche",
-    "undo": "Annuler",
-    "clearSelection": "Effacer la sélection",
-    "mixedColumnWarning": "Colonnes différentes — déplacement impossible",
-    "invalidBulkTransition": "Impossible de déplacer les tâches sélectionnées vers cette colonne",
-    "markAsDone": "Terminer & Créer les PRs",
-    "markAsDoneConfirmTitle": "Terminer les tâches sélectionnées",
-    "markAsDoneConfirmDescription": "Vous êtes sur le point de marquer {{count}} tâche(s) comme terminée(s). Le flux de création de PR va s'ouvrir pour toutes les tâches sélectionnées.",
-    "markAsDoneConfirmInfo": "Des Pull Requests seront créées pour toutes les tâches sélectionnées et elles seront déplacées dans la colonne Terminé.",
-    "markAsDoneConfirmButton": "Confirmer & Créer les PRs",
-    "tasksToComplete": "Tâches à terminer",
-    "bulkMoveSuccess": "{{count}} tâche(s) déplacée(s) avec succès",
-    "bulkMoveError": "Échec du déplacement de {{failed}} tâche(s) sur {{total}}",
-    "dragColumn": "Glisser pour réordonner la colonne",
-    "collapseColumn": "Réduire la colonne",
-    "expandColumn": "Développer la colonne",
-    "resizeColumn": "Redimensionner la colonne",
-    "lockColumn": "Verrouiller la largeur de la colonne",
-    "unlockColumn": "Déverrouiller la largeur de la colonne",
-    "columnLocked": "La largeur de la colonne est verrouillée",
-    "expandAll": "Développer toutes les colonnes",
-    "azureDevOpsNotConnected": "Azure DevOps non connecté — cliquez pour configurer",
-    "jiraNotConnected": "Jira non connecté — cliquez pour configurer"
-  },
-  "queue": {
-    "limitReached": "Limite de tâches parallèles atteinte ({{current}}/{{max}}). Tâche déplacée vers la file d'attente.",
-    "movedToQueue": "Tâche déplacée vers la file d'attente.",
-    "autoPromoted": "Tâche auto-promue de la file d'attente vers En cours.",
-    "capacityAvailable": "{{count}} emplacement(s) disponible(s) dans En cours.",
-    "queueAll": "Tout ajouter à la file d'attente",
-    "queueAllSuccess": "{{count}} tâches déplacées vers la file d'attente.",
-    "settings": {
-      "title": "Paramètres de la file d'attente",
-      "description": "Configurer le nombre maximal de tâches pouvant s'exécuter en parallèle dans le tableau \"En cours\"",
-      "maxParallelLabel": "Tâches parallèles maximales",
-      "minValueError": "Doit être au moins 1",
-      "maxValueError": "Ne peut pas dépasser 10",
-      "hint": "Lorsque cette limite est atteinte, les nouvelles tâches attendront dans la file avant de passer à \"En cours\"",
-      "saved": "Paramètres de la file d'attente enregistrés",
-      "saveFailed": "Échec de l'enregistrement des paramètres",
-      "retry": "Veuillez réessayer"
-    }
-  },
-  "execution": {
-    "phases": {
-      "idle": "Inactif",
-      "planning": "Planification",
-      "coding": "Codage",
-      "rate_limit_paused": "Limite atteinte",
-      "auth_failure_paused": "Auth requise",
-      "reviewing": "Révision",
-      "fixing": "Correction",
-      "complete": "Terminé",
-      "failed": "Échoué"
-    },
-    "labels": {
-      "interrupted": "Interrompu",
-      "progress": "Progression",
-      "entry": "entrée",
-      "entries": "entrées"
-    },
-    "shortPhases": {
-      "plan": "Plan",
-      "code": "Code",
-      "qa": "QA",
-      "planTooltip": "Voir le plan d'implémentation"
-    }
-  },
-  "files": {
-    "title": "Fichiers",
-    "tab": "Fichiers",
-    "noSpecPath": "Aucun fichier de spécification disponible",
-    "noFiles": "Aucun fichier trouvé",
-    "loading": "Chargement des fichiers...",
-    "loadingContent": "Chargement du contenu...",
-    "errorLoading": "Échec du chargement des fichiers",
-    "errorLoadingContent": "Échec du chargement du contenu du fichier",
-    "retry": "Réessayer",
-    "selectFile": "Sélectionnez un fichier pour voir son contenu",
-    "openInIDE": "Ouvrir dans l'IDE"
-  },
-  "metadata": {
-    "severity": "sévérité",
-    "pullRequest": "Pull Request",
-    "showMore": "Afficher plus",
-    "showLess": "Afficher moins",
-    "created": "Créé",
-    "updated": "Mis à jour",
-    "rationale": "Raison",
-    "problemSolved": "Problème résolu",
-    "targetAudience": "Public cible",
-    "dependencies": "Dépendances",
-    "acceptanceCriteria": "Critères d'acceptation",
-    "affectedFiles": "Fichiers affectés"
-  },
-  "images": {
-    "removeImageAriaLabel": "Supprimer l'image {{filename}}",
-    "pasteHint": "Astuce : Collez des captures d'écran directement avec {{shortcut}} pour ajouter des images de référence."
-  },
-  "imagePreview": {
-    "close": "Fermer l'aperçu",
-    "unavailable": "Image indisponible",
-    "description": "Aperçu de {{filename}}",
-    "doubleClickHint": "Double-cliquez pour agrandir",
-    "lowResolution": "Aperçu basse résolution"
-  },
-  "notifications": {
-    "backgroundTaskTitle": "La tâche continue en arrière-plan",
-    "backgroundTaskDescription": "La tâche est toujours en cours. Vous pouvez rouvrir cette boîte de dialogue pour suivre la progression."
-  },
-  "wizard": {
-    "createTitle": "Créer une nouvelle tâche",
-    "createDescription": "Décrivez ce que vous voulez construire. L'IA analysera votre demande et créera une spécification détaillée.",
-    "descriptionPlaceholder": "Décrivez la fonctionnalité, la correction de bug ou l'amélioration que vous souhaitez implémenter. Soyez aussi précis que possible sur les exigences, les contraintes et le comportement attendu. Tapez @ pour référencer des fichiers.",
-    "draftRestored": "Brouillon restauré",
-    "startFresh": "Recommencer",
-    "hideFiles": "Masquer les fichiers",
-    "browseFiles": "Parcourir les fichiers",
-    "creating": "Création...",
-    "createTask": "Créer la tâche",
-    "worktreeNotice": {
-      "title": "Espace de travail isolé",
-      "description": "Cette tâche s'exécute dans un arbre de travail git isolé. Votre branche principale reste protégée jusqu'à ce que vous choisissiez de fusionner."
-    },
-    "gitOptions": {
-      "title": "Options Git (optionnel)",
-      "baseBranchLabel": "Branche de base (optionnel)",
-      "useProjectDefault": "Utiliser la branche par défaut du projet",
-      "useProjectDefaultWithBranch": "Utiliser la branche par défaut du projet ({{branch}})",
-      "searchBranches": "Rechercher des branches...",
-      "noBranchesFound": "Aucune branche trouvée",
-      "helpText": "Remplacez la branche à partir de laquelle l'arbre de travail de cette tâche sera créé. Laissez vide pour utiliser la branche par défaut configurée du projet.",
-      "useWorktreeLabel": "Utiliser un espace de travail isolé (recommandé)",
-      "useWorktreeDescription": "Crée les changements dans un arbre de travail git séparé pour une révision sécurisée avant la fusion. Désactivez pour travailler directement dans votre projet (plus rapide mais risqué)."
-    },
-    "errors": {
-      "createFailed": "Échec de la création de la tâche. Veuillez réessayer."
-    }
-  },
-  "feedback": {
-    "requestChanges": "Demander des modifications",
-    "description": "Des problèmes trouvés ? Décrivez ce qui doit être corrigé et l'IA continuera de travailler dessus.",
-    "placeholder": "Décrivez les problèmes ou les modifications nécessaires...",
-    "dragDropHint": "Glissez-déposez des images ou collez des captures d'écran",
-    "imageAdded": "Image ajoutée avec succès !",
-    "maxImagesError": "Maximum de {{count}} images autorisées",
-    "invalidTypeError": "Type d'image invalide. Autorisés : {{types}}",
-    "removeImage": "Supprimer l'image",
-    "processingError": "Échec du traitement de l'image",
-    "submitting": "Envoi en cours..."
-  },
-  "review": {
-    "mergeTooltip": "Fusionne les changements de la branche d'arbre de travail de la tâche vers votre branche de base. L'IA résoudra les conflits éventuels. Vous pourrez ensuite choisir de conserver ou de supprimer l'arbre de travail."
-  },
-  "edit": {
-    "title": "Modifier la tâche",
-    "description": "Mettez à jour les détails de la tâche, y compris le titre, la description, la classification, les images et les paramètres. Les modifications seront enregistrées dans les fichiers de spécification.",
-    "saveChanges": "Enregistrer les modifications",
-    "errors": {
-      "updateFailed": "Échec de la mise à jour de la tâche. Veuillez réessayer."
-    }
-  },
-  "form": {
-    "description": "Description",
-    "descriptionPlaceholder": "Décrivez la fonctionnalité, la correction de bug ou l'amélioration que vous souhaitez implémenter. Soyez aussi précis que possible sur les exigences, les contraintes et le comportement attendu.",
-    "imageAddedSuccess": "Image ajoutée avec succès !",
-    "taskTitle": "Titre de la tâche",
-    "titlePlaceholder": "Laissez vide pour générer automatiquement à partir de la description",
-    "titleHelpText": "Un titre court et descriptif sera généré automatiquement s'il est laissé vide.",
-    "classificationOptional": "Classification (optionnel)",
-    "requireReviewLabel": "Exiger une révision humaine avant le codage",
-    "requireReviewDescription": "Lorsque activé, vous serez invité à réviser la spécification et le plan d'implémentation avant le début de la phase de codage. Cela vous permet d'approuver, de demander des modifications ou de fournir des commentaires.",
-    "errors": {
-      "descriptionRequired": "Veuillez fournir une description",
-      "maxImagesReached": "Maximum de 5 images autorisé",
-      "invalidImageType": "Type d'image non valide. Autorisés : PNG, JPEG, GIF, WebP",
-      "processPasteFailed": "Échec du traitement de l'image collée",
-      "processDropFailed": "Échec du traitement de l'image déposée"
-    },
-    "classification": {
-      "category": "Catégorie",
-      "selectCategory": "Sélectionner une catégorie",
-      "priority": "Priorité",
-      "selectPriority": "Sélectionner une priorité",
-      "complexity": "Complexité",
-      "selectComplexity": "Sélectionner une complexité",
-      "impact": "Impact",
-      "selectImpact": "Sélectionner un impact",
-      "helpText": "Ces étiquettes aident à organiser et à prioriser les tâches. Elles sont optionnelles mais utiles pour le filtrage.",
-      "values": {
-        "category": {
-          "feature": "Fonctionnalité",
-          "bug_fix": "Correction de bug",
-          "refactoring": "Refactoring",
-          "documentation": "Documentation",
-          "security": "Sécurité"
-        },
-        "priority": {
-          "low": "Basse",
-          "medium": "Moyenne",
-          "high": "Haute",
-          "urgent": "Urgente"
-        },
-        "complexity": {
-          "trivial": "Triviale",
-          "small": "Petite",
-          "medium": "Moyenne",
-          "large": "Grande",
-          "complex": "Complexe"
-        },
-        "impact": {
-          "low": "Impact faible",
-          "medium": "Impact moyen",
-          "high": "Impact élevé",
-          "critical": "Impact critique"
-        }
-      }
-    }
-  },
-  "subtasks": {
-    "untitled": "Sous-tâche sans titre"
-  },
-  "bulkPR": {
-    "selectAllInColumn": "Sélectionner toutes les tâches de la colonne",
-    "deselectAllInColumn": "Désélectionner toutes les tâches",
-    "selectionMode": "Mode sélection actif",
-    "exitSelectionMode": "Quitter le mode sélection",
-    "noTasksToSelect": "Aucune tâche disponible à sélectionner",
-    "confirmBulkAction": "Confirmer l'action groupée pour {{count}} tâches",
-    "processingTasks": "Traitement des tâches sélectionnées..."
-  },
-  "screenshot": {
-    "title": "Prendre une capture d'écran",
-    "description": "Sélectionnez un écran ou une fenêtre à capturer comme image de référence",
-    "capture": "Capturer",
-    "capturing": "Capture...",
-    "noSources": "Aucun écran ou fenêtre trouvé",
-    "errors": {
-      "getSources": "Échec de l'obtention des sources de capture d'écran",
-      "fetchSources": "Échec de la récupération des sources de capture d'écran",
-      "capture": "Échec de la capture d'écran",
-      "captureFailed": "Échec de la capture d'écran"
-    },
-    "devMode": {
-      "title": "Capture d'écran non disponible",
-      "description": "La capture d'écran n'est pas disponible en mode développement en raison des restrictions de permissions système.",
-      "hint": "Utilisez un outil de capture d'écran externe et collez directement dans la description de la tâche avec {{shortcut}}."
-    }
-  },
-  "referenceImages": {
-    "title": "Images de référence (facultatif)",
-    "description": "Ajoutez des références visuelles comme des captures d'écran ou des conceptions pour aider l'IA à comprendre vos exigences."
-  },
-  "modal": {
-    "tabs": {
-      "overview": "Vue d'ensemble",
-      "subtasks": "Sous-tâches ({{count}})",
-      "logs": "Logs"
-    },
-    "actions": {
-      "recovering": "Récupération...",
-      "recoverTask": "Récupérer la tâche",
-      "loadingPlan": "Chargement du plan...",
-      "resumeTask": "Reprendre la tâche",
-      "stopTask": "Arrêter la tâche",
-      "startTask": "Démarrer la tâche",
-      "deleteTask": "Supprimer la tâche",
-      "close": "Fermer",
-      "watchLive": "Regarder en direct",
-      "activating": "Activation...",
-      "syncFromBranch": "Synchroniser depuis une branche"
-    },
-    "badges": {
-      "stuck": "Bloqué",
-      "incomplete": "Incomplet",
-      "completed": "Terminé",
-      "hasErrors": "Contient des erreurs",
-      "approvePlan": "Approuver le plan",
-      "stopped": "Arrêté",
-      "qaIssues": "Problèmes QA"
-    },
-    "progress": {
-      "subtasks": "{{completed}}/{{total}} sous-tâches"
-    },
-    "notifications": {
-      "backgroundTaskTitle": "Tâche en cours d'exécution en arrière-plan",
-      "backgroundTaskDescription": "La tâche continuera de s'exécuter. Vous pouvez vérifier sa progression à tout moment.",
-      "cannotResumeTitle": "Impossible de reprendre la tâche",
-      "cannotResumeDescription": "Échec du chargement du plan d'implémentation. Veuillez réessayer ou vérifier les fichiers de la tâche."
-    },
-    "errors": {
-      "failedToDelete": "Échec de la suppression de la tâche",
-      "failedToMerge": "Échec de la fusion des modifications",
-      "failedToDiscard": "Échec de l'abandon des modifications"
-    },
-    "delete": {
-      "title": "Supprimer la tâche",
-      "confirmMessage": "Êtes-vous sûr de vouloir supprimer <strong>\"{{title}}\"</strong> ?",
-      "warningMessage": "Cette action ne peut pas être annulée. Tous les fichiers de la tâche, y compris la spécification, le plan d'implémentation et tout code généré seront supprimés définitivement du projet.",
-      "cancel": "Annuler",
-      "deleting": "Suppression...",
-      "deletePermanently": "Supprimer définitivement"
-    }
-  }
+	"refreshTasks": "Actualiser les tâches",
+	"status": {
+		"backlog": "Backlog",
+		"queue": "File d'attente",
+		"todo": "À faire",
+		"in_progress": "En cours",
+		"review": "Révision",
+		"prCreated": "PR créée",
+		"complete": "Terminé",
+		"archived": "Archivé"
+	},
+	"providerSwitch": {
+		"title": "Provider mis à jour",
+		"description": "La tâche va maintenant s'exécuter avec {{to}} au lieu de {{from}}"
+	},
+	"actions": {
+		"start": "Démarrer",
+		"stop": "Arrêter",
+		"recover": "Récupérer",
+		"resume": "Reprendre",
+		"archive": "Archiver",
+		"delete": "Supprimer",
+		"view": "Voir les détails",
+		"viewPR": "Voir la PR",
+		"moveTo": "Déplacer vers",
+		"taskActions": "Actions de la tâche",
+		"selectTask": "Sélectionner la tâche : {{title}}",
+		"preview": "Aperçu",
+		"syncFromBranch": "Synchroniser depuis une branche"
+	},
+	"confirmDelete": {
+		"title": "Supprimer la tâche",
+		"description": "Êtes-vous sûr de vouloir supprimer la tâche \"{{title}}\" ? Cette action est irréversible.",
+		"irreversibleAction": "Cette action est irréversible.",
+		"warning": "Cette action ne peut pas être annulée. Tous les fichiers de la tâche, y compris la spécification, le plan d'implémentation et tout code généré seront supprimés définitivement du projet.",
+		"cancel": "Annuler",
+		"confirm": "Supprimer définitivement"
+	},
+	"labels": {
+		"running": "En cours",
+		"aiReview": "Révision IA",
+		"needsReview": "À réviser",
+		"pending": "En attente",
+		"stuck": "Bloqué",
+		"incomplete": "Incomplet",
+		"recovering": "Récupération...",
+		"needsRecovery": "Récupération requise",
+		"needsResume": "Reprise requise"
+	},
+	"reviewReason": {
+		"completed": "Terminé",
+		"hasErrors": "Contient des erreurs",
+		"qaIssues": "Problèmes QA",
+		"approvePlan": "Approuver le plan",
+		"plan_review": "Approuver le plan",
+		"stopped": "Arrêté"
+	},
+	"tooltips": {
+		"archiveTask": "Archiver la tâche",
+		"archiveAllDone": "Archiver toutes les tâches terminées",
+		"viewPR": "Ouvrir la pull request dans le navigateur",
+		"viewPRFiles": "Voir les fichiers modifiés",
+		"previewApp": "Prévisualiser l'application"
+	},
+	"prFiles": {
+		"short": "Fichiers"
+	},
+	"creation": {
+		"title": "Créer une nouvelle tâche",
+		"description": "Décrivez ce que vous voulez construire",
+		"placeholder": "Décrivez votre tâche..."
+	},
+	"empty": {
+		"title": "Aucune tâche",
+		"description": "Créez votre première tâche pour commencer"
+	},
+	"statusNotifications": {
+		"view": "Voir",
+		"human_review": {
+			"title": "Prête pour révision"
+		},
+		"done": {
+			"title": "Tâche terminée"
+		},
+		"pr_created": {
+			"title": "PR créée"
+		},
+		"error": {
+			"title": "Tâche échouée"
+		}
+	},
+	"columns": {
+		"backlog": "Planification",
+		"queue": "File d'attente",
+		"in_progress": "En cours",
+		"ai_review": "Révision IA",
+		"human_review": "Révision humaine",
+		"done": "Terminé",
+		"pr_created": "PR créée",
+		"error": "Erreur"
+	},
+	"kanban": {
+		"emptyBacklog": "Aucune tâche planifiée",
+		"emptyBacklogHint": "Ajoutez une tâche pour commencer",
+		"emptyQueue": "La file d'attente est vide",
+		"emptyQueueHint": "Les tâches attendront ici lorsque la limite de tâches parallèles sera atteinte",
+		"emptyInProgress": "Rien en cours",
+		"emptyInProgressHint": "Démarrez une tâche depuis le Backlog",
+		"emptyAiReview": "Aucune tâche en révision",
+		"emptyAiReviewHint": "L'IA révisera les tâches terminées",
+		"emptyHumanReview": "Rien à réviser",
+		"emptyHumanReviewHint": "Les tâches attendent votre approbation ici",
+		"emptyDone": "Aucune tâche terminée",
+		"emptyDoneHint": "Les tâches approuvées apparaissent ici",
+		"emptyDefault": "Aucune tâche",
+		"dropHere": "Déposer ici",
+		"showArchived": "Afficher les archivées",
+		"addTaskAriaLabel": "Ajouter une nouvelle tâche au backlog",
+		"queueAllAriaLabel": "Déplacer toutes les tâches vers la file d'attente",
+		"closeTaskDetailsAriaLabel": "Fermer les détails de la tâche",
+		"editTask": "Modifier la tâche",
+		"cannotEditWhileRunning": "Impossible de modifier pendant l'exécution",
+		"worktreeCleanupTitle": "Nettoyage de l'arbre de travail",
+		"worktreeCleanupStaged": "Cette tâche a été préparée et possède un arbre de travail. Voulez-vous nettoyer l'arbre de travail ?",
+		"worktreeCleanupNotStaged": "Cette tâche possède un arbre de travail avec des changements non fusionnés. Supprimez l'arbre de travail pour marquer comme terminé, ou annulez pour réviser les changements d'abord.",
+		"keepWorktree": "Garder l'arbre de travail",
+		"deleteWorktree": "Supprimer l'arbre de travail & Marquer Terminé",
+		"refreshTasks": "Actualiser les tâches",
+		"queueSettings": "Paramètres de la file d'attente",
+		"orderSaveFailedTitle": "Réorganisation non enregistrée",
+		"orderSaveFailedDescription": "Votre changement d'ordre des tâches a été appliqué mais n'a pas pu être sauvegardé. Il sera perdu lors du rafraîchissement.",
+		"selectAll": "Tout sélectionner",
+		"deselectAll": "Tout désélectionner",
+		"selectedCount": "{{count}} sélectionné(s)",
+		"selectedCountOne": "{{count}} tâche sélectionnée",
+		"selectedCountOther": "{{count}} tâches sélectionnées",
+		"createPRs": "Créer les PRs",
+		"deleteSelected": "Supprimer",
+		"deleteConfirmTitle": "Supprimer les tâches sélectionnées",
+		"deleteConfirmDescription": "Êtes-vous sûr de vouloir supprimer définitivement ces tâches ?",
+		"deleteWarning": "Cette action est irréversible. Tous les fichiers de tâche, y compris le spec, le plan d'implémentation et tout code généré seront définitivement supprimés du projet.",
+		"tasksToDelete": "Tâches à supprimer",
+		"deleteConfirmButton": "Supprimer {{count}} tâches",
+		"deleteSuccess": "{{count}} tâche(s) supprimée(s) avec succès",
+		"deleteSuccessSingle": "Tâche \"{{title}}\" supprimée avec succès",
+		"deleteError": "Échec de la suppression de certaines tâches",
+		"restoreSuccess": "Tâche restaurée avec succès",
+		"restoreError": "Échec de la restauration de la tâche",
+		"undo": "Annuler",
+		"clearSelection": "Effacer la sélection",
+		"mixedColumnWarning": "Colonnes différentes — déplacement impossible",
+		"invalidBulkTransition": "Impossible de déplacer les tâches sélectionnées vers cette colonne",
+		"markAsDone": "Terminer & Créer les PRs",
+		"markAsDoneConfirmTitle": "Terminer les tâches sélectionnées",
+		"markAsDoneConfirmDescription": "Vous êtes sur le point de marquer {{count}} tâche(s) comme terminée(s). Le flux de création de PR va s'ouvrir pour toutes les tâches sélectionnées.",
+		"markAsDoneConfirmInfo": "Des Pull Requests seront créées pour toutes les tâches sélectionnées et elles seront déplacées dans la colonne Terminé.",
+		"markAsDoneConfirmButton": "Confirmer & Créer les PRs",
+		"tasksToComplete": "Tâches à terminer",
+		"bulkMoveSuccess": "{{count}} tâche(s) déplacée(s) avec succès",
+		"bulkMoveError": "Échec du déplacement de {{failed}} tâche(s) sur {{total}}",
+		"dragColumn": "Glisser pour réordonner la colonne",
+		"collapseColumn": "Réduire la colonne",
+		"expandColumn": "Développer la colonne",
+		"resizeColumn": "Redimensionner la colonne",
+		"lockColumn": "Verrouiller la largeur de la colonne",
+		"unlockColumn": "Déverrouiller la largeur de la colonne",
+		"columnLocked": "La largeur de la colonne est verrouillée",
+		"expandAll": "Développer toutes les colonnes",
+		"azureDevOpsNotConnected": "Azure DevOps non connecté — cliquez pour configurer",
+		"jiraNotConnected": "Jira non connecté — cliquez pour configurer"
+	},
+	"queue": {
+		"limitReached": "Limite de tâches parallèles atteinte ({{current}}/{{max}}). Tâche déplacée vers la file d'attente.",
+		"movedToQueue": "Tâche déplacée vers la file d'attente.",
+		"autoPromoted": "Tâche auto-promue de la file d'attente vers En cours.",
+		"capacityAvailable": "{{count}} emplacement(s) disponible(s) dans En cours.",
+		"queueAll": "Tout ajouter à la file d'attente",
+		"queueAllSuccess": "{{count}} tâches déplacées vers la file d'attente.",
+		"settings": {
+			"title": "Paramètres de la file d'attente",
+			"description": "Configurer le nombre maximal de tâches pouvant s'exécuter en parallèle dans le tableau \"En cours\"",
+			"maxParallelLabel": "Tâches parallèles maximales",
+			"minValueError": "Doit être au moins 1",
+			"maxValueError": "Ne peut pas dépasser 10",
+			"hint": "Lorsque cette limite est atteinte, les nouvelles tâches attendront dans la file avant de passer à \"En cours\"",
+			"saved": "Paramètres de la file d'attente enregistrés",
+			"saveFailed": "Échec de l'enregistrement des paramètres",
+			"retry": "Veuillez réessayer"
+		}
+	},
+	"execution": {
+		"phases": {
+			"idle": "Inactif",
+			"planning": "Planification",
+			"coding": "Codage",
+			"rate_limit_paused": "Limite atteinte",
+			"auth_failure_paused": "Auth requise",
+			"reviewing": "Révision",
+			"fixing": "Correction",
+			"complete": "Terminé",
+			"failed": "Échoué"
+		},
+		"labels": {
+			"interrupted": "Interrompu",
+			"progress": "Progression",
+			"entry": "entrée",
+			"entries": "entrées"
+		},
+		"shortPhases": {
+			"plan": "Plan",
+			"code": "Code",
+			"qa": "QA",
+			"planTooltip": "Voir le plan d'implémentation"
+		}
+	},
+	"files": {
+		"title": "Fichiers",
+		"tab": "Fichiers",
+		"noSpecPath": "Aucun fichier de spécification disponible",
+		"noFiles": "Aucun fichier trouvé",
+		"loading": "Chargement des fichiers...",
+		"loadingContent": "Chargement du contenu...",
+		"errorLoading": "Échec du chargement des fichiers",
+		"errorLoadingContent": "Échec du chargement du contenu du fichier",
+		"retry": "Réessayer",
+		"selectFile": "Sélectionnez un fichier pour voir son contenu",
+		"openInIDE": "Ouvrir dans l'IDE"
+	},
+	"metadata": {
+		"severity": "sévérité",
+		"pullRequest": "Pull Request",
+		"showMore": "Afficher plus",
+		"showLess": "Afficher moins",
+		"created": "Créé",
+		"updated": "Mis à jour",
+		"rationale": "Raison",
+		"problemSolved": "Problème résolu",
+		"targetAudience": "Public cible",
+		"dependencies": "Dépendances",
+		"acceptanceCriteria": "Critères d'acceptation",
+		"affectedFiles": "Fichiers affectés"
+	},
+	"images": {
+		"removeImageAriaLabel": "Supprimer l'image {{filename}}",
+		"pasteHint": "Astuce : Collez des captures d'écran directement avec {{shortcut}} pour ajouter des images de référence."
+	},
+	"imagePreview": {
+		"close": "Fermer l'aperçu",
+		"unavailable": "Image indisponible",
+		"description": "Aperçu de {{filename}}",
+		"doubleClickHint": "Double-cliquez pour agrandir",
+		"lowResolution": "Aperçu basse résolution"
+	},
+	"notifications": {
+		"backgroundTaskTitle": "La tâche continue en arrière-plan",
+		"backgroundTaskDescription": "La tâche est toujours en cours. Vous pouvez rouvrir cette boîte de dialogue pour suivre la progression."
+	},
+	"wizard": {
+		"createTitle": "Créer une nouvelle tâche",
+		"createDescription": "Décrivez ce que vous voulez construire. L'IA analysera votre demande et créera une spécification détaillée.",
+		"descriptionPlaceholder": "Décrivez la fonctionnalité, la correction de bug ou l'amélioration que vous souhaitez implémenter. Soyez aussi précis que possible sur les exigences, les contraintes et le comportement attendu. Tapez @ pour référencer des fichiers.",
+		"draftRestored": "Brouillon restauré",
+		"startFresh": "Recommencer",
+		"hideFiles": "Masquer les fichiers",
+		"browseFiles": "Parcourir les fichiers",
+		"creating": "Création...",
+		"createTask": "Créer la tâche",
+		"worktreeNotice": {
+			"title": "Espace de travail isolé",
+			"description": "Cette tâche s'exécute dans un arbre de travail git isolé. Votre branche principale reste protégée jusqu'à ce que vous choisissiez de fusionner."
+		},
+		"gitOptions": {
+			"title": "Options Git (optionnel)",
+			"baseBranchLabel": "Branche de base (optionnel)",
+			"useProjectDefault": "Utiliser la branche par défaut du projet",
+			"useProjectDefaultWithBranch": "Utiliser la branche par défaut du projet ({{branch}})",
+			"searchBranches": "Rechercher des branches...",
+			"noBranchesFound": "Aucune branche trouvée",
+			"helpText": "Remplacez la branche à partir de laquelle l'arbre de travail de cette tâche sera créé. Laissez vide pour utiliser la branche par défaut configurée du projet.",
+			"useWorktreeLabel": "Utiliser un espace de travail isolé (recommandé)",
+			"useWorktreeDescription": "Crée les changements dans un arbre de travail git séparé pour une révision sécurisée avant la fusion. Désactivez pour travailler directement dans votre projet (plus rapide mais risqué)."
+		},
+		"errors": {
+			"createFailed": "Échec de la création de la tâche. Veuillez réessayer."
+		}
+	},
+	"feedback": {
+		"requestChanges": "Demander des modifications",
+		"description": "Des problèmes trouvés ? Décrivez ce qui doit être corrigé et l'IA continuera de travailler dessus.",
+		"placeholder": "Décrivez les problèmes ou les modifications nécessaires...",
+		"dragDropHint": "Glissez-déposez des images ou collez des captures d'écran",
+		"imageAdded": "Image ajoutée avec succès !",
+		"maxImagesError": "Maximum de {{count}} images autorisées",
+		"invalidTypeError": "Type d'image invalide. Autorisés : {{types}}",
+		"removeImage": "Supprimer l'image",
+		"processingError": "Échec du traitement de l'image",
+		"submitting": "Envoi en cours..."
+	},
+	"review": {
+		"mergeTooltip": "Fusionne les changements de la branche d'arbre de travail de la tâche vers votre branche de base. L'IA résoudra les conflits éventuels. Vous pourrez ensuite choisir de conserver ou de supprimer l'arbre de travail."
+	},
+	"edit": {
+		"title": "Modifier la tâche",
+		"description": "Mettez à jour les détails de la tâche, y compris le titre, la description, la classification, les images et les paramètres. Les modifications seront enregistrées dans les fichiers de spécification.",
+		"saveChanges": "Enregistrer les modifications",
+		"errors": {
+			"updateFailed": "Échec de la mise à jour de la tâche. Veuillez réessayer."
+		}
+	},
+	"form": {
+		"description": "Description",
+		"descriptionPlaceholder": "Décrivez la fonctionnalité, la correction de bug ou l'amélioration que vous souhaitez implémenter. Soyez aussi précis que possible sur les exigences, les contraintes et le comportement attendu.",
+		"imageAddedSuccess": "Image ajoutée avec succès !",
+		"taskTitle": "Titre de la tâche",
+		"titlePlaceholder": "Laissez vide pour générer automatiquement à partir de la description",
+		"titleHelpText": "Un titre court et descriptif sera généré automatiquement s'il est laissé vide.",
+		"classificationOptional": "Classification (optionnel)",
+		"requireReviewLabel": "Exiger une révision humaine avant le codage",
+		"requireReviewDescription": "Lorsque activé, vous serez invité à réviser la spécification et le plan d'implémentation avant le début de la phase de codage. Cela vous permet d'approuver, de demander des modifications ou de fournir des commentaires.",
+		"errors": {
+			"descriptionRequired": "Veuillez fournir une description",
+			"maxImagesReached": "Maximum de 5 images autorisé",
+			"invalidImageType": "Type d'image non valide. Autorisés : PNG, JPEG, GIF, WebP",
+			"processPasteFailed": "Échec du traitement de l'image collée",
+			"processDropFailed": "Échec du traitement de l'image déposée"
+		},
+		"classification": {
+			"category": "Catégorie",
+			"selectCategory": "Sélectionner une catégorie",
+			"priority": "Priorité",
+			"selectPriority": "Sélectionner une priorité",
+			"complexity": "Complexité",
+			"selectComplexity": "Sélectionner une complexité",
+			"impact": "Impact",
+			"selectImpact": "Sélectionner un impact",
+			"helpText": "Ces étiquettes aident à organiser et à prioriser les tâches. Elles sont optionnelles mais utiles pour le filtrage.",
+			"values": {
+				"category": {
+					"feature": "Fonctionnalité",
+					"bug_fix": "Correction de bug",
+					"refactoring": "Refactoring",
+					"documentation": "Documentation",
+					"security": "Sécurité"
+				},
+				"priority": {
+					"low": "Basse",
+					"medium": "Moyenne",
+					"high": "Haute",
+					"urgent": "Urgente"
+				},
+				"complexity": {
+					"trivial": "Triviale",
+					"small": "Petite",
+					"medium": "Moyenne",
+					"large": "Grande",
+					"complex": "Complexe"
+				},
+				"impact": {
+					"low": "Impact faible",
+					"medium": "Impact moyen",
+					"high": "Impact élevé",
+					"critical": "Impact critique"
+				}
+			}
+		}
+	},
+	"subtasks": {
+		"untitled": "Sous-tâche sans titre"
+	},
+	"bulkPR": {
+		"selectAllInColumn": "Sélectionner toutes les tâches de la colonne",
+		"deselectAllInColumn": "Désélectionner toutes les tâches",
+		"selectionMode": "Mode sélection actif",
+		"exitSelectionMode": "Quitter le mode sélection",
+		"noTasksToSelect": "Aucune tâche disponible à sélectionner",
+		"confirmBulkAction": "Confirmer l'action groupée pour {{count}} tâches",
+		"processingTasks": "Traitement des tâches sélectionnées..."
+	},
+	"screenshot": {
+		"title": "Prendre une capture d'écran",
+		"description": "Sélectionnez un écran ou une fenêtre à capturer comme image de référence",
+		"capture": "Capturer",
+		"capturing": "Capture...",
+		"noSources": "Aucun écran ou fenêtre trouvé",
+		"errors": {
+			"getSources": "Échec de l'obtention des sources de capture d'écran",
+			"fetchSources": "Échec de la récupération des sources de capture d'écran",
+			"capture": "Échec de la capture d'écran",
+			"captureFailed": "Échec de la capture d'écran"
+		},
+		"devMode": {
+			"title": "Capture d'écran non disponible",
+			"description": "La capture d'écran n'est pas disponible en mode développement en raison des restrictions de permissions système.",
+			"hint": "Utilisez un outil de capture d'écran externe et collez directement dans la description de la tâche avec {{shortcut}}."
+		}
+	},
+	"referenceImages": {
+		"title": "Images de référence (facultatif)",
+		"description": "Ajoutez des références visuelles comme des captures d'écran ou des conceptions pour aider l'IA à comprendre vos exigences."
+	},
+	"modal": {
+		"tabs": {
+			"overview": "Vue d'ensemble",
+			"subtasks": "Sous-tâches ({{count}})",
+			"logs": "Logs"
+		},
+		"actions": {
+			"recovering": "Récupération...",
+			"recoverTask": "Récupérer la tâche",
+			"loadingPlan": "Chargement du plan...",
+			"resumeTask": "Reprendre la tâche",
+			"stopTask": "Arrêter la tâche",
+			"startTask": "Démarrer la tâche",
+			"deleteTask": "Supprimer la tâche",
+			"close": "Fermer",
+			"watchLive": "Regarder en direct",
+			"activating": "Activation...",
+			"syncFromBranch": "Synchroniser depuis une branche"
+		},
+		"badges": {
+			"stuck": "Bloqué",
+			"incomplete": "Incomplet",
+			"completed": "Terminé",
+			"hasErrors": "Contient des erreurs",
+			"approvePlan": "Approuver le plan",
+			"stopped": "Arrêté",
+			"qaIssues": "Problèmes QA"
+		},
+		"progress": {
+			"subtasks": "{{completed}}/{{total}} sous-tâches"
+		},
+		"notifications": {
+			"backgroundTaskTitle": "Tâche en cours d'exécution en arrière-plan",
+			"backgroundTaskDescription": "La tâche continuera de s'exécuter. Vous pouvez vérifier sa progression à tout moment.",
+			"cannotResumeTitle": "Impossible de reprendre la tâche",
+			"cannotResumeDescription": "Échec du chargement du plan d'implémentation. Veuillez réessayer ou vérifier les fichiers de la tâche."
+		},
+		"errors": {
+			"failedToDelete": "Échec de la suppression de la tâche",
+			"failedToMerge": "Échec de la fusion des modifications",
+			"failedToDiscard": "Échec de l'abandon des modifications"
+		},
+		"delete": {
+			"title": "Supprimer la tâche",
+			"confirmMessage": "Êtes-vous sûr de vouloir supprimer <strong>\"{{title}}\"</strong> ?",
+			"warningMessage": "Cette action ne peut pas être annulée. Tous les fichiers de la tâche, y compris la spécification, le plan d'implémentation et tout code généré seront supprimés définitivement du projet.",
+			"cancel": "Annuler",
+			"deleting": "Suppression...",
+			"deletePermanently": "Supprimer définitivement"
+		}
+	}
 }

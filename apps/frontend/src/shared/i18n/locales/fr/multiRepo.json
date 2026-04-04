@@ -1,54 +1,54 @@
 {
-  "title": "Orchestration Multi-Repo",
-  "dialog": {
-    "title": "Orchestration Multi-Repo",
-    "description": "Coordonner les modifications sur plusieurs d\u00e9p\u00f4ts simultan\u00e9ment",
-    "stepRepos": "1. D\u00e9p\u00f4ts cibles",
-    "stepTask": "2. Description de la t\u00e2che",
-    "addRepo": "Ajouter",
-    "removeRepo": "Supprimer",
-    "repoNamePlaceholder": "Nom du d\u00e9p\u00f4t (ex: owner/frontend)",
-    "repoPathPlaceholder": "Chemin local vers le d\u00e9p\u00f4t",
-    "taskPlaceholder": "D\u00e9crivez ce que vous souhaitez construire \u00e0 travers ces d\u00e9p\u00f4ts...",
-    "noReposAdded": "Ajoutez au moins 2 d\u00e9p\u00f4ts pour d\u00e9marrer une orchestration multi-repo",
-    "createOrchestration": "Cr\u00e9er l'orchestration",
-    "creating": "Cr\u00e9ation...",
-    "startOrchestration": "D\u00e9marrer l'orchestration",
-    "cancel": "Annuler"
-  },
-  "status": {
-    "pending": "En attente",
-    "analyzing": "Analyse des d\u00e9p\u00f4ts...",
-    "planning": "Planification des changements cross-repo...",
-    "executing": "Ex\u00e9cution des pipelines par d\u00e9p\u00f4t...",
-    "creating_prs": "Cr\u00e9ation des PR li\u00e9es...",
-    "completed": "Orchestration termin\u00e9e",
-    "failed": "\u00c9chec de l'orchestration"
-  },
-  "graph": {
-    "title": "Graphe de d\u00e9pendances",
-    "noRepos": "Aucun d\u00e9p\u00f4t configur\u00e9",
-    "noEdges": "Aucune d\u00e9pendance d\u00e9tect\u00e9e entre les d\u00e9p\u00f4ts",
-    "executionOrder": "Ordre d'ex\u00e9cution"
-  },
-  "breakingChanges": {
-    "title": "Changements cassants d\u00e9tect\u00e9s",
-    "severity": {
-      "warning": "Avertissement",
-      "error": "Erreur"
-    },
-    "noChanges": "Aucun changement cassant d\u00e9tect\u00e9"
-  },
-  "execution": {
-    "repoProgress": "Progression de {{repo}}",
-    "overall": "Progression globale"
-  },
-  "errors": {
-    "noRepos": "Veuillez ajouter au moins deux d\u00e9p\u00f4ts",
-    "noDescription": "Veuillez entrer une description de t\u00e2che",
-    "repoNotFound": "D\u00e9p\u00f4t introuvable : {{repo}}",
-    "circularDependency": "D\u00e9pendance circulaire d\u00e9tect\u00e9e entre les d\u00e9p\u00f4ts",
-    "createFailed": "\u00c9chec de la cr\u00e9ation de l'orchestration",
-    "startFailed": "\u00c9chec du d\u00e9marrage de l'orchestration"
-  }
+	"title": "Orchestration Multi-Repo",
+	"dialog": {
+		"title": "Orchestration Multi-Repo",
+		"description": "Coordonner les modifications sur plusieurs d\u00e9p\u00f4ts simultan\u00e9ment",
+		"stepRepos": "1. D\u00e9p\u00f4ts cibles",
+		"stepTask": "2. Description de la t\u00e2che",
+		"addRepo": "Ajouter",
+		"removeRepo": "Supprimer",
+		"repoNamePlaceholder": "Nom du d\u00e9p\u00f4t (ex: owner/frontend)",
+		"repoPathPlaceholder": "Chemin local vers le d\u00e9p\u00f4t",
+		"taskPlaceholder": "D\u00e9crivez ce que vous souhaitez construire \u00e0 travers ces d\u00e9p\u00f4ts...",
+		"noReposAdded": "Ajoutez au moins 2 d\u00e9p\u00f4ts pour d\u00e9marrer une orchestration multi-repo",
+		"createOrchestration": "Cr\u00e9er l'orchestration",
+		"creating": "Cr\u00e9ation...",
+		"startOrchestration": "D\u00e9marrer l'orchestration",
+		"cancel": "Annuler"
+	},
+	"status": {
+		"pending": "En attente",
+		"analyzing": "Analyse des d\u00e9p\u00f4ts...",
+		"planning": "Planification des changements cross-repo...",
+		"executing": "Ex\u00e9cution des pipelines par d\u00e9p\u00f4t...",
+		"creating_prs": "Cr\u00e9ation des PR li\u00e9es...",
+		"completed": "Orchestration termin\u00e9e",
+		"failed": "\u00c9chec de l'orchestration"
+	},
+	"graph": {
+		"title": "Graphe de d\u00e9pendances",
+		"noRepos": "Aucun d\u00e9p\u00f4t configur\u00e9",
+		"noEdges": "Aucune d\u00e9pendance d\u00e9tect\u00e9e entre les d\u00e9p\u00f4ts",
+		"executionOrder": "Ordre d'ex\u00e9cution"
+	},
+	"breakingChanges": {
+		"title": "Changements cassants d\u00e9tect\u00e9s",
+		"severity": {
+			"warning": "Avertissement",
+			"error": "Erreur"
+		},
+		"noChanges": "Aucun changement cassant d\u00e9tect\u00e9"
+	},
+	"execution": {
+		"repoProgress": "Progression de {{repo}}",
+		"overall": "Progression globale"
+	},
+	"errors": {
+		"noRepos": "Veuillez ajouter au moins deux d\u00e9p\u00f4ts",
+		"noDescription": "Veuillez entrer une description de t\u00e2che",
+		"repoNotFound": "D\u00e9p\u00f4t introuvable : {{repo}}",
+		"circularDependency": "D\u00e9pendance circulaire d\u00e9tect\u00e9e entre les d\u00e9p\u00f4ts",
+		"createFailed": "\u00c9chec de la cr\u00e9ation de l'orchestration",
+		"startFailed": "\u00c9chec du d\u00e9marrage de l'orchestration"
+	}
 }

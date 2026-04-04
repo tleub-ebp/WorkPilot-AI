@@ -1,158 +1,158 @@
 {
-  "header": {
-    "competitorAnalysis": "Analyse Concurrentielle",
-    "clickToViewDetailedAnalysis": "Cliquer pour voir l'analyse détaillée",
-    "analyzedCompetitors": "Analyse de {{count}} concurrents avec {{painPoints}} points de douleur identifiés",
-    "addFeature": "Ajouter une Fonctionnalité",
-    "addNewFeature": "Ajouter une nouvelle fonctionnalité à la roadmap",
-    "regenerateRoadmap": "Régénérer la Roadmap",
-    "target": "Cible",
-    "morePersonas": "+{{count}} personas supplémentaires",
-    "secondaryPersonas": "Personas Secondaires:",
-    "features": "fonctionnalités",
-    "phases": "phases"
-  },
-  "emptyState": {
-    "title": "Aucune Roadmap",
-    "description": "Générez une roadmap alimentée par l'IA qui comprend l'audience cible de votre projet et crée un plan stratégique de fonctionnalités.",
-    "generateButton": "Générer la Roadmap"
-  },
-  "tabs": {
-    "kanban": "Kanban",
-    "timeline": "Chronologie",
-    "table": "Tableau"
-  },
-  "features": {
-    "title": "Fonctionnalités",
-    "noFeatures": "Aucune fonctionnalité pour le moment",
-    "addFeature": "Ajouter une Fonctionnalité",
-    "deleteFeature": "Supprimer la Fonctionnalité",
-    "convertToSpec": "Convertir en Spécification",
-    "goToTask": "Aller à la Tâche",
-    "priority": "Priorité",
-    "status": "Statut",
-    "phase": "Phase",
-    "description": "Description",
-    "acceptanceCriteria": "Critères d'Acceptation",
-    "dependencies": "Dépendances",
-    "effort": "Effort",
-    "value": "Valeur",
-    "risk": "Risque"
-  },
-  "phases": {
-    "title": "Phases",
-    "phase": "Phase",
-    "noPhases": "Aucune phase définie",
-    "duration": "Durée",
-    "startDate": "Date de Début",
-    "endDate": "Date de Fin"
-  },
-  "dialogs": {
-    "addFeature": {
-      "title": "Ajouter une Nouvelle Fonctionnalité",
-      "description": "Description",
-      "name": "Nom de la Fonctionnalité",
-      "priority": "Priorité",
-      "phase": "Phase",
-      "acceptanceCriteria": "Critères d'Acceptation",
-      "dependencies": "Dépendances",
-      "effort": "Effort (story points)",
-      "value": "Valeur Métier",
-      "risk": "Niveau de Risque",
-      "cancel": "Annuler",
-      "add": "Ajouter la Fonctionnalité",
-      "addSuccess": "Fonctionnalité ajoutée avec succès"
-    },
-    "deleteFeature": {
-      "title": "Supprimer la Fonctionnalité",
-      "message": "Êtes-vous sûr de vouloir supprimer '{{featureName}}'? Cette action ne peut être annulée.",
-      "cancel": "Annuler",
-      "delete": "Supprimer la Fonctionnalité",
-      "deleteSuccess": "Fonctionnalité supprimée avec succès"
-    },
-    "featureDetails": {
-      "title": "Détails de la Fonctionnalité",
-      "close": "Fermer",
-      "convertToSpec": "Convertir en Spécification",
-      "goToTask": "Aller à la Tâche",
-      "delete": "Supprimer la Fonctionnalité"
-    }
-  },
-  "competitorAnalysis": {
-    "title": "Analyse Concurrentielle",
-    "noAnalysis": "Aucune analyse concurrentielle disponible",
-    "lastUpdated": "Dernière mise à jour: {{date}}",
-    "competitors": "Concurrents",
-    "painPoints": "Points de Douleur",
-    "opportunities": "Opportunités",
-    "threats": "Menaces",
-    "viewAnalysis": "Voir l'Analyse",
-    "runNewAnalysis": "Lancer une Nouvelle Analyse",
-    "useExistingAnalysis": "Utiliser l'Analyse Existante",
-    "skipAnalysis": "Ignorer l'Analyse",
-    "dialog": {
-      "title": "Activer l'Analyse Concurrentielle?",
-      "description": "Améliorez votre roadmap avec des informations sur les produits concurrents",
-      "whatItDoes": "Ce que fait l'analyse concurrentielle :",
-      "identifiesCompetitors": "Identifie 3-5 concurrents principaux basés sur le type de votre projet",
-      "searchesForFeedback": "Recherche dans les stores d'applications, forums et réseaux sociaux pour obtenir les retours utilisateurs et points de douleur",
-      "suggestsFeatures": "Suggère des fonctionnalités qui comblent les lacunes des produits concurrents",
-      "webSearchesTitle": "Des recherches web seront effectuées",
-      "webSearchesDescription": "Cette fonctionnalité effectuera des recherches web pour collecter des informations sur les concurrents. Le nom et le type de votre projet seront utilisés dans les requêtes de recherche. Aucun code ou donnée sensible n'est partagé.",
-      "optionalInfo": "Vous pouvez générer une roadmap sans analyse concurrentielle si vous préférez. La roadmap sera toujours basée sur la structure de votre projet et les meilleures pratiques.",
-      "skipButton": "Non, Ignorer l'Analyse",
-      "enableButton": "Oui, Activer l'Analyse"
-    }
-  },
-  "generation": {
-    "title": "Génération de la Roadmap",
-    "analyzing": "Analyse des exigences du projet...",
-    "generating": "Génération des fonctionnalités de la roadmap...",
-    "organizing": "Organisation en phases...",
-    "finalizing": "Finalisation de la roadmap...",
-    "cancel": "Annuler la Génération",
-    "stop": "Arrêter la Génération"
-  },
-  "save": {
-    "title": "Sauvegarder la Roadmap",
-    "saveSuccess": "Roadmap sauvegardée avec succès",
-    "saveError": "Échec de la sauvegarde de la roadmap",
-    "unsavedChanges": "Vous avez des modifications non sauvegardées",
-    "save": "Sauvegarder",
-    "discard": "Ignorer les Modifications"
-  },
-  "filters": {
-    "title": "Filtres",
-    "allPriorities": "Toutes les Priorités",
-    "allStatuses": "Tous les Statuts",
-    "allPhases": "Toutes les Phases",
-    "highPriority": "Haute Priorité",
-    "mediumPriority": "Priorité Moyenne",
-    "lowPriority": "Basse Priorité",
-    "notStarted": "Non Démarré",
-    "inProgress": "En Cours",
-    "completed": "Terminé",
-    "blocked": "Bloqué"
-  },
-  "sort": {
-    "title": "Trier",
-    "sortBy": "Trier par",
-    "priority": "Priorité",
-    "name": "Nom",
-    "phase": "Phase",
-    "status": "Statut",
-    "value": "Valeur",
-    "effort": "Effort",
-    "ascending": "Croissant",
-    "descending": "Décroissant"
-  },
-  "stats": {
-    "totalFeatures": "Total des Fonctionnalités",
-    "completedFeatures": "Fonctionnalités Terminées",
-    "inProgressFeatures": "Fonctionnalités en Cours",
-    "notStartedFeatures": "Fonctionnalités Non Démarrées",
-    "totalPhases": "Total des Phases",
-    "completedPhases": "Phases Terminées",
-    "currentPhase": "Phase Actuelle"
-  }
+	"header": {
+		"competitorAnalysis": "Analyse Concurrentielle",
+		"clickToViewDetailedAnalysis": "Cliquer pour voir l'analyse détaillée",
+		"analyzedCompetitors": "Analyse de {{count}} concurrents avec {{painPoints}} points de douleur identifiés",
+		"addFeature": "Ajouter une Fonctionnalité",
+		"addNewFeature": "Ajouter une nouvelle fonctionnalité à la roadmap",
+		"regenerateRoadmap": "Régénérer la Roadmap",
+		"target": "Cible",
+		"morePersonas": "+{{count}} personas supplémentaires",
+		"secondaryPersonas": "Personas Secondaires:",
+		"features": "fonctionnalités",
+		"phases": "phases"
+	},
+	"emptyState": {
+		"title": "Aucune Roadmap",
+		"description": "Générez une roadmap alimentée par l'IA qui comprend l'audience cible de votre projet et crée un plan stratégique de fonctionnalités.",
+		"generateButton": "Générer la Roadmap"
+	},
+	"tabs": {
+		"kanban": "Kanban",
+		"timeline": "Chronologie",
+		"table": "Tableau"
+	},
+	"features": {
+		"title": "Fonctionnalités",
+		"noFeatures": "Aucune fonctionnalité pour le moment",
+		"addFeature": "Ajouter une Fonctionnalité",
+		"deleteFeature": "Supprimer la Fonctionnalité",
+		"convertToSpec": "Convertir en Spécification",
+		"goToTask": "Aller à la Tâche",
+		"priority": "Priorité",
+		"status": "Statut",
+		"phase": "Phase",
+		"description": "Description",
+		"acceptanceCriteria": "Critères d'Acceptation",
+		"dependencies": "Dépendances",
+		"effort": "Effort",
+		"value": "Valeur",
+		"risk": "Risque"
+	},
+	"phases": {
+		"title": "Phases",
+		"phase": "Phase",
+		"noPhases": "Aucune phase définie",
+		"duration": "Durée",
+		"startDate": "Date de Début",
+		"endDate": "Date de Fin"
+	},
+	"dialogs": {
+		"addFeature": {
+			"title": "Ajouter une Nouvelle Fonctionnalité",
+			"description": "Description",
+			"name": "Nom de la Fonctionnalité",
+			"priority": "Priorité",
+			"phase": "Phase",
+			"acceptanceCriteria": "Critères d'Acceptation",
+			"dependencies": "Dépendances",
+			"effort": "Effort (story points)",
+			"value": "Valeur Métier",
+			"risk": "Niveau de Risque",
+			"cancel": "Annuler",
+			"add": "Ajouter la Fonctionnalité",
+			"addSuccess": "Fonctionnalité ajoutée avec succès"
+		},
+		"deleteFeature": {
+			"title": "Supprimer la Fonctionnalité",
+			"message": "Êtes-vous sûr de vouloir supprimer '{{featureName}}'? Cette action ne peut être annulée.",
+			"cancel": "Annuler",
+			"delete": "Supprimer la Fonctionnalité",
+			"deleteSuccess": "Fonctionnalité supprimée avec succès"
+		},
+		"featureDetails": {
+			"title": "Détails de la Fonctionnalité",
+			"close": "Fermer",
+			"convertToSpec": "Convertir en Spécification",
+			"goToTask": "Aller à la Tâche",
+			"delete": "Supprimer la Fonctionnalité"
+		}
+	},
+	"competitorAnalysis": {
+		"title": "Analyse Concurrentielle",
+		"noAnalysis": "Aucune analyse concurrentielle disponible",
+		"lastUpdated": "Dernière mise à jour: {{date}}",
+		"competitors": "Concurrents",
+		"painPoints": "Points de Douleur",
+		"opportunities": "Opportunités",
+		"threats": "Menaces",
+		"viewAnalysis": "Voir l'Analyse",
+		"runNewAnalysis": "Lancer une Nouvelle Analyse",
+		"useExistingAnalysis": "Utiliser l'Analyse Existante",
+		"skipAnalysis": "Ignorer l'Analyse",
+		"dialog": {
+			"title": "Activer l'Analyse Concurrentielle?",
+			"description": "Améliorez votre roadmap avec des informations sur les produits concurrents",
+			"whatItDoes": "Ce que fait l'analyse concurrentielle :",
+			"identifiesCompetitors": "Identifie 3-5 concurrents principaux basés sur le type de votre projet",
+			"searchesForFeedback": "Recherche dans les stores d'applications, forums et réseaux sociaux pour obtenir les retours utilisateurs et points de douleur",
+			"suggestsFeatures": "Suggère des fonctionnalités qui comblent les lacunes des produits concurrents",
+			"webSearchesTitle": "Des recherches web seront effectuées",
+			"webSearchesDescription": "Cette fonctionnalité effectuera des recherches web pour collecter des informations sur les concurrents. Le nom et le type de votre projet seront utilisés dans les requêtes de recherche. Aucun code ou donnée sensible n'est partagé.",
+			"optionalInfo": "Vous pouvez générer une roadmap sans analyse concurrentielle si vous préférez. La roadmap sera toujours basée sur la structure de votre projet et les meilleures pratiques.",
+			"skipButton": "Non, Ignorer l'Analyse",
+			"enableButton": "Oui, Activer l'Analyse"
+		}
+	},
+	"generation": {
+		"title": "Génération de la Roadmap",
+		"analyzing": "Analyse des exigences du projet...",
+		"generating": "Génération des fonctionnalités de la roadmap...",
+		"organizing": "Organisation en phases...",
+		"finalizing": "Finalisation de la roadmap...",
+		"cancel": "Annuler la Génération",
+		"stop": "Arrêter la Génération"
+	},
+	"save": {
+		"title": "Sauvegarder la Roadmap",
+		"saveSuccess": "Roadmap sauvegardée avec succès",
+		"saveError": "Échec de la sauvegarde de la roadmap",
+		"unsavedChanges": "Vous avez des modifications non sauvegardées",
+		"save": "Sauvegarder",
+		"discard": "Ignorer les Modifications"
+	},
+	"filters": {
+		"title": "Filtres",
+		"allPriorities": "Toutes les Priorités",
+		"allStatuses": "Tous les Statuts",
+		"allPhases": "Toutes les Phases",
+		"highPriority": "Haute Priorité",
+		"mediumPriority": "Priorité Moyenne",
+		"lowPriority": "Basse Priorité",
+		"notStarted": "Non Démarré",
+		"inProgress": "En Cours",
+		"completed": "Terminé",
+		"blocked": "Bloqué"
+	},
+	"sort": {
+		"title": "Trier",
+		"sortBy": "Trier par",
+		"priority": "Priorité",
+		"name": "Nom",
+		"phase": "Phase",
+		"status": "Statut",
+		"value": "Valeur",
+		"effort": "Effort",
+		"ascending": "Croissant",
+		"descending": "Décroissant"
+	},
+	"stats": {
+		"totalFeatures": "Total des Fonctionnalités",
+		"completedFeatures": "Fonctionnalités Terminées",
+		"inProgressFeatures": "Fonctionnalités en Cours",
+		"notStartedFeatures": "Fonctionnalités Non Démarrées",
+		"totalPhases": "Total des Phases",
+		"completedPhases": "Phases Terminées",
+		"currentPhase": "Phase Actuelle"
+	}
 }

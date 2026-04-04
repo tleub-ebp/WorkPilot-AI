@@ -1,7 +1,7 @@
-import { create } from 'zustand';
-import type { TaskStatusColumn } from '../../shared/constants/task';
-import { TASK_STATUS_COLUMNS } from '../../shared/constants/task';
-import type { KanbanColumnPreference } from '../../shared/types/kanban';
+import { create } from "zustand";
+import type { TaskStatusColumn } from "../../shared/constants/task";
+import { TASK_STATUS_COLUMNS } from "../../shared/constants/task";
+import type { KanbanColumnPreference } from "../../shared/types/kanban";
 
 // ============================================
 // Types
@@ -13,40 +13,43 @@ export type ColumnPreferences = KanbanColumnPreference;
 /**
  * All column preferences keyed by status column
  */
-export type KanbanColumnPreferences = Record<TaskStatusColumn, ColumnPreferences>;
+export type KanbanColumnPreferences = Record<
+	TaskStatusColumn,
+	ColumnPreferences
+>;
 
 /**
  * Kanban settings store state
  */
 interface KanbanSettingsState {
-  /** Column preferences for each status column */
-  columnPreferences: KanbanColumnPreferences | null;
-  /** Column display order (drag-to-reorder) */
-  columnOrder: TaskStatusColumn[];
+	/** Column preferences for each status column */
+	columnPreferences: KanbanColumnPreferences | null;
+	/** Column display order (drag-to-reorder) */
+	columnOrder: TaskStatusColumn[];
 
-  // Actions
-  /** Initialize column preferences (call on mount) */
-  initializePreferences: () => void;
-  /** Set column width */
-  setColumnWidth: (column: TaskStatusColumn, width: number) => void;
-  /** Toggle column collapsed state */
-  toggleColumnCollapsed: (column: TaskStatusColumn) => void;
-  /** Set column collapsed state explicitly */
-  setColumnCollapsed: (column: TaskStatusColumn, isCollapsed: boolean) => void;
-  /** Toggle column locked state */
-  toggleColumnLocked: (column: TaskStatusColumn) => void;
-  /** Set column locked state explicitly */
-  setColumnLocked: (column: TaskStatusColumn, isLocked: boolean) => void;
-  /** Set column display order and persist to localStorage */
-  setColumnOrder: (order: TaskStatusColumn[], projectId?: string) => void;
-  /** Load preferences from main process (IPC), falling back to localStorage */
-  loadPreferences: (projectId: string) => void;
-  /** Save preferences to localStorage (sync cache) and main process (debounced IPC) */
-  savePreferences: (projectId: string) => boolean;
-  /** Reset preferences to defaults */
-  resetPreferences: (projectId: string) => void;
-  /** Get preferences for a single column */
-  getColumnPreferences: (column: TaskStatusColumn) => ColumnPreferences;
+	// Actions
+	/** Initialize column preferences (call on mount) */
+	initializePreferences: () => void;
+	/** Set column width */
+	setColumnWidth: (column: TaskStatusColumn, width: number) => void;
+	/** Toggle column collapsed state */
+	toggleColumnCollapsed: (column: TaskStatusColumn) => void;
+	/** Set column collapsed state explicitly */
+	setColumnCollapsed: (column: TaskStatusColumn, isCollapsed: boolean) => void;
+	/** Toggle column locked state */
+	toggleColumnLocked: (column: TaskStatusColumn) => void;
+	/** Set column locked state explicitly */
+	setColumnLocked: (column: TaskStatusColumn, isLocked: boolean) => void;
+	/** Set column display order and persist to localStorage */
+	setColumnOrder: (order: TaskStatusColumn[], projectId?: string) => void;
+	/** Load preferences from main process (IPC), falling back to localStorage */
+	loadPreferences: (projectId: string) => void;
+	/** Save preferences to localStorage (sync cache) and main process (debounced IPC) */
+	savePreferences: (projectId: string) => boolean;
+	/** Reset preferences to defaults */
+	resetPreferences: (projectId: string) => void;
+	/** Get preferences for a single column */
+	getColumnPreferences: (column: TaskStatusColumn) => ColumnPreferences;
 }
 
 // ============================================
@@ -54,10 +57,10 @@ interface KanbanSettingsState {
 // ============================================
 
 /** localStorage key prefix for kanban settings persistence (sync cache) */
-const KANBAN_SETTINGS_KEY_PREFIX = 'kanban-column-prefs';
+const KANBAN_SETTINGS_KEY_PREFIX = "kanban-column-prefs";
 
 /** localStorage key prefix for kanban column order persistence */
-const KANBAN_COLUMN_ORDER_KEY_PREFIX = 'kanban-column-order';
+const KANBAN_COLUMN_ORDER_KEY_PREFIX = "kanban-column-order";
 
 /** Default column width in pixels */
 export const DEFAULT_COLUMN_WIDTH = 320;
@@ -88,39 +91,39 @@ let currentLoadingProjectId: string | null = null;
  * Get the localStorage key for a project's kanban settings
  */
 function getKanbanSettingsKey(projectId: string): string {
-  return `${KANBAN_SETTINGS_KEY_PREFIX}-${projectId}`;
+	return `${KANBAN_SETTINGS_KEY_PREFIX}-${projectId}`;
 }
 
 /**
  * Get the localStorage key for a project's kanban column order
  */
 function getColumnOrderKey(projectId: string): string {
-  return `${KANBAN_COLUMN_ORDER_KEY_PREFIX}-${projectId}`;
+	return `${KANBAN_COLUMN_ORDER_KEY_PREFIX}-${projectId}`;
 }
 
 /**
  * Validate column order array — must contain all expected columns (extras ignored)
  */
 function validateColumnOrder(data: unknown): data is TaskStatusColumn[] {
-  if (!Array.isArray(data)) return false;
-  return TASK_STATUS_COLUMNS.every((col) => data.includes(col));
+	if (!Array.isArray(data)) return false;
+	return TASK_STATUS_COLUMNS.every((col) => data.includes(col));
 }
 
 /**
  * Create default column preferences for all columns
  */
 function createDefaultPreferences(): KanbanColumnPreferences {
-  const preferences: Partial<KanbanColumnPreferences> = {};
+	const preferences: Partial<KanbanColumnPreferences> = {};
 
-  for (const column of TASK_STATUS_COLUMNS) {
-    preferences[column] = {
-      width: DEFAULT_COLUMN_WIDTH,
-      isCollapsed: false,
-      isLocked: false
-    };
-  }
+	for (const column of TASK_STATUS_COLUMNS) {
+		preferences[column] = {
+			width: DEFAULT_COLUMN_WIDTH,
+			isCollapsed: false,
+			isLocked: false,
+		};
+	}
 
-  return preferences as KanbanColumnPreferences;
+	return preferences as KanbanColumnPreferences;
 }
 
 /**
@@ -128,41 +131,48 @@ function createDefaultPreferences(): KanbanColumnPreferences {
  * Returns true if valid, false if invalid/incomplete
  */
 function validatePreferences(data: unknown): data is KanbanColumnPreferences {
-  if (!data || typeof data !== 'object' || Array.isArray(data)) {
-    return false;
-  }
+	if (!data || typeof data !== "object" || Array.isArray(data)) {
+		return false;
+	}
 
-  const prefs = data as Record<string, unknown>;
+	const prefs = data as Record<string, unknown>;
 
-  // Validate each required column exists with correct structure
-  for (const column of TASK_STATUS_COLUMNS) {
-    const columnPrefs = prefs[column];
+	// Validate each required column exists with correct structure
+	for (const column of TASK_STATUS_COLUMNS) {
+		const columnPrefs = prefs[column];
 
-    if (!columnPrefs || typeof columnPrefs !== 'object') {
-      return false;
-    }
+		if (!columnPrefs || typeof columnPrefs !== "object") {
+			return false;
+		}
 
-    const cp = columnPrefs as Record<string, unknown>;
+		const cp = columnPrefs as Record<string, unknown>;
 
-    // Validate width is a number within bounds
-    if (typeof cp.width !== 'number' || cp.width < MIN_COLUMN_WIDTH || cp.width > MAX_COLUMN_WIDTH) {
-      return false;
-    }
+		// Validate width is a number within bounds
+		if (
+			typeof cp.width !== "number" ||
+			cp.width < MIN_COLUMN_WIDTH ||
+			cp.width > MAX_COLUMN_WIDTH
+		) {
+			return false;
+		}
 
-    // Validate boolean fields
-    if (typeof cp.isCollapsed !== 'boolean' || typeof cp.isLocked !== 'boolean') {
-      return false;
-    }
-  }
+		// Validate boolean fields
+		if (
+			typeof cp.isCollapsed !== "boolean" ||
+			typeof cp.isLocked !== "boolean"
+		) {
+			return false;
+		}
+	}
 
-  return true;
+	return true;
 }
 
 /**
  * Clamp a width value to valid bounds
  */
 function clampWidth(width: number): number {
-  return Math.max(MIN_COLUMN_WIDTH, Math.min(MAX_COLUMN_WIDTH, width));
+	return Math.max(MIN_COLUMN_WIDTH, Math.min(MAX_COLUMN_WIDTH, width));
 }
 
 /**
@@ -173,263 +183,275 @@ function clampWidth(width: number): number {
  * when the user switches projects during the debounce window.
  */
 function saveKanbanPreferencesToMain(projectId: string): void {
-  // Capture preferences at call time to avoid saving wrong project's data
-  const preferencesToSave = useKanbanSettingsStore.getState().columnPreferences;
-  if (!preferencesToSave) return;
+	// Capture preferences at call time to avoid saving wrong project's data
+	const preferencesToSave = useKanbanSettingsStore.getState().columnPreferences;
+	if (!preferencesToSave) return;
 
-  // Clear any pending save
-  if (saveKanbanPrefsTimeout) {
-    clearTimeout(saveKanbanPrefsTimeout);
-  }
+	// Clear any pending save
+	if (saveKanbanPrefsTimeout) {
+		clearTimeout(saveKanbanPrefsTimeout);
+	}
 
-  // Debounce saves to avoid excessive IPC calls
-  saveKanbanPrefsTimeout = setTimeout(async () => {
-    try {
-      await globalThis.electronAPI.saveKanbanPreferences(projectId, preferencesToSave);
-    } catch (_err) {
-      // noop
-    }
-  }, 100);
+	// Debounce saves to avoid excessive IPC calls
+	saveKanbanPrefsTimeout = setTimeout(async () => {
+		try {
+			await globalThis.electronAPI.saveKanbanPreferences(
+				projectId,
+				preferencesToSave,
+			);
+		} catch (_err) {
+			// noop
+		}
+	}, 100);
 }
 
 // ============================================
 // Store
 // ============================================
 
-export const useKanbanSettingsStore = create<KanbanSettingsState>((set, get) => ({
-  columnPreferences: null,
-  columnOrder: [...TASK_STATUS_COLUMNS],
+export const useKanbanSettingsStore = create<KanbanSettingsState>(
+	(set, get) => ({
+		columnPreferences: null,
+		columnOrder: [...TASK_STATUS_COLUMNS],
 
-  initializePreferences: () => {
-    const state = get();
-    if (!state.columnPreferences) {
-      set({ columnPreferences: createDefaultPreferences() });
-    }
-  },
+		initializePreferences: () => {
+			const state = get();
+			if (!state.columnPreferences) {
+				set({ columnPreferences: createDefaultPreferences() });
+			}
+		},
 
-  setColumnOrder: (order, projectId) => {
-    set({ columnOrder: order });
-    if (projectId) {
-      try {
-        localStorage.setItem(getColumnOrderKey(projectId), JSON.stringify(order));
-      } catch {
-        // localStorage write failed, non-critical
-      }
-    }
-  },
+		setColumnOrder: (order, projectId) => {
+			set({ columnOrder: order });
+			if (projectId) {
+				try {
+					localStorage.setItem(
+						getColumnOrderKey(projectId),
+						JSON.stringify(order),
+					);
+				} catch {
+					// localStorage write failed, non-critical
+				}
+			}
+		},
 
-  setColumnWidth: (column, width) => {
-    set((state) => {
-      if (!state.columnPreferences) return state;
+		setColumnWidth: (column, width) => {
+			set((state) => {
+				if (!state.columnPreferences) return state;
 
-      // Don't allow width changes on locked columns
-      if (state.columnPreferences[column].isLocked) {
-        return state;
-      }
+				// Don't allow width changes on locked columns
+				if (state.columnPreferences[column].isLocked) {
+					return state;
+				}
 
-      const clampedWidth = clampWidth(width);
+				const clampedWidth = clampWidth(width);
 
-      return {
-        columnPreferences: {
-          ...state.columnPreferences,
-          [column]: {
-            ...state.columnPreferences[column],
-            width: clampedWidth
-          }
-        }
-      };
-    });
-  },
+				return {
+					columnPreferences: {
+						...state.columnPreferences,
+						[column]: {
+							...state.columnPreferences[column],
+							width: clampedWidth,
+						},
+					},
+				};
+			});
+		},
 
-  toggleColumnCollapsed: (column) => {
-    set((state) => {
-      if (!state.columnPreferences) return state;
+		toggleColumnCollapsed: (column) => {
+			set((state) => {
+				if (!state.columnPreferences) return state;
 
-      return {
-        columnPreferences: {
-          ...state.columnPreferences,
-          [column]: {
-            ...state.columnPreferences[column],
-            isCollapsed: !state.columnPreferences[column].isCollapsed
-          }
-        }
-      };
-    });
-  },
+				return {
+					columnPreferences: {
+						...state.columnPreferences,
+						[column]: {
+							...state.columnPreferences[column],
+							isCollapsed: !state.columnPreferences[column].isCollapsed,
+						},
+					},
+				};
+			});
+		},
 
-  setColumnCollapsed: (column, isCollapsed) => {
-    set((state) => {
-      if (!state.columnPreferences) return state;
+		setColumnCollapsed: (column, isCollapsed) => {
+			set((state) => {
+				if (!state.columnPreferences) return state;
 
-      return {
-        columnPreferences: {
-          ...state.columnPreferences,
-          [column]: {
-            ...state.columnPreferences[column],
-            isCollapsed
-          }
-        }
-      };
-    });
-  },
+				return {
+					columnPreferences: {
+						...state.columnPreferences,
+						[column]: {
+							...state.columnPreferences[column],
+							isCollapsed,
+						},
+					},
+				};
+			});
+		},
 
-  toggleColumnLocked: (column) => {
-    set((state) => {
-      if (!state.columnPreferences) return state;
+		toggleColumnLocked: (column) => {
+			set((state) => {
+				if (!state.columnPreferences) return state;
 
-      return {
-        columnPreferences: {
-          ...state.columnPreferences,
-          [column]: {
-            ...state.columnPreferences[column],
-            isLocked: !state.columnPreferences[column].isLocked
-          }
-        }
-      };
-    });
-  },
+				return {
+					columnPreferences: {
+						...state.columnPreferences,
+						[column]: {
+							...state.columnPreferences[column],
+							isLocked: !state.columnPreferences[column].isLocked,
+						},
+					},
+				};
+			});
+		},
 
-  setColumnLocked: (column, isLocked) => {
-    set((state) => {
-      if (!state.columnPreferences) return state;
+		setColumnLocked: (column, isLocked) => {
+			set((state) => {
+				if (!state.columnPreferences) return state;
 
-      return {
-        columnPreferences: {
-          ...state.columnPreferences,
-          [column]: {
-            ...state.columnPreferences[column],
-            isLocked
-          }
-        }
-      };
-    });
-  },
+				return {
+					columnPreferences: {
+						...state.columnPreferences,
+						[column]: {
+							...state.columnPreferences[column],
+							isLocked,
+						},
+					},
+				};
+			});
+		},
 
-  loadPreferences: (projectId) => {
-    // Clear any pending save from previous project to prevent cross-project contamination
-    if (saveKanbanPrefsTimeout) {
-      clearTimeout(saveKanbanPrefsTimeout);
-      saveKanbanPrefsTimeout = null;
-    }
+		loadPreferences: (projectId) => {
+			// Clear any pending save from previous project to prevent cross-project contamination
+			if (saveKanbanPrefsTimeout) {
+				clearTimeout(saveKanbanPrefsTimeout);
+				saveKanbanPrefsTimeout = null;
+			}
 
-    // Track current project to detect stale IPC results
-    currentLoadingProjectId = projectId;
+			// Track current project to detect stale IPC results
+			currentLoadingProjectId = projectId;
 
-    // First, try loading from localStorage as immediate sync cache
-    try {
-      const key = getKanbanSettingsKey(projectId);
-      const stored = localStorage.getItem(key);
+			// First, try loading from localStorage as immediate sync cache
+			try {
+				const key = getKanbanSettingsKey(projectId);
+				const stored = localStorage.getItem(key);
 
-      if (stored) {
-        const parsed = JSON.parse(stored);
-        if (validatePreferences(parsed)) {
-          set({ columnPreferences: parsed });
-        } else {
-          set({ columnPreferences: createDefaultPreferences() });
-        }
-      } else {
-        set({ columnPreferences: createDefaultPreferences() });
-      }
-    } catch {
-      set({ columnPreferences: createDefaultPreferences() });
-    }
+				if (stored) {
+					const parsed = JSON.parse(stored);
+					if (validatePreferences(parsed)) {
+						set({ columnPreferences: parsed });
+					} else {
+						set({ columnPreferences: createDefaultPreferences() });
+					}
+				} else {
+					set({ columnPreferences: createDefaultPreferences() });
+				}
+			} catch {
+				set({ columnPreferences: createDefaultPreferences() });
+			}
 
-    // Load column order from localStorage
-    try {
-      const orderKey = getColumnOrderKey(projectId);
-      const storedOrder = localStorage.getItem(orderKey);
-      if (storedOrder) {
-        const parsed = JSON.parse(storedOrder);
-        if (validateColumnOrder(parsed)) {
-          set({ columnOrder: parsed });
-        } else {
-          set({ columnOrder: [...TASK_STATUS_COLUMNS] });
-        }
-      } else {
-        set({ columnOrder: [...TASK_STATUS_COLUMNS] });
-      }
-    } catch {
-      set({ columnOrder: [...TASK_STATUS_COLUMNS] });
-    }
+			// Load column order from localStorage
+			try {
+				const orderKey = getColumnOrderKey(projectId);
+				const storedOrder = localStorage.getItem(orderKey);
+				if (storedOrder) {
+					const parsed = JSON.parse(storedOrder);
+					if (validateColumnOrder(parsed)) {
+						set({ columnOrder: parsed });
+					} else {
+						set({ columnOrder: [...TASK_STATUS_COLUMNS] });
+					}
+				} else {
+					set({ columnOrder: [...TASK_STATUS_COLUMNS] });
+				}
+			} catch {
+				set({ columnOrder: [...TASK_STATUS_COLUMNS] });
+			}
 
-    // Then, async load from main process via IPC (source of truth)
-    (async () => {
-      try {
-        const result = await globalThis.electronAPI.getKanbanPreferences(projectId);
+			// Then, async load from main process via IPC (source of truth)
+			(async () => {
+				try {
+					const result =
+						await globalThis.electronAPI.getKanbanPreferences(projectId);
 
-        // Check if project changed while IPC was in flight - discard stale result
-        if (currentLoadingProjectId !== projectId) {
-          return;
-        }
+					// Check if project changed while IPC was in flight - discard stale result
+					if (currentLoadingProjectId !== projectId) {
+						return;
+					}
 
-        if (result?.success && result.data) {
-          if (validatePreferences(result.data)) {
-            set({ columnPreferences: result.data });
+					if (result?.success && result.data) {
+						if (validatePreferences(result.data)) {
+							set({ columnPreferences: result.data });
 
-            // Update localStorage sync cache with IPC data
-            try {
-              const key = getKanbanSettingsKey(projectId);
-              localStorage.setItem(key, JSON.stringify(result.data));
-            } catch {
-              // localStorage write failed, non-critical
-            }
-            return;
-          }
-        }
+							// Update localStorage sync cache with IPC data
+							try {
+								const key = getKanbanSettingsKey(projectId);
+								localStorage.setItem(key, JSON.stringify(result.data));
+							} catch {
+								// localStorage write failed, non-critical
+							}
+							return;
+						}
+					}
 
-        // IPC returned no data or invalid data — keep whatever was loaded from localStorage/defaults
-      } catch {
-        // IPC call failed — keep localStorage/default data already set above
-      }
-    })();
-  },
+					// IPC returned no data or invalid data — keep whatever was loaded from localStorage/defaults
+				} catch {
+					// IPC call failed — keep localStorage/default data already set above
+				}
+			})();
+		},
 
-  savePreferences: (projectId) => {
-    try {
-      const state = get();
-      if (!state.columnPreferences) {
-        return false;
-      }
+		savePreferences: (projectId) => {
+			try {
+				const state = get();
+				if (!state.columnPreferences) {
+					return false;
+				}
 
-      // Save to localStorage as sync cache
-      const key = getKanbanSettingsKey(projectId);
-      localStorage.setItem(key, JSON.stringify(state.columnPreferences));
+				// Save to localStorage as sync cache
+				const key = getKanbanSettingsKey(projectId);
+				localStorage.setItem(key, JSON.stringify(state.columnPreferences));
 
-      // Save to main process via debounced IPC
-      saveKanbanPreferencesToMain(projectId);
+				// Save to main process via debounced IPC
+				saveKanbanPreferencesToMain(projectId);
 
-      return true;
-    } catch {
-      return false;
-    }
-  },
+				return true;
+			} catch {
+				return false;
+			}
+		},
 
-  resetPreferences: (projectId) => {
-    try {
-      const key = getKanbanSettingsKey(projectId);
-      localStorage.removeItem(key);
-      const orderKey = getColumnOrderKey(projectId);
-      localStorage.removeItem(orderKey);
-      set({ columnPreferences: createDefaultPreferences(), columnOrder: [...TASK_STATUS_COLUMNS] });
+		resetPreferences: (projectId) => {
+			try {
+				const key = getKanbanSettingsKey(projectId);
+				localStorage.removeItem(key);
+				const orderKey = getColumnOrderKey(projectId);
+				localStorage.removeItem(orderKey);
+				set({
+					columnPreferences: createDefaultPreferences(),
+					columnOrder: [...TASK_STATUS_COLUMNS],
+				});
 
-      // Also save reset state to main process
-      saveKanbanPreferencesToMain(projectId);
-    } catch {
-      // Reset failed, non-critical
-    }
-  },
+				// Also save reset state to main process
+				saveKanbanPreferencesToMain(projectId);
+			} catch {
+				// Reset failed, non-critical
+			}
+		},
 
-  getColumnPreferences: (column) => {
-    const state = get();
+		getColumnPreferences: (column) => {
+			const state = get();
 
-    if (!state.columnPreferences) {
-      return {
-        width: DEFAULT_COLUMN_WIDTH,
-        isCollapsed: false,
-        isLocked: false
-      };
-    }
+			if (!state.columnPreferences) {
+				return {
+					width: DEFAULT_COLUMN_WIDTH,
+					isCollapsed: false,
+					isLocked: false,
+				};
+			}
 
-    return state.columnPreferences[column];
-  }
-}));
+			return state.columnPreferences[column];
+		},
+	}),
+);

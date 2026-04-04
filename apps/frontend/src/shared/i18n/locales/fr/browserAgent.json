@@ -1,71 +1,71 @@
 {
-  "title": "Agent Navigateur",
-  "subtitle": "Navigateur Chromium pour tester, scraper et valider visuellement",
-  "tabs": {
-    "browser": "Navigateur",
-    "visualRegression": "Regression Visuelle",
-    "testRunner": "Tests E2E"
-  },
-  "stats": {
-    "totalTests": "Tests totaux",
-    "passRate": "Taux de succes",
-    "screenshots": "Captures",
-    "regressions": "Regressions"
-  },
-  "browser": {
-    "urlPlaceholder": "Entrer une URL...",
-    "navigate": "Aller",
-    "captureScreenshot": "Capturer",
-    "screenshotNamePlaceholder": "Nom de la capture...",
-    "idle": "Navigateur inactif. Entrez une URL et cliquez Aller pour commencer.",
-    "idleTitle": "Aucune page chargee",
-    "idleDescription": "Entrez une URL dans la barre d'adresse ci-dessus et cliquez Aller pour capturer une image de la page.",
-    "launching": "Lancement du navigateur...",
-    "navigating": "Navigation en cours...",
-    "ready": "Navigateur pret",
-    "refresh": "Actualiser",
-    "openExternal": "Ouvrir dans le navigateur",
-    "useEmulatorUrl": "Utiliser l'URL de l'emulateur",
-    "capturing": "Capture en cours...",
-    "errorHint": "Verifiez que l'URL est accessible et reessayez."
-  },
-  "regression": {
-    "setBaseline": "Definir comme reference",
-    "compare": "Comparer",
-    "deleteBaseline": "Supprimer",
-    "match": "Correspondance",
-    "diffPixels": "Pixels differents",
-    "passed": "Reussi",
-    "failed": "Echoue",
-    "noBaselines": "Capturez une image dans l'onglet Navigateur, puis revenez ici pour la definir comme reference pour les tests de regression visuelle.",
-    "noBaselinesTitle": "Aucune reference",
-    "resultsTitle": "Resultats de comparaison",
-    "threshold": "Seuil",
-    "comparing": "Comparaison en cours...",
-    "baselineSet": "Reference definie avec succes",
-    "baselineDeleted": "Reference supprimee",
-    "baseline": "Reference",
-    "current": "Actuel",
-    "diff": "Difference"
-  },
-  "tests": {
-    "runAll": "Lancer tous les tests",
-    "running": "Execution des tests...",
-    "noResults": "Cliquez sur Lancer tous les tests pour executer les tests E2E et voir les resultats ici.",
-    "noResultsTitle": "Aucun resultat",
-    "passed": "Reussi",
-    "failed": "Echoue",
-    "skipped": "Ignore",
-    "error": "Erreur",
-    "duration": "Duree",
-    "errorDetails": "Details de l'erreur",
-    "summary": "{{passed}} reussi(s), {{failed}} echoue(s), {{skipped}} ignore(s)"
-  },
-  "errors": {
-    "fetchFailed": "Impossible de charger les donnees",
-    "screenshotFailed": "Echec de la capture d'ecran",
-    "compareFailed": "Echec de la comparaison visuelle",
-    "testsFailed": "Echec de l'execution des tests",
-    "noProject": "Selectionnez un projet pour utiliser l'Agent Navigateur"
-  }
+	"title": "Agent Navigateur",
+	"subtitle": "Navigateur Chromium pour tester, scraper et valider visuellement",
+	"tabs": {
+		"browser": "Navigateur",
+		"visualRegression": "Regression Visuelle",
+		"testRunner": "Tests E2E"
+	},
+	"stats": {
+		"totalTests": "Tests totaux",
+		"passRate": "Taux de succes",
+		"screenshots": "Captures",
+		"regressions": "Regressions"
+	},
+	"browser": {
+		"urlPlaceholder": "Entrer une URL...",
+		"navigate": "Aller",
+		"captureScreenshot": "Capturer",
+		"screenshotNamePlaceholder": "Nom de la capture...",
+		"idle": "Navigateur inactif. Entrez une URL et cliquez Aller pour commencer.",
+		"idleTitle": "Aucune page chargee",
+		"idleDescription": "Entrez une URL dans la barre d'adresse ci-dessus et cliquez Aller pour capturer une image de la page.",
+		"launching": "Lancement du navigateur...",
+		"navigating": "Navigation en cours...",
+		"ready": "Navigateur pret",
+		"refresh": "Actualiser",
+		"openExternal": "Ouvrir dans le navigateur",
+		"useEmulatorUrl": "Utiliser l'URL de l'emulateur",
+		"capturing": "Capture en cours...",
+		"errorHint": "Verifiez que l'URL est accessible et reessayez."
+	},
+	"regression": {
+		"setBaseline": "Definir comme reference",
+		"compare": "Comparer",
+		"deleteBaseline": "Supprimer",
+		"match": "Correspondance",
+		"diffPixels": "Pixels differents",
+		"passed": "Reussi",
+		"failed": "Echoue",
+		"noBaselines": "Capturez une image dans l'onglet Navigateur, puis revenez ici pour la definir comme reference pour les tests de regression visuelle.",
+		"noBaselinesTitle": "Aucune reference",
+		"resultsTitle": "Resultats de comparaison",
+		"threshold": "Seuil",
+		"comparing": "Comparaison en cours...",
+		"baselineSet": "Reference definie avec succes",
+		"baselineDeleted": "Reference supprimee",
+		"baseline": "Reference",
+		"current": "Actuel",
+		"diff": "Difference"
+	},
+	"tests": {
+		"runAll": "Lancer tous les tests",
+		"running": "Execution des tests...",
+		"noResults": "Cliquez sur Lancer tous les tests pour executer les tests E2E et voir les resultats ici.",
+		"noResultsTitle": "Aucun resultat",
+		"passed": "Reussi",
+		"failed": "Echoue",
+		"skipped": "Ignore",
+		"error": "Erreur",
+		"duration": "Duree",
+		"errorDetails": "Details de l'erreur",
+		"summary": "{{passed}} reussi(s), {{failed}} echoue(s), {{skipped}} ignore(s)"
+	},
+	"errors": {
+		"fetchFailed": "Impossible de charger les donnees",
+		"screenshotFailed": "Echec de la capture d'ecran",
+		"compareFailed": "Echec de la comparaison visuelle",
+		"testsFailed": "Echec de l'execution des tests",
+		"noProject": "Selectionnez un projet pour utiliser l'Agent Navigateur"
+	}
 }

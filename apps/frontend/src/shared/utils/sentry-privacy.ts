@@ -15,31 +15,31 @@
 // The actual type is Sentry.ErrorEvent but we define a compatible interface
 // to avoid importing @sentry/electron which has different exports per process
 export interface SentryErrorEvent {
-  exception?: {
-    values?: Array<{
-      stacktrace?: {
-        frames?: Array<{
-          filename?: string;
-          abs_path?: string;
-        }>;
-      };
-      value?: string;
-    }>;
-  };
-  breadcrumbs?: Array<{
-    message?: string;
-    data?: Record<string, unknown>;
-  }>;
-  message?: string;
-  tags?: Record<string, string>;
-  contexts?: Record<string, Record<string, unknown> | null>;
-  extra?: Record<string, unknown>;
-  user?: Record<string, unknown>;
-  request?: {
-    url?: string;
-    headers?: Record<string, string>;
-    data?: unknown;
-  };
+	exception?: {
+		values?: Array<{
+			stacktrace?: {
+				frames?: Array<{
+					filename?: string;
+					abs_path?: string;
+				}>;
+			};
+			value?: string;
+		}>;
+	};
+	breadcrumbs?: Array<{
+		message?: string;
+		data?: Record<string, unknown>;
+	}>;
+	message?: string;
+	tags?: Record<string, string>;
+	contexts?: Record<string, Record<string, unknown> | null>;
+	extra?: Record<string, unknown>;
+	user?: Record<string, unknown>;
+	request?: {
+		url?: string;
+		headers?: Record<string, string>;
+		data?: unknown;
+	};
 }
 
 /**
@@ -54,24 +54,24 @@ export interface SentryErrorEvent {
  * This is intentional - we need to know which file caused the error.
  */
 export function maskUserPaths(text: string): string {
-  if (!text) return text;
+	if (!text) return text;
 
-  // macOS: /Users/username/... or /Users/username (at end of string)
-  // Uses lookahead to match with or without trailing slash
-  text = text.replaceAll(/\/Users\/[^/]+(?=\/|$)/g, '/Users/***');
+	// macOS: /Users/username/... or /Users/username (at end of string)
+	// Uses lookahead to match with or without trailing slash
+	text = text.replaceAll(/\/Users\/[^/]+(?=\/|$)/g, "/Users/***");
 
-  // Windows: C:\Users\username\... or C:\Users\username (at end of string)
-  // Uses lookahead to match with or without trailing backslash
-  text = text.replaceAll(/[A-Z]:\\Users\\[^\\]+(?=\\|$)/gi, (match: string) => {
-    const drive = match[0];
-    return String.raw`${drive}:\Users\***`;
-  });
+	// Windows: C:\Users\username\... or C:\Users\username (at end of string)
+	// Uses lookahead to match with or without trailing backslash
+	text = text.replaceAll(/[A-Z]:\\Users\\[^\\]+(?=\\|$)/gi, (match: string) => {
+		const drive = match[0];
+		return String.raw`${drive}:\Users\***`;
+	});
 
-  // Linux: /home/username/... or /home/username (at end of string)
-  // Uses lookahead to match with or without trailing slash
-  text = text.replaceAll(/\/home\/[^/]+(?=\/|$)/g, '/home/***');
+	// Linux: /home/username/... or /home/username (at end of string)
+	// Uses lookahead to match with or without trailing slash
+	text = text.replaceAll(/\/home\/[^/]+(?=\/|$)/g, "/home/***");
 
-  return text;
+	return text;
 }
 
 /**
@@ -79,27 +79,27 @@ export function maskUserPaths(text: string): string {
  * Handles nested objects and arrays
  */
 function maskObjectPaths(obj: unknown): unknown {
-  if (obj === null || obj === undefined) {
-    return obj;
-  }
+	if (obj === null || obj === undefined) {
+		return obj;
+	}
 
-  if (typeof obj === 'string') {
-    return maskUserPaths(obj);
-  }
+	if (typeof obj === "string") {
+		return maskUserPaths(obj);
+	}
 
-  if (Array.isArray(obj)) {
-    return obj.map(maskObjectPaths);
-  }
+	if (Array.isArray(obj)) {
+		return obj.map(maskObjectPaths);
+	}
 
-  if (typeof obj === 'object') {
-    const result: Record<string, unknown> = {};
-    for (const key of Object.keys(obj as Record<string, unknown>)) {
-      result[key] = maskObjectPaths((obj as Record<string, unknown>)[key]);
-    }
-    return result;
-  }
+	if (typeof obj === "object") {
+		const result: Record<string, unknown> = {};
+		for (const key of Object.keys(obj as Record<string, unknown>)) {
+			result[key] = maskObjectPaths((obj as Record<string, unknown>)[key]);
+		}
+		return result;
+	}
 
-  return obj;
+	return obj;
 }
 
 /**
@@ -117,153 +117,163 @@ function maskObjectPaths(obj: unknown): unknown {
  * - Request data (URLs, headers)
  */
 export function processEvent<T extends SentryErrorEvent>(event: T): T {
-  processExceptionPaths(event);
-  processBreadcrumbs(event);
-  processMessage(event);
-  processTags(event);
-  processContexts(event);
-  processExtraData(event);
-  processUserInfo(event);
-  processRequestData(event);
-  
-  return event;
+	processExceptionPaths(event);
+	processBreadcrumbs(event);
+	processMessage(event);
+	processTags(event);
+	processContexts(event);
+	processExtraData(event);
+	processUserInfo(event);
+	processRequestData(event);
+
+	return event;
 }
 
 /**
  * Process exception stack traces and values
  */
 function processExceptionPaths<T extends SentryErrorEvent>(event: T): void {
-  if (!event.exception?.values) return;
-  
-  for (const exception of event.exception.values) {
-    processStacktraceFrames(exception);
-    processExceptionValue(exception);
-  }
+	if (!event.exception?.values) return;
+
+	for (const exception of event.exception.values) {
+		processStacktraceFrames(exception);
+		processExceptionValue(exception);
+	}
 }
 
 /**
  * Process stacktrace frames for an exception
  */
-function processStacktraceFrames(exception: { stacktrace?: { frames?: Array<{ filename?: string; abs_path?: string }> } }): void {
-  if (!exception.stacktrace?.frames) return;
-  
-  for (const frame of exception.stacktrace.frames) {
-    if (frame.filename) {
-      frame.filename = maskUserPaths(frame.filename);
-    }
-    if (frame.abs_path) {
-      frame.abs_path = maskUserPaths(frame.abs_path);
-    }
-  }
+function processStacktraceFrames(exception: {
+	stacktrace?: { frames?: Array<{ filename?: string; abs_path?: string }> };
+}): void {
+	if (!exception.stacktrace?.frames) return;
+
+	for (const frame of exception.stacktrace.frames) {
+		if (frame.filename) {
+			frame.filename = maskUserPaths(frame.filename);
+		}
+		if (frame.abs_path) {
+			frame.abs_path = maskUserPaths(frame.abs_path);
+		}
+	}
 }
 
 /**
  * Process exception value
  */
 function processExceptionValue(exception: { value?: string }): void {
-  if (exception.value) {
-    exception.value = maskUserPaths(exception.value);
-  }
+	if (exception.value) {
+		exception.value = maskUserPaths(exception.value);
+	}
 }
 
 /**
  * Process breadcrumb messages and data
  */
 function processBreadcrumbs<T extends SentryErrorEvent>(event: T): void {
-  if (!event.breadcrumbs) return;
-  
-  for (const breadcrumb of event.breadcrumbs) {
-    if (breadcrumb.message) {
-      breadcrumb.message = maskUserPaths(breadcrumb.message);
-    }
-    if (breadcrumb.data) {
-      breadcrumb.data = maskObjectPaths(breadcrumb.data) as Record<string, unknown>;
-    }
-  }
+	if (!event.breadcrumbs) return;
+
+	for (const breadcrumb of event.breadcrumbs) {
+		if (breadcrumb.message) {
+			breadcrumb.message = maskUserPaths(breadcrumb.message);
+		}
+		if (breadcrumb.data) {
+			breadcrumb.data = maskObjectPaths(breadcrumb.data) as Record<
+				string,
+				unknown
+			>;
+		}
+	}
 }
 
 /**
  * Process top-level message
  */
 function processMessage<T extends SentryErrorEvent>(event: T): void {
-  if (event.message) {
-    event.message = maskUserPaths(event.message);
-  }
+	if (event.message) {
+		event.message = maskUserPaths(event.message);
+	}
 }
 
 /**
  * Process tag values
  */
 function processTags<T extends SentryErrorEvent>(event: T): void {
-  if (!event.tags) return;
-  
-  for (const key of Object.keys(event.tags)) {
-    if (typeof event.tags[key] === 'string') {
-      event.tags[key] = maskUserPaths(event.tags[key]);
-    }
-  }
+	if (!event.tags) return;
+
+	for (const key of Object.keys(event.tags)) {
+		if (typeof event.tags[key] === "string") {
+			event.tags[key] = maskUserPaths(event.tags[key]);
+		}
+	}
 }
 
 /**
  * Process context objects recursively
  */
 function processContexts<T extends SentryErrorEvent>(event: T): void {
-  if (!event.contexts) return;
-  
-  for (const contextKey of Object.keys(event.contexts)) {
-    const context = event.contexts[contextKey];
-    if (context && typeof context === 'object') {
-      event.contexts[contextKey] = maskObjectPaths(context) as Record<string, unknown>;
-    }
-  }
+	if (!event.contexts) return;
+
+	for (const contextKey of Object.keys(event.contexts)) {
+		const context = event.contexts[contextKey];
+		if (context && typeof context === "object") {
+			event.contexts[contextKey] = maskObjectPaths(context) as Record<
+				string,
+				unknown
+			>;
+		}
+	}
 }
 
 /**
  * Process extra data recursively
  */
 function processExtraData<T extends SentryErrorEvent>(event: T): void {
-  if (event.extra) {
-    event.extra = maskObjectPaths(event.extra) as Record<string, unknown>;
-  }
+	if (event.extra) {
+		event.extra = maskObjectPaths(event.extra) as Record<string, unknown>;
+	}
 }
 
 /**
  * Clear user info entirely for privacy
  */
 function processUserInfo<T extends SentryErrorEvent>(event: T): void {
-  if (event.user) {
-    event.user = {};
-  }
+	if (event.user) {
+		event.user = {};
+	}
 }
 
 /**
  * Process request data (URLs, headers, and data)
  */
 function processRequestData<T extends SentryErrorEvent>(event: T): void {
-  if (!event.request) return;
-  
-  if (event.request.url) {
-    event.request.url = maskUserPaths(event.request.url);
-  }
-  
-  processRequestHeaders(event.request);
-  
-  if (event.request.data) {
-    event.request.data = maskObjectPaths(event.request.data);
-  }
+	if (!event.request) return;
+
+	if (event.request.url) {
+		event.request.url = maskUserPaths(event.request.url);
+	}
+
+	processRequestHeaders(event.request);
+
+	if (event.request.data) {
+		event.request.data = maskObjectPaths(event.request.data);
+	}
 }
 
 /**
  * Process request headers
  */
-function processRequestHeaders(request: { headers?: Record<string, string> }): void {
-  if (!request.headers) return;
-  
-  for (const key of Object.keys(request.headers)) {
-    if (typeof request.headers[key] === 'string') {
-      request.headers[key] = maskUserPaths(request.headers[key]);
-    }
-  }
+function processRequestHeaders(request: {
+	headers?: Record<string, string>;
+}): void {
+	if (!request.headers) return;
+
+	for (const key of Object.keys(request.headers)) {
+		if (typeof request.headers[key] === "string") {
+			request.headers[key] = maskUserPaths(request.headers[key]);
+		}
+	}
 }
 
 /**

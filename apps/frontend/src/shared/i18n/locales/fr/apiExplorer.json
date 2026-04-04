@@ -1,163 +1,163 @@
 {
-  "sidebar": {
-    "search": "Rechercher des endpoints...",
-    "loading": "Chargement du spec...",
-    "loadError": "Échec du chargement du spec",
-    "noResults": "Aucun endpoint ne correspond à votre recherche",
-    "endpoints": "endpoints"
-  },
-  "environments": {
-    "title": "Environnements",
-    "placeholder": "Environnement",
-    "manage": "Gérer les environnements",
-    "addNew": "Ajouter manuellement",
-    "namePlaceholder": "Nom de l'environnement",
-    "detect": "Détecter depuis le projet",
-    "detecting": "Scan des fichiers .env...",
-    "detected": "Environnements détectés",
-    "importSelected": "Importer",
-    "token": "Bearer Token",
-    "tokenPlaceholder": "Collez votre JWT ou token API",
-    "headers": "En-têtes personnalisés"
-  },
-  "actions": {
-    "export": "Exporter",
-    "cancel": "Annuler",
-    "save": "Enregistrer",
-    "add": "Ajouter"
-  },
-  "export": {
-    "title": "Exporter le contrat API",
-    "openapiDesc": "Spécification OpenAPI 3.x brute",
-    "postmanDesc": "Importable directement dans Postman",
-    "markdownDesc": "Documentation API lisible par l'humain",
-    "copySpec": "Copier le spec dans le presse-papiers",
-    "copied": "Copié !",
-    "endpoints": "{{selected}}/{{total}} endpoints sélectionnés",
-    "selectAll": "Tout sélectionner",
-    "deselectAll": "Tout désélectionner"
-  },
-  "detail": {
-    "docs": "Docs",
-    "description": "Description",
-    "parameters": "Paramètres",
-    "responses": "Réponses",
-    "requestBody": "Corps de la requête",
-    "responseSchema": "Schéma de réponse",
-    "noSchema": "Aucun schéma défini pour cet endpoint"
-  },
-  "request": {
-    "send": "Envoyer",
-    "sending": "Envoi en cours...",
-    "params": "Paramètres",
-    "headers": "En-têtes",
-    "body": "Corps",
-    "auth": "Auth",
-    "pathParams": "Paramètres de chemin",
-    "queryParams": "Paramètres de requête",
-    "noParams": "Aucun paramètre pour cet endpoint",
-    "noHeaders": "Aucun en-tête défini",
-    "fillExample": "Remplir avec l'exemple",
-    "networkError": "Erreur réseau",
-    "addParam": "Ajouter un paramètre",
-    "addHeader": "Ajouter un en-tête",
-    "paramKey": "Paramètre",
-    "paramValue": "Valeur",
-    "headerKey": "En-tête",
-    "headerValue": "Valeur",
-    "specHeaders": "En-têtes du spec"
-  },
-  "auth": {
-    "type": "Type d'authentification",
-    "types": {
-      "inherited": "Hérité de l'env.",
-      "none": "Sans auth",
-      "bearer": "Bearer Token",
-      "basic": "Basic Auth",
-      "apikey": "Clé API",
-      "oauth2": "OAuth 2.0"
-    },
-    "inheritedFrom": "Bearer Token de \"{{env}}\" utilisé",
-    "noEnvToken": "Aucun token configuré sur \"{{env}}\".",
-    "configureEnv": "Configurer l'environnement →",
-    "noAuthDesc": "Aucune autorisation ne sera envoyée avec cette requête.",
-    "token": "Token",
-    "tokenPlaceholder": "Collez votre JWT ou token d'accès",
-    "bearerHint": "Envoyé sous : Authorization: Bearer <token>",
-    "username": "Nom d'utilisateur",
-    "usernamePlaceholder": "utilisateur",
-    "password": "Mot de passe",
-    "basicHint": "Identifiants encodés en Base64 dans le header Authorization.",
-    "keyName": "Nom de la clé",
-    "keyValue": "Valeur de la clé",
-    "keyValuePlaceholder": "votre-clé-api",
-    "addTo": "Ajouter dans",
-    "locationHeader": "Header",
-    "locationQuery": "Query Params",
-    "oauth2": {
-      "grantType": "Type de flux",
-      "grants": {
-        "client_credentials": "Client Credentials",
-        "authorization_code": "Authorization Code (With PKCE)",
-        "password": "Password"
-      },
-      "configureToken": "Configurer un nouveau token",
-      "authUrl": "URL d'autorisation",
-      "tokenUrl": "URL du token d'accès",
-      "clientId": "Client ID",
-      "clientSecret": "Client Secret",
-      "scope": "Scope",
-      "getToken": "Obtenir un nouveau token d'accès",
-      "openBrowser": "Ouvrir le navigateur pour s'authentifier",
-      "currentToken": "Token actuel",
-      "tokenPlaceholder": "Collez ou auto-remplissez le token d'accès",
-      "headerPrefix": "Préfixe du header",
-      "missingTokenUrl": "L'URL du token d'accès est requise.",
-      "tokenError": "Impossible de récupérer le token d'accès."
-    }
-  },
-  "response": {
-    "body": "Corps",
-    "headers": "En-têtes",
-    "saveToken": "Sauvegarder comme Bearer Token",
-    "saveTokenTitle": "Sauvegarde le token de cette réponse dans l'environnement actif",
-    "tokenSaved": "Token sauvegardé !",
-    "format": {
-      "pretty": "Formaté",
-      "raw": "Brut",
-      "preview": "Aperçu",
-      "languageTitle": "Sélectionner le langage de rendu",
-      "lang": {
-        "auto": "Auto",
-        "json": "JSON",
-        "xml": "XML",
-        "html": "HTML",
-        "text": "Texte"
-      },
-      "mismatch": "Le contenu ne peut pas être interprété comme {{format}}, affichage en texte brut."
-    }
-  },
-  "empty": {
-    "selectEndpoint": "Sélectionner un endpoint",
-    "selectEndpointHint": "Choisissez un endpoint dans la liste pour voir ses détails et le tester",
-    "noSpec": "Aucun spec chargé",
-    "noSpecHint": "Entrez une URL de spec OpenAPI valide ci-dessus"
-  },
-  "scan": {
-    "button": "Scanner le projet",
-    "scanning": "Scan en cours...",
-    "tooltip": "Scanner le code source pour détecter les endpoints API (C#, Python, Node.js, Java, Go, Rust, Ruby)",
-    "error": "Impossible de scanner les routes du projet",
-    "resync": "Resynchroniser",
-    "sourceBadge": "Source",
-    "scannedAt": "scanné à {{time}}"
-  },
-  "emulator": {
-    "run": "Lancer le projet",
-    "stop": "Arrêter le serveur",
-    "detecting": "Détection...",
-    "starting": "Démarrage...",
-    "running": "En cours",
-    "noProject": "Aucun projet actif sélectionné"
-  }
+	"sidebar": {
+		"search": "Rechercher des endpoints...",
+		"loading": "Chargement du spec...",
+		"loadError": "Échec du chargement du spec",
+		"noResults": "Aucun endpoint ne correspond à votre recherche",
+		"endpoints": "endpoints"
+	},
+	"environments": {
+		"title": "Environnements",
+		"placeholder": "Environnement",
+		"manage": "Gérer les environnements",
+		"addNew": "Ajouter manuellement",
+		"namePlaceholder": "Nom de l'environnement",
+		"detect": "Détecter depuis le projet",
+		"detecting": "Scan des fichiers .env...",
+		"detected": "Environnements détectés",
+		"importSelected": "Importer",
+		"token": "Bearer Token",
+		"tokenPlaceholder": "Collez votre JWT ou token API",
+		"headers": "En-têtes personnalisés"
+	},
+	"actions": {
+		"export": "Exporter",
+		"cancel": "Annuler",
+		"save": "Enregistrer",
+		"add": "Ajouter"
+	},
+	"export": {
+		"title": "Exporter le contrat API",
+		"openapiDesc": "Spécification OpenAPI 3.x brute",
+		"postmanDesc": "Importable directement dans Postman",
+		"markdownDesc": "Documentation API lisible par l'humain",
+		"copySpec": "Copier le spec dans le presse-papiers",
+		"copied": "Copié !",
+		"endpoints": "{{selected}}/{{total}} endpoints sélectionnés",
+		"selectAll": "Tout sélectionner",
+		"deselectAll": "Tout désélectionner"
+	},
+	"detail": {
+		"docs": "Docs",
+		"description": "Description",
+		"parameters": "Paramètres",
+		"responses": "Réponses",
+		"requestBody": "Corps de la requête",
+		"responseSchema": "Schéma de réponse",
+		"noSchema": "Aucun schéma défini pour cet endpoint"
+	},
+	"request": {
+		"send": "Envoyer",
+		"sending": "Envoi en cours...",
+		"params": "Paramètres",
+		"headers": "En-têtes",
+		"body": "Corps",
+		"auth": "Auth",
+		"pathParams": "Paramètres de chemin",
+		"queryParams": "Paramètres de requête",
+		"noParams": "Aucun paramètre pour cet endpoint",
+		"noHeaders": "Aucun en-tête défini",
+		"fillExample": "Remplir avec l'exemple",
+		"networkError": "Erreur réseau",
+		"addParam": "Ajouter un paramètre",
+		"addHeader": "Ajouter un en-tête",
+		"paramKey": "Paramètre",
+		"paramValue": "Valeur",
+		"headerKey": "En-tête",
+		"headerValue": "Valeur",
+		"specHeaders": "En-têtes du spec"
+	},
+	"auth": {
+		"type": "Type d'authentification",
+		"types": {
+			"inherited": "Hérité de l'env.",
+			"none": "Sans auth",
+			"bearer": "Bearer Token",
+			"basic": "Basic Auth",
+			"apikey": "Clé API",
+			"oauth2": "OAuth 2.0"
+		},
+		"inheritedFrom": "Bearer Token de \"{{env}}\" utilisé",
+		"noEnvToken": "Aucun token configuré sur \"{{env}}\".",
+		"configureEnv": "Configurer l'environnement →",
+		"noAuthDesc": "Aucune autorisation ne sera envoyée avec cette requête.",
+		"token": "Token",
+		"tokenPlaceholder": "Collez votre JWT ou token d'accès",
+		"bearerHint": "Envoyé sous : Authorization: Bearer <token>",
+		"username": "Nom d'utilisateur",
+		"usernamePlaceholder": "utilisateur",
+		"password": "Mot de passe",
+		"basicHint": "Identifiants encodés en Base64 dans le header Authorization.",
+		"keyName": "Nom de la clé",
+		"keyValue": "Valeur de la clé",
+		"keyValuePlaceholder": "votre-clé-api",
+		"addTo": "Ajouter dans",
+		"locationHeader": "Header",
+		"locationQuery": "Query Params",
+		"oauth2": {
+			"grantType": "Type de flux",
+			"grants": {
+				"client_credentials": "Client Credentials",
+				"authorization_code": "Authorization Code (With PKCE)",
+				"password": "Password"
+			},
+			"configureToken": "Configurer un nouveau token",
+			"authUrl": "URL d'autorisation",
+			"tokenUrl": "URL du token d'accès",
+			"clientId": "Client ID",
+			"clientSecret": "Client Secret",
+			"scope": "Scope",
+			"getToken": "Obtenir un nouveau token d'accès",
+			"openBrowser": "Ouvrir le navigateur pour s'authentifier",
+			"currentToken": "Token actuel",
+			"tokenPlaceholder": "Collez ou auto-remplissez le token d'accès",
+			"headerPrefix": "Préfixe du header",
+			"missingTokenUrl": "L'URL du token d'accès est requise.",
+			"tokenError": "Impossible de récupérer le token d'accès."
+		}
+	},
+	"response": {
+		"body": "Corps",
+		"headers": "En-têtes",
+		"saveToken": "Sauvegarder comme Bearer Token",
+		"saveTokenTitle": "Sauvegarde le token de cette réponse dans l'environnement actif",
+		"tokenSaved": "Token sauvegardé !",
+		"format": {
+			"pretty": "Formaté",
+			"raw": "Brut",
+			"preview": "Aperçu",
+			"languageTitle": "Sélectionner le langage de rendu",
+			"lang": {
+				"auto": "Auto",
+				"json": "JSON",
+				"xml": "XML",
+				"html": "HTML",
+				"text": "Texte"
+			},
+			"mismatch": "Le contenu ne peut pas être interprété comme {{format}}, affichage en texte brut."
+		}
+	},
+	"empty": {
+		"selectEndpoint": "Sélectionner un endpoint",
+		"selectEndpointHint": "Choisissez un endpoint dans la liste pour voir ses détails et le tester",
+		"noSpec": "Aucun spec chargé",
+		"noSpecHint": "Entrez une URL de spec OpenAPI valide ci-dessus"
+	},
+	"scan": {
+		"button": "Scanner le projet",
+		"scanning": "Scan en cours...",
+		"tooltip": "Scanner le code source pour détecter les endpoints API (C#, Python, Node.js, Java, Go, Rust, Ruby)",
+		"error": "Impossible de scanner les routes du projet",
+		"resync": "Resynchroniser",
+		"sourceBadge": "Source",
+		"scannedAt": "scanné à {{time}}"
+	},
+	"emulator": {
+		"run": "Lancer le projet",
+		"stop": "Arrêter le serveur",
+		"detecting": "Détection...",
+		"starting": "Démarrage...",
+		"running": "En cours",
+		"noProject": "Aucun projet actif sélectionné"
+	}
 }

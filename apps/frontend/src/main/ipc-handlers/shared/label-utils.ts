@@ -11,7 +11,7 @@
  * @returns The escaped string safe for use in a RegExp
  */
 function escapeRegExp(str: string): string {
-  return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+	return str.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
 
 /**
@@ -26,9 +26,9 @@ function escapeRegExp(str: string): string {
  * @returns true if the label contains the term as a whole word
  */
 export function labelMatchesWholeWord(label: string, term: string): boolean {
-  // Escape regex metacharacters in the term to match literally
-  const escapedTerm = escapeRegExp(term);
-  // Use word boundary regex to match whole words only
-  const regex = new RegExp(`\\b${escapedTerm}\\b`);
-  return regex.test(label);
+	// Escape regex metacharacters in the term to match literally
+	const escapedTerm = escapeRegExp(term);
+	// Use word boundary regex to match whole words only
+	const regex = new RegExp(`\\b${escapedTerm}\\b`);
+	return regex.test(label);
 }

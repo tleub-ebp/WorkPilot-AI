@@ -1,18 +1,18 @@
 {
-  "boundary": {
-    "title": "Something went wrong",
-    "description": "An error occurred while rendering this content.",
-    "tryAgain": "Try Again"
-  },
-  "task": {
-    "parseImplementationPlan": "Failed to parse implementation_plan.json for {{specId}}: {{error}}",
-    "jsonError": {
-      "titleSuffix": "(JSON Error)",
-      "description": "⚠️ JSON Parse Error: {{error}}\n\nThe implementation_plan.json file is malformed. Run the backend auto-fix or manually repair the file."
-    }
-  },
-  "noTasks": "No completed tasks",
-  "noTasksDescription": "Complete some tasks first to generate a changelog from them.",
-  "noCommitsGitHistory": "No commits found in the specified time range. Try adjusting your filters.",
-  "noCommitsBranchDiff": "No commits found between the selected branches. The branches may be in sync."
+	"boundary": {
+		"title": "Something went wrong",
+		"description": "An error occurred while rendering this content.",
+		"tryAgain": "Try Again"
+	},
+	"task": {
+		"parseImplementationPlan": "Failed to parse implementation_plan.json for {{specId}}: {{error}}",
+		"jsonError": {
+			"titleSuffix": "(JSON Error)",
+			"description": "⚠️ JSON Parse Error: {{error}}\n\nThe implementation_plan.json file is malformed. Run the backend auto-fix or manually repair the file."
+		}
+	},
+	"noTasks": "No completed tasks",
+	"noTasksDescription": "Complete some tasks first to generate a changelog from them.",
+	"noCommitsGitHistory": "No commits found in the specified time range. Try adjusting your filters.",
+	"noCommitsBranchDiff": "No commits found between the selected branches. The branches may be in sync."
 }

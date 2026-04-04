@@ -1,54 +1,54 @@
-import { Loader2, AlertCircle } from 'lucide-react';
-import { ScrollArea } from '../../ui/scroll-area';
-import { IssueListItem } from './IssueListItem';
-import { EmptyState } from './EmptyStates';
-import type { IssueListProps } from '../types';
+import { AlertCircle, Loader2 } from "lucide-react";
+import { ScrollArea } from "../../ui/scroll-area";
+import type { IssueListProps } from "../types";
+import { EmptyState } from "./EmptyStates";
+import { IssueListItem } from "./IssueListItem";
 
 export function IssueList(props: Readonly<IssueListProps>) {
-  const {
-    issues,
-    selectedIssueIid,
-    isLoading,
-    error,
-    onSelectIssue,
-    onInvestigate
-  } = props;
-  if (error) {
-    return (
-      <div className="p-4 bg-destructive/10 border-b border-destructive/30">
-        <div className="flex items-center gap-2 text-sm text-destructive">
-          <AlertCircle className="h-4 w-4" />
-          {error}
-        </div>
-      </div>
-    );
-  }
+	const {
+		issues,
+		selectedIssueIid,
+		isLoading,
+		error,
+		onSelectIssue,
+		onInvestigate,
+	} = props;
+	if (error) {
+		return (
+			<div className="p-4 bg-destructive/10 border-b border-destructive/30">
+				<div className="flex items-center gap-2 text-sm text-destructive">
+					<AlertCircle className="h-4 w-4" />
+					{error}
+				</div>
+			</div>
+		);
+	}
 
-  if (isLoading) {
-    return (
-      <div className="flex-1 flex items-center justify-center">
-        <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-      </div>
-    );
-  }
+	if (isLoading) {
+		return (
+			<div className="flex-1 flex items-center justify-center">
+				<Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+			</div>
+		);
+	}
 
-  if (issues.length === 0) {
-    return <EmptyState message="No issues found" />;
-  }
+	if (issues.length === 0) {
+		return <EmptyState message="No issues found" />;
+	}
 
-  return (
-    <ScrollArea className="flex-1">
-      <div className="p-2 space-y-1">
-        {issues.map((issue) => (
-          <IssueListItem
-            key={issue.id}
-            issue={issue}
-            isSelected={selectedIssueIid === issue.iid}
-            onClick={() => onSelectIssue(issue.iid)}
-            onInvestigate={() => onInvestigate(issue)}
-          />
-        ))}
-      </div>
-    </ScrollArea>
-  );
+	return (
+		<ScrollArea className="flex-1">
+			<div className="p-2 space-y-1">
+				{issues.map((issue) => (
+					<IssueListItem
+						key={issue.id}
+						issue={issue}
+						isSelected={selectedIssueIid === issue.iid}
+						onClick={() => onSelectIssue(issue.iid)}
+						onInvestigate={() => onInvestigate(issue)}
+					/>
+				))}
+			</div>
+		</ScrollArea>
+	);
 }

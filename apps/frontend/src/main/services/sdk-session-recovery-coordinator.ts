@@ -30,70 +30,76 @@
  * - Notification batching to prevent UI spam
  */
 
-import { EventEmitter } from 'node:events';
-import type { BrowserWindow } from 'electron';
-import { IPC_CHANNELS } from '../../shared/constants';
-import { getClaudeProfileManager } from '../claude-profile-manager';
-import { getUsageMonitor } from '../claude-profile/usage-monitor';
-import { safeSendToRenderer } from '../ipc-handlers/utils';
-import type { ProfileAssignmentReason } from '../../shared/types';
+import { EventEmitter } from "node:events";
+import type { BrowserWindow } from "electron";
+import { IPC_CHANNELS } from "../../shared/constants";
+import type { ProfileAssignmentReason } from "../../shared/types";
+import { getUsageMonitor } from "../claude-profile/usage-monitor";
+import { getClaudeProfileManager } from "../claude-profile-manager";
+import { safeSendToRenderer } from "../ipc-handlers/utils";
 
 /**
  * Types of SDK operations that can be registered
  */
-export type SDKOperationType = 'task' | 'roadmap' | 'ideation' | 'changelog' | 'title-generation' | 'other';
+export type SDKOperationType =
+	| "task"
+	| "roadmap"
+	| "ideation"
+	| "changelog"
+	| "title-generation"
+	| "other";
 
 /**
  * Registered SDK operation
  */
 export interface RegisteredOperation {
-  /** Unique operation ID */
-  id: string;
-  /** Type of operation */
-  type: SDKOperationType;
-  /** Associated profile ID */
-  profileId: string;
-  /** Profile display name */
-  profileName: string;
-  /** Captured session ID (if available) */
-  sessionId?: string;
-  /** Operation start time */
-  startedAt: Date;
-  /** Last activity timestamp */
-  lastActivityAt: Date;
-  /** Custom metadata */
-  metadata?: Record<string, unknown>;
+	/** Unique operation ID */
+	id: string;
+	/** Type of operation */
+	type: SDKOperationType;
+	/** Associated profile ID */
+	profileId: string;
+	/** Profile display name */
+	profileName: string;
+	/** Captured session ID (if available) */
+	sessionId?: string;
+	/** Operation start time */
+	startedAt: Date;
+	/** Last activity timestamp */
+	lastActivityAt: Date;
+	/** Custom metadata */
+	metadata?: Record<string, unknown>;
 }
 
 /**
  * Profile with cooldown tracking
  */
 interface ProfileCooldown {
-  profileId: string;
-  rateLimitedAt: Date;
-  cooldownUntil: Date;
-  rateLimitCount: number;
+	profileId: string;
+	rateLimitedAt: Date;
+	cooldownUntil: Date;
+	rateLimitCount: number;
 }
 
 /**
  * Configuration for the recovery coordinator
  */
 export interface RecoveryCoordinatorConfig {
-  /** Cooldown period after rate limit (ms). Default: 60000 (1 minute) */
-  cooldownPeriodMs: number;
-  /** Maximum consecutive rate limits before profile is marked unavailable. Default: 3 */
-  maxConsecutiveRateLimits: number;
-  /** Notification batch window (ms). Default: 2000 */
-  notificationBatchWindowMs: number;
-  /** Maximum notifications per batch. Default: 5 */
-  maxNotificationsPerBatch: number;
+	/** Cooldown period after rate limit (ms). Default: 60000 (1 minute) */
+	cooldownPeriodMs: number;
+	/** Maximum consecutive rate limits before profile is marked unavailable. Default: 3 */
+	maxConsecutiveRateLimits: number;
+	/** Notification batch window (ms). Default: 2000 */
+	notificationBatchWindowMs: number;
+	/** Maximum notifications per batch. Default: 5 */
+	maxNotificationsPerBatch: number;
 }
 
 const DEFAULT_CONFIG: RecoveryCoordinatorConfig = {
-  cooldownPeriodMs: 60000,
-  maxConsecutiveRateLimits: 3,
-  notificationBatchWindowMs: 2000,
-  maxNotificationsPerBatch: 5,
+	cooldownPeriodMs: 60000,
+	maxConsecutiveRateLimits: 3,
+	notificationBatchWindowMs: 2000,
+	maxNotificationsPerBatch: 5,
 };
 
 /**
@@ -105,12 +111,12 @@ const RATE_LIMIT_PENALTY_POINTS = 5; // Penalty per previous rate limit
 /**
  * Notification types for batching
  */
-type NotificationType = 'profile-swap' | 'rate-limit' | 'blocked';
+type NotificationType = "profile-swap" | "rate-limit" | "blocked";
 
 interface PendingNotification {
-  type: NotificationType;
-  data: unknown;
-  timestamp: Date;
+	type: NotificationType;
+	data: unknown;
+	timestamp: Date;
 }
 
 /**
@@ -127,395 +133,430 @@ interface PendingNotification {
  * Provides unified rate limit handling and profile selection.
  */
 export class SDKSessionRecoveryCoordinator extends EventEmitter {
-  private static instance: SDKSessionRecoveryCoordinator | null = null;
+	private static instance: SDKSessionRecoveryCoordinator | null = null;
 
-  private readonly operations: Map<string, RegisteredOperation> = new Map();
-  private readonly profileCooldowns: Map<string, ProfileCooldown> = new Map();
-  private readonly config: RecoveryCoordinatorConfig;
-  private getMainWindow: (() => BrowserWindow | null) | null = null;
+	private readonly operations: Map<string, RegisteredOperation> = new Map();
+	private readonly profileCooldowns: Map<string, ProfileCooldown> = new Map();
+	private readonly config: RecoveryCoordinatorConfig;
+	private getMainWindow: (() => BrowserWindow | null) | null = null;
 
-  // Notification batching
-  private pendingNotifications: PendingNotification[] = [];
-  private notificationBatchTimeout: NodeJS.Timeout | null = null;
+	// Notification batching
+	private pendingNotifications: PendingNotification[] = [];
+	private notificationBatchTimeout: NodeJS.Timeout | null = null;
 
-  private constructor(config: Partial<RecoveryCoordinatorConfig> = {}) {
-    super();
-    this.config = { ...DEFAULT_CONFIG, ...config };
-  }
+	private constructor(config: Partial<RecoveryCoordinatorConfig> = {}) {
+		super();
+		this.config = { ...DEFAULT_CONFIG, ...config };
+	}
 
-  /**
-   * Get the singleton instance
-   */
-  static getInstance(config?: Partial<RecoveryCoordinatorConfig>): SDKSessionRecoveryCoordinator {
-    SDKSessionRecoveryCoordinator.instance ??= new SDKSessionRecoveryCoordinator(config);
-    return SDKSessionRecoveryCoordinator.instance;
-  }
+	/**
+	 * Get the singleton instance
+	 */
+	static getInstance(
+		config?: Partial<RecoveryCoordinatorConfig>,
+	): SDKSessionRecoveryCoordinator {
+		SDKSessionRecoveryCoordinator.instance ??=
+			new SDKSessionRecoveryCoordinator(config);
+		return SDKSessionRecoveryCoordinator.instance;
+	}
 
-  /**
-   * Reset the singleton (for testing)
-   */
-  static resetInstance(): void {
-    if (SDKSessionRecoveryCoordinator.instance) {
-      SDKSessionRecoveryCoordinator.instance.cleanup();
-      SDKSessionRecoveryCoordinator.instance = null;
-    }
-  }
+	/**
+	 * Reset the singleton (for testing)
+	 */
+	static resetInstance(): void {
+		if (SDKSessionRecoveryCoordinator.instance) {
+			SDKSessionRecoveryCoordinator.instance.cleanup();
+			SDKSessionRecoveryCoordinator.instance = null;
+		}
+	}
 
-  /**
-   * Set the main window getter for sending notifications
-   */
-  setMainWindowGetter(getter: () => BrowserWindow | null): void {
-    this.getMainWindow = getter;
-  }
+	/**
+	 * Set the main window getter for sending notifications
+	 */
+	setMainWindowGetter(getter: () => BrowserWindow | null): void {
+		this.getMainWindow = getter;
+	}
 
-  /**
-   * Register a new SDK operation
-   */
-  registerOperation(
-    id: string,
-    type: SDKOperationType,
-    profileId: string,
-    profileName: string,
-    metadata?: Record<string, unknown>
-  ): RegisteredOperation {
-    const operation: RegisteredOperation = {
-      id,
-      type,
-      profileId,
-      profileName,
-      startedAt: new Date(),
-      lastActivityAt: new Date(),
-      metadata,
-    };
+	/**
+	 * Register a new SDK operation
+	 */
+	registerOperation(
+		id: string,
+		type: SDKOperationType,
+		profileId: string,
+		profileName: string,
+		metadata?: Record<string, unknown>,
+	): RegisteredOperation {
+		const operation: RegisteredOperation = {
+			id,
+			type,
+			profileId,
+			profileName,
+			startedAt: new Date(),
+			lastActivityAt: new Date(),
+			metadata,
+		};
 
-    this.operations.set(id, operation);
+		this.operations.set(id, operation);
 
-    return operation;
-  }
+		return operation;
+	}
 
-  /**
-   * Update operation with session ID
-   */
-  updateOperationSession(id: string, sessionId: string): void {
-    const operation = this.operations.get(id);
-    if (operation) {
-      operation.sessionId = sessionId;
-      operation.lastActivityAt = new Date();
-    }
-  }
+	/**
+	 * Update operation with session ID
+	 */
+	updateOperationSession(id: string, sessionId: string): void {
+		const operation = this.operations.get(id);
+		if (operation) {
+			operation.sessionId = sessionId;
+			operation.lastActivityAt = new Date();
+		}
+	}
 
-  /**
-   * Update operation activity timestamp
-   */
-  updateOperationActivity(id: string): void {
-    const operation = this.operations.get(id);
-    if (operation) {
-      operation.lastActivityAt = new Date();
-    }
-  }
+	/**
+	 * Update operation activity timestamp
+	 */
+	updateOperationActivity(id: string): void {
+		const operation = this.operations.get(id);
+		if (operation) {
+			operation.lastActivityAt = new Date();
+		}
+	}
 
-  /**
-   * Unregister an operation (completed or failed)
-   */
-  unregisterOperation(id: string): void {
-    const operation = this.operations.get(id);
-    if (operation) {
-      this.operations.delete(id);
-    }
-  }
+	/**
+	 * Unregister an operation (completed or failed)
+	 */
+	unregisterOperation(id: string): void {
+		const operation = this.operations.get(id);
+		if (operation) {
+			this.operations.delete(id);
+		}
+	}
 
-  /**
-   * Get an operation by ID
-   */
-  getOperation(id: string): RegisteredOperation | undefined {
-    return this.operations.get(id);
-  }
+	/**
+	 * Get an operation by ID
+	 */
+	getOperation(id: string): RegisteredOperation | undefined {
+		return this.operations.get(id);
+	}
 
-  /**
-   * Get all operations of a specific type
-   */
-  getOperationsByType(type: SDKOperationType): RegisteredOperation[] {
-    return Array.from(this.operations.values()).filter(op => op.type === type);
-  }
+	/**
+	 * Get all operations of a specific type
+	 */
+	getOperationsByType(type: SDKOperationType): RegisteredOperation[] {
+		return Array.from(this.operations.values()).filter(
+			(op) => op.type === type,
+		);
+	}
 
-  /**
-   * Get all operations for a profile
-   */
-  getOperationsByProfile(profileId: string): RegisteredOperation[] {
-    return Array.from(this.operations.values()).filter(op => op.profileId === profileId);
-  }
+	/**
+	 * Get all operations for a profile
+	 */
+	getOperationsByProfile(profileId: string): RegisteredOperation[] {
+		return Array.from(this.operations.values()).filter(
+			(op) => op.profileId === profileId,
+		);
+	}
 
-  /**
-   * Handle rate limit for an operation
-   * Returns the new profile to use, or null if no profile is available
-   */
-  async handleRateLimit(
-    operationId: string,
-    rateLimitedProfileId: string
-  ): Promise<{ profileId: string; profileName: string; reason: ProfileAssignmentReason } | null> {
-    const operation = this.operations.get(operationId);
-    if (!operation) {
-      console.warn(`[RecoveryCoordinator] Unknown operation: ${operationId}`);
-      return null;
-    }
+	/**
+	 * Handle rate limit for an operation
+	 * Returns the new profile to use, or null if no profile is available
+	 */
+	async handleRateLimit(
+		operationId: string,
+		rateLimitedProfileId: string,
+	): Promise<{
+		profileId: string;
+		profileName: string;
+		reason: ProfileAssignmentReason;
+	} | null> {
+		const operation = this.operations.get(operationId);
+		if (!operation) {
+			console.warn(`[RecoveryCoordinator] Unknown operation: ${operationId}`);
+			return null;
+		}
 
-    // Record cooldown for rate-limited profile
-    this.recordProfileCooldown(rateLimitedProfileId);
+		// Record cooldown for rate-limited profile
+		this.recordProfileCooldown(rateLimitedProfileId);
 
-    // Select best available profile
-    const newProfile = await this.selectBestProfile(rateLimitedProfileId);
+		// Select best available profile
+		const newProfile = await this.selectBestProfile(rateLimitedProfileId);
 
-    if (!newProfile) {
-      // No profiles available - queue is blocked
-      this.queueNotification('blocked', {
-        reason: 'All profiles are at capacity or in cooldown',
-        timestamp: new Date().toISOString(),
-      });
+		if (!newProfile) {
+			// No profiles available - queue is blocked
+			this.queueNotification("blocked", {
+				reason: "All profiles are at capacity or in cooldown",
+				timestamp: new Date().toISOString(),
+			});
 
-      // Emit event for listeners
-      this.emit('queue-blocked', { reason: 'no_profiles_available', operationId });
+			// Emit event for listeners
+			this.emit("queue-blocked", {
+				reason: "no_profiles_available",
+				operationId,
+			});
 
-      return null;
-    }
+			return null;
+		}
 
-    // Update operation with new profile
-    operation.profileId = newProfile.profileId;
-    operation.profileName = newProfile.profileName;
-    operation.lastActivityAt = new Date();
+		// Update operation with new profile
+		operation.profileId = newProfile.profileId;
+		operation.profileName = newProfile.profileName;
+		operation.lastActivityAt = new Date();
 
-    // Queue swap notification
-    this.queueNotification('profile-swap', {
-      operationId,
-      operationType: operation.type,
-      fromProfileId: rateLimitedProfileId,
-      fromProfileName: operation.profileName,
-      toProfileId: newProfile.profileId,
-      toProfileName: newProfile.profileName,
-      reason: 'rate_limit',
-      sessionId: operation.sessionId,
-    });
+		// Queue swap notification
+		this.queueNotification("profile-swap", {
+			operationId,
+			operationType: operation.type,
+			fromProfileId: rateLimitedProfileId,
+			fromProfileName: operation.profileName,
+			toProfileId: newProfile.profileId,
+			toProfileName: newProfile.profileName,
+			reason: "rate_limit",
+			sessionId: operation.sessionId,
+		});
 
-    return {
-      profileId: newProfile.profileId,
-      profileName: newProfile.profileName,
-      reason: 'reactive',
-    };
-  }
+		return {
+			profileId: newProfile.profileId,
+			profileName: newProfile.profileName,
+			reason: "reactive",
+		};
+	}
 
-  /**
-   * Check if a profile is eligible for selection (not excluded, authenticated, not rate-limited, not in cooldown)
-   */
-  private isProfileEligible(
-    profile: { profileId: string; profileName: string; isAuthenticated: boolean; isRateLimited: boolean },
-    excludeProfileId: string | undefined,
-    now: Date
-  ): boolean {
-    if (excludeProfileId && profile.profileId === excludeProfileId) {
-      return false;
-    }
+	/**
+	 * Check if a profile is eligible for selection (not excluded, authenticated, not rate-limited, not in cooldown)
+	 */
+	private isProfileEligible(
+		profile: {
+			profileId: string;
+			profileName: string;
+			isAuthenticated: boolean;
+			isRateLimited: boolean;
+		},
+		excludeProfileId: string | undefined,
+		now: Date,
+	): boolean {
+		if (excludeProfileId && profile.profileId === excludeProfileId) {
+			return false;
+		}
 
-    if (!profile.isAuthenticated || profile.isRateLimited) {
-      return false;
-    }
+		if (!profile.isAuthenticated || profile.isRateLimited) {
+			return false;
+		}
 
-    const cooldown = this.profileCooldowns.get(profile.profileId);
-    if (cooldown && cooldown.cooldownUntil > now) {
-      return false;
-    }
+		const cooldown = this.profileCooldowns.get(profile.profileId);
+		if (cooldown && cooldown.cooldownUntil > now) {
+			return false;
+		}
 
-    if (cooldown && cooldown.rateLimitCount >= this.config.maxConsecutiveRateLimits) {
-      return false;
-    }
+		if (
+			cooldown &&
+			cooldown.rateLimitCount >= this.config.maxConsecutiveRateLimits
+		) {
+			return false;
+		}
 
-    return true;
-  }
+		return true;
+	}
 
-  /**
-   * Select the best available profile for a new operation
-   * Considers cooldowns, usage, and current load
-   */
-  async selectBestProfile(
-    excludeProfileId?: string
-  ): Promise<{ profileId: string; profileName: string } | null> {
-    const profileManager = getClaudeProfileManager();
-    const usageMonitor = getUsageMonitor();
+	/**
+	 * Select the best available profile for a new operation
+	 * Considers cooldowns, usage, and current load
+	 */
+	async selectBestProfile(
+		excludeProfileId?: string,
+	): Promise<{ profileId: string; profileName: string } | null> {
+		const profileManager = getClaudeProfileManager();
+		const usageMonitor = getUsageMonitor();
 
-    // Get all profiles usage
-    const allProfilesUsage = await usageMonitor.getAllProfilesUsage();
-    if (!allProfilesUsage) {
-      // Fallback to active profile (if not excluded)
-      const activeProfile = profileManager.getActiveProfile();
-      if (excludeProfileId && activeProfile.id === excludeProfileId) {
-        return null;
-      }
-      return { profileId: activeProfile.id, profileName: activeProfile.name };
-    }
+		// Get all profiles usage
+		const allProfilesUsage = await usageMonitor.getAllProfilesUsage();
+		if (!allProfilesUsage) {
+			// Fallback to active profile (if not excluded)
+			const activeProfile = profileManager.getActiveProfile();
+			if (excludeProfileId && activeProfile.id === excludeProfileId) {
+				return null;
+			}
+			return { profileId: activeProfile.id, profileName: activeProfile.name };
+		}
 
-    // Filter and score profiles
-    const now = new Date();
-    const candidates = allProfilesUsage.allProfiles
-      .filter((profile) => this.isProfileEligible(profile, excludeProfileId, now))
-      .map((profile) => {
-        const cooldown = this.profileCooldowns.get(profile.profileId);
-        const operationsOnProfile = this.getOperationsByProfile(profile.profileId).length;
+		// Filter and score profiles
+		const now = new Date();
+		const candidates = allProfilesUsage.allProfiles
+			.filter((profile) =>
+				this.isProfileEligible(profile, excludeProfileId, now),
+			)
+			.map((profile) => {
+				const cooldown = this.profileCooldowns.get(profile.profileId);
+				const operationsOnProfile = this.getOperationsByProfile(
+					profile.profileId,
+				).length;
 
-        // Calculate score:
-        // - Base: availability score (0-100)
-        // - Penalty: -15 per active operation
-        // - Penalty: -5 per previous rate limit
-        const score =
-          profile.availabilityScore -
-          operationsOnProfile * OPERATION_PENALTY_POINTS -
-          (cooldown?.rateLimitCount ?? 0) * RATE_LIMIT_PENALTY_POINTS;
+				// Calculate score:
+				// - Base: availability score (0-100)
+				// - Penalty: -15 per active operation
+				// - Penalty: -5 per previous rate limit
+				const score =
+					profile.availabilityScore -
+					operationsOnProfile * OPERATION_PENALTY_POINTS -
+					(cooldown?.rateLimitCount ?? 0) * RATE_LIMIT_PENALTY_POINTS;
 
-        return { profileId: profile.profileId, profileName: profile.profileName, score };
-      })
-      .sort((a, b) => b.score - a.score);
+				return {
+					profileId: profile.profileId,
+					profileName: profile.profileName,
+					score,
+				};
+			})
+			.sort((a, b) => b.score - a.score);
 
-    if (candidates.length === 0) {
-      return null;
-    }
+		if (candidates.length === 0) {
+			return null;
+		}
 
-    const best = candidates[0];
+		const best = candidates[0];
 
-    return { profileId: best.profileId, profileName: best.profileName };
-  }
+		return { profileId: best.profileId, profileName: best.profileName };
+	}
 
-  /**
-   * Record a cooldown for a profile that hit rate limit
-   */
-  private recordProfileCooldown(profileId: string): void {
-    const now = new Date();
-    const existing = this.profileCooldowns.get(profileId);
+	/**
+	 * Record a cooldown for a profile that hit rate limit
+	 */
+	private recordProfileCooldown(profileId: string): void {
+		const now = new Date();
+		const existing = this.profileCooldowns.get(profileId);
 
-    const cooldown: ProfileCooldown = {
-      profileId,
-      rateLimitedAt: now,
-      cooldownUntil: new Date(now.getTime() + this.config.cooldownPeriodMs),
-      rateLimitCount: (existing?.rateLimitCount ?? 0) + 1,
-    };
+		const cooldown: ProfileCooldown = {
+			profileId,
+			rateLimitedAt: now,
+			cooldownUntil: new Date(now.getTime() + this.config.cooldownPeriodMs),
+			rateLimitCount: (existing?.rateLimitCount ?? 0) + 1,
+		};
 
-    this.profileCooldowns.set(profileId, cooldown);
-  }
+		this.profileCooldowns.set(profileId, cooldown);
+	}
 
-  /**
-   * Clear cooldown for a profile (e.g., when usage resets)
-   */
-  clearProfileCooldown(profileId: string): void {
-    this.profileCooldowns.delete(profileId);
-  }
+	/**
+	 * Clear cooldown for a profile (e.g., when usage resets)
+	 */
+	clearProfileCooldown(profileId: string): void {
+		this.profileCooldowns.delete(profileId);
+	}
 
-  /**
-   * Queue a notification for batched delivery
-   */
-  private queueNotification(type: NotificationType, data: unknown): void {
-    this.pendingNotifications.push({
-      type,
-      data,
-      timestamp: new Date(),
-    });
+	/**
+	 * Queue a notification for batched delivery
+	 */
+	private queueNotification(type: NotificationType, data: unknown): void {
+		this.pendingNotifications.push({
+			type,
+			data,
+			timestamp: new Date(),
+		});
 
-    // Start batch timer if not already running
-    this.notificationBatchTimeout ??= setTimeout(
-      () => this.flushNotifications(),
-      this.config.notificationBatchWindowMs
-    );
-  }
+		// Start batch timer if not already running
+		this.notificationBatchTimeout ??= setTimeout(
+			() => this.flushNotifications(),
+			this.config.notificationBatchWindowMs,
+		);
+	}
 
-  /**
-   * Flush pending notifications to renderer
-   */
-  private flushNotifications(): void {
-    this.notificationBatchTimeout = null;
+	/**
+	 * Flush pending notifications to renderer
+	 */
+	private flushNotifications(): void {
+		this.notificationBatchTimeout = null;
 
-    if (this.pendingNotifications.length === 0 || !this.getMainWindow) {
-      return;
-    }
+		if (this.pendingNotifications.length === 0 || !this.getMainWindow) {
+			return;
+		}
 
-    const mainWindow = this.getMainWindow();
-    if (!mainWindow) {
-      return;
-    }
+		const mainWindow = this.getMainWindow();
+		if (!mainWindow) {
+			return;
+		}
 
-    // Group by type
-    const swaps = this.pendingNotifications.filter(n => n.type === 'profile-swap');
-    const blocked = this.pendingNotifications.filter(n => n.type === 'blocked');
+		// Group by type
+		const swaps = this.pendingNotifications.filter(
+			(n) => n.type === "profile-swap",
+		);
+		const blocked = this.pendingNotifications.filter(
+			(n) => n.type === "blocked",
+		);
 
-    // Send profile swap notifications
-    if (swaps.length > 0) {
-      const toSend = swaps.slice(0, this.config.maxNotificationsPerBatch);
-      for (const notification of toSend) {
-        safeSendToRenderer(
-          this.getMainWindow,
-          IPC_CHANNELS.QUEUE_PROFILE_SWAPPED,
-          notification.data
-        );
-      }
-      if (swaps.length > this.config.maxNotificationsPerBatch) {
-        // noop
-      }
-    }
+		// Send profile swap notifications
+		if (swaps.length > 0) {
+			const toSend = swaps.slice(0, this.config.maxNotificationsPerBatch);
+			for (const notification of toSend) {
+				safeSendToRenderer(
+					this.getMainWindow,
+					IPC_CHANNELS.QUEUE_PROFILE_SWAPPED,
+					notification.data,
+				);
+			}
+			if (swaps.length > this.config.maxNotificationsPerBatch) {
+				// noop
+			}
+		}
 
-    // Send blocked notification (only most recent)
-    if (blocked.length > 0) {
-      safeSendToRenderer(
-        this.getMainWindow,
-        IPC_CHANNELS.QUEUE_BLOCKED_NO_PROFILES,
-        blocked.at(-1)?.data
-      );
-    }
+		// Send blocked notification (only most recent)
+		if (blocked.length > 0) {
+			safeSendToRenderer(
+				this.getMainWindow,
+				IPC_CHANNELS.QUEUE_BLOCKED_NO_PROFILES,
+				blocked.at(-1)?.data,
+			);
+		}
 
-    // Clear pending notifications
-    this.pendingNotifications = [];
-  }
+		// Clear pending notifications
+		this.pendingNotifications = [];
+	}
 
-  /**
-   * Get coordinator statistics
-   */
-  getStats(): {
-    activeOperations: number;
-    operationsByType: Record<SDKOperationType, number>;
-    profilesInCooldown: number;
-    pendingNotifications: number;
-  } {
-    const operationsByType: Record<SDKOperationType, number> = {
-      task: 0,
-      roadmap: 0,
-      ideation: 0,
-      changelog: 0,
-      'title-generation': 0,
-      other: 0,
-    };
+	/**
+	 * Get coordinator statistics
+	 */
+	getStats(): {
+		activeOperations: number;
+		operationsByType: Record<SDKOperationType, number>;
+		profilesInCooldown: number;
+		pendingNotifications: number;
+	} {
+		const operationsByType: Record<SDKOperationType, number> = {
+			task: 0,
+			roadmap: 0,
+			ideation: 0,
+			changelog: 0,
+			"title-generation": 0,
+			other: 0,
+		};
 
-    for (const op of this.operations.values()) {
-      operationsByType[op.type]++;
-    }
+		for (const op of this.operations.values()) {
+			operationsByType[op.type]++;
+		}
 
-    const now = new Date();
-    const profilesInCooldown = Array.from(this.profileCooldowns.values())
-      .filter(c => c.cooldownUntil > now).length;
+		const now = new Date();
+		const profilesInCooldown = Array.from(
+			this.profileCooldowns.values(),
+		).filter((c) => c.cooldownUntil > now).length;
 
-    return {
-      activeOperations: this.operations.size,
-      operationsByType,
-      profilesInCooldown,
-      pendingNotifications: this.pendingNotifications.length,
-    };
-  }
+		return {
+			activeOperations: this.operations.size,
+			operationsByType,
+			profilesInCooldown,
+			pendingNotifications: this.pendingNotifications.length,
+		};
+	}
 
-  /**
-   * Cleanup resources
-   */
-  cleanup(): void {
-    if (this.notificationBatchTimeout) {
-      clearTimeout(this.notificationBatchTimeout);
-      this.notificationBatchTimeout = null;
-    }
-    this.operations.clear();
-    this.profileCooldowns.clear();
-    this.pendingNotifications = [];
-    this.removeAllListeners();
-  }
+	/**
+	 * Cleanup resources
+	 */
+	cleanup(): void {
+		if (this.notificationBatchTimeout) {
+			clearTimeout(this.notificationBatchTimeout);
+			this.notificationBatchTimeout = null;
+		}
+		this.operations.clear();
+		this.profileCooldowns.clear();
+		this.pendingNotifications = [];
+		this.removeAllListeners();
+	}
 }
 
 /**
@@ -523,5 +564,5 @@ export class SDKSessionRecoveryCoordinator extends EventEmitter {
  * @deprecated Use getOperationRegistry() from '../claude-profile/operation-registry' instead.
  */
 export function getRecoveryCoordinator(): SDKSessionRecoveryCoordinator {
-  return SDKSessionRecoveryCoordinator.getInstance();
+	return SDKSessionRecoveryCoordinator.getInstance();
 }

@@ -1,19 +1,19 @@
 {
-  "title": "Project Initialization",
-  "step1": {
-    "description": "Describe what you want to build."
-  },
-  "step2": {
-    "description": "Set up the basic project settings.",
-    "placeholder": "Project name..."
-  },
-  "step3": {
-    "description": "Review and confirm your project setup."
-  },
-  "projectName": "Project Name",
-  "selectedModel": "Selected Model",
-  "actions": {
-    "creating": "Creating...",
-    "createProject": "Create Project"
-  }
+	"title": "Project Initialization",
+	"step1": {
+		"description": "Describe what you want to build."
+	},
+	"step2": {
+		"description": "Set up the basic project settings.",
+		"placeholder": "Project name..."
+	},
+	"step3": {
+		"description": "Review and confirm your project setup."
+	},
+	"projectName": "Project Name",
+	"selectedModel": "Selected Model",
+	"actions": {
+		"creating": "Creating...",
+		"createProject": "Create Project"
+	}
 }

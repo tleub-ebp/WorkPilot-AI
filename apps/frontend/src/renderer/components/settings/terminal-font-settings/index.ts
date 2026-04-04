@@ -3,9 +3,9 @@
  * Barrel export for all terminal font settings components
  */
 
-export { TerminalFontSettings } from './TerminalFontSettings';
-export { FontConfigPanel } from './FontConfigPanel';
-export { CursorConfigPanel } from './CursorConfigPanel';
-export { PerformanceConfigPanel } from './PerformanceConfigPanel';
-export { PresetsPanel } from './PresetsPanel';
-export { LivePreviewTerminal } from './LivePreviewTerminal';
+export { CursorConfigPanel } from "./CursorConfigPanel";
+export { FontConfigPanel } from "./FontConfigPanel";
+export { LivePreviewTerminal } from "./LivePreviewTerminal";
+export { PerformanceConfigPanel } from "./PerformanceConfigPanel";
+export { PresetsPanel } from "./PresetsPanel";
+export { TerminalFontSettings } from "./TerminalFontSettings";

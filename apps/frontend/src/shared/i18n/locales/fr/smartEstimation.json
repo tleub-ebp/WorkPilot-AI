@@ -1,36 +1,36 @@
 {
-  "title": "Smart Estimation",
-  "description": "Obtenez des estimations de complexité basées sur l'historique de builds de votre projet",
-  "task": {
-    "label": "Description de la tâche",
-    "placeholder": "Décrivez la tâche que vous voulez estimer (ex: 'Ajouter l'authentification utilisateur avec JWT', 'Créer un dashboard avec graphiques', 'Refactoriser le service de paiement')"
-  },
-  "status": {
-    "analyzing": "Analyse de la complexité en cours...",
-    "error": "L'estimation a échoué"
-  },
-  "errors": {
-    "noProject": "Veuillez sélectionner un projet pour obtenir des estimations précises",
-    "generic": "Une erreur est survenue lors de l'estimation. Veuillez réessayer."
-  },
-  "actions": {
-    "estimate": "Estimer la Complexité",
-    "close": "Fermer",
-    "tryAgain": "Réessayer",
-    "copy": "Copier",
-    "copied": "Copié !"
-  },
-  "result": {
-    "complexityScore": "Score de Complexité",
-    "analysisProgress": "Progression de l'Analyse",
-    "estimatedDuration": "Durée Estimée",
-    "qaIterations": "Itérations QA Estimées",
-    "iterations": "itérations",
-    "estimatedCost": "Coût Estimé",
-    "reasoning": "Raisonnement de l'Analyse",
-    "riskFactors": "Facteurs de Risque",
-    "recommendations": "Recommandations",
-    "similarTasks": "Tâches Similaires Historiques",
-    "similarTasksDescription": "Basé sur votre historique de builds, ces tâches similaires fournissent du contexte pour l'estimation"
-  }
+	"title": "Smart Estimation",
+	"description": "Obtenez des estimations de complexité basées sur l'historique de builds de votre projet",
+	"task": {
+		"label": "Description de la tâche",
+		"placeholder": "Décrivez la tâche que vous voulez estimer (ex: 'Ajouter l'authentification utilisateur avec JWT', 'Créer un dashboard avec graphiques', 'Refactoriser le service de paiement')"
+	},
+	"status": {
+		"analyzing": "Analyse de la complexité en cours...",
+		"error": "L'estimation a échoué"
+	},
+	"errors": {
+		"noProject": "Veuillez sélectionner un projet pour obtenir des estimations précises",
+		"generic": "Une erreur est survenue lors de l'estimation. Veuillez réessayer."
+	},
+	"actions": {
+		"estimate": "Estimer la Complexité",
+		"close": "Fermer",
+		"tryAgain": "Réessayer",
+		"copy": "Copier",
+		"copied": "Copié !"
+	},
+	"result": {
+		"complexityScore": "Score de Complexité",
+		"analysisProgress": "Progression de l'Analyse",
+		"estimatedDuration": "Durée Estimée",
+		"qaIterations": "Itérations QA Estimées",
+		"iterations": "itérations",
+		"estimatedCost": "Coût Estimé",
+		"reasoning": "Raisonnement de l'Analyse",
+		"riskFactors": "Facteurs de Risque",
+		"recommendations": "Recommandations",
+		"similarTasks": "Tâches Similaires Historiques",
+		"similarTasksDescription": "Basé sur votre historique de builds, ces tâches similaires fournissent du contexte pour l'estimation"
+	}
 }

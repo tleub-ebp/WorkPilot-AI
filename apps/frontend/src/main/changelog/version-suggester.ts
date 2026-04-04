@@ -1,15 +1,15 @@
-import { spawn } from 'node:child_process';
-import * as os from 'node:os';
-import type { GitCommit } from '../../shared/types';
-import { getBestAvailableProfileEnv } from '../rate-limit-detector';
-import { parsePythonCommand } from '../python-detector';
-import { getAugmentedEnv } from '../env-utils';
-import { isWindows, requiresShell } from '../platform';
+import { spawn } from "node:child_process";
+import * as os from "node:os";
+import type { GitCommit } from "../../shared/types";
+import { getAugmentedEnv } from "../env-utils";
+import { isWindows, requiresShell } from "../platform";
+import { parsePythonCommand } from "../python-detector";
+import { getBestAvailableProfileEnv } from "../rate-limit-detector";
 
 interface VersionSuggestion {
-  version: string;
-  reason: string;
-  bumpType: 'major' | 'minor' | 'patch';
+	version: string;
+	reason: string;
+	bumpType: "major" | "minor" | "patch";
 }
 
 /**
@@ -17,95 +17,101 @@ interface VersionSuggestion {
  * Analyzes commits to intelligently suggest semantic version bumps
  */
 export class VersionSuggester {
-  private readonly debugEnabled: boolean;
+	private readonly debugEnabled: boolean;
 
-  constructor(
-    private readonly pythonPath: string,
-    private readonly claudePath: string,
-    private readonly autoBuildSourcePath: string,
-    debugEnabled: boolean
-  ) {
-    this.debugEnabled = debugEnabled;
-  }
+	constructor(
+		private readonly pythonPath: string,
+		private readonly claudePath: string,
+		private readonly autoBuildSourcePath: string,
+		debugEnabled: boolean,
+	) {
+		this.debugEnabled = debugEnabled;
+	}
 
-  private debug(...args: unknown[]): void {
-    if (this.debugEnabled) {
-      console.warn('[VersionSuggester]', ...args);
-    }
-  }
+	private debug(...args: unknown[]): void {
+		if (this.debugEnabled) {
+			console.warn("[VersionSuggester]", ...args);
+		}
+	}
 
-  /**
-   * Suggest version bump using AI analysis of commits
-   */
-  async suggestVersionBump(
-    commits: GitCommit[],
-    currentVersion: string
-  ): Promise<VersionSuggestion> {
-    this.debug('suggestVersionBump called', {
-      commitCount: commits.length,
-      currentVersion
-    });
+	/**
+	 * Suggest version bump using AI analysis of commits
+	 */
+	async suggestVersionBump(
+		commits: GitCommit[],
+		currentVersion: string,
+	): Promise<VersionSuggestion> {
+		this.debug("suggestVersionBump called", {
+			commitCount: commits.length,
+			currentVersion,
+		});
 
-    // Build prompt for Claude to analyze commits
-    const prompt = this.buildPrompt(commits, currentVersion);
-    const script = this.createAnalysisScript(prompt);
+		// Build prompt for Claude to analyze commits
+		const prompt = this.buildPrompt(commits, currentVersion);
+		const script = this.createAnalysisScript(prompt);
 
-    // Build environment
-    const spawnEnv = this.buildSpawnEnvironment();
+		// Build environment
+		const spawnEnv = this.buildSpawnEnvironment();
 
-    return new Promise((resolve, _reject) => {
-      // Parse Python command to handle space-separated commands like "py -3"
-      const [pythonCommand, pythonBaseArgs] = parsePythonCommand(this.pythonPath);
-      const childProcess = spawn(pythonCommand, [...pythonBaseArgs, '-c', script], {
-        cwd: this.autoBuildSourcePath,
-        env: spawnEnv
-      });
+		return new Promise((resolve, _reject) => {
+			// Parse Python command to handle space-separated commands like "py -3"
+			const [pythonCommand, pythonBaseArgs] = parsePythonCommand(
+				this.pythonPath,
+			);
+			const childProcess = spawn(
+				pythonCommand,
+				[...pythonBaseArgs, "-c", script],
+				{
+					cwd: this.autoBuildSourcePath,
+					env: spawnEnv,
+				},
+			);
 
-      let output = '';
-      let errorOutput = '';
+			let output = "";
+			let errorOutput = "";
 
-      childProcess.stdout?.on('data', (data: Buffer) => {
-        output += data.toString('utf-8');
-      });
+			childProcess.stdout?.on("data", (data: Buffer) => {
+				output += data.toString("utf-8");
+			});
 
-      childProcess.stderr?.on('data', (data: Buffer) => {
-        errorOutput += data.toString('utf-8');
-      });
+			childProcess.stderr?.on("data", (data: Buffer) => {
+				errorOutput += data.toString("utf-8");
+			});
 
-      childProcess.on('exit', (code: number | null) => {
-        if (code === 0 && output.trim()) {
-          try {
-            const result = this.parseAIResponse(output.trim(), currentVersion);
-            this.debug('AI suggestion parsed', result);
-            resolve(result);
-          } catch (error) {
-            this.debug('Failed to parse AI response', error);
-            // Fallback to simple bump
-            resolve(this.fallbackSuggestion(currentVersion));
-          }
-        } else {
-          this.debug('AI analysis failed', { code, error: errorOutput });
-          // Fallback to simple bump
-          resolve(this.fallbackSuggestion(currentVersion));
-        }
-      });
+			childProcess.on("exit", (code: number | null) => {
+				if (code === 0 && output.trim()) {
+					try {
+						const result = this.parseAIResponse(output.trim(), currentVersion);
+						this.debug("AI suggestion parsed", result);
+						resolve(result);
+					} catch (error) {
+						this.debug("Failed to parse AI response", error);
+						// Fallback to simple bump
+						resolve(this.fallbackSuggestion(currentVersion));
+					}
+				} else {
+					this.debug("AI analysis failed", { code, error: errorOutput });
+					// Fallback to simple bump
+					resolve(this.fallbackSuggestion(currentVersion));
+				}
+			});
 
-      childProcess.on('error', (err: Error) => {
-        this.debug('Process error', err);
-        resolve(this.fallbackSuggestion(currentVersion));
-      });
-    });
-  }
+			childProcess.on("error", (err: Error) => {
+				this.debug("Process error", err);
+				resolve(this.fallbackSuggestion(currentVersion));
+			});
+		});
+	}
 
-  /**
-   * Build prompt for Claude to analyze commits and suggest version bump
-   */
-  private buildPrompt(commits: GitCommit[], currentVersion: string): string {
-    const commitSummary = commits
-      .map((c, i) => `${i + 1}. ${c.hash} - ${c.subject}`)
-      .join('\n');
+	/**
+	 * Build prompt for Claude to analyze commits and suggest version bump
+	 */
+	private buildPrompt(commits: GitCommit[], currentVersion: string): string {
+		const commitSummary = commits
+			.map((c, i) => `${i + 1}. ${c.hash} - ${c.subject}`)
+			.join("\n");
 
-    return `You are a semantic versioning expert analyzing git commits to suggest the appropriate version bump.
+		return `You are a semantic versioning expert analyzing git commits to suggest the appropriate version bump.
 
 Current version: ${currentVersion}
 
@@ -123,31 +129,31 @@ Respond with ONLY a JSON object in this exact format (no markdown, no extra text
   "bumpType": "major|minor|patch",
   "reason": "Brief explanation of the decision"
 }`;
-  }
+	}
 
-  /**
-   * Create Python script to run Claude analysis
-   *
-   * On Windows, .cmd/.bat files require shell=True in subprocess.run() because
-   * they are batch scripts that need cmd.exe to execute, not direct executables.
-   */
-  private createAnalysisScript(prompt: string): string {
-    // Escape the prompt for Python string literal
-    const escapedPrompt = prompt
-      .replaceAll('\\', String.raw`\\`)
-      .replaceAll('"', String.raw`\\"`)
-      .replaceAll('\n', String.raw`\\n`);
+	/**
+	 * Create Python script to run Claude analysis
+	 *
+	 * On Windows, .cmd/.bat files require shell=True in subprocess.run() because
+	 * they are batch scripts that need cmd.exe to execute, not direct executables.
+	 */
+	private createAnalysisScript(prompt: string): string {
+		// Escape the prompt for Python string literal
+		const escapedPrompt = prompt
+			.replaceAll("\\", String.raw`\\`)
+			.replaceAll('"', String.raw`\\"`)
+			.replaceAll("\n", String.raw`\\n`);
 
-    // Escape the claude path for Python string (handle Windows backslashes)
-    const escapedClaudePath = this.claudePath
-      .replaceAll('\\', String.raw`\\`)
-      .replaceAll('"', String.raw`\\"`);
+		// Escape the claude path for Python string (handle Windows backslashes)
+		const escapedClaudePath = this.claudePath
+			.replaceAll("\\", String.raw`\\`)
+			.replaceAll('"', String.raw`\\"`);
 
-    // Detect if this is a Windows batch file (.cmd or .bat)
-    // These require shell=True in subprocess.run() because they need cmd.exe to execute
-    const needsShell = requiresShell(this.claudePath);
+		// Detect if this is a Windows batch file (.cmd or .bat)
+		// These require shell=True in subprocess.run() because they need cmd.exe to execute
+		const needsShell = requiresShell(this.claudePath);
 
-    return `
+		return `
 import subprocess
 import sys
 
@@ -155,13 +161,13 @@ import sys
 prompt = "${escapedPrompt}"
 
 try:
-    # shell=${needsShell ? 'True' : 'False'} - Windows .cmd files require shell execution
+    # shell=${needsShell ? "True" : "False"} - Windows .cmd files require shell execution
     result = subprocess.run(
         ["${escapedClaudePath}", "chat", "--model", "haiku", "--prompt", prompt],
         capture_output=True,
         text=True,
         check=True,
-        shell=${needsShell ? 'True' : 'False'}
+        shell=${needsShell ? "True" : "False"}
     )
     print(result.stdout)
 except subprocess.CalledProcessError as e:
@@ -171,83 +177,86 @@ except Exception as e:
     print(f"Error: {str(e)}", file=sys.stderr)
     sys.exit(1)
 `;
-  }
+	}
 
-  /**
-   * Parse AI response to extract version suggestion
-   */
-  private parseAIResponse(output: string, currentVersion: string): VersionSuggestion {
-    // Extract JSON from output (Claude might wrap it in markdown or other text)
-    const jsonRegex = /\{[\s\S]*"bumpType"[\s\S]*"reason"[\s\S]*\}/;
-    const jsonMatch = jsonRegex.exec(output);
-    if (!jsonMatch) {
-      throw new Error('No JSON found in AI response');
-    }
+	/**
+	 * Parse AI response to extract version suggestion
+	 */
+	private parseAIResponse(
+		output: string,
+		currentVersion: string,
+	): VersionSuggestion {
+		// Extract JSON from output (Claude might wrap it in markdown or other text)
+		const jsonRegex = /\{[\s\S]*"bumpType"[\s\S]*"reason"[\s\S]*\}/;
+		const jsonMatch = jsonRegex.exec(output);
+		if (!jsonMatch) {
+			throw new Error("No JSON found in AI response");
+		}
 
-    const parsed = JSON.parse(jsonMatch[0]);
-    const bumpType = parsed.bumpType as 'major' | 'minor' | 'patch';
-    const reason = parsed.reason || 'AI analysis of commits';
+		const parsed = JSON.parse(jsonMatch[0]);
+		const bumpType = parsed.bumpType as "major" | "minor" | "patch";
+		const reason = parsed.reason || "AI analysis of commits";
 
-    // Calculate new version
-    const [major, minor, patch] = currentVersion.split('.').map(Number);
+		// Calculate new version
+		const [major, minor, patch] = currentVersion.split(".").map(Number);
 
-    let newVersion: string;
-    switch (bumpType) {
-      case 'major':
-        newVersion = `${major + 1}.0.0`;
-        break;
-      case 'minor':
-        newVersion = `${major}.${minor + 1}.0`;
-        break;
-      default:
-        newVersion = `${major}.${minor}.${patch + 1}`;
-        break;
-    }
+		let newVersion: string;
+		switch (bumpType) {
+			case "major":
+				newVersion = `${major + 1}.0.0`;
+				break;
+			case "minor":
+				newVersion = `${major}.${minor + 1}.0`;
+				break;
+			default:
+				newVersion = `${major}.${minor}.${patch + 1}`;
+				break;
+		}
 
-    return {
-      version: newVersion,
-      reason,
-      bumpType
-    };
-  }
+		return {
+			version: newVersion,
+			reason,
+			bumpType,
+		};
+	}
 
-  /**
-   * Fallback suggestion if AI analysis fails
-   */
-  private fallbackSuggestion(currentVersion: string): VersionSuggestion {
-    const [major, minor, patch] = currentVersion.split('.').map(Number);
-    return {
-      version: `${major}.${minor}.${patch + 1}`,
-      reason: 'Patch version bump (default)',
-      bumpType: 'patch'
-    };
-  }
+	/**
+	 * Fallback suggestion if AI analysis fails
+	 */
+	private fallbackSuggestion(currentVersion: string): VersionSuggestion {
+		const [major, minor, patch] = currentVersion.split(".").map(Number);
+		return {
+			version: `${major}.${minor}.${patch + 1}`,
+			reason: "Patch version bump (default)",
+			bumpType: "patch",
+		};
+	}
 
-  /**
-   * Build spawn environment with proper PATH and auth settings
-   */
-  private buildSpawnEnvironment(): Record<string, string> {
-    const homeDir = os.homedir();
+	/**
+	 * Build spawn environment with proper PATH and auth settings
+	 */
+	private buildSpawnEnvironment(): Record<string, string> {
+		const homeDir = os.homedir();
 
-    // Use getAugmentedEnv() to ensure common tool paths are available
-    // even when app is launched from Finder/Dock
-    const augmentedEnv = getAugmentedEnv();
+		// Use getAugmentedEnv() to ensure common tool paths are available
+		// even when app is launched from Finder/Dock
+		const augmentedEnv = getAugmentedEnv();
 
-    // Get best available Claude profile environment (automatically handles rate limits)
-    const profileResult = getBestAvailableProfileEnv();
-    const profileEnv = profileResult.env;
+		// Get best available Claude profile environment (automatically handles rate limits)
+		const profileResult = getBestAvailableProfileEnv();
+		const profileEnv = profileResult.env;
 
-    const spawnEnv: Record<string, string> = {
-      ...augmentedEnv,
-      ...profileEnv,
-      // Ensure critical env vars are set for claude CLI
-      ...(isWindows() ? { USERPROFILE: homeDir } : { HOME: homeDir }),
-      USER: process.env.USER || process.env.USERNAME || 'user',
-      PYTHONUNBUFFERED: '1',
-      PYTHONIOENCODING: 'utf-8',
-      PYTHONUTF8: '1'
-    };
+		const spawnEnv: Record<string, string> = {
+			...augmentedEnv,
+			...profileEnv,
+			// Ensure critical env vars are set for claude CLI
+			...(isWindows() ? { USERPROFILE: homeDir } : { HOME: homeDir }),
+			USER: process.env.USER || process.env.USERNAME || "user",
+			PYTHONUNBUFFERED: "1",
+			PYTHONIOENCODING: "utf-8",
+			PYTHONUTF8: "1",
+		};
 
-    return spawnEnv;
-  }
+		return spawnEnv;
+	}
 }

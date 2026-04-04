@@ -27,46 +27,46 @@ export const UI_SCALE_STEP = 5;
 // ============================================
 
 export const DEFAULT_APP_SETTINGS = {
-  theme: 'dark' as const,
-  colorTheme: 'default' as const,
-  defaultModel: 'opus',
-  agentFramework: 'auto-claude',
-  pythonPath: undefined as string | undefined,
-  gitPath: undefined as string | undefined,
-  githubCLIPath: undefined as string | undefined,
-  gitlabCLIPath: undefined as string | undefined,
-  autoBuildPath: undefined as string | undefined,
-  autoUpdateAutoBuild: true,
-  autoNameTerminals: true,
-  onboardingCompleted: false,
-  notifications: {
-    onTaskComplete: true,
-    onTaskFailed: true,
-    onReviewNeeded: true,
-    sound: false
-  },
-  // Global API keys (used as defaults for all projects)
-  globalClaudeOAuthToken: undefined as string | undefined,
-  globalOpenAICodexOAuthToken: undefined as string | undefined,
-  globalOpenAIApiKey: undefined as string | undefined,
-  // Selected agent profile - defaults to 'auto' for per-phase optimized model selection
-  selectedAgentProfile: 'auto',
-  // Changelog preferences (persisted between sessions)
-  changelogFormat: 'keep-a-changelog' as const,
-  changelogAudience: 'user-facing' as const,
-  changelogEmojiLevel: 'none' as const,
-  // UI Scale (default 100% - standard size)
-  uiScale: UI_SCALE_DEFAULT,
-  // Log order setting for task detail view (default chronological - oldest first)
-  logOrder: 'chronological' as const,
-  // Beta updates opt-in (receive pre-release versions)
-  betaUpdates: false,
-  // Language preference (default to English)
-  language: 'en' as const,
-  // Anonymous error reporting (Sentry) - enabled by default to help improve the app
-  sentryEnabled: true,
-  // Auto-name Claude terminals based on initial message (enabled by default)
-  autoNameClaudeTerminals: true
+	theme: "dark" as const,
+	colorTheme: "default" as const,
+	defaultModel: "opus",
+	agentFramework: "auto-claude",
+	pythonPath: undefined as string | undefined,
+	gitPath: undefined as string | undefined,
+	githubCLIPath: undefined as string | undefined,
+	gitlabCLIPath: undefined as string | undefined,
+	autoBuildPath: undefined as string | undefined,
+	autoUpdateAutoBuild: true,
+	autoNameTerminals: true,
+	onboardingCompleted: false,
+	notifications: {
+		onTaskComplete: true,
+		onTaskFailed: true,
+		onReviewNeeded: true,
+		sound: false,
+	},
+	// Global API keys (used as defaults for all projects)
+	globalClaudeOAuthToken: undefined as string | undefined,
+	globalOpenAICodexOAuthToken: undefined as string | undefined,
+	globalOpenAIApiKey: undefined as string | undefined,
+	// Selected agent profile - defaults to 'auto' for per-phase optimized model selection
+	selectedAgentProfile: "auto",
+	// Changelog preferences (persisted between sessions)
+	changelogFormat: "keep-a-changelog" as const,
+	changelogAudience: "user-facing" as const,
+	changelogEmojiLevel: "none" as const,
+	// UI Scale (default 100% - standard size)
+	uiScale: UI_SCALE_DEFAULT,
+	// Log order setting for task detail view (default chronological - oldest first)
+	logOrder: "chronological" as const,
+	// Beta updates opt-in (receive pre-release versions)
+	betaUpdates: false,
+	// Language preference (default to English)
+	language: "en" as const,
+	// Anonymous error reporting (Sentry) - enabled by default to help improve the app
+	sentryEnabled: true,
+	// Auto-name Claude terminals based on initial message (enabled by default)
+	autoNameClaudeTerminals: true,
 };
 
 // ============================================
@@ -74,20 +74,20 @@ export const DEFAULT_APP_SETTINGS = {
 // ============================================
 
 export const DEFAULT_PROJECT_SETTINGS = {
-  model: 'opus',
-  memoryBackend: 'file' as const,
-  linearSync: false,
-  notifications: {
-    onTaskComplete: true,
-    onTaskFailed: true,
-    onReviewNeeded: true,
-    sound: false
-  },
-  // Graphiti MCP server for agent-accessible knowledge graph (enabled by default)
-  graphitiMcpEnabled: true,
-  graphitiMcpUrl: 'http://localhost:9000/mcp/',
-  // Include CLAUDE.md instructions in agent context (enabled by default)
-  useClaudeMd: true
+	model: "opus",
+	memoryBackend: "file" as const,
+	linearSync: false,
+	notifications: {
+		onTaskComplete: true,
+		onTaskFailed: true,
+		onReviewNeeded: true,
+		sound: false,
+	},
+	// Graphiti MCP server for agent-accessible knowledge graph (enabled by default)
+	graphitiMcpEnabled: true,
+	graphitiMcpUrl: "http://localhost:9000/mcp/",
+	// Include CLAUDE.md instructions in agent context (enabled by default)
+	useClaudeMd: true,
 };
 
 // ============================================
@@ -97,30 +97,30 @@ export const DEFAULT_PROJECT_SETTINGS = {
 // File paths relative to project
 // IMPORTANT: All paths use .workpilot/ (the installed instance), NOT auto-claude/ (source code)
 export const AUTO_BUILD_PATHS = {
-  SPECS_DIR: '.workpilot/specs',
-  ROADMAP_DIR: '.workpilot/roadmap',
-  IDEATION_DIR: '.workpilot/ideation',
-  IMPLEMENTATION_PLAN: 'implementation_plan.json',
-  SPEC_FILE: 'spec.md',
-  QA_REPORT: 'qa_report.md',
-  BUILD_PROGRESS: 'build-progress.txt',
-  GENERATION_PROGRESS: 'generation_progress.json',
-  CONTEXT: 'context.json',
-  REQUIREMENTS: 'requirements.json',
-  ROADMAP_FILE: 'roadmap.json',
-  ROADMAP_DISCOVERY: 'roadmap_discovery.json',
-  COMPETITOR_ANALYSIS: 'competitor_analysis.json',
-  IDEATION_FILE: 'ideation.json',
-  IDEATION_CONTEXT: 'ideation_context.json',
-  PROJECT_INDEX: '.workpilot/project_index.json',
-  GRAPHITI_STATE: '.graphiti_state.json',
-  TASKS: '.workpilot/tasks',
+	SPECS_DIR: ".workpilot/specs",
+	ROADMAP_DIR: ".workpilot/roadmap",
+	IDEATION_DIR: ".workpilot/ideation",
+	IMPLEMENTATION_PLAN: "implementation_plan.json",
+	SPEC_FILE: "spec.md",
+	QA_REPORT: "qa_report.md",
+	BUILD_PROGRESS: "build-progress.txt",
+	GENERATION_PROGRESS: "generation_progress.json",
+	CONTEXT: "context.json",
+	REQUIREMENTS: "requirements.json",
+	ROADMAP_FILE: "roadmap.json",
+	ROADMAP_DISCOVERY: "roadmap_discovery.json",
+	COMPETITOR_ANALYSIS: "competitor_analysis.json",
+	IDEATION_FILE: "ideation.json",
+	IDEATION_CONTEXT: "ideation_context.json",
+	PROJECT_INDEX: ".workpilot/project_index.json",
+	GRAPHITI_STATE: ".graphiti_state.json",
+	TASKS: ".workpilot/tasks",
 } as const;
 
 /**
  * Get the specs directory path.
  * All specs go to .workpilot/specs/ (the project's data directory).
  */
-export function getSpecsDir(autoBuildPath: string = '.workpilot'): string {
-  return `${autoBuildPath}/specs`;
+export function getSpecsDir(autoBuildPath: string = ".workpilot"): string {
+	return `${autoBuildPath}/specs`;
 }

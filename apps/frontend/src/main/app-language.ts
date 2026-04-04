@@ -7,18 +7,18 @@
  * Updated via IPC when user changes language in settings.
  */
 
-import { app } from 'electron';
+import { app } from "electron";
 
 // Current app language, defaults to 'en'
 // Updated via setAppLanguage() when renderer notifies of language change
-let currentAppLanguage = 'en';
+let currentAppLanguage = "en";
 
 /**
  * Get the current app language.
  * Falls back to 'en' if not set.
  */
 export function getAppLanguage(): string {
-  return currentAppLanguage;
+	return currentAppLanguage;
 }
 
 /**
@@ -26,7 +26,7 @@ export function getAppLanguage(): string {
  * Called by IPC handler when renderer changes language.
  */
 export function setAppLanguage(language: string): void {
-  currentAppLanguage = language;
+	currentAppLanguage = language;
 }
 
 /**
@@ -34,12 +34,12 @@ export function setAppLanguage(language: string): void {
  * The renderer will update this once i18n initializes.
  */
 export function initAppLanguage(): void {
-  try {
-    // app.getLocale() may not be available in test environments
-    const osLocale = app?.getLocale?.() || 'en';
-    // Extract base language (e.g., 'en-US' -> 'en')
-    currentAppLanguage = osLocale.split('-')[0] || 'en';
-  } catch {
-    currentAppLanguage = 'en';
-  }
+	try {
+		// app.getLocale() may not be available in test environments
+		const osLocale = app?.getLocale?.() || "en";
+		// Extract base language (e.g., 'en-US' -> 'en')
+		currentAppLanguage = osLocale.split("-")[0] || "en";
+	} catch {
+		currentAppLanguage = "en";
+	}
 }

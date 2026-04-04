@@ -1,54 +1,60 @@
-import type { RoadmapFeature, RoadmapPhase, Roadmap, CompetitorPainPoint, CompetitorAnalysis } from '../../../shared/types';
+import type {
+	CompetitorAnalysis,
+	CompetitorPainPoint,
+	Roadmap,
+	RoadmapFeature,
+	RoadmapPhase,
+} from "../../../shared/types";
 
 export interface RoadmapProps {
-  projectId: string;
-  onGoToTask?: (taskId: string) => void;
+	projectId: string;
+	onGoToTask?: (taskId: string) => void;
 }
 
 export interface PhaseCardProps {
-  phase: RoadmapPhase;
-  features: RoadmapFeature[];
-  isFirst: boolean;
-  onFeatureSelect: (feature: RoadmapFeature) => void;
-  onConvertToSpec: (feature: RoadmapFeature) => void;
-  onGoToTask: (specId: string) => void;
+	phase: RoadmapPhase;
+	features: RoadmapFeature[];
+	isFirst: boolean;
+	onFeatureSelect: (feature: RoadmapFeature) => void;
+	onConvertToSpec: (feature: RoadmapFeature) => void;
+	onGoToTask: (specId: string) => void;
 }
 
 export interface FeatureCardProps {
-  feature: RoadmapFeature;
-  onClick: () => void;
-  onConvertToSpec: (feature: RoadmapFeature) => void;
-  onGoToTask: (specId: string) => void;
-  hasCompetitorInsight?: boolean;
+	feature: RoadmapFeature;
+	onClick: () => void;
+	onConvertToSpec: (feature: RoadmapFeature) => void;
+	onGoToTask: (specId: string) => void;
+	hasCompetitorInsight?: boolean;
 }
 
 export interface FeatureDetailPanelProps {
-  feature: RoadmapFeature;
-  onClose: () => void;
-  onConvertToSpec: (feature: RoadmapFeature) => void;
-  onGoToTask: (specId: string) => void;
-  onDelete?: (featureId: string) => void;
-  competitorInsights?: CompetitorPainPoint[];
+	feature: RoadmapFeature;
+	onClose: () => void;
+	onConvertToSpec: (feature: RoadmapFeature) => void;
+	onGoToTask: (specId: string) => void;
+	onDelete?: (featureId: string) => void;
+	competitorInsights?: CompetitorPainPoint[];
 }
 
 export interface RoadmapHeaderProps {
-  roadmap: Roadmap;
-  competitorAnalysis: CompetitorAnalysis | null;
-  onAddFeature: () => void;
-  onRefresh: () => void;
-  onViewCompetitorAnalysis?: () => void;
+	roadmap: Roadmap;
+	competitorAnalysis: CompetitorAnalysis | null;
+	onAddFeature: () => void;
+	onRefresh: () => void;
+	onViewCompetitorAnalysis?: () => void;
 }
 
 export interface RoadmapEmptyStateProps {
-  onGenerate: () => void;
+	onGenerate: () => void;
 }
 
 export interface RoadmapTabsProps {
-  readonly roadmap: Roadmap;
-  readonly activeTab: string;
-  readonly onTabChange: (tab: string) => void;
-  readonly onFeatureSelect: (feature: RoadmapFeature) => void;
-  readonly onConvertToSpec: (feature: RoadmapFeature) => void;
-  readonly onGoToTask: (specId: string) => void;
-  readonly onSave?: () => void;
+	readonly roadmap: Roadmap;
+	readonly activeTab: string;
+	readonly onTabChange: (tab: string) => void;
+	readonly onFeatureSelect: (feature: RoadmapFeature) => void;
+	readonly onConvertToSpec: (feature: RoadmapFeature) => void;
+	readonly onGoToTask: (specId: string) => void;
+	readonly onSave?: () => void;
 }

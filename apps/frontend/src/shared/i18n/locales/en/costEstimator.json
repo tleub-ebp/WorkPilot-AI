@@ -1,40 +1,40 @@
 {
-  "title": "Cost Estimator",
-  "subtitle": "LLM usage costs, budgets, and forecasts",
-  "retry": "Retry",
-  "error": "Failed to load cost data",
-  "kpi": {
-    "totalCost": {
-      "title": "Total Cost",
-      "period": "{{days}} day period"
-    },
-    "dailyAverage": {
-      "title": "Daily Average"
-    },
-    "totalTokens": {
-      "title": "Total Tokens",
-      "inOut": "In: {{input}} / Out: {{output}}"
-    },
-    "providers": {
-      "title": "Provider(s)",
-      "models_one": "{{count}} model",
-      "models_other": "{{count}} models",
-      "models_plural": "{{count}} models",
-      "models": "{{count}} model"
-    }
-  },
-  "budget": {
-    "title": "Monthly Budget",
-    "pctUsed": "{{pct}}% used",
-    "spent": "{{amount}} spent",
-    "remaining": "{{amount}} remaining",
-    "total": "{{amount}} total",
-    "forecast": "End-of-month forecast:",
-    "overBudget": "Over budget"
-  },
-  "breakdown": {
-    "costByProvider": "Cost by Provider",
-    "costByModel": "Cost by Model",
-    "noData": "No data"
-  }
+	"title": "Cost Estimator",
+	"subtitle": "LLM usage costs, budgets, and forecasts",
+	"retry": "Retry",
+	"error": "Failed to load cost data",
+	"kpi": {
+		"totalCost": {
+			"title": "Total Cost",
+			"period": "{{days}} day period"
+		},
+		"dailyAverage": {
+			"title": "Daily Average"
+		},
+		"totalTokens": {
+			"title": "Total Tokens",
+			"inOut": "In: {{input}} / Out: {{output}}"
+		},
+		"providers": {
+			"title": "Provider(s)",
+			"models_one": "{{count}} model",
+			"models_other": "{{count}} models",
+			"models_plural": "{{count}} models",
+			"models": "{{count}} model"
+		}
+	},
+	"budget": {
+		"title": "Monthly Budget",
+		"pctUsed": "{{pct}}% used",
+		"spent": "{{amount}} spent",
+		"remaining": "{{amount}} remaining",
+		"total": "{{amount}} total",
+		"forecast": "End-of-month forecast:",
+		"overBudget": "Over budget"
+	},
+	"breakdown": {
+		"costByProvider": "Cost by Provider",
+		"costByModel": "Cost by Model",
+		"noData": "No data"
+	}
 }

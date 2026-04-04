@@ -1,69 +1,69 @@
 {
-  "title": "Développement en streaming",
-  "dialogTitle": "Session de streaming en direct",
-  "dialogDescription": "Regardez l'agent IA coder en temps réel",
-  "status": {
-    "live": "EN DIRECT",
-    "offline": "HORS LIGNE",
-    "connecting": "CONNEXION...",
-    "reconnect": "Reconnecter",
-    "initializing": "Initialisation...",
-    "sessionStarted": "Session démarrée",
-    "sessionConfirmed": "Session confirmée",
-    "thinking": "Réflexion : {{thought}}...",
-    "responding": "Réponse en cours..."
-  },
-  "header": {
-    "saveRecording": "Sauvegarder l'enregistrement",
-    "share": "Partager",
-    "stopSession": "Arrêter la session"
-  },
-  "stats": {
-    "files": "{{count}} fichiers",
-    "commands": "Commandes :",
-    "tests": "Tests :"
-  },
-  "codeView": {
-    "noFile": "Aucun fichier sélectionné",
-    "waitingForChanges": "// En attente de modifications du code..."
-  },
-  "tabs": {
-    "chat": "Chat",
-    "events": "Événements",
-    "timeline": "Chronologie"
-  },
-  "chat": {
-    "placeholder": "Écrivez un message à Claude...",
-    "send": "Envoyer"
-  },
-  "timeline": {
-    "comingSoon": "Navigation temporelle bientôt disponible...",
-    "replayDescription": "Rejouez les sessions à différentes vitesses"
-  },
-  "controls": {
-    "resume": "Reprendre la session",
-    "pause": "Mettre en pause la session"
-  },
-  "test": {
-    "title": "Test de Streaming",
-    "serverRunning": "Serveur en marche",
-    "serverStopped": "Serveur arrêté",
-    "sessionId": "ID de Session",
-    "sessionIdPlaceholder": "Auto-généré ou entrez personnalisé",
-    "generate": "Générer",
-    "connectionStatus": "État de Connexion",
-    "connected": "Connecté",
-    "disconnected": "Déconnecté",
-    "selectTask": "Sélectionner une Tâche",
-    "selectTaskPlaceholder": "Sélectionner une tâche...",
-    "startTaskWithStreaming": "Démarrer la Tâche avec Streaming",
-    "startStreamingServer": "Démarrer le Serveur de Streaming",
-    "instructions": "Instructions :",
-    "instruction1": "Démarrer le serveur de streaming s'il n'est pas en marche",
-    "instruction2": "Générer ou entrer un ID de session",
-    "instruction3": "Sélectionner une tâche du backlog/queue",
-    "instruction4": "Cliquez sur \"Démarrer la Tâche avec Streaming\"",
-    "instruction5": "La tâche s'exécutera avec des événements en streaming en direct",
-    "pleaseSelectTask": "Veuillez sélectionner une tâche"
-  }
+	"title": "Développement en streaming",
+	"dialogTitle": "Session de streaming en direct",
+	"dialogDescription": "Regardez l'agent IA coder en temps réel",
+	"status": {
+		"live": "EN DIRECT",
+		"offline": "HORS LIGNE",
+		"connecting": "CONNEXION...",
+		"reconnect": "Reconnecter",
+		"initializing": "Initialisation...",
+		"sessionStarted": "Session démarrée",
+		"sessionConfirmed": "Session confirmée",
+		"thinking": "Réflexion : {{thought}}...",
+		"responding": "Réponse en cours..."
+	},
+	"header": {
+		"saveRecording": "Sauvegarder l'enregistrement",
+		"share": "Partager",
+		"stopSession": "Arrêter la session"
+	},
+	"stats": {
+		"files": "{{count}} fichiers",
+		"commands": "Commandes :",
+		"tests": "Tests :"
+	},
+	"codeView": {
+		"noFile": "Aucun fichier sélectionné",
+		"waitingForChanges": "// En attente de modifications du code..."
+	},
+	"tabs": {
+		"chat": "Chat",
+		"events": "Événements",
+		"timeline": "Chronologie"
+	},
+	"chat": {
+		"placeholder": "Écrivez un message à Claude...",
+		"send": "Envoyer"
+	},
+	"timeline": {
+		"comingSoon": "Navigation temporelle bientôt disponible...",
+		"replayDescription": "Rejouez les sessions à différentes vitesses"
+	},
+	"controls": {
+		"resume": "Reprendre la session",
+		"pause": "Mettre en pause la session"
+	},
+	"test": {
+		"title": "Test de Streaming",
+		"serverRunning": "Serveur en marche",
+		"serverStopped": "Serveur arrêté",
+		"sessionId": "ID de Session",
+		"sessionIdPlaceholder": "Auto-généré ou entrez personnalisé",
+		"generate": "Générer",
+		"connectionStatus": "État de Connexion",
+		"connected": "Connecté",
+		"disconnected": "Déconnecté",
+		"selectTask": "Sélectionner une Tâche",
+		"selectTaskPlaceholder": "Sélectionner une tâche...",
+		"startTaskWithStreaming": "Démarrer la Tâche avec Streaming",
+		"startStreamingServer": "Démarrer le Serveur de Streaming",
+		"instructions": "Instructions :",
+		"instruction1": "Démarrer le serveur de streaming s'il n'est pas en marche",
+		"instruction2": "Générer ou entrer un ID de session",
+		"instruction3": "Sélectionner une tâche du backlog/queue",
+		"instruction4": "Cliquez sur \"Démarrer la Tâche avec Streaming\"",
+		"instruction5": "La tâche s'exécutera avec des événements en streaming en direct",
+		"pleaseSelectTask": "Veuillez sélectionner une tâche"
+	}
 }

@@ -2,15 +2,15 @@
  * GitHub utility functions
  */
 
-import { existsSync, readFileSync } from 'fs';
-import { execFileSync, execFile } from 'child_process';
-import { promisify } from 'util';
-import path from 'path';
-import type { Project } from '../../../shared/types';
-import { parseEnvFile } from '../utils';
-import type { GitHubConfig } from './types';
-import { getAugmentedEnv } from '../../env-utils';
-import { getToolPath } from '../../cli-tool-manager';
+import { execFile, execFileSync } from "child_process";
+import { existsSync, readFileSync } from "fs";
+import path from "path";
+import { promisify } from "util";
+import type { Project } from "../../../shared/types";
+import { getToolPath } from "../../cli-tool-manager";
+import { getAugmentedEnv } from "../../env-utils";
+import { parseEnvFile } from "../utils";
+import type { GitHubConfig } from "./types";
 
 const execFileAsync = promisify(execFile);
 
@@ -19,16 +19,20 @@ const execFileAsync = promisify(execFile);
  * Uses augmented PATH to find gh CLI in common locations (e.g., Homebrew on macOS)
  */
 async function getTokenFromGhCliAsync(): Promise<string | null> {
-  try {
-    const { stdout } = await execFileAsync(getToolPath('gh'), ['auth', 'token'], {
-      encoding: 'utf-8',
-      env: getAugmentedEnv()
-    });
-    const token = stdout.trim();
-    return token || null;
-  } catch {
-    return null;
-  }
+	try {
+		const { stdout } = await execFileAsync(
+			getToolPath("gh"),
+			["auth", "token"],
+			{
+				encoding: "utf-8",
+				env: getAugmentedEnv(),
+			},
+		);
+		const token = stdout.trim();
+		return token || null;
+	} catch {
+		return null;
+	}
 }
 
 /**
@@ -36,16 +40,16 @@ async function getTokenFromGhCliAsync(): Promise<string | null> {
  * Uses augmented PATH to find gh CLI in common locations (e.g., Homebrew on macOS)
  */
 function getTokenFromGhCliSync(): string | null {
-  try {
-    const token = execFileSync(getToolPath('gh'), ['auth', 'token'], {
-      encoding: 'utf-8',
-      stdio: 'pipe',
-      env: getAugmentedEnv()
-    }).trim();
-    return token || null;
-  } catch {
-    return null;
-  }
+	try {
+		const token = execFileSync(getToolPath("gh"), ["auth", "token"], {
+			encoding: "utf-8",
+			stdio: "pipe",
+			env: getAugmentedEnv(),
+		}).trim();
+		return token || null;
+	} catch {
+		return null;
+	}
 }
 
 /**
@@ -54,7 +58,7 @@ function getTokenFromGhCliSync(): string | null {
  * @returns The current GitHub token or null if not authenticated
  */
 export async function getGitHubTokenForSubprocess(): Promise<string | null> {
-  return getTokenFromGhCliAsync();
+	return getTokenFromGhCliAsync();
 }
 
 /**
@@ -62,29 +66,29 @@ export async function getGitHubTokenForSubprocess(): Promise<string | null> {
  * Falls back to gh CLI token if GITHUB_TOKEN not in .env
  */
 export function getGitHubConfig(project: Project): GitHubConfig | null {
-  if (!project.autoBuildPath) return null;
-  const envPath = path.join(project.path, project.autoBuildPath, '.env');
-  if (!existsSync(envPath)) return null;
+	if (!project.autoBuildPath) return null;
+	const envPath = path.join(project.path, project.autoBuildPath, ".env");
+	if (!existsSync(envPath)) return null;
 
-  try {
-    const content = readFileSync(envPath, 'utf-8');
-    const vars = parseEnvFile(content);
-    let token: string | undefined = vars['GITHUB_TOKEN'];
-    const repo = vars['GITHUB_REPO'];
+	try {
+		const content = readFileSync(envPath, "utf-8");
+		const vars = parseEnvFile(content);
+		let token: string | undefined = vars["GITHUB_TOKEN"];
+		const repo = vars["GITHUB_REPO"];
 
-    // If no token in .env, try to get it from gh CLI (sync version for sync function)
-    if (!token) {
-      const ghToken = getTokenFromGhCliSync();
-      if (ghToken) {
-        token = ghToken;
-      }
-    }
+		// If no token in .env, try to get it from gh CLI (sync version for sync function)
+		if (!token) {
+			const ghToken = getTokenFromGhCliSync();
+			if (ghToken) {
+				token = ghToken;
+			}
+		}
 
-    if (!token || !repo) return null;
-    return { token, repo };
-  } catch {
-    return null;
-  }
+		if (!token || !repo) return null;
+		return { token, repo };
+	} catch {
+		return null;
+	}
 }
 
 /**
@@ -96,49 +100,51 @@ export function getGitHubConfig(project: Project): GitHubConfig | null {
  * - git@github.com:owner/repo.git
  */
 export function normalizeRepoReference(repo: string): string {
-  if (!repo) return '';
+	if (!repo) return "";
 
-  // Remove trailing .git if present
-  let normalized = repo.replace(/\.git$/, '');
+	// Remove trailing .git if present
+	let normalized = repo.replace(/\.git$/, "");
 
-  // Handle full GitHub URLs
-  if (normalized.startsWith('https://github.com/')) {
-    normalized = normalized.replace('https://github.com/', '');
-  } else if (normalized.startsWith('http://github.com/')) {
-    normalized = normalized.replace('http://github.com/', '');
-  } else if (normalized.startsWith('git@github.com:')) {
-    normalized = normalized.replace('git@github.com:', '');
-  }
+	// Handle full GitHub URLs
+	if (normalized.startsWith("https://github.com/")) {
+		normalized = normalized.replace("https://github.com/", "");
+	} else if (normalized.startsWith("http://github.com/")) {
+		normalized = normalized.replace("http://github.com/", "");
+	} else if (normalized.startsWith("git@github.com:")) {
+		normalized = normalized.replace("git@github.com:", "");
+	}
 
-  return normalized.trim();
+	return normalized.trim();
 }
 
 /**
  * Make a request to the GitHub API
  */
 export async function githubFetch(
-  token: string,
-  endpoint: string,
-  options: RequestInit = {}
+	token: string,
+	endpoint: string,
+	options: RequestInit = {},
 ): Promise<unknown> {
-  const url = endpoint.startsWith('http')
-    ? endpoint
-    : `https://api.github.com${endpoint}`;
+	const url = endpoint.startsWith("http")
+		? endpoint
+		: `https://api.github.com${endpoint}`;
 
-  const response = await fetch(url, {
-    ...options,
-    headers: {
-      'Accept': 'application/vnd.github+json',
-      'Authorization': `Bearer ${token}`,
-      'User-Agent': 'WorkPilot-AI',
-      ...options.headers
-    }
-  });
+	const response = await fetch(url, {
+		...options,
+		headers: {
+			Accept: "application/vnd.github+json",
+			Authorization: `Bearer ${token}`,
+			"User-Agent": "WorkPilot-AI",
+			...options.headers,
+		},
+	});
 
-  if (!response.ok) {
-    const errorBody = await response.text();
-    throw new Error(`GitHub API error: ${response.status} ${response.statusText} - ${errorBody}`);
-  }
+	if (!response.ok) {
+		const errorBody = await response.text();
+		throw new Error(
+			`GitHub API error: ${response.status} ${response.statusText} - ${errorBody}`,
+		);
+	}
 
-  return response.json();
+	return response.json();
 }

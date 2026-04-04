@@ -1,20 +1,20 @@
 {
-  "title": "Code Quality Analysis",
-  "score": "Score",
-  "passed": "PASSED",
-  "failed": "FAILED",
-  "issuesDetected_one": "{{count}} Issue Detected",
-  "issuesDetected_other": "{{count}} Issues Detected",
-  "critical": "Critical",
-  "high": "High",
-  "medium": "Medium",
-  "low": "Low",
-  "noIssues": "No issues detected! Great job!",
-  "andMore": "... and {{count}} more",
-  "categories": {
-    "bugs": "Bugs",
-    "security": "Security",
-    "maintainability": "Maintainability",
-    "complexity": "Complexity"
-  }
+	"title": "Code Quality Analysis",
+	"score": "Score",
+	"passed": "PASSED",
+	"failed": "FAILED",
+	"issuesDetected_one": "{{count}} Issue Detected",
+	"issuesDetected_other": "{{count}} Issues Detected",
+	"critical": "Critical",
+	"high": "High",
+	"medium": "Medium",
+	"low": "Low",
+	"noIssues": "No issues detected! Great job!",
+	"andMore": "... and {{count}} more",
+	"categories": {
+		"bugs": "Bugs",
+		"security": "Security",
+		"maintainability": "Maintainability",
+		"complexity": "Complexity"
+	}
 }

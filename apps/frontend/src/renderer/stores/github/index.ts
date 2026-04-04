@@ -11,53 +11,54 @@
 
 // Issues Store
 export {
-  useIssuesStore,
-  loadGitHubIssues,
-  loadMoreGitHubIssues,
-  loadAllGitHubIssues,
-  importGitHubIssues,
-  type IssueFilterState
-} from './issues-store';
+	type IssueFilterState,
+	importGitHubIssues,
+	loadAllGitHubIssues,
+	loadGitHubIssues,
+	loadMoreGitHubIssues,
+	useIssuesStore,
+} from "./issues-store";
 
 // PR Review Store
 export {
-  usePRReviewStore,
-  initializePRReviewListeners,
-  startPRReview,
-  startFollowupReview
-} from './pr-review-store';
-import { initializePRReviewListeners as _initPRReviewListeners } from './pr-review-store';
+	initializePRReviewListeners,
+	startFollowupReview,
+	startPRReview,
+	usePRReviewStore,
+} from "./pr-review-store";
+
+import { initializePRReviewListeners as _initPRReviewListeners } from "./pr-review-store";
 
 // Investigation Store
 export {
-  useInvestigationStore,
-  investigateGitHubIssue
-} from './investigation-store';
+	investigateGitHubIssue,
+	useInvestigationStore,
+} from "./investigation-store";
 
 // Sync Status Store
 export {
-  useSyncStatusStore,
-  checkGitHubConnection
-} from './sync-status-store';
+	checkGitHubConnection,
+	useSyncStatusStore,
+} from "./sync-status-store";
 
 /**
  * Initialize all global GitHub listeners.
  * Call this once at app startup.
  */
 export function initializeGitHubListeners(): void {
-  _initPRReviewListeners();
-  // Add other global listeners here as needed
+	_initPRReviewListeners();
+	// Add other global listeners here as needed
 }
 
 // Re-export types for convenience
 export type {
-  PRReviewProgress,
-  PRReviewResult
-} from '../../../preload/api/modules/github-api';
+	PRReviewProgress,
+	PRReviewResult,
+} from "../../../preload/api/modules/github-api";
 
 export type {
-  GitHubIssue,
-  GitHubSyncStatus,
-  GitHubInvestigationStatus,
-  GitHubInvestigationResult
-} from '../../../shared/types';
+	GitHubInvestigationResult,
+	GitHubInvestigationStatus,
+	GitHubIssue,
+	GitHubSyncStatus,
+} from "../../../shared/types";

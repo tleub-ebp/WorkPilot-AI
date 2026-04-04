@@ -1,75 +1,75 @@
 {
-  "title": "Pair Programming IA",
-  "subtitle": "Développement parallèle coordonné avec l'IA",
-  "startSession": "Démarrer une session",
-  "stopSession": "Arrêter la session",
-  "newSession": "Nouvelle session",
-  "sendMessage": "Envoyer",
-  "messagePlaceholder": "Messagez votre partenaire IA...",
-  "sections": {
-    "yourWork": "Votre travail",
-    "chat": "Chat de coordination",
-    "aiWork": "Travail de l'IA"
-  },
-  "setup": {
-    "title": "Configurer la session de pair programming",
-    "goalLabel": "Objectif de la session",
-    "goalPlaceholder": "ex. Ajouter l'authentification utilisateur avec JWT",
-    "devScopeLabel": "Votre périmètre (ce que vous ferez)",
-    "devScopePlaceholder": "ex. Composants frontend login/register et store Redux",
-    "aiScopeLabel": "Périmètre de l'IA (ce que l'IA fera)",
-    "aiScopePlaceholder": "ex. API backend auth, middleware JWT et tests d'intégration",
-    "startButton": "Démarrer le pair programming",
-    "hint": "L'IA travaillera sur son périmètre en parallèle pendant que vous vous concentrez sur le vôtre. Vous pouvez chatter pour vous coordonner en temps réel."
-  },
-  "status": {
-    "idle": "Prêt",
-    "planning": "Planification...",
-    "active": "Travail en parallèle",
-    "paused": "En pause",
-    "completed": "Session terminée",
-    "error": "Erreur"
-  },
-  "aiWork": {
-    "waiting": "En attente de démarrage...",
-    "planning": "Analyse du projet et planification...",
-    "active": "Travail sur le périmètre assigné...",
-    "actionLog": "Actions de l'IA",
-    "noActions": "Aucune action pour l'instant"
-  },
-  "actions": {
-    "file_created": "Créé",
-    "file_modified": "Modifié",
-    "file_deleted": "Supprimé",
-    "command_run": "Exécuté",
-    "thinking": "Réflexion"
-  },
-  "chat": {
-    "you": "Vous",
-    "ai": "Partenaire IA",
-    "question": "L'IA pose une question",
-    "empty": "Aucun message. Envoyez un message pour vous coordonner avec votre partenaire IA.",
-    "sessionComplete": "Session terminée."
-  },
-  "devWork": {
-    "scope": "Votre périmètre",
-    "reminder": "Concentrez-vous sur votre périmètre pendant que l'IA gère le sien.",
-    "conflictWarning": "Conflit potentiel"
-  },
-  "conflicts": {
-    "title": "Conflits de périmètre",
-    "description": "L'IA a peut-être touché des fichiers dans votre périmètre. Veuillez vérifier."
-  },
-  "empty": {
-    "title": "Pair Programming IA",
-    "description": "Travaillez en parallèle avec l'IA sur des parties complémentaires de votre codebase. Vous vous concentrez sur une zone, l'IA gère une autre — coordonnés en temps réel.",
-    "feature1": "Travail parallèle sur différents ensembles de fichiers",
-    "feature2": "Chat en temps réel pour la coordination",
-    "feature3": "Détection de conflits pour éviter les chevauchements",
-    "cta": "Démarrer une session"
-  },
-  "errors": {
-    "startFailed": "Échec du démarrage de la session de pair programming",
-    "noProject": "Veuillez d'abord sélectionner un projet"
-  }
+	"title": "Pair Programming IA",
+	"subtitle": "Développement parallèle coordonné avec l'IA",
+	"startSession": "Démarrer une session",
+	"stopSession": "Arrêter la session",
+	"newSession": "Nouvelle session",
+	"sendMessage": "Envoyer",
+	"messagePlaceholder": "Messagez votre partenaire IA...",
+	"sections": {
+		"yourWork": "Votre travail",
+		"chat": "Chat de coordination",
+		"aiWork": "Travail de l'IA"
+	},
+	"setup": {
+		"title": "Configurer la session de pair programming",
+		"goalLabel": "Objectif de la session",
+		"goalPlaceholder": "ex. Ajouter l'authentification utilisateur avec JWT",
+		"devScopeLabel": "Votre périmètre (ce que vous ferez)",
+		"devScopePlaceholder": "ex. Composants frontend login/register et store Redux",
+		"aiScopeLabel": "Périmètre de l'IA (ce que l'IA fera)",
+		"aiScopePlaceholder": "ex. API backend auth, middleware JWT et tests d'intégration",
+		"startButton": "Démarrer le pair programming",
+		"hint": "L'IA travaillera sur son périmètre en parallèle pendant que vous vous concentrez sur le vôtre. Vous pouvez chatter pour vous coordonner en temps réel."
+	},
+	"status": {
+		"idle": "Prêt",
+		"planning": "Planification...",
+		"active": "Travail en parallèle",
+		"paused": "En pause",
+		"completed": "Session terminée",
+		"error": "Erreur"
+	},
+	"aiWork": {
+		"waiting": "En attente de démarrage...",
+		"planning": "Analyse du projet et planification...",
+		"active": "Travail sur le périmètre assigné...",
+		"actionLog": "Actions de l'IA",
+		"noActions": "Aucune action pour l'instant"
+	},
+	"actions": {
+		"file_created": "Créé",
+		"file_modified": "Modifié",
+		"file_deleted": "Supprimé",
+		"command_run": "Exécuté",
+		"thinking": "Réflexion"
+	},
+	"chat": {
+		"you": "Vous",
+		"ai": "Partenaire IA",
+		"question": "L'IA pose une question",
+		"empty": "Aucun message. Envoyez un message pour vous coordonner avec votre partenaire IA.",
+		"sessionComplete": "Session terminée."
+	},
+	"devWork": {
+		"scope": "Votre périmètre",
+		"reminder": "Concentrez-vous sur votre périmètre pendant que l'IA gère le sien.",
+		"conflictWarning": "Conflit potentiel"
+	},
+	"conflicts": {
+		"title": "Conflits de périmètre",
+		"description": "L'IA a peut-être touché des fichiers dans votre périmètre. Veuillez vérifier."
+	},
+	"empty": {
+		"title": "Pair Programming IA",
+		"description": "Travaillez en parallèle avec l'IA sur des parties complémentaires de votre codebase. Vous vous concentrez sur une zone, l'IA gère une autre — coordonnés en temps réel.",
+		"feature1": "Travail parallèle sur différents ensembles de fichiers",
+		"feature2": "Chat en temps réel pour la coordination",
+		"feature3": "Détection de conflits pour éviter les chevauchements",
+		"cta": "Démarrer une session"
+	},
+	"errors": {
+		"startFailed": "Échec du démarrage de la session de pair programming",
+		"noProject": "Veuillez d'abord sélectionner un projet"
+	}
 }

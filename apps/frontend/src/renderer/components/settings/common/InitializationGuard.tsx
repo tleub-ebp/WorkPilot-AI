@@ -1,10 +1,10 @@
-import type { ReactNode } from 'react';
+import type { ReactNode } from "react";
 
 interface InitializationGuardProps {
-  initialized: boolean;
-  title: string;
-  description: string;
-  children: ReactNode;
+	initialized: boolean;
+	title: string;
+	description: string;
+	children: ReactNode;
 }
 
 /**
@@ -12,18 +12,18 @@ interface InitializationGuardProps {
  * Used to prevent configuration of features that require Auto-Build setup.
  */
 export function InitializationGuard({
-  initialized,
-  title,
-  description: _description,
-  children
+	initialized,
+	title,
+	description: _description,
+	children,
 }: InitializationGuardProps) {
-  if (!initialized) {
-    return (
-      <div className="rounded-lg border border-border bg-muted/50 p-4 text-center text-sm text-muted-foreground">
-        Initialize Auto-Build first to configure {title.toLowerCase()}
-      </div>
-    );
-  }
+	if (!initialized) {
+		return (
+			<div className="rounded-lg border border-border bg-muted/50 p-4 text-center text-sm text-muted-foreground">
+				Initialize Auto-Build first to configure {title.toLowerCase()}
+			</div>
+		);
+	}
 
-  return <>{children}</>;
+	return <>{children}</>;
 }

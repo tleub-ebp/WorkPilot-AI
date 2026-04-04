@@ -13,34 +13,40 @@
  * - Shell operations
  */
 
-import { createRoadmapAPI, RoadmapAPI } from './modules/roadmap-api';
-import { createIdeationAPI, IdeationAPI } from './modules/ideation-api';
-import { createInsightsAPI, InsightsAPI } from './modules/insights-api';
-import { createChangelogAPI, ChangelogAPI } from './modules/changelog-api';
-import { createLinearAPI, LinearAPI } from './modules/linear-api';
-import { createGitHubAPI, GitHubAPI } from './modules/github-api';
-import { createGitLabAPI, GitLabAPI } from './modules/gitlab-api';
-import { createAzureDevOpsAPI, AzureDevOpsAPI } from './modules/azure-devops-api';
-import { createJiraAPI, JiraAPI } from './modules/jira-api';
-import { createShellAPI, ShellAPI } from './modules/shell-api';
-import { createPromptOptimizerAPI, PromptOptimizerAPI } from './modules/prompt-optimizer-api';
+import {
+	type AzureDevOpsAPI,
+	createAzureDevOpsAPI,
+} from "./modules/azure-devops-api";
+import { type ChangelogAPI, createChangelogAPI } from "./modules/changelog-api";
+import { createGitHubAPI, type GitHubAPI } from "./modules/github-api";
+import { createGitLabAPI, type GitLabAPI } from "./modules/gitlab-api";
+import { createIdeationAPI, type IdeationAPI } from "./modules/ideation-api";
+import { createInsightsAPI, type InsightsAPI } from "./modules/insights-api";
+import { createJiraAPI, type JiraAPI } from "./modules/jira-api";
+import { createLinearAPI, type LinearAPI } from "./modules/linear-api";
+import {
+	createPromptOptimizerAPI,
+	type PromptOptimizerAPI,
+} from "./modules/prompt-optimizer-api";
+import { createRoadmapAPI, type RoadmapAPI } from "./modules/roadmap-api";
+import { createShellAPI, type ShellAPI } from "./modules/shell-api";
 
 /**
  * Combined Agent API interface
  * Includes all operations from individual API modules
  */
-export interface AgentAPI extends
-  RoadmapAPI,
-  IdeationAPI,
-  InsightsAPI,
-  ChangelogAPI,
-  LinearAPI,
-  GitHubAPI,
-  GitLabAPI,
-  AzureDevOpsAPI,
-  JiraAPI,
-  ShellAPI,
-  PromptOptimizerAPI {}
+export interface AgentAPI
+	extends RoadmapAPI,
+		IdeationAPI,
+		InsightsAPI,
+		ChangelogAPI,
+		LinearAPI,
+		GitHubAPI,
+		GitLabAPI,
+		AzureDevOpsAPI,
+		JiraAPI,
+		ShellAPI,
+		PromptOptimizerAPI {}
 
 /**
  * Creates the complete Agent API by combining all module APIs
@@ -48,65 +54,65 @@ export interface AgentAPI extends
  * @returns Complete AgentAPI with all operations available
  */
 export const createAgentAPI = (): AgentAPI => {
-  const roadmapAPI = createRoadmapAPI();
-  const ideationAPI = createIdeationAPI();
-  const insightsAPI = createInsightsAPI();
-  const changelogAPI = createChangelogAPI();
-  const linearAPI = createLinearAPI();
-  const githubAPI = createGitHubAPI();
-  const gitlabAPI = createGitLabAPI();
-  const azureDevOpsAPI = createAzureDevOpsAPI();
-  const jiraAPI = createJiraAPI();
-  const shellAPI = createShellAPI();
-  const promptOptimizerAPI = createPromptOptimizerAPI();
+	const roadmapAPI = createRoadmapAPI();
+	const ideationAPI = createIdeationAPI();
+	const insightsAPI = createInsightsAPI();
+	const changelogAPI = createChangelogAPI();
+	const linearAPI = createLinearAPI();
+	const githubAPI = createGitHubAPI();
+	const gitlabAPI = createGitLabAPI();
+	const azureDevOpsAPI = createAzureDevOpsAPI();
+	const jiraAPI = createJiraAPI();
+	const shellAPI = createShellAPI();
+	const promptOptimizerAPI = createPromptOptimizerAPI();
 
-  return {
-    // Roadmap API
-    ...roadmapAPI,
+	return {
+		// Roadmap API
+		...roadmapAPI,
 
-    // Ideation API
-    ...ideationAPI,
+		// Ideation API
+		...ideationAPI,
 
-    // Insights API
-    ...insightsAPI,
+		// Insights API
+		...insightsAPI,
 
-    // Changelog API
-    ...changelogAPI,
+		// Changelog API
+		...changelogAPI,
 
-    // Linear Integration API
-    ...linearAPI,
+		// Linear Integration API
+		...linearAPI,
 
-    // GitHub Integration API
-    ...githubAPI,
+		// GitHub Integration API
+		...githubAPI,
 
-    // GitLab Integration API
-    ...gitlabAPI,
+		// GitLab Integration API
+		...gitlabAPI,
 
-    // Azure DevOps Integration API
-    ...azureDevOpsAPI,
+		// Azure DevOps Integration API
+		...azureDevOpsAPI,
 
-    // Jira Integration API
-    ...jiraAPI,
+		// Jira Integration API
+		...jiraAPI,
 
-    // Shell Operations API
-    ...shellAPI,
+		// Shell Operations API
+		...shellAPI,
 
-    // Prompt Optimizer API
-    ...promptOptimizerAPI
-  };
+		// Prompt Optimizer API
+		...promptOptimizerAPI,
+	};
 };
 
 // Re-export individual API interfaces for consumers who need them
 export type {
-  RoadmapAPI,
-  IdeationAPI,
-  InsightsAPI,
-  ChangelogAPI,
-  LinearAPI,
-  GitHubAPI,
-  GitLabAPI,
-  AzureDevOpsAPI,
-  JiraAPI,
-  ShellAPI,
-  PromptOptimizerAPI
+	RoadmapAPI,
+	IdeationAPI,
+	InsightsAPI,
+	ChangelogAPI,
+	LinearAPI,
+	GitHubAPI,
+	GitLabAPI,
+	AzureDevOpsAPI,
+	JiraAPI,
+	ShellAPI,
+	PromptOptimizerAPI,
 };

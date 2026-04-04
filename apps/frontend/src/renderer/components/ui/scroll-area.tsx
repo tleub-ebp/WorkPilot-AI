@@ -1,5 +1,5 @@
-import * as React from 'react';
-import { cn } from '../../lib/utils';
+import * as React from "react";
+import { cn } from "../../lib/utils";
 
 /**
  * Custom scroll area that avoids Radix's ScrollAreaRoot/ScrollAreaScrollbar
@@ -15,47 +15,58 @@ import { cn } from '../../lib/utils';
  * DOM queries (`element.closest('[data-radix-scroll-area-viewport]')`) still work.
  */
 const ScrollArea = React.forwardRef<
-  HTMLDivElement,
-  React.HTMLAttributes<HTMLDivElement> & {
-    viewportClassName?: string;
-    onViewportRef?: (element: HTMLDivElement | null) => void;
-  }
->(({ className, children, viewportClassName, onViewportRef, ...props }, ref) => {
-  const viewportCallbackRef = React.useCallback(
-    (element: HTMLDivElement | null) => {
-      onViewportRef?.(element);
-    },
-    [onViewportRef]
-  );
+	HTMLDivElement,
+	React.HTMLAttributes<HTMLDivElement> & {
+		viewportClassName?: string;
+		onViewportRef?: (element: HTMLDivElement | null) => void;
+	}
+>(
+	(
+		{ className, children, viewportClassName, onViewportRef, ...props },
+		ref,
+	) => {
+		const viewportCallbackRef = React.useCallback(
+			(element: HTMLDivElement | null) => {
+				onViewportRef?.(element);
+			},
+			[onViewportRef],
+		);
 
-  return (
-    <div ref={ref} className={cn('relative overflow-hidden', className)} {...props}>
-      <div
-        ref={viewportCallbackRef}
-        data-radix-scroll-area-viewport=""
-        className={cn(
-          'h-full w-full rounded-[inherit] overflow-auto',
-          // Thin, themed scrollbar — Chrome/Safari
-          '[&::-webkit-scrollbar]:w-2.5 [&::-webkit-scrollbar]:h-2.5',
-          '[&::-webkit-scrollbar-track]:transparent',
-          '[&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-border',
-          // Firefox
-          '[scrollbar-width:thin]',
-          viewportClassName
-        )}
-      >
-        {children}
-      </div>
-    </div>
-  );
-});
-ScrollArea.displayName = 'ScrollArea';
+		return (
+			<div
+				ref={ref}
+				className={cn("relative overflow-hidden", className)}
+				{...props}
+			>
+				<div
+					ref={viewportCallbackRef}
+					data-radix-scroll-area-viewport=""
+					className={cn(
+						"h-full w-full rounded-[inherit] overflow-auto",
+						// Thin, themed scrollbar — Chrome/Safari
+						"[&::-webkit-scrollbar]:w-2.5 [&::-webkit-scrollbar]:h-2.5",
+						"[&::-webkit-scrollbar-track]:transparent",
+						"[&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-border",
+						// Firefox
+						"[scrollbar-width:thin]",
+						viewportClassName,
+					)}
+				>
+					{children}
+				</div>
+			</div>
+		);
+	},
+);
+ScrollArea.displayName = "ScrollArea";
 
 // Kept for API compatibility; scrollbars are now rendered natively via CSS on the viewport.
 const ScrollBar = React.forwardRef<
-  HTMLDivElement,
-  React.HTMLAttributes<HTMLDivElement> & { orientation?: 'vertical' | 'horizontal' }
+	HTMLDivElement,
+	React.HTMLAttributes<HTMLDivElement> & {
+		orientation?: "vertical" | "horizontal";
+	}
 >((_props, _ref) => null);
-ScrollBar.displayName = 'ScrollBar';
+ScrollBar.displayName = "ScrollBar";
 
 export { ScrollArea, ScrollBar };

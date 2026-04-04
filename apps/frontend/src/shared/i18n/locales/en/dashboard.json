@@ -1,40 +1,40 @@
 {
-  "title": "Dashboard",
-  "subtitle": "Project metrics & KPIs",
-  "kpi": {
-    "totalTasks": {
-      "title": "Total Tasks",
-      "completed": "{{count}} completed"
-    },
-    "qaFirstPassRate": {
-      "title": "QA First-Pass Rate",
-      "avgScore": "Avg score: {{score}}"
-    },
-    "totalTokens": {
-      "title": "Total Tokens",
-      "totalCost": "{{cost}} total cost"
-    },
-    "autoMerges": {
-      "title": "Auto Merges",
-      "autoManual": "{{auto}} auto / {{manual}} manual"
-    }
-  },
-  "sections": {
-    "tasksByStatus": "Tasks by Status",
-    "avgCompletionTime": "Avg Completion Time by Complexity",
-    "costByModel": "Cost by Model",
-    "tokensByProvider": "Tokens by Provider",
-    "mergeResolution": "Merge Resolution"
-  },
-  "empty": {
-    "noTasks": "No tasks",
-    "noCompletionData": "No completion data yet",
-    "noCostData": "No cost data",
-    "noTokenData": "No token data yet"
-  },
-  "merge": {
-    "automatic": "Automatic",
-    "manual": "Manual",
-    "autoResolutionRate": "Auto-resolution rate"
-  }
+	"title": "Dashboard",
+	"subtitle": "Project metrics & KPIs",
+	"kpi": {
+		"totalTasks": {
+			"title": "Total Tasks",
+			"completed": "{{count}} completed"
+		},
+		"qaFirstPassRate": {
+			"title": "QA First-Pass Rate",
+			"avgScore": "Avg score: {{score}}"
+		},
+		"totalTokens": {
+			"title": "Total Tokens",
+			"totalCost": "{{cost}} total cost"
+		},
+		"autoMerges": {
+			"title": "Auto Merges",
+			"autoManual": "{{auto}} auto / {{manual}} manual"
+		}
+	},
+	"sections": {
+		"tasksByStatus": "Tasks by Status",
+		"avgCompletionTime": "Avg Completion Time by Complexity",
+		"costByModel": "Cost by Model",
+		"tokensByProvider": "Tokens by Provider",
+		"mergeResolution": "Merge Resolution"
+	},
+	"empty": {
+		"noTasks": "No tasks",
+		"noCompletionData": "No completion data yet",
+		"noCostData": "No cost data",
+		"noTokenData": "No token data yet"
+	},
+	"merge": {
+		"automatic": "Automatic",
+		"manual": "Manual",
+		"autoResolutionRate": "Auto-resolution rate"
+	}
 }

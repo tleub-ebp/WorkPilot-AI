@@ -1,109 +1,109 @@
 {
-  "title": "Agent de Génération de Tests",
-  "description": "Analysez les gaps de couverture et générez des suites de tests complètes pour votre code.",
-  "analyzeCoverage": "Analyser la couverture",
-  "generateTests": "Générer les tests",
-  "sourceFile": {
-    "label": "Fichier source",
-    "placeholder": "Sélectionnez un fichier à analyser"
-  },
-  "existingTest": {
-    "label": "Fichier de test existant"
-  },
-  "unit": {
-    "placeholder": "Sélectionnez un fichier pour la génération de tests unitaires"
-  },
-  "coverageTarget": {
-    "label": "Couverture cible"
-  },
-  "userStory": {
-    "label": "User Story",
-    "placeholder": "Décrivez la user story ou le scénario..."
-  },
-  "targetModule": {
-    "label": "Module cible",
-    "placeholder": "ex: src/auth/login.py"
-  },
-  "actions": {
-    "analyze": "Analyser",
-    "unitTests": "Tests unitaires",
-    "e2eTests": "Tests E2E",
-    "tddMode": "Mode TDD",
-    "analyzeCoverage": "Analyser la couverture",
-    "generateTests": "Générer les tests",
-    "generateUnitTests": "Générer Tests Unitaires",
-    "generateE2ETests": "Générer Tests E2E",
-    "generateTDDTests": "Générer Tests TDD",
-    "copyAll": "Copier tout",
-    "applyTests": "Appliquer Tests",
-    "close": "Fermer",
-    "copy": "Copier",
-    "copied": "Copié",
-    "tryAgain": "Réessayer",
-    "cancel": "Annuler",
-    "apply": "Appliquer",
-    "generate": "Générer"
-  },
-  "tabs": {
-    "analyze": "Analyser",
-    "unit": "Unitaires",
-    "e2e": "E2E",
-    "tdd": "TDD"
-  },
-  "status": {
-    "analyzing": "Analyse du fichier...",
-    "generating": "Génération des tests...",
-    "error": "Erreur"
-  },
-  "coverage": {
-    "title": "Analyse de Couverture",
-    "gaps": "Gaps de couverture identifiés",
-    "noGaps": "Aucun gap de couverture trouvé",
-    "priority": {
-      "high": "Haute priorité",
-      "medium": "Priorité moyenne",
-      "low": "Basse priorité"
-    }
-  },
-  "result": {
-    "generatedTests": "Tests générés",
-    "coverageGapsFound": "Gaps de couverture trouvés",
-    "generatedUnitTests": "Tests unitaires générés",
-    "generatedE2ETests": "Tests E2E générés",
-    "generatedTDDTests": "Tests TDD générés",
-    "testFile": "Fichier de test",
-    "coverage": "Couverture",
-    "explanation": "Explication",
-    "reasoning": "Raisonnement",
-    "streamingOutput": "Sortie en direct"
-  },
-  "tdd": {
-    "description": {
-      "label": "Que doit faire ce code ?",
-      "placeholder": "Décrivez le comportement à implémenter. Exemple : une fonction qui calcule le prix total d'un panier avec taxes et remises, en gérant les paniers vides et les quantités négatives."
-    },
-    "generate": "Générer les tests (failing)"
-  },
-  "snippetType": {
-    "label": "Type de snippet",
-    "options": {
-      "function": "Fonction",
-      "class": "Classe",
-      "component": "Composant",
-      "api": "Endpoint API"
-    }
-  },
-  "language": {
-    "label": "Langue"
-  },
-  "filePicker": {
-    "selectFile": "Parcourir et sélectionner un fichier source...",
-    "filter": "Filtrer les fichiers...",
-    "empty": "Aucun fichier trouvé"
-  },
-  "errors": {
-    "noFile": "Veuillez sélectionner un fichier à analyser",
-    "noProject": "Veuillez sélectionner un projet",
-    "generic": "Une erreur est survenue lors de la génération des tests"
-  }
+	"title": "Agent de Génération de Tests",
+	"description": "Analysez les gaps de couverture et générez des suites de tests complètes pour votre code.",
+	"analyzeCoverage": "Analyser la couverture",
+	"generateTests": "Générer les tests",
+	"sourceFile": {
+		"label": "Fichier source",
+		"placeholder": "Sélectionnez un fichier à analyser"
+	},
+	"existingTest": {
+		"label": "Fichier de test existant"
+	},
+	"unit": {
+		"placeholder": "Sélectionnez un fichier pour la génération de tests unitaires"
+	},
+	"coverageTarget": {
+		"label": "Couverture cible"
+	},
+	"userStory": {
+		"label": "User Story",
+		"placeholder": "Décrivez la user story ou le scénario..."
+	},
+	"targetModule": {
+		"label": "Module cible",
+		"placeholder": "ex: src/auth/login.py"
+	},
+	"actions": {
+		"analyze": "Analyser",
+		"unitTests": "Tests unitaires",
+		"e2eTests": "Tests E2E",
+		"tddMode": "Mode TDD",
+		"analyzeCoverage": "Analyser la couverture",
+		"generateTests": "Générer les tests",
+		"generateUnitTests": "Générer Tests Unitaires",
+		"generateE2ETests": "Générer Tests E2E",
+		"generateTDDTests": "Générer Tests TDD",
+		"copyAll": "Copier tout",
+		"applyTests": "Appliquer Tests",
+		"close": "Fermer",
+		"copy": "Copier",
+		"copied": "Copié",
+		"tryAgain": "Réessayer",
+		"cancel": "Annuler",
+		"apply": "Appliquer",
+		"generate": "Générer"
+	},
+	"tabs": {
+		"analyze": "Analyser",
+		"unit": "Unitaires",
+		"e2e": "E2E",
+		"tdd": "TDD"
+	},
+	"status": {
+		"analyzing": "Analyse du fichier...",
+		"generating": "Génération des tests...",
+		"error": "Erreur"
+	},
+	"coverage": {
+		"title": "Analyse de Couverture",
+		"gaps": "Gaps de couverture identifiés",
+		"noGaps": "Aucun gap de couverture trouvé",
+		"priority": {
+			"high": "Haute priorité",
+			"medium": "Priorité moyenne",
+			"low": "Basse priorité"
+		}
+	},
+	"result": {
+		"generatedTests": "Tests générés",
+		"coverageGapsFound": "Gaps de couverture trouvés",
+		"generatedUnitTests": "Tests unitaires générés",
+		"generatedE2ETests": "Tests E2E générés",
+		"generatedTDDTests": "Tests TDD générés",
+		"testFile": "Fichier de test",
+		"coverage": "Couverture",
+		"explanation": "Explication",
+		"reasoning": "Raisonnement",
+		"streamingOutput": "Sortie en direct"
+	},
+	"tdd": {
+		"description": {
+			"label": "Que doit faire ce code ?",
+			"placeholder": "Décrivez le comportement à implémenter. Exemple : une fonction qui calcule le prix total d'un panier avec taxes et remises, en gérant les paniers vides et les quantités négatives."
+		},
+		"generate": "Générer les tests (failing)"
+	},
+	"snippetType": {
+		"label": "Type de snippet",
+		"options": {
+			"function": "Fonction",
+			"class": "Classe",
+			"component": "Composant",
+			"api": "Endpoint API"
+		}
+	},
+	"language": {
+		"label": "Langue"
+	},
+	"filePicker": {
+		"selectFile": "Parcourir et sélectionner un fichier source...",
+		"filter": "Filtrer les fichiers...",
+		"empty": "Aucun fichier trouvé"
+	},
+	"errors": {
+		"noFile": "Veuillez sélectionner un fichier à analyser",
+		"noProject": "Veuillez sélectionner un projet",
+		"generic": "Une erreur est survenue lors de la génération des tests"
+	}
 }

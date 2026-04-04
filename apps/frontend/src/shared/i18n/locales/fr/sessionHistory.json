@@ -1,24 +1,24 @@
 {
-  "title": "Historique des sessions",
-  "subtitle": "Suivez les sessions des agents, les coûts et les performances",
-  "refresh": "Actualiser",
-  "noSessions": "Aucune session trouvée",
-  "stats": {
-    "total": "Total",
-    "completed": "Terminées",
-    "failed": "Échouées",
-    "tokens": "Tokens"
-  },
-  "filters": {
-    "all": "Toutes",
-    "completed": "Terminées",
-    "failed": "Échouées",
-    "running": "En cours"
-  },
-  "session": {
-    "session": "Session",
-    "ended": "Terminée"
-  },
-  "phases": "Phases",
-  "error": "Erreur"
+	"title": "Historique des sessions",
+	"subtitle": "Suivez les sessions des agents, les coûts et les performances",
+	"refresh": "Actualiser",
+	"noSessions": "Aucune session trouvée",
+	"stats": {
+		"total": "Total",
+		"completed": "Terminées",
+		"failed": "Échouées",
+		"tokens": "Tokens"
+	},
+	"filters": {
+		"all": "Toutes",
+		"completed": "Terminées",
+		"failed": "Échouées",
+		"running": "En cours"
+	},
+	"session": {
+		"session": "Session",
+		"ended": "Terminée"
+	},
+	"phases": "Phases",
+	"error": "Erreur"
 }

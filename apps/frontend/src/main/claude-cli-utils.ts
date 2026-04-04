@@ -1,39 +1,42 @@
-import * as path from 'node:path';
-import { getAugmentedEnv, getAugmentedEnvAsync } from './env-utils';
-import { getToolPath, getToolPathAsync } from './cli-tool-manager';
-import { isWindows, getPathDelimiter } from './platform';
+import * as path from "node:path";
+import { getToolPath, getToolPathAsync } from "./cli-tool-manager";
+import { getAugmentedEnv, getAugmentedEnvAsync } from "./env-utils";
+import { getPathDelimiter, isWindows } from "./platform";
 
 export type ClaudeCliInvocation = {
-  command: string;
-  env: Record<string, string>;
+	command: string;
+	env: Record<string, string>;
 };
 
-function ensureCommandDirInPath(command: string, env: Record<string, string>): Record<string, string> {
-  if (!path.isAbsolute(command)) {
-    return env;
-  }
+function ensureCommandDirInPath(
+	command: string,
+	env: Record<string, string>,
+): Record<string, string> {
+	if (!path.isAbsolute(command)) {
+		return env;
+	}
 
-  const pathSeparator = getPathDelimiter();
-  const commandDir = path.dirname(command);
-  const currentPath = env.PATH || '';
-  const pathEntries = currentPath.split(pathSeparator);
-  const normalizedCommandDir = path.normalize(commandDir);
-  const hasCommandDir = isWindows()
-    ? pathEntries
-      .map((entry) => path.normalize(entry).toLowerCase())
-      .includes(normalizedCommandDir.toLowerCase())
-    : pathEntries
-      .map((entry) => path.normalize(entry))
-      .includes(normalizedCommandDir);
+	const pathSeparator = getPathDelimiter();
+	const commandDir = path.dirname(command);
+	const currentPath = env.PATH || "";
+	const pathEntries = currentPath.split(pathSeparator);
+	const normalizedCommandDir = path.normalize(commandDir);
+	const hasCommandDir = isWindows()
+		? pathEntries
+				.map((entry) => path.normalize(entry).toLowerCase())
+				.includes(normalizedCommandDir.toLowerCase())
+		: pathEntries
+				.map((entry) => path.normalize(entry))
+				.includes(normalizedCommandDir);
 
-  if (hasCommandDir) {
-    return env;
-  }
+	if (hasCommandDir) {
+		return env;
+	}
 
-  return {
-    ...env,
-    PATH: [commandDir, currentPath].filter(Boolean).join(pathSeparator),
-  };
+	return {
+		...env,
+		PATH: [commandDir, currentPath].filter(Boolean).join(pathSeparator),
+	};
 }
 
 /**
@@ -43,13 +46,13 @@ function ensureCommandDirInPath(command: string, env: Record<string, string>): R
  * For use in Electron main process, prefer getClaudeCliInvocationAsync() instead.
  */
 export function getClaudeCliInvocation(): ClaudeCliInvocation {
-  const command = getToolPath('claude');
-  const env = getAugmentedEnv();
+	const command = getToolPath("claude");
+	const env = getAugmentedEnv();
 
-  return {
-    command,
-    env: ensureCommandDirInPath(command, env),
-  };
+	return {
+		command,
+		env: ensureCommandDirInPath(command, env),
+	};
 }
 
 /**
@@ -65,14 +68,14 @@ export function getClaudeCliInvocation(): ClaudeCliInvocation {
  * ```
  */
 export async function getClaudeCliInvocationAsync(): Promise<ClaudeCliInvocation> {
-  // Run both detections in parallel for efficiency
-  const [command, env] = await Promise.all([
-    getToolPathAsync('claude'),
-    getAugmentedEnvAsync(),
-  ]);
+	// Run both detections in parallel for efficiency
+	const [command, env] = await Promise.all([
+		getToolPathAsync("claude"),
+		getAugmentedEnvAsync(),
+	]);
 
-  return {
-    command,
-    env: ensureCommandDirInPath(command, env),
-  };
+	return {
+		command,
+		env: ensureCommandDirInPath(command, env),
+	};
 }

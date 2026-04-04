@@ -1,6 +1,6 @@
 {
-  "tabs": {
-    "designImport": "Import Design",
-    "canvas": "Canvas"
-  }
+	"tabs": {
+		"designImport": "Import Design",
+		"canvas": "Canvas"
+	}
 }

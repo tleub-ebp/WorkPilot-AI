@@ -1,19 +1,25 @@
-import { createContext, useContext, useState, useCallback, useMemo } from 'react';
-import type { ReactNode } from 'react';
+import type { ReactNode } from "react";
+import {
+	createContext,
+	useCallback,
+	useContext,
+	useMemo,
+	useState,
+} from "react";
 
 interface ViewState {
-  showArchived: boolean;
+	showArchived: boolean;
 }
 
 interface ViewStateContextValue extends ViewState {
-  setShowArchived: (show: boolean) => void;
-  toggleShowArchived: () => void;
+	setShowArchived: (show: boolean) => void;
+	toggleShowArchived: () => void;
 }
 
 const ViewStateContext = createContext<ViewStateContextValue | null>(null);
 
 interface ViewStateProviderProps {
-  children: ReactNode;
+	children: ReactNode;
 }
 
 /**
@@ -24,30 +30,30 @@ interface ViewStateProviderProps {
  * - showArchived: Whether to show archived items in views
  */
 export function ViewStateProvider({ children }: ViewStateProviderProps) {
-  const [showArchived, setShowArchivedState] = useState(false);
+	const [showArchived, setShowArchivedState] = useState(false);
 
-  const setShowArchived = useCallback((show: boolean) => {
-    setShowArchivedState(show);
-  }, []);
+	const setShowArchived = useCallback((show: boolean) => {
+		setShowArchivedState(show);
+	}, []);
 
-  const toggleShowArchived = useCallback(() => {
-    setShowArchivedState((prev) => !prev);
-  }, []);
+	const toggleShowArchived = useCallback(() => {
+		setShowArchivedState((prev) => !prev);
+	}, []);
 
-  const value = useMemo<ViewStateContextValue>(
-    () => ({
-      showArchived,
-      setShowArchived,
-      toggleShowArchived,
-    }),
-    [showArchived, setShowArchived, toggleShowArchived]
-  );
+	const value = useMemo<ViewStateContextValue>(
+		() => ({
+			showArchived,
+			setShowArchived,
+			toggleShowArchived,
+		}),
+		[showArchived, setShowArchived, toggleShowArchived],
+	);
 
-  return (
-    <ViewStateContext.Provider value={value}>
-      {children}
-    </ViewStateContext.Provider>
-  );
+	return (
+		<ViewStateContext.Provider value={value}>
+			{children}
+		</ViewStateContext.Provider>
+	);
 }
 
 /**
@@ -69,13 +75,13 @@ export function ViewStateProvider({ children }: ViewStateProviderProps) {
  * ```
  */
 export function useViewState(): ViewStateContextValue {
-  const context = useContext(ViewStateContext);
+	const context = useContext(ViewStateContext);
 
-  if (!context) {
-    throw new Error('useViewState must be used within a ViewStateProvider');
-  }
+	if (!context) {
+		throw new Error("useViewState must be used within a ViewStateProvider");
+	}
 
-  return context;
+	return context;
 }
 
 /**
@@ -83,5 +89,5 @@ export function useViewState(): ViewStateContextValue {
  * Useful for components that may or may not be within the provider tree.
  */
 export function useViewStateOptional(): ViewStateContextValue | null {
-  return useContext(ViewStateContext);
+	return useContext(ViewStateContext);
 }

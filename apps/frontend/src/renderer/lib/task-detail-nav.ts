@@ -5,11 +5,11 @@
 let _pendingInitialTab: string | null = null;
 
 export function setPendingTaskDetailTab(tab: string): void {
-  _pendingInitialTab = tab;
+	_pendingInitialTab = tab;
 }
 
 export function consumePendingTaskDetailTab(): string | null {
-  const tab = _pendingInitialTab;
-  _pendingInitialTab = null;
-  return tab;
+	const tab = _pendingInitialTab;
+	_pendingInitialTab = null;
+	return tab;
 }

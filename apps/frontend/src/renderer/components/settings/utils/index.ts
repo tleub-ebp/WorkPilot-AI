@@ -3,4 +3,4 @@
  * Includes helpers for state management and optimization.
  */
 
-export { createHookProxy } from './hookProxyFactory';
+export { createHookProxy } from "./hookProxyFactory";

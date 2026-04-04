@@ -1,33 +1,33 @@
 {
-  "title": "Natural Language Git",
-  "description": "Manipulate git in natural language directly from the interface",
-  "command": {
-    "label": "Git Command",
-    "placeholder": "Ex: Undo my last 3 commits, show what changed since Monday, create a branch from the last stable tag...",
-    "examples": "Examples: \"show changes\", \"undo last commit\", \"create branch feature-x\", \"switch to main\", \"merge branch dev\", \"push to origin\""
-  },
-  "status": {
-    "processing": "Processing command...",
-    "error": "Error"
-  },
-  "result": {
-    "generatedCommand": "Generated Command",
-    "explanation": "Explanation",
-    "executionOutput": "Execution Output",
-    "streamingOutput": "Live Output",
-    "executionSuccess": "Command executed successfully",
-    "executionError": "Execution failed"
-  },
-  "errors": {
-    "noProject": "Please select a project to use this feature",
-    "generic": "An error occurred"
-  },
-  "actions": {
-    "close": "Close",
-    "execute": "Execute",
-    "tryAgain": "Try Again",
-    "newCommand": "New Command",
-    "copy": "Copy",
-    "copied": "Copied"
-  }
+	"title": "Natural Language Git",
+	"description": "Manipulate git in natural language directly from the interface",
+	"command": {
+		"label": "Git Command",
+		"placeholder": "Ex: Undo my last 3 commits, show what changed since Monday, create a branch from the last stable tag...",
+		"examples": "Examples: \"show changes\", \"undo last commit\", \"create branch feature-x\", \"switch to main\", \"merge branch dev\", \"push to origin\""
+	},
+	"status": {
+		"processing": "Processing command...",
+		"error": "Error"
+	},
+	"result": {
+		"generatedCommand": "Generated Command",
+		"explanation": "Explanation",
+		"executionOutput": "Execution Output",
+		"streamingOutput": "Live Output",
+		"executionSuccess": "Command executed successfully",
+		"executionError": "Execution failed"
+	},
+	"errors": {
+		"noProject": "Please select a project to use this feature",
+		"generic": "An error occurred"
+	},
+	"actions": {
+		"close": "Close",
+		"execute": "Execute",
+		"tryAgain": "Try Again",
+		"newCommand": "New Command",
+		"copy": "Copy",
+		"copied": "Copied"
+	}
 }

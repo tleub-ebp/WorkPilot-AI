@@ -1,14 +1,14 @@
 {
-  "title": "Gestion des providers LLM",
-  "claudeCodeState": "État Claude Code",
-  "authenticated": "Authentifié",
-  "notAuthenticated": "Non authentifié",
-  "availableModels": "Modèles disponibles pour «{{provider}}»",
-  "modelError": "{{error}}",
-  "noModels": "Aucun modèle détecté ou chargement...",
-  "savedConfigs": "Configurations enregistrées :",
-  "providerCapabilities": "Capacités du provider «{{provider}}» :",
-  "configureProvider": "Configurer «{{provider}}»",
-  "generateWithProvider": "Générer avec «{{provider}}»",
-  "promptPlaceholder": "Prompt..."
+	"title": "Gestion des providers LLM",
+	"claudeCodeState": "État Claude Code",
+	"authenticated": "Authentifié",
+	"notAuthenticated": "Non authentifié",
+	"availableModels": "Modèles disponibles pour «{{provider}}»",
+	"modelError": "{{error}}",
+	"noModels": "Aucun modèle détecté ou chargement...",
+	"savedConfigs": "Configurations enregistrées :",
+	"providerCapabilities": "Capacités du provider «{{provider}}» :",
+	"configureProvider": "Configurer «{{provider}}»",
+	"generateWithProvider": "Générer avec «{{provider}}»",
+	"promptPlaceholder": "Prompt..."
 }

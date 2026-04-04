@@ -10,5 +10,5 @@
  * - terminal/types.ts - TypeScript type definitions
  */
 
-export { TerminalManager } from './terminal/terminal-manager';
-export type { TerminalProcess } from './terminal/types';
+export { TerminalManager } from "./terminal/terminal-manager";
+export type { TerminalProcess } from "./terminal/types";

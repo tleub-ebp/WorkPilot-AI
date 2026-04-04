@@ -12,5 +12,13 @@
  * - changelog/types.ts: Type definitions
  */
 
-export { ChangelogService, changelogService } from './changelog/changelog-service';
-export type { ChangelogConfig, PromptBuildOptions, VersionSuggestion, GenerationScriptParams } from './changelog/types';
+export {
+	ChangelogService,
+	changelogService,
+} from "./changelog/changelog-service";
+export type {
+	ChangelogConfig,
+	GenerationScriptParams,
+	PromptBuildOptions,
+	VersionSuggestion,
+} from "./changelog/types";

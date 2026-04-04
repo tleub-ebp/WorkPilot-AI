@@ -1,70 +1,82 @@
 {
-  "title": "Build Analytics",
-  "subtitle": "Monitor agent performance, token usage, and build metrics",
-  "periodSelector": {
-    "last7Days": "Last 7 days",
-    "last30Days": "Last 30 days",
-    "last90Days": "Last 90 days"
-  },
-  "actions": { "refresh": "Refresh" },
-  "kpis": {
-    "totalBuilds": { "title": "Total Tasks", "description": "Total number of tasks" },
-    "successfulBuilds": { "title": "Completed", "description": "Successfully completed tasks" },
-    "successRate": { "title": "Success Rate", "description": "Task completion rate" },
-    "totalTokens": { "title": "Total Tokens", "description": "Across all tasks" },
-    "totalCost": { "title": "Total Cost", "description": "LLM usage cost" }
-  },
-  "tabs": {
-    "overview": "Overview",
-    "costs": "Costs",
-    "performance": "Performance",
-    "builds": "Builds",
-    "errors": "Errors"
-  },
-  "sections": {
-    "tasksByStatus": "Tasks by Status",
-    "qaMetrics": "QA & Merges",
-    "costByProvider": "Cost by Provider",
-    "costByModel": "Cost by Model",
-    "tokensByProvider": "Tokens by Provider",
-    "completionByComplexity": "Avg. Completion by Complexity",
-    "tokenSplit": "Token Breakdown",
-    "recentBuilds": "Recent Builds",
-    "phasePerformance": "Phase Performance",
-    "agentPerformance": "Agent Performance",
-    "tokenUsageTrend": "Token Usage Trend",
-    "topErrorTypes": "Top Error Types",
-    "allBuilds": "All Builds"
-  },
-  "fields": {
-    "dailyAvg": "Daily avg.",
-    "overDays": "Over {{days}} days",
-    "trend": "vs prev. period",
-    "qaPassRate": "QA first-pass rate",
-    "mergeAuto": "Auto-merged",
-    "mergeManual": "Manual merge",
-    "totalTokens": "Total",
-    "inputTokens": "Input",
-    "outputTokens": "Output",
-    "duration": "Duration",
-    "tokens": "Tokens",
-    "cost": "Cost",
-    "qaIterations": "QA Iterations",
-    "successRate": "Success Rate",
-    "avgDuration": "Avg Duration",
-    "avgTokens": "Avg Tokens",
-    "avgCost": "Avg Cost",
-    "builds": "builds",
-    "occurrences": "occurrences"
-  },
-  "badges": { "success": "Success", "failed": "Failed" },
-  "empty": { "noProject": "Select a project to view analytics" },
-  "status": {
-    "loading": "Loading analytics...",
-    "error": "Error Loading Analytics",
-    "retry": "Retry",
-    "noData": "No data available",
-    "noBuilds": "No builds found",
-    "noErrors": "No errors found"
-  }
+	"title": "Build Analytics",
+	"subtitle": "Monitor agent performance, token usage, and build metrics",
+	"periodSelector": {
+		"last7Days": "Last 7 days",
+		"last30Days": "Last 30 days",
+		"last90Days": "Last 90 days"
+	},
+	"actions": { "refresh": "Refresh" },
+	"kpis": {
+		"totalBuilds": {
+			"title": "Total Tasks",
+			"description": "Total number of tasks"
+		},
+		"successfulBuilds": {
+			"title": "Completed",
+			"description": "Successfully completed tasks"
+		},
+		"successRate": {
+			"title": "Success Rate",
+			"description": "Task completion rate"
+		},
+		"totalTokens": {
+			"title": "Total Tokens",
+			"description": "Across all tasks"
+		},
+		"totalCost": { "title": "Total Cost", "description": "LLM usage cost" }
+	},
+	"tabs": {
+		"overview": "Overview",
+		"costs": "Costs",
+		"performance": "Performance",
+		"builds": "Builds",
+		"errors": "Errors"
+	},
+	"sections": {
+		"tasksByStatus": "Tasks by Status",
+		"qaMetrics": "QA & Merges",
+		"costByProvider": "Cost by Provider",
+		"costByModel": "Cost by Model",
+		"tokensByProvider": "Tokens by Provider",
+		"completionByComplexity": "Avg. Completion by Complexity",
+		"tokenSplit": "Token Breakdown",
+		"recentBuilds": "Recent Builds",
+		"phasePerformance": "Phase Performance",
+		"agentPerformance": "Agent Performance",
+		"tokenUsageTrend": "Token Usage Trend",
+		"topErrorTypes": "Top Error Types",
+		"allBuilds": "All Builds"
+	},
+	"fields": {
+		"dailyAvg": "Daily avg.",
+		"overDays": "Over {{days}} days",
+		"trend": "vs prev. period",
+		"qaPassRate": "QA first-pass rate",
+		"mergeAuto": "Auto-merged",
+		"mergeManual": "Manual merge",
+		"totalTokens": "Total",
+		"inputTokens": "Input",
+		"outputTokens": "Output",
+		"duration": "Duration",
+		"tokens": "Tokens",
+		"cost": "Cost",
+		"qaIterations": "QA Iterations",
+		"successRate": "Success Rate",
+		"avgDuration": "Avg Duration",
+		"avgTokens": "Avg Tokens",
+		"avgCost": "Avg Cost",
+		"builds": "builds",
+		"occurrences": "occurrences"
+	},
+	"badges": { "success": "Success", "failed": "Failed" },
+	"empty": { "noProject": "Select a project to view analytics" },
+	"status": {
+		"loading": "Loading analytics...",
+		"error": "Error Loading Analytics",
+		"retry": "Retry",
+		"noData": "No data available",
+		"noBuilds": "No builds found",
+		"noErrors": "No errors found"
+	}
 }

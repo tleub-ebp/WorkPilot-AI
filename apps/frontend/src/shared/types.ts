@@ -5,4 +5,4 @@
  * See ./types/ directory for the actual type definitions.
  */
 
-export * from './types/index';
+export * from "./types/index";

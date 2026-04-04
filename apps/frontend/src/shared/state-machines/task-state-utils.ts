@@ -5,7 +5,7 @@
  * derived from the task machine definition. Used by task-state-manager and
  * agent-events-handlers to avoid duplicate constants.
  */
-import type { TaskStatus, ReviewReason, ExecutionPhase } from '../types';
+import type { ExecutionPhase, ReviewReason, TaskStatus } from "../types";
 
 /**
  * All XState task state names.
@@ -14,12 +14,20 @@ import type { TaskStatus, ReviewReason, ExecutionPhase } from '../types';
  * If you add/remove a state in the machine, update this array.
  */
 export const TASK_STATE_NAMES = [
-  'backlog', 'planning', 'plan_review', 'coding',
-  'qa_review', 'qa_fixing', 'human_review', 'error',
-  'creating_pr', 'pr_created', 'done'
+	"backlog",
+	"planning",
+	"plan_review",
+	"coding",
+	"qa_review",
+	"qa_fixing",
+	"human_review",
+	"error",
+	"creating_pr",
+	"pr_created",
+	"done",
 ] as const;
 
-export type TaskStateName = typeof TASK_STATE_NAMES[number];
+export type TaskStateName = (typeof TASK_STATE_NAMES)[number];
 
 /**
  * XState states where the task has "settled" — the state machine has determined
@@ -32,23 +40,30 @@ export type TaskStateName = typeof TASK_STATE_NAMES[number];
  * to `coding` before the new agent process emits events, so the guard no longer
  * blocks — new execution-progress events flow through normally.
  */
-export const XSTATE_SETTLED_STATES: ReadonlySet<string> = new Set<TaskStateName>([
-  'plan_review', 'human_review', 'error', 'creating_pr', 'pr_created', 'done'
-]);
+export const XSTATE_SETTLED_STATES: ReadonlySet<string> =
+	new Set<TaskStateName>([
+		"plan_review",
+		"human_review",
+		"error",
+		"creating_pr",
+		"pr_created",
+		"done",
+	]);
 
 /** Maps XState states to execution phases. */
-export const XSTATE_TO_PHASE: Record<TaskStateName, ExecutionPhase> & Record<string, ExecutionPhase | undefined> = {
-  'backlog': 'idle',
-  'planning': 'planning',
-  'plan_review': 'planning',
-  'coding': 'coding',
-  'qa_review': 'qa_review',
-  'qa_fixing': 'qa_fixing',
-  'human_review': 'complete',
-  'error': 'failed',
-  'creating_pr': 'complete',
-  'pr_created': 'complete',
-  'done': 'complete'
+export const XSTATE_TO_PHASE: Record<TaskStateName, ExecutionPhase> &
+	Record<string, ExecutionPhase | undefined> = {
+	backlog: "idle",
+	planning: "planning",
+	plan_review: "planning",
+	coding: "coding",
+	qa_review: "qa_review",
+	qa_fixing: "qa_fixing",
+	human_review: "complete",
+	error: "failed",
+	creating_pr: "complete",
+	pr_created: "complete",
+	done: "complete",
 };
 
 /**
@@ -59,31 +74,34 @@ export const XSTATE_TO_PHASE: Record<TaskStateName, ExecutionPhase> & Record<str
  * callers that don't have access to the XState context).
  */
 export function mapStateToLegacy(
-  state: string,
-  reviewReason?: ReviewReason
+	state: string,
+	reviewReason?: ReviewReason,
 ): { status: TaskStatus; reviewReason?: ReviewReason } {
-  switch (state) {
-    case 'backlog':
-      return { status: 'backlog' };
-    case 'planning':
-    case 'coding':
-      return { status: 'in_progress' };
-    case 'plan_review':
-      return { status: 'human_review', reviewReason: 'plan_review' };
-    case 'qa_review':
-    case 'qa_fixing':
-      return { status: 'ai_review' };
-    case 'human_review':
-      return { status: 'human_review', reviewReason: reviewReason ?? 'completed' };
-    case 'error':
-      return { status: 'human_review', reviewReason: 'errors' };
-    case 'creating_pr':
-      return { status: 'human_review', reviewReason: 'completed' };
-    case 'pr_created':
-      return { status: 'pr_created' };
-    case 'done':
-      return { status: 'done' };
-    default:
-      return { status: 'backlog' };
-  }
+	switch (state) {
+		case "backlog":
+			return { status: "backlog" };
+		case "planning":
+		case "coding":
+			return { status: "in_progress" };
+		case "plan_review":
+			return { status: "human_review", reviewReason: "plan_review" };
+		case "qa_review":
+		case "qa_fixing":
+			return { status: "ai_review" };
+		case "human_review":
+			return {
+				status: "human_review",
+				reviewReason: reviewReason ?? "completed",
+			};
+		case "error":
+			return { status: "human_review", reviewReason: "errors" };
+		case "creating_pr":
+			return { status: "human_review", reviewReason: "completed" };
+		case "pr_created":
+			return { status: "pr_created" };
+		case "done":
+			return { status: "done" };
+		default:
+			return { status: "backlog" };
+	}
 }

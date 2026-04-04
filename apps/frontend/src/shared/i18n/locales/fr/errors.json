@@ -1,18 +1,18 @@
 {
-  "boundary": {
-    "title": "Une erreur est survenue",
-    "description": "Une erreur s'est produite lors du rendu de ce contenu.",
-    "tryAgain": "Réessayer"
-  },
-  "task": {
-    "parseImplementationPlan": "Échec de l'analyse du fichier implementation_plan.json pour {{specId}} : {{error}}",
-    "jsonError": {
-      "titleSuffix": "(Erreur JSON)",
-      "description": "⚠️ Erreur d'analyse JSON : {{error}}\n\nLe fichier implementation_plan.json est malformé. Exécutez la correction automatique du backend ou réparez le fichier manuellement."
-    }
-  },
-  "noTasks": "Aucune tâche terminée",
-  "noTasksDescription": "Terminez d'abord quelques tâches pour générer un journal à partir de celles-ci.",
-  "noCommitsGitHistory": "Aucun commit trouvé dans la plage de temps spécifiée. Essayez d'ajuster vos filtres.",
-  "noCommitsBranchDiff": "Aucun commit trouvé entre les branches sélectionnées. Les branches sont peut-être synchronisées."
+	"boundary": {
+		"title": "Une erreur est survenue",
+		"description": "Une erreur s'est produite lors du rendu de ce contenu.",
+		"tryAgain": "Réessayer"
+	},
+	"task": {
+		"parseImplementationPlan": "Échec de l'analyse du fichier implementation_plan.json pour {{specId}} : {{error}}",
+		"jsonError": {
+			"titleSuffix": "(Erreur JSON)",
+			"description": "⚠️ Erreur d'analyse JSON : {{error}}\n\nLe fichier implementation_plan.json est malformé. Exécutez la correction automatique du backend ou réparez le fichier manuellement."
+		}
+	},
+	"noTasks": "Aucune tâche terminée",
+	"noTasksDescription": "Terminez d'abord quelques tâches pour générer un journal à partir de celles-ci.",
+	"noCommitsGitHistory": "Aucun commit trouvé dans la plage de temps spécifiée. Essayez d'ajuster vos filtres.",
+	"noCommitsBranchDiff": "Aucun commit trouvé entre les branches sélectionnées. Les branches sont peut-être synchronisées."
 }

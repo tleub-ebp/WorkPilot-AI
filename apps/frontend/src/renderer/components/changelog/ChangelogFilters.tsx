@@ -1,420 +1,509 @@
-import { FileText, History, GitBranch, Tag, Calendar, RefreshCw, Loader2, AlertCircle } from 'lucide-react';
-import { useTranslation } from 'react-i18next';
-import { Button } from '../ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
-import { Input } from '../ui/input';
-import { Label } from '../ui/label';
-import { Checkbox } from '../ui/checkbox';
-import { Badge } from '../ui/badge';
-import { RadioGroup, RadioGroupItem } from '../ui/radio-group';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
-import { cn } from '../../lib/utils';
-import type { ChangelogSourceMode, GitBranchInfo, GitTagInfo } from '../../../shared/types';
+import {
+	AlertCircle,
+	Calendar,
+	FileText,
+	GitBranch,
+	History,
+	Loader2,
+	RefreshCw,
+	Tag,
+} from "lucide-react";
+import { useTranslation } from "react-i18next";
+import type {
+	ChangelogSourceMode,
+	GitBranchInfo,
+	GitTagInfo,
+} from "../../../shared/types";
+import { cn } from "../../lib/utils";
+import { Badge } from "../ui/badge";
+import { Button } from "../ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
+import { Checkbox } from "../ui/checkbox";
+import { Input } from "../ui/input";
+import { Label } from "../ui/label";
+import { RadioGroup, RadioGroupItem } from "../ui/radio-group";
+import {
+	Select,
+	SelectContent,
+	SelectItem,
+	SelectTrigger,
+	SelectValue,
+} from "../ui/select";
 
-type GitHistoryType = 'recent' | 'since-date' | 'tag-range' | 'since-version';
+type GitHistoryType = "recent" | "since-date" | "tag-range" | "since-version";
 
 interface ChangelogFiltersProps {
-  // Source mode
-  readonly sourceMode: ChangelogSourceMode;
-  readonly onSourceModeChange: (mode: ChangelogSourceMode) => void;
-  // Task counts
-  readonly doneTasksCount: number;
-  // Git data
-  readonly branches: GitBranchInfo[];
-  readonly tags: GitTagInfo[];
-  readonly defaultBranch: string;
-  readonly isLoadingGitData: boolean;
-  readonly isLoadingCommits: boolean;
-  // Git history options
-  readonly gitHistoryType: GitHistoryType;
-  readonly gitHistoryCount: number;
-  readonly gitHistorySinceDate: string;
-  readonly gitHistoryFromTag: string;
-  readonly gitHistoryToTag: string;
-  readonly gitHistorySinceVersion: string;
-  readonly includeMergeCommits: boolean;
-  readonly onGitHistoryTypeChange: (type: GitHistoryType) => void;
-  readonly onGitHistoryCountChange: (count: number) => void;
-  readonly onGitHistorySinceDateChange: (date: string) => void;
-  readonly onGitHistoryFromTagChange: (tag: string) => void;
-  readonly onGitHistoryToTagChange: (tag: string) => void;
-  readonly onGitHistorySinceVersionChange: (version: string) => void;
-  readonly onIncludeMergeCommitsChange: (include: boolean) => void;
-  // Branch diff options
-  readonly baseBranch: string;
-  readonly compareBranch: string;
-  readonly onBaseBranchChange: (branch: string) => void;
-  readonly onCompareBranchChange: (branch: string) => void;
-  // Actions
-  readonly onLoadCommitsPreview: () => void;
+	// Source mode
+	readonly sourceMode: ChangelogSourceMode;
+	readonly onSourceModeChange: (mode: ChangelogSourceMode) => void;
+	// Task counts
+	readonly doneTasksCount: number;
+	// Git data
+	readonly branches: GitBranchInfo[];
+	readonly tags: GitTagInfo[];
+	readonly defaultBranch: string;
+	readonly isLoadingGitData: boolean;
+	readonly isLoadingCommits: boolean;
+	// Git history options
+	readonly gitHistoryType: GitHistoryType;
+	readonly gitHistoryCount: number;
+	readonly gitHistorySinceDate: string;
+	readonly gitHistoryFromTag: string;
+	readonly gitHistoryToTag: string;
+	readonly gitHistorySinceVersion: string;
+	readonly includeMergeCommits: boolean;
+	readonly onGitHistoryTypeChange: (type: GitHistoryType) => void;
+	readonly onGitHistoryCountChange: (count: number) => void;
+	readonly onGitHistorySinceDateChange: (date: string) => void;
+	readonly onGitHistoryFromTagChange: (tag: string) => void;
+	readonly onGitHistoryToTagChange: (tag: string) => void;
+	readonly onGitHistorySinceVersionChange: (version: string) => void;
+	readonly onIncludeMergeCommitsChange: (include: boolean) => void;
+	// Branch diff options
+	readonly baseBranch: string;
+	readonly compareBranch: string;
+	readonly onBaseBranchChange: (branch: string) => void;
+	readonly onCompareBranchChange: (branch: string) => void;
+	// Actions
+	readonly onLoadCommitsPreview: () => void;
 }
 
 export function ChangelogFilters({
-  sourceMode,
-  onSourceModeChange,
-  doneTasksCount,
-  branches,
-  tags,
-  defaultBranch,
-  isLoadingGitData,
-  isLoadingCommits,
-  gitHistoryType,
-  gitHistoryCount,
-  gitHistorySinceDate,
-  gitHistoryFromTag,
-  gitHistoryToTag,
-  gitHistorySinceVersion,
-  includeMergeCommits,
-  onGitHistoryTypeChange,
-  onGitHistoryCountChange,
-  onGitHistorySinceDateChange,
-  onGitHistoryFromTagChange,
-  onGitHistoryToTagChange,
-  onGitHistorySinceVersionChange,
-  onIncludeMergeCommitsChange,
-  baseBranch,
-  compareBranch,
-  onBaseBranchChange,
-  onCompareBranchChange,
-  onLoadCommitsPreview
+	sourceMode,
+	onSourceModeChange,
+	doneTasksCount,
+	branches,
+	tags,
+	defaultBranch,
+	isLoadingGitData,
+	isLoadingCommits,
+	gitHistoryType,
+	gitHistoryCount,
+	gitHistorySinceDate,
+	gitHistoryFromTag,
+	gitHistoryToTag,
+	gitHistorySinceVersion,
+	includeMergeCommits,
+	onGitHistoryTypeChange,
+	onGitHistoryCountChange,
+	onGitHistorySinceDateChange,
+	onGitHistoryFromTagChange,
+	onGitHistoryToTagChange,
+	onGitHistorySinceVersionChange,
+	onIncludeMergeCommitsChange,
+	baseBranch,
+	compareBranch,
+	onBaseBranchChange,
+	onCompareBranchChange,
+	onLoadCommitsPreview,
 }: ChangelogFiltersProps) {
-  const { t } = useTranslation(['changelog', 'common']);
-  const localBranches = branches.filter((b) => !b.isRemote);
+	const { t } = useTranslation(["changelog", "common"]);
+	const localBranches = branches.filter((b) => !b.isRemote);
 
-  return (
-    <div className="w-80 shrink-0 border-r border-border overflow-y-auto">
-      <div className="p-6 space-y-6">
-        {/* Source Mode Selection */}
-        <div className="space-y-3">
-          <Label className="text-sm font-medium">{t('changelog:source.title')}</Label>
-          <RadioGroup
-            value={sourceMode}
-            onValueChange={(value) => onSourceModeChange(value as ChangelogSourceMode)}
-            className="space-y-2"
-          >
-{/* biome-ignore lint/a11y/noLabelWithoutControl: intentional */}
-            <label
-              className={cn(
-                'flex items-start gap-3 rounded-lg border p-3 cursor-pointer transition-all',
-                sourceMode === 'tasks'
-                  ? 'border-primary bg-primary/5'
-                  : 'border-border hover:border-primary/50'
-              )}
-            >
-              <RadioGroupItem value="tasks" className="mt-1" />
-              <div className="flex-1">
-                <div className="flex items-center gap-2">
-                  <FileText className="h-4 w-4" />
-                  <span className="font-medium text-sm">
-                    {t('changelog:source.tasks.label')}
-                  </span>
-                  <Badge variant="secondary" className="ml-auto text-xs">
-                    {doneTasksCount}
-                  </Badge>
-                </div>
-                <p className="text-xs text-muted-foreground mt-1">
-                  {t('changelog:source.tasks.description')}
-                </p>
-              </div>
-            </label>
-{/* biome-ignore lint/a11y/noLabelWithoutControl: intentional */}
-            <label
-              className={cn(
-                'flex items-start gap-3 rounded-lg border p-3 cursor-pointer transition-all',
-                sourceMode === 'git-history'
-                  ? 'border-primary bg-primary/5'
-                  : 'border-border hover:border-primary/50'
-              )}
-            >
-              <RadioGroupItem value="git-history" className="mt-1" />
-              <div className="flex-1">
-                <div className="flex items-center gap-2">
-                  <History className="h-4 w-4" />
-                  <span className="font-medium text-sm">
-                    {t('changelog:source.gitHistory.label')}
-                  </span>
-                </div>
-                <p className="text-xs text-muted-foreground mt-1">
-                  {t('changelog:source.gitHistory.description')}
-                </p>
-              </div>
-            </label>
-{/* biome-ignore lint/a11y/noLabelWithoutControl: intentional */}
-            <label
-              className={cn(
-                'flex items-start gap-3 rounded-lg border p-3 cursor-pointer transition-all',
-                sourceMode === 'branch-diff'
-                  ? 'border-primary bg-primary/5'
-                  : 'border-border hover:border-primary/50'
-              )}
-            >
-              <RadioGroupItem value="branch-diff" className="mt-1" />
-              <div className="flex-1">
-                <div className="flex items-center gap-2">
-                  <GitBranch className="h-4 w-4" />
-                  <span className="font-medium text-sm">
-                    {t('changelog:source.branchDiff.label')}
-                  </span>
-                </div>
-                <p className="text-xs text-muted-foreground mt-1">
-                  {t('changelog:source.branchDiff.description')}
-                </p>
-              </div>
-            </label>
-          </RadioGroup>
-        </div>
+	return (
+		<div className="w-80 shrink-0 border-r border-border overflow-y-auto">
+			<div className="p-6 space-y-6">
+				{/* Source Mode Selection */}
+				<div className="space-y-3">
+					<Label className="text-sm font-medium">
+						{t("changelog:source.title")}
+					</Label>
+					<RadioGroup
+						value={sourceMode}
+						onValueChange={(value) =>
+							onSourceModeChange(value as ChangelogSourceMode)
+						}
+						className="space-y-2"
+					>
+						{/* biome-ignore lint/a11y/noLabelWithoutControl: intentional */}
+						<label
+							className={cn(
+								"flex items-start gap-3 rounded-lg border p-3 cursor-pointer transition-all",
+								sourceMode === "tasks"
+									? "border-primary bg-primary/5"
+									: "border-border hover:border-primary/50",
+							)}
+						>
+							<RadioGroupItem value="tasks" className="mt-1" />
+							<div className="flex-1">
+								<div className="flex items-center gap-2">
+									<FileText className="h-4 w-4" />
+									<span className="font-medium text-sm">
+										{t("changelog:source.tasks.label")}
+									</span>
+									<Badge variant="secondary" className="ml-auto text-xs">
+										{doneTasksCount}
+									</Badge>
+								</div>
+								<p className="text-xs text-muted-foreground mt-1">
+									{t("changelog:source.tasks.description")}
+								</p>
+							</div>
+						</label>
+						{/* biome-ignore lint/a11y/noLabelWithoutControl: intentional */}
+						<label
+							className={cn(
+								"flex items-start gap-3 rounded-lg border p-3 cursor-pointer transition-all",
+								sourceMode === "git-history"
+									? "border-primary bg-primary/5"
+									: "border-border hover:border-primary/50",
+							)}
+						>
+							<RadioGroupItem value="git-history" className="mt-1" />
+							<div className="flex-1">
+								<div className="flex items-center gap-2">
+									<History className="h-4 w-4" />
+									<span className="font-medium text-sm">
+										{t("changelog:source.gitHistory.label")}
+									</span>
+								</div>
+								<p className="text-xs text-muted-foreground mt-1">
+									{t("changelog:source.gitHistory.description")}
+								</p>
+							</div>
+						</label>
+						{/* biome-ignore lint/a11y/noLabelWithoutControl: intentional */}
+						<label
+							className={cn(
+								"flex items-start gap-3 rounded-lg border p-3 cursor-pointer transition-all",
+								sourceMode === "branch-diff"
+									? "border-primary bg-primary/5"
+									: "border-border hover:border-primary/50",
+							)}
+						>
+							<RadioGroupItem value="branch-diff" className="mt-1" />
+							<div className="flex-1">
+								<div className="flex items-center gap-2">
+									<GitBranch className="h-4 w-4" />
+									<span className="font-medium text-sm">
+										{t("changelog:source.branchDiff.label")}
+									</span>
+								</div>
+								<p className="text-xs text-muted-foreground mt-1">
+									{t("changelog:source.branchDiff.description")}
+								</p>
+							</div>
+						</label>
+					</RadioGroup>
+				</div>
 
-        {/* Git History Options */}
-        {sourceMode === 'git-history' && (
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="text-sm">{t('changelog:gitHistory.title')}</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              {/* History Type */}
-              <div className="space-y-2">
-                <Label className="text-xs">{t('changelog:gitHistory.typeLabel')}</Label>
-                <Select
-                  value={gitHistoryType}
-                  onValueChange={(v) => onGitHistoryTypeChange(v as GitHistoryType)}
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="since-version">
-                      <div className="flex items-center gap-2">
-                        <Tag className="h-3 w-3" />
-                        {t('changelog:gitHistory.types.sinceVersion')}
-                      </div>
-                    </SelectItem>
-                    <SelectItem value="recent">
-                      <div className="flex items-center gap-2">
-                        <History className="h-3 w-3" />
-                        {t('changelog:gitHistory.types.recent')}
-                      </div>
-                    </SelectItem>
-                    <SelectItem value="since-date">
-                      <div className="flex items-center gap-2">
-                        <Calendar className="h-3 w-3" />
-                        {t('changelog:gitHistory.types.sinceDate')}
-                      </div>
-                    </SelectItem>
-                    <SelectItem value="tag-range">
-                      <div className="flex items-center gap-2">
-                        <Tag className="h-3 w-3" />
-                        {t('changelog:gitHistory.types.tagRange')}
-                      </div>
-                    </SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
+				{/* Git History Options */}
+				{sourceMode === "git-history" && (
+					<Card>
+						<CardHeader className="pb-3">
+							<CardTitle className="text-sm">
+								{t("changelog:gitHistory.title")}
+							</CardTitle>
+						</CardHeader>
+						<CardContent className="space-y-4">
+							{/* History Type */}
+							<div className="space-y-2">
+								<Label className="text-xs">
+									{t("changelog:gitHistory.typeLabel")}
+								</Label>
+								<Select
+									value={gitHistoryType}
+									onValueChange={(v) =>
+										onGitHistoryTypeChange(v as GitHistoryType)
+									}
+								>
+									<SelectTrigger>
+										<SelectValue />
+									</SelectTrigger>
+									<SelectContent>
+										<SelectItem value="since-version">
+											<div className="flex items-center gap-2">
+												<Tag className="h-3 w-3" />
+												{t("changelog:gitHistory.types.sinceVersion")}
+											</div>
+										</SelectItem>
+										<SelectItem value="recent">
+											<div className="flex items-center gap-2">
+												<History className="h-3 w-3" />
+												{t("changelog:gitHistory.types.recent")}
+											</div>
+										</SelectItem>
+										<SelectItem value="since-date">
+											<div className="flex items-center gap-2">
+												<Calendar className="h-3 w-3" />
+												{t("changelog:gitHistory.types.sinceDate")}
+											</div>
+										</SelectItem>
+										<SelectItem value="tag-range">
+											<div className="flex items-center gap-2">
+												<Tag className="h-3 w-3" />
+												{t("changelog:gitHistory.types.tagRange")}
+											</div>
+										</SelectItem>
+									</SelectContent>
+								</Select>
+							</div>
 
-              {/* Type-specific options */}
-              {gitHistoryType === 'recent' && (
-                <div className="space-y-2">
-                  <Label className="text-xs">{t('changelog:gitHistory.countLabel')}</Label>
-                  <Input
-                    type="number"
-                    min={1}
-                    max={500}
-                    value={gitHistoryCount}
-                    onChange={(e) => onGitHistoryCountChange(Number.parseInt(e.target.value, 10) || 25)}
-                  />
-                </div>
-              )}
+							{/* Type-specific options */}
+							{gitHistoryType === "recent" && (
+								<div className="space-y-2">
+									<Label className="text-xs">
+										{t("changelog:gitHistory.countLabel")}
+									</Label>
+									<Input
+										type="number"
+										min={1}
+										max={500}
+										value={gitHistoryCount}
+										onChange={(e) =>
+											onGitHistoryCountChange(
+												Number.parseInt(e.target.value, 10) || 25,
+											)
+										}
+									/>
+								</div>
+							)}
 
-              {gitHistoryType === 'since-date' && (
-                <div className="space-y-2">
-                  <Label className="text-xs">{t('changelog:gitHistory.dateLabel')}</Label>
-                  <Input
-                    type="date"
-                    value={gitHistorySinceDate}
-                    onChange={(e) => onGitHistorySinceDateChange(e.target.value)}
-                  />
-                </div>
-              )}
+							{gitHistoryType === "since-date" && (
+								<div className="space-y-2">
+									<Label className="text-xs">
+										{t("changelog:gitHistory.dateLabel")}
+									</Label>
+									<Input
+										type="date"
+										value={gitHistorySinceDate}
+										onChange={(e) =>
+											onGitHistorySinceDateChange(e.target.value)
+										}
+									/>
+								</div>
+							)}
 
-              {gitHistoryType === 'tag-range' && (
-                <>
-                  <div className="space-y-2">
-                    <Label className="text-xs">{t('changelog:gitHistory.fromTagLabel')}</Label>
-                    <Select value={gitHistoryFromTag} onValueChange={onGitHistoryFromTagChange}>
-                      <SelectTrigger>
-                        <SelectValue placeholder={t('changelog:branchDiff.selectBranch')} />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {tags.map((tag) => (
-                          <SelectItem key={tag.name} value={tag.name}>
-                            {tag.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div className="space-y-2">
-                    <Label className="text-xs">{t('changelog:gitHistory.toTagLabel')}</Label>
-                    <Select value={gitHistoryToTag || 'HEAD'} onValueChange={(v) => onGitHistoryToTagChange(v === 'HEAD' ? '' : v)}>
-                      <SelectTrigger>
-                        <SelectValue placeholder={t('changelog:gitHistory.toHead')} />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="HEAD">{t('changelog:gitHistory.toHead')}</SelectItem>
-                        {tags.map((tag) => (
-                          <SelectItem key={tag.name} value={tag.name}>
-                            {tag.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </>
-              )}
+							{gitHistoryType === "tag-range" && (
+								<>
+									<div className="space-y-2">
+										<Label className="text-xs">
+											{t("changelog:gitHistory.fromTagLabel")}
+										</Label>
+										<Select
+											value={gitHistoryFromTag}
+											onValueChange={onGitHistoryFromTagChange}
+										>
+											<SelectTrigger>
+												<SelectValue
+													placeholder={t("changelog:branchDiff.selectBranch")}
+												/>
+											</SelectTrigger>
+											<SelectContent>
+												{tags.map((tag) => (
+													<SelectItem key={tag.name} value={tag.name}>
+														{tag.name}
+													</SelectItem>
+												))}
+											</SelectContent>
+										</Select>
+									</div>
+									<div className="space-y-2">
+										<Label className="text-xs">
+											{t("changelog:gitHistory.toTagLabel")}
+										</Label>
+										<Select
+											value={gitHistoryToTag || "HEAD"}
+											onValueChange={(v) =>
+												onGitHistoryToTagChange(v === "HEAD" ? "" : v)
+											}
+										>
+											<SelectTrigger>
+												<SelectValue
+													placeholder={t("changelog:gitHistory.toHead")}
+												/>
+											</SelectTrigger>
+											<SelectContent>
+												<SelectItem value="HEAD">
+													{t("changelog:gitHistory.toHead")}
+												</SelectItem>
+												{tags.map((tag) => (
+													<SelectItem key={tag.name} value={tag.name}>
+														{tag.name}
+													</SelectItem>
+												))}
+											</SelectContent>
+										</Select>
+									</div>
+								</>
+							)}
 
-              {gitHistoryType === 'since-version' && (
-                <div className="space-y-2">
-                  <Label className="text-xs">{t('changelog:gitHistory.versionLabel')}</Label>
-                  <Select value={gitHistorySinceVersion} onValueChange={onGitHistorySinceVersionChange}>
-                    <SelectTrigger>
-                      <SelectValue placeholder={t('changelog:branchDiff.selectBranch')} />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {tags.map((tag) => (
-                        <SelectItem key={tag.name} value={tag.name}>
-                          {tag.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <p className="text-xs text-muted-foreground">
-                    {t('changelog:gitHistory.sinceVersionDescription')}
-                  </p>
-                </div>
-              )}
+							{gitHistoryType === "since-version" && (
+								<div className="space-y-2">
+									<Label className="text-xs">
+										{t("changelog:gitHistory.versionLabel")}
+									</Label>
+									<Select
+										value={gitHistorySinceVersion}
+										onValueChange={onGitHistorySinceVersionChange}
+									>
+										<SelectTrigger>
+											<SelectValue
+												placeholder={t("changelog:branchDiff.selectBranch")}
+											/>
+										</SelectTrigger>
+										<SelectContent>
+											{tags.map((tag) => (
+												<SelectItem key={tag.name} value={tag.name}>
+													{tag.name}
+												</SelectItem>
+											))}
+										</SelectContent>
+									</Select>
+									<p className="text-xs text-muted-foreground">
+										{t("changelog:gitHistory.sinceVersionDescription")}
+									</p>
+								</div>
+							)}
 
-              {/* Include merge commits */}
-              <div className="flex items-center gap-2">
-                <Checkbox
-                  id="merge-commits"
-                  checked={includeMergeCommits}
-                  onCheckedChange={(checked) => onIncludeMergeCommitsChange(checked as boolean)}
-                />
-                <Label htmlFor="merge-commits" className="text-xs cursor-pointer">
-                  {t('changelog:gitHistory.includeMergeCommits')}
-                </Label>
-              </div>
+							{/* Include merge commits */}
+							<div className="flex items-center gap-2">
+								<Checkbox
+									id="merge-commits"
+									checked={includeMergeCommits}
+									onCheckedChange={(checked) =>
+										onIncludeMergeCommitsChange(checked as boolean)
+									}
+								/>
+								<Label
+									htmlFor="merge-commits"
+									className="text-xs cursor-pointer"
+								>
+									{t("changelog:gitHistory.includeMergeCommits")}
+								</Label>
+							</div>
 
-              {/* Load Preview Button */}
-              <Button
-                variant="outline"
-                className="w-full"
-                onClick={onLoadCommitsPreview}
-                disabled={isLoadingCommits || isLoadingGitData}
-              >
-                {isLoadingCommits ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    {t('changelog:gitHistory.loadingCommits')}
-                  </>
-                ) : (
-                  <>
-                    <RefreshCw className="mr-2 h-4 w-4" />
-                    {t('changelog:actions.loadPreview')}
-                  </>
-                )}
-              </Button>
-            </CardContent>
-          </Card>
-        )}
+							{/* Load Preview Button */}
+							<Button
+								variant="outline"
+								className="w-full"
+								onClick={onLoadCommitsPreview}
+								disabled={isLoadingCommits || isLoadingGitData}
+							>
+								{isLoadingCommits ? (
+									<>
+										<Loader2 className="mr-2 h-4 w-4 animate-spin" />
+										{t("changelog:gitHistory.loadingCommits")}
+									</>
+								) : (
+									<>
+										<RefreshCw className="mr-2 h-4 w-4" />
+										{t("changelog:actions.loadPreview")}
+									</>
+								)}
+							</Button>
+						</CardContent>
+					</Card>
+				)}
 
-        {/* Branch Diff Options */}
-        {sourceMode === 'branch-diff' && (
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="text-sm">{t('changelog:branchDiff.title')}</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="space-y-2">
-                <Label className="text-xs">{t('changelog:branchDiff.baseBranchLabel')}</Label>
-                <Select value={baseBranch} onValueChange={onBaseBranchChange}>
-                  <SelectTrigger>
-                    <SelectValue placeholder={t('changelog:branchDiff.selectBranch')} />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {localBranches.map((branch) => (
-                      <SelectItem key={branch.name} value={branch.name}>
-                        <div className="flex items-center gap-2">
-                          {branch.name}
-                          {branch.name === defaultBranch && (
-                            <Badge variant="outline" className="text-xs">{t('changelog:branchDiff.defaultBadge')}</Badge>
-                          )}
-                        </div>
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <p className="text-xs text-muted-foreground">
-                  {t('changelog:branchDiff.baseBranchDescription')}
-                </p>
-              </div>
+				{/* Branch Diff Options */}
+				{sourceMode === "branch-diff" && (
+					<Card>
+						<CardHeader className="pb-3">
+							<CardTitle className="text-sm">
+								{t("changelog:branchDiff.title")}
+							</CardTitle>
+						</CardHeader>
+						<CardContent className="space-y-4">
+							<div className="space-y-2">
+								<Label className="text-xs">
+									{t("changelog:branchDiff.baseBranchLabel")}
+								</Label>
+								<Select value={baseBranch} onValueChange={onBaseBranchChange}>
+									<SelectTrigger>
+										<SelectValue
+											placeholder={t("changelog:branchDiff.selectBranch")}
+										/>
+									</SelectTrigger>
+									<SelectContent>
+										{localBranches.map((branch) => (
+											<SelectItem key={branch.name} value={branch.name}>
+												<div className="flex items-center gap-2">
+													{branch.name}
+													{branch.name === defaultBranch && (
+														<Badge variant="outline" className="text-xs">
+															{t("changelog:branchDiff.defaultBadge")}
+														</Badge>
+													)}
+												</div>
+											</SelectItem>
+										))}
+									</SelectContent>
+								</Select>
+								<p className="text-xs text-muted-foreground">
+									{t("changelog:branchDiff.baseBranchDescription")}
+								</p>
+							</div>
 
-              <div className="space-y-2">
-                <Label className="text-xs">{t('changelog:branchDiff.compareBranchLabel')}</Label>
-                <Select value={compareBranch} onValueChange={onCompareBranchChange}>
-                  <SelectTrigger>
-                    <SelectValue placeholder={t('changelog:branchDiff.selectBranch')} />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {localBranches.map((branch) => (
-                      <SelectItem key={branch.name} value={branch.name}>
-                        <div className="flex items-center gap-2">
-                          {branch.name}
-                          {branch.isCurrent && (
-                            <Badge variant="secondary" className="text-xs">{t('changelog:branchDiff.currentBadge')}</Badge>
-                          )}
-                        </div>
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <p className="text-xs text-muted-foreground">
-                  {t('changelog:branchDiff.compareBranchDescription')}
-                </p>
-              </div>
+							<div className="space-y-2">
+								<Label className="text-xs">
+									{t("changelog:branchDiff.compareBranchLabel")}
+								</Label>
+								<Select
+									value={compareBranch}
+									onValueChange={onCompareBranchChange}
+								>
+									<SelectTrigger>
+										<SelectValue
+											placeholder={t("changelog:branchDiff.selectBranch")}
+										/>
+									</SelectTrigger>
+									<SelectContent>
+										{localBranches.map((branch) => (
+											<SelectItem key={branch.name} value={branch.name}>
+												<div className="flex items-center gap-2">
+													{branch.name}
+													{branch.isCurrent && (
+														<Badge variant="secondary" className="text-xs">
+															{t("changelog:branchDiff.currentBadge")}
+														</Badge>
+													)}
+												</div>
+											</SelectItem>
+										))}
+									</SelectContent>
+								</Select>
+								<p className="text-xs text-muted-foreground">
+									{t("changelog:branchDiff.compareBranchDescription")}
+								</p>
+							</div>
 
-              {baseBranch && compareBranch && baseBranch === compareBranch && (
-                <div className="flex items-center gap-2 text-destructive text-xs">
-                  <AlertCircle className="h-3 w-3" />
-                  {t('changelog:branchDiff.branchesMustBeDifferent')}
-                </div>
-              )}
+							{baseBranch && compareBranch && baseBranch === compareBranch && (
+								<div className="flex items-center gap-2 text-destructive text-xs">
+									<AlertCircle className="h-3 w-3" />
+									{t("changelog:branchDiff.branchesMustBeDifferent")}
+								</div>
+							)}
 
-              {/* Load Preview Button */}
-              <Button
-                variant="outline"
-                className="w-full"
-                onClick={onLoadCommitsPreview}
-                disabled={isLoadingCommits || isLoadingGitData || !baseBranch || !compareBranch || baseBranch === compareBranch}
-              >
-                {isLoadingCommits ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    {t('changelog:gitHistory.loadingCommits')}
-                  </>
-                ) : (
-                  <>
-                    <RefreshCw className="mr-2 h-4 w-4" />
-                    {t('changelog:actions.loadPreview')}
-                  </>
-                )}
-              </Button>
-            </CardContent>
-          </Card>
-        )}
-      </div>
-    </div>
-  );
+							{/* Load Preview Button */}
+							<Button
+								variant="outline"
+								className="w-full"
+								onClick={onLoadCommitsPreview}
+								disabled={
+									isLoadingCommits ||
+									isLoadingGitData ||
+									!baseBranch ||
+									!compareBranch ||
+									baseBranch === compareBranch
+								}
+							>
+								{isLoadingCommits ? (
+									<>
+										<Loader2 className="mr-2 h-4 w-4 animate-spin" />
+										{t("changelog:gitHistory.loadingCommits")}
+									</>
+								) : (
+									<>
+										<RefreshCw className="mr-2 h-4 w-4" />
+										{t("changelog:actions.loadPreview")}
+									</>
+								)}
+							</Button>
+						</CardContent>
+					</Card>
+				)}
+			</div>
+		</div>
+	);
 }
-
-
-

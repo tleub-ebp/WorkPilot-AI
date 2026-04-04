@@ -17,12 +17,12 @@
  * 2. The calling context truly cannot use async/await (e.g., synchronous event handlers)
  */
 
-import path from 'node:path';
-import { readFileSync, writeFileSync, mkdirSync } from 'node:fs';
-import { AUTO_BUILD_PATHS, getSpecsDir } from '../../../shared/constants';
-import type { TaskStatus, Project, Task } from '../../../shared/types';
-import { projectStore } from '../../project-store';
-import type { TaskEventPayload } from '../../agent/task-event-schema';
+import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import path from "node:path";
+import { AUTO_BUILD_PATHS, getSpecsDir } from "../../../shared/constants";
+import type { Project, Task, TaskStatus } from "../../../shared/types";
+import type { TaskEventPayload } from "../../agent/task-event-schema";
+import { projectStore } from "../../project-store";
 
 // In-memory locks for plan file operations
 // Key: plan file path, Value: Promise chain for serializing operations
@@ -32,63 +32,70 @@ const planLocks = new Map<string, Promise<void>>();
  * Serialize operations on a specific plan file to prevent race conditions.
  * Each operation waits for the previous one to complete before starting.
  */
-async function withPlanLock<T>(planPath: string, operation: () => Promise<T>): Promise<T> {
-  // Get or create the lock chain for this file
-  const currentLock = planLocks.get(planPath) || Promise.resolve();
+async function withPlanLock<T>(
+	planPath: string,
+	operation: () => Promise<T>,
+): Promise<T> {
+	// Get or create the lock chain for this file
+	const currentLock = planLocks.get(planPath) || Promise.resolve();
 
-  // Create a new promise that will resolve after our operation completes
-  let resolve: () => void = () => { /* placeholder, will be overwritten by Promise constructor */ };
-  const newLock = new Promise<void>((r) => { resolve = r; });
-  planLocks.set(planPath, newLock);
+	// Create a new promise that will resolve after our operation completes
+	let resolve: () => void = () => {
+		/* placeholder, will be overwritten by Promise constructor */
+	};
+	const newLock = new Promise<void>((r) => {
+		resolve = r;
+	});
+	planLocks.set(planPath, newLock);
 
-  try {
-    // Wait for any previous operation to complete
-    await currentLock;
-    // Execute our operation
-    return await operation();
-  } finally {
-    // Release the lock
-    resolve?.();
-    // Clean up if this was the last operation
-    if (planLocks.get(planPath) === newLock) {
-      planLocks.delete(planPath);
-    }
-  }
+	try {
+		// Wait for any previous operation to complete
+		await currentLock;
+		// Execute our operation
+		return await operation();
+	} finally {
+		// Release the lock
+		resolve?.();
+		// Clean up if this was the last operation
+		if (planLocks.get(planPath) === newLock) {
+			planLocks.delete(planPath);
+		}
+	}
 }
 
 /**
  * Check if an error is a "file not found" error
  */
 function isFileNotFoundError(err: unknown): boolean {
-  return (err as NodeJS.ErrnoException).code === 'ENOENT';
+	return (err as NodeJS.ErrnoException).code === "ENOENT";
 }
 
 /**
  * Get the plan file path for a task
  */
 export function getPlanPath(project: Project, task: Task): string {
-  const specsBaseDir = getSpecsDir(project.autoBuildPath);
-  const specDir = path.join(project.path, specsBaseDir, task.specId);
-  return path.join(specDir, AUTO_BUILD_PATHS.IMPLEMENTATION_PLAN);
+	const specsBaseDir = getSpecsDir(project.autoBuildPath);
+	const specDir = path.join(project.path, specsBaseDir, task.specId);
+	return path.join(specDir, AUTO_BUILD_PATHS.IMPLEMENTATION_PLAN);
 }
 
 /**
  * Map UI TaskStatus to Python-compatible planStatus
  */
 export function mapStatusToPlanStatus(status: TaskStatus): string {
-  switch (status) {
-    case 'queue':
-      return 'queued';
-    case 'in_progress':
-      return 'in_progress';
-    case 'ai_review':
-    case 'human_review':
-      return 'review';
-    case 'done':
-      return 'completed';
-    default:
-      return 'pending';
-  }
+	switch (status) {
+		case "queue":
+			return "queued";
+		case "in_progress":
+			return "in_progress";
+		case "ai_review":
+		case "human_review":
+			return "review";
+		case "done":
+			return "completed";
+		default:
+			return "pending";
+	}
 }
 
 /**
@@ -100,37 +107,51 @@ export function mapStatusToPlanStatus(status: TaskStatus): string {
  * @param projectId - Optional project ID to invalidate cache (recommended for performance)
  * @returns true if status was persisted, false if plan file doesn't exist
  */
-export async function persistPlanStatus(planPath: string, status: TaskStatus, projectId?: string): Promise<boolean> {
-  return withPlanLock(planPath, async () => {
-    try {
-      console.warn(`[plan-file-utils] Reading implementation_plan.json to update status to: ${status}`, { planPath });
-      // Read file directly without existence check to avoid TOCTOU race condition
-      const planContent = readFileSync(planPath, 'utf-8');
-      const plan = JSON.parse(planContent);
+export async function persistPlanStatus(
+	planPath: string,
+	status: TaskStatus,
+	projectId?: string,
+): Promise<boolean> {
+	return withPlanLock(planPath, async () => {
+		try {
+			console.warn(
+				`[plan-file-utils] Reading implementation_plan.json to update status to: ${status}`,
+				{ planPath },
+			);
+			// Read file directly without existence check to avoid TOCTOU race condition
+			const planContent = readFileSync(planPath, "utf-8");
+			const plan = JSON.parse(planContent);
 
-      plan.status = status;
-      plan.planStatus = mapStatusToPlanStatus(status);
-      plan.updated_at = new Date().toISOString();
+			plan.status = status;
+			plan.planStatus = mapStatusToPlanStatus(status);
+			plan.updated_at = new Date().toISOString();
 
-      writeFileSync(planPath, JSON.stringify(plan, null, 2), 'utf-8');
-      console.warn(`[plan-file-utils] Successfully persisted status: ${status} to implementation_plan.json`);
+			writeFileSync(planPath, JSON.stringify(plan, null, 2), "utf-8");
+			console.warn(
+				`[plan-file-utils] Successfully persisted status: ${status} to implementation_plan.json`,
+			);
 
-      // Invalidate tasks cache since status changed
-      if (projectId) {
-        projectStore.invalidateTasksCache(projectId);
-      }
+			// Invalidate tasks cache since status changed
+			if (projectId) {
+				projectStore.invalidateTasksCache(projectId);
+			}
 
-      return true;
-    } catch (err) {
-      // File not found is expected - return false
-      if (isFileNotFoundError(err)) {
-        console.warn(`[plan-file-utils] implementation_plan.json not found at ${planPath} - status not persisted`);
-        return false;
-      }
-      console.warn(`[plan-file-utils] Could not persist status to ${planPath}:`, err);
-      return false;
-    }
-  });
+			return true;
+		} catch (err) {
+			// File not found is expected - return false
+			if (isFileNotFoundError(err)) {
+				console.warn(
+					`[plan-file-utils] implementation_plan.json not found at ${planPath} - status not persisted`,
+				);
+				return false;
+			}
+			console.warn(
+				`[plan-file-utils] Could not persist status to ${planPath}:`,
+				err,
+			);
+			return false;
+		}
+	});
 }
 
 /**
@@ -158,32 +179,39 @@ export async function persistPlanStatus(planPath: string, status: TaskStatus, pr
  * @param projectId - Optional project ID to invalidate cache (recommended for performance)
  * @returns true if status was persisted, false otherwise
  */
-export function persistPlanStatusSync(planPath: string, status: TaskStatus, projectId?: string): boolean {
-  try {
-    // Read file directly without existence check to avoid TOCTOU race condition
-    const planContent = readFileSync(planPath, 'utf-8');
-    const plan = JSON.parse(planContent);
+export function persistPlanStatusSync(
+	planPath: string,
+	status: TaskStatus,
+	projectId?: string,
+): boolean {
+	try {
+		// Read file directly without existence check to avoid TOCTOU race condition
+		const planContent = readFileSync(planPath, "utf-8");
+		const plan = JSON.parse(planContent);
 
-    plan.status = status;
-    plan.planStatus = mapStatusToPlanStatus(status);
-    plan.updated_at = new Date().toISOString();
+		plan.status = status;
+		plan.planStatus = mapStatusToPlanStatus(status);
+		plan.updated_at = new Date().toISOString();
 
-    writeFileSync(planPath, JSON.stringify(plan, null, 2), 'utf-8');
+		writeFileSync(planPath, JSON.stringify(plan, null, 2), "utf-8");
 
-    // Invalidate tasks cache since status changed
-    if (projectId) {
-      projectStore.invalidateTasksCache(projectId);
-    }
+		// Invalidate tasks cache since status changed
+		if (projectId) {
+			projectStore.invalidateTasksCache(projectId);
+		}
 
-    return true;
-  } catch (err) {
-    // File not found is expected - return false
-    if (isFileNotFoundError(err)) {
-      return false;
-    }
-    console.warn(`[plan-file-utils] Could not persist status to ${planPath}:`, err);
-    return false;
-  }
+		return true;
+	} catch (err) {
+		// File not found is expected - return false
+		if (isFileNotFoundError(err)) {
+			return false;
+		}
+		console.warn(
+			`[plan-file-utils] Could not persist status to ${planPath}:`,
+			err,
+		);
+		return false;
+	}
 }
 
 /**
@@ -192,28 +220,34 @@ export function persistPlanStatusSync(planPath: string, status: TaskStatus, proj
  * WARNING: This bypasses async locking. Use only in sync event handlers where
  * async isn't practical. Prefer updatePlanFile when possible.
  */
-export function persistPlanLastEventSync(planPath: string, event: TaskEventPayload): boolean {
-  try {
-    const planContent = readFileSync(planPath, 'utf-8');
-    const plan = JSON.parse(planContent);
+export function persistPlanLastEventSync(
+	planPath: string,
+	event: TaskEventPayload,
+): boolean {
+	try {
+		const planContent = readFileSync(planPath, "utf-8");
+		const plan = JSON.parse(planContent);
 
-    plan.lastEvent = {
-      eventId: event.eventId,
-      sequence: event.sequence,
-      type: event.type,
-      timestamp: event.timestamp
-    };
-    plan.updated_at = new Date().toISOString();
+		plan.lastEvent = {
+			eventId: event.eventId,
+			sequence: event.sequence,
+			type: event.type,
+			timestamp: event.timestamp,
+		};
+		plan.updated_at = new Date().toISOString();
 
-    writeFileSync(planPath, JSON.stringify(plan, null, 2), 'utf-8');
-    return true;
-  } catch (err) {
-    if (isFileNotFoundError(err)) {
-      return false;
-    }
-    console.warn(`[plan-file-utils] Could not persist lastEvent to ${planPath}:`, err);
-    return false;
-  }
+		writeFileSync(planPath, JSON.stringify(plan, null, 2), "utf-8");
+		return true;
+	} catch (err) {
+		if (isFileNotFoundError(err)) {
+			return false;
+		}
+		console.warn(
+			`[plan-file-utils] Could not persist lastEvent to ${planPath}:`,
+			err,
+		);
+		return false;
+	}
 }
 
 /**
@@ -225,57 +259,60 @@ export function persistPlanLastEventSync(planPath: string, event: TaskEventPaylo
  * This ensures XState state is persisted even during early phases like spec creation.
  */
 export function persistPlanStatusAndReasonSync(
-  planPath: string,
-  status: TaskStatus,
-  reviewReason?: string,
-  projectId?: string,
-  xstateState?: string,
-  executionPhase?: string
+	planPath: string,
+	status: TaskStatus,
+	reviewReason?: string,
+	projectId?: string,
+	xstateState?: string,
+	executionPhase?: string,
 ): boolean {
-  try {
-    let plan: Record<string, unknown>;
+	try {
+		let plan: Record<string, unknown>;
 
-    try {
-      const planContent = readFileSync(planPath, 'utf-8');
-      plan = JSON.parse(planContent);
-    } catch (readErr) {
-      if (!isFileNotFoundError(readErr)) {
-        throw readErr;
-      }
-      // File doesn't exist - create a minimal status-only plan.
-      // The spec runner will populate the full plan (with phases/subtasks) later.
-      // IMPORTANT: Do NOT include phases: [] here. An empty phases array causes
-      // the backend planner validator to fail with "No phases defined" before
-      // the planner agent gets a chance to create a real plan.
-      const planDir = path.dirname(planPath);
-      mkdirSync(planDir, { recursive: true });
-      plan = {
-        created_at: new Date().toISOString()
-      };
-    }
+		try {
+			const planContent = readFileSync(planPath, "utf-8");
+			plan = JSON.parse(planContent);
+		} catch (readErr) {
+			if (!isFileNotFoundError(readErr)) {
+				throw readErr;
+			}
+			// File doesn't exist - create a minimal status-only plan.
+			// The spec runner will populate the full plan (with phases/subtasks) later.
+			// IMPORTANT: Do NOT include phases: [] here. An empty phases array causes
+			// the backend planner validator to fail with "No phases defined" before
+			// the planner agent gets a chance to create a real plan.
+			const planDir = path.dirname(planPath);
+			mkdirSync(planDir, { recursive: true });
+			plan = {
+				created_at: new Date().toISOString(),
+			};
+		}
 
-    plan.status = status;
-    plan.planStatus = mapStatusToPlanStatus(status);
-    plan.reviewReason = reviewReason;
-    if (xstateState) {
-      plan.xstateState = xstateState;
-    }
-    if (executionPhase) {
-      plan.executionPhase = executionPhase;
-    }
-    plan.updated_at = new Date().toISOString();
+		plan.status = status;
+		plan.planStatus = mapStatusToPlanStatus(status);
+		plan.reviewReason = reviewReason;
+		if (xstateState) {
+			plan.xstateState = xstateState;
+		}
+		if (executionPhase) {
+			plan.executionPhase = executionPhase;
+		}
+		plan.updated_at = new Date().toISOString();
 
-    writeFileSync(planPath, JSON.stringify(plan, null, 2), 'utf-8');
+		writeFileSync(planPath, JSON.stringify(plan, null, 2), "utf-8");
 
-    if (projectId) {
-      projectStore.invalidateTasksCache(projectId);
-    }
+		if (projectId) {
+			projectStore.invalidateTasksCache(projectId);
+		}
 
-    return true;
-  } catch (err) {
-    console.warn(`[plan-file-utils] Could not persist status/reason to ${planPath}:`, err);
-    return false;
-  }
+		return true;
+	} catch (err) {
+		console.warn(
+			`[plan-file-utils] Could not persist status/reason to ${planPath}:`,
+			err,
+		);
+		return false;
+	}
 }
 
 /**
@@ -284,61 +321,64 @@ export function persistPlanStatusAndReasonSync(
  * is persisted for restoration on app refresh.
  */
 export function persistPlanPhaseSync(
-  planPath: string,
-  phase: string,
-  projectId?: string
+	planPath: string,
+	phase: string,
+	projectId?: string,
 ): boolean {
-  try {
-    let plan: Record<string, unknown>;
+	try {
+		let plan: Record<string, unknown>;
 
-    try {
-      const planContent = readFileSync(planPath, 'utf-8');
-      plan = JSON.parse(planContent);
-    } catch (readErr) {
-      if (!isFileNotFoundError(readErr)) {
-        throw readErr;
-      }
-      // File doesn't exist - create minimal status-only plan.
-      // Do NOT include phases: [] — the backend planner will populate phases.
-      const planDir = path.dirname(planPath);
-      mkdirSync(planDir, { recursive: true });
-      plan = {
-        created_at: new Date().toISOString()
-      };
-    }
+		try {
+			const planContent = readFileSync(planPath, "utf-8");
+			plan = JSON.parse(planContent);
+		} catch (readErr) {
+			if (!isFileNotFoundError(readErr)) {
+				throw readErr;
+			}
+			// File doesn't exist - create minimal status-only plan.
+			// Do NOT include phases: [] — the backend planner will populate phases.
+			const planDir = path.dirname(planPath);
+			mkdirSync(planDir, { recursive: true });
+			plan = {
+				created_at: new Date().toISOString(),
+			};
+		}
 
-    // Store the execution phase for restoration
-    plan.executionPhase = phase;
+		// Store the execution phase for restoration
+		plan.executionPhase = phase;
 
-    // Also update status to match the phase so the card stays in the correct column on refresh
-    // Map execution phase to TaskStatus for column placement
-    const phaseToStatus: Record<string, TaskStatus> = {
-      'planning': 'in_progress',
-      'coding': 'in_progress',
-      'qa_review': 'ai_review',
-      'qa_fixing': 'ai_review',
-      'complete': 'human_review',
-      'failed': 'error'
-    };
-    const mappedStatus = phaseToStatus[phase];
-    if (mappedStatus) {
-      plan.status = mappedStatus;
-      plan.planStatus = mapStatusToPlanStatus(mappedStatus);
-    }
+		// Also update status to match the phase so the card stays in the correct column on refresh
+		// Map execution phase to TaskStatus for column placement
+		const phaseToStatus: Record<string, TaskStatus> = {
+			planning: "in_progress",
+			coding: "in_progress",
+			qa_review: "ai_review",
+			qa_fixing: "ai_review",
+			complete: "human_review",
+			failed: "error",
+		};
+		const mappedStatus = phaseToStatus[phase];
+		if (mappedStatus) {
+			plan.status = mappedStatus;
+			plan.planStatus = mapStatusToPlanStatus(mappedStatus);
+		}
 
-    plan.updated_at = new Date().toISOString();
+		plan.updated_at = new Date().toISOString();
 
-    writeFileSync(planPath, JSON.stringify(plan, null, 2), 'utf-8');
+		writeFileSync(planPath, JSON.stringify(plan, null, 2), "utf-8");
 
-    if (projectId) {
-      projectStore.invalidateTasksCache(projectId);
-    }
+		if (projectId) {
+			projectStore.invalidateTasksCache(projectId);
+		}
 
-    return true;
-  } catch (err) {
-    console.warn(`[plan-file-utils] Could not persist phase to ${planPath}:`, err);
-    return false;
-  }
+		return true;
+	} catch (err) {
+		console.warn(
+			`[plan-file-utils] Could not persist phase to ${planPath}:`,
+			err,
+		);
+		return false;
+	}
 }
 
 /**
@@ -349,33 +389,44 @@ export function persistPlanPhaseSync(
  * @returns The updated plan, or null if the file doesn't exist
  */
 export async function updatePlanFile<T extends Record<string, unknown>>(
-  planPath: string,
-  updater: (plan: T) => T
+	planPath: string,
+	updater: (plan: T) => T,
 ): Promise<T | null> {
-  return withPlanLock(planPath, async () => {
-    try {
-      console.warn(`[plan-file-utils] Reading implementation_plan.json for update`, { planPath });
-      // Read file directly without existence check to avoid TOCTOU race condition
-      const planContent = readFileSync(planPath, 'utf-8');
-      const plan = JSON.parse(planContent) as T;
+	return withPlanLock(planPath, async () => {
+		try {
+			console.warn(
+				`[plan-file-utils] Reading implementation_plan.json for update`,
+				{ planPath },
+			);
+			// Read file directly without existence check to avoid TOCTOU race condition
+			const planContent = readFileSync(planPath, "utf-8");
+			const plan = JSON.parse(planContent) as T;
 
-      const updatedPlan = updater(plan);
-      // Add updated_at timestamp - use type assertion since T extends Record<string, unknown>
-      (updatedPlan as Record<string, unknown>).updated_at = new Date().toISOString();
+			const updatedPlan = updater(plan);
+			// Add updated_at timestamp - use type assertion since T extends Record<string, unknown>
+			(updatedPlan as Record<string, unknown>).updated_at =
+				new Date().toISOString();
 
-      writeFileSync(planPath, JSON.stringify(updatedPlan, null, 2), 'utf-8');
-      console.warn(`[plan-file-utils] Successfully updated implementation_plan.json`);
-      return updatedPlan;
-    } catch (err) {
-      // File not found is expected - return null
-      if (isFileNotFoundError(err)) {
-        console.warn(`[plan-file-utils] implementation_plan.json not found at ${planPath} - update skipped`);
-        return null;
-      }
-      console.warn(`[plan-file-utils] Could not update plan at ${planPath}:`, err);
-      return null;
-    }
-  });
+			writeFileSync(planPath, JSON.stringify(updatedPlan, null, 2), "utf-8");
+			console.warn(
+				`[plan-file-utils] Successfully updated implementation_plan.json`,
+			);
+			return updatedPlan;
+		} catch (err) {
+			// File not found is expected - return null
+			if (isFileNotFoundError(err)) {
+				console.warn(
+					`[plan-file-utils] implementation_plan.json not found at ${planPath} - update skipped`,
+				);
+				return null;
+			}
+			console.warn(
+				`[plan-file-utils] Could not update plan at ${planPath}:`,
+				err,
+			);
+			return null;
+		}
+	});
 }
 
 /**
@@ -387,51 +438,51 @@ export async function updatePlanFile<T extends Record<string, unknown>>(
  * @param xstateState - Optional XState machine state for restoration
  */
 export async function createPlanIfNotExists(
-  planPath: string,
-  task: Task,
-  status: TaskStatus,
-  xstateState?: string
+	planPath: string,
+	task: Task,
+	status: TaskStatus,
+	xstateState?: string,
 ): Promise<void> {
-  return withPlanLock(planPath, async () => {
-    // Try to read the file first - if it exists, do nothing
-    try {
-      readFileSync(planPath, 'utf-8');
-      return; // File exists, nothing to do
-    } catch (err) {
-      if (!isFileNotFoundError(err)) {
-        throw err; // Re-throw unexpected errors
-      }
-      // File doesn't exist, continue to create it
-    }
+	return withPlanLock(planPath, async () => {
+		// Try to read the file first - if it exists, do nothing
+		try {
+			readFileSync(planPath, "utf-8");
+			return; // File exists, nothing to do
+		} catch (err) {
+			if (!isFileNotFoundError(err)) {
+				throw err; // Re-throw unexpected errors
+			}
+			// File doesn't exist, continue to create it
+		}
 
-    const plan: Record<string, unknown> = {
-      feature: task.title,
-      description: task.description || '',
-      created_at: task.createdAt.toISOString(),
-      updated_at: new Date().toISOString(),
-      status: status,
-      planStatus: mapStatusToPlanStatus(status),
-      phases: []
-    };
+		const plan: Record<string, unknown> = {
+			feature: task.title,
+			description: task.description || "",
+			created_at: task.createdAt.toISOString(),
+			updated_at: new Date().toISOString(),
+			status: status,
+			planStatus: mapStatusToPlanStatus(status),
+			phases: [],
+		};
 
-    // Include xstateState for accurate restoration on reload
-    if (xstateState) {
-      plan.xstateState = xstateState;
-    }
+		// Include xstateState for accurate restoration on reload
+		if (xstateState) {
+			plan.xstateState = xstateState;
+		}
 
-    // Ensure directory exists - use try/catch pattern
-    const planDir = path.dirname(planPath);
-    try {
-      mkdirSync(planDir, { recursive: true });
-    } catch (err) {
-      // Directory might already exist or be created concurrently - that's fine
-      if ((err as NodeJS.ErrnoException).code !== 'EEXIST') {
-        throw err;
-      }
-    }
+		// Ensure directory exists - use try/catch pattern
+		const planDir = path.dirname(planPath);
+		try {
+			mkdirSync(planDir, { recursive: true });
+		} catch (err) {
+			// Directory might already exist or be created concurrently - that's fine
+			if ((err as NodeJS.ErrnoException).code !== "EEXIST") {
+				throw err;
+			}
+		}
 
-    writeFileSync(planPath, JSON.stringify(plan, null, 2), 'utf-8');
-  });
+		writeFileSync(planPath, JSON.stringify(plan, null, 2), "utf-8");
+	});
 }
 
 /**
@@ -442,32 +493,38 @@ export async function createPlanIfNotExists(
  * @param prUrl - The PR URL to add to metadata
  * @returns true if metadata was updated, false if file doesn't exist or failed
  */
-export function updateTaskMetadataPrUrl(metadataPath: string, prUrl: string): boolean {
-  try {
-    let metadata: Record<string, unknown> = {};
+export function updateTaskMetadataPrUrl(
+	metadataPath: string,
+	prUrl: string,
+): boolean {
+	try {
+		let metadata: Record<string, unknown> = {};
 
-    // Try to read existing metadata
-    try {
-      const content = readFileSync(metadataPath, 'utf-8');
-      metadata = JSON.parse(content);
-    } catch (err) {
-      if (!isFileNotFoundError(err)) {
-        throw err;
-      }
-      // File doesn't exist, will create new one
-    }
+		// Try to read existing metadata
+		try {
+			const content = readFileSync(metadataPath, "utf-8");
+			metadata = JSON.parse(content);
+		} catch (err) {
+			if (!isFileNotFoundError(err)) {
+				throw err;
+			}
+			// File doesn't exist, will create new one
+		}
 
-    // Update with prUrl
-    metadata.prUrl = prUrl;
+		// Update with prUrl
+		metadata.prUrl = prUrl;
 
-    // Ensure parent directory exists before writing
-    mkdirSync(path.dirname(metadataPath), { recursive: true });
+		// Ensure parent directory exists before writing
+		mkdirSync(path.dirname(metadataPath), { recursive: true });
 
-    // Write back
-    writeFileSync(metadataPath, JSON.stringify(metadata, null, 2), 'utf-8');
-    return true;
-  } catch (err) {
-    console.warn(`[plan-file-utils] Could not update metadata at ${metadataPath}:`, err);
-    return false;
-  }
+		// Write back
+		writeFileSync(metadataPath, JSON.stringify(metadata, null, 2), "utf-8");
+		return true;
+	} catch (err) {
+		console.warn(
+			`[plan-file-utils] Could not update metadata at ${metadataPath}:`,
+			err,
+		);
+		return false;
+	}
 }

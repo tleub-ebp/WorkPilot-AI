@@ -3,4 +3,4 @@
  * Handles navigation between different settings sections.
  */
 
-export { SectionRouter } from './SectionRouter';
+export { SectionRouter } from "./SectionRouter";

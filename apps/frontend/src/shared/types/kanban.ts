@@ -7,12 +7,12 @@
  * Column preferences for a single kanban column
  */
 export interface KanbanColumnPreference {
-  /** Column width in pixels (180-600px range) */
-  width: number;
-  /** Whether the column is collapsed (narrow vertical strip) */
-  isCollapsed: boolean;
-  /** Whether the column width is locked (prevents resize) */
-  isLocked: boolean;
+	/** Column width in pixels (180-600px range) */
+	width: number;
+	/** Whether the column is collapsed (narrow vertical strip) */
+	isCollapsed: boolean;
+	/** Whether the column width is locked (prevents resize) */
+	isLocked: boolean;
 }
 
 /**

@@ -13,8 +13,8 @@
  * Backend equivalent: apps/backend/core/git_executable.py:get_isolated_git_env()
  */
 
-import { execFileSync } from 'child_process';
-import { getToolPath } from '../cli-tool-manager';
+import { execFileSync } from "child_process";
+import { getToolPath } from "../cli-tool-manager";
 
 /**
  * Git environment variables that can cause cross-contamination between worktrees.
@@ -28,17 +28,17 @@ import { getToolPath } from '../cli-tool-manager';
  * GIT_COMMITTER_*: Can cause wrong commit attribution in automated contexts
  */
 export const GIT_ENV_VARS_TO_CLEAR = [
-  'GIT_DIR',
-  'GIT_WORK_TREE',
-  'GIT_INDEX_FILE',
-  'GIT_OBJECT_DIRECTORY',
-  'GIT_ALTERNATE_OBJECT_DIRECTORIES',
-  'GIT_AUTHOR_NAME',
-  'GIT_AUTHOR_EMAIL',
-  'GIT_AUTHOR_DATE',
-  'GIT_COMMITTER_NAME',
-  'GIT_COMMITTER_EMAIL',
-  'GIT_COMMITTER_DATE',
+	"GIT_DIR",
+	"GIT_WORK_TREE",
+	"GIT_INDEX_FILE",
+	"GIT_OBJECT_DIRECTORY",
+	"GIT_ALTERNATE_OBJECT_DIRECTORIES",
+	"GIT_AUTHOR_NAME",
+	"GIT_AUTHOR_EMAIL",
+	"GIT_AUTHOR_DATE",
+	"GIT_COMMITTER_NAME",
+	"GIT_COMMITTER_EMAIL",
+	"GIT_COMMITTER_DATE",
 ] as const;
 
 /**
@@ -66,17 +66,17 @@ export const GIT_ENV_VARS_TO_CLEAR = [
  * ```
  */
 export function getIsolatedGitEnv(
-  baseEnv: NodeJS.ProcessEnv = process.env
+	baseEnv: NodeJS.ProcessEnv = process.env,
 ): Record<string, string | undefined> {
-  const env: Record<string, string | undefined> = { ...baseEnv };
+	const env: Record<string, string | undefined> = { ...baseEnv };
 
-  for (const varName of GIT_ENV_VARS_TO_CLEAR) {
-    delete env[varName];
-  }
+	for (const varName of GIT_ENV_VARS_TO_CLEAR) {
+		delete env[varName];
+	}
 
-  env.HUSKY = '0';
+	env.HUSKY = "0";
 
-  return env;
+	return env;
 }
 
 /**
@@ -98,25 +98,25 @@ export function getIsolatedGitEnv(
  * ```
  */
 export function getIsolatedGitSpawnOptions(
-  cwd: string,
-  additionalOptions: Record<string, unknown> = {}
+	cwd: string,
+	additionalOptions: Record<string, unknown> = {},
 ): Record<string, unknown> {
-  return {
-    cwd,
-    env: getIsolatedGitEnv(),
-    encoding: 'utf-8',
-    ...additionalOptions,
-  };
+	return {
+		cwd,
+		env: getIsolatedGitEnv(),
+		encoding: "utf-8",
+		...additionalOptions,
+	};
 }
 
 /**
  * Result type for detectWorktreeBranch function.
  */
 export interface WorktreeBranchDetectionResult {
-  /** The branch name to use for deletion */
-  branch: string;
-  /** Whether the fallback branch pattern was used */
-  usingFallback: boolean;
+	/** The branch name to use for deletion */
+	branch: string;
+	/** Whether the fallback branch pattern was used */
+	usingFallback: boolean;
 }
 
 /**
@@ -146,40 +146,50 @@ export interface WorktreeBranchDetectionResult {
  * ```
  */
 export function detectWorktreeBranch(
-  worktreePath: string,
-  specId: string,
-  options: { timeout?: number; logPrefix?: string } = {}
+	worktreePath: string,
+	specId: string,
+	options: { timeout?: number; logPrefix?: string } = {},
 ): WorktreeBranchDetectionResult {
-  const { timeout = 30000, logPrefix = '[WORKTREE_BRANCH_DETECTION]' } = options;
-  const expectedBranch = `auto-claude/${specId}`;
-  let branch = expectedBranch;
-  let usingFallback = false;
+	const { timeout = 30000, logPrefix = "[WORKTREE_BRANCH_DETECTION]" } =
+		options;
+	const expectedBranch = `auto-claude/${specId}`;
+	let branch = expectedBranch;
+	let usingFallback = false;
 
-  try {
-    const detectedBranch = execFileSync(getToolPath('git'), ['rev-parse', '--abbrev-ref', 'HEAD'], {
-      cwd: worktreePath,
-      encoding: 'utf-8',
-      timeout,
-      env: getIsolatedGitEnv()
-    }).trim();
+	try {
+		const detectedBranch = execFileSync(
+			getToolPath("git"),
+			["rev-parse", "--abbrev-ref", "HEAD"],
+			{
+				cwd: worktreePath,
+				encoding: "utf-8",
+				timeout,
+				env: getIsolatedGitEnv(),
+			},
+		).trim();
 
-    // SECURITY: Use strict exact-match validation (not prefix matching) to prevent
-    // accidentally deleting a different task's auto-claude branch. When git rev-parse
-    // returns an unexpected branch, we MUST fall back to the expected pattern rather
-    // than risking deletion of the wrong branch. This is critical for data safety.
-    if (detectedBranch === expectedBranch) {
-      branch = detectedBranch;
-    } else {
-      console.warn(`${logPrefix} Detected branch '${detectedBranch}' doesn't match expected branch '${expectedBranch}', using fallback: ${expectedBranch}`);
-      usingFallback = true;
-    }
-  } catch (branchError) {
-    // If we can't get branch name, use the default pattern
-    usingFallback = true;
-    console.warn(`${logPrefix} Could not get branch name, using fallback pattern: ${branch}`, branchError);
-  }
+		// SECURITY: Use strict exact-match validation (not prefix matching) to prevent
+		// accidentally deleting a different task's auto-claude branch. When git rev-parse
+		// returns an unexpected branch, we MUST fall back to the expected pattern rather
+		// than risking deletion of the wrong branch. This is critical for data safety.
+		if (detectedBranch === expectedBranch) {
+			branch = detectedBranch;
+		} else {
+			console.warn(
+				`${logPrefix} Detected branch '${detectedBranch}' doesn't match expected branch '${expectedBranch}', using fallback: ${expectedBranch}`,
+			);
+			usingFallback = true;
+		}
+	} catch (branchError) {
+		// If we can't get branch name, use the default pattern
+		usingFallback = true;
+		console.warn(
+			`${logPrefix} Could not get branch name, using fallback pattern: ${branch}`,
+			branchError,
+		);
+	}
 
-  return { branch, usingFallback };
+	return { branch, usingFallback };
 }
 
 /**
@@ -205,14 +215,14 @@ export function detectWorktreeBranch(
  * ```
  */
 export function refreshGitIndex(cwd: string): void {
-  try {
-    execFileSync(getToolPath('git'), ['update-index', '--refresh'], {
-      cwd,
-      encoding: 'utf-8',
-      stdio: ['pipe', 'pipe', 'pipe'],
-      env: getIsolatedGitEnv(),
-    });
-  } catch {
-    // Ignore refresh errors - it's a best-effort optimization
-  }
+	try {
+		execFileSync(getToolPath("git"), ["update-index", "--refresh"], {
+			cwd,
+			encoding: "utf-8",
+			stdio: ["pipe", "pipe", "pipe"],
+			env: getIsolatedGitEnv(),
+		});
+	} catch {
+		// Ignore refresh errors - it's a best-effort optimization
+	}
 }

@@ -1,33 +1,33 @@
 {
-  "title": "Git en langage naturel",
-  "description": "Manipuler git en langage naturel directement depuis l'interface",
-  "command": {
-    "label": "Commande Git",
-    "placeholder": "Ex: Annule mes 3 derniers commits, montre ce qui a changé depuis lundi, crée une branche depuis le dernier tag stable...",
-    "examples": "Exemples: \"show changes\", \"undo last commit\", \"create branch feature-x\", \"switch to main\", \"merge branch dev\", \"push to origin\""
-  },
-  "status": {
-    "processing": "Traitement de la commande...",
-    "error": "Erreur"
-  },
-  "result": {
-    "generatedCommand": "Commande générée",
-    "explanation": "Explication",
-    "executionOutput": "Sortie d'exécution",
-    "streamingOutput": "Sortie en direct",
-    "executionSuccess": "Commande exécutée avec succès",
-    "executionError": "Échec de l'exécution"
-  },
-  "errors": {
-    "noProject": "Veuillez sélectionner un projet pour utiliser cette fonctionnalité",
-    "generic": "Une erreur s'est produite"
-  },
-  "actions": {
-    "close": "Fermer",
-    "execute": "Exécuter",
-    "tryAgain": "Réessayer",
-    "newCommand": "Nouvelle commande",
-    "copy": "Copier",
-    "copied": "Copié"
-  }
+	"title": "Git en langage naturel",
+	"description": "Manipuler git en langage naturel directement depuis l'interface",
+	"command": {
+		"label": "Commande Git",
+		"placeholder": "Ex: Annule mes 3 derniers commits, montre ce qui a changé depuis lundi, crée une branche depuis le dernier tag stable...",
+		"examples": "Exemples: \"show changes\", \"undo last commit\", \"create branch feature-x\", \"switch to main\", \"merge branch dev\", \"push to origin\""
+	},
+	"status": {
+		"processing": "Traitement de la commande...",
+		"error": "Erreur"
+	},
+	"result": {
+		"generatedCommand": "Commande générée",
+		"explanation": "Explication",
+		"executionOutput": "Sortie d'exécution",
+		"streamingOutput": "Sortie en direct",
+		"executionSuccess": "Commande exécutée avec succès",
+		"executionError": "Échec de l'exécution"
+	},
+	"errors": {
+		"noProject": "Veuillez sélectionner un projet pour utiliser cette fonctionnalité",
+		"generic": "Une erreur s'est produite"
+	},
+	"actions": {
+		"close": "Fermer",
+		"execute": "Exécuter",
+		"tryAgain": "Réessayer",
+		"newCommand": "Nouvelle commande",
+		"copy": "Copier",
+		"copied": "Copié"
+	}
 }

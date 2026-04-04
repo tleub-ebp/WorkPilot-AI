@@ -9,14 +9,14 @@
  * which isn't in PATH when the Electron app launches from Finder/Dock.
  */
 
-import * as os from 'os';
-import * as path from 'path';
-import * as fs from 'fs';
-import { promises as fsPromises } from 'fs';
-import { execFileSync, execFile } from 'child_process';
-import { promisify } from 'util';
-import { getSentryEnvForSubprocess } from './sentry';
-import { isWindows, isUnix, getPathDelimiter, getNpmCommand } from './platform';
+import { execFile, execFileSync } from "child_process";
+import * as fs from "fs";
+import { promises as fsPromises } from "fs";
+import * as os from "os";
+import * as path from "path";
+import { promisify } from "util";
+import { getNpmCommand, getPathDelimiter, isUnix, isWindows } from "./platform";
+import { getSentryEnvForSubprocess } from "./sentry";
 
 const execFileAsync = promisify(execFile);
 
@@ -31,8 +31,9 @@ const execFileAsync = promisify(execFile);
  * falling back to the default home directory location.
  */
 const WINDOWS_NPM_FALLBACK_PATH = (): string => {
-  const appDataPath = process.env.APPDATA || path.join(os.homedir(), 'AppData', 'Roaming');
-  return path.join(appDataPath, 'npm');
+	const appDataPath =
+		process.env.APPDATA || path.join(os.homedir(), "AppData", "Roaming");
+	return path.join(appDataPath, "npm");
 };
 
 /**
@@ -44,16 +45,16 @@ const WINDOWS_NPM_FALLBACK_PATH = (): string => {
  * @returns Promise resolving to true if path exists, false otherwise
  */
 export async function existsAsync(filePath: string): Promise<boolean> {
-  try {
-    await fsPromises.access(filePath);
-    return true;
-  } catch {
-    return false;
-  }
+	try {
+		await fsPromises.access(filePath);
+		return true;
+	} catch {
+		return false;
+	}
 }
 
 // Cache for npm global prefix to avoid repeated async calls
-let npmGlobalPrefixCache: string | null | undefined ;
+let npmGlobalPrefixCache: string | null | undefined;
 let npmGlobalPrefixCachePromise: Promise<string | null> | null = null;
 
 /**
@@ -68,45 +69,50 @@ let npmGlobalPrefixCachePromise: Promise<string | null> | null = null;
  * @returns npm global binaries directory, or null if npm not available or path doesn't exist
  */
 function getNpmGlobalPrefix(): string | null {
-  try {
-    // Use platform module helper for npm command name
-    const npmCommand = getNpmCommand();
+	try {
+		// Use platform module helper for npm command name
+		const npmCommand = getNpmCommand();
 
-    // Use --location=global to bypass workspace context and avoid ENOWORKSPACES error
-    const rawPrefix = execFileSync(npmCommand, ['config', 'get', 'prefix', '--location=global'], {
-      encoding: 'utf-8',
-      timeout: 3000,
-      windowsHide: true,
-      cwd: os.homedir(), // Run from home dir to avoid ENOWORKSPACES error in monorepos
-      shell: isWindows(), // Enable shell on Windows for .cmd resolution
-    }).trim();
+		// Use --location=global to bypass workspace context and avoid ENOWORKSPACES error
+		const rawPrefix = execFileSync(
+			npmCommand,
+			["config", "get", "prefix", "--location=global"],
+			{
+				encoding: "utf-8",
+				timeout: 3000,
+				windowsHide: true,
+				cwd: os.homedir(), // Run from home dir to avoid ENOWORKSPACES error in monorepos
+				shell: isWindows(), // Enable shell on Windows for .cmd resolution
+			},
+		).trim();
 
-    if (!rawPrefix) {
-      return null;
-    }
+		if (!rawPrefix) {
+			return null;
+		}
 
-    // On non-Windows platforms, npm globals are installed in prefix/bin
-    // On Windows, they're installed directly in the prefix directory
-    const binPath = isWindows()
-      ? rawPrefix
-      : path.join(rawPrefix, 'bin');
+		// On non-Windows platforms, npm globals are installed in prefix/bin
+		// On Windows, they're installed directly in the prefix directory
+		const binPath = isWindows() ? rawPrefix : path.join(rawPrefix, "bin");
 
-    // Normalize and verify the path exists
-    const normalizedPath = path.normalize(binPath);
+		// Normalize and verify the path exists
+		const normalizedPath = path.normalize(binPath);
 
-    return fs.existsSync(normalizedPath) ? normalizedPath : null;
-  } catch (_error) {
-    // Fallback for Windows: try default npm global location when npm.cmd is not in PATH
-    // This happens when the packaged app launches from GUI without full shell environment
-    if (isWindows()) {
-      const defaultNpmPath = WINDOWS_NPM_FALLBACK_PATH();
-      if (fs.existsSync(defaultNpmPath)) {
-        console.warn('[env-utils] npm command not found, using default npm path:', defaultNpmPath);
-        return defaultNpmPath;
-      }
-    }
-    return null;
-  }
+		return fs.existsSync(normalizedPath) ? normalizedPath : null;
+	} catch (_error) {
+		// Fallback for Windows: try default npm global location when npm.cmd is not in PATH
+		// This happens when the packaged app launches from GUI without full shell environment
+		if (isWindows()) {
+			const defaultNpmPath = WINDOWS_NPM_FALLBACK_PATH();
+			if (fs.existsSync(defaultNpmPath)) {
+				console.warn(
+					"[env-utils] npm command not found, using default npm path:",
+					defaultNpmPath,
+				);
+				return defaultNpmPath;
+			}
+		}
+		return null;
+	}
 }
 
 /**
@@ -114,42 +120,47 @@ function getNpmGlobalPrefix(): string | null {
  * These are locations where commonly used tools are installed
  */
 export const COMMON_BIN_PATHS: Record<string, string[]> = {
-  darwin: [
-    '/opt/homebrew/bin',      // Apple Silicon Homebrew
-    '/usr/local/bin',         // Intel Homebrew / system
-    '/usr/local/share/dotnet', // .NET SDK
-    '/opt/homebrew/sbin',     // Apple Silicon Homebrew sbin
-    '/usr/local/sbin',        // Intel Homebrew sbin
-    '~/.local/bin',           // User-local binaries (Claude CLI)
-    '~/.dotnet/tools',        // .NET global tools
-  ],
-  linux: [
-    '/usr/local/bin',
-    '/usr/bin',               // System binaries (Python, etc.)
-    '/snap/bin',              // Snap packages
-    '~/.local/bin',           // User-local binaries
-    '~/.dotnet/tools',        // .NET global tools
-    '/usr/sbin',              // System admin binaries
-  ],
-  win32: [
-    // Windows usually handles PATH better, but we can add common locations
-    'C:\\Program Files\\Git\\cmd',
-    'C:\\Program Files\\GitHub CLI',
-    // Node.js and npm paths - critical for packaged Electron apps that don't inherit full PATH
-    'C:\\Program Files\\nodejs',                  // Standard Node.js installer (64-bit)
-    'C:\\Program Files (x86)\\nodejs',            // 32-bit Node.js on 64-bit Windows
-    '~\\AppData\\Local\\Programs\\nodejs',        // NVM for Windows / user install
-    '~\\AppData\\Roaming\\npm',                   // npm global scripts (claude.cmd lives here)
-    '~\\scoop\\apps\\nodejs\\current',            // Scoop package manager
-    'C:\\ProgramData\\chocolatey\\bin',           // Chocolatey package manager
-  ],
+	darwin: [
+		"/opt/homebrew/bin", // Apple Silicon Homebrew
+		"/usr/local/bin", // Intel Homebrew / system
+		"/usr/local/share/dotnet", // .NET SDK
+		"/opt/homebrew/sbin", // Apple Silicon Homebrew sbin
+		"/usr/local/sbin", // Intel Homebrew sbin
+		"~/.local/bin", // User-local binaries (Claude CLI)
+		"~/.dotnet/tools", // .NET global tools
+	],
+	linux: [
+		"/usr/local/bin",
+		"/usr/bin", // System binaries (Python, etc.)
+		"/snap/bin", // Snap packages
+		"~/.local/bin", // User-local binaries
+		"~/.dotnet/tools", // .NET global tools
+		"/usr/sbin", // System admin binaries
+	],
+	win32: [
+		// Windows usually handles PATH better, but we can add common locations
+		"C:\\Program Files\\Git\\cmd",
+		"C:\\Program Files\\GitHub CLI",
+		// Node.js and npm paths - critical for packaged Electron apps that don't inherit full PATH
+		"C:\\Program Files\\nodejs", // Standard Node.js installer (64-bit)
+		"C:\\Program Files (x86)\\nodejs", // 32-bit Node.js on 64-bit Windows
+		"~\\AppData\\Local\\Programs\\nodejs", // NVM for Windows / user install
+		"~\\AppData\\Roaming\\npm", // npm global scripts (claude.cmd lives here)
+		"~\\scoop\\apps\\nodejs\\current", // Scoop package manager
+		"C:\\ProgramData\\chocolatey\\bin", // Chocolatey package manager
+	],
 };
 
 /**
  * Essential system directories that must always be in PATH
  * Required for core system functionality (e.g., /usr/bin/security for Keychain access)
  */
-const ESSENTIAL_SYSTEM_PATHS: string[] = ['/usr/bin', '/bin', '/usr/sbin', '/sbin'];
+const ESSENTIAL_SYSTEM_PATHS: string[] = [
+	"/usr/bin",
+	"/bin",
+	"/usr/sbin",
+	"/sbin",
+];
 
 /**
  * Get expanded platform paths for PATH augmentation
@@ -161,24 +172,24 @@ const ESSENTIAL_SYSTEM_PATHS: string[] = ['/usr/bin', '/bin', '/usr/sbin', '/sbi
  * @returns Array of expanded paths (without existence checking)
  */
 function getExpandedPlatformPaths(additionalPaths?: string[]): string[] {
-  const platform = process.platform as 'darwin' | 'linux' | 'win32';
-  const homeDir = os.homedir();
+	const platform = process.platform as "darwin" | "linux" | "win32";
+	const homeDir = os.homedir();
 
-  // Get platform-specific paths and expand home directory
-  const platformPaths = COMMON_BIN_PATHS[platform] || [];
-  const expandedPaths = platformPaths.map(p =>
-    p.startsWith('~') ? p.replace('~', homeDir) : p
-  );
+	// Get platform-specific paths and expand home directory
+	const platformPaths = COMMON_BIN_PATHS[platform] || [];
+	const expandedPaths = platformPaths.map((p) =>
+		p.startsWith("~") ? p.replace("~", homeDir) : p,
+	);
 
-  // Add user-requested additional paths (expanded)
-  if (additionalPaths) {
-    for (const p of additionalPaths) {
-      const expanded = p.startsWith('~') ? p.replace('~', homeDir) : p;
-      expandedPaths.push(expanded);
-    }
-  }
+	// Add user-requested additional paths (expanded)
+	if (additionalPaths) {
+		for (const p of additionalPaths) {
+			const expanded = p.startsWith("~") ? p.replace("~", homeDir) : p;
+			expandedPaths.push(expanded);
+		}
+	}
 
-  return expandedPaths;
+	return expandedPaths;
 }
 
 /**
@@ -194,26 +205,30 @@ function getExpandedPlatformPaths(additionalPaths?: string[]): string[] {
  * @returns Array of paths to prepend to PATH
  */
 function buildPathsToAdd(
-  candidatePaths: string[],
-  currentPathSet: Set<string>,
-  existingPaths: Set<string>,
-  npmPrefix: string | null
+	candidatePaths: string[],
+	currentPathSet: Set<string>,
+	existingPaths: Set<string>,
+	npmPrefix: string | null,
 ): string[] {
-  const pathsToAdd: string[] = [];
+	const pathsToAdd: string[] = [];
 
-  // Add platform-specific paths that exist
-  for (const p of candidatePaths) {
-    if (!currentPathSet.has(p) && existingPaths.has(p)) {
-      pathsToAdd.push(p);
-    }
-  }
+	// Add platform-specific paths that exist
+	for (const p of candidatePaths) {
+		if (!currentPathSet.has(p) && existingPaths.has(p)) {
+			pathsToAdd.push(p);
+		}
+	}
 
-  // Add npm global prefix if it exists
-  if (npmPrefix && !currentPathSet.has(npmPrefix) && existingPaths.has(npmPrefix)) {
-    pathsToAdd.push(npmPrefix);
-  }
+	// Add npm global prefix if it exists
+	if (
+		npmPrefix &&
+		!currentPathSet.has(npmPrefix) &&
+		existingPaths.has(npmPrefix)
+	) {
+		pathsToAdd.push(npmPrefix);
+	}
 
-  return pathsToAdd;
+	return pathsToAdd;
 }
 
 /**
@@ -226,55 +241,68 @@ function buildPathsToAdd(
  * @param additionalPaths - Optional array of additional paths to include
  * @returns Environment object with augmented PATH
  */
-export function getAugmentedEnv(additionalPaths?: string[]): Record<string, string> {
-  const env = { ...process.env } as Record<string, string>;
-  const pathSeparator = getPathDelimiter();
+export function getAugmentedEnv(
+	additionalPaths?: string[],
+): Record<string, string> {
+	const env = { ...process.env } as Record<string, string>;
+	const pathSeparator = getPathDelimiter();
 
-  // Get all candidate paths (platform + additional)
-  const candidatePaths = getExpandedPlatformPaths(additionalPaths);
+	// Get all candidate paths (platform + additional)
+	const candidatePaths = getExpandedPlatformPaths(additionalPaths);
 
-  // Ensure PATH has essential system directories when launched from Finder/Dock.
-  // When Electron launches from GUI (not terminal), PATH might be empty or minimal.
-  // The Claude Agent SDK needs /usr/bin/security to access macOS Keychain.
-  let currentPath = env.PATH || '';
+	// Ensure PATH has essential system directories when launched from Finder/Dock.
+	// When Electron launches from GUI (not terminal), PATH might be empty or minimal.
+	// The Claude Agent SDK needs /usr/bin/security to access macOS Keychain.
+	let currentPath = env.PATH || "";
 
-  // On macOS/Linux, ensure basic system paths are always present
-  if (isUnix()) {
-    const pathSetForEssentials = new Set(currentPath.split(pathSeparator).filter(Boolean));
-    const missingEssentials = ESSENTIAL_SYSTEM_PATHS.filter(p => !pathSetForEssentials.has(p));
+	// On macOS/Linux, ensure basic system paths are always present
+	if (isUnix()) {
+		const pathSetForEssentials = new Set(
+			currentPath.split(pathSeparator).filter(Boolean),
+		);
+		const missingEssentials = ESSENTIAL_SYSTEM_PATHS.filter(
+			(p) => !pathSetForEssentials.has(p),
+		);
 
-    if (missingEssentials.length > 0) {
-      // Append essential paths if missing (append, not prepend, to respect user's PATH)
-      currentPath = currentPath
-        ? `${currentPath}${pathSeparator}${missingEssentials.join(pathSeparator)}`
-        : missingEssentials.join(pathSeparator);
-    }
-  }
+		if (missingEssentials.length > 0) {
+			// Append essential paths if missing (append, not prepend, to respect user's PATH)
+			currentPath = currentPath
+				? `${currentPath}${pathSeparator}${missingEssentials.join(pathSeparator)}`
+				: missingEssentials.join(pathSeparator);
+		}
+	}
 
-  // Collect paths to add (only if they exist and aren't already in PATH)
-  const currentPathSet = new Set(currentPath.split(pathSeparator).filter(Boolean));
+	// Collect paths to add (only if they exist and aren't already in PATH)
+	const currentPathSet = new Set(
+		currentPath.split(pathSeparator).filter(Boolean),
+	);
 
-  // Check existence synchronously and build existing paths set
-  const existingPaths = new Set(candidatePaths.filter(p => fs.existsSync(p)));
+	// Check existence synchronously and build existing paths set
+	const existingPaths = new Set(candidatePaths.filter((p) => fs.existsSync(p)));
 
-  // Get npm global prefix dynamically
-  const npmPrefix = getNpmGlobalPrefix();
-  if (npmPrefix && fs.existsSync(npmPrefix)) {
-    existingPaths.add(npmPrefix);
-  }
+	// Get npm global prefix dynamically
+	const npmPrefix = getNpmGlobalPrefix();
+	if (npmPrefix && fs.existsSync(npmPrefix)) {
+		existingPaths.add(npmPrefix);
+	}
 
-  // Build final paths to add using shared helper
-  const pathsToAdd = buildPathsToAdd(candidatePaths, currentPathSet, existingPaths, npmPrefix);
+	// Build final paths to add using shared helper
+	const pathsToAdd = buildPathsToAdd(
+		candidatePaths,
+		currentPathSet,
+		existingPaths,
+		npmPrefix,
+	);
 
-  // Prepend new paths to PATH (prepend so they take priority)
-  env.PATH = [...pathsToAdd, currentPath].filter(Boolean).join(pathSeparator);
+	// Prepend new paths to PATH (prepend so they take priority)
+	env.PATH = [...pathsToAdd, currentPath].filter(Boolean).join(pathSeparator);
 
-  // Add Sentry environment variables for Python subprocesses
-  // These are embedded at build time and need to be passed explicitly
-  const sentryEnv = getSentryEnvForSubprocess();
-  Object.assign(env, sentryEnv);
+	// Add Sentry environment variables for Python subprocesses
+	// These are embedded at build time and need to be passed explicitly
+	const sentryEnv = getSentryEnvForSubprocess();
+	Object.assign(env, sentryEnv);
 
-  return env;
+	return env;
 }
 
 /**
@@ -287,26 +315,24 @@ export function getAugmentedEnv(additionalPaths?: string[]): Record<string, stri
  * @returns The full path to the executable, or null if not found
  */
 export function findExecutable(command: string): string | null {
-  const env = getAugmentedEnv();
-  const pathSeparator = getPathDelimiter();
-  const pathDirs = (env.PATH || '').split(pathSeparator);
+	const env = getAugmentedEnv();
+	const pathSeparator = getPathDelimiter();
+	const pathDirs = (env.PATH || "").split(pathSeparator);
 
-  // On Windows, check Windows-native extensions first (.exe, .cmd) before
-  // extensionless files (which are typically bash/sh scripts for Git Bash/Cygwin)
-  const extensions = isWindows()
-    ? ['.exe', '.cmd', '.bat', '.ps1', '']
-    : [''];
+	// On Windows, check Windows-native extensions first (.exe, .cmd) before
+	// extensionless files (which are typically bash/sh scripts for Git Bash/Cygwin)
+	const extensions = isWindows() ? [".exe", ".cmd", ".bat", ".ps1", ""] : [""];
 
-  for (const dir of pathDirs) {
-    for (const ext of extensions) {
-      const fullPath = path.join(dir, command + ext);
-      if (fs.existsSync(fullPath)) {
-        return fullPath;
-      }
-    }
-  }
+	for (const dir of pathDirs) {
+		for (const ext of extensions) {
+			const fullPath = path.join(dir, command + ext);
+			if (fs.existsSync(fullPath)) {
+				return fullPath;
+			}
+		}
+	}
 
-  return null;
+	return null;
 }
 
 /**
@@ -316,7 +342,7 @@ export function findExecutable(command: string): string | null {
  * @returns true if the command is available
  */
 export function isCommandAvailable(command: string): boolean {
-  return findExecutable(command) !== null;
+	return findExecutable(command) !== null;
 }
 
 // ============================================================================
@@ -332,63 +358,70 @@ export function isCommandAvailable(command: string): boolean {
  * @returns Promise resolving to npm global binaries directory, or null
  */
 async function getNpmGlobalPrefixAsync(): Promise<string | null> {
-  // Return cached value if available
-  if (npmGlobalPrefixCache !== undefined) {
-    return npmGlobalPrefixCache;
-  }
+	// Return cached value if available
+	if (npmGlobalPrefixCache !== undefined) {
+		return npmGlobalPrefixCache;
+	}
 
-  // If a fetch is already in progress, wait for it
-  if (npmGlobalPrefixCachePromise) {
-    return npmGlobalPrefixCachePromise;
-  }
+	// If a fetch is already in progress, wait for it
+	if (npmGlobalPrefixCachePromise) {
+		return npmGlobalPrefixCachePromise;
+	}
 
-  // Start the async fetch
-  npmGlobalPrefixCachePromise = (async () => {
-    try {
-      // Use platform module helper for npm command name
-      const npmCommand = getNpmCommand();
+	// Start the async fetch
+	npmGlobalPrefixCachePromise = (async () => {
+		try {
+			// Use platform module helper for npm command name
+			const npmCommand = getNpmCommand();
 
-      const { stdout } = await execFileAsync(npmCommand, ['config', 'get', 'prefix', '--location=global'], {
-        encoding: 'utf-8',
-        timeout: 3000,
-        windowsHide: true,
-        cwd: os.homedir(), // Run from home dir to avoid ENOWORKSPACES error in monorepos
-        shell: isWindows(),
-      });
+			const { stdout } = await execFileAsync(
+				npmCommand,
+				["config", "get", "prefix", "--location=global"],
+				{
+					encoding: "utf-8",
+					timeout: 3000,
+					windowsHide: true,
+					cwd: os.homedir(), // Run from home dir to avoid ENOWORKSPACES error in monorepos
+					shell: isWindows(),
+				},
+			);
 
-      const rawPrefix = stdout.trim();
-      if (!rawPrefix) {
-        npmGlobalPrefixCache = null;
-        return null;
-      }
+			const rawPrefix = stdout.trim();
+			if (!rawPrefix) {
+				npmGlobalPrefixCache = null;
+				return null;
+			}
 
-      const binPath = isWindows()
-        ? rawPrefix
-        : path.join(rawPrefix, 'bin');
+			const binPath = isWindows() ? rawPrefix : path.join(rawPrefix, "bin");
 
-      const normalizedPath = path.normalize(binPath);
-      npmGlobalPrefixCache = await existsAsync(normalizedPath) ? normalizedPath : null;
-      return npmGlobalPrefixCache;
-    } catch (error) {
-      // Fallback for Windows: try default npm global location when npm.cmd is not in PATH
-      // This happens when the packaged app launches from GUI without full shell environment
-      if (isWindows()) {
-        const defaultNpmPath = WINDOWS_NPM_FALLBACK_PATH();
-        if (await existsAsync(defaultNpmPath)) {
-          console.warn('[env-utils] npm command not found, using default npm path:', defaultNpmPath);
-          npmGlobalPrefixCache = defaultNpmPath;
-          return defaultNpmPath;
-        }
-      }
-      console.warn(`[env-utils] Failed to get npm global prefix: ${error}`);
-      npmGlobalPrefixCache = null;
-      return null;
-    } finally {
-      npmGlobalPrefixCachePromise = null;
-    }
-  })();
+			const normalizedPath = path.normalize(binPath);
+			npmGlobalPrefixCache = (await existsAsync(normalizedPath))
+				? normalizedPath
+				: null;
+			return npmGlobalPrefixCache;
+		} catch (error) {
+			// Fallback for Windows: try default npm global location when npm.cmd is not in PATH
+			// This happens when the packaged app launches from GUI without full shell environment
+			if (isWindows()) {
+				const defaultNpmPath = WINDOWS_NPM_FALLBACK_PATH();
+				if (await existsAsync(defaultNpmPath)) {
+					console.warn(
+						"[env-utils] npm command not found, using default npm path:",
+						defaultNpmPath,
+					);
+					npmGlobalPrefixCache = defaultNpmPath;
+					return defaultNpmPath;
+				}
+			}
+			console.warn(`[env-utils] Failed to get npm global prefix: ${error}`);
+			npmGlobalPrefixCache = null;
+			return null;
+		} finally {
+			npmGlobalPrefixCachePromise = null;
+		}
+	})();
 
-  return npmGlobalPrefixCachePromise;
+	return npmGlobalPrefixCachePromise;
 }
 
 /**
@@ -400,56 +433,72 @@ async function getNpmGlobalPrefixAsync(): Promise<string | null> {
  * @param additionalPaths - Optional array of additional paths to include
  * @returns Promise resolving to environment object with augmented PATH
  */
-export async function getAugmentedEnvAsync(additionalPaths?: string[]): Promise<Record<string, string>> {
-  const env = { ...process.env } as Record<string, string>;
-  const pathSeparator = getPathDelimiter();
+export async function getAugmentedEnvAsync(
+	additionalPaths?: string[],
+): Promise<Record<string, string>> {
+	const env = { ...process.env } as Record<string, string>;
+	const pathSeparator = getPathDelimiter();
 
-  // Get all candidate paths (platform + additional)
-  const candidatePaths = getExpandedPlatformPaths(additionalPaths);
+	// Get all candidate paths (platform + additional)
+	const candidatePaths = getExpandedPlatformPaths(additionalPaths);
 
-  // Ensure essential system paths are present (for macOS Keychain access)
-  let currentPath = env.PATH || '';
+	// Ensure essential system paths are present (for macOS Keychain access)
+	let currentPath = env.PATH || "";
 
-  if (isUnix()) {
-    const pathSetForEssentials = new Set(currentPath.split(pathSeparator).filter(Boolean));
-    const missingEssentials = ESSENTIAL_SYSTEM_PATHS.filter(p => !pathSetForEssentials.has(p));
+	if (isUnix()) {
+		const pathSetForEssentials = new Set(
+			currentPath.split(pathSeparator).filter(Boolean),
+		);
+		const missingEssentials = ESSENTIAL_SYSTEM_PATHS.filter(
+			(p) => !pathSetForEssentials.has(p),
+		);
 
-    if (missingEssentials.length > 0) {
-      currentPath = currentPath
-        ? `${currentPath}${pathSeparator}${missingEssentials.join(pathSeparator)}`
-        : missingEssentials.join(pathSeparator);
-    }
-  }
+		if (missingEssentials.length > 0) {
+			currentPath = currentPath
+				? `${currentPath}${pathSeparator}${missingEssentials.join(pathSeparator)}`
+				: missingEssentials.join(pathSeparator);
+		}
+	}
 
-  // Collect paths to add (only if they exist and aren't already in PATH)
-  const currentPathSet = new Set(currentPath.split(pathSeparator).filter(Boolean));
+	// Collect paths to add (only if they exist and aren't already in PATH)
+	const currentPathSet = new Set(
+		currentPath.split(pathSeparator).filter(Boolean),
+	);
 
-  // Check existence asynchronously in parallel for performance
-  const pathChecks = await Promise.all(
-    candidatePaths.map(async (p) => ({ path: p, exists: await existsAsync(p) }))
-  );
-  const existingPaths = new Set(
-    pathChecks.filter(({ exists }) => exists).map(({ path: p }) => p)
-  );
+	// Check existence asynchronously in parallel for performance
+	const pathChecks = await Promise.all(
+		candidatePaths.map(async (p) => ({
+			path: p,
+			exists: await existsAsync(p),
+		})),
+	);
+	const existingPaths = new Set(
+		pathChecks.filter(({ exists }) => exists).map(({ path: p }) => p),
+	);
 
-  // Get npm global prefix dynamically (async - non-blocking)
-  const npmPrefix = await getNpmGlobalPrefixAsync();
-  if (npmPrefix && await existsAsync(npmPrefix)) {
-    existingPaths.add(npmPrefix);
-  }
+	// Get npm global prefix dynamically (async - non-blocking)
+	const npmPrefix = await getNpmGlobalPrefixAsync();
+	if (npmPrefix && (await existsAsync(npmPrefix))) {
+		existingPaths.add(npmPrefix);
+	}
 
-  // Build final paths to add using shared helper
-  const pathsToAdd = buildPathsToAdd(candidatePaths, currentPathSet, existingPaths, npmPrefix);
+	// Build final paths to add using shared helper
+	const pathsToAdd = buildPathsToAdd(
+		candidatePaths,
+		currentPathSet,
+		existingPaths,
+		npmPrefix,
+	);
 
-  // Prepend new paths to PATH (prepend so they take priority)
-  env.PATH = [...pathsToAdd, currentPath].filter(Boolean).join(pathSeparator);
+	// Prepend new paths to PATH (prepend so they take priority)
+	env.PATH = [...pathsToAdd, currentPath].filter(Boolean).join(pathSeparator);
 
-  // Add Sentry environment variables for Python subprocesses
-  // These are embedded at build time and need to be passed explicitly
-  const sentryEnv = getSentryEnvForSubprocess();
-  Object.assign(env, sentryEnv);
+	// Add Sentry environment variables for Python subprocesses
+	// These are embedded at build time and need to be passed explicitly
+	const sentryEnv = getSentryEnvForSubprocess();
+	Object.assign(env, sentryEnv);
 
-  return env;
+	return env;
 }
 
 /**
@@ -460,25 +509,25 @@ export async function getAugmentedEnvAsync(additionalPaths?: string[]): Promise<
  * @param command - The command name to find (e.g., 'gh', 'git')
  * @returns Promise resolving to the full path to the executable, or null
  */
-export async function findExecutableAsync(command: string): Promise<string | null> {
-  const env = await getAugmentedEnvAsync();
-  const pathSeparator = getPathDelimiter();
-  const pathDirs = (env.PATH || '').split(pathSeparator);
+export async function findExecutableAsync(
+	command: string,
+): Promise<string | null> {
+	const env = await getAugmentedEnvAsync();
+	const pathSeparator = getPathDelimiter();
+	const pathDirs = (env.PATH || "").split(pathSeparator);
 
-  const extensions = isWindows()
-    ? ['.exe', '.cmd', '.bat', '.ps1', '']
-    : [''];
+	const extensions = isWindows() ? [".exe", ".cmd", ".bat", ".ps1", ""] : [""];
 
-  for (const dir of pathDirs) {
-    for (const ext of extensions) {
-      const fullPath = path.join(dir, command + ext);
-      if (await existsAsync(fullPath)) {
-        return fullPath;
-      }
-    }
-  }
+	for (const dir of pathDirs) {
+		for (const ext of extensions) {
+			const fullPath = path.join(dir, command + ext);
+			if (await existsAsync(fullPath)) {
+				return fullPath;
+			}
+		}
+	}
 
-  return null;
+	return null;
 }
 
 /**
@@ -487,8 +536,8 @@ export async function findExecutableAsync(command: string): Promise<string | nul
  * Call this if npm configuration changes and you need fresh detection.
  */
 export function clearNpmPrefixCache(): void {
-  npmGlobalPrefixCache = undefined;
-  npmGlobalPrefixCachePromise = null;
+	npmGlobalPrefixCache = undefined;
+	npmGlobalPrefixCachePromise = null;
 }
 
 /**
@@ -510,17 +559,19 @@ export function clearNpmPrefixCache(): void {
  * ```
  */
 export function shouldUseShell(command: string): boolean {
-  // Only Windows needs special handling for .cmd/.bat files
-  if (isUnix()) {
-    return false;
-  }
+	// Only Windows needs special handling for .cmd/.bat files
+	if (isUnix()) {
+		return false;
+	}
 
-  const trimmed = command.trim();
-  const unquoted =
-    trimmed.startsWith('"') && trimmed.endsWith('"') ? trimmed.slice(1, -1) : trimmed;
+	const trimmed = command.trim();
+	const unquoted =
+		trimmed.startsWith('"') && trimmed.endsWith('"')
+			? trimmed.slice(1, -1)
+			: trimmed;
 
-  // Check if command ends with .cmd or .bat (case-insensitive)
-  return /\.(cmd|bat)$/i.test(unquoted);
+	// Check if command ends with .cmd or .bat (case-insensitive)
+	return /\.(cmd|bat)$/i.test(unquoted);
 }
 
 /**
@@ -543,26 +594,26 @@ export function shouldUseShell(command: string): boolean {
  * ```
  */
 export function getSpawnOptions(
-  command: string,
-  baseOptions?: {
-    cwd?: string;
-    env?: Record<string, string>;
-    timeout?: number;
-    windowsHide?: boolean;
-    stdio?: 'inherit' | 'pipe' | Array<'inherit' | 'pipe'>;
-  }
+	command: string,
+	baseOptions?: {
+		cwd?: string;
+		env?: Record<string, string>;
+		timeout?: number;
+		windowsHide?: boolean;
+		stdio?: "inherit" | "pipe" | Array<"inherit" | "pipe">;
+	},
 ): {
-  cwd?: string;
-  env?: Record<string, string>;
-  shell: boolean;
-  timeout?: number;
-  windowsHide?: boolean;
-  stdio?: 'inherit' | 'pipe' | Array<'inherit' | 'pipe'>;
+	cwd?: string;
+	env?: Record<string, string>;
+	shell: boolean;
+	timeout?: number;
+	windowsHide?: boolean;
+	stdio?: "inherit" | "pipe" | Array<"inherit" | "pipe">;
 } {
-  return {
-    ...baseOptions,
-    shell: shouldUseShell(command),
-  };
+	return {
+		...baseOptions,
+		shell: shouldUseShell(command),
+	};
 }
 
 /**
@@ -582,19 +633,19 @@ export function getSpawnOptions(
  * ```
  */
 export function getSpawnCommand(command: string): string {
-  // For .cmd/.bat files on Windows, quote the command to handle spaces
-  // The shell will parse the quoted path correctly
-  const trimmed = command.trim();
-  if (shouldUseShell(trimmed)) {
-    // Idempotent if already quoted
-    if (trimmed.startsWith('"') && trimmed.endsWith('"')) {
-      return trimmed;
-    }
-    return `"${trimmed}"`;
-  }
-  // For non-.cmd/.bat files, strip quotes if present (defensive: no double quotes with shell:false)
-  if (trimmed.startsWith('"') && trimmed.endsWith('"')) {
-    return trimmed.slice(1, -1);
-  }
-  return trimmed;
+	// For .cmd/.bat files on Windows, quote the command to handle spaces
+	// The shell will parse the quoted path correctly
+	const trimmed = command.trim();
+	if (shouldUseShell(trimmed)) {
+		// Idempotent if already quoted
+		if (trimmed.startsWith('"') && trimmed.endsWith('"')) {
+			return trimmed;
+		}
+		return `"${trimmed}"`;
+	}
+	// For non-.cmd/.bat files, strip quotes if present (defensive: no double quotes with shell:false)
+	if (trimmed.startsWith('"') && trimmed.endsWith('"')) {
+		return trimmed.slice(1, -1);
+	}
+	return trimmed;
 }

@@ -24,4 +24,4 @@
  */
 
 // Re-export all constants from domain-specific modules
-export * from './constants/index';
+export * from "./constants/index";

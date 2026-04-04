@@ -1,82 +1,97 @@
-import { ipcMain } from 'electron';
-import type { BrowserWindow } from 'electron';
-import { IPC_CHANNELS } from '../../shared/constants';
+import { spawn } from "child_process";
+import type { BrowserWindow } from "electron";
+import { ipcMain } from "electron";
+import { existsSync, readFileSync } from "fs";
+import path from "path";
+import { fileURLToPath } from "url";
+import { IPC_CHANNELS } from "../../shared/constants";
 import type {
-  IPCResult,
-  JiraWorkItem,
-  JiraSyncStatus,
-  Project,
-} from '../../shared/types';
-import path from 'path';
-import { existsSync, readFileSync } from 'fs';
-import { projectStore } from '../project-store';
-import { parseEnvFile } from './utils';
-import { spawn } from 'child_process';
-import { fileURLToPath } from 'url';
-import { AgentManager } from '../agent';
+	IPCResult,
+	JiraSyncStatus,
+	JiraWorkItem,
+	Project,
+} from "../../shared/types";
+import type { AgentManager } from "../agent";
+import { projectStore } from "../project-store";
+import { parseEnvFile } from "./utils";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-const connectorSrcPath = path.resolve(__dirname, '..', '..', '..', '..', 'src');
+const connectorSrcPath = path.resolve(__dirname, "..", "..", "..", "..", "src");
 
 /**
  * Register all Jira-related IPC handlers
  */
 export function registerJiraHandlers(
-  _agentManager: AgentManager,
-  _getMainWindow: () => BrowserWindow | null
+	_agentManager: AgentManager,
+	_getMainWindow: () => BrowserWindow | null,
 ): void {
-  /**
-   * Helper to get Jira credentials from project env
-   */
-  const getJiraConfig = (
-    project: Project
-  ): {
-    instanceUrl: string | null;
-    email: string | null;
-    apiToken: string | null;
-    projectKey: string | null;
-  } => {
-    if (!project.autoBuildPath) {
-      return { instanceUrl: null, email: null, apiToken: null, projectKey: null };
-    }
-    const envPath = path.join(project.path, project.autoBuildPath, '.env');
-    if (!existsSync(envPath)) {
-      return { instanceUrl: null, email: null, apiToken: null, projectKey: null };
-    }
+	/**
+	 * Helper to get Jira credentials from project env
+	 */
+	const getJiraConfig = (
+		project: Project,
+	): {
+		instanceUrl: string | null;
+		email: string | null;
+		apiToken: string | null;
+		projectKey: string | null;
+	} => {
+		if (!project.autoBuildPath) {
+			return {
+				instanceUrl: null,
+				email: null,
+				apiToken: null,
+				projectKey: null,
+			};
+		}
+		const envPath = path.join(project.path, project.autoBuildPath, ".env");
+		if (!existsSync(envPath)) {
+			return {
+				instanceUrl: null,
+				email: null,
+				apiToken: null,
+				projectKey: null,
+			};
+		}
 
-    try {
-      const content = readFileSync(envPath, 'utf-8');
-      const vars = parseEnvFile(content);
-      return {
-        instanceUrl: vars['JIRA_INSTANCE_URL'] || null,
-        email: vars['JIRA_EMAIL'] || null,
-        apiToken: vars['JIRA_API_TOKEN'] || null,
-        projectKey: vars['JIRA_PROJECT_KEY'] || null,
-      };
-    } catch {
-      return { instanceUrl: null, email: null, apiToken: null, projectKey: null };
-    }
-  };
+		try {
+			const content = readFileSync(envPath, "utf-8");
+			const vars = parseEnvFile(content);
+			return {
+				instanceUrl: vars["JIRA_INSTANCE_URL"] || null,
+				email: vars["JIRA_EMAIL"] || null,
+				apiToken: vars["JIRA_API_TOKEN"] || null,
+				projectKey: vars["JIRA_PROJECT_KEY"] || null,
+			};
+		} catch {
+			return {
+				instanceUrl: null,
+				email: null,
+				apiToken: null,
+				projectKey: null,
+			};
+		}
+	};
 
-  /**
-   * Call Python Jira connector
-   */
-  const callJiraPython = async (
-    projectPath: string,
-    operation: string,
-    params: Record<string, unknown> = {},
-    envOverrides: Record<string, string> = {}
-  ): Promise<unknown> => {
-    return new Promise((resolve, reject) => {
-      const pythonScript = `
+	/**
+	 * Call Python Jira connector
+	 */
+	const callJiraPython = async (
+		projectPath: string,
+		operation: string,
+		params: Record<string, unknown> = {},
+		envOverrides: Record<string, string> = {},
+	): Promise<unknown> => {
+		return new Promise((resolve, reject) => {
+			const pythonScript = `
 import sys
 import json
 import os
 from pathlib import Path
 
 # Add project root (parent of src/) to sys.path
-sys.path.insert(0, str(Path('${connectorSrcPath.replace(/\\/g, '\\\\')}').parent))
+sys.path.insert(0, str(Path('${connectorSrcPath.replace(/\\/g, "\\\\")}').parent))
 
 from src.connectors.jira.client import JiraClient
 from src.connectors.jira.connector import JiraConnector
@@ -135,179 +150,200 @@ except Exception as e:
     sys.exit(1)
 `;
 
-      const proc = spawn('python', ['-c', pythonScript], {
-        cwd: projectPath,
-        env: { ...process.env, ...envOverrides },
-      });
+			const proc = spawn("python", ["-c", pythonScript], {
+				cwd: projectPath,
+				env: { ...process.env, ...envOverrides },
+			});
 
-      let stdout = '';
-      let stderr = '';
+			let stdout = "";
+			let stderr = "";
 
-      proc.stdout?.on('data', (data) => {
-        stdout += data.toString();
-      });
+			proc.stdout?.on("data", (data) => {
+				stdout += data.toString();
+			});
 
-      proc.stderr?.on('data', (data) => {
-        stderr += data.toString();
-      });
+			proc.stderr?.on("data", (data) => {
+				stderr += data.toString();
+			});
 
-      proc.on('close', (code) => {
-        if (code !== 0) {
-          const errorOutput = [stderr.trim(), stdout.trim()].filter(Boolean).join('\n');
-          reject(new Error(errorOutput || `Process exited with code ${code}`));
-          return;
-        }
+			proc.on("close", (code) => {
+				if (code !== 0) {
+					const errorOutput = [stderr.trim(), stdout.trim()]
+						.filter(Boolean)
+						.join("\n");
+					reject(new Error(errorOutput || `Process exited with code ${code}`));
+					return;
+				}
 
-        try {
-          const result = JSON.parse(stdout);
-          if (result.error) {
-            reject(new Error(result.error));
-          } else {
-            resolve(result.data);
-          }
-        } catch (_e) {
-          reject(new Error(`Failed to parse response: ${stdout}`));
-        }
-      });
+				try {
+					const result = JSON.parse(stdout);
+					if (result.error) {
+						reject(new Error(result.error));
+					} else {
+						resolve(result.data);
+					}
+				} catch (_e) {
+					reject(new Error(`Failed to parse response: ${stdout}`));
+				}
+			});
 
-      proc.on('error', (error) => {
-        reject(error);
-      });
-    });
-  };
+			proc.on("error", (error) => {
+				reject(error);
+			});
+		});
+	};
 
-  ipcMain.handle(
-    IPC_CHANNELS.JIRA_CHECK_CONNECTION,
-    async (_, projectId: string): Promise<IPCResult<JiraSyncStatus>> => {
-      const project = projectStore.getProject(projectId);
-      if (!project) {
-        return { success: false, error: 'Project not found' };
-      }
+	ipcMain.handle(
+		IPC_CHANNELS.JIRA_CHECK_CONNECTION,
+		async (_, projectId: string): Promise<IPCResult<JiraSyncStatus>> => {
+			const project = projectStore.getProject(projectId);
+			if (!project) {
+				return { success: false, error: "Project not found" };
+			}
 
-      const config = getJiraConfig(project);
-      const envOverrides: Record<string, string> = {};
-      if (config.instanceUrl) envOverrides.JIRA_URL = config.instanceUrl;
-      if (config.email) envOverrides.JIRA_EMAIL = config.email;
-      if (config.apiToken) envOverrides.JIRA_API_TOKEN = config.apiToken;
-      if (config.projectKey) envOverrides.JIRA_PROJECT_KEY = config.projectKey;
+			const config = getJiraConfig(project);
+			const envOverrides: Record<string, string> = {};
+			if (config.instanceUrl) envOverrides.JIRA_URL = config.instanceUrl;
+			if (config.email) envOverrides.JIRA_EMAIL = config.email;
+			if (config.apiToken) envOverrides.JIRA_API_TOKEN = config.apiToken;
+			if (config.projectKey) envOverrides.JIRA_PROJECT_KEY = config.projectKey;
 
-      if (!config.instanceUrl || !config.email || !config.apiToken) {
-        return {
-          success: true,
-          data: {
-            connected: false,
-            error: 'Jira not configured',
-          },
-        };
-      }
+			if (!config.instanceUrl || !config.email || !config.apiToken) {
+				return {
+					success: true,
+					data: {
+						connected: false,
+						error: "Jira not configured",
+					},
+				};
+			}
 
-      try {
-        const projectPath = path.join(project.path, project.autoBuildPath || '');
-        await callJiraPython(projectPath, 'test_connection', {}, envOverrides);
+			try {
+				const projectPath = path.join(
+					project.path,
+					project.autoBuildPath || "",
+				);
+				await callJiraPython(projectPath, "test_connection", {}, envOverrides);
 
-        return {
-          success: true,
-          data: {
-            connected: true,
-            instanceUrl: config.instanceUrl,
-            projectKey: config.projectKey || undefined,
-          },
-        };
-      } catch (error: unknown) {
-        const errorMessage =
-          error instanceof Error ? error.message : String(error);
-        return {
-          success: true,
-          data: {
-            connected: false,
-            error: errorMessage,
-          },
-        };
-      }
-    }
-  );
+				return {
+					success: true,
+					data: {
+						connected: true,
+						instanceUrl: config.instanceUrl,
+						projectKey: config.projectKey || undefined,
+					},
+				};
+			} catch (error: unknown) {
+				const errorMessage =
+					error instanceof Error ? error.message : String(error);
+				return {
+					success: true,
+					data: {
+						connected: false,
+						error: errorMessage,
+					},
+				};
+			}
+		},
+	);
 
-  ipcMain.handle(
-    IPC_CHANNELS.JIRA_GET_ISSUES,
-    async (
-      _,
-      projectId: string,
-      maxItems?: number
-    ): Promise<IPCResult<JiraWorkItem[]>> => {
-      const project = projectStore.getProject(projectId);
-      if (!project) {
-        return { success: false, error: 'Project not found' };
-      }
+	ipcMain.handle(
+		IPC_CHANNELS.JIRA_GET_ISSUES,
+		async (
+			_,
+			projectId: string,
+			maxItems?: number,
+		): Promise<IPCResult<JiraWorkItem[]>> => {
+			const project = projectStore.getProject(projectId);
+			if (!project) {
+				return { success: false, error: "Project not found" };
+			}
 
-      const config = getJiraConfig(project);
-      const envOverrides: Record<string, string> = {};
-      if (config.instanceUrl) envOverrides.JIRA_URL = config.instanceUrl;
-      if (config.email) envOverrides.JIRA_EMAIL = config.email;
-      if (config.apiToken) envOverrides.JIRA_API_TOKEN = config.apiToken;
-      if (config.projectKey) envOverrides.JIRA_PROJECT_KEY = config.projectKey;
+			const config = getJiraConfig(project);
+			const envOverrides: Record<string, string> = {};
+			if (config.instanceUrl) envOverrides.JIRA_URL = config.instanceUrl;
+			if (config.email) envOverrides.JIRA_EMAIL = config.email;
+			if (config.apiToken) envOverrides.JIRA_API_TOKEN = config.apiToken;
+			if (config.projectKey) envOverrides.JIRA_PROJECT_KEY = config.projectKey;
 
-      if (!config.instanceUrl || !config.email || !config.apiToken) {
-        return {
-          success: false,
-          error: 'Jira not configured for this project',
-        };
-      }
+			if (!config.instanceUrl || !config.email || !config.apiToken) {
+				return {
+					success: false,
+					error: "Jira not configured for this project",
+				};
+			}
 
-      try {
-        const projectPath = path.join(project.path, project.autoBuildPath || '');
-        const items = (await callJiraPython(projectPath, 'list_issues', {
-          project_key: config.projectKey,
-          max_results: maxItems || 100,
-        }, envOverrides)) as JiraWorkItem[];
+			try {
+				const projectPath = path.join(
+					project.path,
+					project.autoBuildPath || "",
+				);
+				const items = (await callJiraPython(
+					projectPath,
+					"list_issues",
+					{
+						project_key: config.projectKey,
+						max_results: maxItems || 100,
+					},
+					envOverrides,
+				)) as JiraWorkItem[];
 
-        return { success: true, data: items };
-      } catch (error: unknown) {
-        const errorMessage =
-          error instanceof Error ? error.message : String(error);
-        return { success: false, error: errorMessage };
-      }
-    }
-  );
+				return { success: true, data: items };
+			} catch (error: unknown) {
+				const errorMessage =
+					error instanceof Error ? error.message : String(error);
+				return { success: false, error: errorMessage };
+			}
+		},
+	);
 
-  ipcMain.handle(
-    IPC_CHANNELS.JIRA_TEST_CONNECTION,
-    async (_, config: { instanceUrl: string; email: string; apiToken: string }): Promise<IPCResult<JiraSyncStatus>> => {
-      if (!config.instanceUrl || !config.email || !config.apiToken) {
-        return {
-          success: false,
-          error: 'Jira credentials are required',
-        };
-      }
+	ipcMain.handle(
+		IPC_CHANNELS.JIRA_TEST_CONNECTION,
+		async (
+			_,
+			config: { instanceUrl: string; email: string; apiToken: string },
+		): Promise<IPCResult<JiraSyncStatus>> => {
+			if (!config.instanceUrl || !config.email || !config.apiToken) {
+				return {
+					success: false,
+					error: "Jira credentials are required",
+				};
+			}
 
-      try {
-        // Create a temporary environment for testing
-        const envOverrides: Record<string, string> = {
-          JIRA_URL: config.instanceUrl,
-          JIRA_EMAIL: config.email,
-          JIRA_API_TOKEN: config.apiToken,
-        };
+			try {
+				// Create a temporary environment for testing
+				const envOverrides: Record<string, string> = {
+					JIRA_URL: config.instanceUrl,
+					JIRA_EMAIL: config.email,
+					JIRA_API_TOKEN: config.apiToken,
+				};
 
-        // Test connection using a temporary path (current working directory)
-        const _result = await callJiraPython(process.cwd(), 'test_connection', {}, envOverrides);
+				// Test connection using a temporary path (current working directory)
+				const _result = await callJiraPython(
+					process.cwd(),
+					"test_connection",
+					{},
+					envOverrides,
+				);
 
-        return {
-          success: true,
-          data: {
-            connected: true,
-            instanceUrl: config.instanceUrl,
-          },
-        };
-      } catch (error: unknown) {
-        const errorMessage =
-          error instanceof Error ? error.message : String(error);
-        return {
-          success: true,
-          data: {
-            connected: false,
-            error: errorMessage,
-          },
-        };
-      }
-    }
-  );
+				return {
+					success: true,
+					data: {
+						connected: true,
+						instanceUrl: config.instanceUrl,
+					},
+				};
+			} catch (error: unknown) {
+				const errorMessage =
+					error instanceof Error ? error.message : String(error);
+				return {
+					success: true,
+					data: {
+						connected: false,
+						error: errorMessage,
+					},
+				};
+			}
+		},
+	);
 }

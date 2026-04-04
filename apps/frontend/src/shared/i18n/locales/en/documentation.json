@@ -1,1 +1,35 @@
-﻿{"title":"Documentation Agent","description":"Check coverage, generate docstrings, and create READMEs","coverage":{"title":"Documentation Coverage","checkLabel":"Check Documentation Coverage","filePathPlaceholder":"Path to Python file (e.g., src/connectors/jira/connector.py)","wellDocumented":"Well documented","needsImprovement":"Needs improvement","poorlyDocumented":"Poorly documented","documented":"Documented","partial":"Partial","missing":"Missing"},"actions":{"check":"Check","generateDocstrings":"Generate Docstrings","generate":"Generate","copied":"Copied","copy":"Copy"},"readme":{"generateLabel":"Generate README","dirPathPlaceholder":"Path to module directory (e.g., src/connectors/jira/)","title":"Generated README.md"},"errors":{"coverageFailed":"Coverage check failed","docstringFailed":"Docstring generation failed","readmeFailed":"README generation failed","networkError":"Network error"},"symbols":{"title":"Symbols"},"docstrings":{"title":"Generated Docstrings ({{count}})"}}
+﻿{
+	"title": "Documentation Agent",
+	"description": "Check coverage, generate docstrings, and create READMEs",
+	"coverage": {
+		"title": "Documentation Coverage",
+		"checkLabel": "Check Documentation Coverage",
+		"filePathPlaceholder": "Path to Python file (e.g., src/connectors/jira/connector.py)",
+		"wellDocumented": "Well documented",
+		"needsImprovement": "Needs improvement",
+		"poorlyDocumented": "Poorly documented",
+		"documented": "Documented",
+		"partial": "Partial",
+		"missing": "Missing"
+	},
+	"actions": {
+		"check": "Check",
+		"generateDocstrings": "Generate Docstrings",
+		"generate": "Generate",
+		"copied": "Copied",
+		"copy": "Copy"
+	},
+	"readme": {
+		"generateLabel": "Generate README",
+		"dirPathPlaceholder": "Path to module directory (e.g., src/connectors/jira/)",
+		"title": "Generated README.md"
+	},
+	"errors": {
+		"coverageFailed": "Coverage check failed",
+		"docstringFailed": "Docstring generation failed",
+		"readmeFailed": "README generation failed",
+		"networkError": "Network error"
+	},
+	"symbols": { "title": "Symbols" },
+	"docstrings": { "title": "Generated Docstrings ({{count}})" }
+}

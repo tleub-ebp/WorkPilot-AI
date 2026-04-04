@@ -1,4 +1,9 @@
-export { GitHubPRs } from './GitHubPRs';
-export { PRList, PRDetail } from './components';
-export { useGitHubPRs } from './hooks';
-export type { PRData, PRReviewFinding, PRReviewResult, PRReviewProgress } from './hooks';
+export { PRDetail, PRList } from "./components";
+export { GitHubPRs } from "./GitHubPRs";
+export type {
+	PRData,
+	PRReviewFinding,
+	PRReviewProgress,
+	PRReviewResult,
+} from "./hooks";
+export { useGitHubPRs } from "./hooks";

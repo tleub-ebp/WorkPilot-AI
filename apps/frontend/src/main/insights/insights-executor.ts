@@ -1,26 +1,29 @@
-import { spawn, ChildProcess } from 'child_process';
-import { existsSync, writeFileSync, unlinkSync } from 'fs';
-import path from 'path';
-import os from 'os';
-import { EventEmitter } from 'events';
+import { type ChildProcess, spawn } from "child_process";
+import { EventEmitter } from "events";
+import { existsSync, unlinkSync, writeFileSync } from "fs";
+import os from "os";
+import path from "path";
+import { MODEL_ID_MAP } from "../../shared/constants";
 import type {
-  InsightsChatMessage,
-  InsightsChatStatus,
-  InsightsStreamChunk,
-  InsightsToolUsage,
-  InsightsModelConfig
-} from '../../shared/types';
-import { MODEL_ID_MAP } from '../../shared/constants';
-import { InsightsConfig } from './config';
-import { detectRateLimit, createSDKRateLimitInfo } from '../rate-limit-detector';
+	InsightsChatMessage,
+	InsightsChatStatus,
+	InsightsModelConfig,
+	InsightsStreamChunk,
+	InsightsToolUsage,
+} from "../../shared/types";
+import {
+	createSDKRateLimitInfo,
+	detectRateLimit,
+} from "../rate-limit-detector";
+import type { InsightsConfig } from "./config";
 
 /**
  * Message processor result
  */
 interface ProcessorResult {
-  fullResponse: string;
-  suggestedTask?: InsightsChatMessage['suggestedTask'];
-  toolsUsed: InsightsToolUsage[];
+	fullResponse: string;
+	suggestedTask?: InsightsChatMessage["suggestedTask"];
+	toolsUsed: InsightsToolUsage[];
 }
 
 /**
@@ -28,320 +31,337 @@ interface ProcessorResult {
  * Handles spawning and managing the Python insights runner process
  */
 export class InsightsExecutor extends EventEmitter {
-  private config: InsightsConfig;
-  private activeSessions: Map<string, ChildProcess> = new Map();
+	private config: InsightsConfig;
+	private activeSessions: Map<string, ChildProcess> = new Map();
 
-  constructor(config: InsightsConfig) {
-    super();
-    this.config = config;
-  }
+	constructor(config: InsightsConfig) {
+		super();
+		this.config = config;
+	}
 
-  /**
-   * Check if a session is currently active
-   */
-  isSessionActive(projectId: string): boolean {
-    return this.activeSessions.has(projectId);
-  }
+	/**
+	 * Check if a session is currently active
+	 */
+	isSessionActive(projectId: string): boolean {
+		return this.activeSessions.has(projectId);
+	}
 
-  /**
-   * Cancel an active session
-   */
-  cancelSession(projectId: string): boolean {
-    const existingProcess = this.activeSessions.get(projectId);
-    if (!existingProcess) return false;
+	/**
+	 * Cancel an active session
+	 */
+	cancelSession(projectId: string): boolean {
+		const existingProcess = this.activeSessions.get(projectId);
+		if (!existingProcess) return false;
 
-    existingProcess.kill();
-    this.activeSessions.delete(projectId);
-    return true;
-  }
+		existingProcess.kill();
+		this.activeSessions.delete(projectId);
+		return true;
+	}
 
-  /**
-   * Execute insights query
-   */
-  async execute(
-    projectId: string,
-    projectPath: string,
-    message: string,
-    conversationHistory: Array<{ role: string; content: string }>,
-    modelConfig?: InsightsModelConfig,
-    learningMode?: { enabled: boolean; level: string }
-  ): Promise<ProcessorResult> {
-    // Cancel any existing session
-    this.cancelSession(projectId);
+	/**
+	 * Execute insights query
+	 */
+	async execute(
+		projectId: string,
+		projectPath: string,
+		message: string,
+		conversationHistory: Array<{ role: string; content: string }>,
+		modelConfig?: InsightsModelConfig,
+		learningMode?: { enabled: boolean; level: string },
+	): Promise<ProcessorResult> {
+		// Cancel any existing session
+		this.cancelSession(projectId);
 
-    const autoBuildSource = this.config.getAutoBuildSourcePath();
-    if (!autoBuildSource) {
-      throw new Error('WorkPilot AI source not found');
-    }
+		const autoBuildSource = this.config.getAutoBuildSourcePath();
+		if (!autoBuildSource) {
+			throw new Error("WorkPilot AI source not found");
+		}
 
-    const runnerPath = path.join(autoBuildSource, 'runners', 'insights_runner.py');
-    if (!existsSync(runnerPath)) {
-      throw new Error('insights_runner.py not found in auto-claude directory');
-    }
+		const runnerPath = path.join(
+			autoBuildSource,
+			"runners",
+			"insights_runner.py",
+		);
+		if (!existsSync(runnerPath)) {
+			throw new Error("insights_runner.py not found in auto-claude directory");
+		}
 
-    // Emit thinking status
-    this.emit('status', projectId, {
-      phase: 'thinking',
-      message: 'Processing your message...'
-    } as InsightsChatStatus);
+		// Emit thinking status
+		this.emit("status", projectId, {
+			phase: "thinking",
+			message: "Processing your message...",
+		} as InsightsChatStatus);
 
-    // Get process environment
-    const processEnv = await this.config.getProcessEnv();
+		// Get process environment
+		const processEnv = await this.config.getProcessEnv();
 
-    // Write conversation history to temp file to avoid Windows command-line length limit
-    const historyFile = path.join(
-      os.tmpdir(),
-      `insights-history-${projectId}-${Date.now()}.json`
-    );
+		// Write conversation history to temp file to avoid Windows command-line length limit
+		const historyFile = path.join(
+			os.tmpdir(),
+			`insights-history-${projectId}-${Date.now()}.json`,
+		);
 
-    let historyFileCreated = false;
-    try {
-      writeFileSync(historyFile, JSON.stringify(conversationHistory), 'utf-8');
-      historyFileCreated = true;
-    } catch (err) {
-      console.error('[Insights] Failed to write history file:', err);
-      throw new Error('Failed to write conversation history to temp file');
-    }
+		let historyFileCreated = false;
+		try {
+			writeFileSync(historyFile, JSON.stringify(conversationHistory), "utf-8");
+			historyFileCreated = true;
+		} catch (err) {
+			console.error("[Insights] Failed to write history file:", err);
+			throw new Error("Failed to write conversation history to temp file");
+		}
 
-    // Build command arguments
-    const args = [
-      runnerPath,
-      '--project-dir', projectPath,
-      '--message', message,
-      '--history-file', historyFile
-    ];
+		// Build command arguments
+		const args = [
+			runnerPath,
+			"--project-dir",
+			projectPath,
+			"--message",
+			message,
+			"--history-file",
+			historyFile,
+		];
 
-    // Add model config if provided
-    if (modelConfig) {
-      const modelId = MODEL_ID_MAP[modelConfig.model] || MODEL_ID_MAP['sonnet'];
-      args.push('--model', modelId);
-      args.push('--thinking-level', modelConfig.thinkingLevel);
-    }
-    
-    // Add Learning Mode parameters if enabled
-    if (learningMode?.enabled) {
-      args.push('--learning-mode');
-      args.push('--explanation-level', learningMode.level || 'intermediate');
-    }
+		// Add model config if provided
+		if (modelConfig) {
+			const modelId = MODEL_ID_MAP[modelConfig.model] || MODEL_ID_MAP["sonnet"];
+			args.push("--model", modelId);
+			args.push("--thinking-level", modelConfig.thinkingLevel);
+		}
 
-    // Spawn Python process
-    const proc = spawn(this.config.getPythonPath(), args, {
-      cwd: autoBuildSource,
-      env: processEnv
-    });
+		// Add Learning Mode parameters if enabled
+		if (learningMode?.enabled) {
+			args.push("--learning-mode");
+			args.push("--explanation-level", learningMode.level || "intermediate");
+		}
 
-    this.activeSessions.set(projectId, proc);
+		// Spawn Python process
+		const proc = spawn(this.config.getPythonPath(), args, {
+			cwd: autoBuildSource,
+			env: processEnv,
+		});
 
-    return new Promise((resolve, reject) => {
-      let fullResponse = '';
-      let suggestedTask: InsightsChatMessage['suggestedTask'] | undefined;
-      const toolsUsed: InsightsToolUsage[] = [];
-      let allInsightsOutput = '';
-      let stderrOutput = '';
+		this.activeSessions.set(projectId, proc);
 
-      proc.stdout?.on('data', (data: Buffer) => {
-        const text = data.toString('utf-8');
-        // Collect output for rate limit detection (keep last 10KB)
-        allInsightsOutput = (allInsightsOutput + text).slice(-10000);
+		return new Promise((resolve, reject) => {
+			let fullResponse = "";
+			let suggestedTask: InsightsChatMessage["suggestedTask"] | undefined;
+			const toolsUsed: InsightsToolUsage[] = [];
+			let allInsightsOutput = "";
+			let stderrOutput = "";
 
-        // Process output lines
-        const lines = text.split('\n');
-        for (const line of lines) {
-          if (line.startsWith('__TASK_SUGGESTION__:')) {
-            this.handleTaskSuggestion(projectId, line, (task) => {
-              suggestedTask = task;
-            });
-          } else if (line.startsWith('__TOOL_START__:')) {
-            this.handleToolStart(projectId, line, toolsUsed);
-          } else if (line.startsWith('__TOOL_END__:')) {
-            this.handleToolEnd(projectId, line);
-          } else if (line.startsWith('__EXPLANATION__:')) {
-            this.handleExplanation(projectId, line);
-          } else if (line.trim()) {
-            fullResponse += line + '\n';
-            this.emit('stream-chunk', projectId, {
-              type: 'text',
-              content: line + '\n'
-            } as InsightsStreamChunk);
-          }
-        }
-      });
+			proc.stdout?.on("data", (data: Buffer) => {
+				const text = data.toString("utf-8");
+				// Collect output for rate limit detection (keep last 10KB)
+				allInsightsOutput = (allInsightsOutput + text).slice(-10000);
 
-      proc.stderr?.on('data', (data: Buffer) => {
-        const text = data.toString('utf-8');
-        // Collect stderr for rate limit detection and error reporting
-        allInsightsOutput = (allInsightsOutput + text).slice(-10000);
-        stderrOutput = (stderrOutput + text).slice(-2000);
-        console.error('[Insights]', text);
-      });
+				// Process output lines
+				const lines = text.split("\n");
+				for (const line of lines) {
+					if (line.startsWith("__TASK_SUGGESTION__:")) {
+						this.handleTaskSuggestion(projectId, line, (task) => {
+							suggestedTask = task;
+						});
+					} else if (line.startsWith("__TOOL_START__:")) {
+						this.handleToolStart(projectId, line, toolsUsed);
+					} else if (line.startsWith("__TOOL_END__:")) {
+						this.handleToolEnd(projectId, line);
+					} else if (line.startsWith("__EXPLANATION__:")) {
+						this.handleExplanation(projectId, line);
+					} else if (line.trim()) {
+						fullResponse += line + "\n";
+						this.emit("stream-chunk", projectId, {
+							type: "text",
+							content: line + "\n",
+						} as InsightsStreamChunk);
+					}
+				}
+			});
 
-      proc.on('close', (code) => {
-        this.activeSessions.delete(projectId);
+			proc.stderr?.on("data", (data: Buffer) => {
+				const text = data.toString("utf-8");
+				// Collect stderr for rate limit detection and error reporting
+				allInsightsOutput = (allInsightsOutput + text).slice(-10000);
+				stderrOutput = (stderrOutput + text).slice(-2000);
+				console.error("[Insights]", text);
+			});
 
-        // Cleanup temp file
-        if (historyFileCreated && existsSync(historyFile)) {
-          try {
-            unlinkSync(historyFile);
-          } catch (cleanupErr) {
-            console.error('[Insights] Failed to cleanup history file:', cleanupErr);
-          }
-        }
+			proc.on("close", (code) => {
+				this.activeSessions.delete(projectId);
 
-        // Check for rate limit if process failed
-        if (code !== 0) {
-          this.handleRateLimit(projectId, allInsightsOutput);
-        }
+				// Cleanup temp file
+				if (historyFileCreated && existsSync(historyFile)) {
+					try {
+						unlinkSync(historyFile);
+					} catch (cleanupErr) {
+						console.error(
+							"[Insights] Failed to cleanup history file:",
+							cleanupErr,
+						);
+					}
+				}
 
-        if (code === 0) {
-          this.emit('stream-chunk', projectId, {
-            type: 'done'
-          } as InsightsStreamChunk);
+				// Check for rate limit if process failed
+				if (code !== 0) {
+					this.handleRateLimit(projectId, allInsightsOutput);
+				}
 
-          this.emit('status', projectId, {
-            phase: 'complete'
-          } as InsightsChatStatus);
+				if (code === 0) {
+					this.emit("stream-chunk", projectId, {
+						type: "done",
+					} as InsightsStreamChunk);
 
-          resolve({
-            fullResponse: fullResponse.trim(),
-            suggestedTask,
-            toolsUsed
-          });
-        } else {
-          // Include stderr output in error message for debugging
-          const stderrSummary = stderrOutput.trim()
-            ? `\n\nError output:\n${stderrOutput.slice(-500)}`
-            : '';
-          const error = `Process exited with code ${code}${stderrSummary}`;
-          this.emit('stream-chunk', projectId, {
-            type: 'error',
-            error
-          } as InsightsStreamChunk);
+					this.emit("status", projectId, {
+						phase: "complete",
+					} as InsightsChatStatus);
 
-          this.emit('error', projectId, error);
-          reject(new Error(error));
-        }
-      });
+					resolve({
+						fullResponse: fullResponse.trim(),
+						suggestedTask,
+						toolsUsed,
+					});
+				} else {
+					// Include stderr output in error message for debugging
+					const stderrSummary = stderrOutput.trim()
+						? `\n\nError output:\n${stderrOutput.slice(-500)}`
+						: "";
+					const error = `Process exited with code ${code}${stderrSummary}`;
+					this.emit("stream-chunk", projectId, {
+						type: "error",
+						error,
+					} as InsightsStreamChunk);
 
-      proc.on('error', (err) => {
-        this.activeSessions.delete(projectId);
+					this.emit("error", projectId, error);
+					reject(new Error(error));
+				}
+			});
 
-        // Cleanup temp file
-        if (historyFileCreated && existsSync(historyFile)) {
-          try {
-            unlinkSync(historyFile);
-          } catch (cleanupErr) {
-            console.error('[Insights] Failed to cleanup history file:', cleanupErr);
-          }
-        }
+			proc.on("error", (err) => {
+				this.activeSessions.delete(projectId);
 
-        this.emit('error', projectId, err.message);
-        reject(err);
-      });
-    });
-  }
+				// Cleanup temp file
+				if (historyFileCreated && existsSync(historyFile)) {
+					try {
+						unlinkSync(historyFile);
+					} catch (cleanupErr) {
+						console.error(
+							"[Insights] Failed to cleanup history file:",
+							cleanupErr,
+						);
+					}
+				}
 
-  /**
-   * Handle task suggestion from output
-   */
-  private handleTaskSuggestion(
-    projectId: string,
-    line: string,
-    onTaskFound: (task: InsightsChatMessage['suggestedTask']) => void
-  ): void {
-    try {
-      const taskJson = line.substring('__TASK_SUGGESTION__:'.length);
-      const suggestedTask = JSON.parse(taskJson);
-      onTaskFound(suggestedTask);
-      this.emit('stream-chunk', projectId, {
-        type: 'task_suggestion',
-        suggestedTask
-      } as InsightsStreamChunk);
-    } catch {
-      // Not valid JSON, treat as normal text (should not emit here as it's already handled)
-    }
-  }
+				this.emit("error", projectId, err.message);
+				reject(err);
+			});
+		});
+	}
 
-  /**
-   * Handle tool start marker
-   */
-  private handleToolStart(
-    projectId: string,
-    line: string,
-    toolsUsed: InsightsToolUsage[]
-  ): void {
-    try {
-      const toolJson = line.substring('__TOOL_START__:'.length);
-      const toolData = JSON.parse(toolJson);
-      // Accumulate tool usage for persistence
-      toolsUsed.push({
-        name: toolData.name,
-        input: toolData.input,
-        timestamp: new Date()
-      });
-      this.emit('stream-chunk', projectId, {
-        type: 'tool_start',
-        tool: {
-          name: toolData.name,
-          input: toolData.input
-        }
-      } as InsightsStreamChunk);
-    } catch {
-      // Ignore parse errors for tool markers
-    }
-  }
+	/**
+	 * Handle task suggestion from output
+	 */
+	private handleTaskSuggestion(
+		projectId: string,
+		line: string,
+		onTaskFound: (task: InsightsChatMessage["suggestedTask"]) => void,
+	): void {
+		try {
+			const taskJson = line.substring("__TASK_SUGGESTION__:".length);
+			const suggestedTask = JSON.parse(taskJson);
+			onTaskFound(suggestedTask);
+			this.emit("stream-chunk", projectId, {
+				type: "task_suggestion",
+				suggestedTask,
+			} as InsightsStreamChunk);
+		} catch {
+			// Not valid JSON, treat as normal text (should not emit here as it's already handled)
+		}
+	}
 
-  /**
-   * Handle tool end marker
-   */
-  private handleToolEnd(projectId: string, line: string): void {
-    try {
-      const toolJson = line.substring('__TOOL_END__:'.length);
-      const toolData = JSON.parse(toolJson);
-      this.emit('stream-chunk', projectId, {
-        type: 'tool_end',
-        tool: {
-          name: toolData.name
-        }
-      } as InsightsStreamChunk);
-    } catch {
-      // Ignore parse errors for tool markers
-    }
-  }
+	/**
+	 * Handle tool start marker
+	 */
+	private handleToolStart(
+		projectId: string,
+		line: string,
+		toolsUsed: InsightsToolUsage[],
+	): void {
+		try {
+			const toolJson = line.substring("__TOOL_START__:".length);
+			const toolData = JSON.parse(toolJson);
+			// Accumulate tool usage for persistence
+			toolsUsed.push({
+				name: toolData.name,
+				input: toolData.input,
+				timestamp: new Date(),
+			});
+			this.emit("stream-chunk", projectId, {
+				type: "tool_start",
+				tool: {
+					name: toolData.name,
+					input: toolData.input,
+				},
+			} as InsightsStreamChunk);
+		} catch {
+			// Ignore parse errors for tool markers
+		}
+	}
 
-  /**
-   * Handle Learning Mode explanation marker
-   */
-  private handleExplanation(projectId: string, line: string): void {
-    try {
-      const explanationJson = line.substring('__EXPLANATION__:'.length);
-      const explanation = JSON.parse(explanationJson);
-      this.emit('stream-chunk', projectId, {
-        type: 'explanation',
-        explanation
-      } as InsightsStreamChunk);
-    } catch (err) {
-      console.error('[Insights] Failed to parse explanation:', err);
-      // Ignore parse errors for explanation markers
-    }
-  }
+	/**
+	 * Handle tool end marker
+	 */
+	private handleToolEnd(projectId: string, line: string): void {
+		try {
+			const toolJson = line.substring("__TOOL_END__:".length);
+			const toolData = JSON.parse(toolJson);
+			this.emit("stream-chunk", projectId, {
+				type: "tool_end",
+				tool: {
+					name: toolData.name,
+				},
+			} as InsightsStreamChunk);
+		} catch {
+			// Ignore parse errors for tool markers
+		}
+	}
 
-  /**
-   * Handle rate limit detection
-   */
-  private handleRateLimit(projectId: string, output: string): void {
-    const rateLimitDetection = detectRateLimit(output);
-    if (rateLimitDetection.isRateLimited) {
-      console.warn('[Insights] Rate limit detected:', {
-        projectId,
-        resetTime: rateLimitDetection.resetTime,
-        limitType: rateLimitDetection.limitType,
-        suggestedProfile: rateLimitDetection.suggestedProfile?.name
-      });
+	/**
+	 * Handle Learning Mode explanation marker
+	 */
+	private handleExplanation(projectId: string, line: string): void {
+		try {
+			const explanationJson = line.substring("__EXPLANATION__:".length);
+			const explanation = JSON.parse(explanationJson);
+			this.emit("stream-chunk", projectId, {
+				type: "explanation",
+				explanation,
+			} as InsightsStreamChunk);
+		} catch (err) {
+			console.error("[Insights] Failed to parse explanation:", err);
+			// Ignore parse errors for explanation markers
+		}
+	}
 
-      const rateLimitInfo = createSDKRateLimitInfo('other', rateLimitDetection, {
-        projectId
-      });
-      this.emit('sdk-rate-limit', rateLimitInfo);
-    }
-  }
+	/**
+	 * Handle rate limit detection
+	 */
+	private handleRateLimit(projectId: string, output: string): void {
+		const rateLimitDetection = detectRateLimit(output);
+		if (rateLimitDetection.isRateLimited) {
+			console.warn("[Insights] Rate limit detected:", {
+				projectId,
+				resetTime: rateLimitDetection.resetTime,
+				limitType: rateLimitDetection.limitType,
+				suggestedProfile: rateLimitDetection.suggestedProfile?.name,
+			});
+
+			const rateLimitInfo = createSDKRateLimitInfo(
+				"other",
+				rateLimitDetection,
+				{
+					projectId,
+				},
+			);
+			this.emit("sdk-rate-limit", rateLimitInfo);
+		}
+	}
 }

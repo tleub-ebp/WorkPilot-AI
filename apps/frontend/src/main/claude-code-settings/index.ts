@@ -14,31 +14,28 @@
  *   const hierarchy = readAllSettings('/path/to/project');
  */
 
+export {
+	getDangerousEnvVars,
+	getWarningEnvVars,
+	isDangerousEnvVar,
+	isWarningEnvVar,
+	sanitizeEnvVars,
+} from "./env-sanitizer";
+export { mergeClaudeCodeSettings } from "./merger";
+export {
+	readAllSettings,
+	readManagedSettings,
+	readProjectLocalSettings,
+	readProjectSharedSettings,
+	readUserGlobalSettings,
+} from "./reader";
 export type {
-  ClaudeCodeSettings,
-  ClaudeCodePermissions,
-  ClaudeCodeSettingsHierarchy,
-} from './types';
+	ClaudeCodePermissions,
+	ClaudeCodeSettings,
+	ClaudeCodeSettingsHierarchy,
+} from "./types";
 
-export {
-  readUserGlobalSettings,
-  readProjectSharedSettings,
-  readProjectLocalSettings,
-  readManagedSettings,
-  readAllSettings,
-} from './reader';
-
-export { mergeClaudeCodeSettings } from './merger';
-
-export {
-  sanitizeEnvVars,
-  isDangerousEnvVar,
-  isWarningEnvVar,
-  getDangerousEnvVars,
-  getWarningEnvVars,
-} from './env-sanitizer';
-
-import { readAllSettings as _readAllSettings } from './reader';
+import { readAllSettings as _readAllSettings } from "./reader";
 
 /**
  * Convenience function: read all settings levels, merge, and return just the env object.
@@ -50,6 +47,6 @@ import { readAllSettings as _readAllSettings } from './reader';
  * @returns Merged env record, or empty object if no env vars are configured.
  */
 export function getClaudeCodeEnv(projectPath?: string): Record<string, string> {
-  const hierarchy = _readAllSettings(projectPath);
-  return hierarchy.merged.env ?? {};
+	const hierarchy = _readAllSettings(projectPath);
+	return hierarchy.merged.env ?? {};
 }

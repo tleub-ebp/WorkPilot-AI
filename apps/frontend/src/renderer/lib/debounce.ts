@@ -13,22 +13,22 @@
  * debounced.cancel(); // Cancels the pending call
  */
 export function debounce<T extends (...args: unknown[]) => void>(
-  fn: T,
-  ms: number
+	fn: T,
+	ms: number,
 ): { fn: T; cancel: () => void } {
-  let timeoutId: ReturnType<typeof setTimeout> | null = null;
+	let timeoutId: ReturnType<typeof setTimeout> | null = null;
 
-  const debouncedFn = ((...args: unknown[]) => {
-    if (timeoutId) clearTimeout(timeoutId);
-    timeoutId = setTimeout(() => fn(...args), ms);
-  }) as T;
+	const debouncedFn = ((...args: unknown[]) => {
+		if (timeoutId) clearTimeout(timeoutId);
+		timeoutId = setTimeout(() => fn(...args), ms);
+	}) as T;
 
-  const cancel = () => {
-    if (timeoutId) {
-      clearTimeout(timeoutId);
-      timeoutId = null;
-    }
-  };
+	const cancel = () => {
+		if (timeoutId) {
+			clearTimeout(timeoutId);
+			timeoutId = null;
+		}
+	};
 
-  return { fn: debouncedFn, cancel };
+	return { fn: debouncedFn, cancel };
 }

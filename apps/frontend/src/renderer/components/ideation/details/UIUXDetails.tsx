@@ -1,73 +1,66 @@
-﻿import {
-  AlertCircle,
-  CheckCircle2,
-  Users,
-  FileCode
-} from 'lucide-react';
-import { Badge } from '../../ui/badge';
-import { UIUX_CATEGORY_LABELS } from '../../../../shared/constants';
-import type { UIUXImprovementIdea } from '../../../../shared/types';
+﻿import { AlertCircle, CheckCircle2, FileCode, Users } from "lucide-react";
+import { UIUX_CATEGORY_LABELS } from "../../../../shared/constants";
+import type { UIUXImprovementIdea } from "../../../../shared/types";
+import { Badge } from "../../ui/badge";
 
 interface UIUXDetailsProps {
-  idea: UIUXImprovementIdea;
+	idea: UIUXImprovementIdea;
 }
 
 export function UIUXDetails({ idea }: UIUXDetailsProps) {
-  return (
-    <>
-      {/* Category */}
-      <div>
-        <Badge variant="outline" className="text-sm">
-          {UIUX_CATEGORY_LABELS[idea.category]}
-        </Badge>
-      </div>
+	return (
+		<>
+			{/* Category */}
+			<div>
+				<Badge variant="outline" className="text-sm">
+					{UIUX_CATEGORY_LABELS[idea.category]}
+				</Badge>
+			</div>
 
-      {/* Current State */}
-      <div>
-        <h3 className="text-sm font-medium mb-2 flex items-center gap-2">
-          <AlertCircle className="h-4 w-4" />
-          Current State
-        </h3>
-        <p className="text-sm text-muted-foreground">{idea.currentState}</p>
-      </div>
+			{/* Current State */}
+			<div>
+				<h3 className="text-sm font-medium mb-2 flex items-center gap-2">
+					<AlertCircle className="h-4 w-4" />
+					Current State
+				</h3>
+				<p className="text-sm text-muted-foreground">{idea.currentState}</p>
+			</div>
 
-      {/* Proposed Change */}
-      <div>
-        <h3 className="text-sm font-medium mb-2 flex items-center gap-2">
-          <CheckCircle2 className="h-4 w-4" />
-          Proposed Change
-        </h3>
-        <p className="text-sm text-muted-foreground">{idea.proposedChange}</p>
-      </div>
+			{/* Proposed Change */}
+			<div>
+				<h3 className="text-sm font-medium mb-2 flex items-center gap-2">
+					<CheckCircle2 className="h-4 w-4" />
+					Proposed Change
+				</h3>
+				<p className="text-sm text-muted-foreground">{idea.proposedChange}</p>
+			</div>
 
-      {/* User Benefit */}
-      <div>
-        <h3 className="text-sm font-medium mb-2 flex items-center gap-2">
-          <Users className="h-4 w-4" />
-          User Benefit
-        </h3>
-        <p className="text-sm text-muted-foreground">{idea.userBenefit}</p>
-      </div>
+			{/* User Benefit */}
+			<div>
+				<h3 className="text-sm font-medium mb-2 flex items-center gap-2">
+					<Users className="h-4 w-4" />
+					User Benefit
+				</h3>
+				<p className="text-sm text-muted-foreground">{idea.userBenefit}</p>
+			</div>
 
-      {/* Affected Components */}
-      {idea.affectedComponents && idea.affectedComponents.length > 0 && (
-        <div>
-          <h3 className="text-sm font-medium mb-2 flex items-center gap-2">
-            <FileCode className="h-4 w-4" />
-            Affected Components
-          </h3>
-          <ul className="space-y-1">
-            {idea.affectedComponents.map((component, i) => (
-// biome-ignore lint/suspicious/noArrayIndexKey: no stable key available 
-              <li key={i} className="text-sm font-mono text-muted-foreground">
-                {component}
-              </li>
-            ))}
-          </ul>
-        </div>
-      )}
-    </>
-  );
+			{/* Affected Components */}
+			{idea.affectedComponents && idea.affectedComponents.length > 0 && (
+				<div>
+					<h3 className="text-sm font-medium mb-2 flex items-center gap-2">
+						<FileCode className="h-4 w-4" />
+						Affected Components
+					</h3>
+					<ul className="space-y-1">
+						{idea.affectedComponents.map((component, i) => (
+							// biome-ignore lint/suspicious/noArrayIndexKey: no stable key available
+							<li key={i} className="text-sm font-mono text-muted-foreground">
+								{component}
+							</li>
+						))}
+					</ul>
+				</div>
+			)}
+		</>
+	);
 }
-
-

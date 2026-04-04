@@ -5,9 +5,9 @@
  * delegating to the modular handlers in the gitlab/ directory.
  */
 
-import type { BrowserWindow } from 'electron';
-import type { AgentManager } from '../agent';
-import { registerGitlabHandlers } from './gitlab/index';
+import type { BrowserWindow } from "electron";
+import type { AgentManager } from "../agent";
+import { registerGitlabHandlers } from "./gitlab/index";
 
 export { registerGitlabHandlers };
 
@@ -15,8 +15,8 @@ export { registerGitlabHandlers };
  * Default export for consistency with other handler modules
  */
 export default function setupGitlabHandlers(
-  agentManager: AgentManager,
-  getMainWindow: () => BrowserWindow | null
+	agentManager: AgentManager,
+	getMainWindow: () => BrowserWindow | null,
 ): void {
-  registerGitlabHandlers(agentManager, getMainWindow);
+	registerGitlabHandlers(agentManager, getMainWindow);
 }

@@ -5,11 +5,11 @@
  * All IPC handlers have been organized into domain-specific modules in ./ipc-handlers/
  */
 
-import type { BrowserWindow } from 'electron';
-import { AgentManager } from './agent';
-import { TerminalManager } from './terminal-manager';
-import { PythonEnvManager } from './python-env-manager';
-import { setupIpcHandlers as setupModularHandlers } from './ipc-handlers';
+import type { BrowserWindow } from "electron";
+import type { AgentManager } from "./agent";
+import { setupIpcHandlers as setupModularHandlers } from "./ipc-handlers";
+import type { PythonEnvManager } from "./python-env-manager";
+import type { TerminalManager } from "./terminal-manager";
 
 /**
  * Setup all IPC handlers
@@ -39,11 +39,16 @@ import { setupIpcHandlers as setupModularHandlers } from './ipc-handlers';
  * @param pythonEnvManager - The Python environment manager instance
  */
 export function setupIpcHandlers(
-  agentManager: AgentManager,
-  terminalManager: TerminalManager,
-  getMainWindow: () => BrowserWindow | null,
-  pythonEnvManager: PythonEnvManager
+	agentManager: AgentManager,
+	terminalManager: TerminalManager,
+	getMainWindow: () => BrowserWindow | null,
+	pythonEnvManager: PythonEnvManager,
 ): void {
-  // Delegate to modular handler setup
-  setupModularHandlers(agentManager, terminalManager, getMainWindow, pythonEnvManager);
+	// Delegate to modular handler setup
+	setupModularHandlers(
+		agentManager,
+		terminalManager,
+		getMainWindow,
+		pythonEnvManager,
+	);
 }

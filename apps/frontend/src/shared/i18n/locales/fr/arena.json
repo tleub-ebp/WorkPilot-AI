@@ -1,73 +1,73 @@
 {
-  "title": "Mode Arena",
-  "subtitle": "Comparaison A/B de modèles à l'aveugle — laissez les données parler",
-  "tabs": {
-    "battle": "Combat",
-    "history": "Historique",
-    "analytics": "Analytics",
-    "routing": "Routage Auto"
-  },
-  "taskTypes": {
-    "coding": "Code",
-    "review": "Revue de code",
-    "test": "Génération de tests",
-    "planning": "Planification",
-    "spec": "Spécification",
-    "insights": "Analyses"
-  },
-  "battle": {
-    "taskType": "Type de tâche",
-    "selectModels": "Sélectionner les modèles",
-    "selectModelHint": "2 à 4 modèles",
-    "prompt": "Prompt",
-    "promptPlaceholder": "Décrivez la tâche que tous les modèles doivent réaliser…",
-    "startBattle": "Lancer le combat",
-    "model": "Modèle",
-    "voteForThis": "Voter pour celui-ci",
-    "votePrompt": "Les deux modèles ont terminé — quelle réponse est meilleure ? Votre vote est anonyme.",
-    "winner": "Vainqueur",
-    "newBattle": "Nouveau combat",
-    "statusRunning": "En cours…",
-    "statusVoting": "Votez maintenant",
-    "statusCompleted": "Terminé",
-    "waitingForStart": "En attente de démarrage…",
-    "generating": "Génération en cours…",
-    "noOutput": "Aucune sortie"
-  },
-  "history": {
-    "loading": "Chargement de l'historique…",
-    "empty": "Aucun combat pour l'instant",
-    "battles": "combats",
-    "clearAll": "Tout effacer",
-    "awaitingVote": "En attente de vote"
-  },
-  "analytics": {
-    "loading": "Calcul des analytics…",
-    "noData": "Pas encore de données analytiques",
-    "noDataHint": "Lancez des combats et votez pour voir les statistiques",
-    "totalBattles": "Total des combats",
-    "totalVotes": "Votes exprimés",
-    "modelsCompared": "Modèles comparés",
-    "modelRankings": "Classement des modèles",
-    "winRate": "Taux de victoire",
-    "winsTotal": "V/Total",
-    "avgCost": "Coût moyen"
-  },
-  "routing": {
-    "autoRouting": "Routage automatique",
-    "autoRoutingDesc": "Achemine automatiquement chaque type de tâche vers le modèle le plus performant",
-    "recommendations": "Recommandations actuelles",
-    "noRecommendations": "Pas encore de recommandations",
-    "noRecommendationsHint": "Effectuez au moins 5 combats par type de tâche",
-    "needMoreData": "Effectuez {{count}} combat(s) supplémentaire(s) pour améliorer la confiance des recommandations",
-    "confidence": {
-      "low": "Confiance faible",
-      "medium": "Confiance moyenne",
-      "high": "Confiance élevée"
-    }
-  },
-  "errors": {
-    "startFailed": "Impossible de démarrer le combat",
-    "voteFailed": "Impossible de soumettre le vote"
-  }
+	"title": "Mode Arena",
+	"subtitle": "Comparaison A/B de modèles à l'aveugle — laissez les données parler",
+	"tabs": {
+		"battle": "Combat",
+		"history": "Historique",
+		"analytics": "Analytics",
+		"routing": "Routage Auto"
+	},
+	"taskTypes": {
+		"coding": "Code",
+		"review": "Revue de code",
+		"test": "Génération de tests",
+		"planning": "Planification",
+		"spec": "Spécification",
+		"insights": "Analyses"
+	},
+	"battle": {
+		"taskType": "Type de tâche",
+		"selectModels": "Sélectionner les modèles",
+		"selectModelHint": "2 à 4 modèles",
+		"prompt": "Prompt",
+		"promptPlaceholder": "Décrivez la tâche que tous les modèles doivent réaliser…",
+		"startBattle": "Lancer le combat",
+		"model": "Modèle",
+		"voteForThis": "Voter pour celui-ci",
+		"votePrompt": "Les deux modèles ont terminé — quelle réponse est meilleure ? Votre vote est anonyme.",
+		"winner": "Vainqueur",
+		"newBattle": "Nouveau combat",
+		"statusRunning": "En cours…",
+		"statusVoting": "Votez maintenant",
+		"statusCompleted": "Terminé",
+		"waitingForStart": "En attente de démarrage…",
+		"generating": "Génération en cours…",
+		"noOutput": "Aucune sortie"
+	},
+	"history": {
+		"loading": "Chargement de l'historique…",
+		"empty": "Aucun combat pour l'instant",
+		"battles": "combats",
+		"clearAll": "Tout effacer",
+		"awaitingVote": "En attente de vote"
+	},
+	"analytics": {
+		"loading": "Calcul des analytics…",
+		"noData": "Pas encore de données analytiques",
+		"noDataHint": "Lancez des combats et votez pour voir les statistiques",
+		"totalBattles": "Total des combats",
+		"totalVotes": "Votes exprimés",
+		"modelsCompared": "Modèles comparés",
+		"modelRankings": "Classement des modèles",
+		"winRate": "Taux de victoire",
+		"winsTotal": "V/Total",
+		"avgCost": "Coût moyen"
+	},
+	"routing": {
+		"autoRouting": "Routage automatique",
+		"autoRoutingDesc": "Achemine automatiquement chaque type de tâche vers le modèle le plus performant",
+		"recommendations": "Recommandations actuelles",
+		"noRecommendations": "Pas encore de recommandations",
+		"noRecommendationsHint": "Effectuez au moins 5 combats par type de tâche",
+		"needMoreData": "Effectuez {{count}} combat(s) supplémentaire(s) pour améliorer la confiance des recommandations",
+		"confidence": {
+			"low": "Confiance faible",
+			"medium": "Confiance moyenne",
+			"high": "Confiance élevée"
+		}
+	},
+	"errors": {
+		"startFailed": "Impossible de démarrer le combat",
+		"voteFailed": "Impossible de soumettre le vote"
+	}
 }

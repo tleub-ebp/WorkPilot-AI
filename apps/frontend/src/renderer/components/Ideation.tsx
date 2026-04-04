@@ -2,4 +2,4 @@
 // This file maintains the original import path while the actual implementation
 // has been refactored into smaller, maintainable components in ./ideation/
 
-export { Ideation } from './ideation/Ideation';
+export { Ideation } from "./ideation/Ideation";

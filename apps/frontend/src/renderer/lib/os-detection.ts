@@ -7,15 +7,15 @@
 
 // Type augmentation for navigator.userAgentData (modern User-Agent Client Hints API)
 interface NavigatorUAData {
-  platform: string;
+	platform: string;
 }
 declare global {
-  interface Navigator {
-    userAgentData?: NavigatorUAData;
-  }
+	interface Navigator {
+		userAgentData?: NavigatorUAData;
+	}
 }
 
-export type Platform = 'windows' | 'macos' | 'linux' | 'unknown';
+export type Platform = "windows" | "macos" | "linux" | "unknown";
 
 /**
  * Get the current platform string at runtime.
@@ -25,13 +25,13 @@ export type Platform = 'windows' | 'macos' | 'linux' | 'unknown';
  * @returns Platform string in lowercase
  */
 export function getPlatform(): string {
-  // Prefer navigator.userAgentData.platform (modern, non-deprecated)
-  if (navigator.userAgentData?.platform) {
-    return navigator.userAgentData.platform.toLowerCase();
-  }
-  // Fallback to navigator.platform (deprecated but widely supported)
-  // Use empty string fallback for environments where navigator.platform is undefined
-  return (navigator.platform ?? '').toLowerCase();
+	// Prefer navigator.userAgentData.platform (modern, non-deprecated)
+	if (navigator.userAgentData?.platform) {
+		return navigator.userAgentData.platform.toLowerCase();
+	}
+	// Fallback to navigator.platform (deprecated but widely supported)
+	// Use empty string fallback for environments where navigator.platform is undefined
+	return (navigator.platform ?? "").toLowerCase();
 }
 
 /**
@@ -40,8 +40,8 @@ export function getPlatform(): string {
  * @returns true if running on Windows
  */
 export function isWindows(): boolean {
-  const platform = getPlatform();
-  return platform.startsWith('win');
+	const platform = getPlatform();
+	return platform.startsWith("win");
 }
 
 /**
@@ -50,8 +50,8 @@ export function isWindows(): boolean {
  * @returns true if running on macOS
  */
 export function isMacOS(): boolean {
-  const platform = getPlatform();
-  return platform.includes('mac') || platform.includes('darwin');
+	const platform = getPlatform();
+	return platform.includes("mac") || platform.includes("darwin");
 }
 
 /**
@@ -60,8 +60,8 @@ export function isMacOS(): boolean {
  * @returns true if running on Linux
  */
 export function isLinux(): boolean {
-  const platform = getPlatform();
-  return platform.includes('linux');
+	const platform = getPlatform();
+	return platform.includes("linux");
 }
 
 /**
@@ -70,8 +70,8 @@ export function isLinux(): boolean {
  * @returns Platform enum value
  */
 export function getOS(): Platform {
-  if (isWindows()) return 'windows';
-  if (isMacOS()) return 'macos';
-  if (isLinux()) return 'linux';
-  return 'unknown';
+	if (isWindows()) return "windows";
+	if (isMacOS()) return "macos";
+	if (isLinux()) return "linux";
+	return "unknown";
 }

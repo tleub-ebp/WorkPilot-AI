@@ -1,61 +1,61 @@
 {
-  "title": "Auto-Refactor Agent",
-  "description": "Analysez votre codebase pour détecter les code smells, la dette technique et les patterns obsolètes, puis générez et exécutez des plans de refactoring automatiques.",
-  "config": {
-    "autoExecute": {
-      "label": "Exécution Automatique",
-      "enabled": "Activé",
-      "disabled": "Désactivé",
-      "warning": "⚠️ L'exécution automatique modifiera directement votre code. Utilisez avec prudence."
-    },
-    "model": {
-      "label": "Modèle IA"
-    },
-    "thinkingLevel": {
-      "label": "Niveau de Réflexion",
-      "options": {
-        "none": "Aucun",
-        "low": "Faible",
-        "medium": "Moyen",
-        "high": "Élevé",
-        "ultrathink": "Ultra-Réflexion"
-      }
-    }
-  },
-  "status": {
-    "analyzing": "Analyse du codebase en cours...",
-    "executing": "Exécution du refactoring en cours...",
-    "error": "Erreur lors de l'analyse"
-  },
-  "errors": {
-    "noProject": "Aucun projet sélectionné. Veuillez sélectionner un projet avant de continuer.",
-    "generic": "Une erreur s'est produite lors de l'analyse. Veuillez réessayer."
-  },
-  "actions": {
-    "close": "Fermer",
-    "analyze": "Analyser",
-    "execute": "Exécuter",
-    "cancel": "Annuler",
-    "tryAgain": "Réessayer",
-    "copy": "Copier",
-    "copied": "Copié"
-  },
-  "result": {
-    "streamingOutput": "Sortie en temps réel",
-    "analysis": {
-      "title": "Résultats de l'Analyse"
-    },
-    "plan": {
-      "title": "Plan de Refactoring"
-    },
-    "execution": {
-      "title": "Résultats de l'Exécution"
-    }
-  },
-  "summary": {
-    "issuesFound": "Problèmes Identifiés",
-    "refactoringItems": "Éléments de Refactoring",
-    "quickWins": "Quick Wins",
-    "riskLevel": "Niveau de Risque"
-  }
+	"title": "Auto-Refactor Agent",
+	"description": "Analysez votre codebase pour détecter les code smells, la dette technique et les patterns obsolètes, puis générez et exécutez des plans de refactoring automatiques.",
+	"config": {
+		"autoExecute": {
+			"label": "Exécution Automatique",
+			"enabled": "Activé",
+			"disabled": "Désactivé",
+			"warning": "⚠️ L'exécution automatique modifiera directement votre code. Utilisez avec prudence."
+		},
+		"model": {
+			"label": "Modèle IA"
+		},
+		"thinkingLevel": {
+			"label": "Niveau de Réflexion",
+			"options": {
+				"none": "Aucun",
+				"low": "Faible",
+				"medium": "Moyen",
+				"high": "Élevé",
+				"ultrathink": "Ultra-Réflexion"
+			}
+		}
+	},
+	"status": {
+		"analyzing": "Analyse du codebase en cours...",
+		"executing": "Exécution du refactoring en cours...",
+		"error": "Erreur lors de l'analyse"
+	},
+	"errors": {
+		"noProject": "Aucun projet sélectionné. Veuillez sélectionner un projet avant de continuer.",
+		"generic": "Une erreur s'est produite lors de l'analyse. Veuillez réessayer."
+	},
+	"actions": {
+		"close": "Fermer",
+		"analyze": "Analyser",
+		"execute": "Exécuter",
+		"cancel": "Annuler",
+		"tryAgain": "Réessayer",
+		"copy": "Copier",
+		"copied": "Copié"
+	},
+	"result": {
+		"streamingOutput": "Sortie en temps réel",
+		"analysis": {
+			"title": "Résultats de l'Analyse"
+		},
+		"plan": {
+			"title": "Plan de Refactoring"
+		},
+		"execution": {
+			"title": "Résultats de l'Exécution"
+		}
+	},
+	"summary": {
+		"issuesFound": "Problèmes Identifiés",
+		"refactoringItems": "Éléments de Refactoring",
+		"quickWins": "Quick Wins",
+		"riskLevel": "Niveau de Risque"
+	}
 }

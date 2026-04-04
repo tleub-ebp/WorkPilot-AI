@@ -1,50 +1,50 @@
 {
-  "expand": {
-    "expand": "Agrandir le terminal",
-    "collapse": "Reduire le terminal"
-  },
-  "resume": {
-    "pending": "Reprise disponible",
-    "pendingTooltip": "Cliquez pour reprendre la session Claude précédente",
-    "resumeAllSessions": "Reprendre Tout"
-  },
-  "auth": {
-    "terminalTitle": "Auth: {{profileName}}",
-    "maxTerminalsReached": "Impossible d'ouvrir le terminal d'auth: nombre maximum de terminaux atteint. Fermez un terminal d'abord."
-  },
-  "worktree": {
-    "create": "Arbre de travail",
-    "createNew": "Nouvel arbre de travail",
-    "existing": "Terminaux d'arbres de travail",
-    "taskWorktrees": "Arbres de travail des tâches",
-    "otherWorktrees": "Autres",
-    "createTitle": "Créer un terminal d'arbre de travail",
-    "createDescription": "Créer un espace de travail isolé pour ce terminal. Tout le travail se fera dans le répertoire de l'arbre de travail.",
-    "name": "Nom de l'arbre de travail",
-    "namePlaceholder": "ma-fonctionnalite",
-    "nameRequired": "Le nom de l'arbre de travail est requis",
-    "nameInvalid": "Le nom doit commencer et se terminer par une lettre ou un chiffre",
-    "nameHelp": "Lettres minuscules, chiffres, tirets et underscores (les espaces deviennent des tirets)",
-    "associateTask": "Lier a une Tache",
-    "selectTask": "Selectionner une tache...",
-    "noTask": "Pas de tache (arbre de travail autonome)",
-    "createBranch": "Creer une Branche Git",
-    "branchHelp": "Cree la branche: {{branch}}",
-    "baseBranch": "Branche de Base",
-    "selectBaseBranch": "Selectionner la branche de base...",
-    "searchBranch": "Rechercher des branches...",
-    "noBranchFound": "Aucune branche trouvee",
-    "useProjectDefault": "Utiliser la valeur par defaut du projet ({{branch}})",
-    "baseBranchHelp": "La branche a partir de laquelle creer l'arbre de travail",
-    "openInIDE": "Ouvrir dans IDE",
-    "maxReached": "Maximum de 12 terminaux d'arbres de travail atteint",
-    "alreadyExists": "Un arbre de travail avec ce nom existe deja",
-    "searchPlaceholder": "Rechercher des arbres de travail...",
-    "noResults": "Aucun arbre de travail trouvé",
-    "deleteTitle": "Supprimer l'arbre de travail?",
-    "deleteDescription": "Ceci supprimera definitivement l'arbre de travail et sa branche. Les modifications non committées seront perdues.",
-    "detached": "(détaché)",
-    "remotePushFailed": "Suivi distant non configure",
-    "remotePushFailedDescription": "L'arbre de travail a ete cree mais la branche n'a pas pu etre poussee vers le depot distant. Vous devrez peut-etre executer git push -u manuellement."
-  }
+	"expand": {
+		"expand": "Agrandir le terminal",
+		"collapse": "Reduire le terminal"
+	},
+	"resume": {
+		"pending": "Reprise disponible",
+		"pendingTooltip": "Cliquez pour reprendre la session Claude précédente",
+		"resumeAllSessions": "Reprendre Tout"
+	},
+	"auth": {
+		"terminalTitle": "Auth: {{profileName}}",
+		"maxTerminalsReached": "Impossible d'ouvrir le terminal d'auth: nombre maximum de terminaux atteint. Fermez un terminal d'abord."
+	},
+	"worktree": {
+		"create": "Arbre de travail",
+		"createNew": "Nouvel arbre de travail",
+		"existing": "Terminaux d'arbres de travail",
+		"taskWorktrees": "Arbres de travail des tâches",
+		"otherWorktrees": "Autres",
+		"createTitle": "Créer un terminal d'arbre de travail",
+		"createDescription": "Créer un espace de travail isolé pour ce terminal. Tout le travail se fera dans le répertoire de l'arbre de travail.",
+		"name": "Nom de l'arbre de travail",
+		"namePlaceholder": "ma-fonctionnalite",
+		"nameRequired": "Le nom de l'arbre de travail est requis",
+		"nameInvalid": "Le nom doit commencer et se terminer par une lettre ou un chiffre",
+		"nameHelp": "Lettres minuscules, chiffres, tirets et underscores (les espaces deviennent des tirets)",
+		"associateTask": "Lier a une Tache",
+		"selectTask": "Selectionner une tache...",
+		"noTask": "Pas de tache (arbre de travail autonome)",
+		"createBranch": "Creer une Branche Git",
+		"branchHelp": "Cree la branche: {{branch}}",
+		"baseBranch": "Branche de Base",
+		"selectBaseBranch": "Selectionner la branche de base...",
+		"searchBranch": "Rechercher des branches...",
+		"noBranchFound": "Aucune branche trouvee",
+		"useProjectDefault": "Utiliser la valeur par defaut du projet ({{branch}})",
+		"baseBranchHelp": "La branche a partir de laquelle creer l'arbre de travail",
+		"openInIDE": "Ouvrir dans IDE",
+		"maxReached": "Maximum de 12 terminaux d'arbres de travail atteint",
+		"alreadyExists": "Un arbre de travail avec ce nom existe deja",
+		"searchPlaceholder": "Rechercher des arbres de travail...",
+		"noResults": "Aucun arbre de travail trouvé",
+		"deleteTitle": "Supprimer l'arbre de travail?",
+		"deleteDescription": "Ceci supprimera definitivement l'arbre de travail et sa branche. Les modifications non committées seront perdues.",
+		"detached": "(détaché)",
+		"remotePushFailed": "Suivi distant non configure",
+		"remotePushFailedDescription": "L'arbre de travail a ete cree mais la branche n'a pas pu etre poussee vers le depot distant. Vous devrez peut-etre executer git push -u manuellement."
+	}
 }

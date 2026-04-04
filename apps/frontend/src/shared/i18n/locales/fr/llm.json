@@ -1,10 +1,10 @@
 {
-  "assistantLabel": "Assistant IA",
-  "assistantPlaceholder": "Sélectionnez un assistant IA…",
-  "ok": "(OK)",
-  "notConfigured": "(Non configuré)",
-  "loading": "Chargement...",
-  "errorTitle": "Erreur Assistant IA",
-  "errorDescription": "Impossible de charger la liste des assistants IA. Veuillez vérifier que le backend fonctionne (voir README).",
-  "errorApiUnavailable": "API non disponible"
+	"assistantLabel": "Assistant IA",
+	"assistantPlaceholder": "Sélectionnez un assistant IA…",
+	"ok": "(OK)",
+	"notConfigured": "(Non configuré)",
+	"loading": "Chargement...",
+	"errorTitle": "Erreur Assistant IA",
+	"errorDescription": "Impossible de charger la liste des assistants IA. Veuillez vérifier que le backend fonctionne (voir README).",
+	"errorApiUnavailable": "API non disponible"
 }

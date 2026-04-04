@@ -1,274 +1,297 @@
-import path from 'node:path';
-import { fileURLToPath } from 'node:url';
-import { existsSync, readFileSync } from 'node:fs';
-import { spawn } from 'node:child_process';
-import { app } from 'electron';
+import { spawn } from "node:child_process";
+import { existsSync, readFileSync } from "node:fs";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
+import { app } from "electron";
 
 // ESM-compatible __dirname
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-import { EventEmitter } from 'node:events';
-import { detectRateLimit, createSDKRateLimitInfo, getBestAvailableProfileEnv } from './rate-limit-detector';
-import { parsePythonCommand, getValidatedPythonPath } from './python-detector';
-import { getConfiguredPythonPath } from './python-env-manager';
-import { getAPIProfileEnv } from './services/profile';
-import { getOAuthModeClearVars } from './agent/env-utils';
+
+import { EventEmitter } from "node:events";
+import { getOAuthModeClearVars } from "./agent/env-utils";
+import { getValidatedPythonPath, parsePythonCommand } from "./python-detector";
+import { getConfiguredPythonPath } from "./python-env-manager";
+import {
+	createSDKRateLimitInfo,
+	detectRateLimit,
+	getBestAvailableProfileEnv,
+} from "./rate-limit-detector";
+import { getAPIProfileEnv } from "./services/profile";
 
 /**
  * Debug logging - only logs when DEBUG=true or in development mode
  */
-const DEBUG = process.env.DEBUG === 'true' || process.env.NODE_ENV === 'development';
+const DEBUG =
+	process.env.DEBUG === "true" || process.env.NODE_ENV === "development";
 
 function debug(...args: unknown[]): void {
-  if (DEBUG) {
-    console.warn('[TitleGenerator]', ...args);
-  }
+	if (DEBUG) {
+		console.warn("[TitleGenerator]", ...args);
+	}
 }
 
 /**
  * Service for generating task titles from descriptions using Claude AI
  */
 export class TitleGenerator extends EventEmitter {
-  // Python path will be configured by pythonEnvManager after venv is ready
-  private _pythonPath: string | null = null;
-  private autoBuildSourcePath: string = '';
+	// Python path will be configured by pythonEnvManager after venv is ready
+	private _pythonPath: string | null = null;
+	private autoBuildSourcePath: string = "";
 
-  constructor() {
-    super();
-    debug('TitleGenerator initialized');
-  }
+	constructor() {
+		super();
+		debug("TitleGenerator initialized");
+	}
 
-  configure(pythonPath?: string, autoBuildSourcePath?: string): void {
-    if (pythonPath) {
-      this._pythonPath = getValidatedPythonPath(pythonPath, 'TitleGenerator');
-    }
-    if (autoBuildSourcePath) {
-      this.autoBuildSourcePath = autoBuildSourcePath;
-    }
-  }
+	configure(pythonPath?: string, autoBuildSourcePath?: string): void {
+		if (pythonPath) {
+			this._pythonPath = getValidatedPythonPath(pythonPath, "TitleGenerator");
+		}
+		if (autoBuildSourcePath) {
+			this.autoBuildSourcePath = autoBuildSourcePath;
+		}
+	}
 
-  /**
-   * Get the configured Python path.
-   * Returns explicitly configured path, or falls back to getConfiguredPythonPath()
-   * which uses the venv Python if ready.
-   */
-  private get pythonPath(): string {
-    if (this._pythonPath) {
-      return this._pythonPath;
-    }
-    return getConfiguredPythonPath();
-  }
+	/**
+	 * Get the configured Python path.
+	 * Returns explicitly configured path, or falls back to getConfiguredPythonPath()
+	 * which uses the venv Python if ready.
+	 */
+	private get pythonPath(): string {
+		if (this._pythonPath) {
+			return this._pythonPath;
+		}
+		return getConfiguredPythonPath();
+	}
 
-  /**
-   * Get the auto-claude source path (detects automatically if not configured)
-   */
-  private getAutoBuildSourcePath(): string | null {
-    if (this.autoBuildSourcePath && existsSync(this.autoBuildSourcePath)) {
-      return this.autoBuildSourcePath;
-    }
+	/**
+	 * Get the auto-claude source path (detects automatically if not configured)
+	 */
+	private getAutoBuildSourcePath(): string | null {
+		if (this.autoBuildSourcePath && existsSync(this.autoBuildSourcePath)) {
+			return this.autoBuildSourcePath;
+		}
 
-    const possiblePaths = [
-      // Apps structure: from out/main -> apps/backend
-      path.resolve(__dirname, '..', '..', '..', 'backend'),
-      path.resolve(app.getAppPath(), '..', 'backend'),
-      path.resolve(process.cwd(), 'apps', 'backend')
-    ];
+		const possiblePaths = [
+			// Apps structure: from out/main -> apps/backend
+			path.resolve(__dirname, "..", "..", "..", "backend"),
+			path.resolve(app.getAppPath(), "..", "backend"),
+			path.resolve(process.cwd(), "apps", "backend"),
+		];
 
-    for (const p of possiblePaths) {
-      if (existsSync(p) && existsSync(path.join(p, 'runners', 'spec_runner.py'))) {
-        return p;
-      }
-    }
-    return null;
-  }
+		for (const p of possiblePaths) {
+			if (
+				existsSync(p) &&
+				existsSync(path.join(p, "runners", "spec_runner.py"))
+			) {
+				return p;
+			}
+		}
+		return null;
+	}
 
-  /**
-   * Load environment variables from auto-claude .env file
-   */
-  private loadAutoBuildEnv(): Record<string, string> {
-    const autoBuildSource = this.getAutoBuildSourcePath();
-    if (!autoBuildSource) return {};
+	/**
+	 * Load environment variables from auto-claude .env file
+	 */
+	private loadAutoBuildEnv(): Record<string, string> {
+		const autoBuildSource = this.getAutoBuildSourcePath();
+		if (!autoBuildSource) return {};
 
-    const envPath = path.join(autoBuildSource, '.env');
-    if (!existsSync(envPath)) return {};
+		const envPath = path.join(autoBuildSource, ".env");
+		if (!existsSync(envPath)) return {};
 
-    try {
-      const envContent = readFileSync(envPath, 'utf-8');
-      const envVars: Record<string, string> = {};
+		try {
+			const envContent = readFileSync(envPath, "utf-8");
+			const envVars: Record<string, string> = {};
 
-      // Handle both Unix (\n) and Windows (\r\n) line endings
-      for (const line of envContent.split(/\r?\n/)) {
-        const trimmed = line.trim();
-        if (!trimmed || trimmed.startsWith('#')) continue;
+			// Handle both Unix (\n) and Windows (\r\n) line endings
+			for (const line of envContent.split(/\r?\n/)) {
+				const trimmed = line.trim();
+				if (!trimmed || trimmed.startsWith("#")) continue;
 
-        const eqIndex = trimmed.indexOf('=');
-        if (eqIndex > 0) {
-          const key = trimmed.substring(0, eqIndex).trim();
-          let value = trimmed.substring(eqIndex + 1).trim();
+				const eqIndex = trimmed.indexOf("=");
+				if (eqIndex > 0) {
+					const key = trimmed.substring(0, eqIndex).trim();
+					let value = trimmed.substring(eqIndex + 1).trim();
 
-          if ((value.startsWith('"') && value.endsWith('"')) ||
-              (value.startsWith("'") && value.endsWith("'"))) {
-            value = value.slice(1, -1);
-          }
+					if (
+						(value.startsWith('"') && value.endsWith('"')) ||
+						(value.startsWith("'") && value.endsWith("'"))
+					) {
+						value = value.slice(1, -1);
+					}
 
-          envVars[key] = value;
-        }
-      }
+					envVars[key] = value;
+				}
+			}
 
-      return envVars;
-    } catch {
-      return {};
-    }
-  }
+			return envVars;
+		} catch {
+			return {};
+		}
+	}
 
-  /**
-   * Generate a task title from a description using Claude AI
-   * @param description - The task description to generate a title from
-   * @returns Promise resolving to the generated title or null on failure
-   */
-  async generateTitle(description: string): Promise<string | null> {
-    const autoBuildSource = this.getAutoBuildSourcePath();
+	/**
+	 * Generate a task title from a description using Claude AI
+	 * @param description - The task description to generate a title from
+	 * @returns Promise resolving to the generated title or null on failure
+	 */
+	async generateTitle(description: string): Promise<string | null> {
+		const autoBuildSource = this.getAutoBuildSourcePath();
 
-    if (!autoBuildSource) {
-      debug('Auto-claude source path not found');
-      return null;
-    }
+		if (!autoBuildSource) {
+			debug("Auto-claude source path not found");
+			return null;
+		}
 
-    const prompt = this.createTitlePrompt(description);
-    const script = this.createGenerationScript(prompt);
+		const prompt = this.createTitlePrompt(description);
+		const script = this.createGenerationScript(prompt);
 
-    debug('Generating title for description:', description.substring(0, 100) + '...');
+		debug(
+			"Generating title for description:",
+			description.substring(0, 100) + "...",
+		);
 
-    const autoBuildEnv = this.loadAutoBuildEnv();
-    debug('Environment loaded', {
-      hasOAuthToken: !!autoBuildEnv.CLAUDE_CODE_OAUTH_TOKEN
-    });
+		const autoBuildEnv = this.loadAutoBuildEnv();
+		debug("Environment loaded", {
+			hasOAuthToken: !!autoBuildEnv.CLAUDE_CODE_OAUTH_TOKEN,
+		});
 
-    // Get active API profile environment variables (ANTHROPIC_* vars)
-    const apiProfileEnv = await getAPIProfileEnv();
-    const isApiProfileActive = Object.keys(apiProfileEnv).length > 0;
+		// Get active API profile environment variables (ANTHROPIC_* vars)
+		const apiProfileEnv = await getAPIProfileEnv();
+		const isApiProfileActive = Object.keys(apiProfileEnv).length > 0;
 
-    // Only get OAuth profile env if no API profile is active to avoid conflicts
-    let profileEnv: Record<string, string> = {};
-    if (!isApiProfileActive) {
-      // Use centralized function that automatically handles rate limits and capacity
-      const profileResult = getBestAvailableProfileEnv();
-      profileEnv = profileResult.env;
+		// Only get OAuth profile env if no API profile is active to avoid conflicts
+		let profileEnv: Record<string, string> = {};
+		if (!isApiProfileActive) {
+			// Use centralized function that automatically handles rate limits and capacity
+			const profileResult = getBestAvailableProfileEnv();
+			profileEnv = profileResult.env;
 
-      if (profileResult.wasSwapped) {
-        debug('Using alternative profile for title generation:', {
-          originalProfile: profileResult.originalProfile?.name,
-          selectedProfile: profileResult.profileName,
-          reason: profileResult.swapReason
-        });
-      }
-    }
+			if (profileResult.wasSwapped) {
+				debug("Using alternative profile for title generation:", {
+					originalProfile: profileResult.originalProfile?.name,
+					selectedProfile: profileResult.profileName,
+					reason: profileResult.swapReason,
+				});
+			}
+		}
 
-    // Get OAuth mode clearing vars (clears stale ANTHROPIC_* vars when in OAuth mode)
-    const oauthModeClearVars = getOAuthModeClearVars(apiProfileEnv);
+		// Get OAuth mode clearing vars (clears stale ANTHROPIC_* vars when in OAuth mode)
+		const oauthModeClearVars = getOAuthModeClearVars(apiProfileEnv);
 
-    // Debug: Log the final environment that will be used
-    // Note: profileEnv from getBestAvailableProfileEnv() already includes CLAUDE_CODE_OAUTH_TOKEN=''
-    // when CLAUDE_CONFIG_DIR is set, ensuring the subprocess uses the correct credentials
-    debug('Final subprocess environment:', {
-      profileEnvCLAUDE_CONFIG_DIR: profileEnv.CLAUDE_CONFIG_DIR,
-      profileEnvClearsOAuthToken: profileEnv.CLAUDE_CODE_OAUTH_TOKEN === ''
-    });
+		// Debug: Log the final environment that will be used
+		// Note: profileEnv from getBestAvailableProfileEnv() already includes CLAUDE_CODE_OAUTH_TOKEN=''
+		// when CLAUDE_CONFIG_DIR is set, ensuring the subprocess uses the correct credentials
+		debug("Final subprocess environment:", {
+			profileEnvCLAUDE_CONFIG_DIR: profileEnv.CLAUDE_CONFIG_DIR,
+			profileEnvClearsOAuthToken: profileEnv.CLAUDE_CODE_OAUTH_TOKEN === "",
+		});
 
-    return new Promise((resolve) => {
-      // Parse Python command to handle space-separated commands like "py -3"
-      const [pythonCommand, pythonBaseArgs] = parsePythonCommand(this.pythonPath);
-      const childProcess = spawn(pythonCommand, [...pythonBaseArgs, '-c', script], {
-        cwd: autoBuildSource,
-        env: {
-          ...process.env,
-          ...autoBuildEnv,
-          ...profileEnv, // Claude OAuth profile - includes CLAUDE_CONFIG_DIR and clears CLAUDE_CODE_OAUTH_TOKEN
-          ...apiProfileEnv, // API profile (ANTHROPIC_AUTH_TOKEN, ANTHROPIC_BASE_URL, etc.)
-          ...oauthModeClearVars, // Clear stale ANTHROPIC_* vars when in OAuth mode
-          PYTHONUNBUFFERED: '1',
-          PYTHONIOENCODING: 'utf-8',
-          PYTHONUTF8: '1'
-        }
-      });
+		return new Promise((resolve) => {
+			// Parse Python command to handle space-separated commands like "py -3"
+			const [pythonCommand, pythonBaseArgs] = parsePythonCommand(
+				this.pythonPath,
+			);
+			const childProcess = spawn(
+				pythonCommand,
+				[...pythonBaseArgs, "-c", script],
+				{
+					cwd: autoBuildSource,
+					env: {
+						...process.env,
+						...autoBuildEnv,
+						...profileEnv, // Claude OAuth profile - includes CLAUDE_CONFIG_DIR and clears CLAUDE_CODE_OAUTH_TOKEN
+						...apiProfileEnv, // API profile (ANTHROPIC_AUTH_TOKEN, ANTHROPIC_BASE_URL, etc.)
+						...oauthModeClearVars, // Clear stale ANTHROPIC_* vars when in OAuth mode
+						PYTHONUNBUFFERED: "1",
+						PYTHONIOENCODING: "utf-8",
+						PYTHONUTF8: "1",
+					},
+				},
+			);
 
-      let output = '';
-      let errorOutput = '';
-      const timeout = setTimeout(() => {
-        console.warn('[TitleGenerator] Title generation timed out after 60s');
-        childProcess.kill();
-        resolve(null);
-      }, 60000); // 60 second timeout for SDK initialization + API call
+			let output = "";
+			let errorOutput = "";
+			const timeout = setTimeout(() => {
+				console.warn("[TitleGenerator] Title generation timed out after 60s");
+				childProcess.kill();
+				resolve(null);
+			}, 60000); // 60 second timeout for SDK initialization + API call
 
-      childProcess.stdout?.on('data', (data: Buffer) => {
-        output += data.toString('utf-8');
-      });
+			childProcess.stdout?.on("data", (data: Buffer) => {
+				output += data.toString("utf-8");
+			});
 
-      childProcess.stderr?.on('data', (data: Buffer) => {
-        errorOutput += data.toString('utf-8');
-      });
+			childProcess.stderr?.on("data", (data: Buffer) => {
+				errorOutput += data.toString("utf-8");
+			});
 
-      childProcess.on('exit', (code: number | null) => {
-        clearTimeout(timeout);
+			childProcess.on("exit", (code: number | null) => {
+				clearTimeout(timeout);
 
-        if (code === 0 && output.trim()) {
-          const title = this.cleanTitle(output.trim());
-          debug('Generated title:', title);
-          resolve(title);
-        } else {
-          // Check for rate limit
-          const combinedOutput = `${output}\n${errorOutput}`;
-          const rateLimitDetection = detectRateLimit(combinedOutput);
-          if (rateLimitDetection.isRateLimited) {
-            console.warn('[TitleGenerator] Rate limit detected:', {
-              resetTime: rateLimitDetection.resetTime,
-              limitType: rateLimitDetection.limitType,
-              suggestedProfile: rateLimitDetection.suggestedProfile?.name
-            });
+				if (code === 0 && output.trim()) {
+					const title = this.cleanTitle(output.trim());
+					debug("Generated title:", title);
+					resolve(title);
+				} else {
+					// Check for rate limit
+					const combinedOutput = `${output}\n${errorOutput}`;
+					const rateLimitDetection = detectRateLimit(combinedOutput);
+					if (rateLimitDetection.isRateLimited) {
+						console.warn("[TitleGenerator] Rate limit detected:", {
+							resetTime: rateLimitDetection.resetTime,
+							limitType: rateLimitDetection.limitType,
+							suggestedProfile: rateLimitDetection.suggestedProfile?.name,
+						});
 
-            const rateLimitInfo = createSDKRateLimitInfo('title-generator', rateLimitDetection);
-            this.emit('sdk-rate-limit', rateLimitInfo);
-          }
+						const rateLimitInfo = createSDKRateLimitInfo(
+							"title-generator",
+							rateLimitDetection,
+						);
+						this.emit("sdk-rate-limit", rateLimitInfo);
+					}
 
-          // Always log failures to help diagnose issues
-          console.warn('[TitleGenerator] Title generation failed', {
-            code,
-            errorOutput: errorOutput.substring(0, 500),
-            output: output.substring(0, 200),
-            isRateLimited: rateLimitDetection.isRateLimited
-          });
-          resolve(null);
-        }
-      });
+					// Always log failures to help diagnose issues
+					console.warn("[TitleGenerator] Title generation failed", {
+						code,
+						errorOutput: errorOutput.substring(0, 500),
+						output: output.substring(0, 200),
+						isRateLimited: rateLimitDetection.isRateLimited,
+					});
+					resolve(null);
+				}
+			});
 
-      childProcess.on('error', (err) => {
-        clearTimeout(timeout);
-        console.warn('[TitleGenerator] Process error:', err.message);
-        resolve(null);
-      });
-    });
-  }
+			childProcess.on("error", (err) => {
+				clearTimeout(timeout);
+				console.warn("[TitleGenerator] Process error:", err.message);
+				resolve(null);
+			});
+		});
+	}
 
-  /**
-   * Create the prompt for title generation
-   */
-  private createTitlePrompt(description: string): string {
-    return `Generate a short, concise task title (3-7 words) for the following task description. The title should be action-oriented and describe what will be done. Output ONLY the title, nothing else.
+	/**
+	 * Create the prompt for title generation
+	 */
+	private createTitlePrompt(description: string): string {
+		return `Generate a short, concise task title (3-7 words) for the following task description. The title should be action-oriented and describe what will be done. Output ONLY the title, nothing else.
 
 Description:
 ${description}
 
 Title:`;
-  }
+	}
 
-  /**
-   * Create the Python script to generate title using Claude Agent SDK
-   */
-  private createGenerationScript(prompt: string): string {
-    // Escape the prompt for Python string - use JSON.stringify for safe escaping
-    const escapedPrompt = JSON.stringify(prompt);
+	/**
+	 * Create the Python script to generate title using Claude Agent SDK
+	 */
+	private createGenerationScript(prompt: string): string {
+		// Escape the prompt for Python string - use JSON.stringify for safe escaping
+		const escapedPrompt = JSON.stringify(prompt);
 
-    return `
+		return `
 import asyncio
 import sys
 
@@ -324,28 +347,28 @@ async def generate_title():
 
 asyncio.run(generate_title())
 `;
-  }
+	}
 
-  /**
-   * Clean up the generated title
-   */
-  private cleanTitle(title: string): string {
-    // Remove quotes if present
-    let cleaned = title.replaceAll(/^["']|["']$/g, '');
+	/**
+	 * Clean up the generated title
+	 */
+	private cleanTitle(title: string): string {
+		// Remove quotes if present
+		let cleaned = title.replaceAll(/^["']|["']$/g, "");
 
-    // Remove any "Title:" or similar prefixes
-    cleaned = cleaned.replace(/^(title|task|feature)[:\s]*/i, '');
+		// Remove any "Title:" or similar prefixes
+		cleaned = cleaned.replace(/^(title|task|feature)[:\s]*/i, "");
 
-    // Capitalize first letter
-    cleaned = cleaned.charAt(0).toUpperCase() + cleaned.slice(1);
+		// Capitalize first letter
+		cleaned = cleaned.charAt(0).toUpperCase() + cleaned.slice(1);
 
-    // Truncate if too long (max 100 chars)
-    if (cleaned.length > 100) {
-      cleaned = cleaned.substring(0, 97) + '...';
-    }
+		// Truncate if too long (max 100 chars)
+		if (cleaned.length > 100) {
+			cleaned = cleaned.substring(0, 97) + "...";
+		}
 
-    return cleaned.trim();
-  }
+		return cleaned.trim();
+	}
 }
 
 // Export singleton instance

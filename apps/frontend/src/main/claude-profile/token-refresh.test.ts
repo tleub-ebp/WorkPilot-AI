@@ -4,347 +4,385 @@
  * Tests token expiry detection and refresh functionality.
  */
 
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
-  isTokenExpiredOrNearExpiry,
-  getTimeUntilExpiry,
-  formatTimeRemaining,
-  refreshOAuthToken,
-  ensureValidToken,
-  reactiveTokenRefresh,
-} from './token-refresh';
+	ensureValidToken,
+	formatTimeRemaining,
+	getTimeUntilExpiry,
+	isTokenExpiredOrNearExpiry,
+	reactiveTokenRefresh,
+	refreshOAuthToken,
+} from "./token-refresh";
 
 // Mock credential-utils
-vi.mock('./credential-utils', () => ({
-  getFullCredentialsFromKeychain: vi.fn(() => ({
-    token: 'mock-access-token',
-    email: 'test@example.com',
-    refreshToken: 'mock-refresh-token',
-    expiresAt: Date.now() + 3600000, // 1 hour from now
-    scopes: ['user:read']
-  })),
-  updateKeychainCredentials: vi.fn(() => ({ success: true })),
-  clearKeychainCache: vi.fn()
+vi.mock("./credential-utils", () => ({
+	getFullCredentialsFromKeychain: vi.fn(() => ({
+		token: "mock-access-token",
+		email: "test@example.com",
+		refreshToken: "mock-refresh-token",
+		expiresAt: Date.now() + 3600000, // 1 hour from now
+		scopes: ["user:read"],
+	})),
+	updateKeychainCredentials: vi.fn(() => ({ success: true })),
+	clearKeychainCache: vi.fn(),
 }));
 
 // Mock fetch for token refresh
 const mockFetch = vi.fn();
 globalThis.fetch = mockFetch;
 
-describe('token-refresh', () => {
-  beforeEach(() => {
-    vi.clearAllMocks();
-    vi.useFakeTimers();
-    vi.setSystemTime(new Date('2025-01-20T12:00:00Z'));
-    
-    // Clear global state from token-refresh module to avoid test interference
-    vi.resetModules();
-  });
+describe("token-refresh", () => {
+	beforeEach(() => {
+		vi.clearAllMocks();
+		vi.useFakeTimers();
+		vi.setSystemTime(new Date("2025-01-20T12:00:00Z"));
 
-  afterEach(() => {
-    vi.useRealTimers();
-  });
+		// Clear global state from token-refresh module to avoid test interference
+		vi.resetModules();
+	});
 
-  describe('isTokenExpiredOrNearExpiry', () => {
-    it('should return true when expiresAt is null', () => {
-      expect(isTokenExpiredOrNearExpiry(null)).toBe(true);
-    });
+	afterEach(() => {
+		vi.useRealTimers();
+	});
 
-    it('should return true when token is expired', () => {
-      const expiredAt = Date.now() - 1000; // 1 second ago
-      expect(isTokenExpiredOrNearExpiry(expiredAt)).toBe(true);
-    });
+	describe("isTokenExpiredOrNearExpiry", () => {
+		it("should return true when expiresAt is null", () => {
+			expect(isTokenExpiredOrNearExpiry(null)).toBe(true);
+		});
 
-    it('should return true when token is within threshold', () => {
-      const expiresIn25Min = Date.now() + 25 * 60 * 1000; // 25 minutes
-      // Default threshold is 30 minutes
-      expect(isTokenExpiredOrNearExpiry(expiresIn25Min)).toBe(true);
-    });
+		it("should return true when token is expired", () => {
+			const expiredAt = Date.now() - 1000; // 1 second ago
+			expect(isTokenExpiredOrNearExpiry(expiredAt)).toBe(true);
+		});
 
-    it('should return false when token is valid beyond threshold', () => {
-      const expiresIn2Hours = Date.now() + 2 * 60 * 60 * 1000;
-      expect(isTokenExpiredOrNearExpiry(expiresIn2Hours)).toBe(false);
-    });
+		it("should return true when token is within threshold", () => {
+			const expiresIn25Min = Date.now() + 25 * 60 * 1000; // 25 minutes
+			// Default threshold is 30 minutes
+			expect(isTokenExpiredOrNearExpiry(expiresIn25Min)).toBe(true);
+		});
 
-    it('should respect custom threshold', () => {
-      const expiresIn45Min = Date.now() + 45 * 60 * 1000;
-      const threshold1Hour = 60 * 60 * 1000;
+		it("should return false when token is valid beyond threshold", () => {
+			const expiresIn2Hours = Date.now() + 2 * 60 * 60 * 1000;
+			expect(isTokenExpiredOrNearExpiry(expiresIn2Hours)).toBe(false);
+		});
 
-      // Within 1 hour threshold = near expiry
-      expect(isTokenExpiredOrNearExpiry(expiresIn45Min, threshold1Hour)).toBe(true);
+		it("should respect custom threshold", () => {
+			const expiresIn45Min = Date.now() + 45 * 60 * 1000;
+			const threshold1Hour = 60 * 60 * 1000;
 
-      // Beyond 30 minute threshold = valid
-      expect(isTokenExpiredOrNearExpiry(expiresIn45Min, 30 * 60 * 1000)).toBe(false);
-    });
-  });
+			// Within 1 hour threshold = near expiry
+			expect(isTokenExpiredOrNearExpiry(expiresIn45Min, threshold1Hour)).toBe(
+				true,
+			);
 
-  describe('getTimeUntilExpiry', () => {
-    it('should return null when expiresAt is null', () => {
-      expect(getTimeUntilExpiry(null)).toBeNull();
-    });
+			// Beyond 30 minute threshold = valid
+			expect(isTokenExpiredOrNearExpiry(expiresIn45Min, 30 * 60 * 1000)).toBe(
+				false,
+			);
+		});
+	});
 
-    it('should return 0 for expired tokens', () => {
-      const expired = Date.now() - 1000;
-      expect(getTimeUntilExpiry(expired)).toBe(0);
-    });
+	describe("getTimeUntilExpiry", () => {
+		it("should return null when expiresAt is null", () => {
+			expect(getTimeUntilExpiry(null)).toBeNull();
+		});
 
-    it('should return correct time remaining', () => {
-      const expiresIn1Hour = Date.now() + 60 * 60 * 1000;
-      const remaining = getTimeUntilExpiry(expiresIn1Hour);
+		it("should return 0 for expired tokens", () => {
+			const expired = Date.now() - 1000;
+			expect(getTimeUntilExpiry(expired)).toBe(0);
+		});
 
-      expect(remaining).toBeCloseTo(60 * 60 * 1000, -2); // Within 100ms
-    });
-  });
+		it("should return correct time remaining", () => {
+			const expiresIn1Hour = Date.now() + 60 * 60 * 1000;
+			const remaining = getTimeUntilExpiry(expiresIn1Hour);
 
-  describe('formatTimeRemaining', () => {
-    it('should return "unknown" for null', () => {
-      expect(formatTimeRemaining(null)).toBe('unknown');
-    });
+			expect(remaining).toBeCloseTo(60 * 60 * 1000, -2); // Within 100ms
+		});
+	});
 
-    it('should return "expired" for 0 or negative', () => {
-      expect(formatTimeRemaining(0)).toBe('expired');
-      expect(formatTimeRemaining(-1000)).toBe('expired');
-    });
+	describe("formatTimeRemaining", () => {
+		it('should return "unknown" for null', () => {
+			expect(formatTimeRemaining(null)).toBe("unknown");
+		});
 
-    it('should format minutes correctly', () => {
-      expect(formatTimeRemaining(45 * 60 * 1000)).toBe('45m');
-      expect(formatTimeRemaining(5 * 60 * 1000)).toBe('5m');
-    });
+		it('should return "expired" for 0 or negative', () => {
+			expect(formatTimeRemaining(0)).toBe("expired");
+			expect(formatTimeRemaining(-1000)).toBe("expired");
+		});
 
-    it('should format hours and minutes correctly', () => {
-      expect(formatTimeRemaining(90 * 60 * 1000)).toBe('1h 30m');
-      expect(formatTimeRemaining(3 * 60 * 60 * 1000 + 15 * 60 * 1000)).toBe('3h 15m');
-    });
-  });
+		it("should format minutes correctly", () => {
+			expect(formatTimeRemaining(45 * 60 * 1000)).toBe("45m");
+			expect(formatTimeRemaining(5 * 60 * 1000)).toBe("5m");
+		});
 
-  describe('refreshOAuthToken', () => {
-    it('should return error when no refresh token provided', async () => {
-      const result = await refreshOAuthToken('');
+		it("should format hours and minutes correctly", () => {
+			expect(formatTimeRemaining(90 * 60 * 1000)).toBe("1h 30m");
+			expect(formatTimeRemaining(3 * 60 * 60 * 1000 + 15 * 60 * 1000)).toBe(
+				"3h 15m",
+			);
+		});
+	});
 
-      expect(result.success).toBe(false);
-      expect(result.errorCode).toBe('missing_refresh_token');
-    });
+	describe("refreshOAuthToken", () => {
+		it("should return error when no refresh token provided", async () => {
+			const result = await refreshOAuthToken("");
 
-    it('should successfully refresh token', async () => {
-      mockFetch.mockResolvedValueOnce({
-        ok: true,
-        json: async () => ({
-          access_token: 'new-access-token',
-          refresh_token: 'new-refresh-token',
-          expires_in: 28800
-        })
-      });
+			expect(result.success).toBe(false);
+			expect(result.errorCode).toBe("missing_refresh_token");
+		});
 
-      const result = await refreshOAuthToken('old-refresh-token');
+		it("should successfully refresh token", async () => {
+			mockFetch.mockResolvedValueOnce({
+				ok: true,
+				json: async () => ({
+					access_token: "new-access-token",
+					refresh_token: "new-refresh-token",
+					expires_in: 28800,
+				}),
+			});
 
-      expect(result.success).toBe(true);
-      expect(result.accessToken).toBe('new-access-token');
-      expect(result.refreshToken).toBe('new-refresh-token');
-      expect(result.expiresIn).toBe(28800);
-      expect(result.expiresAt).toBeDefined();
-    });
+			const result = await refreshOAuthToken("old-refresh-token");
 
-    it('should handle invalid_grant error without retry', async () => {
-      mockFetch.mockResolvedValueOnce({
-        ok: false,
-        status: 400,
-        statusText: 'Bad Request',
-        json: async () => ({
-          error: 'invalid_grant',
-          error_description: 'Refresh token is invalid or expired'
-        })
-      });
+			expect(result.success).toBe(true);
+			expect(result.accessToken).toBe("new-access-token");
+			expect(result.refreshToken).toBe("new-refresh-token");
+			expect(result.expiresIn).toBe(28800);
+			expect(result.expiresAt).toBeDefined();
+		});
 
-      const result = await refreshOAuthToken('invalid-refresh-token');
+		it("should handle invalid_grant error without retry", async () => {
+			mockFetch.mockResolvedValueOnce({
+				ok: false,
+				status: 400,
+				statusText: "Bad Request",
+				json: async () => ({
+					error: "invalid_grant",
+					error_description: "Refresh token is invalid or expired",
+				}),
+			});
 
-      expect(result.success).toBe(false);
-      expect(result.errorCode).toBe('invalid_grant');
-      expect(mockFetch).toHaveBeenCalledTimes(1); // No retries
-    });
+			const result = await refreshOAuthToken("invalid-refresh-token");
 
-    it('should retry on network errors', async () => {
-      mockFetch
-        .mockRejectedValueOnce(new Error('Network error'))
-        .mockRejectedValueOnce(new Error('Network error'))
-        .mockResolvedValueOnce({
-          ok: true,
-          json: async () => ({
-            access_token: 'new-token',
-            refresh_token: 'new-refresh',
-            expires_in: 28800
-          })
-        });
+			expect(result.success).toBe(false);
+			expect(result.errorCode).toBe("invalid_grant");
+			expect(mockFetch).toHaveBeenCalledTimes(1); // No retries
+		});
 
-      // Start the async operation
-      const resultPromise = refreshOAuthToken('valid-refresh-token');
+		it("should retry on network errors", async () => {
+			mockFetch
+				.mockRejectedValueOnce(new Error("Network error"))
+				.mockRejectedValueOnce(new Error("Network error"))
+				.mockResolvedValueOnce({
+					ok: true,
+					json: async () => ({
+						access_token: "new-token",
+						refresh_token: "new-refresh",
+						expires_in: 28800,
+					}),
+				});
 
-      // Advance timers to handle retry delays (1s, 2s exponential backoff)
-      await vi.advanceTimersByTimeAsync(1000);
-      await vi.advanceTimersByTimeAsync(2000);
+			// Start the async operation
+			const resultPromise = refreshOAuthToken("valid-refresh-token");
 
-      const result = await resultPromise;
+			// Advance timers to handle retry delays (1s, 2s exponential backoff)
+			await vi.advanceTimersByTimeAsync(1000);
+			await vi.advanceTimersByTimeAsync(2000);
 
-      expect(result.success).toBe(true);
-      expect(mockFetch).toHaveBeenCalledTimes(3);
-    });
+			const result = await resultPromise;
 
-    it('should fail after max retries', async () => {
-      mockFetch.mockRejectedValue(new Error('Persistent network error'));
+			expect(result.success).toBe(true);
+			expect(mockFetch).toHaveBeenCalledTimes(3);
+		});
 
-      // Start the async operation
-      const resultPromise = refreshOAuthToken('valid-refresh-token');
+		it("should fail after max retries", async () => {
+			mockFetch.mockRejectedValue(new Error("Persistent network error"));
 
-      // Advance timers to handle retry delays
-      await vi.advanceTimersByTimeAsync(1000);
-      await vi.advanceTimersByTimeAsync(2000);
+			// Start the async operation
+			const resultPromise = refreshOAuthToken("valid-refresh-token");
 
-      const result = await resultPromise;
+			// Advance timers to handle retry delays
+			await vi.advanceTimersByTimeAsync(1000);
+			await vi.advanceTimersByTimeAsync(2000);
 
-      expect(result.success).toBe(false);
-      expect(result.errorCode).toBe('network_error');
-      expect(mockFetch).toHaveBeenCalledTimes(3); // Initial + 2 retries
-    });
-  });
+			const result = await resultPromise;
 
-  describe('ensureValidToken', () => {
-    it('should return existing token if not near expiry', async () => {
-      const { getFullCredentialsFromKeychain } = await import('./credential-utils');
-      (getFullCredentialsFromKeychain as ReturnType<typeof vi.fn>).mockReturnValue({
-        token: 'valid-token',
-        refreshToken: 'refresh-token',
-        expiresAt: Date.now() + 2 * 60 * 60 * 1000, // 2 hours
-        email: 'test@example.com'
-      });
+			expect(result.success).toBe(false);
+			expect(result.errorCode).toBe("network_error");
+			expect(mockFetch).toHaveBeenCalledTimes(3); // Initial + 2 retries
+		});
+	});
 
-      const result = await ensureValidToken(undefined);
+	describe("ensureValidToken", () => {
+		it("should return existing token if not near expiry", async () => {
+			const { getFullCredentialsFromKeychain } = await import(
+				"./credential-utils"
+			);
+			(
+				getFullCredentialsFromKeychain as ReturnType<typeof vi.fn>
+			).mockReturnValue({
+				token: "valid-token",
+				refreshToken: "refresh-token",
+				expiresAt: Date.now() + 2 * 60 * 60 * 1000, // 2 hours
+				email: "test@example.com",
+			});
 
-      expect(result.token).toBe('valid-token');
-      expect(result.wasRefreshed).toBe(false);
-    });
+			const result = await ensureValidToken(undefined);
 
-    it('should refresh token when near expiry', async () => {
-      const { getFullCredentialsFromKeychain } = await import('./credential-utils');
-      (getFullCredentialsFromKeychain as ReturnType<typeof vi.fn>).mockReturnValue({
-        token: 'old-token',
-        refreshToken: 'valid-refresh-token',
-        expiresAt: Date.now() + 10 * 60 * 1000, // 10 minutes - within threshold
-        email: 'test@example.com'
-      });
+			expect(result.token).toBe("valid-token");
+			expect(result.wasRefreshed).toBe(false);
+		});
 
-      mockFetch.mockResolvedValueOnce({
-        ok: true,
-        json: async () => ({
-          access_token: 'new-token',
-          refresh_token: 'new-refresh',
-          expires_in: 28800
-        })
-      });
+		it("should refresh token when near expiry", async () => {
+			const { getFullCredentialsFromKeychain } = await import(
+				"./credential-utils"
+			);
+			(
+				getFullCredentialsFromKeychain as ReturnType<typeof vi.fn>
+			).mockReturnValue({
+				token: "old-token",
+				refreshToken: "valid-refresh-token",
+				expiresAt: Date.now() + 10 * 60 * 1000, // 10 minutes - within threshold
+				email: "test@example.com",
+			});
 
-      const result = await ensureValidToken(undefined);
+			mockFetch.mockResolvedValueOnce({
+				ok: true,
+				json: async () => ({
+					access_token: "new-token",
+					refresh_token: "new-refresh",
+					expires_in: 28800,
+				}),
+			});
 
-      expect(result.wasRefreshed).toBe(true);
-      expect(result.token).toBe('new-token');
-    });
+			const result = await ensureValidToken(undefined);
 
-    it('should return error when no token available', async () => {
-      const { getFullCredentialsFromKeychain } = await import('./credential-utils');
-      (getFullCredentialsFromKeychain as ReturnType<typeof vi.fn>).mockReturnValue({
-        token: null,
-        refreshToken: null,
-        expiresAt: null,
-        email: null
-      });
+			expect(result.wasRefreshed).toBe(true);
+			expect(result.token).toBe("new-token");
+		});
 
-      const result = await ensureValidToken(undefined);
+		it("should return error when no token available", async () => {
+			const { getFullCredentialsFromKeychain } = await import(
+				"./credential-utils"
+			);
+			(
+				getFullCredentialsFromKeychain as ReturnType<typeof vi.fn>
+			).mockReturnValue({
+				token: null,
+				refreshToken: null,
+				expiresAt: null,
+				email: null,
+			});
 
-      expect(result.token).toBeNull();
-      expect(result.error).toContain('No access token');
-    });
+			const result = await ensureValidToken(undefined);
 
-    it('should return existing token if no refresh token available', async () => {
-      const { getFullCredentialsFromKeychain } = await import('./credential-utils');
-      (getFullCredentialsFromKeychain as ReturnType<typeof vi.fn>).mockReturnValue({
-        token: 'expiring-token',
-        refreshToken: null, // No refresh token
-        expiresAt: Date.now() + 5 * 60 * 1000, // 5 minutes
-        email: 'test@example.com'
-      });
+			expect(result.token).toBeNull();
+			expect(result.error).toContain("No access token");
+		});
 
-      const result = await ensureValidToken(undefined, undefined, { forceRefresh: true });
+		it("should return existing token if no refresh token available", async () => {
+			const { getFullCredentialsFromKeychain } = await import(
+				"./credential-utils"
+			);
+			(
+				getFullCredentialsFromKeychain as ReturnType<typeof vi.fn>
+			).mockReturnValue({
+				token: "expiring-token",
+				refreshToken: null, // No refresh token
+				expiresAt: Date.now() + 5 * 60 * 1000, // 5 minutes
+				email: "test@example.com",
+			});
 
-      expect(result.token).toBe('expiring-token');
-      expect(result.wasRefreshed).toBe(false);
-      expect(result.error).toContain('Token expired but no refresh token available');
-    });
+			const result = await ensureValidToken(undefined, undefined, {
+				forceRefresh: true,
+			});
 
-    it('should call onRefreshed callback when token is refreshed', async () => {
-      const { getFullCredentialsFromKeychain } = await import('./credential-utils');
-      (getFullCredentialsFromKeychain as ReturnType<typeof vi.fn>).mockReturnValue({
-        token: 'old-token',
-        refreshToken: 'valid-refresh',
-        expiresAt: Date.now() + 5 * 60 * 1000,
-        email: 'test@example.com'
-      });
+			expect(result.token).toBe("expiring-token");
+			expect(result.wasRefreshed).toBe(false);
+			expect(result.error).toContain(
+				"Token expired but no refresh token available",
+			);
+		});
 
-      mockFetch.mockResolvedValueOnce({
-        ok: true,
-        json: async () => ({
-          access_token: 'new-token',
-          refresh_token: 'new-refresh',
-          expires_in: 28800
-        })
-      });
+		it("should call onRefreshed callback when token is refreshed", async () => {
+			const { getFullCredentialsFromKeychain } = await import(
+				"./credential-utils"
+			);
+			(
+				getFullCredentialsFromKeychain as ReturnType<typeof vi.fn>
+			).mockReturnValue({
+				token: "old-token",
+				refreshToken: "valid-refresh",
+				expiresAt: Date.now() + 5 * 60 * 1000,
+				email: "test@example.com",
+			});
 
-      const onRefreshed = vi.fn();
-      await ensureValidToken(undefined, onRefreshed, { forceRefresh: true });
+			mockFetch.mockResolvedValueOnce({
+				ok: true,
+				json: async () => ({
+					access_token: "new-token",
+					refresh_token: "new-refresh",
+					expires_in: 28800,
+				}),
+			});
 
-      expect(onRefreshed).toHaveBeenCalledWith(
-        undefined,
-        'new-token',
-        'new-refresh',
-        expect.any(Number)
-      );
-    });
-  });
+			const onRefreshed = vi.fn();
+			await ensureValidToken(undefined, onRefreshed, { forceRefresh: true });
 
-  describe('reactiveTokenRefresh', () => {
-    it('should force refresh even if token appears valid', async () => {
-      const { getFullCredentialsFromKeychain } = await import('./credential-utils');
-      (getFullCredentialsFromKeychain as ReturnType<typeof vi.fn>).mockReturnValue({
-        token: 'current-token',
-        refreshToken: 'valid-refresh',
-        expiresAt: Date.now() + 2 * 60 * 60 * 1000, // 2 hours
-        email: 'test@example.com'
-      });
+			expect(onRefreshed).toHaveBeenCalledWith(
+				undefined,
+				"new-token",
+				"new-refresh",
+				expect.any(Number),
+			);
+		});
+	});
 
-      mockFetch.mockResolvedValueOnce({
-        ok: true,
-        json: async () => ({
-          access_token: 'new-token',
-          refresh_token: 'new-refresh',
-          expires_in: 28800
-        })
-      });
+	describe("reactiveTokenRefresh", () => {
+		it("should force refresh even if token appears valid", async () => {
+			const { getFullCredentialsFromKeychain } = await import(
+				"./credential-utils"
+			);
+			(
+				getFullCredentialsFromKeychain as ReturnType<typeof vi.fn>
+			).mockReturnValue({
+				token: "current-token",
+				refreshToken: "valid-refresh",
+				expiresAt: Date.now() + 2 * 60 * 60 * 1000, // 2 hours
+				email: "test@example.com",
+			});
 
-      const result = await reactiveTokenRefresh(undefined);
+			mockFetch.mockResolvedValueOnce({
+				ok: true,
+				json: async () => ({
+					access_token: "new-token",
+					refresh_token: "new-refresh",
+					expires_in: 28800,
+				}),
+			});
 
-      expect(result.wasRefreshed).toBe(true);
-      expect(result.token).toBe('new-token');
-    });
+			const result = await reactiveTokenRefresh(undefined);
 
-    it('should return error when no refresh token available', async () => {
-      const { getFullCredentialsFromKeychain } = await import('./credential-utils');
-      (getFullCredentialsFromKeychain as ReturnType<typeof vi.fn>).mockReturnValue({
-        token: 'current-token',
-        refreshToken: null,
-        expiresAt: Date.now() + 2 * 60 * 60 * 1000,
-        email: 'test@example.com'
-      });
+			expect(result.wasRefreshed).toBe(true);
+			expect(result.token).toBe("new-token");
+		});
 
-      const result = await reactiveTokenRefresh(undefined);
+		it("should return error when no refresh token available", async () => {
+			const { getFullCredentialsFromKeychain } = await import(
+				"./credential-utils"
+			);
+			(
+				getFullCredentialsFromKeychain as ReturnType<typeof vi.fn>
+			).mockReturnValue({
+				token: "current-token",
+				refreshToken: null,
+				expiresAt: Date.now() + 2 * 60 * 60 * 1000,
+				email: "test@example.com",
+			});
 
-      expect(result.token).toBeNull();
-      expect(result.error).toContain('No refresh token');
-    });
-  });
+			const result = await reactiveTokenRefresh(undefined);
+
+			expect(result.token).toBeNull();
+			expect(result.error).toContain("No refresh token");
+		});
+	});
 });

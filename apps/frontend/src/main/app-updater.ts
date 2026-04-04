@@ -17,30 +17,32 @@
  * - APP_UPDATE_ERROR: Error during update process
  */
 
-import { accessSync, constants as fsConstants } from 'node:fs';
-import path from 'node:path';
-import { autoUpdater } from 'electron-updater';
-import type { UpdateInfo } from 'electron-updater';
-import { app, net } from 'electron';
-import type { BrowserWindow } from 'electron';
-import { IPC_CHANNELS } from '../shared/constants';
-import type { AppUpdateInfo } from '../shared/types';
-import { compareVersions } from './updater/version-manager';
-import { isMacOS } from './platform';
+import { accessSync, constants as fsConstants } from "node:fs";
+import path from "node:path";
+import type { BrowserWindow } from "electron";
+import { app, net } from "electron";
+import type { UpdateInfo } from "electron-updater";
+import { autoUpdater } from "electron-updater";
+import { IPC_CHANNELS } from "../shared/constants";
+import type { AppUpdateInfo } from "../shared/types";
+import { isMacOS } from "./platform";
+import { compareVersions } from "./updater/version-manager";
 
 // GitHub repo info for API calls
-const GITHUB_OWNER = 'tleub-ebp';
-const GITHUB_REPO = 'WorkPilot-AI';
+const GITHUB_OWNER = "tleub-ebp";
+const GITHUB_REPO = "WorkPilot-AI";
 
 // Debug mode - DEBUG_UPDATER=true or development mode
-const DEBUG_UPDATER = process.env.DEBUG_UPDATER === 'true' || process.env.NODE_ENV === 'development';
+const DEBUG_UPDATER =
+	process.env.DEBUG_UPDATER === "true" ||
+	process.env.NODE_ENV === "development";
 
 // Configure electron-updater
-autoUpdater.autoDownload = true;  // Automatically download updates when available
-autoUpdater.autoInstallOnAppQuit = true;  // Automatically install on app quit
+autoUpdater.autoDownload = true; // Automatically download updates when available
+autoUpdater.autoInstallOnAppQuit = true; // Automatically install on app quit
 
 // Update channels: 'latest' for stable, 'beta' for pre-release
-type UpdateChannel = 'latest' | 'beta';
+type UpdateChannel = "latest" | "beta";
 
 // Store interval ID for cleanup during shutdown
 let periodicCheckIntervalId: ReturnType<typeof setInterval> | null = null;
@@ -52,37 +54,39 @@ let periodicCheckIntervalId: ReturnType<typeof setInterval> | null = null;
  * - ReleaseNoteInfo[]: Convert to markdown with version headers
  * - null/undefined: Return undefined
  */
-function formatReleaseNotes(releaseNotes: UpdateInfo['releaseNotes']): string | undefined {
-  if (!releaseNotes) {
-    return undefined;
-  }
+function formatReleaseNotes(
+	releaseNotes: UpdateInfo["releaseNotes"],
+): string | undefined {
+	if (!releaseNotes) {
+		return undefined;
+	}
 
-  // If it's already a string, return as-is
-  if (typeof releaseNotes === 'string') {
-    return releaseNotes;
-  }
+	// If it's already a string, return as-is
+	if (typeof releaseNotes === "string") {
+		return releaseNotes;
+	}
 
-  // It's an array of ReleaseNoteInfo objects
-  // Format: [{ version: "1.0.0", note: "changes..." }, ...]
-  if (Array.isArray(releaseNotes)) {
-    // Return undefined for empty arrays for consistency with null/undefined handling
-    if (releaseNotes.length === 0) {
-      return undefined;
-    }
+	// It's an array of ReleaseNoteInfo objects
+	// Format: [{ version: "1.0.0", note: "changes..." }, ...]
+	if (Array.isArray(releaseNotes)) {
+		// Return undefined for empty arrays for consistency with null/undefined handling
+		if (releaseNotes.length === 0) {
+			return undefined;
+		}
 
-    const formattedNotes = releaseNotes
-      .filter(item => item.note) // Filter out entries with null/undefined notes
-      .map(item => {
-        // Each item has version and note properties
-        const versionHeader = item.version ? `## ${item.version}\n` : '';
-        return `${versionHeader}${item.note}`;
-      })
-      .join('\n\n');
+		const formattedNotes = releaseNotes
+			.filter((item) => item.note) // Filter out entries with null/undefined notes
+			.map((item) => {
+				// Each item has version and note properties
+				const versionHeader = item.version ? `## ${item.version}\n` : "";
+				return `${versionHeader}${item.note}`;
+			})
+			.join("\n\n");
 
-    return formattedNotes || undefined;
-  }
+		return formattedNotes || undefined;
+	}
 
-  return undefined;
+	return undefined;
 }
 
 /**
@@ -93,24 +97,26 @@ function formatReleaseNotes(releaseNotes: UpdateInfo['releaseNotes']): string | 
  * @param channel - The update channel to use
  */
 export function setUpdateChannel(channel: UpdateChannel): void {
-  autoUpdater.channel = channel;
-  // Enable pre-release scanning when beta channel is selected
-  // This allows electron-updater to find beta releases on GitHub
-  autoUpdater.allowPrerelease = channel === 'beta';
-  // Clear any downloaded update info when channel changes to prevent showing
-  // an Install button for an update from a different channel
-  downloadedUpdateInfo = null;
-  console.warn(`[app-updater] Update channel set to: ${channel}, allowPrerelease: ${autoUpdater.allowPrerelease}`);
+	autoUpdater.channel = channel;
+	// Enable pre-release scanning when beta channel is selected
+	// This allows electron-updater to find beta releases on GitHub
+	autoUpdater.allowPrerelease = channel === "beta";
+	// Clear any downloaded update info when channel changes to prevent showing
+	// an Install button for an update from a different channel
+	downloadedUpdateInfo = null;
+	console.warn(
+		`[app-updater] Update channel set to: ${channel}, allowPrerelease: ${autoUpdater.allowPrerelease}`,
+	);
 }
 
 // Enable more verbose logging in debug mode
 if (DEBUG_UPDATER) {
-  autoUpdater.logger = {
-    info: (msg: string) => console.warn('[app-updater:debug]', msg),
-    warn: (msg: string) => console.warn('[app-updater:debug]', msg),
-    error: (msg: string) => console.error('[app-updater:debug]', msg),
-    debug: (msg: string) => console.warn('[app-updater:debug]', msg)
-  };
+	autoUpdater.logger = {
+		info: (msg: string) => console.warn("[app-updater:debug]", msg),
+		warn: (msg: string) => console.warn("[app-updater:debug]", msg),
+		error: (msg: string) => console.error("[app-updater:debug]", msg),
+		debug: (msg: string) => console.warn("[app-updater:debug]", msg),
+	};
 }
 
 let mainWindow: BrowserWindow | null = null;
@@ -127,124 +133,153 @@ let downloadedUpdateInfo: AppUpdateInfo | null = null;
  * @param window - The main BrowserWindow for sending update events
  * @param betaUpdates - Whether to receive beta/pre-release updates
  */
-export function initializeAppUpdater(window: BrowserWindow, betaUpdates = false): void {
-  mainWindow = window;
+export function initializeAppUpdater(
+	window: BrowserWindow,
+	betaUpdates = false,
+): void {
+	mainWindow = window;
 
-  // Set update channel based on user preference
-  const channel = betaUpdates ? 'beta' : 'latest';
-  setUpdateChannel(channel);
+	// Set update channel based on user preference
+	const channel = betaUpdates ? "beta" : "latest";
+	setUpdateChannel(channel);
 
-  // Log updater configuration
-  console.warn('[app-updater] ========================================');
-  console.warn('[app-updater] Initializing app auto-updater');
-  console.warn('[app-updater] App packaged:', app.isPackaged);
-  console.warn('[app-updater] Current version:', autoUpdater.currentVersion.version);
-  console.warn('[app-updater] Update channel:', channel);
-  console.warn('[app-updater] Auto-download enabled:', autoUpdater.autoDownload);
-  console.warn('[app-updater] Debug mode:', DEBUG_UPDATER);
-  console.warn('[app-updater] ========================================');
+	// Log updater configuration
+	console.warn("[app-updater] ========================================");
+	console.warn("[app-updater] Initializing app auto-updater");
+	console.warn("[app-updater] App packaged:", app.isPackaged);
+	console.warn(
+		"[app-updater] Current version:",
+		autoUpdater.currentVersion.version,
+	);
+	console.warn("[app-updater] Update channel:", channel);
+	console.warn(
+		"[app-updater] Auto-download enabled:",
+		autoUpdater.autoDownload,
+	);
+	console.warn("[app-updater] Debug mode:", DEBUG_UPDATER);
+	console.warn("[app-updater] ========================================");
 
-  // ============================================
-  // Event Handlers
-  // ============================================
+	// ============================================
+	// Event Handlers
+	// ============================================
 
-  // Update available - new version found
-  autoUpdater.on('update-available', (info) => {
-    console.warn('[app-updater] Update available:', info.version);
-    if (mainWindow) {
-      mainWindow.webContents.send(IPC_CHANNELS.APP_UPDATE_AVAILABLE, {
-        version: info.version,
-        releaseNotes: formatReleaseNotes(info.releaseNotes),
-        releaseDate: info.releaseDate
-      });
-    }
-  });
+	// Update available - new version found
+	autoUpdater.on("update-available", (info) => {
+		console.warn("[app-updater] Update available:", info.version);
+		if (mainWindow) {
+			mainWindow.webContents.send(IPC_CHANNELS.APP_UPDATE_AVAILABLE, {
+				version: info.version,
+				releaseNotes: formatReleaseNotes(info.releaseNotes),
+				releaseDate: info.releaseDate,
+			});
+		}
+	});
 
-  // Update downloaded - ready to install
-  autoUpdater.on('update-downloaded', (info) => {
-    console.warn('[app-updater] Update downloaded:', info.version);
-    // Store downloaded update info so it persists across Settings page navigations
-    downloadedUpdateInfo = {
-      version: info.version,
-      releaseNotes: formatReleaseNotes(info.releaseNotes),
-      releaseDate: info.releaseDate
-    };
-    if (mainWindow) {
-      // Reuse downloadedUpdateInfo instead of calling formatReleaseNotes again
-      mainWindow.webContents.send(IPC_CHANNELS.APP_UPDATE_DOWNLOADED, downloadedUpdateInfo);
-    }
-  });
+	// Update downloaded - ready to install
+	autoUpdater.on("update-downloaded", (info) => {
+		console.warn("[app-updater] Update downloaded:", info.version);
+		// Store downloaded update info so it persists across Settings page navigations
+		downloadedUpdateInfo = {
+			version: info.version,
+			releaseNotes: formatReleaseNotes(info.releaseNotes),
+			releaseDate: info.releaseDate,
+		};
+		if (mainWindow) {
+			// Reuse downloadedUpdateInfo instead of calling formatReleaseNotes again
+			mainWindow.webContents.send(
+				IPC_CHANNELS.APP_UPDATE_DOWNLOADED,
+				downloadedUpdateInfo,
+			);
+		}
+	});
 
-  // Download progress
-  autoUpdater.on('download-progress', (progress) => {
-    console.warn(`[app-updater] Download progress: ${progress.percent.toFixed(2)}%`);
-    if (mainWindow) {
-      mainWindow.webContents.send(IPC_CHANNELS.APP_UPDATE_PROGRESS, {
-        percent: progress.percent,
-        bytesPerSecond: progress.bytesPerSecond,
-        transferred: progress.transferred,
-        total: progress.total
-      });
-    }
-  });
+	// Download progress
+	autoUpdater.on("download-progress", (progress) => {
+		console.warn(
+			`[app-updater] Download progress: ${progress.percent.toFixed(2)}%`,
+		);
+		if (mainWindow) {
+			mainWindow.webContents.send(IPC_CHANNELS.APP_UPDATE_PROGRESS, {
+				percent: progress.percent,
+				bytesPerSecond: progress.bytesPerSecond,
+				transferred: progress.transferred,
+				total: progress.total,
+			});
+		}
+	});
 
-  // Error handling
-  autoUpdater.on('error', (error) => {
-    console.error('[app-updater] Update error:', error);
-    if (mainWindow) {
-      mainWindow.webContents.send(IPC_CHANNELS.APP_UPDATE_ERROR, {
-        message: error.message
-      });
-    }
-  });
+	// Error handling
+	autoUpdater.on("error", (error) => {
+		console.error("[app-updater] Update error:", error);
+		if (mainWindow) {
+			mainWindow.webContents.send(IPC_CHANNELS.APP_UPDATE_ERROR, {
+				message: error.message,
+			});
+		}
+	});
 
-  // No update available
-  autoUpdater.on('update-not-available', (info) => {
-    console.warn('[app-updater] No updates available - you are on the latest version');
-    console.warn('[app-updater]   Current version:', info.version);
-    if (DEBUG_UPDATER) {
-      console.warn('[app-updater:debug] Full info:', JSON.stringify(info, null, 2));
-    }
-  });
+	// No update available
+	autoUpdater.on("update-not-available", (info) => {
+		console.warn(
+			"[app-updater] No updates available - you are on the latest version",
+		);
+		console.warn("[app-updater]   Current version:", info.version);
+		if (DEBUG_UPDATER) {
+			console.warn(
+				"[app-updater:debug] Full info:",
+				JSON.stringify(info, null, 2),
+			);
+		}
+	});
 
-  // Checking for updates
-  autoUpdater.on('checking-for-update', () => {
-    console.warn('[app-updater] Checking for updates...');
-  });
+	// Checking for updates
+	autoUpdater.on("checking-for-update", () => {
+		console.warn("[app-updater] Checking for updates...");
+	});
 
-  // ============================================
-  // Update Check Schedule
-  // ============================================
+	// ============================================
+	// Update Check Schedule
+	// ============================================
 
-  // Check for updates 3 seconds after launch
-  const INITIAL_DELAY = 3000;
-  console.warn(`[app-updater] Will check for updates in ${INITIAL_DELAY / 1000} seconds...`);
+	// Check for updates 3 seconds after launch
+	const INITIAL_DELAY = 3000;
+	console.warn(
+		`[app-updater] Will check for updates in ${INITIAL_DELAY / 1000} seconds...`,
+	);
 
-  setTimeout(() => {
-    console.warn('[app-updater] Performing initial update check');
-    autoUpdater.checkForUpdates().catch((error) => {
-      console.error('[app-updater] ❌ Initial update check failed:', error.message);
-      if (DEBUG_UPDATER) {
-        console.error('[app-updater:debug] Full error:', error);
-      }
-    });
-  }, INITIAL_DELAY);
+	setTimeout(() => {
+		console.warn("[app-updater] Performing initial update check");
+		autoUpdater.checkForUpdates().catch((error) => {
+			console.error(
+				"[app-updater] ❌ Initial update check failed:",
+				error.message,
+			);
+			if (DEBUG_UPDATER) {
+				console.error("[app-updater:debug] Full error:", error);
+			}
+		});
+	}, INITIAL_DELAY);
 
-  // Check for updates every 4 hours
-  const FOUR_HOURS = 4 * 60 * 60 * 1000;
-  console.warn(`[app-updater] Periodic checks scheduled every ${FOUR_HOURS / 1000 / 60 / 60} hours`);
+	// Check for updates every 4 hours
+	const FOUR_HOURS = 4 * 60 * 60 * 1000;
+	console.warn(
+		`[app-updater] Periodic checks scheduled every ${FOUR_HOURS / 1000 / 60 / 60} hours`,
+	);
 
-  periodicCheckIntervalId = setInterval(() => {
-    console.warn('[app-updater] Performing periodic update check');
-    autoUpdater.checkForUpdates().catch((error) => {
-      console.error('[app-updater] ❌ Periodic update check failed:', error.message);
-      if (DEBUG_UPDATER) {
-        console.error('[app-updater:debug] Full error:', error);
-      }
-    });
-  }, FOUR_HOURS);
+	periodicCheckIntervalId = setInterval(() => {
+		console.warn("[app-updater] Performing periodic update check");
+		autoUpdater.checkForUpdates().catch((error) => {
+			console.error(
+				"[app-updater] ❌ Periodic update check failed:",
+				error.message,
+			);
+			if (DEBUG_UPDATER) {
+				console.error("[app-updater:debug] Full error:", error);
+			}
+		});
+	}, FOUR_HOURS);
 
-  console.warn('[app-updater] Auto-updater initialized successfully');
+	console.warn("[app-updater] Auto-updater initialized successfully");
 }
 
 /**
@@ -252,36 +287,38 @@ export function initializeAppUpdater(window: BrowserWindow, betaUpdates = false)
  * Called from IPC handler when user requests manual check
  */
 export async function checkForUpdates(): Promise<AppUpdateInfo | null> {
-  try {
-    console.warn('[app-updater] Manual update check requested');
-    const result = await autoUpdater.checkForUpdates();
+	try {
+		console.warn("[app-updater] Manual update check requested");
+		const result = await autoUpdater.checkForUpdates();
 
-    if (!result) {
-      return null;
-    }
+		if (!result) {
+			return null;
+		}
 
-    const currentVersion = autoUpdater.currentVersion.version;
-    const latestVersion = result.updateInfo.version;
+		const currentVersion = autoUpdater.currentVersion.version;
+		const latestVersion = result.updateInfo.version;
 
-    // Use proper semver comparison to detect if update is actually newer
-    // This prevents offering downgrades (e.g., v2.7.1 when on v2.7.2-beta.6)
-    const isNewer = compareVersions(latestVersion, currentVersion) > 0;
+		// Use proper semver comparison to detect if update is actually newer
+		// This prevents offering downgrades (e.g., v2.7.1 when on v2.7.2-beta.6)
+		const isNewer = compareVersions(latestVersion, currentVersion) > 0;
 
-    console.warn(`[app-updater] Version comparison: ${latestVersion} vs ${currentVersion} -> ${isNewer ? 'UPDATE' : 'NO UPDATE'}`);
+		console.warn(
+			`[app-updater] Version comparison: ${latestVersion} vs ${currentVersion} -> ${isNewer ? "UPDATE" : "NO UPDATE"}`,
+		);
 
-    if (!isNewer) {
-      return null;
-    }
+		if (!isNewer) {
+			return null;
+		}
 
-    return {
-      version: result.updateInfo.version,
-      releaseNotes: formatReleaseNotes(result.updateInfo.releaseNotes),
-      releaseDate: result.updateInfo.releaseDate
-    };
-  } catch (error) {
-    console.error('[app-updater] Manual update check failed:', error);
-    throw error;
-  }
+		return {
+			version: result.updateInfo.version,
+			releaseNotes: formatReleaseNotes(result.updateInfo.releaseNotes),
+			releaseDate: result.updateInfo.releaseDate,
+		};
+	} catch (error) {
+		console.error("[app-updater] Manual update check failed:", error);
+		throw error;
+	}
 }
 
 /**
@@ -289,13 +326,13 @@ export async function checkForUpdates(): Promise<AppUpdateInfo | null> {
  * Called from IPC handler when user requests manual download
  */
 export async function downloadUpdate(): Promise<void> {
-  try {
-    console.warn('[app-updater] Manual update download requested');
-    await autoUpdater.downloadUpdate();
-  } catch (error) {
-    console.error('[app-updater] Manual update download failed:', error);
-    throw error;
-  }
+	try {
+		console.warn("[app-updater] Manual update download requested");
+		await autoUpdater.downloadUpdate();
+	} catch (error) {
+		console.error("[app-updater] Manual update download failed:", error);
+		throw error;
+	}
 }
 
 /**
@@ -303,29 +340,32 @@ export async function downloadUpdate(): Promise<void> {
  * Returns true if the app cannot be updated in place
  */
 function isRunningFromReadOnlyVolume(): boolean {
-  if (!isMacOS()) {
-    return false;
-  }
+	if (!isMacOS()) {
+		return false;
+	}
 
-  const appPath = app.getAppPath();
+	const appPath = app.getAppPath();
 
-  // Check if the filesystem is read-only by testing write access.
-  // We don't use a /Volumes/ prefix check because writable external drives
-  // (USB, external SSDs) are also mounted under /Volumes/ on macOS.
-  try {
-    // Navigate from app.asar to the Contents/ directory (app.asar -> Resources -> Contents)
-    const contentsPath = path.resolve(appPath, '..', '..');
+	// Check if the filesystem is read-only by testing write access.
+	// We don't use a /Volumes/ prefix check because writable external drives
+	// (USB, external SSDs) are also mounted under /Volumes/ on macOS.
+	try {
+		// Navigate from app.asar to the Contents/ directory (app.asar -> Resources -> Contents)
+		const contentsPath = path.resolve(appPath, "..", "..");
 
-    // Try to check if we can write to the app bundle's parent directory
-    accessSync(path.dirname(contentsPath), fsConstants.W_OK);
-    return false;
-  } catch (error: unknown) {
-    // Only treat as read-only if the filesystem itself is read-only (EROFS).
-    // Permission errors (EACCES) in managed/enterprise environments should not
-    // block updates — the updater may still have elevated access.
-    const code = error instanceof Error ? (error as NodeJS.ErrnoException).code : undefined;
-    return code === 'EROFS';
-  }
+		// Try to check if we can write to the app bundle's parent directory
+		accessSync(path.dirname(contentsPath), fsConstants.W_OK);
+		return false;
+	} catch (error: unknown) {
+		// Only treat as read-only if the filesystem itself is read-only (EROFS).
+		// Permission errors (EACCES) in managed/enterprise environments should not
+		// block updates — the updater may still have elevated access.
+		const code =
+			error instanceof Error
+				? (error as NodeJS.ErrnoException).code
+				: undefined;
+		return code === "EROFS";
+	}
 }
 
 /**
@@ -334,28 +374,28 @@ function isRunningFromReadOnlyVolume(): boolean {
  * Returns false if running from a read-only volume (update cannot proceed)
  */
 export function quitAndInstall(): boolean {
-  // Check if running from read-only volume before attempting install
-  if (isRunningFromReadOnlyVolume()) {
-    console.warn('[app-updater] Cannot install: running from read-only volume');
+	// Check if running from read-only volume before attempting install
+	if (isRunningFromReadOnlyVolume()) {
+		console.warn("[app-updater] Cannot install: running from read-only volume");
 
-    if (mainWindow) {
-      mainWindow.webContents.send(IPC_CHANNELS.APP_UPDATE_READONLY_VOLUME, {
-        appPath: app.getAppPath()
-      });
-    }
-    return false;
-  }
+		if (mainWindow) {
+			mainWindow.webContents.send(IPC_CHANNELS.APP_UPDATE_READONLY_VOLUME, {
+				appPath: app.getAppPath(),
+			});
+		}
+		return false;
+	}
 
-  console.warn('[app-updater] Quitting and installing update');
-  autoUpdater.quitAndInstall(false, true);
-  return true;
+	console.warn("[app-updater] Quitting and installing update");
+	autoUpdater.quitAndInstall(false, true);
+	return true;
 }
 
 /**
  * Get current app version
  */
 export function getCurrentVersion(): string {
-  return autoUpdater.currentVersion.version;
+	return autoUpdater.currentVersion.version;
 }
 
 /**
@@ -364,14 +404,16 @@ export function getCurrentVersion(): string {
  * after the download completed in the background.
  */
 export function getDownloadedUpdateInfo(): AppUpdateInfo | null {
-  return downloadedUpdateInfo;
+	return downloadedUpdateInfo;
 }
 
 /**
  * Check if a version string represents a prerelease (beta, alpha, rc, etc.)
  */
 export function isPrerelease(version: string): boolean {
-  return /-(alpha|beta|rc|dev|canary)\.\d+$/i.test(version) || version.includes('-');
+	return (
+		/-(alpha|beta|rc|dev|canary)\.\d+$/i.test(version) || version.includes("-")
+	);
 }
 
 // Timeout for GitHub API requests (10 seconds)
@@ -382,125 +424,142 @@ const GITHUB_API_TIMEOUT = 10000;
  * Returns the latest non-prerelease version
  */
 async function fetchLatestStableRelease(): Promise<AppUpdateInfo | null> {
-  const fetchPromise = new Promise<AppUpdateInfo | null>((resolve) => {
-    const url = `https://api.github.com/repos/${GITHUB_OWNER}/${GITHUB_REPO}/releases`;
-    console.warn('[app-updater] Fetching releases from:', url);
+	const fetchPromise = new Promise<AppUpdateInfo | null>((resolve) => {
+		const url = `https://api.github.com/repos/${GITHUB_OWNER}/${GITHUB_REPO}/releases`;
+		console.warn("[app-updater] Fetching releases from:", url);
 
-    const request = net.request({
-      url,
-      method: 'GET'
-    });
+		const request = net.request({
+			url,
+			method: "GET",
+		});
 
-    request.setHeader('Accept', 'application/vnd.github.v3+json');
-    request.setHeader('User-Agent', `WorkPilot-AI/${getCurrentVersion()}`);
+		request.setHeader("Accept", "application/vnd.github.v3+json");
+		request.setHeader("User-Agent", `WorkPilot-AI/${getCurrentVersion()}`);
 
-    let data = '';
+		let data = "";
 
-    request.on('response', (response) => {
-      if (!handleResponseStatus(response.statusCode, resolve)) {
-        return;
-      }
+		request.on("response", (response) => {
+			if (!handleResponseStatus(response.statusCode, resolve)) {
+				return;
+			}
 
-      response.on('data', (chunk) => {
-        data += chunk.toString('utf-8');
-      });
+			response.on("data", (chunk) => {
+				data += chunk.toString("utf-8");
+			});
 
-      response.on('end', () => {
-        handleResponseData(data, resolve);
-      });
-    });
+			response.on("end", () => {
+				handleResponseData(data, resolve);
+			});
+		});
 
-    request.on('error', (error) => {
-      handleRequestError(error, resolve);
-    });
+		request.on("error", (error) => {
+			handleRequestError(error, resolve);
+		});
 
-    request.end();
-  });
+		request.end();
+	});
 
-  // Add timeout to prevent hanging indefinitely
-  const timeoutPromise = new Promise<AppUpdateInfo | null>((resolve) => {
-    setTimeout(() => {
-      console.error(`[app-updater] GitHub API request timed out after ${GITHUB_API_TIMEOUT}ms`);
-      resolve(null);
-    }, GITHUB_API_TIMEOUT);
-  });
+	// Add timeout to prevent hanging indefinitely
+	const timeoutPromise = new Promise<AppUpdateInfo | null>((resolve) => {
+		setTimeout(() => {
+			console.error(
+				`[app-updater] GitHub API request timed out after ${GITHUB_API_TIMEOUT}ms`,
+			);
+			resolve(null);
+		}, GITHUB_API_TIMEOUT);
+	});
 
-  return Promise.race([fetchPromise, timeoutPromise]);
+	return Promise.race([fetchPromise, timeoutPromise]);
 }
 
-function handleResponseStatus(statusCode: number | undefined, resolve: (value: AppUpdateInfo | null) => void): boolean {
-  if (statusCode === 200) {
-    return true;
-  }
+function handleResponseStatus(
+	statusCode: number | undefined,
+	resolve: (value: AppUpdateInfo | null) => void,
+): boolean {
+	if (statusCode === 200) {
+		return true;
+	}
 
-  // Sanitize statusCode to prevent log injection
-  const numericCode = Number(statusCode);
-  const safeStatusCode = (Number.isInteger(numericCode) && numericCode >= 100 && numericCode < 600)
-    ? String(numericCode)
-    : 'unknown';
-  console.error(`[app-updater] GitHub API error: HTTP ${safeStatusCode}`);
-  
-  if (statusCode === 403) {
-    console.error('[app-updater] Rate limit may have been exceeded');
-  } else if (statusCode === 404) {
-    console.error('[app-updater] Repository or releases not found');
-  }
-  
-  resolve(null);
-  return false;
+	// Sanitize statusCode to prevent log injection
+	const numericCode = Number(statusCode);
+	const safeStatusCode =
+		Number.isInteger(numericCode) && numericCode >= 100 && numericCode < 600
+			? String(numericCode)
+			: "unknown";
+	console.error(`[app-updater] GitHub API error: HTTP ${safeStatusCode}`);
+
+	if (statusCode === 403) {
+		console.error("[app-updater] Rate limit may have been exceeded");
+	} else if (statusCode === 404) {
+		console.error("[app-updater] Repository or releases not found");
+	}
+
+	resolve(null);
+	return false;
 }
 
-function handleResponseData(data: string, resolve: (value: AppUpdateInfo | null) => void): void {
-  try {
-    const parsed = JSON.parse(data);
+function handleResponseData(
+	data: string,
+	resolve: (value: AppUpdateInfo | null) => void,
+): void {
+	try {
+		const parsed = JSON.parse(data);
 
-    if (!Array.isArray(parsed)) {
-      console.error('[app-updater] Unexpected response format - expected array, got:', typeof parsed);
-      resolve(null);
-      return;
-    }
+		if (!Array.isArray(parsed)) {
+			console.error(
+				"[app-updater] Unexpected response format - expected array, got:",
+				typeof parsed,
+			);
+			resolve(null);
+			return;
+		}
 
-    const releases = parsed as Array<{
-      tag_name: string;
-      prerelease: boolean;
-      draft: boolean;
-      body?: string;
-      published_at?: string;
-      html_url?: string;
-    }>;
+		const releases = parsed as Array<{
+			tag_name: string;
+			prerelease: boolean;
+			draft: boolean;
+			body?: string;
+			published_at?: string;
+			html_url?: string;
+		}>;
 
-    const latestStable = releases.find(r => !r.prerelease && !r.draft);
+		const latestStable = releases.find((r) => !r.prerelease && !r.draft);
 
-    if (!latestStable) {
-      console.warn('[app-updater] No stable release found');
-      resolve(null);
-      return;
-    }
+		if (!latestStable) {
+			console.warn("[app-updater] No stable release found");
+			resolve(null);
+			return;
+		}
 
-    const version = latestStable.tag_name.replace(/^v/, '');
-    // Sanitize version string for logging (remove control characters and limit length)
-    // biome-ignore lint/suspicious/noControlCharactersInRegex: Intentionally matching control chars for sanitization
-    const safeVersion = String(version).replaceAll(/[\x00-\x1f\x7f]/g, '').slice(0, 50);
-    console.warn('[app-updater] Found latest stable release:', safeVersion);
+		const version = latestStable.tag_name.replace(/^v/, "");
+		// Sanitize version string for logging (remove control characters and limit length)
+		const safeVersion = String(version)
+			.replaceAll(/[\x00-\x1f\x7f]/g, "")
+			.slice(0, 50);
+		console.warn("[app-updater] Found latest stable release:", safeVersion);
 
-    resolve({
-      version,
-      releaseNotes: latestStable.body,
-      releaseDate: latestStable.published_at
-    });
-  } catch (e) {
-    // Sanitize error message for logging (prevent log injection from malformed JSON)
-    const safeError = e instanceof Error ? e.message : 'Unknown parse error';
-    console.error('[app-updater] Failed to parse releases JSON:', safeError);
-    resolve(null);
-  }
+		resolve({
+			version,
+			releaseNotes: latestStable.body,
+			releaseDate: latestStable.published_at,
+		});
+	} catch (e) {
+		// Sanitize error message for logging (prevent log injection from malformed JSON)
+		const safeError = e instanceof Error ? e.message : "Unknown parse error";
+		console.error("[app-updater] Failed to parse releases JSON:", safeError);
+		resolve(null);
+	}
 }
 
-function handleRequestError(error: unknown, resolve: (value: AppUpdateInfo | null) => void): void {
-  // Sanitize error message for logging (use only the message property)
-  const safeErrorMessage = error instanceof Error ? error.message : 'Unknown error';
-  console.error('[app-updater] Failed to fetch releases:', safeErrorMessage);
-  resolve(null);
+function handleRequestError(
+	error: unknown,
+	resolve: (value: AppUpdateInfo | null) => void,
+): void {
+	// Sanitize error message for logging (use only the message property)
+	const safeErrorMessage =
+		error instanceof Error ? error.message : "Unknown error";
+	console.error("[app-updater] Failed to fetch releases:", safeErrorMessage);
+	resolve(null);
 }
 
 /**
@@ -512,26 +571,31 @@ function handleRequestError(error: unknown, resolve: (value: AppUpdateInfo | nul
  * 2. A stable version exists
  */
 export async function checkForStableDowngrade(): Promise<AppUpdateInfo | null> {
-  const currentVersion = getCurrentVersion();
+	const currentVersion = getCurrentVersion();
 
-  // Only check for downgrade if currently on a prerelease
-  if (!isPrerelease(currentVersion)) {
-    console.warn('[app-updater] Current version is not a prerelease, no downgrade needed');
-    return null;
-  }
+	// Only check for downgrade if currently on a prerelease
+	if (!isPrerelease(currentVersion)) {
+		console.warn(
+			"[app-updater] Current version is not a prerelease, no downgrade needed",
+		);
+		return null;
+	}
 
-  console.warn('[app-updater] Current version is prerelease:', currentVersion);
-  console.warn('[app-updater] Checking for stable version to downgrade to...');
+	console.warn("[app-updater] Current version is prerelease:", currentVersion);
+	console.warn("[app-updater] Checking for stable version to downgrade to...");
 
-  const latestStable = await fetchLatestStableRelease();
+	const latestStable = await fetchLatestStableRelease();
 
-  if (!latestStable) {
-    console.warn('[app-updater] No stable release available for downgrade');
-    return null;
-  }
+	if (!latestStable) {
+		console.warn("[app-updater] No stable release available for downgrade");
+		return null;
+	}
 
-  console.warn('[app-updater] Stable downgrade available:', latestStable.version);
-  return latestStable;
+	console.warn(
+		"[app-updater] Stable downgrade available:",
+		latestStable.version,
+	);
+	return latestStable;
 }
 
 /**
@@ -542,25 +606,28 @@ export async function checkForStableDowngrade(): Promise<AppUpdateInfo | null> {
  * @param triggerDowngradeCheck - Whether to check for stable downgrade (when disabling beta)
  */
 export async function setUpdateChannelWithDowngradeCheck(
-  channel: UpdateChannel,
-  triggerDowngradeCheck = false
+	channel: UpdateChannel,
+	triggerDowngradeCheck = false,
 ): Promise<AppUpdateInfo | null> {
-  // Use the shared channel-setting function to avoid code duplication
-  setUpdateChannel(channel);
+	// Use the shared channel-setting function to avoid code duplication
+	setUpdateChannel(channel);
 
-  // If switching to stable and downgrade check requested, look for stable version
-  if (channel === 'latest' && triggerDowngradeCheck) {
-    const stableVersion = await checkForStableDowngrade();
+	// If switching to stable and downgrade check requested, look for stable version
+	if (channel === "latest" && triggerDowngradeCheck) {
+		const stableVersion = await checkForStableDowngrade();
 
-    if (stableVersion && mainWindow) {
-      // Notify the renderer about the available stable downgrade
-      mainWindow.webContents.send(IPC_CHANNELS.APP_UPDATE_STABLE_DOWNGRADE, stableVersion);
-    }
+		if (stableVersion && mainWindow) {
+			// Notify the renderer about the available stable downgrade
+			mainWindow.webContents.send(
+				IPC_CHANNELS.APP_UPDATE_STABLE_DOWNGRADE,
+				stableVersion,
+			);
+		}
 
-    return stableVersion;
-  }
+		return stableVersion;
+	}
 
-  return null;
+	return null;
 }
 
 /**
@@ -568,36 +635,38 @@ export async function setUpdateChannelWithDowngradeCheck(
  * Uses electron-updater with allowDowngrade enabled to download older stable versions
  */
 export async function downloadStableVersion(): Promise<void> {
-  // Switch to stable channel (resets allowPrerelease and clears downloadedUpdateInfo)
-  setUpdateChannel('latest');
-  // Enable downgrade to allow downloading older versions (e.g., stable when on beta)
-  autoUpdater.allowDowngrade = true;
-  console.warn('[app-updater] Downloading stable version (allowDowngrade=true)...');
+	// Switch to stable channel (resets allowPrerelease and clears downloadedUpdateInfo)
+	setUpdateChannel("latest");
+	// Enable downgrade to allow downloading older versions (e.g., stable when on beta)
+	autoUpdater.allowDowngrade = true;
+	console.warn(
+		"[app-updater] Downloading stable version (allowDowngrade=true)...",
+	);
 
-  try {
-    // Force a fresh check on the stable channel, then download
-    const result = await autoUpdater.checkForUpdates();
-    if (result) {
-      await autoUpdater.downloadUpdate();
-    } else {
-      throw new Error('No stable version available for download');
-    }
-  } catch (error) {
-    console.error('[app-updater] Failed to download stable version:', error);
-    throw error;
-  } finally {
-    // Reset allowDowngrade to prevent unintended downgrades in normal update checks
-    autoUpdater.allowDowngrade = false;
-  }
+	try {
+		// Force a fresh check on the stable channel, then download
+		const result = await autoUpdater.checkForUpdates();
+		if (result) {
+			await autoUpdater.downloadUpdate();
+		} else {
+			throw new Error("No stable version available for download");
+		}
+	} catch (error) {
+		console.error("[app-updater] Failed to download stable version:", error);
+		throw error;
+	} finally {
+		// Reset allowDowngrade to prevent unintended downgrades in normal update checks
+		autoUpdater.allowDowngrade = false;
+	}
 }
 
 /**
  * Stop periodic update checks - called during app shutdown
  */
 export function stopPeriodicUpdates(): void {
-  if (periodicCheckIntervalId) {
-    clearInterval(periodicCheckIntervalId);
-    periodicCheckIntervalId = null;
-    console.warn('[app-updater] Periodic update checks stopped');
-  }
+	if (periodicCheckIntervalId) {
+		clearInterval(periodicCheckIntervalId);
+		periodicCheckIntervalId = null;
+		console.warn("[app-updater] Periodic update checks stopped");
+	}
 }

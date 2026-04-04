@@ -1,38 +1,44 @@
-import { spawn, type ChildProcess } from 'node:child_process';
-import { existsSync, readFileSync, writeFileSync, readdirSync, statSync, } from 'node:fs';
-import path from 'node:path';
-import net from 'node:net';
-import http from 'node:http';
-import { EventEmitter } from 'node:events';
-import { app } from 'electron';
+import { type ChildProcess, spawn } from "node:child_process";
+import { EventEmitter } from "node:events";
+import {
+	existsSync,
+	readdirSync,
+	readFileSync,
+	statSync,
+	writeFileSync,
+} from "node:fs";
+import http from "node:http";
+import net from "node:net";
+import path from "node:path";
+import { app } from "electron";
 
 /**
  * A single runnable service within a fullstack project (e.g. .NET backend, Angular frontend).
  */
 export interface AppEmulatorServiceConfig {
-  /** Human-readable label shown in the UI (e.g. "Backend (.NET)", "Frontend (Angular)") */
-  label: string;
-  framework: string;
-  startCommand: string;
-  port: number;
-  /** Absolute working directory for this service */
-  projectDir: string;
-  /** true = this is the API service; its URL becomes the base URL in API Studio */
-  isPrimary: boolean;
+	/** Human-readable label shown in the UI (e.g. "Backend (.NET)", "Frontend (Angular)") */
+	label: string;
+	framework: string;
+	startCommand: string;
+	port: number;
+	/** Absolute working directory for this service */
+	projectDir: string;
+	/** true = this is the API service; its URL becomes the base URL in API Studio */
+	isPrimary: boolean;
 }
 
 /**
  * Detected project configuration for the App Emulator.
  */
 export interface AppEmulatorConfig {
-  type: string;           // 'web' | 'cli' | 'desktop'
-  framework: string;      // 'vite' | 'next' | 'django' | 'flask' | etc.
-  startCommand: string;   // 'npm run dev', 'python manage.py runserver', etc.
-  port: number;           // primary port — API/backend port used by API Studio
-  isWeb: boolean;         // Whether the app can be previewed in an iframe
-  projectDir?: string;    // Resolved project directory (primary service)
-  /** For fullstack projects: all services to launch (backend + frontend). */
-  services?: AppEmulatorServiceConfig[];
+	type: string; // 'web' | 'cli' | 'desktop'
+	framework: string; // 'vite' | 'next' | 'django' | 'flask' | etc.
+	startCommand: string; // 'npm run dev', 'python manage.py runserver', etc.
+	port: number; // primary port — API/backend port used by API Studio
+	isWeb: boolean; // Whether the app can be previewed in an iframe
+	projectDir?: string; // Resolved project directory (primary service)
+	/** For fullstack projects: all services to launch (backend + frontend). */
+	services?: AppEmulatorServiceConfig[];
 }
 
 /**
@@ -47,1550 +53,2073 @@ export interface AppEmulatorConfig {
  * - 'config' (config: AppEmulatorConfig) — Project detection result
  */
 export class AppEmulatorService extends EventEmitter {
-  private activeServerProcess: ChildProcess | null = null;
-  private detectionProcess: ChildProcess | null = null;
-  private currentConfig: AppEmulatorConfig | null = null;
-  private serverUrl: string | null = null;
-  private pythonPath = 'python';
-  private autoBuildSourcePath: string | null = null;
-  /** Synchronous guard — prevents concurrent startServer calls (race condition on port check) */
-  private startingInProgress = false;
-  /** Tracks all service processes for multi-service (fullstack) mode */
-  private readonly activeServiceProcesses = new Map<string, ChildProcess>();
-  /** Maps original paths with spaces → junction paths without spaces (Windows only) */
-  private readonly junctionMap = new Map<string, string>();
-  /** Maps @ngtools/webpack index.js path → original file content (for patch rollback) */
-  private readonly angularWebpackPatches = new Map<string, string>();
-
-  /**
-   * Configure paths for Python and auto-claude source.
-   */
-  configure(pythonPath?: string, autoBuildSourcePath?: string): void {
-    if (pythonPath) {
-      this.pythonPath = pythonPath;
-    }
-    if (autoBuildSourcePath) {
-      this.autoBuildSourcePath = autoBuildSourcePath;
-    }
-  }
-
-  /**
-   * Get the auto-build source path.
-   * Uses the same resolution strategy as agent-process.ts.
-   */
-  private getAutoBuildSourcePath(): string | null {
-    if (this.autoBuildSourcePath && existsSync(this.autoBuildSourcePath)) {
-      return this.autoBuildSourcePath;
-    }
-
-    const possiblePaths = [
-      // Packaged app: backend is in extraResources (process.resourcesPath/backend)
-      ...(app.isPackaged ? [path.join(process.resourcesPath, 'backend')] : []),
-      // Dev mode: from dist/main -> ../../backend (apps/frontend/out/main -> apps/backend)
-      path.resolve(__dirname, '..', '..', '..', 'backend'),
-      // Alternative: from app root -> apps/backend
-      path.resolve(app.getAppPath(), '..', 'backend'),
-      // If running from repo root with apps structure
-      path.resolve(process.cwd(), 'apps', 'backend'),
-    ];
-
-    for (const p of possiblePaths) {
-      const runnerPath = path.join(p, 'runners', 'app_emulator_runner.py');
-      if (existsSync(runnerPath)) {
-        this.autoBuildSourcePath = p;
-        return p;
-      }
-    }
-
-    return null;
-  }
-
-  /**
-   * Detect project type. Uses fast inline JS detection first,
-   * falls back to Python runner for advanced cases.
-   */
-  async detectProject(projectDirRaw: string): Promise<AppEmulatorConfig> {
-    // Decode URI-encoded paths (e.g. spaces stored as %20)
-    const projectDir = decodeURIComponent(projectDirRaw);
-
-    if (!existsSync(projectDir)) {
-      throw new Error(`Project directory not found: ${projectDir}`);
-    }
-
-    // Cancel any existing detection
-    if (this.detectionProcess) {
-      this.detectionProcess.kill();
-      this.detectionProcess = null;
-    }
-
-    // Try fast inline JS detection first (no Python needed)
-    const jsResult = this.detectProjectInline(projectDir);
-    if (jsResult) {
-      // Use subdirectory projectDir if detection found a nested project, otherwise use root
-      // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
-      const resolvedProjectDir = (jsResult as any).projectDir || projectDir;
-      const config: AppEmulatorConfig = { ...jsResult, projectDir: resolvedProjectDir };
-      this.currentConfig = config;
-      this.emit('config', config);
-      return config;
-    }
-
-    // Fallback: Python runner
-    return this.detectProjectViaPython(projectDir);
-  }
-
-  /**
-   * Fast inline detection — handles common project types without Python.
-   */
-  private detectProjectInline(projectDir: string): Omit<AppEmulatorConfig, 'projectDir'> | null {
-    // Node.js / frontend projects
-    const pkgPath = path.join(projectDir, 'package.json');
-    if (existsSync(pkgPath)) {
-      try {
-        const pkg = JSON.parse(readFileSync(pkgPath, 'utf-8'));
-        const scripts = pkg.scripts ?? {};
-        const deps = { ...(pkg.dependencies), ...(pkg.devDependencies) };
-
-        let framework = 'node';
-        let type = 'web';
-        let port = 3000;
-
-        if ('next' in deps) { framework = 'next'; }
-        else if ('nuxt' in deps || 'nuxt3' in deps) { framework = 'nuxt'; }
-        else if ('react-scripts' in deps) { framework = 'create-react-app'; }
-        else if ('vite' in deps) { framework = 'vite'; port = 5173; }
-        else if ('@angular/core' in deps) { framework = 'angular'; port = 4200; }
-        else if ('vue' in deps && !('vite' in deps)) { framework = 'vue-cli'; port = 8080; }
-        else if ('svelte' in deps || '@sveltejs/kit' in deps) { framework = 'svelte'; port = 5173; }
-        else if ('electron' in deps) { framework = 'electron'; type = 'desktop'; port = 0; }
-        // Node.js API/backend frameworks
-        else if ('@nestjs/core' in deps) { framework = 'nestjs'; port = 3000; }
-        else if ('express' in deps || 'fastify' in deps || 'koa' in deps || 'hapi' in deps || '@hapi/hapi' in deps) { framework = 'express'; port = 3000; }
-
-        // Detect start command from scripts
-        let startCommand = '';
-        const pm = this.detectPackageManager(projectDir);
-        for (const name of ['dev', 'start:dev', 'serve', 'start']) {
-          if (name in scripts) {
-            startCommand = name === 'start' ? `${pm} start` : `${pm} run ${name}`;
-            break;
-          }
-        }
-        if (!startCommand && Object.keys(scripts).length > 0) {
-          const first = Object.keys(scripts)[0];
-          startCommand = `${pm} run ${first}`;
-        }
-
-        // For Angular, always use explicit --port so the port can be replaced
-        // on conflict and to avoid Angular's interactive "use different port?" prompt.
-        if (framework === 'angular') {
-          startCommand = `npx ng serve --port ${port}`;
-        }
-
-        // Pure frontend → look for a backend counterpart in subdirectories
-        const PURE_FRONTEND = new Set(['angular', 'vite', 'svelte', 'create-react-app', 'vue-cli', 'nuxt']);
-        if (PURE_FRONTEND.has(framework)) {
-          const backendResult = this.findBackendInSubdirs(projectDir);
-          if (backendResult) {
-            return this.buildFullstackConfig(backendResult, { framework, startCommand, port, projectDir });
-          }
-        }
-
-        // Node.js backend → look for a frontend counterpart in subdirectories
-        const NODE_BACKEND = new Set(['nestjs', 'express']);
-        if (NODE_BACKEND.has(framework)) {
-          const frontendResult = this.findFrontendInSubdirs(projectDir, 3);
-          if (frontendResult) {
-            // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
-            const frontendDir = (frontendResult as any).projectDir ?? projectDir;
-            return this.buildFullstackConfig(
-              { framework, startCommand, port, projectDir },
-              { framework: frontendResult.framework, startCommand: frontendResult.startCommand, port: frontendResult.port, projectDir: frontendDir },
-            );
-          }
-        }
-
-        return { type, framework, startCommand, port, isWeb: type === 'web' };
-      } catch {
-        // JSON parse error — skip
-      }
-    }
-
-    // Python projects
-    const hasPyproject = existsSync(path.join(projectDir, 'pyproject.toml'));
-    const hasRequirements = existsSync(path.join(projectDir, 'requirements.txt'));
-    const hasManagePy = existsSync(path.join(projectDir, 'manage.py'));
-    const hasAppPy = existsSync(path.join(projectDir, 'app.py'));
-    const hasMainPy = existsSync(path.join(projectDir, 'main.py'));
-
-    if (hasPyproject || hasRequirements || hasManagePy || hasAppPy || hasMainPy) {
-      let depsText = '';
-      try {
-        if (hasRequirements) depsText += readFileSync(path.join(projectDir, 'requirements.txt'), 'utf-8').toLowerCase();
-        if (hasPyproject) depsText += '\n' + readFileSync(path.join(projectDir, 'pyproject.toml'), 'utf-8').toLowerCase();
-      } catch { /* ignore */ }
-
-      let backendCfg: { framework: string; startCommand: string; port: number; isWeb: boolean } | null = null;
-      if (hasManagePy || depsText.includes('django')) {
-        backendCfg = { framework: 'django', startCommand: 'python manage.py runserver', port: 8000, isWeb: true };
-      } else if (depsText.includes('fastapi')) {
-        backendCfg = { framework: 'fastapi', startCommand: `uvicorn ${hasAppPy ? 'app:app' : 'main:app'} --reload --port 8000`, port: 8000, isWeb: true };
-      } else if (depsText.includes('flask')) {
-        backendCfg = { framework: 'flask', startCommand: `python ${hasAppPy ? 'app.py' : 'main.py'}`, port: 5000, isWeb: true };
-      } else if (depsText.includes('streamlit')) {
-        backendCfg = { framework: 'streamlit', startCommand: `streamlit run ${hasAppPy ? 'app.py' : 'main.py'}`, port: 8501, isWeb: true };
-      } else if (hasMainPy || hasAppPy) {
-        backendCfg = { framework: 'python', startCommand: `python ${hasMainPy ? 'main.py' : 'app.py'}`, port: 0, isWeb: false };
-      }
-
-      if (backendCfg) {
-        if (backendCfg.isWeb) {
-          const frontendResult = this.findFrontendInSubdirs(projectDir, 3);
-          if (frontendResult) {
-            // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
-            const frontendDir = (frontendResult as any).projectDir ?? projectDir;
-            return this.buildFullstackConfig(
-              { ...backendCfg, projectDir },
-              { framework: frontendResult.framework, startCommand: frontendResult.startCommand, port: frontendResult.port, projectDir: frontendDir },
-            );
-          }
-        }
-        return { type: backendCfg.isWeb ? 'web' : 'cli', ...backendCfg };
-      }
-    }
-
-    // Go projects
-    if (existsSync(path.join(projectDir, 'go.mod'))) {
-      const frontendResult = this.findFrontendInSubdirs(projectDir, 3);
-      if (frontendResult) {
-        // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
-        const frontendDir = (frontendResult as any).projectDir ?? projectDir;
-        return this.buildFullstackConfig(
-          { framework: 'go', startCommand: 'go run .', port: 8080, projectDir },
-          { framework: frontendResult.framework, startCommand: frontendResult.startCommand, port: frontendResult.port, projectDir: frontendDir },
-        );
-      }
-      return { type: 'web', framework: 'go', startCommand: 'go run .', port: 8080, isWeb: true };
-    }
-
-    // Rust projects
-    if (existsSync(path.join(projectDir, 'Cargo.toml'))) {
-      return { type: 'cli', framework: 'rust', startCommand: 'cargo run', port: 0, isWeb: false };
-    }
-
-    // Docker projects
-    if (existsSync(path.join(projectDir, 'docker-compose.yml')) || existsSync(path.join(projectDir, 'docker-compose.yaml'))) {
-      return { type: 'web', framework: 'docker-compose', startCommand: 'docker-compose up', port: 3000, isWeb: true };
-    }
-    if (existsSync(path.join(projectDir, 'Dockerfile'))) {
-      return { type: 'web', framework: 'docker', startCommand: 'docker build -t app . && docker run -p 3000:3000 app', port: 3000, isWeb: true };
-    }
-
-    // .NET projects (*.sln at root)
-    try {
-      const rootFiles = readdirSync(projectDir);
-      if (rootFiles.some(f => f.endsWith('.sln'))) {
-        // Find the .NET project directory (contains *.csproj) and read its HTTP port.
-        // findDotnetProjectDir looks for a dir with a .csproj + Program.cs/Startup.cs.
-        // If it returns null (e.g. multiple .csproj without a clear entry point), fall back
-        // to locating any .csproj file and using its parent directory.
-        let dotnetDir = this.findDotnetProjectDir(projectDir, 4);
-        if (!dotnetDir) {
-          const csprojFile = this.findFirstCsprojFile(projectDir, 5);
-          dotnetDir = csprojFile ? path.dirname(csprojFile) : projectDir;
-        }
-        const dotnetPort = this.readDotnetPort(dotnetDir) ?? 5000;
-        const frontendResult = this.findFrontendInSubdirs(projectDir, 3);
-
-        if (frontendResult) {
-          // Fullstack: launch .NET backend AND frontend separately so both are reachable.
-          // The backend port becomes the API Studio base URL; the frontend runs in parallel.
-          // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
-          const frontendDir = (frontendResult as any).projectDir ?? projectDir;
-          return this.buildFullstackConfig(
-            { framework: 'dotnet', startCommand: 'dotnet run', port: dotnetPort, projectDir: dotnetDir },
-            { framework: frontendResult.framework, startCommand: frontendResult.startCommand, port: frontendResult.port, projectDir: frontendDir },
-          );
-        }
-
-        // Pure .NET backend — single service
-        // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
-        return { type: 'web', framework: 'dotnet', startCommand: 'dotnet run', port: dotnetPort, isWeb: true, projectDir: dotnetDir } as any;
-      }
-    } catch { /* ignore */ }
-
-    // Last resort: scan subdirectories (up to 3 levels deep) for package.json
-    const subResult = this.findFrontendInSubdirs(projectDir, 3);
-    if (subResult) return subResult;
-
-    return null;
-  }
-
-  /**
-   * Recursively search subdirectories for a frontend project (package.json with scripts).
-   */
-  private findFrontendInSubdirs(dir: string, maxDepth: number): Omit<AppEmulatorConfig, 'projectDir'> | null {
-    if (maxDepth <= 0) return null;
-
-    try {
-      const entries = readdirSync(dir);
-      for (const entry of entries) {
-        // Skip hidden dirs, node_modules, and common non-project dirs
-        if (entry.startsWith('.') || entry === 'node_modules' || entry === 'dist' || entry === 'build' || entry === 'bin' || entry === 'obj') continue;
-
-        const fullPath = path.join(dir, entry);
-        try {
-          if (!statSync(fullPath).isDirectory()) continue;
-        } catch { continue; }
-
-        // Check for package.json in this subdirectory
-        const pkgPath = path.join(fullPath, 'package.json');
-        if (existsSync(pkgPath)) {
-          try {
-            const pkg = JSON.parse(readFileSync(pkgPath, 'utf-8'));
-            const scripts = pkg.scripts ?? {};
-            // Only consider it if it has dev/start scripts (not just a lockfile)
-            if (Object.keys(scripts).length > 0) {
-              // Only create deps object if there are actual dependencies
-              const hasDeps = (pkg.dependencies && Object.keys(pkg.dependencies).length > 0) || 
-                           (pkg.devDependencies && Object.keys(pkg.devDependencies).length > 0);
-              
-              // Declare variables outside the conditional
-              let framework = 'node';
-              let type = 'web';
-              let port = 3000;
-
-              // Only proceed with framework detection if there are dependencies
-              if (hasDeps) {
-                const deps = { ...(pkg.dependencies), ...(pkg.devDependencies) };
-                if ('@angular/core' in deps) { framework = 'angular'; port = 4200; }
-                else if ('next' in deps) { framework = 'next'; }
-                else if ('nuxt' in deps || 'nuxt3' in deps) { framework = 'nuxt'; }
-                else if ('react-scripts' in deps) { framework = 'create-react-app'; }
-                else if ('vite' in deps) { framework = 'vite'; port = 5173; }
-                else if ('vue' in deps && !('vite' in deps)) { framework = 'vue-cli'; port = 8080; }
-                else if ('svelte' in deps || '@sveltejs/kit' in deps) { framework = 'svelte'; port = 5173; }
-                else if ('electron' in deps) { framework = 'electron'; type = 'desktop'; port = 0; }
-              }
-              // If no dependencies, defaults (node, web, 3000) are already set
-
-              const pm = this.detectPackageManager(fullPath);
-              let startCommand = '';
-              for (const name of ['dev', 'start:dev', 'serve', 'start']) {
-                if (name in scripts) {
-                  startCommand = name === 'start' ? `${pm} start` : `${pm} run ${name}`;
-                  break;
-                }
-              }
-              if (!startCommand) {
-                const first = Object.keys(scripts)[0];
-                startCommand = `${pm} run ${first}`;
-              }
-
-              // For Angular, always use explicit --port so the port can be replaced
-              // on conflict and to avoid Angular's interactive "use different port?" prompt.
-              if (framework === 'angular') {
-                startCommand = `npx ng serve --port ${port}`;
-              }
-              // Return config with projectDir pointing to the subdirectory where package.json lives
-              // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
-              return { type, framework, startCommand, port, isWeb: type === 'web', projectDir: fullPath } as any;
-            }
-          } catch { /* ignore parse error */ }
-        }
-
-        // Recurse deeper
-        const deeper = this.findFrontendInSubdirs(fullPath, maxDepth - 1);
-        if (deeper) return deeper;
-      }
-    } catch { /* ignore readdir error */ }
-
-    return null;
-  }
-
-  /**
-   * Check whether a .csproj file is a class library (not directly runnable).
-   *
-   * .NET SDK default OutputType rules (when <OutputType> is absent):
-   *   Microsoft.NET.Sdk        → Library  (class library — NOT runnable)
-   *   Microsoft.NET.Sdk.Web    → Exe      (ASP.NET Core / Web API — runnable)
-   *   Microsoft.NET.Sdk.Worker → Exe      (Worker service — runnable)
-   *   Microsoft.NET.Sdk.Razor  → Library  (Razor Class Library — NOT runnable)
-   */
-  private isCsprojLibrary(csprojPath: string): boolean {
-    try {
-      const content = readFileSync(csprojPath, 'utf-8');
-
-      // Explicit <OutputType> wins over everything else
-      if (/<OutputType>\s*Library\s*<\/OutputType>/i.test(content)) return true;
-      if (/<OutputType>\s*(Exe|WinExe)\s*<\/OutputType>/i.test(content)) return false;
-
-      // Executable SDK types don't need an explicit OutputType=Exe
-      if (/Sdk\s*=\s*["']Microsoft\.NET\.Sdk\.Web["']/i.test(content)) return false;
-      if (/Sdk\s*=\s*["']Microsoft\.NET\.Sdk\.Worker["']/i.test(content)) return false;
-
-      // Microsoft.NET.Sdk (base SDK) without explicit OutputType → default is Library
-      if (/Sdk\s*=\s*["']Microsoft\.NET\.Sdk["']/i.test(content)) return true;
-
-      // Razor Class Library
-      if (/Sdk\s*=\s*["']Microsoft\.NET\.Sdk\.Razor["']/i.test(content)) return true;
-
-      // Old-style / unknown project — can't determine; assume runnable
-      return false;
-    } catch { return false; }
-  }
-
-  /**
-   * Find the directory that should be used as cwd for `dotnet run`.
-   * Priority:
-   *   1. Dir with .csproj + Program.cs/Startup.cs  (definite executable)
-   *   2. Dir with .csproj that is not a Library     (executable without runtime file)
-   *   3. Any dir with .csproj                       (last resort fallback)
-   * Searches up to maxDepth levels.
-   */
-  private findDotnetProjectDir(rootDir: string, maxDepth: number): string | null {
-    const skipDirs = new Set(['node_modules', 'bin', 'obj', 'dist', 'build', '.git', '.vs', 'packages', 'TestResults']);
-    let fallbackDir: string | null = null; // best dir when no perfect match found
-
-    const scan = (dir: string, depth: number): string | null => {
-      if (depth < 0) return null;
-      let entries: string[];
-      try { entries = readdirSync(dir); } catch { return null; }
-
-      const csprojsHere = entries.filter(f => f.endsWith('.csproj'));
-      if (csprojsHere.length > 0) {
-        // Tier 1 — has runtime entry point (Program.cs / Startup.cs)
-        const hasRuntime = entries.some(f =>
-          f === 'Program.cs' || f === 'program.cs' || f === 'Startup.cs' || f === 'startup.cs'
-        );
-        if (hasRuntime) return dir;
-
-        // Tier 2 — at least one .csproj is executable (not a library)
-        const executableCsprojs = csprojsHere.filter(f =>
-          !this.isCsprojLibrary(path.join(dir, f))
-        );
-        if (executableCsprojs.length > 0) return dir;
-
-        // All .csproj here are libraries — remember as last-resort fallback
-        if (!fallbackDir) fallbackDir = dir;
-      }
-
-      for (const entry of entries) {
-        if (entry.startsWith('.') || skipDirs.has(entry)) continue;
-        const fullPath = path.join(dir, entry);
-        try { if (!statSync(fullPath).isDirectory()) continue; } catch { continue; }
-        const found = scan(fullPath, depth - 1);
-        if (found) return found;
-      }
-      return null;
-    };
-
-    const result = scan(rootDir, maxDepth);
-    const finalResult = result ?? fallbackDir;
-    return finalResult;
-  }
-
-  /**
-   * Last-resort fallback: find the path to the first executable (non-Library) .csproj in the tree.
-   * If no executable .csproj is found, returns any .csproj (excluding test projects).
-   */
-  private findFirstCsprojFile(rootDir: string, maxDepth: number): string | null {
-    const skipDirs = new Set(['node_modules', 'bin', 'obj', 'dist', 'build', '.git', '.vs', 'packages', 'TestResults']);
-    let libraryFallback: string | null = null; // fallback if only libraries found
-
-    const scan = (dir: string, depth: number): string | null => {
-      if (depth < 0) return null;
-      let entries: string[];
-      try { entries = readdirSync(dir); } catch { return null; }
-
-      const csprojs = entries.filter(f => f.endsWith('.csproj') && !f.toLowerCase().includes('test'));
-      for (const csproj of csprojs) {
-        const fullPath = path.join(dir, csproj);
-        if (!this.isCsprojLibrary(fullPath)) return fullPath; // executable → use it
-        if (!libraryFallback) libraryFallback = fullPath;     // library → remember as fallback
-      }
-
-      for (const entry of entries) {
-        if (entry.startsWith('.') || skipDirs.has(entry)) continue;
-        const fullPath = path.join(dir, entry);
-        try { if (!statSync(fullPath).isDirectory()) continue; } catch { continue; }
-        const found = scan(fullPath, depth - 1);
-        if (found) return found;
-      }
-      return null;
-    };
-
-    return scan(rootDir, maxDepth) ?? libraryFallback;
-  }
-
-  /**
-   * Read the HTTP port from launchSettings.json in a .NET project directory.
-   * Prefers http:// over https:// to avoid certificate issues.
-   */
-  private readDotnetPort(csprojDir: string): number | null {
-    const launchSettingsPath = path.join(csprojDir, 'Properties', 'launchSettings.json');
-    if (!existsSync(launchSettingsPath)) return null;
-    try {
-      const settings = JSON.parse(readFileSync(launchSettingsPath, 'utf-8'));
-      for (const profile of Object.values(settings.profiles ?? {})) {
-        // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
-        const url: string | undefined = (profile as any).applicationUrl;
-        if (!url) continue;
-        const httpMatch = url.match(/http:\/\/[^;:]+:(\d+)/);
-        if (httpMatch) return parseInt(httpMatch[1], 10);
-        const httpsMatch = url.match(/https:\/\/[^;:]+:(\d+)/);
-        if (httpsMatch) return parseInt(httpsMatch[1], 10);
-      }
-    } catch { /* ignore */ }
-    return null;
-  }
-
-  /**
-   * Detect if a specific directory contains a backend server.
-   * Returns config if found, null otherwise.
-   */
-  private detectBackendAt(dir: string): { framework: string; startCommand: string; port: number } | null {
-    // Python
-    const hasManagePy = existsSync(path.join(dir, 'manage.py'));
-    const hasAppPy = existsSync(path.join(dir, 'app.py'));
-    const hasMainPy = existsSync(path.join(dir, 'main.py'));
-    const hasRequirements = existsSync(path.join(dir, 'requirements.txt'));
-    const hasPyproject = existsSync(path.join(dir, 'pyproject.toml'));
-    if (hasPyproject || hasRequirements || hasManagePy || hasAppPy || hasMainPy) {
-      let depsText = '';
-      try {
-        if (hasRequirements) depsText += readFileSync(path.join(dir, 'requirements.txt'), 'utf-8').toLowerCase();
-        if (hasPyproject) depsText += readFileSync(path.join(dir, 'pyproject.toml'), 'utf-8').toLowerCase();
-      } catch { /* ignore */ }
-      if (hasManagePy || depsText.includes('django')) return { framework: 'django', startCommand: 'python manage.py runserver', port: 8000 };
-      if (depsText.includes('fastapi')) return { framework: 'fastapi', startCommand: `uvicorn ${hasAppPy ? 'app:app' : 'main:app'} --reload --port 8000`, port: 8000 };
-      if (depsText.includes('flask')) return { framework: 'flask', startCommand: `python ${hasAppPy ? 'app.py' : 'main.py'}`, port: 5000 };
-      if ((hasMainPy || hasAppPy) && !depsText.includes('streamlit')) return { framework: 'python', startCommand: `python ${hasMainPy ? 'main.py' : 'app.py'}`, port: 8000 };
-    }
-    // Go
-    if (existsSync(path.join(dir, 'go.mod'))) return { framework: 'go', startCommand: 'go run .', port: 8080 };
-    // Rust
-    if (existsSync(path.join(dir, 'Cargo.toml'))) return { framework: 'rust', startCommand: 'cargo run', port: 8080 };
-    // .NET: check this dir AND one level of subdirs (covers nested project layouts)
-    try {
-      const entries = readdirSync(dir);
-      if (entries.some(f => f.endsWith('.csproj'))) {
-        return { framework: 'dotnet', startCommand: 'dotnet run', port: this.readDotnetPort(dir) ?? 5000 };
-      }
-      // One level deeper (e.g. solution root → project subdir)
-      for (const entry of entries) {
-        if (entry.startsWith('.') || entry === 'node_modules' || entry === 'bin' || entry === 'obj') continue;
-        const sub = path.join(dir, entry);
-        try {
-          if (!statSync(sub).isDirectory()) continue;
-          if (readdirSync(sub).some(f => f.endsWith('.csproj'))) {
-            // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
-            return { framework: 'dotnet', startCommand: 'dotnet run', port: this.readDotnetPort(sub) ?? 5000, projectDir: sub } as any;
-          }
-        } catch { /* ignore */ }
-      }
-    } catch { /* ignore */ }
-    // Node.js API frameworks (express, fastify, nestjs, etc.)
-    const pkgPath = path.join(dir, 'package.json');
-    if (existsSync(pkgPath)) {
-      try {
-        const pkg = JSON.parse(readFileSync(pkgPath, 'utf-8'));
-        const deps = { ...(pkg.dependencies), ...(pkg.devDependencies) };
-        // Skip if it's clearly a frontend project
-        if ('@angular/core' in deps || 'react-scripts' in deps || ('@sveltejs/kit' in deps)) return null;
-        if ('@nestjs/core' in deps) {
-          const pm = this.detectPackageManager(dir);
-          const scripts = pkg.scripts ?? {};
-          const cmd = 'start:dev' in scripts ? `${pm} run start:dev` : `${pm} run dev`;
-          return { framework: 'nestjs', startCommand: cmd, port: 3000 };
-        }
-        if ('express' in deps || 'fastify' in deps || 'koa' in deps || 'hapi' in deps || '@hapi/hapi' in deps) {
-          const pm = this.detectPackageManager(dir);
-          const scripts = pkg.scripts ?? {};
-          const cmd = 'dev' in scripts ? `${pm} run dev` : 'start:dev' in scripts ? `${pm} run start:dev` : `${pm} start`;
-          return { framework: 'express', startCommand: cmd, port: 3000 };
-        }
-      } catch { /* ignore */ }
-    }
-    return null;
-  }
-
-  /**
-   * Scan subdirectories for a backend server.
-   * Prioritises common backend folder names (backend, server, api, etc.).
-   */
-  private findBackendInSubdirs(rootDir: string, maxDepth = 2): { framework: string; startCommand: string; port: number; projectDir: string } | null {
-    if (maxDepth <= 0) return null;
-    const skipDirs = new Set(['node_modules', 'dist', 'build', '.git', 'bin', 'obj', 'public', 'static', 'assets', 'coverage']);
-    const backendHints = new Set(['backend', 'server', 'api', 'service', 'services', 'app', 'src']);
-    try {
-      const entries = readdirSync(rootDir);
-      // Prioritise entries that look like backend directories
-      const sorted = [
-        ...entries.filter(e => backendHints.has(e.toLowerCase())),
-        ...entries.filter(e => !backendHints.has(e.toLowerCase())),
-      ];
-      for (const entry of sorted) {
-        if (entry.startsWith('.') || skipDirs.has(entry)) continue;
-        const fullPath = path.join(rootDir, entry);
-        try { if (!statSync(fullPath).isDirectory()) continue; } catch { continue; }
-        const result = this.detectBackendAt(fullPath);
-        if (result) return { ...result, projectDir: fullPath };
-      }
-      if (maxDepth > 1) {
-        for (const entry of sorted) {
-          if (entry.startsWith('.') || skipDirs.has(entry)) continue;
-          const fullPath = path.join(rootDir, entry);
-          try { if (!statSync(fullPath).isDirectory()) continue; } catch { continue; }
-          const deeper = this.findBackendInSubdirs(fullPath, maxDepth - 1);
-          if (deeper) return deeper;
-        }
-      }
-    } catch { /* ignore */ }
-    return null;
-  }
-
-  /**
-   * Build a fullstack multi-service config from a detected backend and frontend.
-   * The backend is always the primary service (API Studio base URL).
-   */
-  private buildFullstackConfig(
-    backend: { framework: string; startCommand: string; port: number; projectDir: string },
-    frontend: { framework: string; startCommand: string; port: number; projectDir: string },
-  ): Omit<AppEmulatorConfig, 'projectDir'> {
-    return {
-      type: 'web',
-      framework: backend.framework,
-      startCommand: backend.startCommand,
-      port: backend.port,
-      isWeb: true,
-      projectDir: backend.projectDir,
-      services: [
-        {
-          label: `Backend (${backend.framework})`,
-          framework: backend.framework,
-          startCommand: backend.startCommand,
-          port: backend.port,
-          projectDir: backend.projectDir,
-          isPrimary: true,
-        },
-        {
-          label: `Frontend (${frontend.framework})`,
-          framework: frontend.framework,
-          startCommand: frontend.startCommand,
-          port: frontend.port,
-          projectDir: frontend.projectDir,
-          isPrimary: false,
-        },
-      ],
-    // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
-    } as any;
-  }
-
-  /**
-   * Detect the package manager from lock files.
-   */
-  private detectPackageManager(projectDir: string): string {
-    if (existsSync(path.join(projectDir, 'pnpm-lock.yaml'))) return 'pnpm';
-    if (existsSync(path.join(projectDir, 'yarn.lock'))) return 'yarn';
-    if (existsSync(path.join(projectDir, 'bun.lockb')) || existsSync(path.join(projectDir, 'bun.lock'))) return 'bun';
-    return 'npm';
-  }
-
-  /**
-   * Ensure Node.js project dependencies are installed.
-   * Runs `{packageManager} install` if package.json exists but node_modules is missing.
-   */
-  private ensureDependenciesInstalled(projectDir: string, label?: string): Promise<void> {
-    const prefix = label ? `[${label}] ` : '';
-    const packageJsonPath = path.join(projectDir, 'package.json');
-    const nodeModulesPath = path.join(projectDir, 'node_modules');
-
-    if (!existsSync(packageJsonPath)) return Promise.resolve();
-    if (existsSync(nodeModulesPath)) return Promise.resolve();
-
-    const pm = this.detectPackageManager(projectDir);
-    const isWindows = process.platform === 'win32';
-
-    this.emit('status', `${prefix}Installing dependencies with ${pm}...`);
-    this.emit('output', `${prefix}node_modules not found — running "${pm} install"...`);
-
-    return new Promise<void>((resolve, reject) => {
-      const proc = spawn(pm, ['install'], {
-        cwd: projectDir,
-        env: process.env as Record<string, string>,
-        shell: isWindows ? true : undefined,
-        stdio: ['ignore', 'pipe', 'pipe'],
-      });
-      proc.stdout?.on('data', (data: Buffer) => {
-        for (const line of data.toString('utf-8').split('\n')) {
-          if (line.trim()) this.emit('output', `${prefix}${line}`);
-        }
-      });
-      proc.stderr?.on('data', (data: Buffer) => {
-        for (const line of data.toString('utf-8').split('\n')) {
-          if (line.trim()) this.emit('output', `${prefix}${line}`);
-        }
-      });
-      proc.on('error', (err) => reject(new Error(`${prefix}Failed to run "${pm} install": ${err.message}`)));
-      proc.on('close', (code) => {
-        if (code === 0) {
-          this.emit('output', `${prefix}Dependencies installed successfully.`);
-          resolve();
-        } else {
-          reject(new Error(`${prefix}"${pm} install" exited with code ${code}`));
-        }
-      });
-    });
-  }
-
-  /**
-   * Ensure Python project dependencies are installed.
-   * Skips if a virtual environment already exists.
-   * Supports: pip (requirements.txt), poetry, uv, pipenv.
-   */
-  private ensurePythonDependenciesInstalled(projectDir: string, label?: string): Promise<void> {
-    const prefix = label ? `[${label}] ` : '';
-
-    // If a virtual environment already exists, assume deps are installed.
-    const venvMarkers = ['.venv', 'venv', 'env', '.env'];
-    const hasVenv = venvMarkers.some(d =>
-      existsSync(path.join(projectDir, d, 'lib')) ||    // Unix
-      existsSync(path.join(projectDir, d, 'Lib'))       // Windows
-    );
-    if (hasVenv) return Promise.resolve();
-
-    // Detect Python package manager by lock/config files (most specific first).
-    const hasPoetryLock = existsSync(path.join(projectDir, 'poetry.lock'));
-    const hasUvLock = existsSync(path.join(projectDir, 'uv.lock'));
-    const hasPipfileLock = existsSync(path.join(projectDir, 'Pipfile.lock'));
-    const hasRequirements = existsSync(path.join(projectDir, 'requirements.txt'));
-    const hasPyproject = existsSync(path.join(projectDir, 'pyproject.toml'));
-
-    let installCmd: string | null = null;
-    if (hasPoetryLock) installCmd = 'poetry install';
-    else if (hasUvLock) installCmd = 'uv sync';
-    else if (hasPipfileLock) installCmd = 'pipenv install';
-    else if (hasRequirements) installCmd = 'pip install -r requirements.txt';
-    else if (hasPyproject) installCmd = 'pip install -e .';
-
-    if (!installCmd) return Promise.resolve();
-
-    const isWindows = process.platform === 'win32';
-    this.emit('status', `${prefix}Installing Python dependencies...`);
-    this.emit('output', `${prefix}No virtual environment found — running "${installCmd}"...`);
-
-    return new Promise<void>((resolve, reject) => {
-      const [cmd, ...args] = installCmd?.split(' ') || [];
-      const proc = spawn(cmd, args, {
-        cwd: projectDir,
-        env: process.env as Record<string, string>,
-        shell: isWindows ? true : undefined,
-        stdio: ['ignore', 'pipe', 'pipe'],
-      });
-      proc.stdout?.on('data', (data: Buffer) => {
-        for (const line of data.toString('utf-8').split('\n')) {
-          if (line.trim()) this.emit('output', `${prefix}${line}`);
-        }
-      });
-      proc.stderr?.on('data', (data: Buffer) => {
-        for (const line of data.toString('utf-8').split('\n')) {
-          if (line.trim()) this.emit('output', `${prefix}${line}`);
-        }
-      });
-      proc.on('error', (err) => reject(new Error(`${prefix}Failed to run "${installCmd}": ${err.message}`)));
-      proc.on('close', (code) => {
-        if (code === 0) {
-          this.emit('output', `${prefix}Python dependencies installed successfully.`);
-          resolve();
-        } else {
-          reject(new Error(`${prefix}"${installCmd}" exited with code ${code}`));
-        }
-      });
-    });
-  }
-
-  /**
-   * Fallback: Detect project type via Python runner.
-   */
-  private detectProjectViaPython(projectDir: string): Promise<AppEmulatorConfig> {
-    const autoBuildSource = this.getAutoBuildSourcePath();
-    if (!autoBuildSource) {
-      throw new Error(`Could not detect project type in: ${projectDir}`);
-    }
-
-    const runnerPath = path.join(autoBuildSource, 'runners', 'app_emulator_runner.py');
-    if (!existsSync(runnerPath)) {
-      throw new Error(`Could not detect project type in: ${projectDir}`);
-    }
-
-    return new Promise((resolve, reject) => {
-      const proc = spawn(this.pythonPath, [runnerPath, '--project-dir', projectDir], {
-        cwd: autoBuildSource,
-        env: { ...process.env } as Record<string, string>,
-      });
-
-      this.detectionProcess = proc;
-      let stdout = '';
-      let stderr = '';
-
-      proc.stdout?.on('data', (data: Buffer) => {
-        stdout += data.toString('utf-8');
-      });
-
-      proc.stderr?.on('data', (data: Buffer) => {
-        stderr += data.toString('utf-8');
-      });
-
-      proc.on('close', (code) => {
-        this.detectionProcess = null;
-
-        // Parse the result from stdout
-        const marker = '__APP_EMULATOR_RESULT__:';
-        const markerIdx = stdout.indexOf(marker);
-
-        if (markerIdx >= 0) {
-          try {
-            const jsonStr = stdout.substring(markerIdx + marker.length).trim();
-            const result = JSON.parse(jsonStr);
-
-            if (result.success) {
-              const config: AppEmulatorConfig = {
-                type: result.type,
-                framework: result.framework,
-                startCommand: result.startCommand,
-                port: result.port,
-                isWeb: result.isWeb,
-                projectDir,
-              };
-              this.currentConfig = config;
-              this.emit('config', config);
-              resolve(config);
-            } else {
-              reject(new Error(result.error || `Could not detect project type in: ${projectDir}`));
-            }
-          } catch (parseErr) {
-            reject(new Error(`Failed to parse detection result: ${parseErr}`));
-          }
-        } else {
-          reject(new Error(`Detection failed (exit code ${code}): ${stderr.slice(-500)}`));
-        }
-      });
-
-      proc.on('error', (err) => {
-        this.detectionProcess = null;
-        reject(new Error(`Failed to start detection: ${err.message}`));
-      });
-    });
-  }
-
-  /**
-   * Start the dev server with the given config.
-   */
-  async startServer(config: AppEmulatorConfig): Promise<void> {
-    // Synchronous guard — prevents race condition when two calls arrive before either awaits
-    if (this.startingInProgress) {
-      return;
-    }
-    this.startingInProgress = true;
-
-    try {
-    // Stop any existing server
-    this.stopServer();
-
-    // On Windows, taskkill is fire-and-forget. Wait for the OS to fully release
-    // ports from killed processes before probing them.
-    await new Promise<void>((resolve) => setTimeout(resolve, 1000));
-
-    this.currentConfig = config;
-
-    // Fullstack multi-service path (e.g. .NET backend + Angular frontend)
-    if (config.services && config.services.length > 1) {
-      await this.startMultipleServices(config);
-      return;
-    }
-
-    const rawDir = config.projectDir || process.cwd();
-    const projectDir = rawDir; // No junction — Angular runs from the real path
-
-    // Patch @ngtools/webpack to fix the %20 encoding bug for paths with spaces.
-    // Must run from real path (not junction) so TypeScript & webpack use the same paths.
-    if (config.framework === 'angular') {
-      await this.patchAngularWebpack(rawDir);
-    }
-
-    // Ensure Node.js dependencies are installed before starting the dev server.
-    try {
-      await this.ensureDependenciesInstalled(projectDir);
-    } catch (err) {
-      this.emit('error', String(err));
-      return;
-    }
-
-    // Ensure Python dependencies are installed before starting the dev server.
-    const PYTHON_FRAMEWORKS = new Set(['django', 'fastapi', 'flask', 'streamlit', 'python']);
-    if (PYTHON_FRAMEWORKS.has(config.framework)) {
-      try {
-        await this.ensurePythonDependenciesInstalled(projectDir);
-      } catch (err) {
-        this.emit('error', String(err));
-        return;
-      }
-    }
-
-    if (!config.startCommand) {
-      this.emit('error', 'No start command configured');
-      return;
-    }
-
-    // Check if something is already running on the configured port
-    if (config.isWeb && config.port > 0) {
-      const portFree = await this.isPortAvailable(config.port);
-      if (!portFree) {
-        // Port is occupied — check if there's a working HTTP server we can reuse
-        const alreadyServing = await this.isHttpReachable(config.port);
-        if (alreadyServing) {
-          this.serverUrl = `http://localhost:${config.port}`;
-          this.emit('status', `Running at ${this.serverUrl}`);
-          this.emit('ready', this.serverUrl);
-          return;
-        }
-
-        // Port occupied but no usable HTTP server — try to kill the orphaned process first.
-        await this.killProcessOnPort(config.port);
-        if (!await this.isPortAvailable(config.port)) {
-          // Still occupied after kill — fall back to next available port
-          const availablePort = await this.findAvailablePort(config.port + 1);
-          this.emit('status', `Port ${config.port} in use — using port ${availablePort} instead`);
-          const updatedCommand = this.replacePortInCommand(config.startCommand, config.port, availablePort);
-          if (updatedCommand === config.startCommand) {
-            if (config.framework === 'angular') {
-              config.startCommand = `npx ng serve --port ${availablePort}`;
-            } else {
-              config.startCommand = `${config.startCommand} -- --port ${availablePort}`;
-            }
-          } else {
-            config.startCommand = updatedCommand;
-          }
-          config.port = availablePort;
-          this.currentConfig = config;
-          this.emit('config', config);
-        }
-      }
-    }
-
-    this.emit('status', `Starting: ${config.startCommand}`);
-
-    // Parse command
-    const isWindows = process.platform === 'win32';
-    const shell = isWindows ? true : undefined;
-    const [cmd, ...args] = config.startCommand.split(' ');
-
-    const proc = spawn(cmd, args, {
-      cwd: projectDir,
-      env: {
-        ...process.env,
-        BROWSER: 'none',
-        PORT: String(config.port),
-      } as Record<string, string>,
-      shell,
-      stdio: ['ignore', 'pipe', 'pipe'],
-    });
-
-    this.activeServerProcess = proc;
-
-    proc.stdout?.on('data', (data: Buffer) => {
-      const text = data.toString('utf-8');
-      for (const line of text.split('\n')) {
-        if (line.trim()) {
-          this.emit('output', line);
-        }
-      }
-    });
-
-    proc.stderr?.on('data', (data: Buffer) => {
-      const text = data.toString('utf-8');
-      for (const line of text.split('\n')) {
-        if (line.trim()) {
-          this.emit('output', line);
-        }
-      }
-    });
-
-    proc.on('close', (code) => {
-      this.activeServerProcess = null;
-      this.serverUrl = null;
-      // Release startingInProgress so a retry can start immediately
-      this.startingInProgress = false;
-      if (code !== null && code !== 0) {
-        this.emit('error', `Server exited with code ${code}`);
-      }
-      this.emit('stopped');
-    });
-
-    proc.on('error', (err) => {
-      this.activeServerProcess = null;
-      this.serverUrl = null;
-      this.startingInProgress = false;
-      this.emit('error', `Failed to start server: ${err.message}`);
-    });
-
-    // Wait for the port to become available (for web apps)
-    if (config.isWeb && config.port > 0) {
-      try {
-        await this.waitForPort(config.port, 60000);
-      } catch {
-        // Port didn't open in time; bail if the process died
-        if (!this.activeServerProcess || this.activeServerProcess.killed) return;
-      }
-
-      // After TCP is up, wait for the server to actually serve HTTP (e.g. Angular
-      // dev-server binds the port immediately but compiles for 30-60 s before
-      // responding with 2xx).  We poll for up to 90 s; if still not 2xx we emit
-      // 'ready' anyway so the user at least sees the terminal output.
-      await this.waitForHttpSuccess(config.port, 90000);
-
-      if (this.activeServerProcess && !this.activeServerProcess.killed) {
-        this.serverUrl = `http://localhost:${config.port}`;
-        this.emit('ready', this.serverUrl);
-      }
-    }
-    } finally {
-      this.startingInProgress = false;
-    }
-  }
-
-  /**
-   * Launch all services defined in config.services in parallel.
-   * The primary service (isPrimary === true) drives the 'ready' event and
-   * sets the API Studio base URL. Secondary services (e.g. frontend) are
-   * started fire-and-forget alongside.
-   */
-  private async startMultipleServices(config: AppEmulatorConfig): Promise<void> {
-    // biome-ignore lint/style/noNonNullAssertion: value is guaranteed by context
-    const services = config.services!;
-    const primary = services.find(s => s.isPrimary) ?? services[0];
-    const secondaries = services.filter(s => !s.isPrimary);
-
-    const isWindows = process.platform === 'win32';
-    const shell = isWindows ? true : undefined;
-
-    // Resolve port conflicts for each service before spawning anything.
-    // Services whose port is already served by a live HTTP server are skipped entirely
-    // (no need to restart them).
-    const skipSpawn = new Set<string>();
-    for (const svc of services) {
-      if (svc.port <= 0) continue;
-      const portFree = await this.isPortAvailable(svc.port);
-      if (!portFree) {
-        const alreadyServing = await this.isHttpReachable(svc.port);
-        if (alreadyServing) {
-          this.emit('output', `[${svc.label}] Port ${svc.port} already has a running server — reusing it`);
-          skipSpawn.add(svc.label); // don't spawn: a server is already listening there
-          continue;
-        }
-        // Port occupied but not serving HTTP — likely an orphaned process from a
-        // previous session (e.g. after navigating away without stopping). Kill it.
-        this.emit('output', `[${svc.label}] Port ${svc.port} occupied — stopping previous process...`);
-        await this.killProcessOnPort(svc.port);
-        // Re-check after kill
-        const freeAfterKill = await this.isPortAvailable(svc.port);
-        if (!freeAfterKill) {
-          // Still occupied (e.g. another unrelated process) — find alternative port
-          const availablePort = await this.findAvailablePort(svc.port + 1);
-          this.emit('status', `[${svc.label}] Port ${svc.port} still in use — using ${availablePort} instead`);
-          const updatedCmd = this.replacePortInCommand(svc.startCommand, svc.port, availablePort);
-          svc.startCommand = updatedCmd !== svc.startCommand ? updatedCmd
-            : svc.framework === 'angular' ? `npx ng serve --port ${availablePort}`
-            : `${svc.startCommand} -- --port ${availablePort}`;
-          svc.port = availablePort;
-        }
-      }
-    }
-    // Notify renderer of updated config (ports may have changed)
-    this.emit('config', config);
-
-    // Spawn secondary services (fire-and-forget — no waiting for ready)
-    for (const svc of secondaries) {
-      if (skipSpawn.has(svc.label)) continue;
-      this.emit('output', `[${svc.label}] Starting: ${svc.startCommand}`);
-      const [cmd, ...args] = svc.startCommand.split(' ');
-      // Patch @ngtools/webpack to fix the %20 encoding bug (paths with spaces).
-      // Angular must run from the real path so TypeScript & webpack use the same paths.
-      if (svc.framework === 'angular') {
-        await this.patchAngularWebpack(svc.projectDir);
-      }
-      try {
-        await this.ensureDependenciesInstalled(svc.projectDir, svc.label);
-        await this.ensurePythonDependenciesInstalled(svc.projectDir, svc.label);
-      } catch (err) {
-        this.emit('output', `[${svc.label}] ${String(err)}`);
-      }
-      const proc = spawn(cmd, args, {
-        cwd: svc.projectDir,
-        env: {
-          ...process.env,
-          BROWSER: 'none',
-          PORT: String(svc.port),
-        } as Record<string, string>,
-        shell,
-        stdio: ['ignore', 'pipe', 'pipe'],
-      });
-      this.activeServiceProcesses.set(svc.label, proc);
-      proc.stdout?.on('data', (data: Buffer) => {
-        for (const line of data.toString('utf-8').split('\n')) {
-          if (line.trim()) this.emit('output', `[${svc.label}] ${line}`);
-        }
-      });
-      proc.stderr?.on('data', (data: Buffer) => {
-        for (const line of data.toString('utf-8').split('\n')) {
-          if (line.trim()) this.emit('output', `[${svc.label}] ${line}`);
-        }
-      });
-      proc.on('close', (code) => {
-        this.activeServiceProcesses.delete(svc.label);
-        if (code !== null && code !== 0) {
-          this.emit('output', `[${svc.label}] exited with code ${code}`);
-        }
-      });
-      proc.on('error', (err) => {
-        this.activeServiceProcesses.delete(svc.label);
-        this.emit('output', `[${svc.label}] failed to start: ${err.message}`);
-      });
-    }
-
-    // Spawn primary service — drives 'ready' and waitForPort checks
-    this.emit('status', `Starting: ${primary.startCommand}`);
-    const [primaryCmd, ...primaryArgs] = primary.startCommand.split(' ');
-    // Patch @ngtools/webpack for the %20 bug if primary is Angular.
-    if (primary.framework === 'angular') {
-      await this.patchAngularWebpack(primary.projectDir);
-    }
-    try {
-      await this.ensureDependenciesInstalled(primary.projectDir, primary.label);
-      await this.ensurePythonDependenciesInstalled(primary.projectDir, primary.label);
-    } catch (err) {
-      this.emit('error', String(err));
-      this.startingInProgress = false;
-      return;
-    }
-    const primaryProc = spawn(primaryCmd, primaryArgs, {
-      cwd: primary.projectDir,
-      env: {
-        ...process.env,
-        BROWSER: 'none',
-        PORT: String(primary.port),
-      } as Record<string, string>,
-      shell,
-      stdio: ['ignore', 'pipe', 'pipe'],
-    });
-    // Assign to activeServerProcess so waitForPort/waitForHttpSuccess bail correctly
-    this.activeServerProcess = primaryProc;
-    this.activeServiceProcesses.set(primary.label, primaryProc);
-
-    primaryProc.stdout?.on('data', (data: Buffer) => {
-      for (const line of data.toString('utf-8').split('\n')) {
-        if (line.trim()) this.emit('output', `[${primary.label}] ${line}`);
-      }
-    });
-    primaryProc.stderr?.on('data', (data: Buffer) => {
-      for (const line of data.toString('utf-8').split('\n')) {
-        if (line.trim()) this.emit('output', `[${primary.label}] ${line}`);
-      }
-    });
-    primaryProc.on('close', (code) => {
-      this.activeServerProcess = null;
-      this.serverUrl = null;
-      this.startingInProgress = false;
-      this.activeServiceProcesses.delete(primary.label);
-      if (code !== null && code !== 0) {
-        this.emit('error', `Server exited with code ${code}`);
-      }
-      this.emit('stopped');
-    });
-    primaryProc.on('error', (err) => {
-      this.activeServerProcess = null;
-      this.serverUrl = null;
-      this.startingInProgress = false;
-      this.emit('error', `Failed to start server: ${err.message}`);
-    });
-
-    // Wait for the primary (backend) to accept connections — longer timeout for .NET compilation
-    try {
-      await this.waitForPort(primary.port, 120000);
-    } catch {
-      if (!this.activeServerProcess || this.activeServerProcess.killed) return;
-    }
-    // For fullstack projects, poll the frontend HTTP (no auth required) rather than
-    // the backend API which may return 401 and pollute the backend logs.
-    const frontendSvc = secondaries.find(s =>
-      ['angular', 'vite', 'next', 'nuxt', 'create-react-app', 'vue-cli', 'svelte'].includes(s.framework)
-    );
-    if (frontendSvc) {
-      await this.waitForHttpSuccess(frontendSvc.port, 120000);
-    } else {
-      await this.waitForHttpSuccess(primary.port, 120000);
-    }
-
-    if (this.activeServerProcess && !this.activeServerProcess.killed) {
-      this.serverUrl = frontendSvc
-        ? `http://localhost:${frontendSvc.port}`
-        : `http://localhost:${primary.port}`;
-      this.emit('ready', this.serverUrl);
-    }
-  }
-
-  /**
-   * Replace every occurrence of `oldPort` in a start command with `newPort`.
-   * Handles both `--port N` and `PORT=N` forms.
-   */
-  private replacePortInCommand(cmd: string, oldPort: number, newPort: number): string {
-    return cmd.replaceAll(
-      new RegExp(String.raw`(--port\s+)${oldPort}|(\bPORT=)${oldPort}`, 'g'),
-      (_m: string, p1: string, p2: string) => p1 ? `${p1}${newPort}` : `${p2}${newPort}`,
-    );
-  }
-
-  /**
-   * Quick check: is there an HTTP server responding on this port?
-   * Returns true if we get any HTTP response within 1.5 s.
-   */
-  private isHttpReachable(port: number): Promise<boolean> {
-    return new Promise((resolve) => {
-      const req = http.get(
-        { hostname: '127.0.0.1', port, path: '/', timeout: 1500 },
-        (res) => {
-          res.resume();
-          resolve(true);
-        },
-      );
-      req.on('error', () => resolve(false));
-      req.on('timeout', () => { req.destroy(); resolve(false); });
-    });
-  }
-
-  /**
-   * Check if a port is available (not in use).
-   * Probes both IPv4 (0.0.0.0) and IPv6 (::) to catch all listener types on Windows:
-   *  • 0.0.0.0 catches: IPv4, IPv6 dual-stack (IPV6_V6ONLY=false)
-   *  • ::        catches: IPv6-only (IPV6_V6ONLY=true) listeners missed by the IPv4 probe
-   * Only reports "free" when BOTH binds succeed.
-   */
-  private async isPortAvailable(port: number): Promise<boolean> {
-    const tryBind = (host: string): Promise<boolean> =>
-      new Promise((resolve) => {
-        const server = net.createServer();
-        server.once('error', (err: NodeJS.ErrnoException) => {
-          // EADDRINUSE → port occupied; other errors (no IPv6 support, etc.) → treat as free
-          resolve(err.code !== 'EADDRINUSE');
-        });
-        server.once('listening', () => server.close(() => resolve(true)));
-        server.listen(port, host);
-      });
-
-    const ipv4Free = await tryBind('0.0.0.0');
-    return ipv4Free ? tryBind('::') : false;
-  }
-
-  /**
-   * Find an available port starting from startPort.
-   */
-  private async findAvailablePort(startPort: number): Promise<number> {
-    let port = startPort;
-    while (port < startPort + 20) {
-      if (await this.isPortAvailable(port)) return port;
-      port++;
-    }
-    return startPort; // fallback
-  }
-
-  /**
-   * Wait for a port to accept connections.
-   */
-  private waitForPort(port: number, timeout: number): Promise<void> {
-    return new Promise((resolve, reject) => {
-      const startTime = Date.now();
-
-      const tryConnect = () => {
-        if (Date.now() - startTime > timeout) {
-          reject(new Error(`Timeout waiting for port ${port}`));
-          return;
-        }
-
-        // Bail out immediately if the process died
-        if (!this.activeServerProcess || this.activeServerProcess.killed) {
-          resolve();
-          return;
-        }
-
-        const socket = new net.Socket();
-        socket.setTimeout(1000);
-
-        socket.on('connect', () => {
-          socket.destroy();
-          resolve();
-        });
-
-        socket.on('error', () => {
-          socket.destroy();
-          setTimeout(tryConnect, 500);
-        });
-
-        socket.on('timeout', () => {
-          socket.destroy();
-          setTimeout(tryConnect, 500);
-        });
-
-        socket.connect(port, '127.0.0.1');
-      };
-
-      tryConnect();
-    });
-  }
-
-  /**
-   * Poll the server with an HTTP GET until it responds with a 2xx status code
-   * (meaning the app is compiled and actually serving content), or until
-   * `timeout` ms elapses, whichever comes first.
-   */
-  private waitForHttpSuccess(port: number, timeout: number): Promise<void> {
-    return new Promise((resolve) => {
-      const startTime = Date.now();
-
-      const tryGet = () => {
-        // Stop polling if the process died
-        if (!this.activeServerProcess || this.activeServerProcess.killed) {
-          resolve();
-          return;
-        }
-
-        if (Date.now() - startTime > timeout) {
-          // Timed out — emit ready anyway so the user can see what's happening
-          resolve();
-          return;
-        }
-
-        const req = http.get(
-          { hostname: '127.0.0.1', port, path: '/', timeout: 3000 },
-          (res) => {
-            res.resume(); // drain the response body
-            if (res.statusCode !== undefined && res.statusCode < 500) {
-              // Any non-5xx response (including 401/403) means the server is up and reachable
-              resolve();
-            } else {
-              // 5xx or no status — server not ready yet (e.g. still compiling)
-              setTimeout(tryGet, 2000);
-            }
-          },
-        );
-
-        req.on('error', () => setTimeout(tryGet, 1000));
-        req.on('timeout', () => {
-          req.destroy();
-          setTimeout(tryGet, 1000);
-        });
-      };
-
-      tryGet();
-    });
-  }
-
-  private killProcessOnPort(port: number): Promise<void> {
-    if (process.platform !== 'win32') return Promise.resolve();
-    return new Promise<void>((resolve) => {
-      const ps = spawn('powershell', [
-        '-NoProfile', '-NonInteractive', '-Command',
-        // Get all TCP connections on this port (any state), extract unique owning PIDs,
-        // skip system PIDs (0-4), then force-stop each process.
-        `Get-NetTCPConnection -LocalPort ${port} -ErrorAction SilentlyContinue |` +
-        ` Select-Object -ExpandProperty OwningProcess -Unique |` +
-        ` Where-Object { $_ -gt 4 } |` +
-        ` ForEach-Object { Stop-Process -Id $_ -Force -ErrorAction SilentlyContinue }`,
-      ], { stdio: 'ignore' });
-      // Wait 1000 ms after kill for the OS to fully release the port
-      ps.on('close', () => setTimeout(resolve, 1000));
-      ps.on('error', () => resolve());
-      setTimeout(() => { try { ps.kill(); } catch { /* ignore */ } resolve(); }, 4000);
-    });
-  }
-
-  /**
-   * Stop the dev server (single-service) or all services (multi-service).
-   */
-  stopServer(): void {
-    const killProc = (proc: ChildProcess) => {
-      const pid = proc.pid;
-      try {
-        if (process.platform === 'win32' && pid) {
-          spawn('taskkill', ['/pid', String(pid), '/f', '/t'], { stdio: 'ignore' });
-        } else {
-          proc.kill('SIGKILL');
-        }
-      } catch { /* already dead */ }
-    };
-
-    // Capture ports before clearing config — used for fallback port-based kill below
-    const portsToKill: number[] = [];
-    if (this.currentConfig) {
-      if (this.currentConfig.services) {
-        for (const svc of this.currentConfig.services) {
-          if (svc.port > 0) portsToKill.push(svc.port);
-        }
-      } else if (this.currentConfig.port > 0) {
-        portsToKill.push(this.currentConfig.port);
-      }
-    }
-
-    // Kill all tracked secondary service processes
-    for (const proc of this.activeServiceProcesses.values()) {
-      killProc(proc);
-    }
-    this.activeServiceProcesses.clear();
-
-    // Kill the primary / single-service process
-    if (this.activeServerProcess) {
-      killProc(this.activeServerProcess);
-      this.activeServerProcess = null;
-    }
-
-    this.serverUrl = null;
-    this.currentConfig = null;
-
-    // Fallback port-based kill: on Windows, dotnet run spawns the actual web server
-    // as a grandchild process that taskkill /t sometimes misses. Kill by port to be sure.
-    for (const port of portsToKill) {
-      this.killProcessOnPort(port).catch(() => { /* noop */ });
-    }
-
-    // Remove any junctions created to work around spaces-in-path issues
-    this.cleanupJunctions();
-    // Restore any @ngtools/webpack patches applied for the spaces-in-path bug
-    this.restoreAngularWebpackPatches();
-
-    this.emit('stopped');
-  }
-
-  /**
-   * Remove all junctions created by ensureNoSpacesPath and clear the map.
-   */
-  private cleanupJunctions(): void {
-    for (const junctionPath of this.junctionMap.values()) {
-      spawn('powershell', [
-        '-NoProfile', '-NonInteractive', '-Command',
-        `Remove-Item -Path '${junctionPath}' -Force -ErrorAction SilentlyContinue`,
-      ], { stdio: 'ignore' });
-    }
-    this.junctionMap.clear();
-  }
-
-  /**
-   * Patch @ngtools/webpack/src/ivy/plugin.js to add decodeURIComponent() around
-   * resource paths before they are looked up in the TypeScript compilation.
-   *
-   * Root cause: webpack URL-encodes paths containing spaces, producing module IDs
-   * like "MeCa%20Web/...". The TypeScript compilation registers source files with
-   * the real decoded path ("MeCa Web/..."). On incremental rebuilds the lookup in
-   * `createFileEmitter` calls `normalizePath(file)` where `file` still has `%20`,
-   * so `program.getSourceFile()` returns undefined → "missing from TypeScript
-   * compilation" error.
-   *
-   * Fix: wrap `file` and `resource` in `decodeURIComponent()` before passing to
-   * `normalizePath()`, matching the same fix shipped in Angular CLI 15.1
-   * (angular-cli#24798).
-   *
-   * IMPORTANT: Angular must run from the real project path (no junction symlink),
-   * otherwise TypeScript compiles with junction paths and the lookup still fails.
-   *
-   * No-op if:
-   *  - projectDir has no spaces
-   *  - plugin.js does not exist (Angular CLI not installed)
-   *  - the fix is already present (Angular CLI 15.1+)
-   *  - the expected pattern is not found in this compiled version
-   */
-  private async patchAngularWebpack(projectDir: string): Promise<void> {
-    if (!projectDir.includes(' ')) return;
-
-    const pluginPath = path.join(
-      projectDir, 'node_modules', '@ngtools', 'webpack', 'src', 'ivy', 'plugin.js',
-    );
-    if (!existsSync(pluginPath)) return;
-    if (this.angularWebpackPatches.has(pluginPath)) return; // already patched this session
-
-    try {
-      const original = readFileSync(pluginPath, 'utf-8');
-
-      // Guard: patch already present (Angular CLI 15.1+)
-      if (original.includes('decodeURIComponent(file)') || original.includes('decodeURIComponent(resource)')) return;
-
-      let patched = original;
-
-      // Fix 1: createFileEmitter — decode the resource path before TypeScript program lookup.
-      // normalizePath)(file) → normalizePath)(decodeURIComponent(file))
-      patched = patched.replace(
-        /normalizePath\)\(file\)/g,
-        'normalizePath)(decodeURIComponent(file))',
-      );
-
-      // Fix 2: unused-file detection and rebuild-file detection.
-      // normalizePath)(resource) → normalizePath)(decodeURIComponent(resource))
-      patched = patched.replace(
-        /normalizePath\)\(resource\)/g,
-        'normalizePath)(decodeURIComponent(resource))',
-      );
-
-      if (patched === original) {
-        return;
-      }
-
-      writeFileSync(pluginPath, patched, 'utf-8');
-      this.angularWebpackPatches.set(pluginPath, original);
-    } catch (err) {
-      console.warn('[AppEmulator] Could not patch @ngtools/webpack:', err);
-    }
-  }
-
-  /**
-   * Restore all @ngtools/webpack files that were patched by patchAngularWebpack.
-   */
-  private restoreAngularWebpackPatches(): void {
-    for (const [indexPath, original] of this.angularWebpackPatches) {
-      try {
-        writeFileSync(indexPath, original, 'utf-8');
-      } catch { /* ignore — file may have been deleted */ }
-    }
-    this.angularWebpackPatches.clear();
-  }
-
-  /**
-   * Check if a server is currently running.
-   */
-  isRunning(): boolean {
-    return this.activeServerProcess !== null && !this.activeServerProcess.killed;
-  }
-
-  /**
-   * Get the current server URL.
-   */
-  getUrl(): string | null {
-    return this.serverUrl;
-  }
-
-  /**
-   * Get current configuration.
-   */
-  getConfig(): AppEmulatorConfig | null {
-    return this.currentConfig;
-  }
-
-  /**
-   * Cancel any active detection.
-   */
-  cancelDetection(): void {
-    if (this.detectionProcess) {
-      this.detectionProcess.kill();
-      this.detectionProcess = null;
-    }
-  }
+	private activeServerProcess: ChildProcess | null = null;
+	private detectionProcess: ChildProcess | null = null;
+	private currentConfig: AppEmulatorConfig | null = null;
+	private serverUrl: string | null = null;
+	private pythonPath = "python";
+	private autoBuildSourcePath: string | null = null;
+	/** Synchronous guard — prevents concurrent startServer calls (race condition on port check) */
+	private startingInProgress = false;
+	/** Tracks all service processes for multi-service (fullstack) mode */
+	private readonly activeServiceProcesses = new Map<string, ChildProcess>();
+	/** Maps original paths with spaces → junction paths without spaces (Windows only) */
+	private readonly junctionMap = new Map<string, string>();
+	/** Maps @ngtools/webpack index.js path → original file content (for patch rollback) */
+	private readonly angularWebpackPatches = new Map<string, string>();
+
+	/**
+	 * Configure paths for Python and auto-claude source.
+	 */
+	configure(pythonPath?: string, autoBuildSourcePath?: string): void {
+		if (pythonPath) {
+			this.pythonPath = pythonPath;
+		}
+		if (autoBuildSourcePath) {
+			this.autoBuildSourcePath = autoBuildSourcePath;
+		}
+	}
+
+	/**
+	 * Get the auto-build source path.
+	 * Uses the same resolution strategy as agent-process.ts.
+	 */
+	private getAutoBuildSourcePath(): string | null {
+		if (this.autoBuildSourcePath && existsSync(this.autoBuildSourcePath)) {
+			return this.autoBuildSourcePath;
+		}
+
+		const possiblePaths = [
+			// Packaged app: backend is in extraResources (process.resourcesPath/backend)
+			...(app.isPackaged ? [path.join(process.resourcesPath, "backend")] : []),
+			// Dev mode: from dist/main -> ../../backend (apps/frontend/out/main -> apps/backend)
+			path.resolve(__dirname, "..", "..", "..", "backend"),
+			// Alternative: from app root -> apps/backend
+			path.resolve(app.getAppPath(), "..", "backend"),
+			// If running from repo root with apps structure
+			path.resolve(process.cwd(), "apps", "backend"),
+		];
+
+		for (const p of possiblePaths) {
+			const runnerPath = path.join(p, "runners", "app_emulator_runner.py");
+			if (existsSync(runnerPath)) {
+				this.autoBuildSourcePath = p;
+				return p;
+			}
+		}
+
+		return null;
+	}
+
+	/**
+	 * Detect project type. Uses fast inline JS detection first,
+	 * falls back to Python runner for advanced cases.
+	 */
+	async detectProject(projectDirRaw: string): Promise<AppEmulatorConfig> {
+		// Decode URI-encoded paths (e.g. spaces stored as %20)
+		const projectDir = decodeURIComponent(projectDirRaw);
+
+		if (!existsSync(projectDir)) {
+			throw new Error(`Project directory not found: ${projectDir}`);
+		}
+
+		// Cancel any existing detection
+		if (this.detectionProcess) {
+			this.detectionProcess.kill();
+			this.detectionProcess = null;
+		}
+
+		// Try fast inline JS detection first (no Python needed)
+		const jsResult = this.detectProjectInline(projectDir);
+		if (jsResult) {
+			// Use subdirectory projectDir if detection found a nested project, otherwise use root
+			// biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
+			const resolvedProjectDir = (jsResult as any).projectDir || projectDir;
+			const config: AppEmulatorConfig = {
+				...jsResult,
+				projectDir: resolvedProjectDir,
+			};
+			this.currentConfig = config;
+			this.emit("config", config);
+			return config;
+		}
+
+		// Fallback: Python runner
+		return this.detectProjectViaPython(projectDir);
+	}
+
+	/**
+	 * Fast inline detection — handles common project types without Python.
+	 */
+	private detectProjectInline(
+		projectDir: string,
+	): Omit<AppEmulatorConfig, "projectDir"> | null {
+		// Node.js / frontend projects
+		const pkgPath = path.join(projectDir, "package.json");
+		if (existsSync(pkgPath)) {
+			try {
+				const pkg = JSON.parse(readFileSync(pkgPath, "utf-8"));
+				const scripts = pkg.scripts ?? {};
+				const deps = { ...pkg.dependencies, ...pkg.devDependencies };
+
+				let framework = "node";
+				let type = "web";
+				let port = 3000;
+
+				if ("next" in deps) {
+					framework = "next";
+				} else if ("nuxt" in deps || "nuxt3" in deps) {
+					framework = "nuxt";
+				} else if ("react-scripts" in deps) {
+					framework = "create-react-app";
+				} else if ("vite" in deps) {
+					framework = "vite";
+					port = 5173;
+				} else if ("@angular/core" in deps) {
+					framework = "angular";
+					port = 4200;
+				} else if ("vue" in deps && !("vite" in deps)) {
+					framework = "vue-cli";
+					port = 8080;
+				} else if ("svelte" in deps || "@sveltejs/kit" in deps) {
+					framework = "svelte";
+					port = 5173;
+				} else if ("electron" in deps) {
+					framework = "electron";
+					type = "desktop";
+					port = 0;
+				}
+				// Node.js API/backend frameworks
+				else if ("@nestjs/core" in deps) {
+					framework = "nestjs";
+					port = 3000;
+				} else if (
+					"express" in deps ||
+					"fastify" in deps ||
+					"koa" in deps ||
+					"hapi" in deps ||
+					"@hapi/hapi" in deps
+				) {
+					framework = "express";
+					port = 3000;
+				}
+
+				// Detect start command from scripts
+				let startCommand = "";
+				const pm = this.detectPackageManager(projectDir);
+				for (const name of ["dev", "start:dev", "serve", "start"]) {
+					if (name in scripts) {
+						startCommand =
+							name === "start" ? `${pm} start` : `${pm} run ${name}`;
+						break;
+					}
+				}
+				if (!startCommand && Object.keys(scripts).length > 0) {
+					const first = Object.keys(scripts)[0];
+					startCommand = `${pm} run ${first}`;
+				}
+
+				// For Angular, always use explicit --port so the port can be replaced
+				// on conflict and to avoid Angular's interactive "use different port?" prompt.
+				if (framework === "angular") {
+					startCommand = `npx ng serve --port ${port}`;
+				}
+
+				// Pure frontend → look for a backend counterpart in subdirectories
+				const PURE_FRONTEND = new Set([
+					"angular",
+					"vite",
+					"svelte",
+					"create-react-app",
+					"vue-cli",
+					"nuxt",
+				]);
+				if (PURE_FRONTEND.has(framework)) {
+					const backendResult = this.findBackendInSubdirs(projectDir);
+					if (backendResult) {
+						return this.buildFullstackConfig(backendResult, {
+							framework,
+							startCommand,
+							port,
+							projectDir,
+						});
+					}
+				}
+
+				// Node.js backend → look for a frontend counterpart in subdirectories
+				const NODE_BACKEND = new Set(["nestjs", "express"]);
+				if (NODE_BACKEND.has(framework)) {
+					const frontendResult = this.findFrontendInSubdirs(projectDir, 3);
+					if (frontendResult) {
+						const frontendDir =
+							(frontendResult as any).projectDir ?? projectDir;
+						return this.buildFullstackConfig(
+							{ framework, startCommand, port, projectDir },
+							{
+								framework: frontendResult.framework,
+								startCommand: frontendResult.startCommand,
+								port: frontendResult.port,
+								projectDir: frontendDir,
+							},
+						);
+					}
+				}
+
+				return { type, framework, startCommand, port, isWeb: type === "web" };
+			} catch {
+				// JSON parse error — skip
+			}
+		}
+
+		// Python projects
+		const hasPyproject = existsSync(path.join(projectDir, "pyproject.toml"));
+		const hasRequirements = existsSync(
+			path.join(projectDir, "requirements.txt"),
+		);
+		const hasManagePy = existsSync(path.join(projectDir, "manage.py"));
+		const hasAppPy = existsSync(path.join(projectDir, "app.py"));
+		const hasMainPy = existsSync(path.join(projectDir, "main.py"));
+
+		if (
+			hasPyproject ||
+			hasRequirements ||
+			hasManagePy ||
+			hasAppPy ||
+			hasMainPy
+		) {
+			let depsText = "";
+			try {
+				if (hasRequirements)
+					depsText += readFileSync(
+						path.join(projectDir, "requirements.txt"),
+						"utf-8",
+					).toLowerCase();
+				if (hasPyproject)
+					depsText +=
+						"\n" +
+						readFileSync(
+							path.join(projectDir, "pyproject.toml"),
+							"utf-8",
+						).toLowerCase();
+			} catch {
+				/* ignore */
+			}
+
+			let backendCfg: {
+				framework: string;
+				startCommand: string;
+				port: number;
+				isWeb: boolean;
+			} | null = null;
+			if (hasManagePy || depsText.includes("django")) {
+				backendCfg = {
+					framework: "django",
+					startCommand: "python manage.py runserver",
+					port: 8000,
+					isWeb: true,
+				};
+			} else if (depsText.includes("fastapi")) {
+				backendCfg = {
+					framework: "fastapi",
+					startCommand: `uvicorn ${hasAppPy ? "app:app" : "main:app"} --reload --port 8000`,
+					port: 8000,
+					isWeb: true,
+				};
+			} else if (depsText.includes("flask")) {
+				backendCfg = {
+					framework: "flask",
+					startCommand: `python ${hasAppPy ? "app.py" : "main.py"}`,
+					port: 5000,
+					isWeb: true,
+				};
+			} else if (depsText.includes("streamlit")) {
+				backendCfg = {
+					framework: "streamlit",
+					startCommand: `streamlit run ${hasAppPy ? "app.py" : "main.py"}`,
+					port: 8501,
+					isWeb: true,
+				};
+			} else if (hasMainPy || hasAppPy) {
+				backendCfg = {
+					framework: "python",
+					startCommand: `python ${hasMainPy ? "main.py" : "app.py"}`,
+					port: 0,
+					isWeb: false,
+				};
+			}
+
+			if (backendCfg) {
+				if (backendCfg.isWeb) {
+					const frontendResult = this.findFrontendInSubdirs(projectDir, 3);
+					if (frontendResult) {
+						const frontendDir =
+							(frontendResult as any).projectDir ?? projectDir;
+						return this.buildFullstackConfig(
+							{ ...backendCfg, projectDir },
+							{
+								framework: frontendResult.framework,
+								startCommand: frontendResult.startCommand,
+								port: frontendResult.port,
+								projectDir: frontendDir,
+							},
+						);
+					}
+				}
+				return { type: backendCfg.isWeb ? "web" : "cli", ...backendCfg };
+			}
+		}
+
+		// Go projects
+		if (existsSync(path.join(projectDir, "go.mod"))) {
+			const frontendResult = this.findFrontendInSubdirs(projectDir, 3);
+			if (frontendResult) {
+				// biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
+				const frontendDir = (frontendResult as any).projectDir ?? projectDir;
+				return this.buildFullstackConfig(
+					{ framework: "go", startCommand: "go run .", port: 8080, projectDir },
+					{
+						framework: frontendResult.framework,
+						startCommand: frontendResult.startCommand,
+						port: frontendResult.port,
+						projectDir: frontendDir,
+					},
+				);
+			}
+			return {
+				type: "web",
+				framework: "go",
+				startCommand: "go run .",
+				port: 8080,
+				isWeb: true,
+			};
+		}
+
+		// Rust projects
+		if (existsSync(path.join(projectDir, "Cargo.toml"))) {
+			return {
+				type: "cli",
+				framework: "rust",
+				startCommand: "cargo run",
+				port: 0,
+				isWeb: false,
+			};
+		}
+
+		// Docker projects
+		if (
+			existsSync(path.join(projectDir, "docker-compose.yml")) ||
+			existsSync(path.join(projectDir, "docker-compose.yaml"))
+		) {
+			return {
+				type: "web",
+				framework: "docker-compose",
+				startCommand: "docker-compose up",
+				port: 3000,
+				isWeb: true,
+			};
+		}
+		if (existsSync(path.join(projectDir, "Dockerfile"))) {
+			return {
+				type: "web",
+				framework: "docker",
+				startCommand: "docker build -t app . && docker run -p 3000:3000 app",
+				port: 3000,
+				isWeb: true,
+			};
+		}
+
+		// .NET projects (*.sln at root)
+		try {
+			const rootFiles = readdirSync(projectDir);
+			if (rootFiles.some((f) => f.endsWith(".sln"))) {
+				// Find the .NET project directory (contains *.csproj) and read its HTTP port.
+				// findDotnetProjectDir looks for a dir with a .csproj + Program.cs/Startup.cs.
+				// If it returns null (e.g. multiple .csproj without a clear entry point), fall back
+				// to locating any .csproj file and using its parent directory.
+				let dotnetDir = this.findDotnetProjectDir(projectDir, 4);
+				if (!dotnetDir) {
+					const csprojFile = this.findFirstCsprojFile(projectDir, 5);
+					dotnetDir = csprojFile ? path.dirname(csprojFile) : projectDir;
+				}
+				const dotnetPort = this.readDotnetPort(dotnetDir) ?? 5000;
+				const frontendResult = this.findFrontendInSubdirs(projectDir, 3);
+
+				if (frontendResult) {
+					// Fullstack: launch .NET backend AND frontend separately so both are reachable.
+					// The backend port becomes the API Studio base URL; the frontend runs in parallel.
+					// biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
+					const frontendDir = (frontendResult as any).projectDir ?? projectDir;
+					return this.buildFullstackConfig(
+						{
+							framework: "dotnet",
+							startCommand: "dotnet run",
+							port: dotnetPort,
+							projectDir: dotnetDir,
+						},
+						{
+							framework: frontendResult.framework,
+							startCommand: frontendResult.startCommand,
+							port: frontendResult.port,
+							projectDir: frontendDir,
+						},
+					);
+				}
+
+				// Pure .NET backend — single service
+				return {
+					type: "web",
+					framework: "dotnet",
+					startCommand: "dotnet run",
+					port: dotnetPort,
+					isWeb: true,
+					projectDir: dotnetDir,
+				} as any;
+			}
+		} catch {
+			/* ignore */
+		}
+
+		// Last resort: scan subdirectories (up to 3 levels deep) for package.json
+		const subResult = this.findFrontendInSubdirs(projectDir, 3);
+		if (subResult) return subResult;
+
+		return null;
+	}
+
+	/**
+	 * Recursively search subdirectories for a frontend project (package.json with scripts).
+	 */
+	private findFrontendInSubdirs(
+		dir: string,
+		maxDepth: number,
+	): Omit<AppEmulatorConfig, "projectDir"> | null {
+		if (maxDepth <= 0) return null;
+
+		try {
+			const entries = readdirSync(dir);
+			for (const entry of entries) {
+				// Skip hidden dirs, node_modules, and common non-project dirs
+				if (
+					entry.startsWith(".") ||
+					entry === "node_modules" ||
+					entry === "dist" ||
+					entry === "build" ||
+					entry === "bin" ||
+					entry === "obj"
+				)
+					continue;
+
+				const fullPath = path.join(dir, entry);
+				try {
+					if (!statSync(fullPath).isDirectory()) continue;
+				} catch {
+					continue;
+				}
+
+				// Check for package.json in this subdirectory
+				const pkgPath = path.join(fullPath, "package.json");
+				if (existsSync(pkgPath)) {
+					try {
+						const pkg = JSON.parse(readFileSync(pkgPath, "utf-8"));
+						const scripts = pkg.scripts ?? {};
+						// Only consider it if it has dev/start scripts (not just a lockfile)
+						if (Object.keys(scripts).length > 0) {
+							// Only create deps object if there are actual dependencies
+							const hasDeps =
+								(pkg.dependencies &&
+									Object.keys(pkg.dependencies).length > 0) ||
+								(pkg.devDependencies &&
+									Object.keys(pkg.devDependencies).length > 0);
+
+							// Declare variables outside the conditional
+							let framework = "node";
+							let type = "web";
+							let port = 3000;
+
+							// Only proceed with framework detection if there are dependencies
+							if (hasDeps) {
+								const deps = { ...pkg.dependencies, ...pkg.devDependencies };
+								if ("@angular/core" in deps) {
+									framework = "angular";
+									port = 4200;
+								} else if ("next" in deps) {
+									framework = "next";
+								} else if ("nuxt" in deps || "nuxt3" in deps) {
+									framework = "nuxt";
+								} else if ("react-scripts" in deps) {
+									framework = "create-react-app";
+								} else if ("vite" in deps) {
+									framework = "vite";
+									port = 5173;
+								} else if ("vue" in deps && !("vite" in deps)) {
+									framework = "vue-cli";
+									port = 8080;
+								} else if ("svelte" in deps || "@sveltejs/kit" in deps) {
+									framework = "svelte";
+									port = 5173;
+								} else if ("electron" in deps) {
+									framework = "electron";
+									type = "desktop";
+									port = 0;
+								}
+							}
+							// If no dependencies, defaults (node, web, 3000) are already set
+
+							const pm = this.detectPackageManager(fullPath);
+							let startCommand = "";
+							for (const name of ["dev", "start:dev", "serve", "start"]) {
+								if (name in scripts) {
+									startCommand =
+										name === "start" ? `${pm} start` : `${pm} run ${name}`;
+									break;
+								}
+							}
+							if (!startCommand) {
+								const first = Object.keys(scripts)[0];
+								startCommand = `${pm} run ${first}`;
+							}
+
+							// For Angular, always use explicit --port so the port can be replaced
+							// on conflict and to avoid Angular's interactive "use different port?" prompt.
+							if (framework === "angular") {
+								startCommand = `npx ng serve --port ${port}`;
+							}
+							// Return config with projectDir pointing to the subdirectory where package.json lives
+							return {
+								type,
+								framework,
+								startCommand,
+								port,
+								isWeb: type === "web",
+								projectDir: fullPath,
+							} as any;
+						}
+					} catch {
+						/* ignore parse error */
+					}
+				}
+
+				// Recurse deeper
+				const deeper = this.findFrontendInSubdirs(fullPath, maxDepth - 1);
+				if (deeper) return deeper;
+			}
+		} catch {
+			/* ignore readdir error */
+		}
+
+		return null;
+	}
+
+	/**
+	 * Check whether a .csproj file is a class library (not directly runnable).
+	 *
+	 * .NET SDK default OutputType rules (when <OutputType> is absent):
+	 *   Microsoft.NET.Sdk        → Library  (class library — NOT runnable)
+	 *   Microsoft.NET.Sdk.Web    → Exe      (ASP.NET Core / Web API — runnable)
+	 *   Microsoft.NET.Sdk.Worker → Exe      (Worker service — runnable)
+	 *   Microsoft.NET.Sdk.Razor  → Library  (Razor Class Library — NOT runnable)
+	 */
+	private isCsprojLibrary(csprojPath: string): boolean {
+		try {
+			const content = readFileSync(csprojPath, "utf-8");
+
+			// Explicit <OutputType> wins over everything else
+			if (/<OutputType>\s*Library\s*<\/OutputType>/i.test(content)) return true;
+			if (/<OutputType>\s*(Exe|WinExe)\s*<\/OutputType>/i.test(content))
+				return false;
+
+			// Executable SDK types don't need an explicit OutputType=Exe
+			if (/Sdk\s*=\s*["']Microsoft\.NET\.Sdk\.Web["']/i.test(content))
+				return false;
+			if (/Sdk\s*=\s*["']Microsoft\.NET\.Sdk\.Worker["']/i.test(content))
+				return false;
+
+			// Microsoft.NET.Sdk (base SDK) without explicit OutputType → default is Library
+			if (/Sdk\s*=\s*["']Microsoft\.NET\.Sdk["']/i.test(content)) return true;
+
+			// Razor Class Library
+			if (/Sdk\s*=\s*["']Microsoft\.NET\.Sdk\.Razor["']/i.test(content))
+				return true;
+
+			// Old-style / unknown project — can't determine; assume runnable
+			return false;
+		} catch {
+			return false;
+		}
+	}
+
+	/**
+	 * Find the directory that should be used as cwd for `dotnet run`.
+	 * Priority:
+	 *   1. Dir with .csproj + Program.cs/Startup.cs  (definite executable)
+	 *   2. Dir with .csproj that is not a Library     (executable without runtime file)
+	 *   3. Any dir with .csproj                       (last resort fallback)
+	 * Searches up to maxDepth levels.
+	 */
+	private findDotnetProjectDir(
+		rootDir: string,
+		maxDepth: number,
+	): string | null {
+		const skipDirs = new Set([
+			"node_modules",
+			"bin",
+			"obj",
+			"dist",
+			"build",
+			".git",
+			".vs",
+			"packages",
+			"TestResults",
+		]);
+		let fallbackDir: string | null = null; // best dir when no perfect match found
+
+		const scan = (dir: string, depth: number): string | null => {
+			if (depth < 0) return null;
+			let entries: string[];
+			try {
+				entries = readdirSync(dir);
+			} catch {
+				return null;
+			}
+
+			const csprojsHere = entries.filter((f) => f.endsWith(".csproj"));
+			if (csprojsHere.length > 0) {
+				// Tier 1 — has runtime entry point (Program.cs / Startup.cs)
+				const hasRuntime = entries.some(
+					(f) =>
+						f === "Program.cs" ||
+						f === "program.cs" ||
+						f === "Startup.cs" ||
+						f === "startup.cs",
+				);
+				if (hasRuntime) return dir;
+
+				// Tier 2 — at least one .csproj is executable (not a library)
+				const executableCsprojs = csprojsHere.filter(
+					(f) => !this.isCsprojLibrary(path.join(dir, f)),
+				);
+				if (executableCsprojs.length > 0) return dir;
+
+				// All .csproj here are libraries — remember as last-resort fallback
+				if (!fallbackDir) fallbackDir = dir;
+			}
+
+			for (const entry of entries) {
+				if (entry.startsWith(".") || skipDirs.has(entry)) continue;
+				const fullPath = path.join(dir, entry);
+				try {
+					if (!statSync(fullPath).isDirectory()) continue;
+				} catch {
+					continue;
+				}
+				const found = scan(fullPath, depth - 1);
+				if (found) return found;
+			}
+			return null;
+		};
+
+		const result = scan(rootDir, maxDepth);
+		const finalResult = result ?? fallbackDir;
+		return finalResult;
+	}
+
+	/**
+	 * Last-resort fallback: find the path to the first executable (non-Library) .csproj in the tree.
+	 * If no executable .csproj is found, returns any .csproj (excluding test projects).
+	 */
+	private findFirstCsprojFile(
+		rootDir: string,
+		maxDepth: number,
+	): string | null {
+		const skipDirs = new Set([
+			"node_modules",
+			"bin",
+			"obj",
+			"dist",
+			"build",
+			".git",
+			".vs",
+			"packages",
+			"TestResults",
+		]);
+		let libraryFallback: string | null = null; // fallback if only libraries found
+
+		const scan = (dir: string, depth: number): string | null => {
+			if (depth < 0) return null;
+			let entries: string[];
+			try {
+				entries = readdirSync(dir);
+			} catch {
+				return null;
+			}
+
+			const csprojs = entries.filter(
+				(f) => f.endsWith(".csproj") && !f.toLowerCase().includes("test"),
+			);
+			for (const csproj of csprojs) {
+				const fullPath = path.join(dir, csproj);
+				if (!this.isCsprojLibrary(fullPath)) return fullPath; // executable → use it
+				if (!libraryFallback) libraryFallback = fullPath; // library → remember as fallback
+			}
+
+			for (const entry of entries) {
+				if (entry.startsWith(".") || skipDirs.has(entry)) continue;
+				const fullPath = path.join(dir, entry);
+				try {
+					if (!statSync(fullPath).isDirectory()) continue;
+				} catch {
+					continue;
+				}
+				const found = scan(fullPath, depth - 1);
+				if (found) return found;
+			}
+			return null;
+		};
+
+		return scan(rootDir, maxDepth) ?? libraryFallback;
+	}
+
+	/**
+	 * Read the HTTP port from launchSettings.json in a .NET project directory.
+	 * Prefers http:// over https:// to avoid certificate issues.
+	 */
+	private readDotnetPort(csprojDir: string): number | null {
+		const launchSettingsPath = path.join(
+			csprojDir,
+			"Properties",
+			"launchSettings.json",
+		);
+		if (!existsSync(launchSettingsPath)) return null;
+		try {
+			const settings = JSON.parse(readFileSync(launchSettingsPath, "utf-8"));
+			for (const profile of Object.values(settings.profiles ?? {})) {
+				// biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
+				const url: string | undefined = (profile as any).applicationUrl;
+				if (!url) continue;
+				const httpMatch = url.match(/http:\/\/[^;:]+:(\d+)/);
+				if (httpMatch) return parseInt(httpMatch[1], 10);
+				const httpsMatch = url.match(/https:\/\/[^;:]+:(\d+)/);
+				if (httpsMatch) return parseInt(httpsMatch[1], 10);
+			}
+		} catch {
+			/* ignore */
+		}
+		return null;
+	}
+
+	/**
+	 * Detect if a specific directory contains a backend server.
+	 * Returns config if found, null otherwise.
+	 */
+	private detectBackendAt(
+		dir: string,
+	): { framework: string; startCommand: string; port: number } | null {
+		// Python
+		const hasManagePy = existsSync(path.join(dir, "manage.py"));
+		const hasAppPy = existsSync(path.join(dir, "app.py"));
+		const hasMainPy = existsSync(path.join(dir, "main.py"));
+		const hasRequirements = existsSync(path.join(dir, "requirements.txt"));
+		const hasPyproject = existsSync(path.join(dir, "pyproject.toml"));
+		if (
+			hasPyproject ||
+			hasRequirements ||
+			hasManagePy ||
+			hasAppPy ||
+			hasMainPy
+		) {
+			let depsText = "";
+			try {
+				if (hasRequirements)
+					depsText += readFileSync(
+						path.join(dir, "requirements.txt"),
+						"utf-8",
+					).toLowerCase();
+				if (hasPyproject)
+					depsText += readFileSync(
+						path.join(dir, "pyproject.toml"),
+						"utf-8",
+					).toLowerCase();
+			} catch {
+				/* ignore */
+			}
+			if (hasManagePy || depsText.includes("django"))
+				return {
+					framework: "django",
+					startCommand: "python manage.py runserver",
+					port: 8000,
+				};
+			if (depsText.includes("fastapi"))
+				return {
+					framework: "fastapi",
+					startCommand: `uvicorn ${hasAppPy ? "app:app" : "main:app"} --reload --port 8000`,
+					port: 8000,
+				};
+			if (depsText.includes("flask"))
+				return {
+					framework: "flask",
+					startCommand: `python ${hasAppPy ? "app.py" : "main.py"}`,
+					port: 5000,
+				};
+			if ((hasMainPy || hasAppPy) && !depsText.includes("streamlit"))
+				return {
+					framework: "python",
+					startCommand: `python ${hasMainPy ? "main.py" : "app.py"}`,
+					port: 8000,
+				};
+		}
+		// Go
+		if (existsSync(path.join(dir, "go.mod")))
+			return { framework: "go", startCommand: "go run .", port: 8080 };
+		// Rust
+		if (existsSync(path.join(dir, "Cargo.toml")))
+			return { framework: "rust", startCommand: "cargo run", port: 8080 };
+		// .NET: check this dir AND one level of subdirs (covers nested project layouts)
+		try {
+			const entries = readdirSync(dir);
+			if (entries.some((f) => f.endsWith(".csproj"))) {
+				return {
+					framework: "dotnet",
+					startCommand: "dotnet run",
+					port: this.readDotnetPort(dir) ?? 5000,
+				};
+			}
+			// One level deeper (e.g. solution root → project subdir)
+			for (const entry of entries) {
+				if (
+					entry.startsWith(".") ||
+					entry === "node_modules" ||
+					entry === "bin" ||
+					entry === "obj"
+				)
+					continue;
+				const sub = path.join(dir, entry);
+				try {
+					if (!statSync(sub).isDirectory()) continue;
+					if (readdirSync(sub).some((f) => f.endsWith(".csproj"))) {
+						return {
+							framework: "dotnet",
+							startCommand: "dotnet run",
+							port: this.readDotnetPort(sub) ?? 5000,
+							projectDir: sub,
+						} as any;
+					}
+				} catch {
+					/* ignore */
+				}
+			}
+		} catch {
+			/* ignore */
+		}
+		// Node.js API frameworks (express, fastify, nestjs, etc.)
+		const pkgPath = path.join(dir, "package.json");
+		if (existsSync(pkgPath)) {
+			try {
+				const pkg = JSON.parse(readFileSync(pkgPath, "utf-8"));
+				const deps = { ...pkg.dependencies, ...pkg.devDependencies };
+				// Skip if it's clearly a frontend project
+				if (
+					"@angular/core" in deps ||
+					"react-scripts" in deps ||
+					"@sveltejs/kit" in deps
+				)
+					return null;
+				if ("@nestjs/core" in deps) {
+					const pm = this.detectPackageManager(dir);
+					const scripts = pkg.scripts ?? {};
+					const cmd =
+						"start:dev" in scripts ? `${pm} run start:dev` : `${pm} run dev`;
+					return { framework: "nestjs", startCommand: cmd, port: 3000 };
+				}
+				if (
+					"express" in deps ||
+					"fastify" in deps ||
+					"koa" in deps ||
+					"hapi" in deps ||
+					"@hapi/hapi" in deps
+				) {
+					const pm = this.detectPackageManager(dir);
+					const scripts = pkg.scripts ?? {};
+					const cmd =
+						"dev" in scripts
+							? `${pm} run dev`
+							: "start:dev" in scripts
+								? `${pm} run start:dev`
+								: `${pm} start`;
+					return { framework: "express", startCommand: cmd, port: 3000 };
+				}
+			} catch {
+				/* ignore */
+			}
+		}
+		return null;
+	}
+
+	/**
+	 * Scan subdirectories for a backend server.
+	 * Prioritises common backend folder names (backend, server, api, etc.).
+	 */
+	private findBackendInSubdirs(
+		rootDir: string,
+		maxDepth = 2,
+	): {
+		framework: string;
+		startCommand: string;
+		port: number;
+		projectDir: string;
+	} | null {
+		if (maxDepth <= 0) return null;
+		const skipDirs = new Set([
+			"node_modules",
+			"dist",
+			"build",
+			".git",
+			"bin",
+			"obj",
+			"public",
+			"static",
+			"assets",
+			"coverage",
+		]);
+		const backendHints = new Set([
+			"backend",
+			"server",
+			"api",
+			"service",
+			"services",
+			"app",
+			"src",
+		]);
+		try {
+			const entries = readdirSync(rootDir);
+			// Prioritise entries that look like backend directories
+			const sorted = [
+				...entries.filter((e) => backendHints.has(e.toLowerCase())),
+				...entries.filter((e) => !backendHints.has(e.toLowerCase())),
+			];
+			for (const entry of sorted) {
+				if (entry.startsWith(".") || skipDirs.has(entry)) continue;
+				const fullPath = path.join(rootDir, entry);
+				try {
+					if (!statSync(fullPath).isDirectory()) continue;
+				} catch {
+					continue;
+				}
+				const result = this.detectBackendAt(fullPath);
+				if (result) return { ...result, projectDir: fullPath };
+			}
+			if (maxDepth > 1) {
+				for (const entry of sorted) {
+					if (entry.startsWith(".") || skipDirs.has(entry)) continue;
+					const fullPath = path.join(rootDir, entry);
+					try {
+						if (!statSync(fullPath).isDirectory()) continue;
+					} catch {
+						continue;
+					}
+					const deeper = this.findBackendInSubdirs(fullPath, maxDepth - 1);
+					if (deeper) return deeper;
+				}
+			}
+		} catch {
+			/* ignore */
+		}
+		return null;
+	}
+
+	/**
+	 * Build a fullstack multi-service config from a detected backend and frontend.
+	 * The backend is always the primary service (API Studio base URL).
+	 */
+	private buildFullstackConfig(
+		backend: {
+			framework: string;
+			startCommand: string;
+			port: number;
+			projectDir: string;
+		},
+		frontend: {
+			framework: string;
+			startCommand: string;
+			port: number;
+			projectDir: string;
+		},
+	): Omit<AppEmulatorConfig, "projectDir"> {
+		return {
+			type: "web",
+			framework: backend.framework,
+			startCommand: backend.startCommand,
+			port: backend.port,
+			isWeb: true,
+			projectDir: backend.projectDir,
+			services: [
+				{
+					label: `Backend (${backend.framework})`,
+					framework: backend.framework,
+					startCommand: backend.startCommand,
+					port: backend.port,
+					projectDir: backend.projectDir,
+					isPrimary: true,
+				},
+				{
+					label: `Frontend (${frontend.framework})`,
+					framework: frontend.framework,
+					startCommand: frontend.startCommand,
+					port: frontend.port,
+					projectDir: frontend.projectDir,
+					isPrimary: false,
+				},
+			],
+			// biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
+		} as any;
+	}
+
+	/**
+	 * Detect the package manager from lock files.
+	 */
+	private detectPackageManager(projectDir: string): string {
+		if (existsSync(path.join(projectDir, "pnpm-lock.yaml"))) return "pnpm";
+		if (existsSync(path.join(projectDir, "yarn.lock"))) return "yarn";
+		if (
+			existsSync(path.join(projectDir, "bun.lockb")) ||
+			existsSync(path.join(projectDir, "bun.lock"))
+		)
+			return "bun";
+		return "npm";
+	}
+
+	/**
+	 * Ensure Node.js project dependencies are installed.
+	 * Runs `{packageManager} install` if package.json exists but node_modules is missing.
+	 */
+	private ensureDependenciesInstalled(
+		projectDir: string,
+		label?: string,
+	): Promise<void> {
+		const prefix = label ? `[${label}] ` : "";
+		const packageJsonPath = path.join(projectDir, "package.json");
+		const nodeModulesPath = path.join(projectDir, "node_modules");
+
+		if (!existsSync(packageJsonPath)) return Promise.resolve();
+		if (existsSync(nodeModulesPath)) return Promise.resolve();
+
+		const pm = this.detectPackageManager(projectDir);
+		const isWindows = process.platform === "win32";
+
+		this.emit("status", `${prefix}Installing dependencies with ${pm}...`);
+		this.emit(
+			"output",
+			`${prefix}node_modules not found — running "${pm} install"...`,
+		);
+
+		return new Promise<void>((resolve, reject) => {
+			const proc = spawn(pm, ["install"], {
+				cwd: projectDir,
+				env: process.env as Record<string, string>,
+				shell: isWindows ? true : undefined,
+				stdio: ["ignore", "pipe", "pipe"],
+			});
+			proc.stdout?.on("data", (data: Buffer) => {
+				for (const line of data.toString("utf-8").split("\n")) {
+					if (line.trim()) this.emit("output", `${prefix}${line}`);
+				}
+			});
+			proc.stderr?.on("data", (data: Buffer) => {
+				for (const line of data.toString("utf-8").split("\n")) {
+					if (line.trim()) this.emit("output", `${prefix}${line}`);
+				}
+			});
+			proc.on("error", (err) =>
+				reject(
+					new Error(`${prefix}Failed to run "${pm} install": ${err.message}`),
+				),
+			);
+			proc.on("close", (code) => {
+				if (code === 0) {
+					this.emit("output", `${prefix}Dependencies installed successfully.`);
+					resolve();
+				} else {
+					reject(
+						new Error(`${prefix}"${pm} install" exited with code ${code}`),
+					);
+				}
+			});
+		});
+	}
+
+	/**
+	 * Ensure Python project dependencies are installed.
+	 * Skips if a virtual environment already exists.
+	 * Supports: pip (requirements.txt), poetry, uv, pipenv.
+	 */
+	private ensurePythonDependenciesInstalled(
+		projectDir: string,
+		label?: string,
+	): Promise<void> {
+		const prefix = label ? `[${label}] ` : "";
+
+		// If a virtual environment already exists, assume deps are installed.
+		const venvMarkers = [".venv", "venv", "env", ".env"];
+		const hasVenv = venvMarkers.some(
+			(d) =>
+				existsSync(path.join(projectDir, d, "lib")) || // Unix
+				existsSync(path.join(projectDir, d, "Lib")), // Windows
+		);
+		if (hasVenv) return Promise.resolve();
+
+		// Detect Python package manager by lock/config files (most specific first).
+		const hasPoetryLock = existsSync(path.join(projectDir, "poetry.lock"));
+		const hasUvLock = existsSync(path.join(projectDir, "uv.lock"));
+		const hasPipfileLock = existsSync(path.join(projectDir, "Pipfile.lock"));
+		const hasRequirements = existsSync(
+			path.join(projectDir, "requirements.txt"),
+		);
+		const hasPyproject = existsSync(path.join(projectDir, "pyproject.toml"));
+
+		let installCmd: string | null = null;
+		if (hasPoetryLock) installCmd = "poetry install";
+		else if (hasUvLock) installCmd = "uv sync";
+		else if (hasPipfileLock) installCmd = "pipenv install";
+		else if (hasRequirements) installCmd = "pip install -r requirements.txt";
+		else if (hasPyproject) installCmd = "pip install -e .";
+
+		if (!installCmd) return Promise.resolve();
+
+		const isWindows = process.platform === "win32";
+		this.emit("status", `${prefix}Installing Python dependencies...`);
+		this.emit(
+			"output",
+			`${prefix}No virtual environment found — running "${installCmd}"...`,
+		);
+
+		return new Promise<void>((resolve, reject) => {
+			const [cmd, ...args] = installCmd?.split(" ") || [];
+			const proc = spawn(cmd, args, {
+				cwd: projectDir,
+				env: process.env as Record<string, string>,
+				shell: isWindows ? true : undefined,
+				stdio: ["ignore", "pipe", "pipe"],
+			});
+			proc.stdout?.on("data", (data: Buffer) => {
+				for (const line of data.toString("utf-8").split("\n")) {
+					if (line.trim()) this.emit("output", `${prefix}${line}`);
+				}
+			});
+			proc.stderr?.on("data", (data: Buffer) => {
+				for (const line of data.toString("utf-8").split("\n")) {
+					if (line.trim()) this.emit("output", `${prefix}${line}`);
+				}
+			});
+			proc.on("error", (err) =>
+				reject(
+					new Error(`${prefix}Failed to run "${installCmd}": ${err.message}`),
+				),
+			);
+			proc.on("close", (code) => {
+				if (code === 0) {
+					this.emit(
+						"output",
+						`${prefix}Python dependencies installed successfully.`,
+					);
+					resolve();
+				} else {
+					reject(
+						new Error(`${prefix}"${installCmd}" exited with code ${code}`),
+					);
+				}
+			});
+		});
+	}
+
+	/**
+	 * Fallback: Detect project type via Python runner.
+	 */
+	private detectProjectViaPython(
+		projectDir: string,
+	): Promise<AppEmulatorConfig> {
+		const autoBuildSource = this.getAutoBuildSourcePath();
+		if (!autoBuildSource) {
+			throw new Error(`Could not detect project type in: ${projectDir}`);
+		}
+
+		const runnerPath = path.join(
+			autoBuildSource,
+			"runners",
+			"app_emulator_runner.py",
+		);
+		if (!existsSync(runnerPath)) {
+			throw new Error(`Could not detect project type in: ${projectDir}`);
+		}
+
+		return new Promise((resolve, reject) => {
+			const proc = spawn(
+				this.pythonPath,
+				[runnerPath, "--project-dir", projectDir],
+				{
+					cwd: autoBuildSource,
+					env: { ...process.env } as Record<string, string>,
+				},
+			);
+
+			this.detectionProcess = proc;
+			let stdout = "";
+			let stderr = "";
+
+			proc.stdout?.on("data", (data: Buffer) => {
+				stdout += data.toString("utf-8");
+			});
+
+			proc.stderr?.on("data", (data: Buffer) => {
+				stderr += data.toString("utf-8");
+			});
+
+			proc.on("close", (code) => {
+				this.detectionProcess = null;
+
+				// Parse the result from stdout
+				const marker = "__APP_EMULATOR_RESULT__:";
+				const markerIdx = stdout.indexOf(marker);
+
+				if (markerIdx >= 0) {
+					try {
+						const jsonStr = stdout.substring(markerIdx + marker.length).trim();
+						const result = JSON.parse(jsonStr);
+
+						if (result.success) {
+							const config: AppEmulatorConfig = {
+								type: result.type,
+								framework: result.framework,
+								startCommand: result.startCommand,
+								port: result.port,
+								isWeb: result.isWeb,
+								projectDir,
+							};
+							this.currentConfig = config;
+							this.emit("config", config);
+							resolve(config);
+						} else {
+							reject(
+								new Error(
+									result.error ||
+										`Could not detect project type in: ${projectDir}`,
+								),
+							);
+						}
+					} catch (parseErr) {
+						reject(new Error(`Failed to parse detection result: ${parseErr}`));
+					}
+				} else {
+					reject(
+						new Error(
+							`Detection failed (exit code ${code}): ${stderr.slice(-500)}`,
+						),
+					);
+				}
+			});
+
+			proc.on("error", (err) => {
+				this.detectionProcess = null;
+				reject(new Error(`Failed to start detection: ${err.message}`));
+			});
+		});
+	}
+
+	/**
+	 * Start the dev server with the given config.
+	 */
+	async startServer(config: AppEmulatorConfig): Promise<void> {
+		// Synchronous guard — prevents race condition when two calls arrive before either awaits
+		if (this.startingInProgress) {
+			return;
+		}
+		this.startingInProgress = true;
+
+		try {
+			// Stop any existing server
+			this.stopServer();
+
+			// On Windows, taskkill is fire-and-forget. Wait for the OS to fully release
+			// ports from killed processes before probing them.
+			await new Promise<void>((resolve) => setTimeout(resolve, 1000));
+
+			this.currentConfig = config;
+
+			// Fullstack multi-service path (e.g. .NET backend + Angular frontend)
+			if (config.services && config.services.length > 1) {
+				await this.startMultipleServices(config);
+				return;
+			}
+
+			const rawDir = config.projectDir || process.cwd();
+			const projectDir = rawDir; // No junction — Angular runs from the real path
+
+			// Patch @ngtools/webpack to fix the %20 encoding bug for paths with spaces.
+			// Must run from real path (not junction) so TypeScript & webpack use the same paths.
+			if (config.framework === "angular") {
+				await this.patchAngularWebpack(rawDir);
+			}
+
+			// Ensure Node.js dependencies are installed before starting the dev server.
+			try {
+				await this.ensureDependenciesInstalled(projectDir);
+			} catch (err) {
+				this.emit("error", String(err));
+				return;
+			}
+
+			// Ensure Python dependencies are installed before starting the dev server.
+			const PYTHON_FRAMEWORKS = new Set([
+				"django",
+				"fastapi",
+				"flask",
+				"streamlit",
+				"python",
+			]);
+			if (PYTHON_FRAMEWORKS.has(config.framework)) {
+				try {
+					await this.ensurePythonDependenciesInstalled(projectDir);
+				} catch (err) {
+					this.emit("error", String(err));
+					return;
+				}
+			}
+
+			if (!config.startCommand) {
+				this.emit("error", "No start command configured");
+				return;
+			}
+
+			// Check if something is already running on the configured port
+			if (config.isWeb && config.port > 0) {
+				const portFree = await this.isPortAvailable(config.port);
+				if (!portFree) {
+					// Port is occupied — check if there's a working HTTP server we can reuse
+					const alreadyServing = await this.isHttpReachable(config.port);
+					if (alreadyServing) {
+						this.serverUrl = `http://localhost:${config.port}`;
+						this.emit("status", `Running at ${this.serverUrl}`);
+						this.emit("ready", this.serverUrl);
+						return;
+					}
+
+					// Port occupied but no usable HTTP server — try to kill the orphaned process first.
+					await this.killProcessOnPort(config.port);
+					if (!(await this.isPortAvailable(config.port))) {
+						// Still occupied after kill — fall back to next available port
+						const availablePort = await this.findAvailablePort(config.port + 1);
+						this.emit(
+							"status",
+							`Port ${config.port} in use — using port ${availablePort} instead`,
+						);
+						const updatedCommand = this.replacePortInCommand(
+							config.startCommand,
+							config.port,
+							availablePort,
+						);
+						if (updatedCommand === config.startCommand) {
+							if (config.framework === "angular") {
+								config.startCommand = `npx ng serve --port ${availablePort}`;
+							} else {
+								config.startCommand = `${config.startCommand} -- --port ${availablePort}`;
+							}
+						} else {
+							config.startCommand = updatedCommand;
+						}
+						config.port = availablePort;
+						this.currentConfig = config;
+						this.emit("config", config);
+					}
+				}
+			}
+
+			this.emit("status", `Starting: ${config.startCommand}`);
+
+			// Parse command
+			const isWindows = process.platform === "win32";
+			const shell = isWindows ? true : undefined;
+			const [cmd, ...args] = config.startCommand.split(" ");
+
+			const proc = spawn(cmd, args, {
+				cwd: projectDir,
+				env: {
+					...process.env,
+					BROWSER: "none",
+					PORT: String(config.port),
+				} as Record<string, string>,
+				shell,
+				stdio: ["ignore", "pipe", "pipe"],
+			});
+
+			this.activeServerProcess = proc;
+
+			proc.stdout?.on("data", (data: Buffer) => {
+				const text = data.toString("utf-8");
+				for (const line of text.split("\n")) {
+					if (line.trim()) {
+						this.emit("output", line);
+					}
+				}
+			});
+
+			proc.stderr?.on("data", (data: Buffer) => {
+				const text = data.toString("utf-8");
+				for (const line of text.split("\n")) {
+					if (line.trim()) {
+						this.emit("output", line);
+					}
+				}
+			});
+
+			proc.on("close", (code) => {
+				this.activeServerProcess = null;
+				this.serverUrl = null;
+				// Release startingInProgress so a retry can start immediately
+				this.startingInProgress = false;
+				if (code !== null && code !== 0) {
+					this.emit("error", `Server exited with code ${code}`);
+				}
+				this.emit("stopped");
+			});
+
+			proc.on("error", (err) => {
+				this.activeServerProcess = null;
+				this.serverUrl = null;
+				this.startingInProgress = false;
+				this.emit("error", `Failed to start server: ${err.message}`);
+			});
+
+			// Wait for the port to become available (for web apps)
+			if (config.isWeb && config.port > 0) {
+				try {
+					await this.waitForPort(config.port, 60000);
+				} catch {
+					// Port didn't open in time; bail if the process died
+					if (!this.activeServerProcess || this.activeServerProcess.killed)
+						return;
+				}
+
+				// After TCP is up, wait for the server to actually serve HTTP (e.g. Angular
+				// dev-server binds the port immediately but compiles for 30-60 s before
+				// responding with 2xx).  We poll for up to 90 s; if still not 2xx we emit
+				// 'ready' anyway so the user at least sees the terminal output.
+				await this.waitForHttpSuccess(config.port, 90000);
+
+				if (this.activeServerProcess && !this.activeServerProcess.killed) {
+					this.serverUrl = `http://localhost:${config.port}`;
+					this.emit("ready", this.serverUrl);
+				}
+			}
+		} finally {
+			this.startingInProgress = false;
+		}
+	}
+
+	/**
+	 * Launch all services defined in config.services in parallel.
+	 * The primary service (isPrimary === true) drives the 'ready' event and
+	 * sets the API Studio base URL. Secondary services (e.g. frontend) are
+	 * started fire-and-forget alongside.
+	 */
+	private async startMultipleServices(
+		config: AppEmulatorConfig,
+	): Promise<void> {
+		// biome-ignore lint/style/noNonNullAssertion: value is guaranteed by context
+		const services = config.services!;
+		const primary = services.find((s) => s.isPrimary) ?? services[0];
+		const secondaries = services.filter((s) => !s.isPrimary);
+
+		const isWindows = process.platform === "win32";
+		const shell = isWindows ? true : undefined;
+
+		// Resolve port conflicts for each service before spawning anything.
+		// Services whose port is already served by a live HTTP server are skipped entirely
+		// (no need to restart them).
+		const skipSpawn = new Set<string>();
+		for (const svc of services) {
+			if (svc.port <= 0) continue;
+			const portFree = await this.isPortAvailable(svc.port);
+			if (!portFree) {
+				const alreadyServing = await this.isHttpReachable(svc.port);
+				if (alreadyServing) {
+					this.emit(
+						"output",
+						`[${svc.label}] Port ${svc.port} already has a running server — reusing it`,
+					);
+					skipSpawn.add(svc.label); // don't spawn: a server is already listening there
+					continue;
+				}
+				// Port occupied but not serving HTTP — likely an orphaned process from a
+				// previous session (e.g. after navigating away without stopping). Kill it.
+				this.emit(
+					"output",
+					`[${svc.label}] Port ${svc.port} occupied — stopping previous process...`,
+				);
+				await this.killProcessOnPort(svc.port);
+				// Re-check after kill
+				const freeAfterKill = await this.isPortAvailable(svc.port);
+				if (!freeAfterKill) {
+					// Still occupied (e.g. another unrelated process) — find alternative port
+					const availablePort = await this.findAvailablePort(svc.port + 1);
+					this.emit(
+						"status",
+						`[${svc.label}] Port ${svc.port} still in use — using ${availablePort} instead`,
+					);
+					const updatedCmd = this.replacePortInCommand(
+						svc.startCommand,
+						svc.port,
+						availablePort,
+					);
+					svc.startCommand =
+						updatedCmd !== svc.startCommand
+							? updatedCmd
+							: svc.framework === "angular"
+								? `npx ng serve --port ${availablePort}`
+								: `${svc.startCommand} -- --port ${availablePort}`;
+					svc.port = availablePort;
+				}
+			}
+		}
+		// Notify renderer of updated config (ports may have changed)
+		this.emit("config", config);
+
+		// Spawn secondary services (fire-and-forget — no waiting for ready)
+		for (const svc of secondaries) {
+			if (skipSpawn.has(svc.label)) continue;
+			this.emit("output", `[${svc.label}] Starting: ${svc.startCommand}`);
+			const [cmd, ...args] = svc.startCommand.split(" ");
+			// Patch @ngtools/webpack to fix the %20 encoding bug (paths with spaces).
+			// Angular must run from the real path so TypeScript & webpack use the same paths.
+			if (svc.framework === "angular") {
+				await this.patchAngularWebpack(svc.projectDir);
+			}
+			try {
+				await this.ensureDependenciesInstalled(svc.projectDir, svc.label);
+				await this.ensurePythonDependenciesInstalled(svc.projectDir, svc.label);
+			} catch (err) {
+				this.emit("output", `[${svc.label}] ${String(err)}`);
+			}
+			const proc = spawn(cmd, args, {
+				cwd: svc.projectDir,
+				env: {
+					...process.env,
+					BROWSER: "none",
+					PORT: String(svc.port),
+				} as Record<string, string>,
+				shell,
+				stdio: ["ignore", "pipe", "pipe"],
+			});
+			this.activeServiceProcesses.set(svc.label, proc);
+			proc.stdout?.on("data", (data: Buffer) => {
+				for (const line of data.toString("utf-8").split("\n")) {
+					if (line.trim()) this.emit("output", `[${svc.label}] ${line}`);
+				}
+			});
+			proc.stderr?.on("data", (data: Buffer) => {
+				for (const line of data.toString("utf-8").split("\n")) {
+					if (line.trim()) this.emit("output", `[${svc.label}] ${line}`);
+				}
+			});
+			proc.on("close", (code) => {
+				this.activeServiceProcesses.delete(svc.label);
+				if (code !== null && code !== 0) {
+					this.emit("output", `[${svc.label}] exited with code ${code}`);
+				}
+			});
+			proc.on("error", (err) => {
+				this.activeServiceProcesses.delete(svc.label);
+				this.emit("output", `[${svc.label}] failed to start: ${err.message}`);
+			});
+		}
+
+		// Spawn primary service — drives 'ready' and waitForPort checks
+		this.emit("status", `Starting: ${primary.startCommand}`);
+		const [primaryCmd, ...primaryArgs] = primary.startCommand.split(" ");
+		// Patch @ngtools/webpack for the %20 bug if primary is Angular.
+		if (primary.framework === "angular") {
+			await this.patchAngularWebpack(primary.projectDir);
+		}
+		try {
+			await this.ensureDependenciesInstalled(primary.projectDir, primary.label);
+			await this.ensurePythonDependenciesInstalled(
+				primary.projectDir,
+				primary.label,
+			);
+		} catch (err) {
+			this.emit("error", String(err));
+			this.startingInProgress = false;
+			return;
+		}
+		const primaryProc = spawn(primaryCmd, primaryArgs, {
+			cwd: primary.projectDir,
+			env: {
+				...process.env,
+				BROWSER: "none",
+				PORT: String(primary.port),
+			} as Record<string, string>,
+			shell,
+			stdio: ["ignore", "pipe", "pipe"],
+		});
+		// Assign to activeServerProcess so waitForPort/waitForHttpSuccess bail correctly
+		this.activeServerProcess = primaryProc;
+		this.activeServiceProcesses.set(primary.label, primaryProc);
+
+		primaryProc.stdout?.on("data", (data: Buffer) => {
+			for (const line of data.toString("utf-8").split("\n")) {
+				if (line.trim()) this.emit("output", `[${primary.label}] ${line}`);
+			}
+		});
+		primaryProc.stderr?.on("data", (data: Buffer) => {
+			for (const line of data.toString("utf-8").split("\n")) {
+				if (line.trim()) this.emit("output", `[${primary.label}] ${line}`);
+			}
+		});
+		primaryProc.on("close", (code) => {
+			this.activeServerProcess = null;
+			this.serverUrl = null;
+			this.startingInProgress = false;
+			this.activeServiceProcesses.delete(primary.label);
+			if (code !== null && code !== 0) {
+				this.emit("error", `Server exited with code ${code}`);
+			}
+			this.emit("stopped");
+		});
+		primaryProc.on("error", (err) => {
+			this.activeServerProcess = null;
+			this.serverUrl = null;
+			this.startingInProgress = false;
+			this.emit("error", `Failed to start server: ${err.message}`);
+		});
+
+		// Wait for the primary (backend) to accept connections — longer timeout for .NET compilation
+		try {
+			await this.waitForPort(primary.port, 120000);
+		} catch {
+			if (!this.activeServerProcess || this.activeServerProcess.killed) return;
+		}
+		// For fullstack projects, poll the frontend HTTP (no auth required) rather than
+		// the backend API which may return 401 and pollute the backend logs.
+		const frontendSvc = secondaries.find((s) =>
+			[
+				"angular",
+				"vite",
+				"next",
+				"nuxt",
+				"create-react-app",
+				"vue-cli",
+				"svelte",
+			].includes(s.framework),
+		);
+		if (frontendSvc) {
+			await this.waitForHttpSuccess(frontendSvc.port, 120000);
+		} else {
+			await this.waitForHttpSuccess(primary.port, 120000);
+		}
+
+		if (this.activeServerProcess && !this.activeServerProcess.killed) {
+			this.serverUrl = frontendSvc
+				? `http://localhost:${frontendSvc.port}`
+				: `http://localhost:${primary.port}`;
+			this.emit("ready", this.serverUrl);
+		}
+	}
+
+	/**
+	 * Replace every occurrence of `oldPort` in a start command with `newPort`.
+	 * Handles both `--port N` and `PORT=N` forms.
+	 */
+	private replacePortInCommand(
+		cmd: string,
+		oldPort: number,
+		newPort: number,
+	): string {
+		return cmd.replaceAll(
+			new RegExp(String.raw`(--port\s+)${oldPort}|(\bPORT=)${oldPort}`, "g"),
+			(_m: string, p1: string, p2: string) =>
+				p1 ? `${p1}${newPort}` : `${p2}${newPort}`,
+		);
+	}
+
+	/**
+	 * Quick check: is there an HTTP server responding on this port?
+	 * Returns true if we get any HTTP response within 1.5 s.
+	 */
+	private isHttpReachable(port: number): Promise<boolean> {
+		return new Promise((resolve) => {
+			const req = http.get(
+				{ hostname: "127.0.0.1", port, path: "/", timeout: 1500 },
+				(res) => {
+					res.resume();
+					resolve(true);
+				},
+			);
+			req.on("error", () => resolve(false));
+			req.on("timeout", () => {
+				req.destroy();
+				resolve(false);
+			});
+		});
+	}
+
+	/**
+	 * Check if a port is available (not in use).
+	 * Probes both IPv4 (0.0.0.0) and IPv6 (::) to catch all listener types on Windows:
+	 *  • 0.0.0.0 catches: IPv4, IPv6 dual-stack (IPV6_V6ONLY=false)
+	 *  • ::        catches: IPv6-only (IPV6_V6ONLY=true) listeners missed by the IPv4 probe
+	 * Only reports "free" when BOTH binds succeed.
+	 */
+	private async isPortAvailable(port: number): Promise<boolean> {
+		const tryBind = (host: string): Promise<boolean> =>
+			new Promise((resolve) => {
+				const server = net.createServer();
+				server.once("error", (err: NodeJS.ErrnoException) => {
+					// EADDRINUSE → port occupied; other errors (no IPv6 support, etc.) → treat as free
+					resolve(err.code !== "EADDRINUSE");
+				});
+				server.once("listening", () => server.close(() => resolve(true)));
+				server.listen(port, host);
+			});
+
+		const ipv4Free = await tryBind("0.0.0.0");
+		return ipv4Free ? tryBind("::") : false;
+	}
+
+	/**
+	 * Find an available port starting from startPort.
+	 */
+	private async findAvailablePort(startPort: number): Promise<number> {
+		let port = startPort;
+		while (port < startPort + 20) {
+			if (await this.isPortAvailable(port)) return port;
+			port++;
+		}
+		return startPort; // fallback
+	}
+
+	/**
+	 * Wait for a port to accept connections.
+	 */
+	private waitForPort(port: number, timeout: number): Promise<void> {
+		return new Promise((resolve, reject) => {
+			const startTime = Date.now();
+
+			const tryConnect = () => {
+				if (Date.now() - startTime > timeout) {
+					reject(new Error(`Timeout waiting for port ${port}`));
+					return;
+				}
+
+				// Bail out immediately if the process died
+				if (!this.activeServerProcess || this.activeServerProcess.killed) {
+					resolve();
+					return;
+				}
+
+				const socket = new net.Socket();
+				socket.setTimeout(1000);
+
+				socket.on("connect", () => {
+					socket.destroy();
+					resolve();
+				});
+
+				socket.on("error", () => {
+					socket.destroy();
+					setTimeout(tryConnect, 500);
+				});
+
+				socket.on("timeout", () => {
+					socket.destroy();
+					setTimeout(tryConnect, 500);
+				});
+
+				socket.connect(port, "127.0.0.1");
+			};
+
+			tryConnect();
+		});
+	}
+
+	/**
+	 * Poll the server with an HTTP GET until it responds with a 2xx status code
+	 * (meaning the app is compiled and actually serving content), or until
+	 * `timeout` ms elapses, whichever comes first.
+	 */
+	private waitForHttpSuccess(port: number, timeout: number): Promise<void> {
+		return new Promise((resolve) => {
+			const startTime = Date.now();
+
+			const tryGet = () => {
+				// Stop polling if the process died
+				if (!this.activeServerProcess || this.activeServerProcess.killed) {
+					resolve();
+					return;
+				}
+
+				if (Date.now() - startTime > timeout) {
+					// Timed out — emit ready anyway so the user can see what's happening
+					resolve();
+					return;
+				}
+
+				const req = http.get(
+					{ hostname: "127.0.0.1", port, path: "/", timeout: 3000 },
+					(res) => {
+						res.resume(); // drain the response body
+						if (res.statusCode !== undefined && res.statusCode < 500) {
+							// Any non-5xx response (including 401/403) means the server is up and reachable
+							resolve();
+						} else {
+							// 5xx or no status — server not ready yet (e.g. still compiling)
+							setTimeout(tryGet, 2000);
+						}
+					},
+				);
+
+				req.on("error", () => setTimeout(tryGet, 1000));
+				req.on("timeout", () => {
+					req.destroy();
+					setTimeout(tryGet, 1000);
+				});
+			};
+
+			tryGet();
+		});
+	}
+
+	private killProcessOnPort(port: number): Promise<void> {
+		if (process.platform !== "win32") return Promise.resolve();
+		return new Promise<void>((resolve) => {
+			const ps = spawn(
+				"powershell",
+				[
+					"-NoProfile",
+					"-NonInteractive",
+					"-Command",
+					// Get all TCP connections on this port (any state), extract unique owning PIDs,
+					// skip system PIDs (0-4), then force-stop each process.
+					`Get-NetTCPConnection -LocalPort ${port} -ErrorAction SilentlyContinue |` +
+						` Select-Object -ExpandProperty OwningProcess -Unique |` +
+						` Where-Object { $_ -gt 4 } |` +
+						` ForEach-Object { Stop-Process -Id $_ -Force -ErrorAction SilentlyContinue }`,
+				],
+				{ stdio: "ignore" },
+			);
+			// Wait 1000 ms after kill for the OS to fully release the port
+			ps.on("close", () => setTimeout(resolve, 1000));
+			ps.on("error", () => resolve());
+			setTimeout(() => {
+				try {
+					ps.kill();
+				} catch {
+					/* ignore */
+				}
+				resolve();
+			}, 4000);
+		});
+	}
+
+	/**
+	 * Stop the dev server (single-service) or all services (multi-service).
+	 */
+	stopServer(): void {
+		const killProc = (proc: ChildProcess) => {
+			const pid = proc.pid;
+			try {
+				if (process.platform === "win32" && pid) {
+					spawn("taskkill", ["/pid", String(pid), "/f", "/t"], {
+						stdio: "ignore",
+					});
+				} else {
+					proc.kill("SIGKILL");
+				}
+			} catch {
+				/* already dead */
+			}
+		};
+
+		// Capture ports before clearing config — used for fallback port-based kill below
+		const portsToKill: number[] = [];
+		if (this.currentConfig) {
+			if (this.currentConfig.services) {
+				for (const svc of this.currentConfig.services) {
+					if (svc.port > 0) portsToKill.push(svc.port);
+				}
+			} else if (this.currentConfig.port > 0) {
+				portsToKill.push(this.currentConfig.port);
+			}
+		}
+
+		// Kill all tracked secondary service processes
+		for (const proc of this.activeServiceProcesses.values()) {
+			killProc(proc);
+		}
+		this.activeServiceProcesses.clear();
+
+		// Kill the primary / single-service process
+		if (this.activeServerProcess) {
+			killProc(this.activeServerProcess);
+			this.activeServerProcess = null;
+		}
+
+		this.serverUrl = null;
+		this.currentConfig = null;
+
+		// Fallback port-based kill: on Windows, dotnet run spawns the actual web server
+		// as a grandchild process that taskkill /t sometimes misses. Kill by port to be sure.
+		for (const port of portsToKill) {
+			this.killProcessOnPort(port).catch(() => {
+				/* noop */
+			});
+		}
+
+		// Remove any junctions created to work around spaces-in-path issues
+		this.cleanupJunctions();
+		// Restore any @ngtools/webpack patches applied for the spaces-in-path bug
+		this.restoreAngularWebpackPatches();
+
+		this.emit("stopped");
+	}
+
+	/**
+	 * Remove all junctions created by ensureNoSpacesPath and clear the map.
+	 */
+	private cleanupJunctions(): void {
+		for (const junctionPath of this.junctionMap.values()) {
+			spawn(
+				"powershell",
+				[
+					"-NoProfile",
+					"-NonInteractive",
+					"-Command",
+					`Remove-Item -Path '${junctionPath}' -Force -ErrorAction SilentlyContinue`,
+				],
+				{ stdio: "ignore" },
+			);
+		}
+		this.junctionMap.clear();
+	}
+
+	/**
+	 * Patch @ngtools/webpack/src/ivy/plugin.js to add decodeURIComponent() around
+	 * resource paths before they are looked up in the TypeScript compilation.
+	 *
+	 * Root cause: webpack URL-encodes paths containing spaces, producing module IDs
+	 * like "MeCa%20Web/...". The TypeScript compilation registers source files with
+	 * the real decoded path ("MeCa Web/..."). On incremental rebuilds the lookup in
+	 * `createFileEmitter` calls `normalizePath(file)` where `file` still has `%20`,
+	 * so `program.getSourceFile()` returns undefined → "missing from TypeScript
+	 * compilation" error.
+	 *
+	 * Fix: wrap `file` and `resource` in `decodeURIComponent()` before passing to
+	 * `normalizePath()`, matching the same fix shipped in Angular CLI 15.1
+	 * (angular-cli#24798).
+	 *
+	 * IMPORTANT: Angular must run from the real project path (no junction symlink),
+	 * otherwise TypeScript compiles with junction paths and the lookup still fails.
+	 *
+	 * No-op if:
+	 *  - projectDir has no spaces
+	 *  - plugin.js does not exist (Angular CLI not installed)
+	 *  - the fix is already present (Angular CLI 15.1+)
+	 *  - the expected pattern is not found in this compiled version
+	 */
+	private async patchAngularWebpack(projectDir: string): Promise<void> {
+		if (!projectDir.includes(" ")) return;
+
+		const pluginPath = path.join(
+			projectDir,
+			"node_modules",
+			"@ngtools",
+			"webpack",
+			"src",
+			"ivy",
+			"plugin.js",
+		);
+		if (!existsSync(pluginPath)) return;
+		if (this.angularWebpackPatches.has(pluginPath)) return; // already patched this session
+
+		try {
+			const original = readFileSync(pluginPath, "utf-8");
+
+			// Guard: patch already present (Angular CLI 15.1+)
+			if (
+				original.includes("decodeURIComponent(file)") ||
+				original.includes("decodeURIComponent(resource)")
+			)
+				return;
+
+			let patched = original;
+
+			// Fix 1: createFileEmitter — decode the resource path before TypeScript program lookup.
+			// normalizePath)(file) → normalizePath)(decodeURIComponent(file))
+			patched = patched.replace(
+				/normalizePath\)\(file\)/g,
+				"normalizePath)(decodeURIComponent(file))",
+			);
+
+			// Fix 2: unused-file detection and rebuild-file detection.
+			// normalizePath)(resource) → normalizePath)(decodeURIComponent(resource))
+			patched = patched.replace(
+				/normalizePath\)\(resource\)/g,
+				"normalizePath)(decodeURIComponent(resource))",
+			);
+
+			if (patched === original) {
+				return;
+			}
+
+			writeFileSync(pluginPath, patched, "utf-8");
+			this.angularWebpackPatches.set(pluginPath, original);
+		} catch (err) {
+			console.warn("[AppEmulator] Could not patch @ngtools/webpack:", err);
+		}
+	}
+
+	/**
+	 * Restore all @ngtools/webpack files that were patched by patchAngularWebpack.
+	 */
+	private restoreAngularWebpackPatches(): void {
+		for (const [indexPath, original] of this.angularWebpackPatches) {
+			try {
+				writeFileSync(indexPath, original, "utf-8");
+			} catch {
+				/* ignore — file may have been deleted */
+			}
+		}
+		this.angularWebpackPatches.clear();
+	}
+
+	/**
+	 * Check if a server is currently running.
+	 */
+	isRunning(): boolean {
+		return (
+			this.activeServerProcess !== null && !this.activeServerProcess.killed
+		);
+	}
+
+	/**
+	 * Get the current server URL.
+	 */
+	getUrl(): string | null {
+		return this.serverUrl;
+	}
+
+	/**
+	 * Get current configuration.
+	 */
+	getConfig(): AppEmulatorConfig | null {
+		return this.currentConfig;
+	}
+
+	/**
+	 * Cancel any active detection.
+	 */
+	cancelDetection(): void {
+		if (this.detectionProcess) {
+			this.detectionProcess.kill();
+			this.detectionProcess = null;
+		}
+	}
 }
 
 // Singleton instance

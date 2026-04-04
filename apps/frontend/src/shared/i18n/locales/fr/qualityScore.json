@@ -1,20 +1,20 @@
 {
-  "title": "Analyse de la Qualité du Code",
-  "score": "Score",
-  "passed": "RÉUSSI",
-  "failed": "ÉCHOUÉ",
-  "issuesDetected_one": "{{count}} Problème Détecté",
-  "issuesDetected_other": "{{count}} Problèmes Détectés",
-  "critical": "Critique",
-  "high": "Élevé",
-  "medium": "Moyen",
-  "low": "Faible",
-  "noIssues": "Aucun problème détecté ! Excellent travail !",
-  "andMore": "... et {{count}} autres",
-  "categories": {
-    "bugs": "Bogues",
-    "security": "Sécurité",
-    "maintainability": "Maintenabilité",
-    "complexity": "Complexité"
-  }
+	"title": "Analyse de la Qualité du Code",
+	"score": "Score",
+	"passed": "RÉUSSI",
+	"failed": "ÉCHOUÉ",
+	"issuesDetected_one": "{{count}} Problème Détecté",
+	"issuesDetected_other": "{{count}} Problèmes Détectés",
+	"critical": "Critique",
+	"high": "Élevé",
+	"medium": "Moyen",
+	"low": "Faible",
+	"noIssues": "Aucun problème détecté ! Excellent travail !",
+	"andMore": "... et {{count}} autres",
+	"categories": {
+		"bugs": "Bogues",
+		"security": "Sécurité",
+		"maintainability": "Maintenabilité",
+		"complexity": "Complexité"
+	}
 }

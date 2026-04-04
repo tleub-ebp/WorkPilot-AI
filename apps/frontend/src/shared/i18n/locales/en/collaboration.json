@@ -1,139 +1,139 @@
 {
-  "title": "Collaboration",
-  "description": "Real-time multi-user collaboration",
-  "presence": {
-    "title": "Team Presence",
-    "online": "Online",
-    "away": "Away",
-    "busy": "Busy",
-    "offline": "Offline",
-    "usersOnline": "{{count}} user online",
-    "usersOnline_other": "{{count}} users online",
-    "noUsersOnline": "No users online",
-    "workingOn": "Working on {{task}}",
-    "idle": "Idle",
-    "you": "(you)",
-    "lastSeen": "Last seen {{time}}",
-    "connectedSince": "Connected since {{time}}"
-  },
-  "locks": {
-    "title": "Task Locks",
-    "lockedBy": "Locked by {{user}}",
-    "lockedByAgent": "Locked by agent {{agent}}",
-    "lockTask": "Lock task",
-    "unlockTask": "Unlock task",
-    "forceUnlock": "Force unlock",
-    "forceUnlockConfirm": "Are you sure you want to force unlock this task? The user currently editing will lose unsaved changes.",
-    "lockReason": "Reason",
-    "taskLockedWarning": "This task is locked by {{user}}. You cannot edit it until they release the lock.",
-    "agentLockedWarning": "An agent is currently working on this task. Please wait until it finishes.",
-    "lockExpired": "Lock expired",
-    "noActiveLocks": "No active locks"
-  },
-  "chat": {
-    "title": "Team Chat",
-    "placeholder": "Type a message...",
-    "send": "Send",
-    "reply": "Reply",
-    "replyTo": "Replying to {{user}}",
-    "cancelReply": "Cancel reply",
-    "mention": "Mention",
-    "noMessages": "No messages yet. Start the conversation!",
-    "searchMessages": "Search messages...",
-    "searchNoResults": "No messages match your search",
-    "today": "Today",
-    "yesterday": "Yesterday",
-    "newMessages": "{{count}} new message",
-    "newMessages_other": "{{count}} new messages",
-    "messageDeleted": "This message was deleted",
-    "editMessage": "Edit message",
-    "deleteMessage": "Delete message"
-  },
-  "conflicts": {
-    "title": "Conflict Resolution",
-    "detected": "Conflict detected",
-    "description": "Two users modified the same field simultaneously",
-    "fieldConflict": "Conflict on field \"{{field}}\"",
-    "yourVersion": "Your version",
-    "theirVersion": "Their version ({{user}})",
-    "resolution": {
-      "title": "Choose resolution",
-      "keepMine": "Keep mine",
-      "keepTheirs": "Keep theirs",
-      "merge": "Merge manually",
-      "lastWriteWins": "Last write wins (automatic)"
-    },
-    "resolved": "Conflict resolved",
-    "unresolvedCount": "{{count}} unresolved conflict",
-    "unresolvedCount_other": "{{count}} unresolved conflicts",
-    "noConflicts": "No conflicts"
-  },
-  "notifications": {
-    "userJoined": "{{user}} joined the project",
-    "userLeft": "{{user}} left the project",
-    "taskLocked": "{{user}} locked task #{{task}}",
-    "taskUnlocked": "{{user}} unlocked task #{{task}}",
-    "agentStarted": "Agent {{agent}} started working on #{{task}}",
-    "agentCompleted": "Agent {{agent}} finished #{{task}}",
-    "agentFailed": "Agent {{agent}} failed on #{{task}}",
-    "taskMoved": "{{user}} moved #{{task}} from {{from}} to {{to}}",
-    "taskUpdated": "{{user}} updated task #{{task}}",
-    "conflictDetected": "Conflict detected on task #{{task}}",
-    "mentionedYou": "{{user}} mentioned you in chat"
-  },
-  "settings": {
-    "title": "Collaboration Settings",
-    "description": "Configure multi-user collaboration behavior",
-    "conflictStrategy": {
-      "title": "Conflict Resolution Strategy",
-      "description": "How to handle concurrent modifications",
-      "lastWriteWins": "Last write wins",
-      "lastWriteWinsDesc": "The most recent change overwrites previous ones",
-      "firstWriteWins": "First write wins",
-      "firstWriteWinsDesc": "The first change is preserved, later ones are rejected",
-      "manual": "Manual resolution",
-      "manualDesc": "Show a dialog to choose which version to keep",
-      "merge": "Auto-merge",
-      "mergeDesc": "Attempt to merge changes automatically"
-    },
-    "presenceIndicator": {
-      "title": "Presence Indicator",
-      "description": "Show who is online and what they're working on",
-      "enabled": "Show presence indicator"
-    },
-    "notifications": {
-      "title": "Collaboration Notifications",
-      "description": "Choose which notifications to receive",
-      "userJoinLeave": "User join/leave",
-      "taskLocks": "Task locks",
-      "agentActivity": "Agent activity",
-      "chatMentions": "Chat mentions",
-      "conflicts": "Conflicts"
-    },
-    "chat": {
-      "title": "Team Chat",
-      "description": "Configure team chat settings",
-      "enabled": "Enable team chat",
-      "soundNotifications": "Sound notifications for new messages",
-      "desktopNotifications": "Desktop notifications for mentions"
-    }
-  },
-  "sync": {
-    "syncing": "Syncing...",
-    "synced": "All changes synced",
-    "syncError": "Sync error — click to retry",
-    "reconnecting": "Reconnecting...",
-    "disconnected": "Disconnected"
-  },
-  "stats": {
-    "title": "Collaboration Statistics",
-    "totalUsers": "Total users",
-    "onlineUsers": "Online users",
-    "activeLocks": "Active locks",
-    "agentLocks": "Agent locks",
-    "totalEvents": "Total events",
-    "chatMessages": "Chat messages",
-    "totalConflicts": "Total conflicts",
-    "unresolvedConflicts": "Unresolved conflicts"
-  }
+	"title": "Collaboration",
+	"description": "Real-time multi-user collaboration",
+	"presence": {
+		"title": "Team Presence",
+		"online": "Online",
+		"away": "Away",
+		"busy": "Busy",
+		"offline": "Offline",
+		"usersOnline": "{{count}} user online",
+		"usersOnline_other": "{{count}} users online",
+		"noUsersOnline": "No users online",
+		"workingOn": "Working on {{task}}",
+		"idle": "Idle",
+		"you": "(you)",
+		"lastSeen": "Last seen {{time}}",
+		"connectedSince": "Connected since {{time}}"
+	},
+	"locks": {
+		"title": "Task Locks",
+		"lockedBy": "Locked by {{user}}",
+		"lockedByAgent": "Locked by agent {{agent}}",
+		"lockTask": "Lock task",
+		"unlockTask": "Unlock task",
+		"forceUnlock": "Force unlock",
+		"forceUnlockConfirm": "Are you sure you want to force unlock this task? The user currently editing will lose unsaved changes.",
+		"lockReason": "Reason",
+		"taskLockedWarning": "This task is locked by {{user}}. You cannot edit it until they release the lock.",
+		"agentLockedWarning": "An agent is currently working on this task. Please wait until it finishes.",
+		"lockExpired": "Lock expired",
+		"noActiveLocks": "No active locks"
+	},
+	"chat": {
+		"title": "Team Chat",
+		"placeholder": "Type a message...",
+		"send": "Send",
+		"reply": "Reply",
+		"replyTo": "Replying to {{user}}",
+		"cancelReply": "Cancel reply",
+		"mention": "Mention",
+		"noMessages": "No messages yet. Start the conversation!",
+		"searchMessages": "Search messages...",
+		"searchNoResults": "No messages match your search",
+		"today": "Today",
+		"yesterday": "Yesterday",
+		"newMessages": "{{count}} new message",
+		"newMessages_other": "{{count}} new messages",
+		"messageDeleted": "This message was deleted",
+		"editMessage": "Edit message",
+		"deleteMessage": "Delete message"
+	},
+	"conflicts": {
+		"title": "Conflict Resolution",
+		"detected": "Conflict detected",
+		"description": "Two users modified the same field simultaneously",
+		"fieldConflict": "Conflict on field \"{{field}}\"",
+		"yourVersion": "Your version",
+		"theirVersion": "Their version ({{user}})",
+		"resolution": {
+			"title": "Choose resolution",
+			"keepMine": "Keep mine",
+			"keepTheirs": "Keep theirs",
+			"merge": "Merge manually",
+			"lastWriteWins": "Last write wins (automatic)"
+		},
+		"resolved": "Conflict resolved",
+		"unresolvedCount": "{{count}} unresolved conflict",
+		"unresolvedCount_other": "{{count}} unresolved conflicts",
+		"noConflicts": "No conflicts"
+	},
+	"notifications": {
+		"userJoined": "{{user}} joined the project",
+		"userLeft": "{{user}} left the project",
+		"taskLocked": "{{user}} locked task #{{task}}",
+		"taskUnlocked": "{{user}} unlocked task #{{task}}",
+		"agentStarted": "Agent {{agent}} started working on #{{task}}",
+		"agentCompleted": "Agent {{agent}} finished #{{task}}",
+		"agentFailed": "Agent {{agent}} failed on #{{task}}",
+		"taskMoved": "{{user}} moved #{{task}} from {{from}} to {{to}}",
+		"taskUpdated": "{{user}} updated task #{{task}}",
+		"conflictDetected": "Conflict detected on task #{{task}}",
+		"mentionedYou": "{{user}} mentioned you in chat"
+	},
+	"settings": {
+		"title": "Collaboration Settings",
+		"description": "Configure multi-user collaboration behavior",
+		"conflictStrategy": {
+			"title": "Conflict Resolution Strategy",
+			"description": "How to handle concurrent modifications",
+			"lastWriteWins": "Last write wins",
+			"lastWriteWinsDesc": "The most recent change overwrites previous ones",
+			"firstWriteWins": "First write wins",
+			"firstWriteWinsDesc": "The first change is preserved, later ones are rejected",
+			"manual": "Manual resolution",
+			"manualDesc": "Show a dialog to choose which version to keep",
+			"merge": "Auto-merge",
+			"mergeDesc": "Attempt to merge changes automatically"
+		},
+		"presenceIndicator": {
+			"title": "Presence Indicator",
+			"description": "Show who is online and what they're working on",
+			"enabled": "Show presence indicator"
+		},
+		"notifications": {
+			"title": "Collaboration Notifications",
+			"description": "Choose which notifications to receive",
+			"userJoinLeave": "User join/leave",
+			"taskLocks": "Task locks",
+			"agentActivity": "Agent activity",
+			"chatMentions": "Chat mentions",
+			"conflicts": "Conflicts"
+		},
+		"chat": {
+			"title": "Team Chat",
+			"description": "Configure team chat settings",
+			"enabled": "Enable team chat",
+			"soundNotifications": "Sound notifications for new messages",
+			"desktopNotifications": "Desktop notifications for mentions"
+		}
+	},
+	"sync": {
+		"syncing": "Syncing...",
+		"synced": "All changes synced",
+		"syncError": "Sync error — click to retry",
+		"reconnecting": "Reconnecting...",
+		"disconnected": "Disconnected"
+	},
+	"stats": {
+		"title": "Collaboration Statistics",
+		"totalUsers": "Total users",
+		"onlineUsers": "Online users",
+		"activeLocks": "Active locks",
+		"agentLocks": "Agent locks",
+		"totalEvents": "Total events",
+		"chatMessages": "Chat messages",
+		"totalConflicts": "Total conflicts",
+		"unresolvedConflicts": "Unresolved conflicts"
+	}
 }

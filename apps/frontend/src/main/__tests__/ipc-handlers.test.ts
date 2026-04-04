@@ -3,893 +3,1015 @@
  * Unit tests for IPC handlers
  * Tests all IPC communication patterns between main and renderer processes
  */
-import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+
 import { EventEmitter } from "node:events";
-import { writeFileSync, mkdirSync, rmSync, existsSync } from "node:fs";
+import { existsSync, mkdirSync, rmSync, writeFileSync } from "node:fs";
 import path from "node:path";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 // Type for mocked fs module
 type MockedFs = {
-  existsSync: ReturnType<typeof vi.fn>;
-  readFileSync: ReturnType<typeof vi.fn>;
-  writeFileSync: ReturnType<typeof vi.fn>;
-  mkdirSync: ReturnType<typeof vi.fn>;
-  mkdtempSync: ReturnType<typeof vi.fn>;
-  rmSync: ReturnType<typeof vi.fn>;
-  readdirSync: ReturnType<typeof vi.fn>;
-  appendFileSync: ReturnType<typeof vi.fn>;
+	existsSync: ReturnType<typeof vi.fn>;
+	readFileSync: ReturnType<typeof vi.fn>;
+	writeFileSync: ReturnType<typeof vi.fn>;
+	mkdirSync: ReturnType<typeof vi.fn>;
+	mkdtempSync: ReturnType<typeof vi.fn>;
+	rmSync: ReturnType<typeof vi.fn>;
+	readdirSync: ReturnType<typeof vi.fn>;
+	appendFileSync: ReturnType<typeof vi.fn>;
 };
 
 // Test data directory
-const TEST_DIR = path.join('..', '..', 'tmp', 'ipc-handlers-test');
-const TEST_PROJECT_PATH = path.join(TEST_DIR, 'test-project');
+const TEST_DIR = path.join("..", "..", "tmp", "ipc-handlers-test");
+const TEST_PROJECT_PATH = path.join(TEST_DIR, "test-project");
 
 // Mock electron-updater before importing
 vi.mock("electron-updater", () => ({
-  autoUpdater: {
-    autoDownload: true,
-    autoInstallOnAppQuit: true,
-    on: vi.fn(),
-    checkForUpdates: vi.fn(() => Promise.resolve(null)),
-    downloadUpdate: vi.fn(() => Promise.resolve()),
-    quitAndInstall: vi.fn(),
-  },
+	autoUpdater: {
+		autoDownload: true,
+		autoInstallOnAppQuit: true,
+		on: vi.fn(),
+		checkForUpdates: vi.fn(() => Promise.resolve(null)),
+		downloadUpdate: vi.fn(() => Promise.resolve()),
+		quitAndInstall: vi.fn(),
+	},
 }));
 
 // Mock @electron-toolkit/utils before importing
 vi.mock("@electron-toolkit/utils", () => ({
-  is: {
-    dev: true,
-    windows: process.platform === "win32",
-    macos: process.platform === "darwin",
-    linux: process.platform === "linux",
-  },
-  electronApp: {
-    setAppUserModelId: vi.fn(),
-  },
-  optimizer: {
-    watchWindowShortcuts: vi.fn(),
-  },
+	is: {
+		dev: true,
+		windows: process.platform === "win32",
+		macos: process.platform === "darwin",
+		linux: process.platform === "linux",
+	},
+	electronApp: {
+		setAppUserModelId: vi.fn(),
+	},
+	optimizer: {
+		watchWindowShortcuts: vi.fn(),
+	},
 }));
 
 // Mock fs to control existsSync behavior
-vi.mock('fs', () => {
-  const mockFs = {
-    existsSync: vi.fn((path: string) => path.includes('ipc-handlers-test') && path.includes('test-project')),
-    readFileSync: vi.fn(),
-    writeFileSync: vi.fn(),
-    mkdirSync: vi.fn(),
-    mkdtempSync: vi.fn(() => '/tmp/test-dir'),
-    rmSync: vi.fn(),
-    readdirSync: vi.fn(),
-    appendFileSync: vi.fn(),
-  };
-  return {
-    ...mockFs,
-    default: mockFs,
-  };
+vi.mock("fs", () => {
+	const mockFs = {
+		existsSync: vi.fn(
+			(path: string) =>
+				path.includes("ipc-handlers-test") && path.includes("test-project"),
+		),
+		readFileSync: vi.fn(),
+		writeFileSync: vi.fn(),
+		mkdirSync: vi.fn(),
+		mkdtempSync: vi.fn(() => "/tmp/test-dir"),
+		rmSync: vi.fn(),
+		readdirSync: vi.fn(),
+		appendFileSync: vi.fn(),
+	};
+	return {
+		...mockFs,
+		default: mockFs,
+	};
 });
 
 // Mock node:fs — keep real writeFileSync/mkdirSync/rmSync for test setup/cleanup,
 // but mock existsSync, readFileSync, readdirSync so handler code can be controlled.
 // Note: in Vitest node env, 'fs' and 'node:fs' resolve to the same module so this
 // mock applies to both import specifiers.
-vi.mock('node:fs', async (importActual) => {
-  const actual = await importActual<typeof import('node:fs')>();
-  const mockExistsSync = vi.fn((p: string) =>
-    p.includes('ipc-handlers-test') && p.includes('test-project')
-  );
-  const mockReadFileSync = vi.fn();
-  const mockReaddirSync = vi.fn(() => []);
-  return {
-    ...actual,
-    existsSync: mockExistsSync,
-    readFileSync: mockReadFileSync,
-    readdirSync: mockReaddirSync,
-    default: { ...actual, existsSync: mockExistsSync, readFileSync: mockReadFileSync, readdirSync: mockReaddirSync },
-  };
+vi.mock("node:fs", async (importActual) => {
+	const actual = await importActual<typeof import("node:fs")>();
+	const mockExistsSync = vi.fn(
+		(p: string) =>
+			p.includes("ipc-handlers-test") && p.includes("test-project"),
+	);
+	const mockReadFileSync = vi.fn();
+	const mockReaddirSync = vi.fn(() => []);
+	return {
+		...actual,
+		existsSync: mockExistsSync,
+		readFileSync: mockReadFileSync,
+		readdirSync: mockReaddirSync,
+		default: {
+			...actual,
+			existsSync: mockExistsSync,
+			readFileSync: mockReadFileSync,
+			readdirSync: mockReaddirSync,
+		},
+	};
 });
 
 // Mock version-manager to return a predictable version
 vi.mock("../updater/version-manager", () => ({
-  getEffectiveVersion: vi.fn(() => "0.1.0"),
-  getBundledVersion: vi.fn(() => "0.1.0"),
-  parseVersionFromTag: vi.fn((tag: string) => tag.replace("v", "")),
-  compareVersions: vi.fn(() => 0),
+	getEffectiveVersion: vi.fn(() => "0.1.0"),
+	getBundledVersion: vi.fn(() => "0.1.0"),
+	parseVersionFromTag: vi.fn((tag: string) => tag.replace("v", "")),
+	compareVersions: vi.fn(() => 0),
 }));
 
 vi.mock("../notification-service", () => ({
-  notificationService: {
-    initialize: vi.fn(),
-    notifyReviewNeeded: vi.fn(),
-    notifyTaskFailed: vi.fn(),
-  },
+	notificationService: {
+		initialize: vi.fn(),
+		notifyReviewNeeded: vi.fn(),
+		notifyTaskFailed: vi.fn(),
+	},
 }));
 
 // Mock electron-log to prevent Electron binary dependency
 vi.mock("electron-log/main.js", () => ({
-  default: {
-    initialize: vi.fn(),
-    transports: {
-      file: {
-        maxSize: 10 * 1024 * 1024,
-        format: "",
-        fileName: "main.log",
-        level: "info",
-        getFile: vi.fn(() => ({ path: "/tmp/test.log" })),
-      },
-      console: {
-        level: "warn",
-        format: "",
-      },
-    },
-    debug: vi.fn(),
-    info: vi.fn(),
-    warn: vi.fn(),
-    error: vi.fn(),
-  },
+	default: {
+		initialize: vi.fn(),
+		transports: {
+			file: {
+				maxSize: 10 * 1024 * 1024,
+				format: "",
+				fileName: "main.log",
+				level: "info",
+				getFile: vi.fn(() => ({ path: "/tmp/test.log" })),
+			},
+			console: {
+				level: "warn",
+				format: "",
+			},
+		},
+		debug: vi.fn(),
+		info: vi.fn(),
+		warn: vi.fn(),
+		error: vi.fn(),
+	},
 }));
 
 // Mock cli-tool-manager to avoid blocking tool detection on Windows
 vi.mock("../cli-tool-manager", () => ({
-  getToolInfo: vi.fn(() => ({ found: false, path: null, source: "mock" })),
-  getToolPath: vi.fn((tool: string) => tool),
-  deriveGitBashPath: vi.fn(() => null),
-  clearCache: vi.fn(),
-  clearToolCache: vi.fn(),
-  configureTools: vi.fn(),
-  preWarmToolCache: vi.fn(() => Promise.resolve()),
-  getToolPathAsync: vi.fn((tool: string) => Promise.resolve(tool)),
+	getToolInfo: vi.fn(() => ({ found: false, path: null, source: "mock" })),
+	getToolPath: vi.fn((tool: string) => tool),
+	deriveGitBashPath: vi.fn(() => null),
+	clearCache: vi.fn(),
+	clearToolCache: vi.fn(),
+	configureTools: vi.fn(),
+	preWarmToolCache: vi.fn(() => Promise.resolve()),
+	getToolPathAsync: vi.fn((tool: string) => Promise.resolve(tool)),
 }));
 
 // Mock modules before importing
 vi.mock("electron", () => {
-  const mockIpcMain = new (class extends EventEmitter {
-    private readonly handlers: Map<string, Function> = new Map();
+	const mockIpcMain = new (class extends EventEmitter {
+		private readonly handlers: Map<string, Function> = new Map();
 
-    handle(channel: string, handler: Function): void {
-      this.handlers.set(channel, handler);
-    }
+		handle(channel: string, handler: Function): void {
+			this.handlers.set(channel, handler);
+		}
 
-    removeHandler(channel: string): void {
-      this.handlers.delete(channel);
-    }
+		removeHandler(channel: string): void {
+			this.handlers.delete(channel);
+		}
 
-    async invokeHandler(channel: string, event: unknown, ...args: unknown[]): Promise<unknown> {
-      const handler = this.handlers.get(channel);
-      if (handler) {
-        return handler(event, ...args);
-      }
-      throw new Error(`No handler for channel: ${channel}`);
-    }
+		async invokeHandler(
+			channel: string,
+			event: unknown,
+			...args: unknown[]
+		): Promise<unknown> {
+			const handler = this.handlers.get(channel);
+			if (handler) {
+				return handler(event, ...args);
+			}
+			throw new Error(`No handler for channel: ${channel}`);
+		}
 
-    getHandler(channel: string): Function | undefined {
-      return this.handlers.get(channel);
-    }
-  })();
+		getHandler(channel: string): Function | undefined {
+			return this.handlers.get(channel);
+		}
+	})();
 
-  return {
-    app: {
-      getPath: vi.fn((name: string) => {
-        if (name === "userData") return path.join(TEST_DIR, "userData");
-        return TEST_DIR;
-      }),
-      getAppPath: vi.fn(() => TEST_DIR),
-      getVersion: vi.fn(() => "0.1.0"),
-      isPackaged: false,
-    },
-    ipcMain: mockIpcMain,
-    dialog: {
-      showOpenDialog: vi.fn(() =>
-        Promise.resolve({ canceled: false, filePaths: [TEST_PROJECT_PATH] })
-      ),
-    },
-    BrowserWindow: class {
-      webContents = { send: vi.fn() };
-    },
-  };
+	return {
+		app: {
+			getPath: vi.fn((name: string) => {
+				if (name === "userData") return path.join(TEST_DIR, "userData");
+				return TEST_DIR;
+			}),
+			getAppPath: vi.fn(() => TEST_DIR),
+			getVersion: vi.fn(() => "0.1.0"),
+			isPackaged: false,
+		},
+		ipcMain: mockIpcMain,
+		dialog: {
+			showOpenDialog: vi.fn(() =>
+				Promise.resolve({ canceled: false, filePaths: [TEST_PROJECT_PATH] }),
+			),
+		},
+		BrowserWindow: class {
+			webContents = { send: vi.fn() };
+		},
+	};
 });
 
 // Setup test project structure
 function setupTestProject(): void {
-  mkdirSync(TEST_PROJECT_PATH, { recursive: true });
-  mkdirSync(path.join(TEST_PROJECT_PATH, ".workpilot", "specs"), { recursive: true });
+	mkdirSync(TEST_PROJECT_PATH, { recursive: true });
+	mkdirSync(path.join(TEST_PROJECT_PATH, ".workpilot", "specs"), {
+		recursive: true,
+	});
 }
 
 // Cleanup test directories
 async function cleanupTestDirs(): Promise<void> {
-  try {
-    if (existsSync(TEST_DIR)) {
-      rmSync(TEST_DIR, { recursive: true, force: true });
-    }
-  } catch {
-    // Ignore cleanup errors in tests
-  }
+	try {
+		if (existsSync(TEST_DIR)) {
+			rmSync(TEST_DIR, { recursive: true, force: true });
+		}
+	} catch {
+		// Ignore cleanup errors in tests
+	}
 }
 
 // Increase timeout for all tests in this file due to dynamic imports and setup overhead.
 // Windows requires longer timeout due to slower file system operations and module loading.
 describe("IPC Handlers", { timeout: 30000 }, () => {
-  let ipcMain: EventEmitter & {
-    handlers: Map<string, Function>;
-    invokeHandler: (channel: string, event: unknown, ...args: unknown[]) => Promise<unknown>;
-    getHandler: (channel: string) => Function | undefined;
-  };
-  let mockMainWindow: { webContents: { send: ReturnType<typeof vi.fn> } };
-  let mockAgentManager: EventEmitter & {
-    startSpecCreation: ReturnType<typeof vi.fn>;
-    startTaskExecution: ReturnType<typeof vi.fn>;
-    startQAProcess: ReturnType<typeof vi.fn>;
-    killTask: ReturnType<typeof vi.fn>;
-    configure: ReturnType<typeof vi.fn>;
-  };
-  let mockTerminalManager: {
-    create: ReturnType<typeof vi.fn>;
-    destroy: ReturnType<typeof vi.fn>;
-    write: ReturnType<typeof vi.fn>;
-    resize: ReturnType<typeof vi.fn>;
-    invokeClaude: ReturnType<typeof vi.fn>;
-    killAll: ReturnType<typeof vi.fn>;
-  };
-  let mockPythonEnvManager: {
-    on: ReturnType<typeof vi.fn>;
-    initialize: ReturnType<typeof vi.fn>;
-    getStatus: ReturnType<typeof vi.fn>;
-  };
-
-  beforeEach(async () => {
-    await cleanupTestDirs();
-    setupTestProject();
-    mkdirSync(path.join(TEST_DIR, "userData", "store"), { recursive: true });
-
-    // Get mocked ipcMain
-    const electron = await import("electron");
-    ipcMain = electron.ipcMain as unknown as typeof ipcMain;
-
-    // Create mock window with isDestroyed methods for safeSendToRenderer
-    mockMainWindow = {
-      isDestroyed: vi.fn(() => false),
-      webContents: {
-        send: vi.fn(),
-        isDestroyed: vi.fn(() => false),
-      },
-    } as { webContents: { send: ReturnType<typeof vi.fn> }; isDestroyed: () => boolean };
-
-    // Create mock agent manager
-    mockAgentManager = Object.assign(new EventEmitter(), {
-      startSpecCreation: vi.fn(),
-      startTaskExecution: vi.fn(),
-      startQAProcess: vi.fn(),
-      killTask: vi.fn(),
-      configure: vi.fn(),
-    });
-
-    // Create mock terminal manager
-    mockTerminalManager = {
-      create: vi.fn(() => Promise.resolve({ success: true })),
-      destroy: vi.fn(() => Promise.resolve({ success: true })),
-      write: vi.fn(),
-      resize: vi.fn(),
-      invokeClaude: vi.fn(),
-      killAll: vi.fn(() => Promise.resolve()),
-    };
-
-    mockPythonEnvManager = {
-      on: vi.fn(),
-      initialize: vi.fn(() =>
-        Promise.resolve({
-          ready: true,
-          pythonPath: "/usr/bin/python3",
-          venvExists: true,
-          depsInstalled: true,
-        })
-      ),
-      getStatus: vi.fn(() =>
-        Promise.resolve({
-          ready: true,
-          pythonPath: "/usr/bin/python3",
-          venvExists: true,
-          depsInstalled: true,
-        })
-      ),
-    };
-
-    // Need to reset modules to re-register handlers
-    vi.resetModules();
-  });
-
-  afterEach(async () => {
-    await cleanupTestDirs();
-    vi.clearAllMocks();
-  });
-
-  describe("project:add handler", () => {
-    beforeEach(() => {
-      vi.clearAllMocks();
-    });
-
-    it("should return error for non-existent path", async () => {
-      const fs = (await vi.importMock('fs')) as MockedFs;
-      fs.existsSync.mockReturnValue(false);
-      const nodeFs = (await vi.importMock('node:fs')) as MockedFs;
-      nodeFs.existsSync.mockReturnValue(false);
-      
-      const { setupIpcHandlers } = await import("../ipc-handlers");
-      setupIpcHandlers(
-        mockAgentManager as never,
-        mockAgentManager as never,
-        () => mockMainWindow as never,
-        mockPythonEnvManager as never
-      );
-
-      const result = await ipcMain.invokeHandler("project:add", {}, "/nonexistent/path");
-
-      expect(result).toEqual({
-        success: false,
-        error: "Directory does not exist",
-      });
-    });
-
-    it("should successfully add an existing project", async () => {
-      const fs = (await vi.importMock('fs')) as MockedFs;
-      fs.existsSync.mockImplementation((path: string) => {
-        return path === TEST_PROJECT_PATH;
-      });
-      
-      const { setupIpcHandlers } = await import("../ipc-handlers");
-      setupIpcHandlers(
-        mockAgentManager as never,
-        mockTerminalManager as never,
-        () => mockMainWindow as never,
-        mockPythonEnvManager as never
-      );
-
-      const result = await ipcMain.invokeHandler("project:add", {}, TEST_PROJECT_PATH);
-
-      expect(result).toHaveProperty("success", true);
-      expect(result).toHaveProperty("data");
-      const data = (result as { data: { path: string; name: string } }).data;
-      expect(data.path).toContain('test-project');
-      expect(data.name).toBe("test-project");
-    });
-
-    it("should return existing project if already added", async () => {
-      const fs = (await vi.importMock('fs')) as MockedFs;
-      fs.existsSync.mockReturnValue(true);
-      
-      const { setupIpcHandlers } = await import("../ipc-handlers");
-      setupIpcHandlers(
-        mockAgentManager as never,
-        mockTerminalManager as never,
-        () => mockMainWindow as never,
-        mockPythonEnvManager as never
-      );
-
-      // Add project twice
-      const result1 = await ipcMain.invokeHandler("project:add", {}, TEST_PROJECT_PATH);
-      const result2 = await ipcMain.invokeHandler("project:add", {}, TEST_PROJECT_PATH);
-
-      const data1 = (result1 as { data: { id: string } }).data;
-      const data2 = (result2 as { data: { id: string } }).data;
-      expect(data1.id).toBe(data2.id);
-    });
-  });
-
-  describe("project:list handler", () => {
-    it("should return empty array when no projects", async () => {
-      const { setupIpcHandlers } = await import("../ipc-handlers");
-      setupIpcHandlers(
-        mockAgentManager as never,
-        mockTerminalManager as never,
-        () => mockMainWindow as never,
-        mockPythonEnvManager as never
-      );
-
-      const result = await ipcMain.invokeHandler("project:list", {});
-
-      expect(result).toEqual({
-        success: true,
-        data: [],
-      });
-    });
-
-    it("should return all added projects", async () => {
-      const { setupIpcHandlers } = await import("../ipc-handlers");
-      setupIpcHandlers(
-        mockAgentManager as never,
-        mockTerminalManager as never,
-        () => mockMainWindow as never,
-        mockPythonEnvManager as never
-      );
-
-      // Add a project
-      await ipcMain.invokeHandler("project:add", {}, TEST_PROJECT_PATH);
-
-      const result = await ipcMain.invokeHandler("project:list", {});
-
-      expect(result).toHaveProperty("success", true);
-      const data = (result as { data: unknown[] }).data;
-      expect(data).toHaveLength(1);
-    });
-  });
-
-  describe("project:remove handler", () => {
-    it("should return false for non-existent project", async () => {
-      const { setupIpcHandlers } = await import("../ipc-handlers");
-      setupIpcHandlers(
-        mockAgentManager as never,
-        mockTerminalManager as never,
-        () => mockMainWindow as never,
-        mockPythonEnvManager as never
-      );
-
-      const result = await ipcMain.invokeHandler("project:remove", {}, "nonexistent-id");
-
-      expect(result).toEqual({ success: false });
-    });
-
-    it("should successfully remove an existing project", async () => {
-      const { setupIpcHandlers } = await import("../ipc-handlers");
-      setupIpcHandlers(
-        mockAgentManager as never,
-        mockTerminalManager as never,
-        () => mockMainWindow as never,
-        mockPythonEnvManager as never
-      );
-
-      // Add a project first
-      const addResult = await ipcMain.invokeHandler("project:add", {}, TEST_PROJECT_PATH);
-      const projectId = (addResult as { data: { id: string } }).data.id;
-
-      // Remove it
-      const removeResult = await ipcMain.invokeHandler("project:remove", {}, projectId);
-
-      expect(removeResult).toEqual({ success: true });
-
-      // Verify it's gone
-      const listResult = await ipcMain.invokeHandler("project:list", {});
-      const data = (listResult as { data: unknown[] }).data;
-      expect(data).toHaveLength(0);
-    });
-  });
-
-  describe("project:updateSettings handler", () => {
-    it("should return error for non-existent project", async () => {
-      const { setupIpcHandlers } = await import("../ipc-handlers");
-      setupIpcHandlers(
-        mockAgentManager as never,
-        mockTerminalManager as never,
-        () => mockMainWindow as never,
-        mockPythonEnvManager as never
-      );
-
-      const result = await ipcMain.invokeHandler("project:updateSettings", {}, "nonexistent-id", {
-        model: "sonnet",
-      });
-
-      expect(result).toEqual({
-        success: false,
-        error: "Project not found",
-      });
-    });
-
-    it("should successfully update project settings", async () => {
-      const fs = (await vi.importMock('fs')) as MockedFs;
-      fs.existsSync.mockImplementation((path: string) => {
-        return path === TEST_PROJECT_PATH;
-      });
-      
-      const { setupIpcHandlers } = await import("../ipc-handlers");
-      setupIpcHandlers(
-        mockAgentManager as never,
-        mockTerminalManager as never,
-        () => mockMainWindow as never,
-        mockPythonEnvManager as never
-      );
-
-      // Add a project first
-      const addResult = await ipcMain.invokeHandler("project:add", {}, TEST_PROJECT_PATH);
-      const projectId = (addResult as { data: { id: string } }).data.id;
-
-      // Update settings
-      const result = await ipcMain.invokeHandler("project:updateSettings", {}, projectId, {
-        model: "sonnet",
-        linearSync: true,
-      });
-
-      expect(result).toEqual({ success: true });
-    });
-  });
-
-  describe("task:list handler", () => {
-    beforeEach(() => {
-      vi.clearAllMocks();
-    });
-
-    it("should return empty array for project with no specs", async () => {
-      const fs = (await vi.importMock('fs')) as MockedFs;
-      fs.existsSync.mockImplementation((path: string) => {
-        return path === TEST_PROJECT_PATH;
-      });
-      
-      const { setupIpcHandlers } = await import("../ipc-handlers");
-      setupIpcHandlers(
-        mockAgentManager as never,
-        mockTerminalManager as never,
-        () => mockMainWindow as never,
-        mockPythonEnvManager as never
-      );
-
-      // Add a project first
-      const addResult = await ipcMain.invokeHandler("project:add", {}, TEST_PROJECT_PATH);
-      const projectId = (addResult as { data: { id: string } }).data.id;
-
-      const result = await ipcMain.invokeHandler("task:list", {}, projectId);
-
-      expect(result).toEqual({
-        success: true,
-        data: [],
-      });
-    });
-
-    it("should return tasks when specs exist", async () => {
-      const fs = (await vi.importMock('fs')) as MockedFs;
-      fs.existsSync.mockImplementation((path: string) => {
-        // Return true for TEST_PROJECT_PATH and any .workpilot paths
-        if (path === TEST_PROJECT_PATH) return true;
-        if (path.includes('.workpilot')) return true;
-        // Specifically return true for our spec directory and files
-        if (path.includes('001-test-feature')) return true;
-        if (path.includes('implementation_plan.json')) return true;
-        if (path.includes('spec.json')) return true;
-        return false;
-      });
-      
-      fs.readFileSync.mockImplementation((path: string, _encoding?: string) => {
-        if (path.includes('implementation_plan.json')) {
-          return JSON.stringify({
-            feature: "Test Feature",
-            description: "Test description",
-            workflow_type: "feature",
-            services_involved: [],
-            phases: [
-              {
-                phase: 1,
-                name: "Test Phase",
-                type: "implementation",
-                subtasks: [{ id: "subtask-1", description: "Test subtask", status: "pending" }],
-              },
-            ],
-            final_acceptance: [],
-            created_at: new Date().toISOString(),
-            updated_at: new Date().toISOString(),
-            spec_file: "",
-          });
-        }
-        return '{}';
-      });
-      
-      fs.readdirSync.mockImplementation((path: string, _options?: { withFileTypes?: boolean }) => {
-        if (path.includes('.workpilot/specs')) {
-          // Return our spec directory as a simple string array
-          return ['001-test-feature'];
-        }
-        if (path.includes('001-test-feature')) {
-          // Return the implementation plan file
-          return ['implementation_plan.json'];
-        }
-        return [];
-      });
-      
-      const { setupIpcHandlers } = await import("../ipc-handlers");
-      setupIpcHandlers(
-        mockAgentManager as never,
-        mockTerminalManager as never,
-        () => mockMainWindow as never,
-        mockPythonEnvManager as never
-      );
-
-      // Create .workpilot directory first (before adding project so it gets detected)
-      mkdirSync(path.join(TEST_PROJECT_PATH, ".workpilot", "specs"), { recursive: true });
-
-      // Add a project - it will detect .workpilot
-      const addResult = await ipcMain.invokeHandler("project:add", {}, TEST_PROJECT_PATH);
-      const projectId = (addResult as { data: { id: string } }).data.id;
-
-      // Create a spec directory with implementation plan in .workpilot/specs
-      const specDir = path.join(TEST_PROJECT_PATH, ".workpilot", "specs", "001-test-feature");
-      mkdirSync(specDir, { recursive: true });
-      
-      // Create the implementation_plan.json file (required for task detection)
-      writeFileSync(
-        path.join(specDir, "implementation_plan.json"),
-        JSON.stringify({
-          feature: "Test Feature",
-          description: "Test description",
-          workflow_type: "feature",
-          services_involved: [],
-          phases: [
-            {
-              phase: 1,
-              name: "Test Phase",
-              type: "implementation",
-              subtasks: [{ id: "subtask-1", description: "Test subtask", status: "pending" }],
-            },
-          ],
-          final_acceptance: [],
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
-          spec_file: "",
-        })
-      );
-
-      // Invalidate cache to force fresh scan
-      const { projectStore } = await import("../project-store");
-      projectStore.invalidateTasksCache(projectId);
-
-      const result = await ipcMain.invokeHandler("task:list", {}, projectId);
-
-      expect(result).toHaveProperty("success", true);
-      const data = (result as { data: unknown[] }).data;
-      // The test infrastructure may have limitations with task detection
-      // Let's just verify it doesn't crash and returns a valid array
-      expect(Array.isArray(data)).toBe(true);
-    });
-  });
-
-  describe("task:create handler", () => {
-    beforeEach(() => {
-      vi.clearAllMocks();
-    });
-
-    it("should return error for non-existent project", async () => {
-      const { setupIpcHandlers } = await import("../ipc-handlers");
-      setupIpcHandlers(
-        mockAgentManager as never,
-        mockTerminalManager as never,
-        () => mockMainWindow as never,
-        mockPythonEnvManager as never
-      );
-
-      const result = await ipcMain.invokeHandler(
-        "task:create",
-        {},
-        "nonexistent-id",
-        "Test Task",
-        "Test description"
-      );
-
-      expect(result).toEqual({
-        success: false,
-        error: "Project not found",
-      });
-    });
-
-    it("should create task in backlog status", async () => {
-      const fs = (await vi.importMock('fs')) as MockedFs;
-      fs.existsSync.mockImplementation((path: string) => {
-        return path === TEST_PROJECT_PATH || path.includes('.workpilot');
-      });
-      
-      const { setupIpcHandlers } = await import("../ipc-handlers");
-      setupIpcHandlers(
-        mockAgentManager as never,
-        mockTerminalManager as never,
-        () => mockMainWindow as never,
-        mockPythonEnvManager as never
-      );
-
-      // Create .workpilot directory first (before adding project so it gets detected)
-      mkdirSync(path.join(TEST_PROJECT_PATH, ".workpilot", "specs"), { recursive: true });
-
-      // Add a project first
-      const addResult = await ipcMain.invokeHandler("project:add", {}, TEST_PROJECT_PATH);
-      const projectId = (addResult as { data: { id: string } }).data.id;
-
-      const result = await ipcMain.invokeHandler(
-        "task:create",
-        {},
-        projectId,
-        "Test Task",
-        "Test description"
-      );
-
-      expect(result).toHaveProperty("success", true);
-      // Task is created in backlog status, spec creation starts when task:start is called
-      const task = (result as { data: { status: string } }).data;
-      expect(task.status).toBe("backlog");
-    });
-  });
-
-  describe("settings:get handler", () => {
-    it("should return default settings when no settings file exists", async () => {
-      const { setupIpcHandlers } = await import("../ipc-handlers");
-      setupIpcHandlers(
-        mockAgentManager as never,
-        mockTerminalManager as never,
-        () => mockMainWindow as never,
-        mockPythonEnvManager as never
-      );
-
-      const result = await ipcMain.invokeHandler("settings:get", {});
-
-      expect(result).toHaveProperty("success", true);
-      const data = (result as { data: { theme: string } }).data;
-      expect(data).toHaveProperty("theme", "dark");
-    });
-  });
-
-  describe("settings:save handler", () => {
-    it("should save settings successfully", async () => {
-      const { setupIpcHandlers } = await import("../ipc-handlers");
-      setupIpcHandlers(
-        mockAgentManager as never,
-        mockTerminalManager as never,
-        () => mockMainWindow as never,
-        mockPythonEnvManager as never
-      );
-
-      const result = await ipcMain.invokeHandler(
-        "settings:save",
-        {},
-        { theme: "dark", defaultModel: "opus" }
-      );
-
-      expect(result).toEqual({ success: true });
-
-      // Verify settings were saved
-      const getResult = await ipcMain.invokeHandler("settings:get", {});
-      const data = (getResult as { data: { theme: string; defaultModel: string } }).data;
-      expect(data.theme).toBe("dark");
-      expect(data.defaultModel).toBe("opus");
-    });
-
-    it("should configure agent manager when paths change", async () => {
-      const { setupIpcHandlers } = await import("../ipc-handlers");
-      setupIpcHandlers(
-        mockAgentManager as never,
-        mockTerminalManager as never,
-        () => mockMainWindow as never,
-        mockPythonEnvManager as never
-      );
-
-      await ipcMain.invokeHandler("settings:save", {}, { pythonPath: "/usr/bin/python3" });
-
-      expect(mockAgentManager.configure).toHaveBeenCalledWith("/usr/bin/python3", undefined);
-    });
-  });
-
-  describe("app:version handler", () => {
-    it("should return app version", async () => {
-      const { setupIpcHandlers } = await import("../ipc-handlers");
-      setupIpcHandlers(
-        mockAgentManager as never,
-        mockTerminalManager as never,
-        () => mockMainWindow as never,
-        mockPythonEnvManager as never
-      );
-
-      const result = await ipcMain.invokeHandler("app:version", {});
-
-      expect(result).toBe("0.1.0");
-    });
-  });
-
-  describe("Agent Manager event forwarding", () => {
-    beforeEach(() => {
-      vi.clearAllMocks();
-    });
-
-    it("should forward log events", async () => {
-      const { setupIpcHandlers } = await import("../ipc-handlers");
-      setupIpcHandlers(
-        mockAgentManager as never,
-        mockTerminalManager as never,
-        () => mockMainWindow as never,
-        mockPythonEnvManager as never
-      );
-
-      // Add project first
-      const addResult = await ipcMain.invokeHandler("project:add", {}, TEST_PROJECT_PATH);
-      const projectId = (addResult as { data: { id: string } }).data.id;
-
-      // Create a task first
-      const taskResult = await ipcMain.invokeHandler(
-        "task:create",
-        {},
-        projectId,
-        "Test Task",
-        "Test description"
-      );
-      const task = (taskResult as { data: { id: string } }).data;
-
-      mockAgentManager.emit("log", task.id, "Test log message", projectId);
-
-      expect(mockMainWindow.webContents.send).toHaveBeenCalledWith(
-        "task:log",
-        task.id,
-        "Test log message",
-        projectId
-      );
-    });
-
-    it("should forward error events to renderer", async () => {
-      const { setupIpcHandlers } = await import("../ipc-handlers");
-      setupIpcHandlers(
-        mockAgentManager as never,
-        mockTerminalManager as never,
-        () => mockMainWindow as never,
-        mockPythonEnvManager as never
-      );
-
-      mockAgentManager.emit("error", "task-1", "Test error message");
-
-      expect(mockMainWindow.webContents.send).toHaveBeenCalledWith(
-        "task:error",
-        "task-1",
-        "Test error message",
-        undefined // projectId is undefined when task not found
-      );
-    });
-
-    it("should forward exit events with status change on failure", async () => {
-      const { setupIpcHandlers } = await import("../ipc-handlers");
-      setupIpcHandlers(
-        mockAgentManager as never,
-        mockTerminalManager as never,
-        () => mockMainWindow as never,
-        mockPythonEnvManager as never
-      );
-
-      // Add project first
-      const addResult = await ipcMain.invokeHandler("project:add", {}, TEST_PROJECT_PATH);
-      const projectId = (addResult as { data: { id: string } }).data.id;
-
-      // Create a task first
-      const taskResult = await ipcMain.invokeHandler(
-        "task:create",
-        {},
-        projectId,
-        "Test Task",
-        "Test description"
-      );
-      const task = (taskResult as { data: { id: string } }).data;
-
-      // Simulate the task being in an active state by manually setting up the TaskStateManager
-      const { taskStateManager } = await import("../task-state-manager");
-      const { projectStore } = await import("../project-store");
-      const project = projectStore.getProject(projectId);
-      
-      if (project) {
-        // Create a complete task object for the TaskStateManager
-        const completeTask = {
-          id: task.id,
-          specId: '001-test-feature',
-          projectId: project.id,
-          title: 'Test Task',
-          description: 'Test description',
-          status: 'backlog' as const,
-          subtasks: [],
-          logs: [],
-          createdAt: new Date(),
-          updatedAt: new Date(),
-          metadata: {}
-        };
-        
-        // Manually put the task in planning state to test PROCESS_EXITED behavior
-        taskStateManager.handleUiEvent(task.id, { type: 'PLANNING_STARTED' }, completeTask, project);
-        
-        // Now emit exit event - this should trigger transition to error state
-        mockAgentManager.emit("exit", task.id, 1, "task-execution", projectId);
-
-        expect(mockMainWindow.webContents.send).toHaveBeenCalledWith(
-          "task:statusChange",
-          task.id,
-          "human_review",
-          projectId,
-          "errors"
-        );
-      }
-    });
-  });
+	let ipcMain: EventEmitter & {
+		handlers: Map<string, Function>;
+		invokeHandler: (
+			channel: string,
+			event: unknown,
+			...args: unknown[]
+		) => Promise<unknown>;
+		getHandler: (channel: string) => Function | undefined;
+	};
+	let mockMainWindow: { webContents: { send: ReturnType<typeof vi.fn> } };
+	let mockAgentManager: EventEmitter & {
+		startSpecCreation: ReturnType<typeof vi.fn>;
+		startTaskExecution: ReturnType<typeof vi.fn>;
+		startQAProcess: ReturnType<typeof vi.fn>;
+		killTask: ReturnType<typeof vi.fn>;
+		configure: ReturnType<typeof vi.fn>;
+	};
+	let mockTerminalManager: {
+		create: ReturnType<typeof vi.fn>;
+		destroy: ReturnType<typeof vi.fn>;
+		write: ReturnType<typeof vi.fn>;
+		resize: ReturnType<typeof vi.fn>;
+		invokeClaude: ReturnType<typeof vi.fn>;
+		killAll: ReturnType<typeof vi.fn>;
+	};
+	let mockPythonEnvManager: {
+		on: ReturnType<typeof vi.fn>;
+		initialize: ReturnType<typeof vi.fn>;
+		getStatus: ReturnType<typeof vi.fn>;
+	};
+
+	beforeEach(async () => {
+		await cleanupTestDirs();
+		setupTestProject();
+		mkdirSync(path.join(TEST_DIR, "userData", "store"), { recursive: true });
+
+		// Get mocked ipcMain
+		const electron = await import("electron");
+		ipcMain = electron.ipcMain as unknown as typeof ipcMain;
+
+		// Create mock window with isDestroyed methods for safeSendToRenderer
+		mockMainWindow = {
+			isDestroyed: vi.fn(() => false),
+			webContents: {
+				send: vi.fn(),
+				isDestroyed: vi.fn(() => false),
+			},
+		} as {
+			webContents: { send: ReturnType<typeof vi.fn> };
+			isDestroyed: () => boolean;
+		};
+
+		// Create mock agent manager
+		mockAgentManager = Object.assign(new EventEmitter(), {
+			startSpecCreation: vi.fn(),
+			startTaskExecution: vi.fn(),
+			startQAProcess: vi.fn(),
+			killTask: vi.fn(),
+			configure: vi.fn(),
+		});
+
+		// Create mock terminal manager
+		mockTerminalManager = {
+			create: vi.fn(() => Promise.resolve({ success: true })),
+			destroy: vi.fn(() => Promise.resolve({ success: true })),
+			write: vi.fn(),
+			resize: vi.fn(),
+			invokeClaude: vi.fn(),
+			killAll: vi.fn(() => Promise.resolve()),
+		};
+
+		mockPythonEnvManager = {
+			on: vi.fn(),
+			initialize: vi.fn(() =>
+				Promise.resolve({
+					ready: true,
+					pythonPath: "/usr/bin/python3",
+					venvExists: true,
+					depsInstalled: true,
+				}),
+			),
+			getStatus: vi.fn(() =>
+				Promise.resolve({
+					ready: true,
+					pythonPath: "/usr/bin/python3",
+					venvExists: true,
+					depsInstalled: true,
+				}),
+			),
+		};
+
+		// Need to reset modules to re-register handlers
+		vi.resetModules();
+	});
+
+	afterEach(async () => {
+		await cleanupTestDirs();
+		vi.clearAllMocks();
+	});
+
+	describe("project:add handler", () => {
+		beforeEach(() => {
+			vi.clearAllMocks();
+		});
+
+		it("should return error for non-existent path", async () => {
+			const fs = (await vi.importMock("fs")) as MockedFs;
+			fs.existsSync.mockReturnValue(false);
+			const nodeFs = (await vi.importMock("node:fs")) as MockedFs;
+			nodeFs.existsSync.mockReturnValue(false);
+
+			const { setupIpcHandlers } = await import("../ipc-handlers");
+			setupIpcHandlers(
+				mockAgentManager as never,
+				mockAgentManager as never,
+				() => mockMainWindow as never,
+				mockPythonEnvManager as never,
+			);
+
+			const result = await ipcMain.invokeHandler(
+				"project:add",
+				{},
+				"/nonexistent/path",
+			);
+
+			expect(result).toEqual({
+				success: false,
+				error: "Directory does not exist",
+			});
+		});
+
+		it("should successfully add an existing project", async () => {
+			const fs = (await vi.importMock("fs")) as MockedFs;
+			fs.existsSync.mockImplementation((path: string) => {
+				return path === TEST_PROJECT_PATH;
+			});
+
+			const { setupIpcHandlers } = await import("../ipc-handlers");
+			setupIpcHandlers(
+				mockAgentManager as never,
+				mockTerminalManager as never,
+				() => mockMainWindow as never,
+				mockPythonEnvManager as never,
+			);
+
+			const result = await ipcMain.invokeHandler(
+				"project:add",
+				{},
+				TEST_PROJECT_PATH,
+			);
+
+			expect(result).toHaveProperty("success", true);
+			expect(result).toHaveProperty("data");
+			const data = (result as { data: { path: string; name: string } }).data;
+			expect(data.path).toContain("test-project");
+			expect(data.name).toBe("test-project");
+		});
+
+		it("should return existing project if already added", async () => {
+			const fs = (await vi.importMock("fs")) as MockedFs;
+			fs.existsSync.mockReturnValue(true);
+
+			const { setupIpcHandlers } = await import("../ipc-handlers");
+			setupIpcHandlers(
+				mockAgentManager as never,
+				mockTerminalManager as never,
+				() => mockMainWindow as never,
+				mockPythonEnvManager as never,
+			);
+
+			// Add project twice
+			const result1 = await ipcMain.invokeHandler(
+				"project:add",
+				{},
+				TEST_PROJECT_PATH,
+			);
+			const result2 = await ipcMain.invokeHandler(
+				"project:add",
+				{},
+				TEST_PROJECT_PATH,
+			);
+
+			const data1 = (result1 as { data: { id: string } }).data;
+			const data2 = (result2 as { data: { id: string } }).data;
+			expect(data1.id).toBe(data2.id);
+		});
+	});
+
+	describe("project:list handler", () => {
+		it("should return empty array when no projects", async () => {
+			const { setupIpcHandlers } = await import("../ipc-handlers");
+			setupIpcHandlers(
+				mockAgentManager as never,
+				mockTerminalManager as never,
+				() => mockMainWindow as never,
+				mockPythonEnvManager as never,
+			);
+
+			const result = await ipcMain.invokeHandler("project:list", {});
+
+			expect(result).toEqual({
+				success: true,
+				data: [],
+			});
+		});
+
+		it("should return all added projects", async () => {
+			const { setupIpcHandlers } = await import("../ipc-handlers");
+			setupIpcHandlers(
+				mockAgentManager as never,
+				mockTerminalManager as never,
+				() => mockMainWindow as never,
+				mockPythonEnvManager as never,
+			);
+
+			// Add a project
+			await ipcMain.invokeHandler("project:add", {}, TEST_PROJECT_PATH);
+
+			const result = await ipcMain.invokeHandler("project:list", {});
+
+			expect(result).toHaveProperty("success", true);
+			const data = (result as { data: unknown[] }).data;
+			expect(data).toHaveLength(1);
+		});
+	});
+
+	describe("project:remove handler", () => {
+		it("should return false for non-existent project", async () => {
+			const { setupIpcHandlers } = await import("../ipc-handlers");
+			setupIpcHandlers(
+				mockAgentManager as never,
+				mockTerminalManager as never,
+				() => mockMainWindow as never,
+				mockPythonEnvManager as never,
+			);
+
+			const result = await ipcMain.invokeHandler(
+				"project:remove",
+				{},
+				"nonexistent-id",
+			);
+
+			expect(result).toEqual({ success: false });
+		});
+
+		it("should successfully remove an existing project", async () => {
+			const { setupIpcHandlers } = await import("../ipc-handlers");
+			setupIpcHandlers(
+				mockAgentManager as never,
+				mockTerminalManager as never,
+				() => mockMainWindow as never,
+				mockPythonEnvManager as never,
+			);
+
+			// Add a project first
+			const addResult = await ipcMain.invokeHandler(
+				"project:add",
+				{},
+				TEST_PROJECT_PATH,
+			);
+			const projectId = (addResult as { data: { id: string } }).data.id;
+
+			// Remove it
+			const removeResult = await ipcMain.invokeHandler(
+				"project:remove",
+				{},
+				projectId,
+			);
+
+			expect(removeResult).toEqual({ success: true });
+
+			// Verify it's gone
+			const listResult = await ipcMain.invokeHandler("project:list", {});
+			const data = (listResult as { data: unknown[] }).data;
+			expect(data).toHaveLength(0);
+		});
+	});
+
+	describe("project:updateSettings handler", () => {
+		it("should return error for non-existent project", async () => {
+			const { setupIpcHandlers } = await import("../ipc-handlers");
+			setupIpcHandlers(
+				mockAgentManager as never,
+				mockTerminalManager as never,
+				() => mockMainWindow as never,
+				mockPythonEnvManager as never,
+			);
+
+			const result = await ipcMain.invokeHandler(
+				"project:updateSettings",
+				{},
+				"nonexistent-id",
+				{
+					model: "sonnet",
+				},
+			);
+
+			expect(result).toEqual({
+				success: false,
+				error: "Project not found",
+			});
+		});
+
+		it("should successfully update project settings", async () => {
+			const fs = (await vi.importMock("fs")) as MockedFs;
+			fs.existsSync.mockImplementation((path: string) => {
+				return path === TEST_PROJECT_PATH;
+			});
+
+			const { setupIpcHandlers } = await import("../ipc-handlers");
+			setupIpcHandlers(
+				mockAgentManager as never,
+				mockTerminalManager as never,
+				() => mockMainWindow as never,
+				mockPythonEnvManager as never,
+			);
+
+			// Add a project first
+			const addResult = await ipcMain.invokeHandler(
+				"project:add",
+				{},
+				TEST_PROJECT_PATH,
+			);
+			const projectId = (addResult as { data: { id: string } }).data.id;
+
+			// Update settings
+			const result = await ipcMain.invokeHandler(
+				"project:updateSettings",
+				{},
+				projectId,
+				{
+					model: "sonnet",
+					linearSync: true,
+				},
+			);
+
+			expect(result).toEqual({ success: true });
+		});
+	});
+
+	describe("task:list handler", () => {
+		beforeEach(() => {
+			vi.clearAllMocks();
+		});
+
+		it("should return empty array for project with no specs", async () => {
+			const fs = (await vi.importMock("fs")) as MockedFs;
+			fs.existsSync.mockImplementation((path: string) => {
+				return path === TEST_PROJECT_PATH;
+			});
+
+			const { setupIpcHandlers } = await import("../ipc-handlers");
+			setupIpcHandlers(
+				mockAgentManager as never,
+				mockTerminalManager as never,
+				() => mockMainWindow as never,
+				mockPythonEnvManager as never,
+			);
+
+			// Add a project first
+			const addResult = await ipcMain.invokeHandler(
+				"project:add",
+				{},
+				TEST_PROJECT_PATH,
+			);
+			const projectId = (addResult as { data: { id: string } }).data.id;
+
+			const result = await ipcMain.invokeHandler("task:list", {}, projectId);
+
+			expect(result).toEqual({
+				success: true,
+				data: [],
+			});
+		});
+
+		it("should return tasks when specs exist", async () => {
+			const fs = (await vi.importMock("fs")) as MockedFs;
+			fs.existsSync.mockImplementation((path: string) => {
+				// Return true for TEST_PROJECT_PATH and any .workpilot paths
+				if (path === TEST_PROJECT_PATH) return true;
+				if (path.includes(".workpilot")) return true;
+				// Specifically return true for our spec directory and files
+				if (path.includes("001-test-feature")) return true;
+				if (path.includes("implementation_plan.json")) return true;
+				if (path.includes("spec.json")) return true;
+				return false;
+			});
+
+			fs.readFileSync.mockImplementation((path: string, _encoding?: string) => {
+				if (path.includes("implementation_plan.json")) {
+					return JSON.stringify({
+						feature: "Test Feature",
+						description: "Test description",
+						workflow_type: "feature",
+						services_involved: [],
+						phases: [
+							{
+								phase: 1,
+								name: "Test Phase",
+								type: "implementation",
+								subtasks: [
+									{
+										id: "subtask-1",
+										description: "Test subtask",
+										status: "pending",
+									},
+								],
+							},
+						],
+						final_acceptance: [],
+						created_at: new Date().toISOString(),
+						updated_at: new Date().toISOString(),
+						spec_file: "",
+					});
+				}
+				return "{}";
+			});
+
+			fs.readdirSync.mockImplementation(
+				(path: string, _options?: { withFileTypes?: boolean }) => {
+					if (path.includes(".workpilot/specs")) {
+						// Return our spec directory as a simple string array
+						return ["001-test-feature"];
+					}
+					if (path.includes("001-test-feature")) {
+						// Return the implementation plan file
+						return ["implementation_plan.json"];
+					}
+					return [];
+				},
+			);
+
+			const { setupIpcHandlers } = await import("../ipc-handlers");
+			setupIpcHandlers(
+				mockAgentManager as never,
+				mockTerminalManager as never,
+				() => mockMainWindow as never,
+				mockPythonEnvManager as never,
+			);
+
+			// Create .workpilot directory first (before adding project so it gets detected)
+			mkdirSync(path.join(TEST_PROJECT_PATH, ".workpilot", "specs"), {
+				recursive: true,
+			});
+
+			// Add a project - it will detect .workpilot
+			const addResult = await ipcMain.invokeHandler(
+				"project:add",
+				{},
+				TEST_PROJECT_PATH,
+			);
+			const projectId = (addResult as { data: { id: string } }).data.id;
+
+			// Create a spec directory with implementation plan in .workpilot/specs
+			const specDir = path.join(
+				TEST_PROJECT_PATH,
+				".workpilot",
+				"specs",
+				"001-test-feature",
+			);
+			mkdirSync(specDir, { recursive: true });
+
+			// Create the implementation_plan.json file (required for task detection)
+			writeFileSync(
+				path.join(specDir, "implementation_plan.json"),
+				JSON.stringify({
+					feature: "Test Feature",
+					description: "Test description",
+					workflow_type: "feature",
+					services_involved: [],
+					phases: [
+						{
+							phase: 1,
+							name: "Test Phase",
+							type: "implementation",
+							subtasks: [
+								{
+									id: "subtask-1",
+									description: "Test subtask",
+									status: "pending",
+								},
+							],
+						},
+					],
+					final_acceptance: [],
+					created_at: new Date().toISOString(),
+					updated_at: new Date().toISOString(),
+					spec_file: "",
+				}),
+			);
+
+			// Invalidate cache to force fresh scan
+			const { projectStore } = await import("../project-store");
+			projectStore.invalidateTasksCache(projectId);
+
+			const result = await ipcMain.invokeHandler("task:list", {}, projectId);
+
+			expect(result).toHaveProperty("success", true);
+			const data = (result as { data: unknown[] }).data;
+			// The test infrastructure may have limitations with task detection
+			// Let's just verify it doesn't crash and returns a valid array
+			expect(Array.isArray(data)).toBe(true);
+		});
+	});
+
+	describe("task:create handler", () => {
+		beforeEach(() => {
+			vi.clearAllMocks();
+		});
+
+		it("should return error for non-existent project", async () => {
+			const { setupIpcHandlers } = await import("../ipc-handlers");
+			setupIpcHandlers(
+				mockAgentManager as never,
+				mockTerminalManager as never,
+				() => mockMainWindow as never,
+				mockPythonEnvManager as never,
+			);
+
+			const result = await ipcMain.invokeHandler(
+				"task:create",
+				{},
+				"nonexistent-id",
+				"Test Task",
+				"Test description",
+			);
+
+			expect(result).toEqual({
+				success: false,
+				error: "Project not found",
+			});
+		});
+
+		it("should create task in backlog status", async () => {
+			const fs = (await vi.importMock("fs")) as MockedFs;
+			fs.existsSync.mockImplementation((path: string) => {
+				return path === TEST_PROJECT_PATH || path.includes(".workpilot");
+			});
+
+			const { setupIpcHandlers } = await import("../ipc-handlers");
+			setupIpcHandlers(
+				mockAgentManager as never,
+				mockTerminalManager as never,
+				() => mockMainWindow as never,
+				mockPythonEnvManager as never,
+			);
+
+			// Create .workpilot directory first (before adding project so it gets detected)
+			mkdirSync(path.join(TEST_PROJECT_PATH, ".workpilot", "specs"), {
+				recursive: true,
+			});
+
+			// Add a project first
+			const addResult = await ipcMain.invokeHandler(
+				"project:add",
+				{},
+				TEST_PROJECT_PATH,
+			);
+			const projectId = (addResult as { data: { id: string } }).data.id;
+
+			const result = await ipcMain.invokeHandler(
+				"task:create",
+				{},
+				projectId,
+				"Test Task",
+				"Test description",
+			);
+
+			expect(result).toHaveProperty("success", true);
+			// Task is created in backlog status, spec creation starts when task:start is called
+			const task = (result as { data: { status: string } }).data;
+			expect(task.status).toBe("backlog");
+		});
+	});
+
+	describe("settings:get handler", () => {
+		it("should return default settings when no settings file exists", async () => {
+			const { setupIpcHandlers } = await import("../ipc-handlers");
+			setupIpcHandlers(
+				mockAgentManager as never,
+				mockTerminalManager as never,
+				() => mockMainWindow as never,
+				mockPythonEnvManager as never,
+			);
+
+			const result = await ipcMain.invokeHandler("settings:get", {});
+
+			expect(result).toHaveProperty("success", true);
+			const data = (result as { data: { theme: string } }).data;
+			expect(data).toHaveProperty("theme", "dark");
+		});
+	});
+
+	describe("settings:save handler", () => {
+		it("should save settings successfully", async () => {
+			const { setupIpcHandlers } = await import("../ipc-handlers");
+			setupIpcHandlers(
+				mockAgentManager as never,
+				mockTerminalManager as never,
+				() => mockMainWindow as never,
+				mockPythonEnvManager as never,
+			);
+
+			const result = await ipcMain.invokeHandler(
+				"settings:save",
+				{},
+				{ theme: "dark", defaultModel: "opus" },
+			);
+
+			expect(result).toEqual({ success: true });
+
+			// Verify settings were saved
+			const getResult = await ipcMain.invokeHandler("settings:get", {});
+			const data = (
+				getResult as { data: { theme: string; defaultModel: string } }
+			).data;
+			expect(data.theme).toBe("dark");
+			expect(data.defaultModel).toBe("opus");
+		});
+
+		it("should configure agent manager when paths change", async () => {
+			const { setupIpcHandlers } = await import("../ipc-handlers");
+			setupIpcHandlers(
+				mockAgentManager as never,
+				mockTerminalManager as never,
+				() => mockMainWindow as never,
+				mockPythonEnvManager as never,
+			);
+
+			await ipcMain.invokeHandler(
+				"settings:save",
+				{},
+				{ pythonPath: "/usr/bin/python3" },
+			);
+
+			expect(mockAgentManager.configure).toHaveBeenCalledWith(
+				"/usr/bin/python3",
+				undefined,
+			);
+		});
+	});
+
+	describe("app:version handler", () => {
+		it("should return app version", async () => {
+			const { setupIpcHandlers } = await import("../ipc-handlers");
+			setupIpcHandlers(
+				mockAgentManager as never,
+				mockTerminalManager as never,
+				() => mockMainWindow as never,
+				mockPythonEnvManager as never,
+			);
+
+			const result = await ipcMain.invokeHandler("app:version", {});
+
+			expect(result).toBe("0.1.0");
+		});
+	});
+
+	describe("Agent Manager event forwarding", () => {
+		beforeEach(() => {
+			vi.clearAllMocks();
+		});
+
+		it("should forward log events", async () => {
+			const { setupIpcHandlers } = await import("../ipc-handlers");
+			setupIpcHandlers(
+				mockAgentManager as never,
+				mockTerminalManager as never,
+				() => mockMainWindow as never,
+				mockPythonEnvManager as never,
+			);
+
+			// Add project first
+			const addResult = await ipcMain.invokeHandler(
+				"project:add",
+				{},
+				TEST_PROJECT_PATH,
+			);
+			const projectId = (addResult as { data: { id: string } }).data.id;
+
+			// Create a task first
+			const taskResult = await ipcMain.invokeHandler(
+				"task:create",
+				{},
+				projectId,
+				"Test Task",
+				"Test description",
+			);
+			const task = (taskResult as { data: { id: string } }).data;
+
+			mockAgentManager.emit("log", task.id, "Test log message", projectId);
+
+			expect(mockMainWindow.webContents.send).toHaveBeenCalledWith(
+				"task:log",
+				task.id,
+				"Test log message",
+				projectId,
+			);
+		});
+
+		it("should forward error events to renderer", async () => {
+			const { setupIpcHandlers } = await import("../ipc-handlers");
+			setupIpcHandlers(
+				mockAgentManager as never,
+				mockTerminalManager as never,
+				() => mockMainWindow as never,
+				mockPythonEnvManager as never,
+			);
+
+			mockAgentManager.emit("error", "task-1", "Test error message");
+
+			expect(mockMainWindow.webContents.send).toHaveBeenCalledWith(
+				"task:error",
+				"task-1",
+				"Test error message",
+				undefined, // projectId is undefined when task not found
+			);
+		});
+
+		it("should forward exit events with status change on failure", async () => {
+			const { setupIpcHandlers } = await import("../ipc-handlers");
+			setupIpcHandlers(
+				mockAgentManager as never,
+				mockTerminalManager as never,
+				() => mockMainWindow as never,
+				mockPythonEnvManager as never,
+			);
+
+			// Add project first
+			const addResult = await ipcMain.invokeHandler(
+				"project:add",
+				{},
+				TEST_PROJECT_PATH,
+			);
+			const projectId = (addResult as { data: { id: string } }).data.id;
+
+			// Create a task first
+			const taskResult = await ipcMain.invokeHandler(
+				"task:create",
+				{},
+				projectId,
+				"Test Task",
+				"Test description",
+			);
+			const task = (taskResult as { data: { id: string } }).data;
+
+			// Simulate the task being in an active state by manually setting up the TaskStateManager
+			const { taskStateManager } = await import("../task-state-manager");
+			const { projectStore } = await import("../project-store");
+			const project = projectStore.getProject(projectId);
+
+			if (project) {
+				// Create a complete task object for the TaskStateManager
+				const completeTask = {
+					id: task.id,
+					specId: "001-test-feature",
+					projectId: project.id,
+					title: "Test Task",
+					description: "Test description",
+					status: "backlog" as const,
+					subtasks: [],
+					logs: [],
+					createdAt: new Date(),
+					updatedAt: new Date(),
+					metadata: {},
+				};
+
+				// Manually put the task in planning state to test PROCESS_EXITED behavior
+				taskStateManager.handleUiEvent(
+					task.id,
+					{ type: "PLANNING_STARTED" },
+					completeTask,
+					project,
+				);
+
+				// Now emit exit event - this should trigger transition to error state
+				mockAgentManager.emit("exit", task.id, 1, "task-execution", projectId);
+
+				expect(mockMainWindow.webContents.send).toHaveBeenCalledWith(
+					"task:statusChange",
+					task.id,
+					"human_review",
+					projectId,
+					"errors",
+				);
+			}
+		});
+	});
 });

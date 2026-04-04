@@ -1,249 +1,267 @@
-import { useState, useEffect } from 'react';
-import { useTranslation } from 'react-i18next';
-import { GitBranch, Terminal, CheckCircle2, AlertCircle, Loader2, FolderGit2 } from 'lucide-react';
-import { Button } from './ui/button';
+import type { GitStatus, Project } from "@shared/types";
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle
-} from './ui/dialog';
-import type { Project, GitStatus } from '@shared/types';
-import { useToast } from '@/hooks/use-toast';
+	AlertCircle,
+	CheckCircle2,
+	FolderGit2,
+	GitBranch,
+	Loader2,
+	Terminal,
+} from "lucide-react";
+import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
+import { useToast } from "@/hooks/use-toast";
+import { Button } from "./ui/button";
+import {
+	Dialog,
+	DialogContent,
+	DialogDescription,
+	DialogFooter,
+	DialogHeader,
+	DialogTitle,
+} from "./ui/dialog";
 
 interface GitSetupModalProps {
-  readonly open: boolean;
-  readonly onOpenChange: (open: boolean) => void;
-  readonly project: Project | null;
-  readonly gitStatus: GitStatus | null;
-  readonly onGitInitialized: () => void;
-  readonly onSkip?: () => void;
-  readonly remoteConfig?: { url?: string; name?: string };
+	readonly open: boolean;
+	readonly onOpenChange: (open: boolean) => void;
+	readonly project: Project | null;
+	readonly gitStatus: GitStatus | null;
+	readonly onGitInitialized: () => void;
+	readonly onSkip?: () => void;
+	readonly remoteConfig?: { url?: string; name?: string };
 }
 
 export function GitSetupModal({
-  open,
-  onOpenChange,
-  project,
-  gitStatus,
-  onGitInitialized,
-  onSkip,
-  remoteConfig
+	open,
+	onOpenChange,
+	project,
+	gitStatus,
+	onGitInitialized,
+	onSkip,
+	remoteConfig,
 }: GitSetupModalProps) {
-  const { t } = useTranslation('dialogs');
-  const { toast } = useToast();
-  const [isInitializing, setIsInitializing] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [step, setStep] = useState<'info' | 'initializing' | 'success'>('info');
-  const needsGitInit = gitStatus && !gitStatus.isGitRepo;
-  
-  // Store remoteConfig in local state to prevent it from being lost
-  const [storedRemoteConfig, setStoredRemoteConfig] = useState(remoteConfig);
-  
-  // Update stored remoteConfig when prop changes
-  useEffect(() => {
-    if (remoteConfig) {
-      setStoredRemoteConfig(remoteConfig);
-    }
-  }, [remoteConfig]);
+	const { t } = useTranslation("dialogs");
+	const { toast } = useToast();
+	const [isInitializing, setIsInitializing] = useState(false);
+	const [error, setError] = useState<string | null>(null);
+	const [step, setStep] = useState<"info" | "initializing" | "success">("info");
+	const needsGitInit = gitStatus && !gitStatus.isGitRepo;
 
-  const handleInitializeGit = async () => {
-    if (!project) return;
+	// Store remoteConfig in local state to prevent it from being lost
+	const [storedRemoteConfig, setStoredRemoteConfig] = useState(remoteConfig);
 
-    setIsInitializing(true);
-    setError(null);
-    setStep('initializing');
+	// Update stored remoteConfig when prop changes
+	useEffect(() => {
+		if (remoteConfig) {
+			setStoredRemoteConfig(remoteConfig);
+		}
+	}, [remoteConfig]);
 
-    try {
-      // Call the backend to initialize git with remote config if available
-      const result = await globalThis.electronAPI.initializeGit(project.path, storedRemoteConfig);
+	const handleInitializeGit = async () => {
+		if (!project) return;
 
-      if (result.success) {
-        setStep('success');
-        
-        // Close this modal first
-        onOpenChange(false);
-        
-        // Then call the parent callback after a short delay
-        setTimeout(() => {
-          onGitInitialized();
-        }, 100);
-      } else {
-        setError(result.error || 'Failed to initialize git');
-        toast({
-          title: t('gitSetup.errorTitle', 'Erreur lors de l\'initialisation'),
-          description: result.error || t('gitSetup.errorDesc', 'Impossible d\'initialiser le dépôt Git.'),
-          variant: 'destructive',
-        });
-        setStep('info');
-      }
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to initialize git');
-      toast({
-        title: t('gitSetup.errorTitle', 'Erreur lors de l\'initialisation'),
-        description: err instanceof Error ? err.message : t('gitSetup.errorDesc', 'Impossible d\'initialiser le dépôt Git.'),
-        variant: 'destructive',
-      });
-      setStep('info');
-    } finally {
-      setIsInitializing(false);
-    }
-  };
+		setIsInitializing(true);
+		setError(null);
+		setStep("initializing");
 
-  const handleSkip = () => {
-    toast({
-      title: t('gitSetup.skipTitle', 'Dépôt Git ignoré'),
-      description: t('gitSetup.skipDesc', 'Vous pourrez initialiser Git plus tard.'),
-      variant: 'default',
-    });
-    
-    // Close this modal first
-    onOpenChange(false);
-    
-    // Then call the parent callback after a short delay
-    setTimeout(() => {
-      onSkip?.();
-    }, 100);
-  };
+		try {
+			// Call the backend to initialize git with remote config if available
+			const result = await globalThis.electronAPI.initializeGit(
+				project.path,
+				storedRemoteConfig,
+			);
 
-  const renderInfoStep = () => (
-    <>
-      <DialogHeader>
-        <DialogTitle className="flex items-center gap-2">
-          <FolderGit2 className="h-5 w-5 text-primary" />
-          {t('gitSetup.title')}
-        </DialogTitle>
-        <DialogDescription>
-          {t('gitSetup.description')}
-        </DialogDescription>
-      </DialogHeader>
+			if (result.success) {
+				setStep("success");
 
-      <div className="py-4 space-y-4">
-        {/* Status indicator */}
-        <div className="rounded-lg bg-muted p-4">
-          <div className="flex items-start gap-3">
-            <AlertCircle className="h-5 w-5 text-warning mt-0.5 shrink-0" />
-            <div className="space-y-1">
-              <p className="font-medium text-sm">
-                {needsGitInit
-                  ? t('gitSetup.notGitRepo')
-                  : t('gitSetup.noCommits')}
-              </p>
-              <p className="text-sm text-muted-foreground">
-                {needsGitInit
-                  ? t('gitSetup.needsInit')
-                  : t('gitSetup.needsCommit')}
-              </p>
-            </div>
-          </div>
-        </div>
+				// Close this modal first
+				onOpenChange(false);
 
-        {/* What will happen */}
-        <div className="rounded-lg border border-border p-4">
-          <p className="font-medium text-sm mb-3">{t('gitSetup.willSetup')}</p>
-          <ul className="space-y-2">
-            {needsGitInit && (
-              <li className="flex items-center gap-2 text-sm text-muted-foreground">
-                <GitBranch className="h-4 w-4 text-primary" />
-                {t('gitSetup.initRepo')}
-              </li>
-            )}
-            <li className="flex items-center gap-2 text-sm text-muted-foreground">
-              <CheckCircle2 className="h-4 w-4 text-primary" />
-              {t('gitSetup.createCommit')}
-            </li>
-            {storedRemoteConfig?.url && (
-              <li className="flex items-center gap-2 text-sm text-muted-foreground">
-                <CheckCircle2 className="h-4 w-4 text-primary" />
-                {t('gitSetup.setupRemote', 'Configurer le remote')}
-              </li>
-            )}
-          </ul>
-        </div>
+				// Then call the parent callback after a short delay
+				setTimeout(() => {
+					onGitInitialized();
+				}, 100);
+			} else {
+				setError(result.error || "Failed to initialize git");
+				toast({
+					title: t("gitSetup.errorTitle", "Erreur lors de l'initialisation"),
+					description:
+						result.error ||
+						t("gitSetup.errorDesc", "Impossible d'initialiser le dépôt Git."),
+					variant: "destructive",
+				});
+				setStep("info");
+			}
+		} catch (err) {
+			setError(err instanceof Error ? err.message : "Failed to initialize git");
+			toast({
+				title: t("gitSetup.errorTitle", "Erreur lors de l'initialisation"),
+				description:
+					err instanceof Error
+						? err.message
+						: t("gitSetup.errorDesc", "Impossible d'initialiser le dépôt Git."),
+				variant: "destructive",
+			});
+			setStep("info");
+		} finally {
+			setIsInitializing(false);
+		}
+	};
 
-        {/* Manual instructions for advanced users */}
-        <details className="text-sm">
-          <summary className="cursor-pointer text-muted-foreground hover:text-foreground">
-            {t('gitSetup.manual')}
-          </summary>
-          <div className="mt-3 rounded-lg bg-muted/50 p-3 font-mono text-xs space-y-1">
-            <p className="text-muted-foreground">{t('gitSetup.manualTerminal')}</p>
-            {needsGitInit && <p>git init</p>}
-            <p>git add .</p>
-            <p>git commit -m "{t('gitSetup.initialCommitMessage')}"</p>
-          </div>
-        </details>
+	const handleSkip = () => {
+		toast({
+			title: t("gitSetup.skipTitle", "Dépôt Git ignoré"),
+			description: t(
+				"gitSetup.skipDesc",
+				"Vous pourrez initialiser Git plus tard.",
+			),
+			variant: "default",
+		});
 
-        {error && (
-          <div className="rounded-lg bg-destructive/10 border border-destructive/20 p-3 text-sm text-destructive">
-            {error}
-          </div>
-        )}
-      </div>
+		// Close this modal first
+		onOpenChange(false);
 
-      <DialogFooter>
-        <Button variant="outline" onClick={handleSkip}>
-          {t('gitSetup.skip')}
-        </Button>
-        <Button onClick={handleInitializeGit} disabled={isInitializing}>
-          <GitBranch className="mr-2 h-4 w-4" />
-          {t('gitSetup.initializeGit')}
-        </Button>
-      </DialogFooter>
-    </>
-  );
+		// Then call the parent callback after a short delay
+		setTimeout(() => {
+			onSkip?.();
+		}, 100);
+	};
 
-  const renderInitializingStep = () => (
-    <>
-      <DialogHeader>
-        <DialogTitle className="flex items-center gap-2">
-          <Loader2 className="h-5 w-5 animate-spin text-primary" />
-          {t('gitSetup.settingUp')}
-        </DialogTitle>
-      </DialogHeader>
+	const renderInfoStep = () => (
+		<>
+			<DialogHeader>
+				<DialogTitle className="flex items-center gap-2">
+					<FolderGit2 className="h-5 w-5 text-primary" />
+					{t("gitSetup.title")}
+				</DialogTitle>
+				<DialogDescription>{t("gitSetup.description")}</DialogDescription>
+			</DialogHeader>
 
-      <div className="py-8 flex flex-col items-center justify-center">
-        <div className="space-y-3 text-center">
-          <Terminal className="h-12 w-12 text-muted-foreground mx-auto" />
-          <p className="text-sm text-muted-foreground">
-            {t('gitSetup.initializingRepo')}
-          </p>
-        </div>
-      </div>
-    </>
-  );
+			<div className="py-4 space-y-4">
+				{/* Status indicator */}
+				<div className="rounded-lg bg-muted p-4">
+					<div className="flex items-start gap-3">
+						<AlertCircle className="h-5 w-5 text-warning mt-0.5 shrink-0" />
+						<div className="space-y-1">
+							<p className="font-medium text-sm">
+								{needsGitInit
+									? t("gitSetup.notGitRepo")
+									: t("gitSetup.noCommits")}
+							</p>
+							<p className="text-sm text-muted-foreground">
+								{needsGitInit
+									? t("gitSetup.needsInit")
+									: t("gitSetup.needsCommit")}
+							</p>
+						</div>
+					</div>
+				</div>
 
-  const renderSuccessStep = () => (
-    <>
-      <DialogHeader>
-        <DialogTitle className="flex items-center gap-2">
-          <CheckCircle2 className="h-5 w-5 text-success" />
-          {t('gitSetup.success')}
-        </DialogTitle>
-      </DialogHeader>
+				{/* What will happen */}
+				<div className="rounded-lg border border-border p-4">
+					<p className="font-medium text-sm mb-3">{t("gitSetup.willSetup")}</p>
+					<ul className="space-y-2">
+						{needsGitInit && (
+							<li className="flex items-center gap-2 text-sm text-muted-foreground">
+								<GitBranch className="h-4 w-4 text-primary" />
+								{t("gitSetup.initRepo")}
+							</li>
+						)}
+						<li className="flex items-center gap-2 text-sm text-muted-foreground">
+							<CheckCircle2 className="h-4 w-4 text-primary" />
+							{t("gitSetup.createCommit")}
+						</li>
+						{storedRemoteConfig?.url && (
+							<li className="flex items-center gap-2 text-sm text-muted-foreground">
+								<CheckCircle2 className="h-4 w-4 text-primary" />
+								{t("gitSetup.setupRemote", "Configurer le remote")}
+							</li>
+						)}
+					</ul>
+				</div>
 
-      <div className="py-8 flex flex-col items-center justify-center">
-        <div className="space-y-3 text-center">
-          <div className="h-16 w-16 rounded-full bg-success/10 flex items-center justify-center mx-auto">
-            <CheckCircle2 className="h-8 w-8 text-success" />
-          </div>
-          <p className="text-sm text-muted-foreground">
-            {t('gitSetup.readyToUse')}
-          </p>
-        </div>
-      </div>
-    </>
-  );
+				{/* Manual instructions for advanced users */}
+				<details className="text-sm">
+					<summary className="cursor-pointer text-muted-foreground hover:text-foreground">
+						{t("gitSetup.manual")}
+					</summary>
+					<div className="mt-3 rounded-lg bg-muted/50 p-3 font-mono text-xs space-y-1">
+						<p className="text-muted-foreground">
+							{t("gitSetup.manualTerminal")}
+						</p>
+						{needsGitInit && <p>git init</p>}
+						<p>git add .</p>
+						<p>git commit -m "{t("gitSetup.initialCommitMessage")}"</p>
+					</div>
+				</details>
 
-  return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md">
-        {step === 'info' && renderInfoStep()}
-        {step === 'initializing' && renderInitializingStep()}
-        {step === 'success' && renderSuccessStep()}
-      </DialogContent>
-    </Dialog>
-  );
+				{error && (
+					<div className="rounded-lg bg-destructive/10 border border-destructive/20 p-3 text-sm text-destructive">
+						{error}
+					</div>
+				)}
+			</div>
+
+			<DialogFooter>
+				<Button variant="outline" onClick={handleSkip}>
+					{t("gitSetup.skip")}
+				</Button>
+				<Button onClick={handleInitializeGit} disabled={isInitializing}>
+					<GitBranch className="mr-2 h-4 w-4" />
+					{t("gitSetup.initializeGit")}
+				</Button>
+			</DialogFooter>
+		</>
+	);
+
+	const renderInitializingStep = () => (
+		<>
+			<DialogHeader>
+				<DialogTitle className="flex items-center gap-2">
+					<Loader2 className="h-5 w-5 animate-spin text-primary" />
+					{t("gitSetup.settingUp")}
+				</DialogTitle>
+			</DialogHeader>
+
+			<div className="py-8 flex flex-col items-center justify-center">
+				<div className="space-y-3 text-center">
+					<Terminal className="h-12 w-12 text-muted-foreground mx-auto" />
+					<p className="text-sm text-muted-foreground">
+						{t("gitSetup.initializingRepo")}
+					</p>
+				</div>
+			</div>
+		</>
+	);
+
+	const renderSuccessStep = () => (
+		<>
+			<DialogHeader>
+				<DialogTitle className="flex items-center gap-2">
+					<CheckCircle2 className="h-5 w-5 text-success" />
+					{t("gitSetup.success")}
+				</DialogTitle>
+			</DialogHeader>
+
+			<div className="py-8 flex flex-col items-center justify-center">
+				<div className="space-y-3 text-center">
+					<div className="h-16 w-16 rounded-full bg-success/10 flex items-center justify-center mx-auto">
+						<CheckCircle2 className="h-8 w-8 text-success" />
+					</div>
+					<p className="text-sm text-muted-foreground">
+						{t("gitSetup.readyToUse")}
+					</p>
+				</div>
+			</div>
+		</>
+	);
+
+	return (
+		<Dialog open={open} onOpenChange={onOpenChange}>
+			<DialogContent className="sm:max-w-md">
+				{step === "info" && renderInfoStep()}
+				{step === "initializing" && renderInitializingStep()}
+				{step === "success" && renderSuccessStep()}
+			</DialogContent>
+		</Dialog>
+	);
 }

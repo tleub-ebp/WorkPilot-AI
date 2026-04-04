@@ -19,26 +19,31 @@
  * @param apiProfileEnv - Environment variables from getAPIProfileEnv()
  * @returns Object with empty ANTHROPIC_* vars if in OAuth mode, empty object otherwise
  */
-export function getOAuthModeClearVars(apiProfileEnv: Record<string, string>): Record<string, string> {
-  // If API profile is active (has ANTHROPIC_* vars), don't clear anything
-  if (apiProfileEnv && Object.keys(apiProfileEnv).some(key => key.startsWith('ANTHROPIC_'))) {
-    return {};
-  }
+export function getOAuthModeClearVars(
+	apiProfileEnv: Record<string, string>,
+): Record<string, string> {
+	// If API profile is active (has ANTHROPIC_* vars), don't clear anything
+	if (
+		apiProfileEnv &&
+		Object.keys(apiProfileEnv).some((key) => key.startsWith("ANTHROPIC_"))
+	) {
+		return {};
+	}
 
-  // In OAuth mode (no API profile), clear all ANTHROPIC_* vars
-  // Setting to empty string ensures they override any values from process.env
-  // Python's `if token:` checks treat empty strings as falsy
-  //
-  // IMPORTANT: ANTHROPIC_API_KEY is included to prevent Claude Code from using
-  // API keys that may be present in the shell environment instead of OAuth tokens.
-  // Without clearing this, Claude Code would show "Claude API" instead of "Claude Max".
-  return {
-    ANTHROPIC_API_KEY: '',
-    ANTHROPIC_AUTH_TOKEN: '',
-    ANTHROPIC_BASE_URL: '',
-    ANTHROPIC_MODEL: '',
-    ANTHROPIC_DEFAULT_HAIKU_MODEL: '',
-    ANTHROPIC_DEFAULT_SONNET_MODEL: '',
-    ANTHROPIC_DEFAULT_OPUS_MODEL: ''
-  };
+	// In OAuth mode (no API profile), clear all ANTHROPIC_* vars
+	// Setting to empty string ensures they override any values from process.env
+	// Python's `if token:` checks treat empty strings as falsy
+	//
+	// IMPORTANT: ANTHROPIC_API_KEY is included to prevent Claude Code from using
+	// API keys that may be present in the shell environment instead of OAuth tokens.
+	// Without clearing this, Claude Code would show "Claude API" instead of "Claude Max".
+	return {
+		ANTHROPIC_API_KEY: "",
+		ANTHROPIC_AUTH_TOKEN: "",
+		ANTHROPIC_BASE_URL: "",
+		ANTHROPIC_MODEL: "",
+		ANTHROPIC_DEFAULT_HAIKU_MODEL: "",
+		ANTHROPIC_DEFAULT_SONNET_MODEL: "",
+		ANTHROPIC_DEFAULT_OPUS_MODEL: "",
+	};
 }

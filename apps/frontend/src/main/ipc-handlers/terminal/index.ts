@@ -5,13 +5,13 @@
  * - Worktree operations (create, list, remove)
  */
 
-import { registerTerminalWorktreeHandlers } from './worktree-handlers';
+import { registerTerminalWorktreeHandlers } from "./worktree-handlers";
 
 /**
  * Register all terminal worktree IPC handlers
  */
 export function registerTerminalWorktreeIpcHandlers(): void {
-  registerTerminalWorktreeHandlers();
+	registerTerminalWorktreeHandlers();
 }
 
-export { registerTerminalWorktreeHandlers } from './worktree-handlers';
+export { registerTerminalWorktreeHandlers } from "./worktree-handlers";

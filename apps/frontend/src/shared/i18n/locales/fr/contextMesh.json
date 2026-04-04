@@ -1,134 +1,134 @@
 {
-  "title": "Context Mesh",
-  "description": "Intelligence cross-projets qui detecte les patterns, genere un handbook d'ingenierie et transfere les competences entre tous vos projets.",
-  "tabs": {
-    "overview": "Vue d'ensemble",
-    "patterns": "Patterns",
-    "handbook": "Handbook",
-    "transfers": "Transferts de competences",
-    "recommendations": "Recommandations",
-    "projects": "Projets"
-  },
-  "overview": {
-    "projects": "Projets enregistres",
-    "patterns": "Patterns cross-projets",
-    "handbookEntries": "Entrees du handbook",
-    "skillTransfers": "Transferts de competences",
-    "activeRecommendations": "Recommandations actives",
-    "pendingTransfers": "Transferts en attente"
-  },
-  "patterns": {
-    "title": "Patterns cross-projets ({{count}})",
-    "confidence": "Confiance",
-    "occurrences": "{{count}} occurrence(s)",
-    "sourceProjects": "Trouve dans",
-    "targetProjects": "Applicable a",
-    "migrationHint": "Indice de migration",
-    "codeExample": "Exemple de code",
-    "adoptionRate": "{{rate}}% d'adoption"
-  },
-  "handbook": {
-    "title": "Handbook d'ingenierie ({{count}})",
-    "domain": "Domaine",
-    "rationale": "Justification de la decision",
-    "sourceProjects": "Des projets",
-    "tags": "Tags",
-    "version": "v{{version}}"
-  },
-  "transfers": {
-    "title": "Transferts de competences ({{count}})",
-    "source": "Appris dans",
-    "targets": "Applicable a",
-    "framework": "Framework/API",
-    "convention": "Details de la convention",
-    "confidence": "Confiance",
-    "statusPending": "En attente",
-    "statusAccepted": "Accepte",
-    "statusDismissed": "Rejete"
-  },
-  "recommendations": {
-    "title": "Recommandations ({{count}})",
-    "source": "Base sur",
-    "target": "Pour le projet",
-    "relevance": "Pertinence",
-    "phase": "Phase",
-    "action": "Action suggeree",
-    "types": {
-      "pattern_reuse": "Reutilisation de pattern",
-      "convention_adoption": "Adoption de convention",
-      "bug_prevention": "Prevention de bugs",
-      "divergence_alert": "Alerte de divergence",
-      "complexity_estimate": "Estimation de complexite",
-      "skill_transfer": "Transfert de competence"
-    }
-  },
-  "projects": {
-    "title": "Projets enregistres ({{count}})",
-    "techStack": "Stack technique",
-    "languages": "Langages",
-    "frameworks": "Frameworks",
-    "lastAnalyzed": "Derniere analyse",
-    "patternCount": "{{count}} pattern(s)",
-    "never": "Jamais",
-    "addProject": "Ajouter un projet",
-    "removeProject": "Supprimer"
-  },
-  "categories": {
-    "architecture": "Architecture",
-    "auth": "Authentification",
-    "api_design": "Conception d'API",
-    "state_management": "Gestion d'etat",
-    "testing": "Tests",
-    "deployment": "Deploiement",
-    "error_handling": "Gestion d'erreurs",
-    "security": "Securite",
-    "performance": "Performance",
-    "naming_convention": "Convention de nommage",
-    "project_structure": "Structure de projet",
-    "database": "Base de donnees",
-    "logging": "Journalisation",
-    "ci_cd": "CI/CD",
-    "other": "Autre"
-  },
-  "domains": {
-    "auth": "Authentification",
-    "api_design": "Conception d'API",
-    "state_management": "Gestion d'etat",
-    "testing": "Tests",
-    "deployment": "Deploiement",
-    "security": "Securite",
-    "performance": "Performance",
-    "database": "Base de donnees",
-    "frontend": "Frontend",
-    "backend": "Backend",
-    "devops": "DevOps",
-    "general": "General"
-  },
-  "status": {
-    "analyzing": "Analyse des projets en cours...",
-    "complete": "Analyse terminee. Graphe de connaissances mis a jour."
-  },
-  "actions": {
-    "analyze": "Lancer l'analyse",
-    "reanalyze": "Re-analyser",
-    "stop": "Arreter l'analyse",
-    "accept": "Accepter",
-    "dismiss": "Rejeter",
-    "apply": "Appliquer",
-    "delete": "Supprimer",
-    "close": "Fermer"
-  },
-  "empty": {
-    "title": "Aucune donnee cross-projet",
-    "description": "Enregistrez au moins deux projets et lancez une analyse pour decouvrir les patterns cross-projets.",
-    "noPatterns": "Aucun pattern detecte. Lancez une analyse pour decouvrir les patterns cross-projets.",
-    "noHandbook": "Aucune entree dans le handbook. Lancez une analyse pour generer automatiquement votre handbook d'ingenierie.",
-    "noTransfers": "Aucun transfert de competence identifie.",
-    "noRecommendations": "Aucune recommandation active.",
-    "noProjects": "Aucun projet enregistre. Ajoutez vos projets pour commencer a construire l'intelligence cross-projets."
-  },
-  "errors": {
-    "analysisRequired": "Au moins deux projets doivent etre enregistres pour lancer l'analyse.",
-    "analysisFailed": "L'analyse a echoue. Verifiez vos identifiants LLM et reessayez."
-  }
+	"title": "Context Mesh",
+	"description": "Intelligence cross-projets qui detecte les patterns, genere un handbook d'ingenierie et transfere les competences entre tous vos projets.",
+	"tabs": {
+		"overview": "Vue d'ensemble",
+		"patterns": "Patterns",
+		"handbook": "Handbook",
+		"transfers": "Transferts de competences",
+		"recommendations": "Recommandations",
+		"projects": "Projets"
+	},
+	"overview": {
+		"projects": "Projets enregistres",
+		"patterns": "Patterns cross-projets",
+		"handbookEntries": "Entrees du handbook",
+		"skillTransfers": "Transferts de competences",
+		"activeRecommendations": "Recommandations actives",
+		"pendingTransfers": "Transferts en attente"
+	},
+	"patterns": {
+		"title": "Patterns cross-projets ({{count}})",
+		"confidence": "Confiance",
+		"occurrences": "{{count}} occurrence(s)",
+		"sourceProjects": "Trouve dans",
+		"targetProjects": "Applicable a",
+		"migrationHint": "Indice de migration",
+		"codeExample": "Exemple de code",
+		"adoptionRate": "{{rate}}% d'adoption"
+	},
+	"handbook": {
+		"title": "Handbook d'ingenierie ({{count}})",
+		"domain": "Domaine",
+		"rationale": "Justification de la decision",
+		"sourceProjects": "Des projets",
+		"tags": "Tags",
+		"version": "v{{version}}"
+	},
+	"transfers": {
+		"title": "Transferts de competences ({{count}})",
+		"source": "Appris dans",
+		"targets": "Applicable a",
+		"framework": "Framework/API",
+		"convention": "Details de la convention",
+		"confidence": "Confiance",
+		"statusPending": "En attente",
+		"statusAccepted": "Accepte",
+		"statusDismissed": "Rejete"
+	},
+	"recommendations": {
+		"title": "Recommandations ({{count}})",
+		"source": "Base sur",
+		"target": "Pour le projet",
+		"relevance": "Pertinence",
+		"phase": "Phase",
+		"action": "Action suggeree",
+		"types": {
+			"pattern_reuse": "Reutilisation de pattern",
+			"convention_adoption": "Adoption de convention",
+			"bug_prevention": "Prevention de bugs",
+			"divergence_alert": "Alerte de divergence",
+			"complexity_estimate": "Estimation de complexite",
+			"skill_transfer": "Transfert de competence"
+		}
+	},
+	"projects": {
+		"title": "Projets enregistres ({{count}})",
+		"techStack": "Stack technique",
+		"languages": "Langages",
+		"frameworks": "Frameworks",
+		"lastAnalyzed": "Derniere analyse",
+		"patternCount": "{{count}} pattern(s)",
+		"never": "Jamais",
+		"addProject": "Ajouter un projet",
+		"removeProject": "Supprimer"
+	},
+	"categories": {
+		"architecture": "Architecture",
+		"auth": "Authentification",
+		"api_design": "Conception d'API",
+		"state_management": "Gestion d'etat",
+		"testing": "Tests",
+		"deployment": "Deploiement",
+		"error_handling": "Gestion d'erreurs",
+		"security": "Securite",
+		"performance": "Performance",
+		"naming_convention": "Convention de nommage",
+		"project_structure": "Structure de projet",
+		"database": "Base de donnees",
+		"logging": "Journalisation",
+		"ci_cd": "CI/CD",
+		"other": "Autre"
+	},
+	"domains": {
+		"auth": "Authentification",
+		"api_design": "Conception d'API",
+		"state_management": "Gestion d'etat",
+		"testing": "Tests",
+		"deployment": "Deploiement",
+		"security": "Securite",
+		"performance": "Performance",
+		"database": "Base de donnees",
+		"frontend": "Frontend",
+		"backend": "Backend",
+		"devops": "DevOps",
+		"general": "General"
+	},
+	"status": {
+		"analyzing": "Analyse des projets en cours...",
+		"complete": "Analyse terminee. Graphe de connaissances mis a jour."
+	},
+	"actions": {
+		"analyze": "Lancer l'analyse",
+		"reanalyze": "Re-analyser",
+		"stop": "Arreter l'analyse",
+		"accept": "Accepter",
+		"dismiss": "Rejeter",
+		"apply": "Appliquer",
+		"delete": "Supprimer",
+		"close": "Fermer"
+	},
+	"empty": {
+		"title": "Aucune donnee cross-projet",
+		"description": "Enregistrez au moins deux projets et lancez une analyse pour decouvrir les patterns cross-projets.",
+		"noPatterns": "Aucun pattern detecte. Lancez une analyse pour decouvrir les patterns cross-projets.",
+		"noHandbook": "Aucune entree dans le handbook. Lancez une analyse pour generer automatiquement votre handbook d'ingenierie.",
+		"noTransfers": "Aucun transfert de competence identifie.",
+		"noRecommendations": "Aucune recommandation active.",
+		"noProjects": "Aucun projet enregistre. Ajoutez vos projets pour commencer a construire l'intelligence cross-projets."
+	},
+	"errors": {
+		"analysisRequired": "Au moins deux projets doivent etre enregistres pour lancer l'analyse.",
+		"analysisFailed": "L'analyse a echoue. Verifiez vos identifiants LLM et reessayez."
+	}
 }

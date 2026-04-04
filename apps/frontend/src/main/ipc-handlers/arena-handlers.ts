@@ -8,568 +8,650 @@
  * - Provide auto-routing recommendations
  */
 
-import { ipcMain, app } from 'electron';
-import type { BrowserWindow } from 'electron';
-import * as fs from 'node:fs';
-import * as path from 'node:path';
-import { appLog } from '../app-logger';
+import * as fs from "node:fs";
+import * as path from "node:path";
+import type { BrowserWindow } from "electron";
+import { app, ipcMain } from "electron";
 import type {
-  ArenaBattle,
-  ArenaParticipant,
-  ArenaLabel,
-  ArenaVote,
-  ArenaAnalytics,
-  ArenaModelStats,
-  ArenaTaskType,
-} from '../../shared/types/arena';
+	ArenaAnalytics,
+	ArenaBattle,
+	ArenaLabel,
+	ArenaModelStats,
+	ArenaParticipant,
+	ArenaTaskType,
+	ArenaVote,
+} from "../../shared/types/arena";
+import { appLog } from "../app-logger";
 
 // ─── Storage ──────────────────────────────────────────────────────────────────
 
 function getArenaDataDir(): string {
-  const userDataPath = app.getPath('userData');
-  const dir = path.join(userDataPath, 'arena-mode');
-  if (!fs.existsSync(dir)) {
-    fs.mkdirSync(dir, { recursive: true });
-  }
-  return dir;
+	const userDataPath = app.getPath("userData");
+	const dir = path.join(userDataPath, "arena-mode");
+	if (!fs.existsSync(dir)) {
+		fs.mkdirSync(dir, { recursive: true });
+	}
+	return dir;
 }
 
 function getBattlesPath(): string {
-  return path.join(getArenaDataDir(), 'battles.json');
+	return path.join(getArenaDataDir(), "battles.json");
 }
 
 function getVotesPath(): string {
-  return path.join(getArenaDataDir(), 'votes.json');
+	return path.join(getArenaDataDir(), "votes.json");
 }
 
 function readBattles(): ArenaBattle[] {
-  const p = getBattlesPath();
-  if (!fs.existsSync(p)) return [];
-  try {
-    return JSON.parse(fs.readFileSync(p, 'utf-8'));
-  } catch {
-    return [];
-  }
+	const p = getBattlesPath();
+	if (!fs.existsSync(p)) return [];
+	try {
+		return JSON.parse(fs.readFileSync(p, "utf-8"));
+	} catch {
+		return [];
+	}
 }
 
 function writeBattles(battles: ArenaBattle[]): void {
-  // Keep only last 100 battles
-  const trimmed = battles.slice(0, 100);
-  fs.writeFileSync(getBattlesPath(), JSON.stringify(trimmed, null, 2));
+	// Keep only last 100 battles
+	const trimmed = battles.slice(0, 100);
+	fs.writeFileSync(getBattlesPath(), JSON.stringify(trimmed, null, 2));
 }
 
 function readVotes(): ArenaVote[] {
-  const p = getVotesPath();
-  if (!fs.existsSync(p)) return [];
-  try {
-    return JSON.parse(fs.readFileSync(p, 'utf-8'));
-  } catch {
-    return [];
-  }
+	const p = getVotesPath();
+	if (!fs.existsSync(p)) return [];
+	try {
+		return JSON.parse(fs.readFileSync(p, "utf-8"));
+	} catch {
+		return [];
+	}
 }
 
 function writeVotes(votes: ArenaVote[]): void {
-  fs.writeFileSync(getVotesPath(), JSON.stringify(votes, null, 2));
+	fs.writeFileSync(getVotesPath(), JSON.stringify(votes, null, 2));
 }
 
 // ─── Analytics Builder ────────────────────────────────────────────────────────
 
 function initializeModelStats(participant: ArenaParticipant): ArenaModelStats {
-  return {
-    profileId: participant.profileId,
-    modelName: participant.modelName,
-    provider: participant.provider,
-    wins: 0,
-    losses: 0,
-    total: 0,
-    winRate: 0,
-    avgCostPerBattle: 0,
-    totalCostUsd: 0,
-    avgDurationMs: 0,
-    byTaskType: {},
-  };
+	return {
+		profileId: participant.profileId,
+		modelName: participant.modelName,
+		provider: participant.provider,
+		wins: 0,
+		losses: 0,
+		total: 0,
+		winRate: 0,
+		avgCostPerBattle: 0,
+		totalCostUsd: 0,
+		avgDurationMs: 0,
+		byTaskType: {},
+	};
 }
 
 function updateModelStats(
-  stats: ArenaModelStats,
-  participant: ArenaParticipant,
-  _battle: ArenaBattle,
-  isWinner: boolean
+	stats: ArenaModelStats,
+	participant: ArenaParticipant,
+	_battle: ArenaBattle,
+	isWinner: boolean,
 ): void {
-  stats.total += 1;
-  if (isWinner) stats.wins += 1;
-  else stats.losses += 1;
-  stats.totalCostUsd += participant.costUsd;
-  stats.avgDurationMs =
-    (stats.avgDurationMs * (stats.total - 1) + participant.durationMs) / stats.total;
+	stats.total += 1;
+	if (isWinner) stats.wins += 1;
+	else stats.losses += 1;
+	stats.totalCostUsd += participant.costUsd;
+	stats.avgDurationMs =
+		(stats.avgDurationMs * (stats.total - 1) + participant.durationMs) /
+		stats.total;
 }
 
 function updateTaskTypeStats(
-  stats: ArenaModelStats,
-  taskType: ArenaTaskType,
-  isWinner: boolean,
-  costUsd: number
+	stats: ArenaModelStats,
+	taskType: ArenaTaskType,
+	isWinner: boolean,
+	costUsd: number,
 ): void {
-  let ttStats = stats.byTaskType[taskType];
-  if (!ttStats) {
-    ttStats = { wins: 0, total: 0, winRate: 0, avgCostUsd: 0 };
-    stats.byTaskType[taskType] = ttStats;
-  }
-  ttStats.total += 1;
-  if (isWinner) ttStats.wins += 1;
-  ttStats.winRate = ttStats.wins / ttStats.total;
-  ttStats.avgCostUsd =
-    (ttStats.avgCostUsd * (ttStats.total - 1) + costUsd) / ttStats.total;
+	let ttStats = stats.byTaskType[taskType];
+	if (!ttStats) {
+		ttStats = { wins: 0, total: 0, winRate: 0, avgCostUsd: 0 };
+		stats.byTaskType[taskType] = ttStats;
+	}
+	ttStats.total += 1;
+	if (isWinner) ttStats.wins += 1;
+	ttStats.winRate = ttStats.wins / ttStats.total;
+	ttStats.avgCostUsd =
+		(ttStats.avgCostUsd * (ttStats.total - 1) + costUsd) / ttStats.total;
 }
 
 function buildModelStats(battles: ArenaBattle[]): Map<string, ArenaModelStats> {
-  const modelMap = new Map<string, ArenaModelStats>();
+	const modelMap = new Map<string, ArenaModelStats>();
 
-  for (const battle of battles) {
-    if (battle.status !== 'completed' || !battle.winnerLabel) continue;
+	for (const battle of battles) {
+		if (battle.status !== "completed" || !battle.winnerLabel) continue;
 
-    for (const participant of battle.participants) {
-      let stats = modelMap.get(participant.profileId);
-      
-      if (!stats) {
-        stats = initializeModelStats(participant);
-        modelMap.set(participant.profileId, stats);
-      }
-      
-      const isWinner = participant.label === battle.winnerLabel;
-      updateModelStats(stats, participant, battle, isWinner);
-      updateTaskTypeStats(stats, battle.taskType, isWinner, participant.costUsd);
-    }
-  }
+		for (const participant of battle.participants) {
+			let stats = modelMap.get(participant.profileId);
 
-  return modelMap;
+			if (!stats) {
+				stats = initializeModelStats(participant);
+				modelMap.set(participant.profileId, stats);
+			}
+
+			const isWinner = participant.label === battle.winnerLabel;
+			updateModelStats(stats, participant, battle, isWinner);
+			updateTaskTypeStats(
+				stats,
+				battle.taskType,
+				isWinner,
+				participant.costUsd,
+			);
+		}
+	}
+
+	return modelMap;
 }
 
 function finalizeStats(modelMap: Map<string, ArenaModelStats>): void {
-  for (const stats of modelMap.values()) {
-    stats.winRate = stats.total > 0 ? stats.wins / stats.total : 0;
-    stats.avgCostPerBattle = stats.total > 0 ? stats.totalCostUsd / stats.total : 0;
-  }
+	for (const stats of modelMap.values()) {
+		stats.winRate = stats.total > 0 ? stats.wins / stats.total : 0;
+		stats.avgCostPerBattle =
+			stats.total > 0 ? stats.totalCostUsd / stats.total : 0;
+	}
 }
 
-function calculateConfidence(totalBattles: number): 'low' | 'medium' | 'high' {
-  if (totalBattles >= 10) return 'high';
-  if (totalBattles >= 5) return 'medium';
-  return 'low';
+function calculateConfidence(totalBattles: number): "low" | "medium" | "high" {
+	if (totalBattles >= 10) return "high";
+	if (totalBattles >= 5) return "medium";
+	return "low";
 }
 
 function findBestModelForTask(
-  modelMap: Map<string, ArenaModelStats>,
-  taskType: ArenaTaskType
-): [ArenaModelStats, NonNullable<ArenaModelStats['byTaskType'][ArenaTaskType]>] | null {
-  let bestCombo: [ArenaModelStats, NonNullable<ArenaModelStats['byTaskType'][ArenaTaskType]>] | null = null;
-  let bestWins = 0;
+	modelMap: Map<string, ArenaModelStats>,
+	taskType: ArenaTaskType,
+):
+	| [ArenaModelStats, NonNullable<ArenaModelStats["byTaskType"][ArenaTaskType]>]
+	| null {
+	let bestCombo:
+		| [
+				ArenaModelStats,
+				NonNullable<ArenaModelStats["byTaskType"][ArenaTaskType]>,
+		  ]
+		| null = null;
+	let bestWins = 0;
 
-  for (const stats of modelMap.values()) {
-    const ttStats = stats.byTaskType[taskType];
-    if (!ttStats || ttStats.total < 2) continue;
-    
-    if (ttStats.wins > bestWins) {
-      bestWins = ttStats.wins;
-      bestCombo = [stats, ttStats];
-    }
-  }
+	for (const stats of modelMap.values()) {
+		const ttStats = stats.byTaskType[taskType];
+		if (!ttStats || ttStats.total < 2) continue;
 
-  return bestCombo;
+		if (ttStats.wins > bestWins) {
+			bestWins = ttStats.wins;
+			bestCombo = [stats, ttStats];
+		}
+	}
+
+	return bestCombo;
 }
 
 function buildAutoRoutingRecommendations(
-  modelMap: Map<string, ArenaModelStats>
-): ArenaAnalytics['autoRoutingRecommendations'] {
-  const taskTypes: ArenaTaskType[] = ['coding', 'review', 'test', 'planning', 'spec', 'insights'];
-  const recommendations: ArenaAnalytics['autoRoutingRecommendations'] = {};
+	modelMap: Map<string, ArenaModelStats>,
+): ArenaAnalytics["autoRoutingRecommendations"] {
+	const taskTypes: ArenaTaskType[] = [
+		"coding",
+		"review",
+		"test",
+		"planning",
+		"spec",
+		"insights",
+	];
+	const recommendations: ArenaAnalytics["autoRoutingRecommendations"] = {};
 
-  for (const taskType of taskTypes) {
-    const bestCombo = findBestModelForTask(modelMap, taskType);
-    
-    if (bestCombo) {
-      const [stats, ttStats] = bestCombo;
-      const confidence = calculateConfidence(ttStats.total);
+	for (const taskType of taskTypes) {
+		const bestCombo = findBestModelForTask(modelMap, taskType);
 
-      recommendations[taskType] = {
-        profileId: stats.profileId,
-        modelName: stats.modelName,
-        winRate: ttStats.winRate,
-        confidence,
-      };
-    }
-  }
+		if (bestCombo) {
+			const [stats, ttStats] = bestCombo;
+			const confidence = calculateConfidence(ttStats.total);
 
-  return recommendations;
+			recommendations[taskType] = {
+				profileId: stats.profileId,
+				modelName: stats.modelName,
+				winRate: ttStats.winRate,
+				confidence,
+			};
+		}
+	}
+
+	return recommendations;
 }
 
-function computeAnalytics(battles: ArenaBattle[], votes: ArenaVote[]): ArenaAnalytics {
-  const modelMap = buildModelStats(battles);
-  finalizeStats(modelMap);
-  const autoRoutingRecommendations = buildAutoRoutingRecommendations(modelMap);
+function computeAnalytics(
+	battles: ArenaBattle[],
+	votes: ArenaVote[],
+): ArenaAnalytics {
+	const modelMap = buildModelStats(battles);
+	finalizeStats(modelMap);
+	const autoRoutingRecommendations = buildAutoRoutingRecommendations(modelMap);
 
-  return {
-    totalBattles: battles.length,
-    totalVotes: votes.length,
-    byModel: Array.from(modelMap.values()).sort((a, b) => b.winRate - a.winRate),
-    autoRoutingRecommendations,
-    lastUpdated: Date.now(),
-  };
+	return {
+		totalBattles: battles.length,
+		totalVotes: votes.length,
+		byModel: Array.from(modelMap.values()).sort(
+			(a, b) => b.winRate - a.winRate,
+		),
+		autoRoutingRecommendations,
+		lastUpdated: Date.now(),
+	};
 }
 
 // ─── Battle Execution ─────────────────────────────────────────────────────────
 
-const LABELS: ArenaLabel[] = ['A', 'B', 'C', 'D'];
+const LABELS: ArenaLabel[] = ["A", "B", "C", "D"];
 
 interface StartBattleRequest {
-  taskType: ArenaTaskType;
-  prompt: string;
-  profileIds: string[];
-  projectPath?: string;
+	taskType: ArenaTaskType;
+	prompt: string;
+	profileIds: string[];
+	projectPath?: string;
 }
 
 async function runBattle(
-  battle: ArenaBattle,
-  request: StartBattleRequest,
-  getMainWindow: () => BrowserWindow | null
+	battle: ArenaBattle,
+	request: StartBattleRequest,
+	getMainWindow: () => BrowserWindow | null,
 ): Promise<void> {
-  const win = getMainWindow();
+	const win = getMainWindow();
 
-  const safeSend = (channel: string, ...args: unknown[]) => {
-    const w = getMainWindow();
-    if (w && !w.isDestroyed()) {
-      w.webContents.send(channel, ...args);
-    }
-  };
+	const safeSend = (channel: string, ...args: unknown[]) => {
+		const w = getMainWindow();
+		if (w && !w.isDestroyed()) {
+			w.webContents.send(channel, ...args);
+		}
+	};
 
-  // Run all participants in parallel
-  const participantPromises = battle.participants.map(async (participant) => {
-    const startTime = Date.now();
+	// Run all participants in parallel
+	const participantPromises = battle.participants.map(async (participant) => {
+		const startTime = Date.now();
 
-    try {
-      safeSend('arena:battleProgress', {
-        battleId: battle.id,
-        label: participant.label,
-        chunk: '',
-        tokensUsed: 0,
-        costUsd: 0,
-      });
+		try {
+			safeSend("arena:battleProgress", {
+				battleId: battle.id,
+				label: participant.label,
+				chunk: "",
+				tokensUsed: 0,
+				costUsd: 0,
+			});
 
-      // Call the Anthropic API (or compatible endpoint) via the credential system
-      // We use a simple fetch to the configured endpoint from the profile
-      // Note: This is mock implementation - real API integration would use the profile credentials
-      await new Promise<{ success: boolean; data?: { baseUrl?: string; apiKey?: string; model?: string } }>((resolve) => {
-        // Use ipcMain to get profile credentials
-        const handler = ipcMain.listeners('profile:get')[0] as Function | undefined;
-        if (handler) {
-          const fakeEvent = { sender: win?.webContents };
-          const result = handler(fakeEvent, participant.profileId);
-          if (result && typeof result.then === 'function') {
-            result.then(resolve).catch(() => resolve({ success: false }));
-          } else {
-            resolve(result || { success: false });
-          }
-        } else {
-          resolve({ success: false });
-        }
-      });
+			// Call the Anthropic API (or compatible endpoint) via the credential system
+			// We use a simple fetch to the configured endpoint from the profile
+			// Note: This is mock implementation - real API integration would use the profile credentials
+			await new Promise<{
+				success: boolean;
+				data?: { baseUrl?: string; apiKey?: string; model?: string };
+			}>((resolve) => {
+				// Use ipcMain to get profile credentials
+				const handler = ipcMain.listeners("profile:get")[0] as
+					| Function
+					| undefined;
+				if (handler) {
+					const fakeEvent = { sender: win?.webContents };
+					const result = handler(fakeEvent, participant.profileId);
+					if (result && typeof result.then === "function") {
+						result.then(resolve).catch(() => resolve({ success: false }));
+					} else {
+						resolve(result || { success: false });
+					}
+				} else {
+					resolve({ success: false });
+				}
+			});
 
-      // Simulate streaming for demo (real implementation would use actual API)
-      // This uses a mock generator until real profile API integration is wired
-      const mockResponses: Record<ArenaTaskType, string[]> = {
-        coding: [
-          '```typescript\n',
-          '// Implementation for: ',
-          request.prompt.slice(0, 50),
-          '\n\n',
-          'function solution() {\n',
-          '  // Core logic here\n',
-          '  const result = processInput();\n',
-          '  return result;\n',
-          '}\n```\n\n',
-          '**Explanation:**\n',
-          'This implementation uses a clean approach that separates concerns.\n',
-        ],
-        review: [
-          '## Code Review\n\n',
-          '### Strengths\n',
-          '- Clean structure\n',
-          '- Good naming conventions\n\n',
-          '### Issues\n',
-          '1. **Performance**: Consider caching\n',
-          '2. **Security**: Validate inputs\n',
-          '3. **Maintainability**: Add documentation\n\n',
-          '### Recommendations\n',
-          'Refactor the main function for clarity.\n',
-        ],
-        test: [
-          '```typescript\n',
-          'describe("Solution", () => {\n',
-          '  it("handles happy path", () => {\n',
-          '    expect(solution()).toBeDefined();\n',
-          '  });\n\n',
-          '  it("handles edge cases", () => {\n',
-          '    expect(() => solution(null)).toThrow();\n',
-          '  });\n',
-          '});\n```\n',
-        ],
-        planning: [
-          '## Implementation Plan\n\n',
-          '### Phase 1: Setup (2 tasks)\n',
-          '1. Initialize project structure\n',
-          '2. Configure dependencies\n\n',
-          '### Phase 2: Core Implementation\n',
-          '1. Build data models\n',
-          '2. Implement business logic\n',
-          '3. Add API layer\n\n',
-          '### Phase 3: Testing & QA\n',
-          '1. Unit tests\n',
-          '2. Integration tests\n',
-        ],
-        spec: [
-          '## Technical Specification\n\n',
-          '### Overview\n',
-          'This feature requires...\n\n',
-          '### Requirements\n',
-          '- Functional: ...\n',
-          '- Non-functional: ...\n\n',
-          '### Architecture\n',
-          'The system will use a layered approach.\n',
-        ],
-        insights: [
-          '## Codebase Analysis\n\n',
-          '### Key Patterns\n',
-          '- Modular architecture detected\n',
-          '- Event-driven communication\n\n',
-          '### Recommendations\n',
-          '1. Consider extracting shared utilities\n',
-          '2. Add more comprehensive error handling\n',
-          '3. Review performance hotspots\n',
-        ],
-      };
+			// Simulate streaming for demo (real implementation would use actual API)
+			// This uses a mock generator until real profile API integration is wired
+			const mockResponses: Record<ArenaTaskType, string[]> = {
+				coding: [
+					"```typescript\n",
+					"// Implementation for: ",
+					request.prompt.slice(0, 50),
+					"\n\n",
+					"function solution() {\n",
+					"  // Core logic here\n",
+					"  const result = processInput();\n",
+					"  return result;\n",
+					"}\n```\n\n",
+					"**Explanation:**\n",
+					"This implementation uses a clean approach that separates concerns.\n",
+				],
+				review: [
+					"## Code Review\n\n",
+					"### Strengths\n",
+					"- Clean structure\n",
+					"- Good naming conventions\n\n",
+					"### Issues\n",
+					"1. **Performance**: Consider caching\n",
+					"2. **Security**: Validate inputs\n",
+					"3. **Maintainability**: Add documentation\n\n",
+					"### Recommendations\n",
+					"Refactor the main function for clarity.\n",
+				],
+				test: [
+					"```typescript\n",
+					'describe("Solution", () => {\n',
+					'  it("handles happy path", () => {\n',
+					"    expect(solution()).toBeDefined();\n",
+					"  });\n\n",
+					'  it("handles edge cases", () => {\n',
+					"    expect(() => solution(null)).toThrow();\n",
+					"  });\n",
+					"});\n```\n",
+				],
+				planning: [
+					"## Implementation Plan\n\n",
+					"### Phase 1: Setup (2 tasks)\n",
+					"1. Initialize project structure\n",
+					"2. Configure dependencies\n\n",
+					"### Phase 2: Core Implementation\n",
+					"1. Build data models\n",
+					"2. Implement business logic\n",
+					"3. Add API layer\n\n",
+					"### Phase 3: Testing & QA\n",
+					"1. Unit tests\n",
+					"2. Integration tests\n",
+				],
+				spec: [
+					"## Technical Specification\n\n",
+					"### Overview\n",
+					"This feature requires...\n\n",
+					"### Requirements\n",
+					"- Functional: ...\n",
+					"- Non-functional: ...\n\n",
+					"### Architecture\n",
+					"The system will use a layered approach.\n",
+				],
+				insights: [
+					"## Codebase Analysis\n\n",
+					"### Key Patterns\n",
+					"- Modular architecture detected\n",
+					"- Event-driven communication\n\n",
+					"### Recommendations\n",
+					"1. Consider extracting shared utilities\n",
+					"2. Add more comprehensive error handling\n",
+					"3. Review performance hotspots\n",
+				],
+			};
 
-      const chunks = mockResponses[request.taskType];
-      let fullOutput = '';
-      let tokenCount = 0;
+			const chunks = mockResponses[request.taskType];
+			let fullOutput = "";
+			let tokenCount = 0;
 
-      for (const chunk of chunks) {
-        await new Promise((r) => setTimeout(r, 150 + Math.random() * 300));
-        fullOutput += chunk;
-        tokenCount += Math.ceil(chunk.length / 4);
-        const costUsd = tokenCount * 0.000003; // ~$3/1M tokens estimate
+			for (const chunk of chunks) {
+				await new Promise((r) => setTimeout(r, 150 + Math.random() * 300));
+				fullOutput += chunk;
+				tokenCount += Math.ceil(chunk.length / 4);
+				const costUsd = tokenCount * 0.000003; // ~$3/1M tokens estimate
 
-        safeSend('arena:battleProgress', {
-          battleId: battle.id,
-          label: participant.label,
-          chunk,
-          tokensUsed: tokenCount,
-          costUsd,
-        });
-      }
+				safeSend("arena:battleProgress", {
+					battleId: battle.id,
+					label: participant.label,
+					chunk,
+					tokensUsed: tokenCount,
+					costUsd,
+				});
+			}
 
-      const durationMs = Date.now() - startTime;
-      const finalCost = tokenCount * 0.000003;
+			const durationMs = Date.now() - startTime;
+			const finalCost = tokenCount * 0.000003;
 
-      safeSend('arena:battleResult', {
-        battleId: battle.id,
-        label: participant.label,
-        output: fullOutput,
-        tokensUsed: tokenCount,
-        costUsd: finalCost,
-        durationMs,
-      });
+			safeSend("arena:battleResult", {
+				battleId: battle.id,
+				label: participant.label,
+				output: fullOutput,
+				tokensUsed: tokenCount,
+				costUsd: finalCost,
+				durationMs,
+			});
 
-      return { label: participant.label, output: fullOutput, tokensUsed: tokenCount, costUsd: finalCost, durationMs };
-    } catch (err) {
-      const error = err instanceof Error ? err.message : 'Unknown error';
-      appLog.error(`[Arena] Participant ${participant.label} failed: ${error}`);
+			return {
+				label: participant.label,
+				output: fullOutput,
+				tokensUsed: tokenCount,
+				costUsd: finalCost,
+				durationMs,
+			};
+		} catch (err) {
+			const error = err instanceof Error ? err.message : "Unknown error";
+			appLog.error(`[Arena] Participant ${participant.label} failed: ${error}`);
 
-      safeSend('arena:battleResult', {
-        battleId: battle.id,
-        label: participant.label,
-        output: '',
-        tokensUsed: 0,
-        costUsd: 0,
-        durationMs: Date.now() - startTime,
-        error,
-      });
+			safeSend("arena:battleResult", {
+				battleId: battle.id,
+				label: participant.label,
+				output: "",
+				tokensUsed: 0,
+				costUsd: 0,
+				durationMs: Date.now() - startTime,
+				error,
+			});
 
-      return { label: participant.label, output: '', tokensUsed: 0, costUsd: 0, durationMs: Date.now() - startTime, error };
-    }
-  });
+			return {
+				label: participant.label,
+				output: "",
+				tokensUsed: 0,
+				costUsd: 0,
+				durationMs: Date.now() - startTime,
+				error,
+			};
+		}
+	});
 
-  // Wait for all participants
-  const results = await Promise.allSettled(participantPromises);
+	// Wait for all participants
+	const results = await Promise.allSettled(participantPromises);
 
-  // Build final participant states
-  const finalParticipants: ArenaParticipant[] = battle.participants.map((p, i) => {
-    const result = results[i];
-    if (result.status === 'fulfilled') {
-      const r = result.value;
-      return { ...p, output: r.output, status: r.error ? 'error' : 'completed', tokensUsed: r.tokensUsed, costUsd: r.costUsd, durationMs: r.durationMs, error: r.error };
-    }
-    return { ...p, status: 'error', error: 'Unexpected failure' };
-  });
+	// Build final participant states
+	const finalParticipants: ArenaParticipant[] = battle.participants.map(
+		(p, i) => {
+			const result = results[i];
+			if (result.status === "fulfilled") {
+				const r = result.value;
+				return {
+					...p,
+					output: r.output,
+					status: r.error ? "error" : "completed",
+					tokensUsed: r.tokensUsed,
+					costUsd: r.costUsd,
+					durationMs: r.durationMs,
+					error: r.error,
+				};
+			}
+			return { ...p, status: "error", error: "Unexpected failure" };
+		},
+	);
 
-  safeSend('arena:battleComplete', {
-    battleId: battle.id,
-    participants: finalParticipants,
-  });
+	safeSend("arena:battleComplete", {
+		battleId: battle.id,
+		participants: finalParticipants,
+	});
 
-  // Persist completed (pre-vote) battle
-  const battles = readBattles();
-  const completedBattle: ArenaBattle = {
-    ...battle,
-    participants: finalParticipants,
-    status: 'voting',
-    completedAt: Date.now(),
-  };
-  writeBattles([completedBattle, ...battles.filter((b) => b.id !== battle.id)]);
+	// Persist completed (pre-vote) battle
+	const battles = readBattles();
+	const completedBattle: ArenaBattle = {
+		...battle,
+		participants: finalParticipants,
+		status: "voting",
+		completedAt: Date.now(),
+	};
+	writeBattles([completedBattle, ...battles.filter((b) => b.id !== battle.id)]);
 
-  appLog.info(`[Arena] Battle ${battle.id} completed with ${finalParticipants.length} participants`);
+	appLog.info(
+		`[Arena] Battle ${battle.id} completed with ${finalParticipants.length} participants`,
+	);
 }
 
 // ─── Handler Registration ─────────────────────────────────────────────────────
 
 export function registerArenaHandlers(
-  getMainWindow: () => BrowserWindow | null
+	getMainWindow: () => BrowserWindow | null,
 ): void {
-  // Start a new battle
-  ipcMain.handle('arena:startBattle', async (_event, request: StartBattleRequest) => {
-    try {
-      if (!request.profileIds || request.profileIds.length < 2) {
-        return { success: false, error: 'At least 2 models are required for a battle' };
-      }
+	// Start a new battle
+	ipcMain.handle(
+		"arena:startBattle",
+		async (_event, request: StartBattleRequest) => {
+			try {
+				if (!request.profileIds || request.profileIds.length < 2) {
+					return {
+						success: false,
+						error: "At least 2 models are required for a battle",
+					};
+				}
 
-      const battleId = `arena-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+				const battleId = `arena-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
 
-      const participants: ArenaParticipant[] = request.profileIds
-        .slice(0, 4)
-        .map((profileId, i) => ({
-          label: LABELS[i],
-          profileId,
-          modelName: `Model ${LABELS[i]}`,
-          provider: 'unknown',
-          status: 'waiting',
-          output: '',
-          tokensUsed: 0,
-          costUsd: 0,
-          durationMs: 0,
-        }));
+				const participants: ArenaParticipant[] = request.profileIds
+					.slice(0, 4)
+					.map((profileId, i) => ({
+						label: LABELS[i],
+						profileId,
+						modelName: `Model ${LABELS[i]}`,
+						provider: "unknown",
+						status: "waiting",
+						output: "",
+						tokensUsed: 0,
+						costUsd: 0,
+						durationMs: 0,
+					}));
 
-      const battle: ArenaBattle = {
-        id: battleId,
-        taskType: request.taskType,
-        prompt: request.prompt,
-        participants,
-        status: 'running',
-        createdAt: Date.now(),
-        revealed: false,
-      };
+				const battle: ArenaBattle = {
+					id: battleId,
+					taskType: request.taskType,
+					prompt: request.prompt,
+					participants,
+					status: "running",
+					createdAt: Date.now(),
+					revealed: false,
+				};
 
-      appLog.info(`[Arena] Starting battle ${battleId} with ${participants.length} models`);
+				appLog.info(
+					`[Arena] Starting battle ${battleId} with ${participants.length} models`,
+				);
 
-      // Run in background — do not await here
-      runBattle(battle, request, getMainWindow).catch((err) => {
-        appLog.error(`[Arena] Battle error: ${err}`);
-        const win = getMainWindow();
-        if (win && !win.isDestroyed()) {
-          win.webContents.send('arena:battleError', {
-            battleId,
-            error: err instanceof Error ? err.message : 'Unknown error',
-          });
-        }
-      });
+				// Run in background — do not await here
+				runBattle(battle, request, getMainWindow).catch((err) => {
+					appLog.error(`[Arena] Battle error: ${err}`);
+					const win = getMainWindow();
+					if (win && !win.isDestroyed()) {
+						win.webContents.send("arena:battleError", {
+							battleId,
+							error: err instanceof Error ? err.message : "Unknown error",
+						});
+					}
+				});
 
-      return { success: true, data: battle };
-    } catch (err) {
-      appLog.error(`[Arena] Failed to start battle: ${err}`);
-      return { success: false, error: err instanceof Error ? err.message : 'Unknown error' };
-    }
-  });
+				return { success: true, data: battle };
+			} catch (err) {
+				appLog.error(`[Arena] Failed to start battle: ${err}`);
+				return {
+					success: false,
+					error: err instanceof Error ? err.message : "Unknown error",
+				};
+			}
+		},
+	);
 
-  // Submit a vote for a battle
-  ipcMain.handle('arena:vote', async (_event, vote: ArenaVote) => {
-    try {
-      // Update battle as completed
-      const battles = readBattles();
-      const battleIdx = battles.findIndex((b) => b.id === vote.battleId);
+	// Submit a vote for a battle
+	ipcMain.handle("arena:vote", async (_event, vote: ArenaVote) => {
+		try {
+			// Update battle as completed
+			const battles = readBattles();
+			const battleIdx = battles.findIndex((b) => b.id === vote.battleId);
 
-      if (battleIdx !== -1) {
-        battles[battleIdx] = {
-          ...battles[battleIdx],
-          status: 'completed',
-          winnerLabel: vote.winnerLabel,
-          votedAt: vote.votedAt,
-          revealed: true,
-        };
-        writeBattles(battles);
-      }
+			if (battleIdx !== -1) {
+				battles[battleIdx] = {
+					...battles[battleIdx],
+					status: "completed",
+					winnerLabel: vote.winnerLabel,
+					votedAt: vote.votedAt,
+					revealed: true,
+				};
+				writeBattles(battles);
+			}
 
-      // Persist vote
-      const votes = readVotes();
-      votes.unshift(vote);
-      writeVotes(votes);
+			// Persist vote
+			const votes = readVotes();
+			votes.unshift(vote);
+			writeVotes(votes);
 
-      appLog.info(`[Arena] Vote recorded: battle=${vote.battleId}, winner=${vote.winnerLabel}`);
-      return { success: true };
-    } catch (err) {
-      return { success: false, error: err instanceof Error ? err.message : 'Failed to save vote' };
-    }
-  });
+			appLog.info(
+				`[Arena] Vote recorded: battle=${vote.battleId}, winner=${vote.winnerLabel}`,
+			);
+			return { success: true };
+		} catch (err) {
+			return {
+				success: false,
+				error: err instanceof Error ? err.message : "Failed to save vote",
+			};
+		}
+	});
 
-  // Get battle history
-  ipcMain.handle('arena:getBattles', async () => {
-    try {
-      const battles = readBattles();
-      return { success: true, data: battles };
-    } catch (err) {
-      return { success: false, error: err instanceof Error ? err.message : 'Failed to load battles' };
-    }
-  });
+	// Get battle history
+	ipcMain.handle("arena:getBattles", async () => {
+		try {
+			const battles = readBattles();
+			return { success: true, data: battles };
+		} catch (err) {
+			return {
+				success: false,
+				error: err instanceof Error ? err.message : "Failed to load battles",
+			};
+		}
+	});
 
-  // Get analytics
-  ipcMain.handle('arena:getAnalytics', async () => {
-    try {
-      const battles = readBattles();
-      const votes = readVotes();
-      const analytics = computeAnalytics(battles, votes);
-      return { success: true, data: analytics };
-    } catch (err) {
-      return { success: false, error: err instanceof Error ? err.message : 'Failed to compute analytics' };
-    }
-  });
+	// Get analytics
+	ipcMain.handle("arena:getAnalytics", async () => {
+		try {
+			const battles = readBattles();
+			const votes = readVotes();
+			const analytics = computeAnalytics(battles, votes);
+			return { success: true, data: analytics };
+		} catch (err) {
+			return {
+				success: false,
+				error:
+					err instanceof Error ? err.message : "Failed to compute analytics",
+			};
+		}
+	});
 
-  // Clear battle history
-  ipcMain.handle('arena:clearHistory', async () => {
-    try {
-      writeBattles([]);
-      writeVotes([]);
-      return { success: true };
-    } catch (err) {
-      return { success: false, error: err instanceof Error ? err.message : 'Failed to clear history' };
-    }
-  });
+	// Clear battle history
+	ipcMain.handle("arena:clearHistory", async () => {
+		try {
+			writeBattles([]);
+			writeVotes([]);
+			return { success: true };
+		} catch (err) {
+			return {
+				success: false,
+				error: err instanceof Error ? err.message : "Failed to clear history",
+			};
+		}
+	});
 
-  // Get available profiles for selection
-  ipcMain.handle('arena:getProfiles', async () => {
-    try {
-      // Delegate to existing profile handler
-      const handlers = ipcMain.listeners('profile:list') as Function[];
-      if (handlers.length > 0) {
-        const result = handlers[0]({} as Electron.IpcMainInvokeEvent);
-        if (result && typeof result.then === 'function') {
-          return await result.catch(() => ({ success: true, data: [] }));
-        } else {
-          return result || { success: true, data: [] };
-        }
-      } else {
-        return { success: true, data: [] };
-      }
-    } catch {
-      return { success: true, data: [] };
-    }
-  });
+	// Get available profiles for selection
+	ipcMain.handle("arena:getProfiles", async () => {
+		try {
+			// Delegate to existing profile handler
+			const handlers = ipcMain.listeners("profile:list") as Function[];
+			if (handlers.length > 0) {
+				const result = handlers[0]({} as Electron.IpcMainInvokeEvent);
+				if (result && typeof result.then === "function") {
+					return await result.catch(() => ({ success: true, data: [] }));
+				} else {
+					return result || { success: true, data: [] };
+				}
+			} else {
+				return { success: true, data: [] };
+			}
+		} catch {
+			return { success: true, data: [] };
+		}
+	});
 
-  appLog.info('[Arena] IPC handlers registered');
+	appLog.info("[Arena] IPC handlers registered");
 }

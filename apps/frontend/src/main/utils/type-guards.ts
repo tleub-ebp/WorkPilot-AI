@@ -9,5 +9,5 @@
  * Useful for checking error codes like 'ENOENT', 'EEXIST', etc.
  */
 export function isNodeError(err: unknown): err is NodeJS.ErrnoException {
-  return err instanceof Error && 'code' in err;
+	return err instanceof Error && "code" in err;
 }

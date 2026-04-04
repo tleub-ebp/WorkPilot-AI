@@ -1,89 +1,89 @@
 {
-  "title": "Continuous AI",
-  "subtitle": "Always-On Background Daemon",
-  "enable": "Enable Continuous AI",
-  "disable": "Disable Continuous AI",
-  "start": "Start Daemon",
-  "stop": "Stop Daemon",
-  "running": "Running",
-  "stopped": "Stopped",
+	"title": "Continuous AI",
+	"subtitle": "Always-On Background Daemon",
+	"enable": "Enable Continuous AI",
+	"disable": "Disable Continuous AI",
+	"start": "Start Daemon",
+	"stop": "Stop Daemon",
+	"running": "Running",
+	"stopped": "Stopped",
 
-  "infoBanner": "Continuous AI uses your active AI profile. It works with any LLM provider configured in your account settings (Anthropic, OpenAI, z.ai, etc.).",
+	"infoBanner": "Continuous AI uses your active AI profile. It works with any LLM provider configured in your account settings (Anthropic, OpenAI, z.ai, etc.).",
 
-  "budget": {
-    "title": "Daily Budget",
-    "spent": "Spent today: ${{amount}}",
-    "remaining": "Remaining: ${{amount}}",
-    "exceeded": "Budget exceeded — daemon paused"
-  },
+	"budget": {
+		"title": "Daily Budget",
+		"spent": "Spent today: ${{amount}}",
+		"remaining": "Remaining: ${{amount}}",
+		"exceeded": "Budget exceeded — daemon paused"
+	},
 
-  "modules": {
-    "title": "Modules",
-    "cicdWatcher": {
-      "title": "CI/CD Watcher",
-      "description": "Monitors CI/CD pipelines for failures and auto-heals",
-      "autoFix": "Auto-fix failures",
-      "autoCreatePr": "Auto-create fix PRs",
-      "watchedWorkflows": "Watched workflows (empty = all)"
-    },
-    "dependencySentinel": {
-      "title": "Dependency Sentinel",
-      "description": "Scans for vulnerable dependencies and auto-patches",
-      "autoPatchMinor": "Auto-patch minor/patch versions",
-      "autoPatchMajor": "Auto-patch major versions",
-      "packageManagers": "Package managers to scan"
-    },
-    "issueResponder": {
-      "title": "Issue Responder",
-      "description": "Auto-triages new issues and investigates bugs",
-      "autoTriage": "Auto-triage (label + classify)",
-      "autoInvestigate": "Auto-investigate bug reports",
-      "autoCreateSpecs": "Auto-create specs for features",
-      "labelsToWatch": "Labels to watch (empty = all)"
-    },
-    "prReviewer": {
-      "title": "PR Reviewer",
-      "description": "Auto-reviews external PRs before human review",
-      "autoApproveTrivial": "Auto-approve trivial PRs",
-      "reviewExternalOnly": "Review external PRs only",
-      "postComments": "Post review comments on PR"
-    }
-  },
+	"modules": {
+		"title": "Modules",
+		"cicdWatcher": {
+			"title": "CI/CD Watcher",
+			"description": "Monitors CI/CD pipelines for failures and auto-heals",
+			"autoFix": "Auto-fix failures",
+			"autoCreatePr": "Auto-create fix PRs",
+			"watchedWorkflows": "Watched workflows (empty = all)"
+		},
+		"dependencySentinel": {
+			"title": "Dependency Sentinel",
+			"description": "Scans for vulnerable dependencies and auto-patches",
+			"autoPatchMinor": "Auto-patch minor/patch versions",
+			"autoPatchMajor": "Auto-patch major versions",
+			"packageManagers": "Package managers to scan"
+		},
+		"issueResponder": {
+			"title": "Issue Responder",
+			"description": "Auto-triages new issues and investigates bugs",
+			"autoTriage": "Auto-triage (label + classify)",
+			"autoInvestigate": "Auto-investigate bug reports",
+			"autoCreateSpecs": "Auto-create specs for features",
+			"labelsToWatch": "Labels to watch (empty = all)"
+		},
+		"prReviewer": {
+			"title": "PR Reviewer",
+			"description": "Auto-reviews external PRs before human review",
+			"autoApproveTrivial": "Auto-approve trivial PRs",
+			"reviewExternalOnly": "Review external PRs only",
+			"postComments": "Post review comments on PR"
+		}
+	},
 
-  "config": {
-    "pollInterval": "Poll interval",
-    "maxActionsPerHour": "Max actions per hour",
-    "autoAct": "Act automatically",
-    "quietHours": "Quiet hours",
-    "quietHoursStart": "Start",
-    "quietHoursEnd": "End"
-  },
+	"config": {
+		"pollInterval": "Poll interval",
+		"maxActionsPerHour": "Max actions per hour",
+		"autoAct": "Act automatically",
+		"quietHours": "Quiet hours",
+		"quietHoursStart": "Start",
+		"quietHoursEnd": "End"
+	},
 
-  "actions": {
-    "title": "Recent Actions",
-    "pending": "Pending Approvals",
-    "approve": "Approve",
-    "reject": "Reject",
-    "noActions": "No actions yet",
-    "noPending": "No pending approvals"
-  },
+	"actions": {
+		"title": "Recent Actions",
+		"pending": "Pending Approvals",
+		"approve": "Approve",
+		"reject": "Reject",
+		"noActions": "No actions yet",
+		"noPending": "No pending approvals"
+	},
 
-  "status": {
-    "idle": "Idle",
-    "polling": "Polling...",
-    "acting": "Executing action...",
-    "error": "Error",
-    "cooldown": "Cooldown",
-    "disabled": "Disabled",
-    "lastPoll": "Last poll: {{time}}",
-    "actionsThisHour": "{{count}} actions this hour",
-    "totalActions": "{{count}} total actions"
-  },
+	"status": {
+		"idle": "Idle",
+		"polling": "Polling...",
+		"acting": "Executing action...",
+		"error": "Error",
+		"cooldown": "Cooldown",
+		"disabled": "Disabled",
+		"lastPoll": "Last poll: {{time}}",
+		"actionsThisHour": "{{count}} actions this hour",
+		"totalActions": "{{count}} total actions"
+	},
 
-  "errors": {
-    "startFailed": "Failed to start daemon",
-    "stopFailed": "Failed to stop daemon",
-    "approveFailed": "Failed to approve action",
-    "noPython": "Python environment not configured"
-  }
+	"errors": {
+		"startFailed": "Failed to start daemon",
+		"stopFailed": "Failed to stop daemon",
+		"approveFailed": "Failed to approve action",
+		"noPython": "Python environment not configured"
+	}
 }

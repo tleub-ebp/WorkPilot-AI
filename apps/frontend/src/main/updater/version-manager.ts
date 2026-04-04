@@ -6,7 +6,7 @@
  * is bundled with the app and updates via electron-updater.
  */
 
-import { app } from 'electron';
+import { app } from "electron";
 
 /**
  * Get the current app/framework version from package.json
@@ -14,7 +14,7 @@ import { app } from 'electron';
  * Uses app.getVersion() (from package.json) as the version.
  */
 export function getBundledVersion(): string {
-  return app.getVersion();
+	return app.getVersion();
 }
 
 /**
@@ -24,31 +24,31 @@ export function getBundledVersion(): string {
  * @returns { base: number[], prerelease: { type: string, num: number } | null }
  */
 function parseVersion(version: string): {
-  base: number[];
-  prerelease: { type: string; num: number } | null
+	base: number[];
+	prerelease: { type: string; num: number } | null;
 } {
-  // Split into base version and prerelease suffix
-  // e.g., "2.7.2-beta.6" -> ["2.7.2", "beta.6"]
-  const [baseStr, prereleaseStr] = version.split('-');
+	// Split into base version and prerelease suffix
+	// e.g., "2.7.2-beta.6" -> ["2.7.2", "beta.6"]
+	const [baseStr, prereleaseStr] = version.split("-");
 
-  // Parse base version numbers
-  const base = baseStr.split('.').map(n => Number.parseInt(n, 10) || 0);
+	// Parse base version numbers
+	const base = baseStr.split(".").map((n) => Number.parseInt(n, 10) || 0);
 
-  // Parse prerelease if present
-  let prerelease: { type: string; num: number } | null = null;
-  if (prereleaseStr) {
-    // Handle formats like "beta.6", "alpha.1", "rc.2"
-    const regex = /^([a-zA-Z]+)\.?(\d*)$/;
-    const match = regex.exec(prereleaseStr);
-    if (match) {
-      prerelease = {
-        type: match[1].toLowerCase(),
-        num: Number.parseInt(match[2], 10) || 0
-      };
-    }
-  }
+	// Parse prerelease if present
+	let prerelease: { type: string; num: number } | null = null;
+	if (prereleaseStr) {
+		// Handle formats like "beta.6", "alpha.1", "rc.2"
+		const regex = /^([a-zA-Z]+)\.?(\d*)$/;
+		const match = regex.exec(prereleaseStr);
+		if (match) {
+			prerelease = {
+				type: match[1].toLowerCase(),
+				num: Number.parseInt(match[2], 10) || 0,
+			};
+		}
+	}
 
-  return { base, prerelease };
+	return { base, prerelease };
 }
 
 /**
@@ -61,40 +61,40 @@ function parseVersion(version: string): {
  * - 2.7.1 < 2.7.2-beta.1 < 2.7.2
  */
 export function compareVersions(a: string, b: string): number {
-  const parsedA = parseVersion(a);
-  const parsedB = parseVersion(b);
+	const parsedA = parseVersion(a);
+	const parsedB = parseVersion(b);
 
-  // Compare base versions first
-  const maxLen = Math.max(parsedA.base.length, parsedB.base.length);
-  for (let i = 0; i < maxLen; i++) {
-    const numA = parsedA.base[i] || 0;
-    const numB = parsedB.base[i] || 0;
+	// Compare base versions first
+	const maxLen = Math.max(parsedA.base.length, parsedB.base.length);
+	for (let i = 0; i < maxLen; i++) {
+		const numA = parsedA.base[i] || 0;
+		const numB = parsedB.base[i] || 0;
 
-    if (numA > numB) return 1;
-    if (numA < numB) return -1;
-  }
+		if (numA > numB) return 1;
+		if (numA < numB) return -1;
+	}
 
-  // Base versions are equal, compare prereleases
-  // No prerelease = stable = higher than any prerelease of same base
-  if (!parsedA.prerelease && !parsedB.prerelease) return 0;
-  if (!parsedA.prerelease && parsedB.prerelease) return 1;  // a is stable, b is prerelease
-  if (parsedA.prerelease && !parsedB.prerelease) return -1; // a is prerelease, b is stable
+	// Base versions are equal, compare prereleases
+	// No prerelease = stable = higher than any prerelease of same base
+	if (!parsedA.prerelease && !parsedB.prerelease) return 0;
+	if (!parsedA.prerelease && parsedB.prerelease) return 1; // a is stable, b is prerelease
+	if (parsedA.prerelease && !parsedB.prerelease) return -1; // a is prerelease, b is stable
 
-  // Both have prereleases - compare type then number
-  const prereleaseOrder: Record<string, number> = { alpha: 0, beta: 1, rc: 2 };
-  // biome-ignore lint/style/noNonNullAssertion: value is guaranteed by context
-  const typeA = prereleaseOrder[parsedA.prerelease!.type] ?? 1;
-  // biome-ignore lint/style/noNonNullAssertion: value is guaranteed by context
-  const typeB = prereleaseOrder[parsedB.prerelease!.type] ?? 1;
+	// Both have prereleases - compare type then number
+	const prereleaseOrder: Record<string, number> = { alpha: 0, beta: 1, rc: 2 };
+	// biome-ignore lint/style/noNonNullAssertion: value is guaranteed by context
+	const typeA = prereleaseOrder[parsedA.prerelease!.type] ?? 1;
+	// biome-ignore lint/style/noNonNullAssertion: value is guaranteed by context
+	const typeB = prereleaseOrder[parsedB.prerelease!.type] ?? 1;
 
-  if (typeA > typeB) return 1;
-  if (typeA < typeB) return -1;
+	if (typeA > typeB) return 1;
+	if (typeA < typeB) return -1;
 
-  // Same prerelease type, compare numbers
-  // biome-ignore lint/style/noNonNullAssertion: value is guaranteed by context
-  if (parsedA.prerelease!.num > parsedB.prerelease!.num) return 1;
-  // biome-ignore lint/style/noNonNullAssertion: value is guaranteed by context
-  if (parsedA.prerelease!.num < parsedB.prerelease!.num) return -1;
+	// Same prerelease type, compare numbers
+	// biome-ignore lint/style/noNonNullAssertion: value is guaranteed by context
+	if (parsedA.prerelease!.num > parsedB.prerelease!.num) return 1;
+	// biome-ignore lint/style/noNonNullAssertion: value is guaranteed by context
+	if (parsedA.prerelease!.num < parsedB.prerelease!.num) return -1;
 
-  return 0;
+	return 0;
 }

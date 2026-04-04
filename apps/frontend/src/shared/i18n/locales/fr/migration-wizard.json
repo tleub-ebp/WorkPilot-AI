@@ -1,60 +1,60 @@
 {
-  "title": "Assistant de migration",
-  "steps": {
-    "configure": "Configuration",
-    "analyze": "Analyse",
-    "transform": "Transformation",
-    "validate": "Validation"
-  },
-  "descriptions": {
-    "configure": "Sélectionnez les frameworks source et cible",
-    "analyze": "Analyse de la structure du projet",
-    "transform": "Application des transformations de code",
-    "validate": "Exécution des tests et validation"
-  },
-  "fields": {
-    "projectPath": "Chemin du projet",
-    "selectMigrationType": "Type de migration",
-    "search": "Rechercher une migration...",
-    "category": "Catégorie"
-  },
-  "categories": {
-    "all": "Toutes les migrations",
-    "frontend": "Frontend",
-    "backend": "Backend",
-    "database": "Base de données",
-    "language": "Langage",
-    "api": "API",
-    "build": "Outils de build",
-    "testing": "Tests",
-    "mobile": "Mobile",
-    "package": "Gestion de paquets"
-  },
-  "complexity": {
-    "low": "Faible",
-    "medium": "Moyenne",
-    "high": "Élevée",
-    "very_high": "Très élevée"
-  },
-  "noMigrations": "Aucune migration trouvée pour \"{{search}}\".",
-  "defaultProjectPath": "./",
-  "options": {
-    "llmEnhancement": {
-      "title": "🤖 Amélioration IA (LLM)",
-      "description": "Active l'assistance de l'IA pour améliorer la migration et proposer des suggestions intelligentes."
-    },
-    "autoFixLoop": {
-      "title": "🔧 Boucle de correction automatique",
-      "description": "Tente de corriger automatiquement les erreurs détectées lors de la migration jusqu'à obtention d'un résultat satisfaisant."
-    },
-    "createBackup": {
-      "title": "💾 Créer une sauvegarde",
-      "description": "Génère une sauvegarde complète du projet avant d'appliquer toute transformation."
-    }
-  },
-  "actions": {
-    "start": "Démarrer la migration",
-    "next": "Suivant",
-    "back": "Retour"
-  }
+	"title": "Assistant de migration",
+	"steps": {
+		"configure": "Configuration",
+		"analyze": "Analyse",
+		"transform": "Transformation",
+		"validate": "Validation"
+	},
+	"descriptions": {
+		"configure": "Sélectionnez les frameworks source et cible",
+		"analyze": "Analyse de la structure du projet",
+		"transform": "Application des transformations de code",
+		"validate": "Exécution des tests et validation"
+	},
+	"fields": {
+		"projectPath": "Chemin du projet",
+		"selectMigrationType": "Type de migration",
+		"search": "Rechercher une migration...",
+		"category": "Catégorie"
+	},
+	"categories": {
+		"all": "Toutes les migrations",
+		"frontend": "Frontend",
+		"backend": "Backend",
+		"database": "Base de données",
+		"language": "Langage",
+		"api": "API",
+		"build": "Outils de build",
+		"testing": "Tests",
+		"mobile": "Mobile",
+		"package": "Gestion de paquets"
+	},
+	"complexity": {
+		"low": "Faible",
+		"medium": "Moyenne",
+		"high": "Élevée",
+		"very_high": "Très élevée"
+	},
+	"noMigrations": "Aucune migration trouvée pour \"{{search}}\".",
+	"defaultProjectPath": "./",
+	"options": {
+		"llmEnhancement": {
+			"title": "🤖 Amélioration IA (LLM)",
+			"description": "Active l'assistance de l'IA pour améliorer la migration et proposer des suggestions intelligentes."
+		},
+		"autoFixLoop": {
+			"title": "🔧 Boucle de correction automatique",
+			"description": "Tente de corriger automatiquement les erreurs détectées lors de la migration jusqu'à obtention d'un résultat satisfaisant."
+		},
+		"createBackup": {
+			"title": "💾 Créer une sauvegarde",
+			"description": "Génère une sauvegarde complète du projet avant d'appliquer toute transformation."
+		}
+	},
+	"actions": {
+		"start": "Démarrer la migration",
+		"next": "Suivant",
+		"back": "Retour"
+	}
 }

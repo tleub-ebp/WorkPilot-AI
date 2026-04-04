@@ -12,23 +12,27 @@
  * - file-utils.ts: File system operations
  */
 
-import { ipcMain } from "electron";
 import type { BrowserWindow } from "electron";
+import { ipcMain } from "electron";
 import { IPC_CHANNELS } from "../../shared/constants";
+import type {
+	Idea,
+	IdeationGenerationStatus,
+	IdeationSession,
+} from "../../shared/types";
 import type { AgentManager } from "../agent";
-import type { IdeationGenerationStatus, IdeationSession, Idea } from "../../shared/types";
 import {
-  getIdeationSession,
-  updateIdeaStatus,
-  dismissIdea,
-  dismissAllIdeas,
-  archiveIdea,
-  deleteIdea,
-  deleteMultipleIdeas,
-  startIdeationGeneration,
-  refreshIdeationSession,
-  stopIdeationGeneration,
-  convertIdeaToTask,
+	archiveIdea,
+	convertIdeaToTask,
+	deleteIdea,
+	deleteMultipleIdeas,
+	dismissAllIdeas,
+	dismissIdea,
+	getIdeationSession,
+	refreshIdeationSession,
+	startIdeationGeneration,
+	stopIdeationGeneration,
+	updateIdeaStatus,
 } from "./ideation";
 import { safeSendToRenderer } from "./utils";
 
@@ -36,98 +40,144 @@ import { safeSendToRenderer } from "./utils";
  * Register all ideation-related IPC handlers
  */
 export function registerIdeationHandlers(
-  agentManager: AgentManager,
-  getMainWindow: () => BrowserWindow | null
+	agentManager: AgentManager,
+	getMainWindow: () => BrowserWindow | null,
 ): () => void {
-  // Session management
-  ipcMain.handle(IPC_CHANNELS.IDEATION_GET, getIdeationSession);
+	// Session management
+	ipcMain.handle(IPC_CHANNELS.IDEATION_GET, getIdeationSession);
 
-  // Idea operations
-  ipcMain.handle(IPC_CHANNELS.IDEATION_UPDATE_IDEA, updateIdeaStatus);
+	// Idea operations
+	ipcMain.handle(IPC_CHANNELS.IDEATION_UPDATE_IDEA, updateIdeaStatus);
 
-  ipcMain.handle(IPC_CHANNELS.IDEATION_DISMISS, dismissIdea);
+	ipcMain.handle(IPC_CHANNELS.IDEATION_DISMISS, dismissIdea);
 
-  ipcMain.handle(IPC_CHANNELS.IDEATION_DISMISS_ALL, dismissAllIdeas);
+	ipcMain.handle(IPC_CHANNELS.IDEATION_DISMISS_ALL, dismissAllIdeas);
 
-  ipcMain.handle(IPC_CHANNELS.IDEATION_ARCHIVE, archiveIdea);
+	ipcMain.handle(IPC_CHANNELS.IDEATION_ARCHIVE, archiveIdea);
 
-  ipcMain.handle(IPC_CHANNELS.IDEATION_DELETE, deleteIdea);
+	ipcMain.handle(IPC_CHANNELS.IDEATION_DELETE, deleteIdea);
 
-  ipcMain.handle(IPC_CHANNELS.IDEATION_DELETE_MULTIPLE, deleteMultipleIdeas);
+	ipcMain.handle(IPC_CHANNELS.IDEATION_DELETE_MULTIPLE, deleteMultipleIdeas);
 
-  // Generation operations
-  ipcMain.on(IPC_CHANNELS.IDEATION_GENERATE, (event, projectId, config) =>
-    startIdeationGeneration(event, projectId, config, agentManager, getMainWindow())
-  );
+	// Generation operations
+	ipcMain.on(IPC_CHANNELS.IDEATION_GENERATE, (event, projectId, config) =>
+		startIdeationGeneration(
+			event,
+			projectId,
+			config,
+			agentManager,
+			getMainWindow(),
+		),
+	);
 
-  ipcMain.on(IPC_CHANNELS.IDEATION_REFRESH, (event, projectId, config) =>
-    refreshIdeationSession(event, projectId, config, agentManager, getMainWindow())
-  );
+	ipcMain.on(IPC_CHANNELS.IDEATION_REFRESH, (event, projectId, config) =>
+		refreshIdeationSession(
+			event,
+			projectId,
+			config,
+			agentManager,
+			getMainWindow(),
+		),
+	);
 
-  ipcMain.handle(IPC_CHANNELS.IDEATION_STOP, (event, projectId) =>
-    stopIdeationGeneration(event, projectId, agentManager, getMainWindow())
-  );
+	ipcMain.handle(IPC_CHANNELS.IDEATION_STOP, (event, projectId) =>
+		stopIdeationGeneration(event, projectId, agentManager, getMainWindow()),
+	);
 
-  // Task conversion
-  ipcMain.handle(IPC_CHANNELS.IDEATION_CONVERT_TO_TASK, convertIdeaToTask);
+	// Task conversion
+	ipcMain.handle(IPC_CHANNELS.IDEATION_CONVERT_TO_TASK, convertIdeaToTask);
 
-  // ============================================
-  // Ideation Agent Events → Renderer
-  // ============================================
+	// ============================================
+	// Ideation Agent Events → Renderer
+	// ============================================
 
-  const handleIdeationProgress = (projectId: string, status: IdeationGenerationStatus): void => {
-    safeSendToRenderer(getMainWindow, IPC_CHANNELS.IDEATION_PROGRESS, projectId, status);
-  };
+	const handleIdeationProgress = (
+		projectId: string,
+		status: IdeationGenerationStatus,
+	): void => {
+		safeSendToRenderer(
+			getMainWindow,
+			IPC_CHANNELS.IDEATION_PROGRESS,
+			projectId,
+			status,
+		);
+	};
 
-  const handleIdeationLog = (projectId: string, log: string): void => {
-    safeSendToRenderer(getMainWindow, IPC_CHANNELS.IDEATION_LOG, projectId, log);
-  };
+	const handleIdeationLog = (projectId: string, log: string): void => {
+		safeSendToRenderer(
+			getMainWindow,
+			IPC_CHANNELS.IDEATION_LOG,
+			projectId,
+			log,
+		);
+	};
 
-  const handleIdeationTypeComplete = (
-    projectId: string,
-    ideationType: string,
-    ideas: Idea[]
-  ): void => {
-    safeSendToRenderer(
-      getMainWindow,
-      IPC_CHANNELS.IDEATION_TYPE_COMPLETE,
-      projectId,
-      ideationType,
-      ideas
-    );
-  };
+	const handleIdeationTypeComplete = (
+		projectId: string,
+		ideationType: string,
+		ideas: Idea[],
+	): void => {
+		safeSendToRenderer(
+			getMainWindow,
+			IPC_CHANNELS.IDEATION_TYPE_COMPLETE,
+			projectId,
+			ideationType,
+			ideas,
+		);
+	};
 
-  const handleIdeationTypeFailed = (projectId: string, ideationType: string): void => {
-    safeSendToRenderer(getMainWindow, IPC_CHANNELS.IDEATION_TYPE_FAILED, projectId, ideationType);
-  };
+	const handleIdeationTypeFailed = (
+		projectId: string,
+		ideationType: string,
+	): void => {
+		safeSendToRenderer(
+			getMainWindow,
+			IPC_CHANNELS.IDEATION_TYPE_FAILED,
+			projectId,
+			ideationType,
+		);
+	};
 
-  const handleIdeationComplete = (projectId: string, session: IdeationSession): void => {
-    safeSendToRenderer(getMainWindow, IPC_CHANNELS.IDEATION_COMPLETE, projectId, session);
-  };
+	const handleIdeationComplete = (
+		projectId: string,
+		session: IdeationSession,
+	): void => {
+		safeSendToRenderer(
+			getMainWindow,
+			IPC_CHANNELS.IDEATION_COMPLETE,
+			projectId,
+			session,
+		);
+	};
 
-  const handleIdeationError = (projectId: string, error: string): void => {
-    safeSendToRenderer(getMainWindow, IPC_CHANNELS.IDEATION_ERROR, projectId, error);
-  };
+	const handleIdeationError = (projectId: string, error: string): void => {
+		safeSendToRenderer(
+			getMainWindow,
+			IPC_CHANNELS.IDEATION_ERROR,
+			projectId,
+			error,
+		);
+	};
 
-  const handleIdeationStopped = (projectId: string): void => {
-    safeSendToRenderer(getMainWindow, IPC_CHANNELS.IDEATION_STOPPED, projectId);
-  };
+	const handleIdeationStopped = (projectId: string): void => {
+		safeSendToRenderer(getMainWindow, IPC_CHANNELS.IDEATION_STOPPED, projectId);
+	};
 
-  agentManager.on("ideation-progress", handleIdeationProgress);
-  agentManager.on("ideation-log", handleIdeationLog);
-  agentManager.on("ideation-type-complete", handleIdeationTypeComplete);
-  agentManager.on("ideation-type-failed", handleIdeationTypeFailed);
-  agentManager.on("ideation-complete", handleIdeationComplete);
-  agentManager.on("ideation-error", handleIdeationError);
-  agentManager.on("ideation-stopped", handleIdeationStopped);
+	agentManager.on("ideation-progress", handleIdeationProgress);
+	agentManager.on("ideation-log", handleIdeationLog);
+	agentManager.on("ideation-type-complete", handleIdeationTypeComplete);
+	agentManager.on("ideation-type-failed", handleIdeationTypeFailed);
+	agentManager.on("ideation-complete", handleIdeationComplete);
+	agentManager.on("ideation-error", handleIdeationError);
+	agentManager.on("ideation-stopped", handleIdeationStopped);
 
-  return (): void => {
-    agentManager.off("ideation-progress", handleIdeationProgress);
-    agentManager.off("ideation-log", handleIdeationLog);
-    agentManager.off("ideation-type-complete", handleIdeationTypeComplete);
-    agentManager.off("ideation-type-failed", handleIdeationTypeFailed);
-    agentManager.off("ideation-complete", handleIdeationComplete);
-    agentManager.off("ideation-error", handleIdeationError);
-    agentManager.off("ideation-stopped", handleIdeationStopped);
-  };
+	return (): void => {
+		agentManager.off("ideation-progress", handleIdeationProgress);
+		agentManager.off("ideation-log", handleIdeationLog);
+		agentManager.off("ideation-type-complete", handleIdeationTypeComplete);
+		agentManager.off("ideation-type-failed", handleIdeationTypeFailed);
+		agentManager.off("ideation-complete", handleIdeationComplete);
+		agentManager.off("ideation-error", handleIdeationError);
+		agentManager.off("ideation-stopped", handleIdeationStopped);
+	};
 }

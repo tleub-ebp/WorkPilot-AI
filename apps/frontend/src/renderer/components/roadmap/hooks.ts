@@ -1,7 +1,13 @@
-import { useEffect, useState } from 'react';
-import { useRoadmapStore, loadRoadmap, generateRoadmap, refreshRoadmap, stopRoadmap } from '../../stores/roadmap-store';
-import { useTaskStore } from '../../stores/task-store';
-import type { RoadmapFeature } from '../../../shared/types';
+import { useEffect, useState } from "react";
+import type { RoadmapFeature } from "../../../shared/types";
+import {
+	generateRoadmap,
+	loadRoadmap,
+	refreshRoadmap,
+	stopRoadmap,
+	useRoadmapStore,
+} from "../../stores/roadmap-store";
+import { useTaskStore } from "../../stores/task-store";
 
 /**
  * Hook to manage roadmap data and loading
@@ -15,57 +21,64 @@ import type { RoadmapFeature } from '../../../shared/types';
  * The loadRoadmap function queries the backend to restore the correct UI state.
  */
 export function useRoadmapData(projectId: string) {
-  const roadmap = useRoadmapStore((state) => state.roadmap);
-  const competitorAnalysis = useRoadmapStore((state) => state.competitorAnalysis);
-  const generationStatus = useRoadmapStore((state) => state.generationStatus);
+	const roadmap = useRoadmapStore((state) => state.roadmap);
+	const competitorAnalysis = useRoadmapStore(
+		(state) => state.competitorAnalysis,
+	);
+	const generationStatus = useRoadmapStore((state) => state.generationStatus);
 
-  useEffect(() => {
-    // Load roadmap data and query generation status for this project
-    // The loadRoadmap function handles checking if generation is running
-    // and restores the UI state accordingly
-    loadRoadmap(projectId);
-  }, [projectId]);
+	useEffect(() => {
+		// Load roadmap data and query generation status for this project
+		// The loadRoadmap function handles checking if generation is running
+		// and restores the UI state accordingly
+		loadRoadmap(projectId);
+	}, [projectId]);
 
-  return {
-    roadmap,
-    competitorAnalysis,
-    generationStatus,
-  };
+	return {
+		roadmap,
+		competitorAnalysis,
+		generationStatus,
+	};
 }
 
 /**
  * Hook to manage feature actions (convert, link, etc.)
  */
 export function useFeatureActions() {
-  const updateFeatureLinkedSpec = useRoadmapStore((state) => state.updateFeatureLinkedSpec);
-  const addTask = useTaskStore((state) => state.addTask);
+	const updateFeatureLinkedSpec = useRoadmapStore(
+		(state) => state.updateFeatureLinkedSpec,
+	);
+	const addTask = useTaskStore((state) => state.addTask);
 
-  const convertFeatureToSpec = async (
-    projectId: string,
-    feature: RoadmapFeature,
-    selectedFeature: RoadmapFeature | null,
-    setSelectedFeature: (feature: RoadmapFeature | null) => void
-  ) => {
-    const result = await window.electronAPI.convertFeatureToSpec(projectId, feature.id);
-    if (result.success && result.data) {
-      // Add the created task to the task store so it appears in the kanban immediately
-      addTask(result.data);
+	const convertFeatureToSpec = async (
+		projectId: string,
+		feature: RoadmapFeature,
+		selectedFeature: RoadmapFeature | null,
+		setSelectedFeature: (feature: RoadmapFeature | null) => void,
+	) => {
+		const result = await window.electronAPI.convertFeatureToSpec(
+			projectId,
+			feature.id,
+		);
+		if (result.success && result.data) {
+			// Add the created task to the task store so it appears in the kanban immediately
+			addTask(result.data);
 
-      // Update the roadmap feature with the linked spec
-      updateFeatureLinkedSpec(feature.id, result.data.specId);
-      if (selectedFeature?.id === feature.id) {
-        setSelectedFeature({
-          ...feature,
-          linkedSpecId: result.data.specId,
-          status: 'in_progress',
-        });
-      }
-    }
-  };
+			// Update the roadmap feature with the linked spec
+			updateFeatureLinkedSpec(feature.id, result.data.specId);
+			if (selectedFeature?.id === feature.id) {
+				setSelectedFeature({
+					...feature,
+					linkedSpecId: result.data.specId,
+					status: "in_progress",
+				});
+			}
+		}
+	};
 
-  return {
-    convertFeatureToSpec,
-  };
+	return {
+		convertFeatureToSpec,
+	};
 }
 
 /**
@@ -75,43 +88,43 @@ export function useFeatureActions() {
  * we save the latest state after Zustand updates (e.g., after drag-drop status change)
  */
 export function useRoadmapSave(projectId: string) {
-  const saveRoadmap = async () => {
-    // Get current state at call time to avoid stale closure issues
-    const roadmap = useRoadmapStore.getState().roadmap;
-    if (!roadmap) return;
+	const saveRoadmap = async () => {
+		// Get current state at call time to avoid stale closure issues
+		const roadmap = useRoadmapStore.getState().roadmap;
+		if (!roadmap) return;
 
-    try {
-      await window.electronAPI.saveRoadmap(projectId, roadmap);
-    } catch (error) {
-      console.error('Failed to save roadmap:', error);
-    }
-  };
+		try {
+			await window.electronAPI.saveRoadmap(projectId, roadmap);
+		} catch (error) {
+			console.error("Failed to save roadmap:", error);
+		}
+	};
 
-  return { saveRoadmap };
+	return { saveRoadmap };
 }
 
 /**
  * Hook to delete features from roadmap
  */
 export function useFeatureDelete(projectId: string) {
-  const deleteFeature = useRoadmapStore((state) => state.deleteFeature);
+	const deleteFeature = useRoadmapStore((state) => state.deleteFeature);
 
-  const handleDeleteFeature = async (featureId: string) => {
-    // Delete from store
-    deleteFeature(featureId);
+	const handleDeleteFeature = async (featureId: string) => {
+		// Delete from store
+		deleteFeature(featureId);
 
-    // Persist to file
-    const roadmap = useRoadmapStore.getState().roadmap;
-    if (roadmap) {
-      try {
-        await window.electronAPI.saveRoadmap(projectId, roadmap);
-      } catch (error) {
-        console.error('Failed to save roadmap after delete:', error);
-      }
-    }
-  };
+		// Persist to file
+		const roadmap = useRoadmapStore.getState().roadmap;
+		if (roadmap) {
+			try {
+				await window.electronAPI.saveRoadmap(projectId, roadmap);
+			} catch (error) {
+				console.error("Failed to save roadmap after delete:", error);
+			}
+		}
+	};
 
-  return { deleteFeature: handleDeleteFeature };
+	return { deleteFeature: handleDeleteFeature };
 }
 
 /**
@@ -122,105 +135,110 @@ export function useFeatureDelete(projectId: string) {
  * 2. Existing competitor analysis: Show options to use existing, run new, or skip
  */
 export function useRoadmapGeneration(projectId: string) {
-  const competitorAnalysis = useRoadmapStore((state) => state.competitorAnalysis);
-  const [pendingAction, setPendingAction] = useState<'generate' | 'refresh' | null>(null);
-  const [showCompetitorDialog, setShowCompetitorDialog] = useState(false);
-  const [showExistingAnalysisDialog, setShowExistingAnalysisDialog] = useState(false);
+	const competitorAnalysis = useRoadmapStore(
+		(state) => state.competitorAnalysis,
+	);
+	const [pendingAction, setPendingAction] = useState<
+		"generate" | "refresh" | null
+	>(null);
+	const [showCompetitorDialog, setShowCompetitorDialog] = useState(false);
+	const [showExistingAnalysisDialog, setShowExistingAnalysisDialog] =
+		useState(false);
 
-  // Check if we have existing competitor analysis
-  const hasExistingAnalysis = !!competitorAnalysis;
+	// Check if we have existing competitor analysis
+	const hasExistingAnalysis = !!competitorAnalysis;
 
-  const handleGenerate = () => {
-    setPendingAction('generate');
-    if (hasExistingAnalysis) {
-      setShowExistingAnalysisDialog(true);
-    } else {
-      setShowCompetitorDialog(true);
-    }
-  };
+	const handleGenerate = () => {
+		setPendingAction("generate");
+		if (hasExistingAnalysis) {
+			setShowExistingAnalysisDialog(true);
+		} else {
+			setShowCompetitorDialog(true);
+		}
+	};
 
-  const handleRefresh = () => {
-    setPendingAction('refresh');
-    if (hasExistingAnalysis) {
-      setShowExistingAnalysisDialog(true);
-    } else {
-      setShowCompetitorDialog(true);
-    }
-  };
+	const handleRefresh = () => {
+		setPendingAction("refresh");
+		if (hasExistingAnalysis) {
+			setShowExistingAnalysisDialog(true);
+		} else {
+			setShowCompetitorDialog(true);
+		}
+	};
 
-  // Handler for "Yes, Enable Analysis" (new competitor analysis)
-  const handleCompetitorDialogAccept = () => {
-    if (pendingAction === 'generate') {
-      generateRoadmap(projectId, true); // Enable competitor analysis
-    } else if (pendingAction === 'refresh') {
-      refreshRoadmap(projectId, true); // Enable competitor analysis
-    }
-    setPendingAction(null);
-  };
+	// Handler for "Yes, Enable Analysis" (new competitor analysis)
+	const handleCompetitorDialogAccept = () => {
+		if (pendingAction === "generate") {
+			generateRoadmap(projectId, true); // Enable competitor analysis
+		} else if (pendingAction === "refresh") {
+			refreshRoadmap(projectId, true); // Enable competitor analysis
+		}
+		setPendingAction(null);
+	};
 
-  // Handler for "No, Skip Analysis"
-  const handleCompetitorDialogDecline = () => {
-    if (pendingAction === 'generate') {
-      generateRoadmap(projectId, false); // Disable competitor analysis
-    } else if (pendingAction === 'refresh') {
-      refreshRoadmap(projectId, false); // Disable competitor analysis
-    }
-    setPendingAction(null);
-  };
+	// Handler for "No, Skip Analysis"
+	const handleCompetitorDialogDecline = () => {
+		if (pendingAction === "generate") {
+			generateRoadmap(projectId, false); // Disable competitor analysis
+		} else if (pendingAction === "refresh") {
+			refreshRoadmap(projectId, false); // Disable competitor analysis
+		}
+		setPendingAction(null);
+	};
 
-  // Handler for "Use existing analysis" - reuses saved competitor data
-  const handleUseExistingAnalysis = () => {
-    // Enable competitor analysis but don't force refresh - backend will use existing if available
-    if (pendingAction === 'generate') {
-      generateRoadmap(projectId, true, false); // enableCompetitorAnalysis=true, refreshCompetitorAnalysis=false
-    } else if (pendingAction === 'refresh') {
-      refreshRoadmap(projectId, true, false); // enableCompetitorAnalysis=true, refreshCompetitorAnalysis=false
-    }
-    setPendingAction(null);
-  };
+	// Handler for "Use existing analysis" - reuses saved competitor data
+	const handleUseExistingAnalysis = () => {
+		// Enable competitor analysis but don't force refresh - backend will use existing if available
+		if (pendingAction === "generate") {
+			generateRoadmap(projectId, true, false); // enableCompetitorAnalysis=true, refreshCompetitorAnalysis=false
+		} else if (pendingAction === "refresh") {
+			refreshRoadmap(projectId, true, false); // enableCompetitorAnalysis=true, refreshCompetitorAnalysis=false
+		}
+		setPendingAction(null);
+	};
 
-  // Handler for "Run new analysis" - performs fresh web searches
-  const handleRunNewAnalysis = () => {
-    // Enable competitor analysis AND force refresh to run fresh web searches
-    if (pendingAction === 'generate') {
-      generateRoadmap(projectId, true, true); // enableCompetitorAnalysis=true, refreshCompetitorAnalysis=true
-    } else if (pendingAction === 'refresh') {
-      refreshRoadmap(projectId, true, true); // enableCompetitorAnalysis=true, refreshCompetitorAnalysis=true
-    }
-    setPendingAction(null);
-  };
+	// Handler for "Run new analysis" - performs fresh web searches
+	const handleRunNewAnalysis = () => {
+		// Enable competitor analysis AND force refresh to run fresh web searches
+		if (pendingAction === "generate") {
+			generateRoadmap(projectId, true, true); // enableCompetitorAnalysis=true, refreshCompetitorAnalysis=true
+		} else if (pendingAction === "refresh") {
+			refreshRoadmap(projectId, true, true); // enableCompetitorAnalysis=true, refreshCompetitorAnalysis=true
+		}
+		setPendingAction(null);
+	};
 
-  // Handler for "Skip analysis"
-  const handleSkipAnalysis = () => {
-    if (pendingAction === 'generate') {
-      generateRoadmap(projectId, false);
-    } else if (pendingAction === 'refresh') {
-      refreshRoadmap(projectId, false);
-    }
-    setPendingAction(null);
-  };
+	// Handler for "Skip analysis"
+	const handleSkipAnalysis = () => {
+		if (pendingAction === "generate") {
+			generateRoadmap(projectId, false);
+		} else if (pendingAction === "refresh") {
+			refreshRoadmap(projectId, false);
+		}
+		setPendingAction(null);
+	};
 
-  const handleStop = async () => {
-    await stopRoadmap(projectId);
-  };
+	const handleStop = async () => {
+		await stopRoadmap(projectId);
+	};
 
-  return {
-    pendingAction,
-    hasExistingAnalysis,
-    competitorAnalysisDate: competitorAnalysis?.createdAt,
-    // New dialog for existing analysis
-    showExistingAnalysisDialog,
-    setShowExistingAnalysisDialog,
-    handleUseExistingAnalysis,
-    handleRunNewAnalysis,
-    handleSkipAnalysis,
-    // Original dialog for no existing analysis
-    showCompetitorDialog,
-    setShowCompetitorDialog,
-    handleGenerate,
-    handleRefresh,
-    handleCompetitorDialogAccept,
-    handleCompetitorDialogDecline,
-    handleStop,
-  };
+	return {
+		pendingAction,
+		hasExistingAnalysis,
+		competitorAnalysisDate: competitorAnalysis?.createdAt,
+		// New dialog for existing analysis
+		showExistingAnalysisDialog,
+		setShowExistingAnalysisDialog,
+		handleUseExistingAnalysis,
+		handleRunNewAnalysis,
+		handleSkipAnalysis,
+		// Original dialog for no existing analysis
+		showCompetitorDialog,
+		setShowCompetitorDialog,
+		handleGenerate,
+		handleRefresh,
+		handleCompetitorDialogAccept,
+		handleCompetitorDialogDecline,
+		handleStop,
+	};
 }

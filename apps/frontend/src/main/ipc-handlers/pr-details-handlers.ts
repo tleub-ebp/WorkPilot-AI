@@ -1,216 +1,242 @@
 /**
  * Universal PR Details Handler
- * 
+ *
  * Supports both GitHub and Azure DevOps Pull Requests
  * Routes to appropriate handlers based on URL detection
  */
 
-import { ipcMain } from 'electron';
-import { IPC_CHANNELS } from '../../shared/constants';
-import type { IPCResult, PRDetailsResult, Project, } from '../../shared/types';
-import { findTaskAndProject } from './task/shared';
+import { ipcMain } from "electron";
+import { IPC_CHANNELS } from "../../shared/constants";
+import type { IPCResult, PRDetailsResult, Project } from "../../shared/types";
+import { findTaskAndProject } from "./task/shared";
 
 /**
  * Register universal PR details handler
  */
 export function registerPRDetailsHandlers(): void {
-  ipcMain.handle(
-    IPC_CHANNELS.PR_DETAILS,
-    async (_, prNumber: number, taskId?: string): Promise<IPCResult<PRDetailsResult>> => {
-      try {
+	ipcMain.handle(
+		IPC_CHANNELS.PR_DETAILS,
+		async (
+			_,
+			prNumber: number,
+			taskId?: string,
+		): Promise<IPCResult<PRDetailsResult>> => {
+			try {
+				// If taskId is provided, get the task and project to detect PR URL
+				let prUrl: string | null = null;
+				let project: Project | null = null;
 
-        // If taskId is provided, get the task and project to detect PR URL
-        let prUrl: string | null = null;
-        let project: Project | null = null;
+				if (taskId) {
+					const result = findTaskAndProject(taskId);
+					if (result.task && result.project) {
+						prUrl = result.task.metadata?.prUrl || null;
+						project = result.project;
+					}
+				}
 
-        if (taskId) {
-          const result = findTaskAndProject(taskId);
-          if (result.task && result.project) {
-            prUrl = result.task.metadata?.prUrl || null;
-            project = result.project;
-          }
-        }
+				// If no PR URL from task, we need to determine the platform
+				// For now, we'll default to GitHub if no URL is found
+				if (!prUrl) {
+					return getGitHubPRDetails(prNumber, project);
+				}
 
-        // If no PR URL from task, we need to determine the platform
-        // For now, we'll default to GitHub if no URL is found
-        if (!prUrl) {
-          return getGitHubPRDetails(prNumber, project);
-        }
-
-        // Detect platform from URL and route accordingly
-        if (prUrl.includes('dev.azure.com') || prUrl.includes('/pullrequest/')) {
-          return getAzureDevOpsPRDetails(prNumber, prUrl, project);
-        } else if (prUrl.includes('github.com') || prUrl.includes('/pull/')) {
-          return getGitHubPRDetails(prNumber, project);
-        } else {
-          return {
-            success: false,
-            error: `Unsupported PR URL format: ${prUrl}. Only GitHub and Azure DevOps are supported.`
-          };
-        }
-      } catch (error) {
-        console.error(`[PR_DETAILS] Error:`, error);
-        return {
-          success: false,
-          error: error instanceof Error ? error.message : 'Unknown error occurred'
-        };
-      }
-    }
-  );
+				// Detect platform from URL and route accordingly
+				if (
+					prUrl.includes("dev.azure.com") ||
+					prUrl.includes("/pullrequest/")
+				) {
+					return getAzureDevOpsPRDetails(prNumber, prUrl, project);
+				} else if (prUrl.includes("github.com") || prUrl.includes("/pull/")) {
+					return getGitHubPRDetails(prNumber, project);
+				} else {
+					return {
+						success: false,
+						error: `Unsupported PR URL format: ${prUrl}. Only GitHub and Azure DevOps are supported.`,
+					};
+				}
+			} catch (error) {
+				console.error(`[PR_DETAILS] Error:`, error);
+				return {
+					success: false,
+					error:
+						error instanceof Error ? error.message : "Unknown error occurred",
+				};
+			}
+		},
+	);
 }
 
 /**
  * Get GitHub PR details
  */
-async function getGitHubPRDetails(prNumber: number, _project: Project | null): Promise<IPCResult<PRDetailsResult>> {
-  try {
-    // For now, return a mock implementation for GitHub too
-    // TODO: Implement actual GitHub API call
-    const mockGitHubResult = {
-      success: true,
-      data: {
-        success: true,
-        data: {
-          number: prNumber,
-          title: `GitHub PR #${prNumber}`,
-          body: 'Mock GitHub PR description',
-          state: 'open',
-          url: `https://github.com/owner/repo/pull/${prNumber}`,
-          additions: 15,
-          deletions: 8,
-          changed_files: 3,
-          source_branch: 'feature/branch',
-          target_branch: 'main',
-          author: 'MockUser',
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
-          mergeable: true,
-          labels: [],
-          reviewers: [],
-          is_draft: false,
-          diff: '', // We'll need to fetch individual file diffs if needed
-          files: [
-            {
-              filename: 'src/example.ts',
-              status: 'modified' as const,
-              additions: 10,
-              deletions: 5,
-              changes: 15,
-              patch: ''
-            },
-            {
-              filename: 'src/new-file.ts',
-              status: 'added' as const,
-              additions: 5,
-              deletions: 0,
-              changes: 5,
-              patch: ''
-            },
-            {
-              filename: 'src/old-file.ts',
-              status: 'renamed' as const,
-              additions: 0,
-              deletions: 3,
-              changes: 3,
-              patch: '',
-              previous_filename: 'src/renamed-file.ts'
-            }
-          ]
-        }
-      }
-    };
+async function getGitHubPRDetails(
+	prNumber: number,
+	_project: Project | null,
+): Promise<IPCResult<PRDetailsResult>> {
+	try {
+		// For now, return a mock implementation for GitHub too
+		// TODO: Implement actual GitHub API call
+		const mockGitHubResult = {
+			success: true,
+			data: {
+				success: true,
+				data: {
+					number: prNumber,
+					title: `GitHub PR #${prNumber}`,
+					body: "Mock GitHub PR description",
+					state: "open",
+					url: `https://github.com/owner/repo/pull/${prNumber}`,
+					additions: 15,
+					deletions: 8,
+					changed_files: 3,
+					source_branch: "feature/branch",
+					target_branch: "main",
+					author: "MockUser",
+					created_at: new Date().toISOString(),
+					updated_at: new Date().toISOString(),
+					mergeable: true,
+					labels: [],
+					reviewers: [],
+					is_draft: false,
+					diff: "", // We'll need to fetch individual file diffs if needed
+					files: [
+						{
+							filename: "src/example.ts",
+							status: "modified" as const,
+							additions: 10,
+							deletions: 5,
+							changes: 15,
+							patch: "",
+						},
+						{
+							filename: "src/new-file.ts",
+							status: "added" as const,
+							additions: 5,
+							deletions: 0,
+							changes: 5,
+							patch: "",
+						},
+						{
+							filename: "src/old-file.ts",
+							status: "renamed" as const,
+							additions: 0,
+							deletions: 3,
+							changes: 3,
+							patch: "",
+							previous_filename: "src/renamed-file.ts",
+						},
+					],
+				},
+			},
+		};
 
-    return mockGitHubResult;
-  } catch (error) {
-    console.error('[PR_DETAILS] GitHub error:', error);
-    return {
-      success: false,
-      error: error instanceof Error ? error.message : 'Failed to fetch GitHub PR details'
-    };
-  }
+		return mockGitHubResult;
+	} catch (error) {
+		console.error("[PR_DETAILS] GitHub error:", error);
+		return {
+			success: false,
+			error:
+				error instanceof Error
+					? error.message
+					: "Failed to fetch GitHub PR details",
+		};
+	}
 }
 
 /**
  * Get Azure DevOps PR details
  */
-async function getAzureDevOpsPRDetails(prNumber: number, prUrl: string, project: Project | null): Promise<IPCResult<PRDetailsResult>> {
-  try {
-    if (!project) {
-      return {
-        success: false,
-        error: 'Project is required for Azure DevOps PR details'
-      };
-    }
+async function getAzureDevOpsPRDetails(
+	prNumber: number,
+	prUrl: string,
+	project: Project | null,
+): Promise<IPCResult<PRDetailsResult>> {
+	try {
+		if (!project) {
+			return {
+				success: false,
+				error: "Project is required for Azure DevOps PR details",
+			};
+		}
 
-    // Parse Azure DevOps URL to extract organization and project
-    const urlMatch = prUrl.match(/https:\/\/dev\.azure\.com\/([^/]+)\/([^/]+)\/_git\/([^/]+)\/pullrequest\/(\d+)/);
-    if (!urlMatch) {
-      return {
-        success: false,
-        error: 'Invalid Azure DevOps PR URL format'
-      };
-    }
+		// Parse Azure DevOps URL to extract organization and project
+		const urlMatch = prUrl.match(
+			/https:\/\/dev\.azure\.com\/([^/]+)\/([^/]+)\/_git\/([^/]+)\/pullrequest\/(\d+)/,
+		);
+		if (!urlMatch) {
+			return {
+				success: false,
+				error: "Invalid Azure DevOps PR URL format",
+			};
+		}
 
-    const [, _organization, _projectName, repository, prNumFromUrl] = urlMatch;
-    
-    // Validate PR number matches URL
-    if (parseInt(prNumFromUrl, 10) !== prNumber) {
-      return {
-        success: false,
-        error: `PR number mismatch: requested ${prNumber} but URL contains ${prNumFromUrl}`
-      };
-    }
+		const [, _organization, _projectName, repository, prNumFromUrl] = urlMatch;
 
-    // Try to call Azure DevOps Python connector using existing project configuration
-    try {
-      const result = await callAzureDevOpsPythonWithExistingConfig(
-        project.path,
-        repository,
-        prNumber,
-        prUrl
-      );
-      
-      if (result && !result.error) {
-        return transformAzureDevOpsData(result.data, prUrl);
-      } else {
-        console.warn('[PR_DETAILS] Python call returned error:', result?.error);
-        if (result?.traceback) {
-          console.error('[PR_DETAILS] Python traceback:', result.traceback);
-        }
-      }
-    } catch (error) {
-      console.error('[PR_DETAILS] Azure DevOps API call failed, using mock data:', error);
-      console.error('[PR_DETAILS] Error details:', error instanceof Error ? error.message : error);
-    }
-    
-    // Fallback to mock data
-    console.warn('[PR_DETAILS] Using enhanced mock data for Azure DevOps PR');
-    return getMockAzureDevOpsPRDetails(prNumber, prUrl);
-  } catch (error) {
-    console.error('[PR_DETAILS] Azure DevOps error:', error);
-    // Fallback to mock data
-    return getMockAzureDevOpsPRDetails(prNumber, prUrl);
-  }
+		// Validate PR number matches URL
+		if (parseInt(prNumFromUrl, 10) !== prNumber) {
+			return {
+				success: false,
+				error: `PR number mismatch: requested ${prNumber} but URL contains ${prNumFromUrl}`,
+			};
+		}
+
+		// Try to call Azure DevOps Python connector using existing project configuration
+		try {
+			const result = await callAzureDevOpsPythonWithExistingConfig(
+				project.path,
+				repository,
+				prNumber,
+				prUrl,
+			);
+
+			if (result && !result.error) {
+				return transformAzureDevOpsData(result.data, prUrl);
+			} else {
+				console.warn("[PR_DETAILS] Python call returned error:", result?.error);
+				if (result?.traceback) {
+					console.error("[PR_DETAILS] Python traceback:", result.traceback);
+				}
+			}
+		} catch (error) {
+			console.error(
+				"[PR_DETAILS] Azure DevOps API call failed, using mock data:",
+				error,
+			);
+			console.error(
+				"[PR_DETAILS] Error details:",
+				error instanceof Error ? error.message : error,
+			);
+		}
+
+		// Fallback to mock data
+		console.warn("[PR_DETAILS] Using enhanced mock data for Azure DevOps PR");
+		return getMockAzureDevOpsPRDetails(prNumber, prUrl);
+	} catch (error) {
+		console.error("[PR_DETAILS] Azure DevOps error:", error);
+		// Fallback to mock data
+		return getMockAzureDevOpsPRDetails(prNumber, prUrl);
+	}
 }
 
 /**
  * Call Azure DevOps Python connector using existing project configuration
  */
 async function callAzureDevOpsPythonWithExistingConfig(
-  projectPath: string,
-  _repository: string,
-  prNumber: number,
-  prUrl: string
-// biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
+	projectPath: string,
+	_repository: string,
+	prNumber: number,
+	prUrl: string,
+	// biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
 ): Promise<any> {
-  return new Promise((resolve, reject) => {
-    // Debug: Check Python executable and project path
-    const { exec } = require('child_process');
-    // biome-ignore lint/suspicious/noEmptyBlockStatements: intentionally empty
-    exec('python --version', (_error: Error | null, _stdout: string, _stderr: string) => {
-    });
-    
-    const pythonScript = `
+	return new Promise((resolve, reject) => {
+		// Debug: Check Python executable and project path
+		const { exec } = require("child_process");
+		exec(
+			"python --version",
+			(_error: Error | null, _stdout: string, _stderr: string) => {},
+		);
+
+		const pythonScript = `
 import sys
 import json
 import os
@@ -228,8 +254,8 @@ try:
     from dotenv import load_dotenv
     # Try loading .env from project path first, then common locations
     env_locations = [
-        os.path.join(r'${projectPath.replace(/\\/g, '\\\\')}', '.env'),
-        os.path.join(r'${projectPath.replace(/\\/g, '\\\\')}', 'apps', 'backend', '.env'),
+        os.path.join(r'${projectPath.replace(/\\/g, "\\\\")}', '.env'),
+        os.path.join(r'${projectPath.replace(/\\/g, "\\\\")}', 'apps', 'backend', '.env'),
     ]
     for env_path in env_locations:
         if os.path.exists(env_path):
@@ -493,219 +519,257 @@ except Exception as e:
     sys.exit(1)
 `;
 
-    const { spawn } = require('child_process');
-    const pythonProcess = spawn('python', ['-c', pythonScript], {
-      cwd: projectPath,
-      env: {
-        ...process.env,
-        PYTHONIOENCODING: 'utf-8',
-      }
-    });
+		const { spawn } = require("child_process");
+		const pythonProcess = spawn("python", ["-c", pythonScript], {
+			cwd: projectPath,
+			env: {
+				...process.env,
+				PYTHONIOENCODING: "utf-8",
+			},
+		});
 
-    let output = '';
-    let errorOutput = '';
-    
-    pythonProcess.stdout.on('data', (data: Buffer) => {
-      const dataStr = data.toString();
-      output += dataStr;
-    });
+		let output = "";
+		let errorOutput = "";
 
-    pythonProcess.stderr.on('data', (data: Buffer) => {
-      const dataStr = data.toString();
-      errorOutput += dataStr;
-      console.error('[PR_DETAILS] Python stderr:', dataStr);
-    });
+		pythonProcess.stdout.on("data", (data: Buffer) => {
+			const dataStr = data.toString();
+			output += dataStr;
+		});
 
-    pythonProcess.on('close', (code: number) => {
-      
-      if (code === 0) {
-        try {
-          // The Python script prints debug messages before the JSON output.
-          // Extract only the last valid JSON line from stdout.
-          // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
-          let result: any = null;
-          const lines = output.trim().split('\n');
-          for (let i = lines.length - 1; i >= 0; i--) {
-            const line = lines[i].trim();
-            if (line.startsWith('{') || line.startsWith('[')) {
-              try {
-                result = JSON.parse(line);
-                break;
-              } catch {
-                // Not valid JSON, keep searching
-              }
-            }
-          }
-          if (result) {
-            resolve(result);
-          } else {
-            console.error('[PR_DETAILS] No valid JSON found in Python output:', output);
-            reject(new Error('No valid JSON found in Python output'));
-          }
-        } catch (error) {
-          console.error('[PR_DETAILS] Failed to parse Python output:', output);
-          reject(new Error(`Failed to parse Python output: ${error}`));
-        }
-      } else {
-        console.error('[PR_DETAILS] Python process failed with output:');
-        console.error('[PR_DETAILS] STDOUT:', output);
-        console.error('[PR_DETAILS] STDERR:', errorOutput);
-        reject(new Error(`Python process exited with code ${code}. Output: ${errorOutput || output}`));
-      }
-    });
+		pythonProcess.stderr.on("data", (data: Buffer) => {
+			const dataStr = data.toString();
+			errorOutput += dataStr;
+			console.error("[PR_DETAILS] Python stderr:", dataStr);
+		});
 
-    pythonProcess.on('error', (error: Error) => {
-      reject(error);
-    });
-  });
+		pythonProcess.on("close", (code: number) => {
+			if (code === 0) {
+				try {
+					// The Python script prints debug messages before the JSON output.
+					// Extract only the last valid JSON line from stdout.
+					// biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
+					let result: any = null;
+					const lines = output.trim().split("\n");
+					for (let i = lines.length - 1; i >= 0; i--) {
+						const line = lines[i].trim();
+						if (line.startsWith("{") || line.startsWith("[")) {
+							try {
+								result = JSON.parse(line);
+								break;
+							} catch {
+								// Not valid JSON, keep searching
+							}
+						}
+					}
+					if (result) {
+						resolve(result);
+					} else {
+						console.error(
+							"[PR_DETAILS] No valid JSON found in Python output:",
+							output,
+						);
+						reject(new Error("No valid JSON found in Python output"));
+					}
+				} catch (error) {
+					console.error("[PR_DETAILS] Failed to parse Python output:", output);
+					reject(new Error(`Failed to parse Python output: ${error}`));
+				}
+			} else {
+				console.error("[PR_DETAILS] Python process failed with output:");
+				console.error("[PR_DETAILS] STDOUT:", output);
+				console.error("[PR_DETAILS] STDERR:", errorOutput);
+				reject(
+					new Error(
+						`Python process exited with code ${code}. Output: ${errorOutput || output}`,
+					),
+				);
+			}
+		});
+
+		pythonProcess.on("error", (error: Error) => {
+			reject(error);
+		});
+	});
 }
 
 /**
  * Transform Azure DevOps data to PRDetailsResult format
  */
-// biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
-function transformAzureDevOpsData(prData: any, prUrl: string): IPCResult<PRDetailsResult> {
-  try {
-    // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
-    const files = prData.files?.map((file: any) => {
-      const status = mapAzureDevOpsChangeType(file.changeType);
-      return {
-        filename: file.path,
-        status: status,
-        additions: file.additions || 0,
-        deletions: file.deletions || 0,
-        changes: file.changes || 0,
-        patch: file.patch || '',
-        previous_filename: file.oldPath || undefined
-      };
-    }) || [];
+function transformAzureDevOpsData(
+	prData: any,
+	prUrl: string,
+): IPCResult<PRDetailsResult> {
+	try {
+		const files =
+			prData.files?.map((file: any) => {
+				const status = mapAzureDevOpsChangeType(file.changeType);
+				return {
+					filename: file.path,
+					status: status,
+					additions: file.additions || 0,
+					deletions: file.deletions || 0,
+					changes: file.changes || 0,
+					patch: file.patch || "",
+					previous_filename: file.oldPath || undefined,
+				};
+			}) || [];
 
-    // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
-    const reviewers = (prData.reviewers || []).map((r: any) => r.displayName || r).filter(Boolean);
-    // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
-    const labels = (prData.labels || []).map((l: any) => typeof l === 'string' ? l : l.name).filter(Boolean);
+		const reviewers = (prData.reviewers || [])
+			.map((r: any) => r.displayName || r)
+			.filter(Boolean);
+		const labels = (prData.labels || [])
+			.map((l: any) => (typeof l === "string" ? l : l.name))
+			.filter(Boolean);
 
-    return {
-      success: true,
-      data: {
-        success: true,
-        data: {
-          number: prData.id,
-          title: prData.title,
-          body: prData.description,
-          state: prData.status === 'active' ? 'open' : 'closed',
-          url: prUrl,
-          additions: prData.additions || 0,
-          deletions: prData.deletions || 0,
-          changed_files: prData.changed_files || files.length,
-          source_branch: prData.sourceRefName,
-          target_branch: prData.targetRefName,
-          author: prData.createdBy?.displayName || 'Unknown',
-          created_at: prData.creationDate,
-          updated_at: prData.closedDate || prData.creationDate,
-          mergeable: true,
-          labels,
-          reviewers,
-          is_draft: prData.isDraft || false,
-          diff: prData.diff || '',
-          files
-        }
-      }
-    };
-  } catch (error) {
-    console.error('[PR_DETAILS] Error transforming Azure DevOps data:', error);
-    return {
-      success: false,
-      error: error instanceof Error ? error.message : 'Failed to transform Azure DevOps data'
-    };
-  }
+		return {
+			success: true,
+			data: {
+				success: true,
+				data: {
+					number: prData.id,
+					title: prData.title,
+					body: prData.description,
+					state: prData.status === "active" ? "open" : "closed",
+					url: prUrl,
+					additions: prData.additions || 0,
+					deletions: prData.deletions || 0,
+					changed_files: prData.changed_files || files.length,
+					source_branch: prData.sourceRefName,
+					target_branch: prData.targetRefName,
+					author: prData.createdBy?.displayName || "Unknown",
+					created_at: prData.creationDate,
+					updated_at: prData.closedDate || prData.creationDate,
+					mergeable: true,
+					labels,
+					reviewers,
+					is_draft: prData.isDraft || false,
+					diff: prData.diff || "",
+					files,
+				},
+			},
+		};
+	} catch (error) {
+		console.error("[PR_DETAILS] Error transforming Azure DevOps data:", error);
+		return {
+			success: false,
+			error:
+				error instanceof Error
+					? error.message
+					: "Failed to transform Azure DevOps data",
+		};
+	}
 }
 
 /**
  * Mock Azure DevOps PR details for fallback
  */
-async function getMockAzureDevOpsPRDetails(prNumber: number, prUrl: string): Promise<IPCResult<PRDetailsResult>> {
-  
-  // Extract real info from URL for more realistic mock data
-  const urlMatch = prUrl.match(/https:\/\/dev\.azure\.com\/([^/]+)\/([^/]+)\/_git\/([^/]+)\/pullrequest\/(\d+)/);
-  const [, organization, projectName, repository] = urlMatch || [undefined, 'Unknown Org', 'Unknown Project', 'Unknown Repo'];
-  
-  return {
-    success: true,
-    data: {
-      success: true,
-      data: {
-        number: prNumber,
-        title: `Planning atelier sécuriser l'accès au dossier d'un [PR #${prNumber}]`,
-        body: `This is a mock representation of Azure DevOps PR #${prNumber} from the ${repository} repository.\n\nThe actual PR details would be fetched from Azure DevOps API when a PAT is configured.\n\n**Organization**: ${organization}\n**Project**: ${projectName}\n**Repository**: ${repository}`,
-        state: 'open',
-        url: prUrl,
-        additions: 25,
-        deletions: 12,
-        changed_files: 3,
-        source_branch: 'feature/planning-atelier-securiser-acces',
-        target_branch: 'main',
-        author: 'Thomas Leberre',
-        created_at: '2025-02-22T10:30:00Z',
-        updated_at: '2025-02-22T14:15:00Z',
-        mergeable: true,
-        labels: ['planning', 'security', 'access-control'],
-        reviewers: ['Reviewer1', 'Reviewer2'],
-        is_draft: false,
-        diff: '',
-        files: [
-          {
-            filename: 'src/components/access-control/AccessManager.ts',
-            status: 'modified' as const,
-            additions: 15,
-            deletions: 8,
-            changes: 23,
-            patch: ''
-          },
-          {
-            filename: 'src/components/access-control/types.ts',
-            status: 'added' as const,
-            additions: 8,
-            deletions: 0,
-            changes: 8,
-            patch: ''
-          },
-          {
-            filename: 'src/utils/security-helpers.ts',
-            status: 'modified' as const,
-            additions: 2,
-            deletions: 4,
-            changes: 6,
-            patch: ''
-          }
-        ]
-      }
-    }
-  };
+async function getMockAzureDevOpsPRDetails(
+	prNumber: number,
+	prUrl: string,
+): Promise<IPCResult<PRDetailsResult>> {
+	// Extract real info from URL for more realistic mock data
+	const urlMatch = prUrl.match(
+		/https:\/\/dev\.azure\.com\/([^/]+)\/([^/]+)\/_git\/([^/]+)\/pullrequest\/(\d+)/,
+	);
+	const [, organization, projectName, repository] = urlMatch || [
+		undefined,
+		"Unknown Org",
+		"Unknown Project",
+		"Unknown Repo",
+	];
+
+	return {
+		success: true,
+		data: {
+			success: true,
+			data: {
+				number: prNumber,
+				title: `Planning atelier sécuriser l'accès au dossier d'un [PR #${prNumber}]`,
+				body: `This is a mock representation of Azure DevOps PR #${prNumber} from the ${repository} repository.\n\nThe actual PR details would be fetched from Azure DevOps API when a PAT is configured.\n\n**Organization**: ${organization}\n**Project**: ${projectName}\n**Repository**: ${repository}`,
+				state: "open",
+				url: prUrl,
+				additions: 25,
+				deletions: 12,
+				changed_files: 3,
+				source_branch: "feature/planning-atelier-securiser-acces",
+				target_branch: "main",
+				author: "Thomas Leberre",
+				created_at: "2025-02-22T10:30:00Z",
+				updated_at: "2025-02-22T14:15:00Z",
+				mergeable: true,
+				labels: ["planning", "security", "access-control"],
+				reviewers: ["Reviewer1", "Reviewer2"],
+				is_draft: false,
+				diff: "",
+				files: [
+					{
+						filename: "src/components/access-control/AccessManager.ts",
+						status: "modified" as const,
+						additions: 15,
+						deletions: 8,
+						changes: 23,
+						patch: "",
+					},
+					{
+						filename: "src/components/access-control/types.ts",
+						status: "added" as const,
+						additions: 8,
+						deletions: 0,
+						changes: 8,
+						patch: "",
+					},
+					{
+						filename: "src/utils/security-helpers.ts",
+						status: "modified" as const,
+						additions: 2,
+						deletions: 4,
+						changes: 6,
+						patch: "",
+					},
+				],
+			},
+		},
+	};
 }
 
 /**
  * Helper functions
  */
 
-function _mapGitHubChangeType(changeType: string): 'added' | 'modified' | 'renamed' {
-  switch (changeType) {
-    case 'ADDED': return 'added';
-    case 'MODIFIED': return 'modified';
-    case 'DELETED': return 'renamed'; // Map GitHub 'deleted' to 'renamed' for compatibility
-    case 'RENAMED': return 'renamed';
-    case 'COPIED': return 'added';
-    case 'CHANGED': return 'modified';
-    default: return 'modified';
-  }
+function _mapGitHubChangeType(
+	changeType: string,
+): "added" | "modified" | "renamed" {
+	switch (changeType) {
+		case "ADDED":
+			return "added";
+		case "MODIFIED":
+			return "modified";
+		case "DELETED":
+			return "renamed"; // Map GitHub 'deleted' to 'renamed' for compatibility
+		case "RENAMED":
+			return "renamed";
+		case "COPIED":
+			return "added";
+		case "CHANGED":
+			return "modified";
+		default:
+			return "modified";
+	}
 }
 
-function mapAzureDevOpsChangeType(changeType: string): 'added' | 'modified' | 'renamed' {
-  switch (changeType) {
-    case 'add': return 'added';
-    case 'edit': return 'modified';
-    case 'delete': return 'renamed'; // Map Azure DevOps 'delete' to 'renamed' for compatibility
-    case 'rename': return 'renamed';
-    default: return 'modified';
-  }
+function mapAzureDevOpsChangeType(
+	changeType: string,
+): "added" | "modified" | "renamed" {
+	switch (changeType) {
+		case "add":
+			return "added";
+		case "edit":
+			return "modified";
+		case "delete":
+			return "renamed"; // Map Azure DevOps 'delete' to 'renamed' for compatibility
+		case "rename":
+			return "renamed";
+		default:
+			return "modified";
+	}
 }

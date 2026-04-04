@@ -1,34 +1,32 @@
 // Main export for the github-issues module
-export { GitHubIssues } from '../GitHubIssues';
-
-// Re-export types for external usage if needed
-export type {
-  GitHubIssuesProps,
-  FilterState,
-  IssueListItemProps,
-  IssueDetailProps,
-  InvestigationDialogProps,
-  IssueListHeaderProps,
-  IssueListProps
-} from './types';
+export { GitHubIssues } from "../GitHubIssues";
+// Re-export components for external usage if needed
+export {
+	EmptyState,
+	InvestigationDialog,
+	IssueDetail,
+	IssueList,
+	IssueListHeader,
+	IssueListItem,
+	NotConnectedState,
+} from "./components";
 
 // Re-export hooks for external usage if needed
 export {
-  useGitHubIssues,
-  useGitHubInvestigation,
-  useIssueFiltering
-} from './hooks';
-
-// Re-export components for external usage if needed
-export {
-  IssueListItem,
-  IssueDetail,
-  InvestigationDialog,
-  EmptyState,
-  NotConnectedState,
-  IssueListHeader,
-  IssueList
-} from './components';
+	useGitHubInvestigation,
+	useGitHubIssues,
+	useIssueFiltering,
+} from "./hooks";
+// Re-export types for external usage if needed
+export type {
+	FilterState,
+	GitHubIssuesProps,
+	InvestigationDialogProps,
+	IssueDetailProps,
+	IssueListHeaderProps,
+	IssueListItemProps,
+	IssueListProps,
+} from "./types";
 
 // Re-export utils for external usage if needed
-export { formatDate, filterIssuesBySearch } from './utils';
+export { filterIssuesBySearch, formatDate } from "./utils";

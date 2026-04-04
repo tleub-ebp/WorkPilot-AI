@@ -1,121 +1,138 @@
 /**
  * Smart Estimation IPC Handlers
- * 
+ *
  * Handles IPC communication for the Smart Estimation feature
  */
 
-import { app, ipcMain } from 'electron';
-import { ChildProcess, spawn } from 'node:child_process';
-import path from 'node:path';
+import { type ChildProcess, spawn } from "node:child_process";
+import path from "node:path";
+import { app, ipcMain } from "electron";
 
 interface SmartEstimationRequest {
-  projectId: string;
-  taskDescription: string;
+	projectId: string;
+	taskDescription: string;
 }
 
 export function setupSmartEstimationHandlers() {
-  let currentProcess: ChildProcess | null = null;
+	let currentProcess: ChildProcess | null = null;
 
-  // Kill existing process when starting a new one
-  const killExistingProcess = () => {
-    if (currentProcess) {
-      currentProcess.kill('SIGTERM');
-      currentProcess = null;
-    }
-  };
+	// Kill existing process when starting a new one
+	const killExistingProcess = () => {
+		if (currentProcess) {
+			currentProcess.kill("SIGTERM");
+			currentProcess = null;
+		}
+	};
 
-  // Handle smart estimation request
-  ipcMain.handle('run-smart-estimation', async (event, { projectId, taskDescription }: SmartEstimationRequest) => {
-    return new Promise((resolve, reject) => {
-      killExistingProcess();
+	// Handle smart estimation request
+	ipcMain.handle(
+		"run-smart-estimation",
+		async (event, { projectId, taskDescription }: SmartEstimationRequest) => {
+			return new Promise((resolve, reject) => {
+				killExistingProcess();
 
-      const backendPath = path.resolve(app.getAppPath(), 'apps', 'backend');
-      const runnerPath = path.resolve(backendPath, 'runners', 'smart_estimation_runner.py');
+				const backendPath = path.resolve(app.getAppPath(), "apps", "backend");
+				const runnerPath = path.resolve(
+					backendPath,
+					"runners",
+					"smart_estimation_runner.py",
+				);
 
-      const spawnedProcess: ChildProcess = spawn('python', [
-        runnerPath,
-        '--project-id', projectId,
-        '--task-description', taskDescription
-      ], {
-        cwd: backendPath,
-        env: {
-          ...process.env,
-          PYTHONPATH: backendPath
-        }
-      } as Parameters<typeof spawn>[2]);
+				const spawnedProcess: ChildProcess = spawn(
+					"python",
+					[
+						runnerPath,
+						"--project-id",
+						projectId,
+						"--task-description",
+						taskDescription,
+					],
+					{
+						cwd: backendPath,
+						env: {
+							...process.env,
+							PYTHONPATH: backendPath,
+						},
+					} as Parameters<typeof spawn>[2],
+				);
 
-      currentProcess = spawnedProcess;
+				currentProcess = spawnedProcess;
 
-      // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
-      let result: any = null;
-      let error: string | null = null;
+				// biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
+				let result: any = null;
+				let error: string | null = null;
 
-      // Handle stdout events
-      spawnedProcess.stdout?.on('data', (data: Buffer) => {
-        const output = data.toString();
-        
-        // Parse smart estimation events
-        const lines = output.split('\n');
-        for (const line of lines) {
-          if (line.startsWith('SMART_ESTIMATION_EVENT:')) {
-            try {
-              const eventData = JSON.parse(line.substring('SMART_ESTIMATION_EVENT:'.length));
-              event.sender.send('smart-estimation-event', eventData);
-            } catch (e) {
-              console.error('Failed to parse smart estimation event:', e);
-            }
-          } else if (line.startsWith('SMART_ESTIMATION_RESULT:')) {
-            try {
-              result = JSON.parse(line.substring('SMART_ESTIMATION_RESULT:'.length));
-            } catch (e) {
-              console.error('Failed to parse smart estimation result:', e);
-            }
-          } else if (line.startsWith('SMART_ESTIMATION_ERROR:')) {
-            error = line.substring('SMART_ESTIMATION_ERROR:'.length);
-          }
-        }
-      });
+				// Handle stdout events
+				spawnedProcess.stdout?.on("data", (data: Buffer) => {
+					const output = data.toString();
 
-      // Handle stderr
-      spawnedProcess.stderr?.on('data', (data: Buffer) => {
-        const errorOutput = data.toString();
-        console.error('Smart Estimation stderr:', errorOutput);
-        event.sender.send('smart-estimation-error', errorOutput);
-      });
+					// Parse smart estimation events
+					const lines = output.split("\n");
+					for (const line of lines) {
+						if (line.startsWith("SMART_ESTIMATION_EVENT:")) {
+							try {
+								const eventData = JSON.parse(
+									line.substring("SMART_ESTIMATION_EVENT:".length),
+								);
+								event.sender.send("smart-estimation-event", eventData);
+							} catch (e) {
+								console.error("Failed to parse smart estimation event:", e);
+							}
+						} else if (line.startsWith("SMART_ESTIMATION_RESULT:")) {
+							try {
+								result = JSON.parse(
+									line.substring("SMART_ESTIMATION_RESULT:".length),
+								);
+							} catch (e) {
+								console.error("Failed to parse smart estimation result:", e);
+							}
+						} else if (line.startsWith("SMART_ESTIMATION_ERROR:")) {
+							error = line.substring("SMART_ESTIMATION_ERROR:".length);
+						}
+					}
+				});
 
-      // Handle process completion
-      spawnedProcess.on('close', (code: number | null) => {
-        currentProcess = null;
-        
-        if (code === 0 && result) {
-          event.sender.send('smart-estimation-complete', result);
-          resolve(result);
-        } else {
-          const errorMessage = error || `Process exited with code ${code}`;
-          event.sender.send('smart-estimation-error', errorMessage);
-          reject(new Error(errorMessage));
-        }
-      });
+				// Handle stderr
+				spawnedProcess.stderr?.on("data", (data: Buffer) => {
+					const errorOutput = data.toString();
+					console.error("Smart Estimation stderr:", errorOutput);
+					event.sender.send("smart-estimation-error", errorOutput);
+				});
 
-      // Handle process error
-      spawnedProcess.on('error', (err: Error) => {
-        currentProcess = null;
-        const errorMessage = `Failed to start smart estimation process: ${err.message}`;
-        event.sender.send('smart-estimation-error', errorMessage);
-        reject(new Error(errorMessage));
-      });
-    });
-  });
+				// Handle process completion
+				spawnedProcess.on("close", (code: number | null) => {
+					currentProcess = null;
 
-  // Handle process cancellation
-  ipcMain.handle('cancel-smart-estimation', () => {
-    killExistingProcess();
-    return true;
-  });
+					if (code === 0 && result) {
+						event.sender.send("smart-estimation-complete", result);
+						resolve(result);
+					} else {
+						const errorMessage = error || `Process exited with code ${code}`;
+						event.sender.send("smart-estimation-error", errorMessage);
+						reject(new Error(errorMessage));
+					}
+				});
 
-  return () => {
-    killExistingProcess();
-    ipcMain.removeAllListeners('run-smart-estimation');
-    ipcMain.removeAllListeners('cancel-smart-estimation');
-  };
+				// Handle process error
+				spawnedProcess.on("error", (err: Error) => {
+					currentProcess = null;
+					const errorMessage = `Failed to start smart estimation process: ${err.message}`;
+					event.sender.send("smart-estimation-error", errorMessage);
+					reject(new Error(errorMessage));
+				});
+			});
+		},
+	);
+
+	// Handle process cancellation
+	ipcMain.handle("cancel-smart-estimation", () => {
+		killExistingProcess();
+		return true;
+	});
+
+	return () => {
+		killExistingProcess();
+		ipcMain.removeAllListeners("run-smart-estimation");
+		ipcMain.removeAllListeners("cancel-smart-estimation");
+	};
 }

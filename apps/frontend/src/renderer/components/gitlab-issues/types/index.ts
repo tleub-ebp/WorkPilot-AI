@@ -1,73 +1,76 @@
-import type { ComponentType } from 'react';
-import type { GitLabIssue, GitLabInvestigationResult } from '../../../../shared/types';
+import type { ComponentType } from "react";
+import type {
+	GitLabInvestigationResult,
+	GitLabIssue,
+} from "../../../../shared/types";
 
-export type FilterState = 'opened' | 'closed' | 'all';
+export type FilterState = "opened" | "closed" | "all";
 
 export interface GitLabIssuesProps {
-  readonly onOpenSettings?: () => void;
-  /** Navigate to view a task in the kanban board */
-  readonly onNavigateToTask?: (taskId: string) => void;
+	readonly onOpenSettings?: () => void;
+	/** Navigate to view a task in the kanban board */
+	readonly onNavigateToTask?: (taskId: string) => void;
 }
 
 export interface IssueListItemProps {
-  issue: GitLabIssue;
-  isSelected: boolean;
-  onClick: () => void;
-  onInvestigate: () => void;
+	issue: GitLabIssue;
+	isSelected: boolean;
+	onClick: () => void;
+	onInvestigate: () => void;
 }
 
 export interface IssueDetailProps {
-  issue: GitLabIssue;
-  onInvestigate: () => void;
-  investigationResult: GitLabInvestigationResult | null;
-  /** ID of existing task linked to this issue (from metadata.gitlabIssueIid) */
-  linkedTaskId?: string;
-  /** Handler to navigate to view the linked task */
-  onViewTask?: (taskId: string) => void;
+	issue: GitLabIssue;
+	onInvestigate: () => void;
+	investigationResult: GitLabInvestigationResult | null;
+	/** ID of existing task linked to this issue (from metadata.gitlabIssueIid) */
+	linkedTaskId?: string;
+	/** Handler to navigate to view the linked task */
+	onViewTask?: (taskId: string) => void;
 }
 
 export interface InvestigationDialogProps {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  selectedIssue: GitLabIssue | null;
-  investigationStatus: {
-    phase: string;
-    progress: number;
-    message: string;
-    error?: string;
-  };
-  onStartInvestigation: (selectedNoteIds: number[]) => void;
-  onClose: () => void;
-  projectId?: string;
+	open: boolean;
+	onOpenChange: (open: boolean) => void;
+	selectedIssue: GitLabIssue | null;
+	investigationStatus: {
+		phase: string;
+		progress: number;
+		message: string;
+		error?: string;
+	};
+	onStartInvestigation: (selectedNoteIds: number[]) => void;
+	onClose: () => void;
+	projectId?: string;
 }
 
 export interface IssueListHeaderProps {
-  projectPath: string;
-  openIssuesCount: number;
-  isLoading: boolean;
-  searchQuery: string;
-  filterState: FilterState;
-  onSearchChange: (query: string) => void;
-  onFilterChange: (state: FilterState) => void;
-  onRefresh: () => void;
+	projectPath: string;
+	openIssuesCount: number;
+	isLoading: boolean;
+	searchQuery: string;
+	filterState: FilterState;
+	onSearchChange: (query: string) => void;
+	onFilterChange: (state: FilterState) => void;
+	onRefresh: () => void;
 }
 
 export interface IssueListProps {
-  issues: GitLabIssue[];
-  selectedIssueIid: number | null;
-  isLoading: boolean;
-  error: string | null;
-  onSelectIssue: (issueIid: number) => void;
-  onInvestigate: (issue: GitLabIssue) => void;
+	issues: GitLabIssue[];
+	selectedIssueIid: number | null;
+	isLoading: boolean;
+	error: string | null;
+	onSelectIssue: (issueIid: number) => void;
+	onInvestigate: (issue: GitLabIssue) => void;
 }
 
 export interface EmptyStateProps {
-  readonly searchQuery?: string;
-  readonly icon?: ComponentType<{ className?: string }>;
-  readonly message: string;
+	readonly searchQuery?: string;
+	readonly icon?: ComponentType<{ className?: string }>;
+	readonly message: string;
 }
 
 export interface NotConnectedStateProps {
-  readonly error: string | null;
-  readonly onOpenSettings?: () => void;
+	readonly error: string | null;
+	readonly onOpenSettings?: () => void;
 }

@@ -1,1 +1,36 @@
-﻿{"title":"Insights","description":"Ask questions about your codebase","sidebar":{"hide":"Hide sidebar","show":"Show sidebar"},"actions":{"newChat":"New Chat"},"welcome":{"title":"Start a Conversation","description":"Ask questions about your codebase, get suggestions for improvements, or discuss features you would like to implement."},"suggestions":{"architecture":"What is the architecture of this project?","quality":"Suggest improvements for code quality","features":"What features could I add next?","security":"Are there any security concerns?"},"messages":{"you":"You","assistant":"Assistant"},"status":{"thinking":"Thinking..."},"input":{"placeholder":"Ask about your codebase...","hint":"Press Enter to send, Shift+Enter for new line"},"tasks":{"suggested":"Suggested Task","creating":"Creating...","created":"Task Created","create":"Create Task"},"tools":{"tool":"tool","tools":"tools","used":"used","read":"Reading file","searching":"Searching files","searchingCode":"Searching code"}}
+﻿{
+	"title": "Insights",
+	"description": "Ask questions about your codebase",
+	"sidebar": { "hide": "Hide sidebar", "show": "Show sidebar" },
+	"actions": { "newChat": "New Chat" },
+	"welcome": {
+		"title": "Start a Conversation",
+		"description": "Ask questions about your codebase, get suggestions for improvements, or discuss features you would like to implement."
+	},
+	"suggestions": {
+		"architecture": "What is the architecture of this project?",
+		"quality": "Suggest improvements for code quality",
+		"features": "What features could I add next?",
+		"security": "Are there any security concerns?"
+	},
+	"messages": { "you": "You", "assistant": "Assistant" },
+	"status": { "thinking": "Thinking..." },
+	"input": {
+		"placeholder": "Ask about your codebase...",
+		"hint": "Press Enter to send, Shift+Enter for new line"
+	},
+	"tasks": {
+		"suggested": "Suggested Task",
+		"creating": "Creating...",
+		"created": "Task Created",
+		"create": "Create Task"
+	},
+	"tools": {
+		"tool": "tool",
+		"tools": "tools",
+		"used": "used",
+		"read": "Reading file",
+		"searching": "Searching files",
+		"searchingCode": "Searching code"
+	}
+}

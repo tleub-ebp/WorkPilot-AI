@@ -1,164 +1,164 @@
 {
-  "title": "Event-Driven Hooks",
-  "description": "Programmable event-driven automation system. Define triggers and actions to automate your entire workflow.",
-  "tabs": {
-    "hooks": "My Hooks",
-    "templates": "Templates",
-    "history": "History",
-    "editor": "Editor"
-  },
-  "stats": {
-    "totalHooks": "Total Hooks",
-    "activeHooks": "Active",
-    "pausedHooks": "Paused",
-    "totalExecutions": "Executions",
-    "totalErrors": "Errors",
-    "successRate": "Success Rate"
-  },
-  "hookList": {
-    "empty": "No hooks configured yet.",
-    "emptyDescription": "Create your first hook or use a template to get started.",
-    "createNew": "New Hook",
-    "search": "Search hooks...",
-    "status": {
-      "active": "Active",
-      "paused": "Paused",
-      "disabled": "Disabled",
-      "error": "Error"
-    },
-    "triggers": "trigger(s)",
-    "actions": "action(s)",
-    "lastTriggered": "Last triggered",
-    "never": "Never",
-    "executions": "executions",
-    "errors": "errors"
-  },
-  "templates": {
-    "title": "Hook Templates",
-    "description": "Pre-configured hooks ready to use. Install in one click.",
-    "categories": {
-      "all": "All",
-      "automation": "Automation",
-      "quality": "Quality",
-      "notification": "Notification",
-      "ci_cd": "CI/CD",
-      "documentation": "Documentation"
-    },
-    "install": "Install",
-    "installed": "Installed",
-    "popularity": "popularity"
-  },
-  "history": {
-    "title": "Execution History",
-    "description": "Recent hook executions with status and details.",
-    "empty": "No executions yet.",
-    "status": {
-      "pending": "Pending",
-      "running": "Running",
-      "success": "Success",
-      "failed": "Failed",
-      "skipped": "Skipped",
-      "timeout": "Timeout"
-    },
-    "duration": "Duration",
-    "triggeredBy": "Triggered by",
-    "actionsExecuted": "actions executed"
-  },
-  "editor": {
-    "title": "Visual Hook Editor",
-    "description": "Drag and drop triggers and actions to build your automation workflow.",
-    "hookName": "Hook Name",
-    "hookNamePlaceholder": "My automation hook...",
-    "hookDescription": "Description",
-    "hookDescriptionPlaceholder": "What does this hook do?",
-    "addTrigger": "Add Trigger",
-    "addAction": "Add Action",
-    "save": "Save Hook",
-    "cancel": "Cancel",
-    "crossProject": "Cross-project",
-    "crossProjectDesc": "This hook applies to all projects",
-    "tags": "Tags",
-    "tagsPlaceholder": "Add tags...",
-    "triggerTypes": {
-      "file_saved": "File Saved",
-      "file_created": "File Created",
-      "file_deleted": "File Deleted",
-      "test_failed": "Test Failed",
-      "test_passed": "Test Passed",
-      "pr_opened": "PR Opened",
-      "pr_merged": "PR Merged",
-      "pr_review_requested": "PR Review Requested",
-      "build_started": "Build Started",
-      "build_completed": "Build Completed",
-      "build_failed": "Build Failed",
-      "dependency_outdated": "Dependency Outdated",
-      "code_pattern_detected": "Code Pattern Detected",
-      "lint_error": "Lint Error",
-      "branch_created": "Branch Created",
-      "commit_pushed": "Commit Pushed",
-      "agent_completed": "Agent Completed",
-      "agent_failed": "Agent Failed",
-      "schedule": "Schedule (Cron)",
-      "manual": "Manual Trigger",
-      "webhook": "Webhook",
-      "custom": "Custom"
-    },
-    "actionTypes": {
-      "run_agent": "Run Agent",
-      "send_notification": "Send Notification",
-      "create_spec": "Create Spec",
-      "trigger_pipeline": "Trigger Pipeline",
-      "run_command": "Run Command",
-      "run_lint": "Run Lint",
-      "run_tests": "Run Tests",
-      "generate_tests": "Generate Tests",
-      "update_docs": "Update Docs",
-      "create_pr": "Create PR",
-      "send_slack": "Send to Slack",
-      "send_webhook": "Send Webhook",
-      "log_event": "Log Event",
-      "chain_hook": "Chain Hook",
-      "custom": "Custom Action"
-    },
-    "conditions": {
-      "title": "Conditions",
-      "addCondition": "Add Condition",
-      "field": "Field",
-      "operator": "Operator",
-      "value": "Value",
-      "operators": {
-        "equals": "Equals",
-        "contains": "Contains",
-        "matches": "Matches (regex)",
-        "startsWith": "Starts with",
-        "endsWith": "Ends with",
-        "glob": "Glob pattern",
-        "not_equals": "Not equals",
-        "not_contains": "Not contains"
-      }
-    },
-    "connections": {
-      "always": "Always",
-      "on_success": "On Success",
-      "on_failure": "On Failure"
-    }
-  },
-  "actions": {
-    "edit": "Edit",
-    "delete": "Delete",
-    "duplicate": "Duplicate",
-    "toggle": "Toggle",
-    "pause": "Pause",
-    "resume": "Resume",
-    "viewHistory": "View History"
-  },
-  "confirmDelete": "Are you sure you want to delete this hook?",
-  "notifications": {
-    "created": "Hook created successfully",
-    "updated": "Hook updated successfully",
-    "deleted": "Hook deleted successfully",
-    "duplicated": "Hook duplicated successfully",
-    "templateInstalled": "Template installed successfully",
-    "eventEmitted": "Event emitted successfully"
-  }
+	"title": "Event-Driven Hooks",
+	"description": "Programmable event-driven automation system. Define triggers and actions to automate your entire workflow.",
+	"tabs": {
+		"hooks": "My Hooks",
+		"templates": "Templates",
+		"history": "History",
+		"editor": "Editor"
+	},
+	"stats": {
+		"totalHooks": "Total Hooks",
+		"activeHooks": "Active",
+		"pausedHooks": "Paused",
+		"totalExecutions": "Executions",
+		"totalErrors": "Errors",
+		"successRate": "Success Rate"
+	},
+	"hookList": {
+		"empty": "No hooks configured yet.",
+		"emptyDescription": "Create your first hook or use a template to get started.",
+		"createNew": "New Hook",
+		"search": "Search hooks...",
+		"status": {
+			"active": "Active",
+			"paused": "Paused",
+			"disabled": "Disabled",
+			"error": "Error"
+		},
+		"triggers": "trigger(s)",
+		"actions": "action(s)",
+		"lastTriggered": "Last triggered",
+		"never": "Never",
+		"executions": "executions",
+		"errors": "errors"
+	},
+	"templates": {
+		"title": "Hook Templates",
+		"description": "Pre-configured hooks ready to use. Install in one click.",
+		"categories": {
+			"all": "All",
+			"automation": "Automation",
+			"quality": "Quality",
+			"notification": "Notification",
+			"ci_cd": "CI/CD",
+			"documentation": "Documentation"
+		},
+		"install": "Install",
+		"installed": "Installed",
+		"popularity": "popularity"
+	},
+	"history": {
+		"title": "Execution History",
+		"description": "Recent hook executions with status and details.",
+		"empty": "No executions yet.",
+		"status": {
+			"pending": "Pending",
+			"running": "Running",
+			"success": "Success",
+			"failed": "Failed",
+			"skipped": "Skipped",
+			"timeout": "Timeout"
+		},
+		"duration": "Duration",
+		"triggeredBy": "Triggered by",
+		"actionsExecuted": "actions executed"
+	},
+	"editor": {
+		"title": "Visual Hook Editor",
+		"description": "Drag and drop triggers and actions to build your automation workflow.",
+		"hookName": "Hook Name",
+		"hookNamePlaceholder": "My automation hook...",
+		"hookDescription": "Description",
+		"hookDescriptionPlaceholder": "What does this hook do?",
+		"addTrigger": "Add Trigger",
+		"addAction": "Add Action",
+		"save": "Save Hook",
+		"cancel": "Cancel",
+		"crossProject": "Cross-project",
+		"crossProjectDesc": "This hook applies to all projects",
+		"tags": "Tags",
+		"tagsPlaceholder": "Add tags...",
+		"triggerTypes": {
+			"file_saved": "File Saved",
+			"file_created": "File Created",
+			"file_deleted": "File Deleted",
+			"test_failed": "Test Failed",
+			"test_passed": "Test Passed",
+			"pr_opened": "PR Opened",
+			"pr_merged": "PR Merged",
+			"pr_review_requested": "PR Review Requested",
+			"build_started": "Build Started",
+			"build_completed": "Build Completed",
+			"build_failed": "Build Failed",
+			"dependency_outdated": "Dependency Outdated",
+			"code_pattern_detected": "Code Pattern Detected",
+			"lint_error": "Lint Error",
+			"branch_created": "Branch Created",
+			"commit_pushed": "Commit Pushed",
+			"agent_completed": "Agent Completed",
+			"agent_failed": "Agent Failed",
+			"schedule": "Schedule (Cron)",
+			"manual": "Manual Trigger",
+			"webhook": "Webhook",
+			"custom": "Custom"
+		},
+		"actionTypes": {
+			"run_agent": "Run Agent",
+			"send_notification": "Send Notification",
+			"create_spec": "Create Spec",
+			"trigger_pipeline": "Trigger Pipeline",
+			"run_command": "Run Command",
+			"run_lint": "Run Lint",
+			"run_tests": "Run Tests",
+			"generate_tests": "Generate Tests",
+			"update_docs": "Update Docs",
+			"create_pr": "Create PR",
+			"send_slack": "Send to Slack",
+			"send_webhook": "Send Webhook",
+			"log_event": "Log Event",
+			"chain_hook": "Chain Hook",
+			"custom": "Custom Action"
+		},
+		"conditions": {
+			"title": "Conditions",
+			"addCondition": "Add Condition",
+			"field": "Field",
+			"operator": "Operator",
+			"value": "Value",
+			"operators": {
+				"equals": "Equals",
+				"contains": "Contains",
+				"matches": "Matches (regex)",
+				"startsWith": "Starts with",
+				"endsWith": "Ends with",
+				"glob": "Glob pattern",
+				"not_equals": "Not equals",
+				"not_contains": "Not contains"
+			}
+		},
+		"connections": {
+			"always": "Always",
+			"on_success": "On Success",
+			"on_failure": "On Failure"
+		}
+	},
+	"actions": {
+		"edit": "Edit",
+		"delete": "Delete",
+		"duplicate": "Duplicate",
+		"toggle": "Toggle",
+		"pause": "Pause",
+		"resume": "Resume",
+		"viewHistory": "View History"
+	},
+	"confirmDelete": "Are you sure you want to delete this hook?",
+	"notifications": {
+		"created": "Hook created successfully",
+		"updated": "Hook updated successfully",
+		"deleted": "Hook deleted successfully",
+		"duplicated": "Hook duplicated successfully",
+		"templateInstalled": "Template installed successfully",
+		"eventEmitted": "Event emitted successfully"
+	}
 }

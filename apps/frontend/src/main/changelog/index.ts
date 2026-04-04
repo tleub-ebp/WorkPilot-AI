@@ -11,10 +11,10 @@
  * - types.ts: Module-specific types
  */
 
-export { ChangelogService, changelogService } from './changelog-service';
-export { ChangelogGenerator } from './generator';
-export { VersionSuggester } from './version-suggester';
-export * from './parser';
-export * from './formatter';
-export * from './git-integration';
-export * from './types';
+export { ChangelogService, changelogService } from "./changelog-service";
+export * from "./formatter";
+export { ChangelogGenerator } from "./generator";
+export * from "./git-integration";
+export * from "./parser";
+export * from "./types";
+export { VersionSuggester } from "./version-suggester";

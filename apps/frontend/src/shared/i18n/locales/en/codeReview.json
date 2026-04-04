@@ -1,1 +1,36 @@
-﻿{ "title": "AI Code Review", "description": "Paste a diff or code snippet to get an automated quality review", "input": { "label": "Diff / Code to review", "placeholder": "Paste your git diff or code snippet here...\n\nExample:\n--- a/src/auth.py\n+++ b/src/auth.py\n@@ -10,6 +10,7 @@\n def login(username, password):\n+    password = base64.b64decode(password)  // security issue\n     user = db.query(username)" }, "actions": { "paste": "Paste", "clear": "Clear", "runReview": "Run Review", "analyzing": "Analyzing..." }, "errors": { "reviewFailed": "Review failed", "networkError": "Network error" }, "score": { "qualityScore": "Quality Score", "good": "Good", "needsImprovement": "Needs improvement", "poor": "Poor" }, "result": { "passed": "Review Passed", "failed": "Review Failed", "issues": "{{count}} issue found", "issues_plural": "{{count}} issues found", "criticalHigh": "critical/high" }, "issues": { "title": "Issues", "line": "line {{line}}", "suggestion": "Suggestion" } }
+﻿{
+	"title": "AI Code Review",
+	"description": "Paste a diff or code snippet to get an automated quality review",
+	"input": {
+		"label": "Diff / Code to review",
+		"placeholder": "Paste your git diff or code snippet here...\n\nExample:\n--- a/src/auth.py\n+++ b/src/auth.py\n@@ -10,6 +10,7 @@\n def login(username, password):\n+    password = base64.b64decode(password)  // security issue\n     user = db.query(username)"
+	},
+	"actions": {
+		"paste": "Paste",
+		"clear": "Clear",
+		"runReview": "Run Review",
+		"analyzing": "Analyzing..."
+	},
+	"errors": {
+		"reviewFailed": "Review failed",
+		"networkError": "Network error"
+	},
+	"score": {
+		"qualityScore": "Quality Score",
+		"good": "Good",
+		"needsImprovement": "Needs improvement",
+		"poor": "Poor"
+	},
+	"result": {
+		"passed": "Review Passed",
+		"failed": "Review Failed",
+		"issues": "{{count}} issue found",
+		"issues_plural": "{{count}} issues found",
+		"criticalHigh": "critical/high"
+	},
+	"issues": {
+		"title": "Issues",
+		"line": "line {{line}}",
+		"suggestion": "Suggestion"
+	}
+}

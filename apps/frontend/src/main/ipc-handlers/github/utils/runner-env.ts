@@ -1,8 +1,8 @@
-import { getOAuthModeClearVars } from '../../../agent/env-utils';
-import { getAPIProfileEnv } from '../../../services/profile';
-import { getBestAvailableProfileEnv } from '../../../rate-limit-detector';
-import { pythonEnvManager } from '../../../python-env-manager';
-import { getGitHubTokenForSubprocess } from '../utils';
+import { getOAuthModeClearVars } from "../../../agent/env-utils";
+import { pythonEnvManager } from "../../../python-env-manager";
+import { getBestAvailableProfileEnv } from "../../../rate-limit-detector";
+import { getAPIProfileEnv } from "../../../services/profile";
+import { getGitHubTokenForSubprocess } from "../utils";
 
 /**
  * Get environment variables for Python runner subprocesses.
@@ -29,25 +29,27 @@ import { getGitHubTokenForSubprocess } from '../utils';
  * from the gh CLI on each call to ensure account changes are reflected immediately.
  */
 export async function getRunnerEnv(
-  extraEnv?: Record<string, string>
+	extraEnv?: Record<string, string>,
 ): Promise<Record<string, string>> {
-  const pythonEnv = pythonEnvManager.getPythonEnv();
-  const apiProfileEnv = await getAPIProfileEnv();
-  const oauthModeClearVars = getOAuthModeClearVars(apiProfileEnv);
-  // Get best available Claude profile environment (automatically handles rate limits)
-  const profileResult = getBestAvailableProfileEnv();
-  const profileEnv = profileResult.env;
+	const pythonEnv = pythonEnvManager.getPythonEnv();
+	const apiProfileEnv = await getAPIProfileEnv();
+	const oauthModeClearVars = getOAuthModeClearVars(apiProfileEnv);
+	// Get best available Claude profile environment (automatically handles rate limits)
+	const profileResult = getBestAvailableProfileEnv();
+	const profileEnv = profileResult.env;
 
-  // Fetch fresh GitHub token from gh CLI (no caching to reflect account changes)
-  const githubToken = await getGitHubTokenForSubprocess();
-  const githubEnv: Record<string, string> = githubToken ? { GITHUB_TOKEN: githubToken } : {};
+	// Fetch fresh GitHub token from gh CLI (no caching to reflect account changes)
+	const githubToken = await getGitHubTokenForSubprocess();
+	const githubEnv: Record<string, string> = githubToken
+		? { GITHUB_TOKEN: githubToken }
+		: {};
 
-  return {
-    ...pythonEnv,  // Python environment including PYTHONPATH (fixes #139)
-    ...apiProfileEnv,
-    ...oauthModeClearVars,
-    ...profileEnv,  // OAuth token from profile manager (fixes #563, rate-limit aware)
-    ...githubEnv,  // Fresh GitHub token from gh CLI (fixes #151)
-    ...extraEnv,
-  };
+	return {
+		...pythonEnv, // Python environment including PYTHONPATH (fixes #139)
+		...apiProfileEnv,
+		...oauthModeClearVars,
+		...profileEnv, // OAuth token from profile manager (fixes #563, rate-limit aware)
+		...githubEnv, // Fresh GitHub token from gh CLI (fixes #151)
+		...extraEnv,
+	};
 }

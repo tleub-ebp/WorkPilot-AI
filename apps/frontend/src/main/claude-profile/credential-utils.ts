@@ -15,12 +15,19 @@
  * Mirrors the functionality of apps/backend/core/auth.py get_token_from_keychain()
  */
 
-import { execFileSync } from 'child_process';
-import { createHash } from 'crypto';
-import { existsSync, mkdirSync, readFileSync, renameSync, unlinkSync, writeFileSync } from 'fs';
-import { homedir, userInfo } from 'os';
-import { dirname, join } from 'path';
-import { isMacOS, isWindows, isLinux } from '../platform';
+import { execFileSync } from "child_process";
+import { createHash } from "crypto";
+import {
+	existsSync,
+	mkdirSync,
+	readFileSync,
+	renameSync,
+	unlinkSync,
+	writeFileSync,
+} from "fs";
+import { homedir, userInfo } from "os";
+import { dirname, join } from "path";
+import { isLinux, isMacOS, isWindows } from "../platform";
 
 /**
  * Create a safe fingerprint of a token for debug logging.
@@ -31,9 +38,9 @@ import { isMacOS, isWindows, isLinux } from '../platform';
  * @returns A safe fingerprint like "sk-ant-oa...xyz9" or "null" if no token
  */
 function getTokenFingerprint(token: string | null | undefined): string {
-  if (!token) return 'null';
-  if (token.length <= 16) return token.slice(0, 4) + '...' + token.slice(-2);
-  return token.slice(0, 8) + '...' + token.slice(-4);
+	if (!token) return "null";
+	if (token.length <= 16) return token.slice(0, 4) + "..." + token.slice(-2);
+	return token.slice(0, 8) + "..." + token.slice(-4);
 }
 
 /**
@@ -44,10 +51,10 @@ function getTokenFingerprint(token: string | null | undefined): string {
  * @returns The escaped string safe for PowerShell interpolation
  */
 function escapePowerShellString(str: string): string {
-  return str
-    .replace(/`/g, '``')   // Backtick is PowerShell's escape character - must be escaped first
-    .replace(/\$/g, '`$')  // Dollar sign triggers variable expansion
-    .replace(/"/g, '`"');  // Double quotes end the string
+	return str
+		.replace(/`/g, "``") // Backtick is PowerShell's escape character - must be escaped first
+		.replace(/\$/g, "`$") // Dollar sign triggers variable expansion
+		.replace(/"/g, '`"'); // Double quotes end the string
 }
 
 /**
@@ -58,16 +65,16 @@ function escapePowerShellString(str: string): string {
  * @returns Base64-encoded string
  */
 function encodeBase64ForPowerShell(str: string): string {
-  return Buffer.from(str, 'utf-8').toString('base64');
+	return Buffer.from(str, "utf-8").toString("base64");
 }
 
 /**
  * Credentials retrieved from platform-specific secure storage
  */
 export interface PlatformCredentials {
-  token: string | null;
-  email: string | null;
-  error?: string;  // Set when credential access fails (locked, permission denied, etc.)
+	token: string | null;
+	email: string | null;
+	error?: string; // Set when credential access fails (locked, permission denied, etc.)
 }
 
 // Legacy alias for backwards compatibility
@@ -78,19 +85,19 @@ export type KeychainCredentials = PlatformCredentials;
  * Used for token refresh operations
  */
 export interface FullOAuthCredentials extends PlatformCredentials {
-  refreshToken: string | null;
-  expiresAt: number | null;  // Unix timestamp in ms when access token expires
-  scopes: string[] | null;
-  subscriptionType: string | null;  // e.g., "max" for Claude Max subscription
-  rateLimitTier: string | null;     // e.g., "default_claude_max_20x"
+	refreshToken: string | null;
+	expiresAt: number | null; // Unix timestamp in ms when access token expires
+	scopes: string[] | null;
+	subscriptionType: string | null; // e.g., "max" for Claude Max subscription
+	rateLimitTier: string | null; // e.g., "default_claude_max_20x"
 }
 
 /**
  * Result of updating credentials in the keychain/credential store
  */
 export interface UpdateCredentialsResult {
-  success: boolean;
-  error?: string;
+	success: boolean;
+	error?: string;
 }
 
 /**
@@ -98,8 +105,8 @@ export interface UpdateCredentialsResult {
  * Map key is the cache key (e.g., "macos:Claude Code-credentials" or "linux:/home/user/.claude")
  */
 interface CredentialCacheEntry {
-  credentials: PlatformCredentials;
-  timestamp: number;
+	credentials: PlatformCredentials;
+	timestamp: number;
 }
 
 const credentialCache = new Map<string, CredentialCacheEntry>();
@@ -124,7 +131,7 @@ const VALID_TARGET_NAME_PATTERN = /^Claude Code-credentials(-[a-f0-9]{8})?$/;
  * @returns true if valid, false otherwise
  */
 function isValidTargetName(targetName: string): boolean {
-  return VALID_TARGET_NAME_PATTERN.test(targetName);
+	return VALID_TARGET_NAME_PATTERN.test(targetName);
 }
 
 /**
@@ -135,15 +142,15 @@ function isValidTargetName(targetName: string): boolean {
  * @returns true if valid, false otherwise
  */
 function isValidCredentialsPath(credentialsPath: string): boolean {
-  // Credentials path should:
-  // 1. Not contain path traversal sequences (works on both Unix and Windows)
-  // 2. End with the expected file name
-  // Note: We allow custom config directories since they come from user settings
-  // The configDir is from profile settings, which is trusted user input
-  return (
-    !credentialsPath.includes('..') &&
-    credentialsPath.endsWith('.credentials.json')
-  );
+	// Credentials path should:
+	// 1. Not contain path traversal sequences (works on both Unix and Windows)
+	// 2. End with the expected file name
+	// Note: We allow custom config directories since they come from user settings
+	// The configDir is from profile settings, which is trusted user input
+	return (
+		!credentialsPath.includes("..") &&
+		credentialsPath.endsWith(".credentials.json")
+	);
 }
 
 /**
@@ -154,7 +161,7 @@ function isValidCredentialsPath(credentialsPath: string): boolean {
  * @returns The 8-character hex hash suffix
  */
 export function calculateConfigDirHash(configDir: string): string {
-  return createHash('sha256').update(configDir).digest('hex').slice(0, 8);
+	return createHash("sha256").update(configDir).digest("hex").slice(0, 8);
 }
 
 /**
@@ -173,10 +180,10 @@ export function calculateConfigDirHash(configDir: string): string {
  * @returns The path with forward slashes replaced by backslashes on Windows
  */
 export function normalizeWindowsPath(path: string): string {
-  if (!isWindows()) return path;
-  // Match: drive letter (C:), UNC with backslashes (\\), or UNC with forward slashes (//)
-  if (!/^[A-Za-z]:|^[\\/]{2}/.test(path)) return path;
-  return path.replace(/\//g, '\\');
+	if (!isWindows()) return path;
+	// Match: drive letter (C:), UNC with backslashes (\\), or UNC with forward slashes (//)
+	if (!/^[A-Za-z]:|^[\\/]{2}/.test(path)) return path;
+	return path.replace(/\//g, "\\");
 }
 
 /**
@@ -190,24 +197,24 @@ export function normalizeWindowsPath(path: string): string {
  * @returns The Keychain service name (e.g., "Claude Code-credentials-d74c9506")
  */
 export function getKeychainServiceName(configDir?: string): string {
-  // No configDir provided - this should not happen with isolated profiles
-  // Fall back to unhashed name for backwards compatibility during migration
-  if (!configDir) {
-    console.warn('[CredentialUtils] getKeychainServiceName called without configDir - using legacy fallback');
-    return 'Claude Code-credentials';
-  }
+	// No configDir provided - this should not happen with isolated profiles
+	// Fall back to unhashed name for backwards compatibility during migration
+	if (!configDir) {
+		console.warn(
+			"[CredentialUtils] getKeychainServiceName called without configDir - using legacy fallback",
+		);
+		return "Claude Code-credentials";
+	}
 
-  // Normalize the configDir: expand ~ and resolve to absolute path
-  const normalizedConfigDir = normalizeWindowsPath(
-    configDir.startsWith('~')
-      ? join(homedir(), configDir.slice(1))
-      : configDir
-  );
+	// Normalize the configDir: expand ~ and resolve to absolute path
+	const normalizedConfigDir = normalizeWindowsPath(
+		configDir.startsWith("~") ? join(homedir(), configDir.slice(1)) : configDir,
+	);
 
-  // ALL profiles now use hash-based keychain entries for isolation
-  // This prevents interference with external Claude Code CLI
-  const hash = calculateConfigDirHash(normalizedConfigDir);
-  return `Claude Code-credentials-${hash}`;
+	// ALL profiles now use hash-based keychain entries for isolation
+	// This prevents interference with external Claude Code CLI
+	const hash = calculateConfigDirHash(normalizedConfigDir);
+	return `Claude Code-credentials-${hash}`;
 }
 
 /**
@@ -217,8 +224,8 @@ export function getKeychainServiceName(configDir?: string): string {
  * @returns The Credential Manager target name (e.g., "Claude Code-credentials-d74c9506")
  */
 export function getWindowsCredentialTarget(configDir?: string): string {
-  // Windows uses the same naming convention as macOS Keychain
-  return getKeychainServiceName(configDir);
+	// Windows uses the same naming convention as macOS Keychain
+	return getKeychainServiceName(configDir);
 }
 
 /**
@@ -226,97 +233,135 @@ export function getWindowsCredentialTarget(configDir?: string): string {
  * @param data - Parsed JSON data from credential store
  * @returns true if data structure is valid, false otherwise
  */
-function validateCredentialData(data: unknown): data is { claudeAiOauth?: { accessToken?: string; email?: string; emailAddress?: string }; email?: string } {
-  if (!data || typeof data !== 'object') {
-    return false;
-  }
+function validateCredentialData(
+	data: unknown,
+): data is {
+	claudeAiOauth?: {
+		accessToken?: string;
+		email?: string;
+		emailAddress?: string;
+	};
+	email?: string;
+} {
+	if (!data || typeof data !== "object") {
+		return false;
+	}
 
-  const obj = data as Record<string, unknown>;
+	const obj = data as Record<string, unknown>;
 
-  // Check if claudeAiOauth exists and is an object
-  if (obj.claudeAiOauth !== undefined) {
-    if (typeof obj.claudeAiOauth !== 'object' || obj.claudeAiOauth === null) {
-      return false;
-    }
-    const oauth = obj.claudeAiOauth as Record<string, unknown>;
-    // Validate accessToken if present
-    if (oauth.accessToken !== undefined && typeof oauth.accessToken !== 'string') {
-      return false;
-    }
-    // Validate email if present (can be 'email' or 'emailAddress')
-    if (oauth.email !== undefined && typeof oauth.email !== 'string') {
-      return false;
-    }
-    if (oauth.emailAddress !== undefined && typeof oauth.emailAddress !== 'string') {
-      return false;
-    }
-  }
+	// Check if claudeAiOauth exists and is an object
+	if (obj.claudeAiOauth !== undefined) {
+		if (typeof obj.claudeAiOauth !== "object" || obj.claudeAiOauth === null) {
+			return false;
+		}
+		const oauth = obj.claudeAiOauth as Record<string, unknown>;
+		// Validate accessToken if present
+		if (
+			oauth.accessToken !== undefined &&
+			typeof oauth.accessToken !== "string"
+		) {
+			return false;
+		}
+		// Validate email if present (can be 'email' or 'emailAddress')
+		if (oauth.email !== undefined && typeof oauth.email !== "string") {
+			return false;
+		}
+		if (
+			oauth.emailAddress !== undefined &&
+			typeof oauth.emailAddress !== "string"
+		) {
+			return false;
+		}
+	}
 
-  // Validate top-level email if present
-  if (obj.email !== undefined && typeof obj.email !== 'string') {
-    return false;
-  }
+	// Validate top-level email if present
+	if (obj.email !== undefined && typeof obj.email !== "string") {
+		return false;
+	}
 
-  return true;
+	return true;
 }
 
 /**
  * Extract token and email from validated credential data
  */
-function extractCredentials(data: { claudeAiOauth?: { accessToken?: string; email?: string; emailAddress?: string }; email?: string }): { token: string | null; email: string | null } {
-  // Extract OAuth token from nested structure
-  const token = data?.claudeAiOauth?.accessToken || null;
+function extractCredentials(data: {
+	claudeAiOauth?: {
+		accessToken?: string;
+		email?: string;
+		emailAddress?: string;
+	};
+	email?: string;
+}): { token: string | null; email: string | null } {
+	// Extract OAuth token from nested structure
+	const token = data?.claudeAiOauth?.accessToken || null;
 
-  // Extract email (might be in different locations depending on Claude Code version)
-  const email = data?.claudeAiOauth?.email || data?.claudeAiOauth?.emailAddress || data?.email || null;
+	// Extract email (might be in different locations depending on Claude Code version)
+	const email =
+		data?.claudeAiOauth?.email ||
+		data?.claudeAiOauth?.emailAddress ||
+		data?.email ||
+		null;
 
-  return { token, email };
+	return { token, email };
 }
 
 /**
  * Extract full credentials including refresh token and expiry from validated credential data
  */
 function extractFullCredentials(data: {
-  claudeAiOauth?: {
-    accessToken?: string;
-    email?: string;
-    emailAddress?: string;
-    refreshToken?: string;
-    expiresAt?: number;
-    scopes?: string[];
-    subscriptionType?: string;
-    rateLimitTier?: string;
-  };
-  email?: string
+	claudeAiOauth?: {
+		accessToken?: string;
+		email?: string;
+		emailAddress?: string;
+		refreshToken?: string;
+		expiresAt?: number;
+		scopes?: string[];
+		subscriptionType?: string;
+		rateLimitTier?: string;
+	};
+	email?: string;
 }): {
-  token: string | null;
-  email: string | null;
-  refreshToken: string | null;
-  expiresAt: number | null;
-  scopes: string[] | null;
-  subscriptionType: string | null;
-  rateLimitTier: string | null;
+	token: string | null;
+	email: string | null;
+	refreshToken: string | null;
+	expiresAt: number | null;
+	scopes: string[] | null;
+	subscriptionType: string | null;
+	rateLimitTier: string | null;
 } {
-  // Extract OAuth token from nested structure
-  const token = data?.claudeAiOauth?.accessToken || null;
+	// Extract OAuth token from nested structure
+	const token = data?.claudeAiOauth?.accessToken || null;
 
-  // Extract email (might be in different locations depending on Claude Code version)
-  const email = data?.claudeAiOauth?.email || data?.claudeAiOauth?.emailAddress || data?.email || null;
+	// Extract email (might be in different locations depending on Claude Code version)
+	const email =
+		data?.claudeAiOauth?.email ||
+		data?.claudeAiOauth?.emailAddress ||
+		data?.email ||
+		null;
 
-  // Extract refresh token
-  const refreshToken = data?.claudeAiOauth?.refreshToken || null;
+	// Extract refresh token
+	const refreshToken = data?.claudeAiOauth?.refreshToken || null;
 
-  // Extract expiry timestamp (Unix timestamp in ms)
-  const expiresAt = data?.claudeAiOauth?.expiresAt || null;
+	// Extract expiry timestamp (Unix timestamp in ms)
+	const expiresAt = data?.claudeAiOauth?.expiresAt || null;
 
-  // Extract scopes (array of strings)
-  const scopes = data?.claudeAiOauth?.scopes || null;
+	// Extract scopes (array of strings)
+	const scopes = data?.claudeAiOauth?.scopes || null;
 
-  // Extract subscription info (determines "Max" vs "API" display in Claude Code)
-  const subscriptionType = data?.claudeAiOauth?.subscriptionType || null;
-  const rateLimitTier = data?.claudeAiOauth?.rateLimitTier || null;
+	// Extract subscription info (determines "Max" vs "API" display in Claude Code)
+	const subscriptionType = data?.claudeAiOauth?.subscriptionType || null;
+	const rateLimitTier = data?.claudeAiOauth?.rateLimitTier || null;
 
-  return { token, email, refreshToken, expiresAt, scopes, subscriptionType, rateLimitTier };
+	return {
+		token,
+		email,
+		refreshToken,
+		expiresAt,
+		scopes,
+		subscriptionType,
+		rateLimitTier,
+	};
 }
 
 /**
@@ -324,7 +369,7 @@ function extractFullCredentials(data: {
  * Use 'sk-ant-' prefix to support future token format versions (oat02, oat03, etc.)
  */
 function isValidTokenFormat(token: string): boolean {
-  return token.startsWith('sk-ant-');
+	return token.startsWith("sk-ant-");
 }
 
 // =============================================================================
@@ -342,35 +387,38 @@ function isValidTokenFormat(token: string): boolean {
  * @returns The raw output string or null if not found
  */
 function executeCredentialRead(
-  executablePath: string,
-  args: string[],
-  timeout: number,
-  _identifier: string
+	executablePath: string,
+	args: string[],
+	timeout: number,
+	_identifier: string,
 ): string | null {
-  try {
-    const result = execFileSync(executablePath, args, {
-      encoding: 'utf-8',
-      timeout,
-      windowsHide: true,
-    });
-    return result.trim();
-  } catch (error) {
-    // Handle expected "not found" errors (macOS exit code 44, Linux/Windows non-zero exit)
-    if (error && typeof error === 'object' && 'status' in error) {
-      const status = (error as { status: number }).status;
-      if (status === 44) {
-        // macOS: errSecItemNotFound
-        return null;
-      }
-    }
-    // Check for "not found" in error message (Linux/Windows)
-    const errorMessage = error instanceof Error ? error.message : String(error);
-    if (errorMessage.includes('not found') || errorMessage.includes('exit code')) {
-      return null;
-    }
-    // Re-throw unexpected errors
-    throw error;
-  }
+	try {
+		const result = execFileSync(executablePath, args, {
+			encoding: "utf-8",
+			timeout,
+			windowsHide: true,
+		});
+		return result.trim();
+	} catch (error) {
+		// Handle expected "not found" errors (macOS exit code 44, Linux/Windows non-zero exit)
+		if (error && typeof error === "object" && "status" in error) {
+			const status = (error as { status: number }).status;
+			if (status === 44) {
+				// macOS: errSecItemNotFound
+				return null;
+			}
+		}
+		// Check for "not found" in error message (Linux/Windows)
+		const errorMessage = error instanceof Error ? error.message : String(error);
+		if (
+			errorMessage.includes("not found") ||
+			errorMessage.includes("exit code")
+		) {
+			return null;
+		}
+		// Re-throw unexpected errors
+		throw error;
+	}
 }
 
 /**
@@ -383,31 +431,35 @@ function executeCredentialRead(
  * @returns Extracted credentials or null values if invalid
  */
 function parseCredentialJson<T extends PlatformCredentials>(
-  credentialsJson: string | null,
-  identifier: string,
-  // biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
-  extractFn: (data: any) => T
+	credentialsJson: string | null,
+	identifier: string,
+	// biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
+	extractFn: (data: any) => T,
 ): T {
-  if (!credentialsJson) {
-    return extractFn({}) as T;
-  }
+	if (!credentialsJson) {
+		return extractFn({}) as T;
+	}
 
-  // Parse JSON
-  let data: unknown;
-  try {
-    data = JSON.parse(credentialsJson);
-  } catch {
-    console.warn(`[CredentialUtils] Failed to parse credential JSON for ${identifier}`);
-    return extractFn({}) as T;
-  }
+	// Parse JSON
+	let data: unknown;
+	try {
+		data = JSON.parse(credentialsJson);
+	} catch {
+		console.warn(
+			`[CredentialUtils] Failed to parse credential JSON for ${identifier}`,
+		);
+		return extractFn({}) as T;
+	}
 
-  // Validate JSON structure
-  if (!validateCredentialData(data)) {
-    console.warn(`[CredentialUtils] Invalid credential data structure for ${identifier}`);
-    return extractFn({}) as T;
-  }
+	// Validate JSON structure
+	if (!validateCredentialData(data)) {
+		console.warn(
+			`[CredentialUtils] Invalid credential data structure for ${identifier}`,
+		);
+		return extractFn({}) as T;
+	}
 
-  return extractFn(data);
+	return extractFn(data);
 }
 
 // =============================================================================
@@ -425,103 +477,149 @@ function parseCredentialJson<T extends PlatformCredentials>(
  * @returns Platform credentials with token and email
  */
 function getCredentialsFromFile(
-  credentialsPath: string,
-  cacheKey: string,
-  logPrefix: string,
-  forceRefresh = false
+	credentialsPath: string,
+	cacheKey: string,
+	logPrefix: string,
+	forceRefresh = false,
 ): PlatformCredentials {
-  const isDebug = process.env.DEBUG === 'true';
-  const now = Date.now();
+	const isDebug = process.env.DEBUG === "true";
+	const now = Date.now();
 
-  // Return cached credentials if available and fresh
-  const cached = credentialCache.get(cacheKey);
-  if (!forceRefresh && cached) {
-    const ttl = cached.credentials.error ? ERROR_CACHE_TTL_MS : CACHE_TTL_MS;
-    if ((now - cached.timestamp) < ttl) {
-      if (isDebug) {
-        const cacheAge = now - cached.timestamp;
-        console.warn(`[CredentialUtils:${logPrefix}:CACHE] Returning cached credentials:`, {
-          credentialsPath,
-          hasToken: !!cached.credentials.token,
-          tokenFingerprint: getTokenFingerprint(cached.credentials.token),
-          cacheAge: Math.round(cacheAge / 1000) + 's'
-        });
-      }
-      return cached.credentials;
-    }
-  }
+	// Return cached credentials if available and fresh
+	const cached = credentialCache.get(cacheKey);
+	if (!forceRefresh && cached) {
+		const ttl = cached.credentials.error ? ERROR_CACHE_TTL_MS : CACHE_TTL_MS;
+		if (now - cached.timestamp < ttl) {
+			if (isDebug) {
+				const cacheAge = now - cached.timestamp;
+				console.warn(
+					`[CredentialUtils:${logPrefix}:CACHE] Returning cached credentials:`,
+					{
+						credentialsPath,
+						hasToken: !!cached.credentials.token,
+						tokenFingerprint: getTokenFingerprint(cached.credentials.token),
+						cacheAge: Math.round(cacheAge / 1000) + "s",
+					},
+				);
+			}
+			return cached.credentials;
+		}
+	}
 
-  // Defense-in-depth: Validate credentials path is within expected boundaries
-  if (!isValidCredentialsPath(credentialsPath)) {
-    if (isDebug) {
-      console.warn(`[CredentialUtils:${logPrefix}] Invalid credentials path rejected:`, { credentialsPath });
-    }
-    const invalidResult = { token: null, email: null, error: 'Invalid credentials path' };
-    credentialCache.set(cacheKey, { credentials: invalidResult, timestamp: now });
-    return invalidResult;
-  }
+	// Defense-in-depth: Validate credentials path is within expected boundaries
+	if (!isValidCredentialsPath(credentialsPath)) {
+		if (isDebug) {
+			console.warn(
+				`[CredentialUtils:${logPrefix}] Invalid credentials path rejected:`,
+				{ credentialsPath },
+			);
+		}
+		const invalidResult = {
+			token: null,
+			email: null,
+			error: "Invalid credentials path",
+		};
+		credentialCache.set(cacheKey, {
+			credentials: invalidResult,
+			timestamp: now,
+		});
+		return invalidResult;
+	}
 
-  // Check if credentials file exists
-  if (!existsSync(credentialsPath)) {
-    if (isDebug) {
-      console.warn(`[CredentialUtils:${logPrefix}] Credentials file not found:`, credentialsPath);
-    }
-    const notFoundResult = { token: null, email: null };
-    credentialCache.set(cacheKey, { credentials: notFoundResult, timestamp: now });
-    return notFoundResult;
-  }
+	// Check if credentials file exists
+	if (!existsSync(credentialsPath)) {
+		if (isDebug) {
+			console.warn(
+				`[CredentialUtils:${logPrefix}] Credentials file not found:`,
+				credentialsPath,
+			);
+		}
+		const notFoundResult = { token: null, email: null };
+		credentialCache.set(cacheKey, {
+			credentials: notFoundResult,
+			timestamp: now,
+		});
+		return notFoundResult;
+	}
 
-  try {
-    const content = readFileSync(credentialsPath, 'utf-8');
+	try {
+		const content = readFileSync(credentialsPath, "utf-8");
 
-    // Parse JSON
-    let data: unknown;
-    try {
-      data = JSON.parse(content);
-    } catch {
-      console.warn(`[CredentialUtils:${logPrefix}] Failed to parse credentials JSON:`, credentialsPath);
-      const errorResult = { token: null, email: null };
-      credentialCache.set(cacheKey, { credentials: errorResult, timestamp: now });
-      return errorResult;
-    }
+		// Parse JSON
+		let data: unknown;
+		try {
+			data = JSON.parse(content);
+		} catch {
+			console.warn(
+				`[CredentialUtils:${logPrefix}] Failed to parse credentials JSON:`,
+				credentialsPath,
+			);
+			const errorResult = { token: null, email: null };
+			credentialCache.set(cacheKey, {
+				credentials: errorResult,
+				timestamp: now,
+			});
+			return errorResult;
+		}
 
-    // Validate JSON structure
-    if (!validateCredentialData(data)) {
-      console.warn(`[CredentialUtils:${logPrefix}] Invalid credentials data structure:`, credentialsPath);
-      const invalidResult = { token: null, email: null };
-      credentialCache.set(cacheKey, { credentials: invalidResult, timestamp: now });
-      return invalidResult;
-    }
+		// Validate JSON structure
+		if (!validateCredentialData(data)) {
+			console.warn(
+				`[CredentialUtils:${logPrefix}] Invalid credentials data structure:`,
+				credentialsPath,
+			);
+			const invalidResult = { token: null, email: null };
+			credentialCache.set(cacheKey, {
+				credentials: invalidResult,
+				timestamp: now,
+			});
+			return invalidResult;
+		}
 
-    const { token, email } = extractCredentials(data);
+		const { token, email } = extractCredentials(data);
 
-    // Validate token format if present
-    if (token && !isValidTokenFormat(token)) {
-      console.warn(`[CredentialUtils:${logPrefix}] Invalid token format in:`, credentialsPath);
-      const result = { token: null, email };
-      credentialCache.set(cacheKey, { credentials: result, timestamp: now });
-      return result;
-    }
+		// Validate token format if present
+		if (token && !isValidTokenFormat(token)) {
+			console.warn(
+				`[CredentialUtils:${logPrefix}] Invalid token format in:`,
+				credentialsPath,
+			);
+			const result = { token: null, email };
+			credentialCache.set(cacheKey, { credentials: result, timestamp: now });
+			return result;
+		}
 
-    const credentials = { token, email };
-    credentialCache.set(cacheKey, { credentials, timestamp: now });
+		const credentials = { token, email };
+		credentialCache.set(cacheKey, { credentials, timestamp: now });
 
-    if (isDebug) {
-      console.warn(`[CredentialUtils:${logPrefix}] Retrieved credentials from file:`, credentialsPath, {
-        hasToken: !!token,
-        hasEmail: !!email,
-        tokenFingerprint: getTokenFingerprint(token),
-        forceRefresh
-      });
-    }
-    return credentials;
-  } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : String(error);
-    console.warn(`[CredentialUtils:${logPrefix}] Failed to read credentials file:`, credentialsPath, errorMessage);
-    const errorResult = { token: null, email: null, error: `Failed to read credentials: ${errorMessage}` };
-    credentialCache.set(cacheKey, { credentials: errorResult, timestamp: now });
-    return errorResult;
-  }
+		if (isDebug) {
+			console.warn(
+				`[CredentialUtils:${logPrefix}] Retrieved credentials from file:`,
+				credentialsPath,
+				{
+					hasToken: !!token,
+					hasEmail: !!email,
+					tokenFingerprint: getTokenFingerprint(token),
+					forceRefresh,
+				},
+			);
+		}
+		return credentials;
+	} catch (error) {
+		const errorMessage = error instanceof Error ? error.message : String(error);
+		console.warn(
+			`[CredentialUtils:${logPrefix}] Failed to read credentials file:`,
+			credentialsPath,
+			errorMessage,
+		);
+		const errorResult = {
+			token: null,
+			email: null,
+			error: `Failed to read credentials: ${errorMessage}`,
+		};
+		credentialCache.set(cacheKey, { credentials: errorResult, timestamp: now });
+		return errorResult;
+	}
 }
 
 /**
@@ -533,70 +631,159 @@ function getCredentialsFromFile(
  * @returns Full OAuth credentials including refresh token
  */
 function getFullCredentialsFromFile(
-  credentialsPath: string,
-  logPrefix: string
+	credentialsPath: string,
+	logPrefix: string,
 ): FullOAuthCredentials {
-  const isDebug = process.env.DEBUG === 'true';
+	const isDebug = process.env.DEBUG === "true";
 
-  // Defense-in-depth: Validate credentials path is within expected boundaries
-  if (!isValidCredentialsPath(credentialsPath)) {
-    if (isDebug) {
-      console.warn(`[CredentialUtils:${logPrefix}] Invalid credentials path rejected:`, { credentialsPath });
-    }
-    return { token: null, email: null, refreshToken: null, expiresAt: null, scopes: null, subscriptionType: null, rateLimitTier: null, error: 'Invalid credentials path' };
-  }
+	// Defense-in-depth: Validate credentials path is within expected boundaries
+	if (!isValidCredentialsPath(credentialsPath)) {
+		if (isDebug) {
+			console.warn(
+				`[CredentialUtils:${logPrefix}] Invalid credentials path rejected:`,
+				{ credentialsPath },
+			);
+		}
+		return {
+			token: null,
+			email: null,
+			refreshToken: null,
+			expiresAt: null,
+			scopes: null,
+			subscriptionType: null,
+			rateLimitTier: null,
+			error: "Invalid credentials path",
+		};
+	}
 
-  // Check if credentials file exists
-  if (!existsSync(credentialsPath)) {
-    if (isDebug) {
-      console.warn(`[CredentialUtils:${logPrefix}] Credentials file not found:`, credentialsPath);
-    }
-    return { token: null, email: null, refreshToken: null, expiresAt: null, scopes: null, subscriptionType: null, rateLimitTier: null };
-  }
+	// Check if credentials file exists
+	if (!existsSync(credentialsPath)) {
+		if (isDebug) {
+			console.warn(
+				`[CredentialUtils:${logPrefix}] Credentials file not found:`,
+				credentialsPath,
+			);
+		}
+		return {
+			token: null,
+			email: null,
+			refreshToken: null,
+			expiresAt: null,
+			scopes: null,
+			subscriptionType: null,
+			rateLimitTier: null,
+		};
+	}
 
-  try {
-    const content = readFileSync(credentialsPath, 'utf-8');
+	try {
+		const content = readFileSync(credentialsPath, "utf-8");
 
-    // Parse JSON
-    let data: unknown;
-    try {
-      data = JSON.parse(content);
-    } catch {
-      console.warn(`[CredentialUtils:${logPrefix}] Failed to parse credentials JSON:`, credentialsPath);
-      return { token: null, email: null, refreshToken: null, expiresAt: null, scopes: null, subscriptionType: null, rateLimitTier: null };
-    }
+		// Parse JSON
+		let data: unknown;
+		try {
+			data = JSON.parse(content);
+		} catch {
+			console.warn(
+				`[CredentialUtils:${logPrefix}] Failed to parse credentials JSON:`,
+				credentialsPath,
+			);
+			return {
+				token: null,
+				email: null,
+				refreshToken: null,
+				expiresAt: null,
+				scopes: null,
+				subscriptionType: null,
+				rateLimitTier: null,
+			};
+		}
 
-    // Validate JSON structure
-    if (!validateCredentialData(data)) {
-      console.warn(`[CredentialUtils:${logPrefix}] Invalid credentials data structure:`, credentialsPath);
-      return { token: null, email: null, refreshToken: null, expiresAt: null, scopes: null, subscriptionType: null, rateLimitTier: null };
-    }
+		// Validate JSON structure
+		if (!validateCredentialData(data)) {
+			console.warn(
+				`[CredentialUtils:${logPrefix}] Invalid credentials data structure:`,
+				credentialsPath,
+			);
+			return {
+				token: null,
+				email: null,
+				refreshToken: null,
+				expiresAt: null,
+				scopes: null,
+				subscriptionType: null,
+				rateLimitTier: null,
+			};
+		}
 
-    const { token, email, refreshToken, expiresAt, scopes, subscriptionType, rateLimitTier } = extractFullCredentials(data);
+		const {
+			token,
+			email,
+			refreshToken,
+			expiresAt,
+			scopes,
+			subscriptionType,
+			rateLimitTier,
+		} = extractFullCredentials(data);
 
-    // Validate token format if present
-    if (token && !isValidTokenFormat(token)) {
-      console.warn(`[CredentialUtils:${logPrefix}] Invalid token format in:`, credentialsPath);
-      return { token: null, email, refreshToken, expiresAt, scopes, subscriptionType, rateLimitTier };
-    }
+		// Validate token format if present
+		if (token && !isValidTokenFormat(token)) {
+			console.warn(
+				`[CredentialUtils:${logPrefix}] Invalid token format in:`,
+				credentialsPath,
+			);
+			return {
+				token: null,
+				email,
+				refreshToken,
+				expiresAt,
+				scopes,
+				subscriptionType,
+				rateLimitTier,
+			};
+		}
 
-    if (isDebug) {
-      console.warn(`[CredentialUtils:${logPrefix}] Retrieved full credentials from file:`, credentialsPath, {
-        hasToken: !!token,
-        hasEmail: !!email,
-        hasRefreshToken: !!refreshToken,
-        expiresAt: expiresAt ? new Date(expiresAt).toISOString() : null,
-        tokenFingerprint: getTokenFingerprint(token),
-        subscriptionType,
-        rateLimitTier
-      });
-    }
-    return { token, email, refreshToken, expiresAt, scopes, subscriptionType, rateLimitTier };
-  } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : String(error);
-    console.warn(`[CredentialUtils:${logPrefix}] Failed to read credentials file:`, credentialsPath, errorMessage);
-    return { token: null, email: null, refreshToken: null, expiresAt: null, scopes: null, subscriptionType: null, rateLimitTier: null, error: `Failed to read credentials: ${errorMessage}` };
-  }
+		if (isDebug) {
+			console.warn(
+				`[CredentialUtils:${logPrefix}] Retrieved full credentials from file:`,
+				credentialsPath,
+				{
+					hasToken: !!token,
+					hasEmail: !!email,
+					hasRefreshToken: !!refreshToken,
+					expiresAt: expiresAt ? new Date(expiresAt).toISOString() : null,
+					tokenFingerprint: getTokenFingerprint(token),
+					subscriptionType,
+					rateLimitTier,
+				},
+			);
+		}
+		return {
+			token,
+			email,
+			refreshToken,
+			expiresAt,
+			scopes,
+			subscriptionType,
+			rateLimitTier,
+		};
+	} catch (error) {
+		const errorMessage = error instanceof Error ? error.message : String(error);
+		console.warn(
+			`[CredentialUtils:${logPrefix}] Failed to read credentials file:`,
+			credentialsPath,
+			errorMessage,
+		);
+		return {
+			token: null,
+			email: null,
+			refreshToken: null,
+			expiresAt: null,
+			scopes: null,
+			subscriptionType: null,
+			rateLimitTier: null,
+			error: `Failed to read credentials: ${errorMessage}`,
+		};
+	}
 }
 
 // =============================================================================
@@ -606,92 +793,120 @@ function getFullCredentialsFromFile(
 /**
  * Retrieve credentials from macOS Keychain
  */
-function getCredentialsFromMacOSKeychain(configDir?: string, forceRefresh = false): PlatformCredentials {
-  const serviceName = getKeychainServiceName(configDir);
-  const cacheKey = `macos:${serviceName}`;
-  const isDebug = process.env.DEBUG === 'true';
-  const now = Date.now();
+function getCredentialsFromMacOSKeychain(
+	configDir?: string,
+	forceRefresh = false,
+): PlatformCredentials {
+	const serviceName = getKeychainServiceName(configDir);
+	const cacheKey = `macos:${serviceName}`;
+	const isDebug = process.env.DEBUG === "true";
+	const now = Date.now();
 
-  // Return cached credentials if available and fresh
-  const cached = credentialCache.get(cacheKey);
-  if (!forceRefresh && cached) {
-    const ttl = cached.credentials.error ? ERROR_CACHE_TTL_MS : CACHE_TTL_MS;
-    if ((now - cached.timestamp) < ttl) {
-      if (isDebug) {
-        const cacheAge = now - cached.timestamp;
-        console.warn('[CredentialUtils:macOS:CACHE] Returning cached credentials:', {
-          serviceName,
-          hasToken: !!cached.credentials.token,
-          tokenFingerprint: getTokenFingerprint(cached.credentials.token),
-          cacheAge: Math.round(cacheAge / 1000) + 's'
-        });
-      }
-      return cached.credentials;
-    }
-  }
+	// Return cached credentials if available and fresh
+	const cached = credentialCache.get(cacheKey);
+	if (!forceRefresh && cached) {
+		const ttl = cached.credentials.error ? ERROR_CACHE_TTL_MS : CACHE_TTL_MS;
+		if (now - cached.timestamp < ttl) {
+			if (isDebug) {
+				const cacheAge = now - cached.timestamp;
+				console.warn(
+					"[CredentialUtils:macOS:CACHE] Returning cached credentials:",
+					{
+						serviceName,
+						hasToken: !!cached.credentials.token,
+						tokenFingerprint: getTokenFingerprint(cached.credentials.token),
+						cacheAge: Math.round(cacheAge / 1000) + "s",
+					},
+				);
+			}
+			return cached.credentials;
+		}
+	}
 
-  // Locate the security executable
-  let securityPath: string | null = null;
-  const candidatePaths = ['/usr/bin/security', '/bin/security'];
+	// Locate the security executable
+	let securityPath: string | null = null;
+	const candidatePaths = ["/usr/bin/security", "/bin/security"];
 
-  for (const candidate of candidatePaths) {
-    if (existsSync(candidate)) {
-      securityPath = candidate;
-      break;
-    }
-  }
+	for (const candidate of candidatePaths) {
+		if (existsSync(candidate)) {
+			securityPath = candidate;
+			break;
+		}
+	}
 
-  if (!securityPath) {
-    const notFoundResult = { token: null, email: null, error: 'macOS security command not found' };
-    credentialCache.set(cacheKey, { credentials: notFoundResult, timestamp: now });
-    return notFoundResult;
-  }
+	if (!securityPath) {
+		const notFoundResult = {
+			token: null,
+			email: null,
+			error: "macOS security command not found",
+		};
+		credentialCache.set(cacheKey, {
+			credentials: notFoundResult,
+			timestamp: now,
+		});
+		return notFoundResult;
+	}
 
-  try {
-    // Query macOS Keychain for Claude Code credentials using shared helper
-    const credentialsJson = executeCredentialRead(
-      securityPath,
-      ['find-generic-password', '-s', serviceName, '-w'],
-      MACOS_KEYCHAIN_TIMEOUT_MS,
-      `macOS:${serviceName}`
-    );
+	try {
+		// Query macOS Keychain for Claude Code credentials using shared helper
+		const credentialsJson = executeCredentialRead(
+			securityPath,
+			["find-generic-password", "-s", serviceName, "-w"],
+			MACOS_KEYCHAIN_TIMEOUT_MS,
+			`macOS:${serviceName}`,
+		);
 
-    // Parse and validate using shared helper
-    const { token, email } = parseCredentialJson(
-      credentialsJson,
-      `macOS:${serviceName}`,
-      extractCredentials
-    );
+		// Parse and validate using shared helper
+		const { token, email } = parseCredentialJson(
+			credentialsJson,
+			`macOS:${serviceName}`,
+			extractCredentials,
+		);
 
-    // Validate token format if present
-    if (token && !isValidTokenFormat(token)) {
-      console.warn('[CredentialUtils:macOS] Invalid token format for service:', serviceName);
-      const result = { token: null, email };
-      credentialCache.set(cacheKey, { credentials: result, timestamp: now });
-      return result;
-    }
+		// Validate token format if present
+		if (token && !isValidTokenFormat(token)) {
+			console.warn(
+				"[CredentialUtils:macOS] Invalid token format for service:",
+				serviceName,
+			);
+			const result = { token: null, email };
+			credentialCache.set(cacheKey, { credentials: result, timestamp: now });
+			return result;
+		}
 
-    const credentials = { token, email };
-    credentialCache.set(cacheKey, { credentials, timestamp: now });
+		const credentials = { token, email };
+		credentialCache.set(cacheKey, { credentials, timestamp: now });
 
-    if (isDebug) {
-      console.warn('[CredentialUtils:macOS] Retrieved credentials from Keychain for service:', serviceName, {
-        hasToken: !!token,
-        hasEmail: !!email,
-        tokenFingerprint: getTokenFingerprint(token),
-        forceRefresh
-      });
-    }
-    return credentials;
-  } catch (error) {
-    // Unexpected error (executeCredentialRead already handles "not found" cases)
-    const errorMessage = error instanceof Error ? error.message : String(error);
-    console.warn('[CredentialUtils:macOS] Keychain access failed for service:', serviceName, errorMessage);
-    const errorResult = { token: null, email: null, error: `Keychain access failed: ${errorMessage}` };
-    // Use shorter TTL for errors
-    credentialCache.set(cacheKey, { credentials: errorResult, timestamp: now });
-    return errorResult;
-  }
+		if (isDebug) {
+			console.warn(
+				"[CredentialUtils:macOS] Retrieved credentials from Keychain for service:",
+				serviceName,
+				{
+					hasToken: !!token,
+					hasEmail: !!email,
+					tokenFingerprint: getTokenFingerprint(token),
+					forceRefresh,
+				},
+			);
+		}
+		return credentials;
+	} catch (error) {
+		// Unexpected error (executeCredentialRead already handles "not found" cases)
+		const errorMessage = error instanceof Error ? error.message : String(error);
+		console.warn(
+			"[CredentialUtils:macOS] Keychain access failed for service:",
+			serviceName,
+			errorMessage,
+		);
+		const errorResult = {
+			token: null,
+			email: null,
+			error: `Keychain access failed: ${errorMessage}`,
+		};
+		// Use shorter TTL for errors
+		credentialCache.set(cacheKey, { credentials: errorResult, timestamp: now });
+		return errorResult;
+	}
 }
 
 // =============================================================================
@@ -708,18 +923,18 @@ const LINUX_SECRET_TOOL_TIMEOUT_MS = 5000;
  * secret-tool is part of libsecret-tools package
  */
 function findSecretToolPath(): string | null {
-  const candidatePaths = [
-    '/usr/bin/secret-tool',
-    '/bin/secret-tool',
-    '/usr/local/bin/secret-tool',
-  ];
+	const candidatePaths = [
+		"/usr/bin/secret-tool",
+		"/bin/secret-tool",
+		"/usr/local/bin/secret-tool",
+	];
 
-  for (const candidate of candidatePaths) {
-    if (existsSync(candidate)) {
-      return candidate;
-    }
-  }
-  return null;
+	for (const candidate of candidatePaths) {
+		if (existsSync(candidate)) {
+			return candidate;
+		}
+	}
+	return null;
 }
 
 /**
@@ -728,12 +943,12 @@ function findSecretToolPath(): string | null {
  * For custom profiles, uses "claude-code-{hash}" where hash is first 8 chars of SHA256.
  */
 function getSecretServiceAttribute(configDir?: string): string {
-  if (!configDir) {
-    return 'claude-code';
-  }
-  // For custom config dirs, create a hashed attribute to avoid conflicts
-  const hash = createHash('sha256').update(configDir).digest('hex').slice(0, 8);
-  return `claude-code-${hash}`;
+	if (!configDir) {
+		return "claude-code";
+	}
+	// For custom config dirs, create a hashed attribute to avoid conflicts
+	const hash = createHash("sha256").update(configDir).digest("hex").slice(0, 8);
+	return `claude-code-${hash}`;
 }
 
 /**
@@ -744,109 +959,142 @@ function getSecretServiceAttribute(configDir?: string): string {
  * - Attributes: {application: "claude-code"}
  * - Secret: JSON string with claudeAiOauth.accessToken
  */
-function getCredentialsFromLinuxSecretService(configDir?: string, forceRefresh = false): PlatformCredentials {
-  const attribute = getSecretServiceAttribute(configDir);
-  const cacheKey = `linux-secret:${attribute}`;
-  const isDebug = process.env.DEBUG === 'true';
-  const now = Date.now();
+function getCredentialsFromLinuxSecretService(
+	configDir?: string,
+	forceRefresh = false,
+): PlatformCredentials {
+	const attribute = getSecretServiceAttribute(configDir);
+	const cacheKey = `linux-secret:${attribute}`;
+	const isDebug = process.env.DEBUG === "true";
+	const now = Date.now();
 
-  // Return cached credentials if available and fresh
-  const cached = credentialCache.get(cacheKey);
-  if (!forceRefresh && cached) {
-    const ttl = cached.credentials.error ? ERROR_CACHE_TTL_MS : CACHE_TTL_MS;
-    if ((now - cached.timestamp) < ttl) {
-      if (isDebug) {
-        const cacheAge = now - cached.timestamp;
-        console.warn('[CredentialUtils:Linux:SecretService:CACHE] Returning cached credentials:', {
-          attribute,
-          hasToken: !!cached.credentials.token,
-          tokenFingerprint: getTokenFingerprint(cached.credentials.token),
-          cacheAge: Math.round(cacheAge / 1000) + 's'
-        });
-      }
-      return cached.credentials;
-    }
-  }
+	// Return cached credentials if available and fresh
+	const cached = credentialCache.get(cacheKey);
+	if (!forceRefresh && cached) {
+		const ttl = cached.credentials.error ? ERROR_CACHE_TTL_MS : CACHE_TTL_MS;
+		if (now - cached.timestamp < ttl) {
+			if (isDebug) {
+				const cacheAge = now - cached.timestamp;
+				console.warn(
+					"[CredentialUtils:Linux:SecretService:CACHE] Returning cached credentials:",
+					{
+						attribute,
+						hasToken: !!cached.credentials.token,
+						tokenFingerprint: getTokenFingerprint(cached.credentials.token),
+						cacheAge: Math.round(cacheAge / 1000) + "s",
+					},
+				);
+			}
+			return cached.credentials;
+		}
+	}
 
-  // Find secret-tool executable
-  const secretToolPath = findSecretToolPath();
-  if (!secretToolPath) {
-    if (isDebug) {
-      console.warn('[CredentialUtils:Linux:SecretService] secret-tool not found, falling back to file storage');
-    }
-    // Return a special result indicating Secret Service is unavailable
-    return { token: null, email: null, error: 'secret-tool not found' };
-  }
+	// Find secret-tool executable
+	const secretToolPath = findSecretToolPath();
+	if (!secretToolPath) {
+		if (isDebug) {
+			console.warn(
+				"[CredentialUtils:Linux:SecretService] secret-tool not found, falling back to file storage",
+			);
+		}
+		// Return a special result indicating Secret Service is unavailable
+		return { token: null, email: null, error: "secret-tool not found" };
+	}
 
-  try {
-    // Query Secret Service for credentials using shared helper
-    const credentialsJson = executeCredentialRead(
-      secretToolPath,
-      ['lookup', 'application', attribute],
-      LINUX_SECRET_TOOL_TIMEOUT_MS,
-      `Linux:SecretService:${attribute}`
-    );
+	try {
+		// Query Secret Service for credentials using shared helper
+		const credentialsJson = executeCredentialRead(
+			secretToolPath,
+			["lookup", "application", attribute],
+			LINUX_SECRET_TOOL_TIMEOUT_MS,
+			`Linux:SecretService:${attribute}`,
+		);
 
-    // Parse and validate using shared helper
-    const { token, email } = parseCredentialJson(
-      credentialsJson,
-      `Linux:SecretService:${attribute}`,
-      extractCredentials
-    );
+		// Parse and validate using shared helper
+		const { token, email } = parseCredentialJson(
+			credentialsJson,
+			`Linux:SecretService:${attribute}`,
+			extractCredentials,
+		);
 
-    // Validate token format if present
-    if (token && !isValidTokenFormat(token)) {
-      console.warn('[CredentialUtils:Linux:SecretService] Invalid token format for attribute:', attribute);
-      const result = { token: null, email };
-      credentialCache.set(cacheKey, { credentials: result, timestamp: now });
-      return result;
-    }
+		// Validate token format if present
+		if (token && !isValidTokenFormat(token)) {
+			console.warn(
+				"[CredentialUtils:Linux:SecretService] Invalid token format for attribute:",
+				attribute,
+			);
+			const result = { token: null, email };
+			credentialCache.set(cacheKey, { credentials: result, timestamp: now });
+			return result;
+		}
 
-    const credentials = { token, email };
-    credentialCache.set(cacheKey, { credentials, timestamp: now });
+		const credentials = { token, email };
+		credentialCache.set(cacheKey, { credentials, timestamp: now });
 
-    if (isDebug) {
-      console.warn('[CredentialUtils:Linux:SecretService] Retrieved credentials from Secret Service:', {
-        attribute,
-        hasToken: !!token,
-        hasEmail: !!email,
-        tokenFingerprint: getTokenFingerprint(token),
-        forceRefresh
-      });
-    }
-    return credentials;
-  } catch (error) {
-    // Unexpected error (executeCredentialRead already handles "not found" cases)
-    const errorMessage = error instanceof Error ? error.message : String(error);
-    console.warn('[CredentialUtils:Linux:SecretService] Secret Service access failed:', errorMessage);
-    // Return error to trigger fallback to file storage
-    return { token: null, email: null, error: `Secret Service access failed: ${errorMessage}` };
-  }
+		if (isDebug) {
+			console.warn(
+				"[CredentialUtils:Linux:SecretService] Retrieved credentials from Secret Service:",
+				{
+					attribute,
+					hasToken: !!token,
+					hasEmail: !!email,
+					tokenFingerprint: getTokenFingerprint(token),
+					forceRefresh,
+				},
+			);
+		}
+		return credentials;
+	} catch (error) {
+		// Unexpected error (executeCredentialRead already handles "not found" cases)
+		const errorMessage = error instanceof Error ? error.message : String(error);
+		console.warn(
+			"[CredentialUtils:Linux:SecretService] Secret Service access failed:",
+			errorMessage,
+		);
+		// Return error to trigger fallback to file storage
+		return {
+			token: null,
+			email: null,
+			error: `Secret Service access failed: ${errorMessage}`,
+		};
+	}
 }
 
 /**
  * Retrieve credentials from Linux - tries Secret Service first, falls back to file
  */
-function getCredentialsFromLinux(configDir?: string, forceRefresh = false): PlatformCredentials {
-  const isDebug = process.env.DEBUG === 'true';
+function getCredentialsFromLinux(
+	configDir?: string,
+	forceRefresh = false,
+): PlatformCredentials {
+	const isDebug = process.env.DEBUG === "true";
 
-  // Try Secret Service first (preferred secure storage)
-  const secretServiceResult = getCredentialsFromLinuxSecretService(configDir, forceRefresh);
+	// Try Secret Service first (preferred secure storage)
+	const secretServiceResult = getCredentialsFromLinuxSecretService(
+		configDir,
+		forceRefresh,
+	);
 
-  // If we got a token from Secret Service, use it
-  if (secretServiceResult.token) {
-    return secretServiceResult;
-  }
+	// If we got a token from Secret Service, use it
+	if (secretServiceResult.token) {
+		return secretServiceResult;
+	}
 
-  // If Secret Service had an error (not just "not found"), log it and try file fallback
-  if (secretServiceResult.error && !secretServiceResult.error.includes('not found')) {
-    if (isDebug) {
-      console.warn('[CredentialUtils:Linux] Secret Service unavailable, trying file fallback:', secretServiceResult.error);
-    }
-  }
+	// If Secret Service had an error (not just "not found"), log it and try file fallback
+	if (
+		secretServiceResult.error &&
+		!secretServiceResult.error.includes("not found")
+	) {
+		if (isDebug) {
+			console.warn(
+				"[CredentialUtils:Linux] Secret Service unavailable, trying file fallback:",
+				secretServiceResult.error,
+			);
+		}
+	}
 
-  // Fall back to file-based storage
-  return getCredentialsFromLinuxFile(configDir, forceRefresh);
+	// Fall back to file-based storage
+	return getCredentialsFromLinuxFile(configDir, forceRefresh);
 }
 
 // =============================================================================
@@ -857,21 +1105,29 @@ function getCredentialsFromLinux(configDir?: string, forceRefresh = false): Plat
  * Get the credentials file path for Linux
  */
 function getLinuxCredentialsPath(configDir?: string): string {
-  let baseDir = configDir || join(homedir(), '.claude');
-  // Expand ~ to home directory (Node.js doesn't resolve ~ in file paths)
-  if (baseDir.startsWith('~')) {
-    baseDir = join(homedir(), baseDir.slice(1));
-  }
-  return join(baseDir, '.credentials.json');
+	let baseDir = configDir || join(homedir(), ".claude");
+	// Expand ~ to home directory (Node.js doesn't resolve ~ in file paths)
+	if (baseDir.startsWith("~")) {
+		baseDir = join(homedir(), baseDir.slice(1));
+	}
+	return join(baseDir, ".credentials.json");
 }
 
 /**
  * Retrieve credentials from Linux .credentials.json file (fallback when Secret Service unavailable)
  */
-function getCredentialsFromLinuxFile(configDir?: string, forceRefresh = false): PlatformCredentials {
-  const credentialsPath = getLinuxCredentialsPath(configDir);
-  const cacheKey = `linux:${credentialsPath}`;
-  return getCredentialsFromFile(credentialsPath, cacheKey, 'Linux', forceRefresh);
+function getCredentialsFromLinuxFile(
+	configDir?: string,
+	forceRefresh = false,
+): PlatformCredentials {
+	const credentialsPath = getLinuxCredentialsPath(configDir);
+	const cacheKey = `linux:${credentialsPath}`;
+	return getCredentialsFromFile(
+		credentialsPath,
+		cacheKey,
+		"Linux",
+		forceRefresh,
+	);
 }
 
 // =============================================================================
@@ -886,61 +1142,83 @@ function getCredentialsFromLinuxFile(configDir?: string, forceRefresh = false): 
  * - Type: Generic credential
  * - Password field contains JSON with { claudeAiOauth: { accessToken, email } }
  */
-function getCredentialsFromWindowsCredentialManager(configDir?: string, forceRefresh = false): PlatformCredentials {
-  const targetName = getWindowsCredentialTarget(configDir);
-  const cacheKey = `windows:${targetName}`;
-  const isDebug = process.env.DEBUG === 'true';
-  const now = Date.now();
+function getCredentialsFromWindowsCredentialManager(
+	configDir?: string,
+	forceRefresh = false,
+): PlatformCredentials {
+	const targetName = getWindowsCredentialTarget(configDir);
+	const cacheKey = `windows:${targetName}`;
+	const isDebug = process.env.DEBUG === "true";
+	const now = Date.now();
 
-  // Return cached credentials if available and fresh
-  const cached = credentialCache.get(cacheKey);
-  if (!forceRefresh && cached) {
-    const ttl = cached.credentials.error ? ERROR_CACHE_TTL_MS : CACHE_TTL_MS;
-    if ((now - cached.timestamp) < ttl) {
-      if (isDebug) {
-        const cacheAge = now - cached.timestamp;
-        console.warn('[CredentialUtils:Windows:CACHE] Returning cached credentials:', {
-          targetName,
-          hasToken: !!cached.credentials.token,
-          tokenFingerprint: getTokenFingerprint(cached.credentials.token),
-          cacheAge: Math.round(cacheAge / 1000) + 's'
-        });
-      }
-      return cached.credentials;
-    }
-  }
+	// Return cached credentials if available and fresh
+	const cached = credentialCache.get(cacheKey);
+	if (!forceRefresh && cached) {
+		const ttl = cached.credentials.error ? ERROR_CACHE_TTL_MS : CACHE_TTL_MS;
+		if (now - cached.timestamp < ttl) {
+			if (isDebug) {
+				const cacheAge = now - cached.timestamp;
+				console.warn(
+					"[CredentialUtils:Windows:CACHE] Returning cached credentials:",
+					{
+						targetName,
+						hasToken: !!cached.credentials.token,
+						tokenFingerprint: getTokenFingerprint(cached.credentials.token),
+						cacheAge: Math.round(cacheAge / 1000) + "s",
+					},
+				);
+			}
+			return cached.credentials;
+		}
+	}
 
-  // Defense-in-depth: Validate target name format before using in PowerShell
-  if (!isValidTargetName(targetName)) {
-    const invalidResult = { token: null, email: null, error: 'Invalid credential target name format' };
-    credentialCache.set(cacheKey, { credentials: invalidResult, timestamp: now });
-    if (isDebug) {
-      console.warn('[CredentialUtils:Windows] Invalid target name rejected:', { targetName });
-    }
-    return invalidResult;
-  }
+	// Defense-in-depth: Validate target name format before using in PowerShell
+	if (!isValidTargetName(targetName)) {
+		const invalidResult = {
+			token: null,
+			email: null,
+			error: "Invalid credential target name format",
+		};
+		credentialCache.set(cacheKey, {
+			credentials: invalidResult,
+			timestamp: now,
+		});
+		if (isDebug) {
+			console.warn("[CredentialUtils:Windows] Invalid target name rejected:", {
+				targetName,
+			});
+		}
+		return invalidResult;
+	}
 
-  // Find PowerShell executable
-  const psPath = findPowerShellPath();
-  if (!psPath) {
-    const notFoundResult = { token: null, email: null, error: 'PowerShell not found' };
-    credentialCache.set(cacheKey, { credentials: notFoundResult, timestamp: now });
-    return notFoundResult;
-  }
+	// Find PowerShell executable
+	const psPath = findPowerShellPath();
+	if (!psPath) {
+		const notFoundResult = {
+			token: null,
+			email: null,
+			error: "PowerShell not found",
+		};
+		credentialCache.set(cacheKey, {
+			credentials: notFoundResult,
+			timestamp: now,
+		});
+		return notFoundResult;
+	}
 
-  try {
-    // PowerShell script to read from Credential Manager
-    // Uses the Windows Credential Manager API via .NET
-    // NOTE: The CREDENTIAL struct must use IntPtr for string fields (blittable requirement)
-    // and strings must be manually marshaled after PtrToStructure
-    //
-    // NOTE: This CREDENTIAL struct uses IntPtr for string fields (TargetName, Comment, etc.)
-    // because CredRead returns a pointer to Windows-allocated memory. We must use a "blittable"
-    // struct layout where strings are IntPtr, then manually marshal strings via PtrToStringUni.
-    // This differs from the CredWrite struct (see updateWindowsCredentialManagerCredentials)
-    // which uses string types because the .NET marshaler can automatically convert strings
-    // to pointers when CALLING Windows APIs (but not when RECEIVING data from them).
-    const psScript = `
+	try {
+		// PowerShell script to read from Credential Manager
+		// Uses the Windows Credential Manager API via .NET
+		// NOTE: The CREDENTIAL struct must use IntPtr for string fields (blittable requirement)
+		// and strings must be manually marshaled after PtrToStructure
+		//
+		// NOTE: This CREDENTIAL struct uses IntPtr for string fields (TargetName, Comment, etc.)
+		// because CredRead returns a pointer to Windows-allocated memory. We must use a "blittable"
+		// struct layout where strings are IntPtr, then manually marshal strings via PtrToStringUni.
+		// This differs from the CredWrite struct (see updateWindowsCredentialManagerCredentials)
+		// which uses string types because the .NET marshaler can automatically convert strings
+		// to pointers when CALLING Windows APIs (but not when RECEIVING data from them).
+		const psScript = `
       $ErrorActionPreference = 'Stop'
 
       # Define the CREDENTIAL struct with IntPtr for string fields (required for CredRead marshaling)
@@ -1001,72 +1279,105 @@ public static extern bool CredFree(IntPtr cred);
       }
     `;
 
-    const result = execFileSync(
-      psPath,
-      ['-NoProfile', '-NonInteractive', '-ExecutionPolicy', 'Bypass', '-Command', psScript],
-      {
-        encoding: 'utf-8',
-        timeout: WINDOWS_CREDMAN_TIMEOUT_MS,
-        windowsHide: true,
-      }
-    );
+		const result = execFileSync(
+			psPath,
+			[
+				"-NoProfile",
+				"-NonInteractive",
+				"-ExecutionPolicy",
+				"Bypass",
+				"-Command",
+				psScript,
+			],
+			{
+				encoding: "utf-8",
+				timeout: WINDOWS_CREDMAN_TIMEOUT_MS,
+				windowsHide: true,
+			},
+		);
 
-    const credentialsJson = result.trim() || null;
+		const credentialsJson = result.trim() || null;
 
-    // Parse and validate using shared helper
-    const { token, email } = parseCredentialJson(
-      credentialsJson,
-      `Windows:${targetName}`,
-      extractCredentials
-    );
+		// Parse and validate using shared helper
+		const { token, email } = parseCredentialJson(
+			credentialsJson,
+			`Windows:${targetName}`,
+			extractCredentials,
+		);
 
-    // Validate token format if present
-    if (token && !isValidTokenFormat(token)) {
-      console.warn('[CredentialUtils:Windows] Invalid token format for target:', targetName);
-      const result = { token: null, email };
-      credentialCache.set(cacheKey, { credentials: result, timestamp: now });
-      return result;
-    }
+		// Validate token format if present
+		if (token && !isValidTokenFormat(token)) {
+			console.warn(
+				"[CredentialUtils:Windows] Invalid token format for target:",
+				targetName,
+			);
+			const result = { token: null, email };
+			credentialCache.set(cacheKey, { credentials: result, timestamp: now });
+			return result;
+		}
 
-    const credentials = { token, email };
-    credentialCache.set(cacheKey, { credentials, timestamp: now });
+		const credentials = { token, email };
+		credentialCache.set(cacheKey, { credentials, timestamp: now });
 
-    if (isDebug) {
-      console.warn('[CredentialUtils:Windows] Retrieved credentials from Credential Manager for target:', targetName, {
-        hasToken: !!token,
-        hasEmail: !!email,
-        tokenFingerprint: getTokenFingerprint(token),
-        forceRefresh
-      });
-    }
-    return credentials;
-  } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : String(error);
-    console.warn('[CredentialUtils:Windows] Credential Manager access failed for target:', targetName, errorMessage);
-    const errorResult = { token: null, email: null, error: `Credential Manager access failed: ${errorMessage}` };
-    credentialCache.set(cacheKey, { credentials: errorResult, timestamp: now });
-    return errorResult;
-  }
+		if (isDebug) {
+			console.warn(
+				"[CredentialUtils:Windows] Retrieved credentials from Credential Manager for target:",
+				targetName,
+				{
+					hasToken: !!token,
+					hasEmail: !!email,
+					tokenFingerprint: getTokenFingerprint(token),
+					forceRefresh,
+				},
+			);
+		}
+		return credentials;
+	} catch (error) {
+		const errorMessage = error instanceof Error ? error.message : String(error);
+		console.warn(
+			"[CredentialUtils:Windows] Credential Manager access failed for target:",
+			targetName,
+			errorMessage,
+		);
+		const errorResult = {
+			token: null,
+			email: null,
+			error: `Credential Manager access failed: ${errorMessage}`,
+		};
+		credentialCache.set(cacheKey, { credentials: errorResult, timestamp: now });
+		return errorResult;
+	}
 }
 
 /**
  * Find PowerShell executable path on Windows
  */
 function findPowerShellPath(): string | null {
-  // Prefer PowerShell 7+ (pwsh) over Windows PowerShell
-  const candidatePaths = [
-    join(process.env.ProgramFiles || 'C:\\Program Files', 'PowerShell', '7', 'pwsh.exe'),
-    join(homedir(), 'AppData', 'Local', 'Microsoft', 'WindowsApps', 'pwsh.exe'),
-    join(process.env.SystemRoot || 'C:\\Windows', 'System32', 'WindowsPowerShell', 'v1.0', 'powershell.exe'),
-  ];
+	// Prefer PowerShell 7+ (pwsh) over Windows PowerShell
+	const candidatePaths = [
+		join(
+			process.env.ProgramFiles || "C:\\Program Files",
+			"PowerShell",
+			"7",
+			"pwsh.exe",
+		),
+		join(homedir(), "AppData", "Local", "Microsoft", "WindowsApps", "pwsh.exe"),
+		join(
+			process.env.SystemRoot || "C:\\Windows",
+			"System32",
+			"WindowsPowerShell",
+			"v1.0",
+			"powershell.exe",
+		),
+	];
 
-  for (const candidate of candidatePaths) {
-    if (existsSync(candidate)) {
-      return candidate;
-    }
-  }
+	for (const candidate of candidatePaths) {
+		if (existsSync(candidate)) {
+			return candidate;
+		}
+	}
 
-  return null;
+	return null;
 }
 
 // =============================================================================
@@ -1078,22 +1389,30 @@ function findPowerShellPath(): string | null {
  * Claude CLI on Windows stores credentials in .credentials.json files, not Windows Credential Manager
  */
 function getWindowsCredentialsPath(configDir?: string): string {
-  let baseDir = configDir || join(homedir(), '.claude');
-  // Expand ~ to home directory (Node.js doesn't resolve ~ in file paths)
-  if (baseDir.startsWith('~')) {
-    baseDir = join(homedir(), baseDir.slice(1));
-  }
-  return join(baseDir, '.credentials.json');
+	let baseDir = configDir || join(homedir(), ".claude");
+	// Expand ~ to home directory (Node.js doesn't resolve ~ in file paths)
+	if (baseDir.startsWith("~")) {
+		baseDir = join(homedir(), baseDir.slice(1));
+	}
+	return join(baseDir, ".credentials.json");
 }
 
 /**
  * Retrieve credentials from Windows .credentials.json file
  * This is the primary storage mechanism used by Claude CLI on Windows
  */
-function getCredentialsFromWindowsFile(configDir?: string, forceRefresh = false): PlatformCredentials {
-  const credentialsPath = getWindowsCredentialsPath(configDir);
-  const cacheKey = `windows-file:${credentialsPath}`;
-  return getCredentialsFromFile(credentialsPath, cacheKey, 'Windows:File', forceRefresh);
+function getCredentialsFromWindowsFile(
+	configDir?: string,
+	forceRefresh = false,
+): PlatformCredentials {
+	const credentialsPath = getWindowsCredentialsPath(configDir);
+	const cacheKey = `windows-file:${credentialsPath}`;
+	return getCredentialsFromFile(
+		credentialsPath,
+		cacheKey,
+		"Windows:File",
+		forceRefresh,
+	);
 }
 
 /**
@@ -1101,37 +1420,49 @@ function getCredentialsFromWindowsFile(configDir?: string, forceRefresh = false)
  * Claude CLI on Windows can store credentials in either location, and they may get out of sync.
  * We compare both sources and return the one with the most recent/valid token.
  */
-function getCredentialsFromWindows(configDir?: string, forceRefresh = false): PlatformCredentials {
-  const isDebug = process.env.DEBUG === 'true';
+function getCredentialsFromWindows(
+	configDir?: string,
+	forceRefresh = false,
+): PlatformCredentials {
+	const isDebug = process.env.DEBUG === "true";
 
-  // Get credentials from both sources
-  const fileResult = getCredentialsFromWindowsFile(configDir, forceRefresh);
-  const credManagerResult = getCredentialsFromWindowsCredentialManager(configDir, forceRefresh);
+	// Get credentials from both sources
+	const fileResult = getCredentialsFromWindowsFile(configDir, forceRefresh);
+	const credManagerResult = getCredentialsFromWindowsCredentialManager(
+		configDir,
+		forceRefresh,
+	);
 
-  // If only one has a token, use that one
-  if (fileResult.token && !credManagerResult.token) {
-    if (isDebug) {
-      console.warn('[CredentialUtils:Windows] Using file credentials (Credential Manager empty)');
-    }
-    return fileResult;
-  }
-  if (credManagerResult.token && !fileResult.token) {
-    if (isDebug) {
-      console.warn('[CredentialUtils:Windows] Using Credential Manager credentials (file empty)');
-    }
-    return credManagerResult;
-  }
+	// If only one has a token, use that one
+	if (fileResult.token && !credManagerResult.token) {
+		if (isDebug) {
+			console.warn(
+				"[CredentialUtils:Windows] Using file credentials (Credential Manager empty)",
+			);
+		}
+		return fileResult;
+	}
+	if (credManagerResult.token && !fileResult.token) {
+		if (isDebug) {
+			console.warn(
+				"[CredentialUtils:Windows] Using Credential Manager credentials (file empty)",
+			);
+		}
+		return credManagerResult;
+	}
 
-  // If neither has a token, return file result (which has the appropriate error)
-  if (!fileResult.token && !credManagerResult.token) {
-    return fileResult;
-  }
+	// If neither has a token, return file result (which has the appropriate error)
+	if (!fileResult.token && !credManagerResult.token) {
+		return fileResult;
+	}
 
-  // Both have tokens - prefer file since Claude CLI writes there after login
-  if (isDebug) {
-    console.warn('[CredentialUtils:Windows] Both sources have tokens, preferring file (Claude CLI primary storage)');
-  }
-  return fileResult;
+	// Both have tokens - prefer file since Claude CLI writes there after login
+	if (isDebug) {
+		console.warn(
+			"[CredentialUtils:Windows] Both sources have tokens, preferring file (Claude CLI primary storage)",
+		);
+	}
+	return fileResult;
 }
 
 // =============================================================================
@@ -1155,21 +1486,28 @@ function getCredentialsFromWindows(configDir?: string, forceRefresh = false): Pl
  * @param forceRefresh - Set to true to bypass cache and fetch fresh credentials
  * @returns Object with token and email (both may be null if not found or invalid)
  */
-export function getCredentialsFromKeychain(configDir?: string, forceRefresh = false): PlatformCredentials {
-  if (isMacOS()) {
-    return getCredentialsFromMacOSKeychain(configDir, forceRefresh);
-  }
+export function getCredentialsFromKeychain(
+	configDir?: string,
+	forceRefresh = false,
+): PlatformCredentials {
+	if (isMacOS()) {
+		return getCredentialsFromMacOSKeychain(configDir, forceRefresh);
+	}
 
-  if (isLinux()) {
-    return getCredentialsFromLinux(configDir, forceRefresh);
-  }
+	if (isLinux()) {
+		return getCredentialsFromLinux(configDir, forceRefresh);
+	}
 
-  if (isWindows()) {
-    return getCredentialsFromWindows(configDir, forceRefresh);
-  }
+	if (isWindows()) {
+		return getCredentialsFromWindows(configDir, forceRefresh);
+	}
 
-  // Unknown platform - return empty
-  return { token: null, email: null, error: `Unsupported platform: ${process.platform}` };
+	// Unknown platform - return empty
+	return {
+		token: null,
+		email: null,
+		error: `Unsupported platform: ${process.platform}`,
+	};
 }
 
 /**
@@ -1184,22 +1522,22 @@ export const getCredentials = getCredentialsFromKeychain;
  * @param configDir - Optional config dir to clear cache for specific profile. If not provided, clears all.
  */
 export function clearKeychainCache(configDir?: string): void {
-  if (configDir) {
-    // Clear cache for this specific configDir on all platforms
-    const macOSKey = `macos:${getKeychainServiceName(configDir)}`;
-    const linuxSecretKey = `linux-secret:${getSecretServiceAttribute(configDir)}`;
-    const linuxFileKey = `linux:${getLinuxCredentialsPath(configDir)}`;
-    const windowsKey = `windows:${getWindowsCredentialTarget(configDir)}`;
-    const windowsFileKey = `windows-file:${getWindowsCredentialsPath(configDir)}`;
+	if (configDir) {
+		// Clear cache for this specific configDir on all platforms
+		const macOSKey = `macos:${getKeychainServiceName(configDir)}`;
+		const linuxSecretKey = `linux-secret:${getSecretServiceAttribute(configDir)}`;
+		const linuxFileKey = `linux:${getLinuxCredentialsPath(configDir)}`;
+		const windowsKey = `windows:${getWindowsCredentialTarget(configDir)}`;
+		const windowsFileKey = `windows-file:${getWindowsCredentialsPath(configDir)}`;
 
-    credentialCache.delete(macOSKey);
-    credentialCache.delete(linuxSecretKey);
-    credentialCache.delete(linuxFileKey);
-    credentialCache.delete(windowsKey);
-    credentialCache.delete(windowsFileKey);
-  } else {
-    credentialCache.clear();
-  }
+		credentialCache.delete(macOSKey);
+		credentialCache.delete(linuxSecretKey);
+		credentialCache.delete(linuxFileKey);
+		credentialCache.delete(windowsKey);
+		credentialCache.delete(windowsFileKey);
+	} else {
+		credentialCache.clear();
+	}
 }
 
 /**
@@ -1214,182 +1552,324 @@ export const clearCredentialCache = clearKeychainCache;
 /**
  * Retrieve full credentials (including refresh token) from macOS Keychain
  */
-function getFullCredentialsFromMacOSKeychain(configDir?: string): FullOAuthCredentials {
-  const serviceName = getKeychainServiceName(configDir);
-  const isDebug = process.env.DEBUG === 'true';
+function getFullCredentialsFromMacOSKeychain(
+	configDir?: string,
+): FullOAuthCredentials {
+	const serviceName = getKeychainServiceName(configDir);
+	const isDebug = process.env.DEBUG === "true";
 
-  // Locate the security executable
-  let securityPath: string | null = null;
-  const candidatePaths = ['/usr/bin/security', '/bin/security'];
+	// Locate the security executable
+	let securityPath: string | null = null;
+	const candidatePaths = ["/usr/bin/security", "/bin/security"];
 
-  for (const candidate of candidatePaths) {
-    if (existsSync(candidate)) {
-      securityPath = candidate;
-      break;
-    }
-  }
+	for (const candidate of candidatePaths) {
+		if (existsSync(candidate)) {
+			securityPath = candidate;
+			break;
+		}
+	}
 
-  if (!securityPath) {
-    return { token: null, email: null, refreshToken: null, expiresAt: null, scopes: null, subscriptionType: null, rateLimitTier: null, error: 'macOS security command not found' };
-  }
+	if (!securityPath) {
+		return {
+			token: null,
+			email: null,
+			refreshToken: null,
+			expiresAt: null,
+			scopes: null,
+			subscriptionType: null,
+			rateLimitTier: null,
+			error: "macOS security command not found",
+		};
+	}
 
-  try {
-    // Query macOS Keychain for Claude Code credentials using shared helper
-    const credentialsJson = executeCredentialRead(
-      securityPath,
-      ['find-generic-password', '-s', serviceName, '-w'],
-      MACOS_KEYCHAIN_TIMEOUT_MS,
-      `macOS:Full:${serviceName}`
-    );
+	try {
+		// Query macOS Keychain for Claude Code credentials using shared helper
+		const credentialsJson = executeCredentialRead(
+			securityPath,
+			["find-generic-password", "-s", serviceName, "-w"],
+			MACOS_KEYCHAIN_TIMEOUT_MS,
+			`macOS:Full:${serviceName}`,
+		);
 
-    // Parse and validate using shared helper
-    const { token, email, refreshToken, expiresAt, scopes, subscriptionType, rateLimitTier } = parseCredentialJson(
-      credentialsJson,
-      `macOS:Full:${serviceName}`,
-      extractFullCredentials
-    );
+		// Parse and validate using shared helper
+		const {
+			token,
+			email,
+			refreshToken,
+			expiresAt,
+			scopes,
+			subscriptionType,
+			rateLimitTier,
+		} = parseCredentialJson(
+			credentialsJson,
+			`macOS:Full:${serviceName}`,
+			extractFullCredentials,
+		);
 
-    // Validate token format if present
-    if (token && !isValidTokenFormat(token)) {
-      console.warn('[CredentialUtils:macOS:Full] Invalid token format for service:', serviceName);
-      return { token: null, email, refreshToken, expiresAt, scopes, subscriptionType, rateLimitTier };
-    }
+		// Validate token format if present
+		if (token && !isValidTokenFormat(token)) {
+			console.warn(
+				"[CredentialUtils:macOS:Full] Invalid token format for service:",
+				serviceName,
+			);
+			return {
+				token: null,
+				email,
+				refreshToken,
+				expiresAt,
+				scopes,
+				subscriptionType,
+				rateLimitTier,
+			};
+		}
 
-    if (isDebug) {
-      console.warn('[CredentialUtils:macOS:Full] Retrieved full credentials from Keychain for service:', serviceName, {
-        hasToken: !!token,
-        hasEmail: !!email,
-        hasRefreshToken: !!refreshToken,
-        expiresAt: expiresAt ? new Date(expiresAt).toISOString() : null,
-        tokenFingerprint: getTokenFingerprint(token),
-        subscriptionType,
-        rateLimitTier
-      });
-    }
-    return { token, email, refreshToken, expiresAt, scopes, subscriptionType, rateLimitTier };
-  } catch (error) {
-    // Unexpected error (executeCredentialRead already handles "not found" cases)
-    const errorMessage = error instanceof Error ? error.message : String(error);
-    console.warn('[CredentialUtils:macOS:Full] Keychain access failed for service:', serviceName, errorMessage);
-    return { token: null, email: null, refreshToken: null, expiresAt: null, scopes: null, subscriptionType: null, rateLimitTier: null, error: `Keychain access failed: ${errorMessage}` };
-  }
+		if (isDebug) {
+			console.warn(
+				"[CredentialUtils:macOS:Full] Retrieved full credentials from Keychain for service:",
+				serviceName,
+				{
+					hasToken: !!token,
+					hasEmail: !!email,
+					hasRefreshToken: !!refreshToken,
+					expiresAt: expiresAt ? new Date(expiresAt).toISOString() : null,
+					tokenFingerprint: getTokenFingerprint(token),
+					subscriptionType,
+					rateLimitTier,
+				},
+			);
+		}
+		return {
+			token,
+			email,
+			refreshToken,
+			expiresAt,
+			scopes,
+			subscriptionType,
+			rateLimitTier,
+		};
+	} catch (error) {
+		// Unexpected error (executeCredentialRead already handles "not found" cases)
+		const errorMessage = error instanceof Error ? error.message : String(error);
+		console.warn(
+			"[CredentialUtils:macOS:Full] Keychain access failed for service:",
+			serviceName,
+			errorMessage,
+		);
+		return {
+			token: null,
+			email: null,
+			refreshToken: null,
+			expiresAt: null,
+			scopes: null,
+			subscriptionType: null,
+			rateLimitTier: null,
+			error: `Keychain access failed: ${errorMessage}`,
+		};
+	}
 }
 
 /**
  * Retrieve full credentials (including refresh token) from Linux Secret Service
  */
-function getFullCredentialsFromLinuxSecretService(configDir?: string): FullOAuthCredentials {
-  const attribute = getSecretServiceAttribute(configDir);
-  const isDebug = process.env.DEBUG === 'true';
+function getFullCredentialsFromLinuxSecretService(
+	configDir?: string,
+): FullOAuthCredentials {
+	const attribute = getSecretServiceAttribute(configDir);
+	const isDebug = process.env.DEBUG === "true";
 
-  // Find secret-tool executable
-  const secretToolPath = findSecretToolPath();
-  if (!secretToolPath) {
-    if (isDebug) {
-      console.warn('[CredentialUtils:Linux:SecretService:Full] secret-tool not found');
-    }
-    return { token: null, email: null, refreshToken: null, expiresAt: null, scopes: null, subscriptionType: null, rateLimitTier: null, error: 'secret-tool not found' };
-  }
+	// Find secret-tool executable
+	const secretToolPath = findSecretToolPath();
+	if (!secretToolPath) {
+		if (isDebug) {
+			console.warn(
+				"[CredentialUtils:Linux:SecretService:Full] secret-tool not found",
+			);
+		}
+		return {
+			token: null,
+			email: null,
+			refreshToken: null,
+			expiresAt: null,
+			scopes: null,
+			subscriptionType: null,
+			rateLimitTier: null,
+			error: "secret-tool not found",
+		};
+	}
 
-  try {
-    // Query Secret Service for credentials using shared helper
-    const credentialsJson = executeCredentialRead(
-      secretToolPath,
-      ['lookup', 'application', attribute],
-      LINUX_SECRET_TOOL_TIMEOUT_MS,
-      `Linux:SecretService:Full:${attribute}`
-    );
+	try {
+		// Query Secret Service for credentials using shared helper
+		const credentialsJson = executeCredentialRead(
+			secretToolPath,
+			["lookup", "application", attribute],
+			LINUX_SECRET_TOOL_TIMEOUT_MS,
+			`Linux:SecretService:Full:${attribute}`,
+		);
 
-    // Parse and validate using shared helper
-    const { token, email, refreshToken, expiresAt, scopes, subscriptionType, rateLimitTier } = parseCredentialJson(
-      credentialsJson,
-      `Linux:SecretService:Full:${attribute}`,
-      extractFullCredentials
-    );
+		// Parse and validate using shared helper
+		const {
+			token,
+			email,
+			refreshToken,
+			expiresAt,
+			scopes,
+			subscriptionType,
+			rateLimitTier,
+		} = parseCredentialJson(
+			credentialsJson,
+			`Linux:SecretService:Full:${attribute}`,
+			extractFullCredentials,
+		);
 
-    if (token && !isValidTokenFormat(token)) {
-      console.warn('[CredentialUtils:Linux:SecretService:Full] Invalid token format for attribute:', attribute);
-      return { token: null, email, refreshToken, expiresAt, scopes, subscriptionType, rateLimitTier };
-    }
+		if (token && !isValidTokenFormat(token)) {
+			console.warn(
+				"[CredentialUtils:Linux:SecretService:Full] Invalid token format for attribute:",
+				attribute,
+			);
+			return {
+				token: null,
+				email,
+				refreshToken,
+				expiresAt,
+				scopes,
+				subscriptionType,
+				rateLimitTier,
+			};
+		}
 
-    if (isDebug) {
-      console.warn('[CredentialUtils:Linux:SecretService:Full] Retrieved full credentials from Secret Service:', {
-        attribute,
-        hasToken: !!token,
-        hasEmail: !!email,
-        hasRefreshToken: !!refreshToken,
-        expiresAt: expiresAt ? new Date(expiresAt).toISOString() : null,
-        tokenFingerprint: getTokenFingerprint(token),
-        subscriptionType,
-        rateLimitTier
-      });
-    }
-    return { token, email, refreshToken, expiresAt, scopes, subscriptionType, rateLimitTier };
-  } catch (error) {
-    // Unexpected error (executeCredentialRead already handles "not found" cases)
-    const errorMessage = error instanceof Error ? error.message : String(error);
-    console.warn('[CredentialUtils:Linux:SecretService:Full] Secret Service access failed:', errorMessage);
-    return { token: null, email: null, refreshToken: null, expiresAt: null, scopes: null, subscriptionType: null, rateLimitTier: null, error: `Secret Service access failed: ${errorMessage}` };
-  }
+		if (isDebug) {
+			console.warn(
+				"[CredentialUtils:Linux:SecretService:Full] Retrieved full credentials from Secret Service:",
+				{
+					attribute,
+					hasToken: !!token,
+					hasEmail: !!email,
+					hasRefreshToken: !!refreshToken,
+					expiresAt: expiresAt ? new Date(expiresAt).toISOString() : null,
+					tokenFingerprint: getTokenFingerprint(token),
+					subscriptionType,
+					rateLimitTier,
+				},
+			);
+		}
+		return {
+			token,
+			email,
+			refreshToken,
+			expiresAt,
+			scopes,
+			subscriptionType,
+			rateLimitTier,
+		};
+	} catch (error) {
+		// Unexpected error (executeCredentialRead already handles "not found" cases)
+		const errorMessage = error instanceof Error ? error.message : String(error);
+		console.warn(
+			"[CredentialUtils:Linux:SecretService:Full] Secret Service access failed:",
+			errorMessage,
+		);
+		return {
+			token: null,
+			email: null,
+			refreshToken: null,
+			expiresAt: null,
+			scopes: null,
+			subscriptionType: null,
+			rateLimitTier: null,
+			error: `Secret Service access failed: ${errorMessage}`,
+		};
+	}
 }
 
 /**
  * Retrieve full credentials from Linux - tries Secret Service first, falls back to file
  */
 function getFullCredentialsFromLinux(configDir?: string): FullOAuthCredentials {
-  const isDebug = process.env.DEBUG === 'true';
+	const isDebug = process.env.DEBUG === "true";
 
-  // Try Secret Service first
-  const secretServiceResult = getFullCredentialsFromLinuxSecretService(configDir);
+	// Try Secret Service first
+	const secretServiceResult =
+		getFullCredentialsFromLinuxSecretService(configDir);
 
-  if (secretServiceResult.token) {
-    return secretServiceResult;
-  }
+	if (secretServiceResult.token) {
+		return secretServiceResult;
+	}
 
-  if (secretServiceResult.error && !secretServiceResult.error.includes('not found')) {
-    if (isDebug) {
-      console.warn('[CredentialUtils:Linux:Full] Secret Service unavailable, trying file fallback:', secretServiceResult.error);
-    }
-  }
+	if (
+		secretServiceResult.error &&
+		!secretServiceResult.error.includes("not found")
+	) {
+		if (isDebug) {
+			console.warn(
+				"[CredentialUtils:Linux:Full] Secret Service unavailable, trying file fallback:",
+				secretServiceResult.error,
+			);
+		}
+	}
 
-  // Fall back to file-based storage
-  return getFullCredentialsFromLinuxFile(configDir);
+	// Fall back to file-based storage
+	return getFullCredentialsFromLinuxFile(configDir);
 }
 
 /**
  * Retrieve full credentials (including refresh token) from Linux .credentials.json file (fallback)
  */
-function getFullCredentialsFromLinuxFile(configDir?: string): FullOAuthCredentials {
-  const credentialsPath = getLinuxCredentialsPath(configDir);
-  return getFullCredentialsFromFile(credentialsPath, 'Linux:Full');
+function getFullCredentialsFromLinuxFile(
+	configDir?: string,
+): FullOAuthCredentials {
+	const credentialsPath = getLinuxCredentialsPath(configDir);
+	return getFullCredentialsFromFile(credentialsPath, "Linux:Full");
 }
 
 /**
  * Retrieve full credentials (including refresh token) from Windows Credential Manager
  */
-function getFullCredentialsFromWindowsCredentialManager(configDir?: string): FullOAuthCredentials {
-  const targetName = getWindowsCredentialTarget(configDir);
-  const isDebug = process.env.DEBUG === 'true';
+function getFullCredentialsFromWindowsCredentialManager(
+	configDir?: string,
+): FullOAuthCredentials {
+	const targetName = getWindowsCredentialTarget(configDir);
+	const isDebug = process.env.DEBUG === "true";
 
-  // Defense-in-depth: Validate target name format before using in PowerShell
-  if (!isValidTargetName(targetName)) {
-    const invalidResult = { token: null, email: null, refreshToken: null, expiresAt: null, scopes: null, subscriptionType: null, rateLimitTier: null, error: 'Invalid credential target name format' };
-    if (isDebug) {
-      console.warn('[CredentialUtils:Windows:Full] Invalid target name rejected:', { targetName });
-    }
-    return invalidResult;
-  }
+	// Defense-in-depth: Validate target name format before using in PowerShell
+	if (!isValidTargetName(targetName)) {
+		const invalidResult = {
+			token: null,
+			email: null,
+			refreshToken: null,
+			expiresAt: null,
+			scopes: null,
+			subscriptionType: null,
+			rateLimitTier: null,
+			error: "Invalid credential target name format",
+		};
+		if (isDebug) {
+			console.warn(
+				"[CredentialUtils:Windows:Full] Invalid target name rejected:",
+				{ targetName },
+			);
+		}
+		return invalidResult;
+	}
 
-  // Find PowerShell executable
-  const psPath = findPowerShellPath();
-  if (!psPath) {
-    return { token: null, email: null, refreshToken: null, expiresAt: null, scopes: null, subscriptionType: null, rateLimitTier: null, error: 'PowerShell not found' };
-  }
+	// Find PowerShell executable
+	const psPath = findPowerShellPath();
+	if (!psPath) {
+		return {
+			token: null,
+			email: null,
+			refreshToken: null,
+			expiresAt: null,
+			scopes: null,
+			subscriptionType: null,
+			rateLimitTier: null,
+			error: "PowerShell not found",
+		};
+	}
 
-  try {
-    // PowerShell script to read from Credential Manager (same as basic credentials)
-    // NOTE: The CREDENTIAL struct must use IntPtr for string fields (blittable requirement)
-    const psScript = `
+	try {
+		// PowerShell script to read from Credential Manager (same as basic credentials)
+		// NOTE: The CREDENTIAL struct must use IntPtr for string fields (blittable requirement)
+		const psScript = `
       $ErrorActionPreference = 'Stop'
 
       # Define the CREDENTIAL struct with IntPtr for string fields (required for marshaling)
@@ -1449,57 +1929,110 @@ public static extern bool CredFree(IntPtr cred);
       }
     `;
 
-    const result = execFileSync(
-      psPath,
-      ['-NoProfile', '-NonInteractive', '-ExecutionPolicy', 'Bypass', '-Command', psScript],
-      {
-        encoding: 'utf-8',
-        timeout: WINDOWS_CREDMAN_TIMEOUT_MS,
-        windowsHide: true,
-      }
-    );
+		const result = execFileSync(
+			psPath,
+			[
+				"-NoProfile",
+				"-NonInteractive",
+				"-ExecutionPolicy",
+				"Bypass",
+				"-Command",
+				psScript,
+			],
+			{
+				encoding: "utf-8",
+				timeout: WINDOWS_CREDMAN_TIMEOUT_MS,
+				windowsHide: true,
+			},
+		);
 
-    const credentialsJson = result.trim() || null;
+		const credentialsJson = result.trim() || null;
 
-    // Parse and validate using shared helper
-    const { token, email, refreshToken, expiresAt, scopes, subscriptionType, rateLimitTier } = parseCredentialJson(
-      credentialsJson,
-      `Windows:Full:${targetName}`,
-      extractFullCredentials
-    );
+		// Parse and validate using shared helper
+		const {
+			token,
+			email,
+			refreshToken,
+			expiresAt,
+			scopes,
+			subscriptionType,
+			rateLimitTier,
+		} = parseCredentialJson(
+			credentialsJson,
+			`Windows:Full:${targetName}`,
+			extractFullCredentials,
+		);
 
-    // Validate token format if present
-    if (token && !isValidTokenFormat(token)) {
-      console.warn('[CredentialUtils:Windows:Full] Invalid token format for target:', targetName);
-      return { token: null, email, refreshToken, expiresAt, scopes, subscriptionType, rateLimitTier };
-    }
+		// Validate token format if present
+		if (token && !isValidTokenFormat(token)) {
+			console.warn(
+				"[CredentialUtils:Windows:Full] Invalid token format for target:",
+				targetName,
+			);
+			return {
+				token: null,
+				email,
+				refreshToken,
+				expiresAt,
+				scopes,
+				subscriptionType,
+				rateLimitTier,
+			};
+		}
 
-    if (isDebug) {
-      console.warn('[CredentialUtils:Windows:Full] Retrieved full credentials from Credential Manager for target:', targetName, {
-        hasToken: !!token,
-        hasEmail: !!email,
-        hasRefreshToken: !!refreshToken,
-        expiresAt: expiresAt ? new Date(expiresAt).toISOString() : null,
-        tokenFingerprint: getTokenFingerprint(token),
-        subscriptionType,
-        rateLimitTier
-      });
-    }
-    return { token, email, refreshToken, expiresAt, scopes, subscriptionType, rateLimitTier };
-  } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : String(error);
-    console.warn('[CredentialUtils:Windows:Full] Credential Manager access failed for target:', targetName, errorMessage);
-    return { token: null, email: null, refreshToken: null, expiresAt: null, scopes: null, subscriptionType: null, rateLimitTier: null, error: `Credential Manager access failed: ${errorMessage}` };
-  }
+		if (isDebug) {
+			console.warn(
+				"[CredentialUtils:Windows:Full] Retrieved full credentials from Credential Manager for target:",
+				targetName,
+				{
+					hasToken: !!token,
+					hasEmail: !!email,
+					hasRefreshToken: !!refreshToken,
+					expiresAt: expiresAt ? new Date(expiresAt).toISOString() : null,
+					tokenFingerprint: getTokenFingerprint(token),
+					subscriptionType,
+					rateLimitTier,
+				},
+			);
+		}
+		return {
+			token,
+			email,
+			refreshToken,
+			expiresAt,
+			scopes,
+			subscriptionType,
+			rateLimitTier,
+		};
+	} catch (error) {
+		const errorMessage = error instanceof Error ? error.message : String(error);
+		console.warn(
+			"[CredentialUtils:Windows:Full] Credential Manager access failed for target:",
+			targetName,
+			errorMessage,
+		);
+		return {
+			token: null,
+			email: null,
+			refreshToken: null,
+			expiresAt: null,
+			scopes: null,
+			subscriptionType: null,
+			rateLimitTier: null,
+			error: `Credential Manager access failed: ${errorMessage}`,
+		};
+	}
 }
 
 /**
  * Retrieve full credentials (including refresh token) from Windows .credentials.json file
  * This is the primary storage mechanism used by Claude CLI on Windows
  */
-function getFullCredentialsFromWindowsFile(configDir?: string): FullOAuthCredentials {
-  const credentialsPath = getWindowsCredentialsPath(configDir);
-  return getFullCredentialsFromFile(credentialsPath, 'Windows:File:Full');
+function getFullCredentialsFromWindowsFile(
+	configDir?: string,
+): FullOAuthCredentials {
+	const credentialsPath = getWindowsCredentialsPath(configDir);
+	return getFullCredentialsFromFile(credentialsPath, "Windows:File:Full");
 }
 
 /**
@@ -1507,40 +2040,49 @@ function getFullCredentialsFromWindowsFile(configDir?: string): FullOAuthCredent
  * Claude CLI on Windows can store credentials in either location, and they may get out of sync.
  * We compare both sources and return the one with the later expiry time (most recently refreshed).
  */
-function getFullCredentialsFromWindows(configDir?: string): FullOAuthCredentials {
-  const isDebug = process.env.DEBUG === 'true';
+function getFullCredentialsFromWindows(
+	configDir?: string,
+): FullOAuthCredentials {
+	const isDebug = process.env.DEBUG === "true";
 
-  // Get credentials from both sources
-  const fileResult = getFullCredentialsFromWindowsFile(configDir);
-  const credManagerResult = getFullCredentialsFromWindowsCredentialManager(configDir);
+	// Get credentials from both sources
+	const fileResult = getFullCredentialsFromWindowsFile(configDir);
+	const credManagerResult =
+		getFullCredentialsFromWindowsCredentialManager(configDir);
 
-  // If only one has a token, use that one
-  if (fileResult.token && !credManagerResult.token) {
-    if (isDebug) {
-      console.warn('[CredentialUtils:Windows:Full] Using file credentials (Credential Manager empty)');
-    }
-    return fileResult;
-  }
-  if (credManagerResult.token && !fileResult.token) {
-    if (isDebug) {
-      console.warn('[CredentialUtils:Windows:Full] Using Credential Manager credentials (file empty)');
-    }
-    return credManagerResult;
-  }
+	// If only one has a token, use that one
+	if (fileResult.token && !credManagerResult.token) {
+		if (isDebug) {
+			console.warn(
+				"[CredentialUtils:Windows:Full] Using file credentials (Credential Manager empty)",
+			);
+		}
+		return fileResult;
+	}
+	if (credManagerResult.token && !fileResult.token) {
+		if (isDebug) {
+			console.warn(
+				"[CredentialUtils:Windows:Full] Using Credential Manager credentials (file empty)",
+			);
+		}
+		return credManagerResult;
+	}
 
-  // If neither has a token, return file result (which has the appropriate error)
-  if (!fileResult.token && !credManagerResult.token) {
-    return fileResult;
-  }
+	// If neither has a token, return file result (which has the appropriate error)
+	if (!fileResult.token && !credManagerResult.token) {
+		return fileResult;
+	}
 
-  // Both have tokens - prefer file since Claude CLI writes there after login
-  // This is consistent with getCredentialsFromWindows() which also prefers file.
-  // Using file as primary ensures consistency: the same token is returned whether
-  // calling getCredentialsFromKeychain() or getFullCredentialsFromKeychain().
-  if (isDebug) {
-    console.warn('[CredentialUtils:Windows:Full] Both sources have tokens, preferring file (Claude CLI primary storage)');
-  }
-  return fileResult;
+	// Both have tokens - prefer file since Claude CLI writes there after login
+	// This is consistent with getCredentialsFromWindows() which also prefers file.
+	// Using file as primary ensures consistency: the same token is returned whether
+	// calling getCredentialsFromKeychain() or getFullCredentialsFromKeychain().
+	if (isDebug) {
+		console.warn(
+			"[CredentialUtils:Windows:Full] Both sources have tokens, preferring file (Claude CLI primary storage)",
+		);
+	}
+	return fileResult;
 }
 
 /**
@@ -1551,364 +2093,420 @@ function getFullCredentialsFromWindows(configDir?: string): FullOAuthCredentials
  * @param configDir - Optional config directory for profile-specific credentials
  * @returns Full credentials including refresh token and expiry information
  */
-export function getFullCredentialsFromKeychain(configDir?: string): FullOAuthCredentials {
-  if (isMacOS()) {
-    return getFullCredentialsFromMacOSKeychain(configDir);
-  }
+export function getFullCredentialsFromKeychain(
+	configDir?: string,
+): FullOAuthCredentials {
+	if (isMacOS()) {
+		return getFullCredentialsFromMacOSKeychain(configDir);
+	}
 
-  if (isLinux()) {
-    return getFullCredentialsFromLinux(configDir);
-  }
+	if (isLinux()) {
+		return getFullCredentialsFromLinux(configDir);
+	}
 
-  if (isWindows()) {
-    return getFullCredentialsFromWindows(configDir);
-  }
+	if (isWindows()) {
+		return getFullCredentialsFromWindows(configDir);
+	}
 
-  // Unknown platform - return empty
-  return { token: null, email: null, refreshToken: null, expiresAt: null, scopes: null, subscriptionType: null, rateLimitTier: null, error: `Unsupported platform: ${process.platform}` };
+	// Unknown platform - return empty
+	return {
+		token: null,
+		email: null,
+		refreshToken: null,
+		expiresAt: null,
+		scopes: null,
+		subscriptionType: null,
+		rateLimitTier: null,
+		error: `Unsupported platform: ${process.platform}`,
+	};
 }
 
 /**
  * Update credentials in macOS Keychain with new tokens
  */
 function updateMacOSKeychainCredentials(
-  configDir: string | undefined,
-  credentials: {
-    accessToken: string;
-    refreshToken: string;
-    expiresAt: number;
-    scopes?: string[];
-  }
+	configDir: string | undefined,
+	credentials: {
+		accessToken: string;
+		refreshToken: string;
+		expiresAt: number;
+		scopes?: string[];
+	},
 ): UpdateCredentialsResult {
-  const serviceName = getKeychainServiceName(configDir);
-  const isDebug = process.env.DEBUG === 'true';
+	const serviceName = getKeychainServiceName(configDir);
+	const isDebug = process.env.DEBUG === "true";
 
-  // Locate the security executable
-  let securityPath: string | null = null;
-  const candidatePaths = ['/usr/bin/security', '/bin/security'];
+	// Locate the security executable
+	let securityPath: string | null = null;
+	const candidatePaths = ["/usr/bin/security", "/bin/security"];
 
-  for (const candidate of candidatePaths) {
-    if (existsSync(candidate)) {
-      securityPath = candidate;
-      break;
-    }
-  }
+	for (const candidate of candidatePaths) {
+		if (existsSync(candidate)) {
+			securityPath = candidate;
+			break;
+		}
+	}
 
-  if (!securityPath) {
-    return { success: false, error: 'macOS security command not found' };
-  }
+	if (!securityPath) {
+		return { success: false, error: "macOS security command not found" };
+	}
 
-  try {
-    // Read existing credentials to preserve email, subscriptionType, and rateLimitTier
-    const existing = getFullCredentialsFromMacOSKeychain(configDir);
+	try {
+		// Read existing credentials to preserve email, subscriptionType, and rateLimitTier
+		const existing = getFullCredentialsFromMacOSKeychain(configDir);
 
-    // Build new credential JSON with all fields
-    // IMPORTANT: Preserve subscriptionType and rateLimitTier from existing credentials
-    // These fields determine "Max" vs "API" display in Claude Code and are NOT returned
-    // by the OAuth token refresh endpoint - they must be preserved from the original auth.
-    const newCredentialData = {
-      claudeAiOauth: {
-        accessToken: credentials.accessToken,
-        refreshToken: credentials.refreshToken,
-        expiresAt: credentials.expiresAt,
-        scopes: credentials.scopes || existing.scopes || [],
-        email: existing.email || undefined,
-        emailAddress: existing.email || undefined,
-        subscriptionType: existing.subscriptionType || undefined,
-        rateLimitTier: existing.rateLimitTier || undefined
-      },
-      email: existing.email || undefined
-    };
+		// Build new credential JSON with all fields
+		// IMPORTANT: Preserve subscriptionType and rateLimitTier from existing credentials
+		// These fields determine "Max" vs "API" display in Claude Code and are NOT returned
+		// by the OAuth token refresh endpoint - they must be preserved from the original auth.
+		const newCredentialData = {
+			claudeAiOauth: {
+				accessToken: credentials.accessToken,
+				refreshToken: credentials.refreshToken,
+				expiresAt: credentials.expiresAt,
+				scopes: credentials.scopes || existing.scopes || [],
+				email: existing.email || undefined,
+				emailAddress: existing.email || undefined,
+				subscriptionType: existing.subscriptionType || undefined,
+				rateLimitTier: existing.rateLimitTier || undefined,
+			},
+			email: existing.email || undefined,
+		};
 
-    const credentialsJson = JSON.stringify(newCredentialData);
+		const credentialsJson = JSON.stringify(newCredentialData);
 
-    // CRITICAL FIX: The -U flag only updates if the account name matches exactly.
-    // Claude Code CLI stores credentials with the system username as the account,
-    // but we were using 'claude-ai-oauth'. This mismatch caused updates to create
-    // a NEW entry instead of updating the existing one, leading to stale tokens.
-    //
-    // Solution: Delete any existing entry first, then add fresh.
-    // This ensures we don't end up with multiple entries with different account names.
+		// CRITICAL FIX: The -U flag only updates if the account name matches exactly.
+		// Claude Code CLI stores credentials with the system username as the account,
+		// but we were using 'claude-ai-oauth'. This mismatch caused updates to create
+		// a NEW entry instead of updating the existing one, leading to stale tokens.
+		//
+		// Solution: Delete any existing entry first, then add fresh.
+		// This ensures we don't end up with multiple entries with different account names.
 
-    // Step 1: Delete existing entry (ignore errors if not found)
-    try {
-      execFileSync(
-        securityPath,
-        ['delete-generic-password', '-s', serviceName],
-        {
-          encoding: 'utf-8',
-          timeout: MACOS_KEYCHAIN_TIMEOUT_MS,
-          windowsHide: true,
-        }
-      );
-      if (isDebug) {
-        console.warn('[CredentialUtils:macOS:Update] Deleted existing Keychain entry for service:', serviceName);
-      }
-    } catch {
-      // Entry didn't exist - that's fine, we'll create it
-      if (isDebug) {
-        console.warn('[CredentialUtils:macOS:Update] No existing entry to delete for service:', serviceName);
-      }
-    }
+		// Step 1: Delete existing entry (ignore errors if not found)
+		try {
+			execFileSync(
+				securityPath,
+				["delete-generic-password", "-s", serviceName],
+				{
+					encoding: "utf-8",
+					timeout: MACOS_KEYCHAIN_TIMEOUT_MS,
+					windowsHide: true,
+				},
+			);
+			if (isDebug) {
+				console.warn(
+					"[CredentialUtils:macOS:Update] Deleted existing Keychain entry for service:",
+					serviceName,
+				);
+			}
+		} catch {
+			// Entry didn't exist - that's fine, we'll create it
+			if (isDebug) {
+				console.warn(
+					"[CredentialUtils:macOS:Update] No existing entry to delete for service:",
+					serviceName,
+				);
+			}
+		}
 
-    // Step 2: Add new entry with system username as account name
-    // Claude Code CLI uses the system username, so we must match that for compatibility
-    const accountName = userInfo().username;
-    execFileSync(
-      securityPath,
-      ['add-generic-password', '-s', serviceName, '-a', accountName, '-w', credentialsJson],
-      {
-        encoding: 'utf-8',
-        timeout: MACOS_KEYCHAIN_TIMEOUT_MS,
-        windowsHide: true,
-      }
-    );
+		// Step 2: Add new entry with system username as account name
+		// Claude Code CLI uses the system username, so we must match that for compatibility
+		const accountName = userInfo().username;
+		execFileSync(
+			securityPath,
+			[
+				"add-generic-password",
+				"-s",
+				serviceName,
+				"-a",
+				accountName,
+				"-w",
+				credentialsJson,
+			],
+			{
+				encoding: "utf-8",
+				timeout: MACOS_KEYCHAIN_TIMEOUT_MS,
+				windowsHide: true,
+			},
+		);
 
-    if (isDebug) {
-      console.warn('[CredentialUtils:macOS:Update] Successfully updated Keychain credentials for service:', serviceName);
-    }
+		if (isDebug) {
+			console.warn(
+				"[CredentialUtils:macOS:Update] Successfully updated Keychain credentials for service:",
+				serviceName,
+			);
+		}
 
-    // Clear cached credentials to ensure fresh values are read
-    clearCredentialCache(configDir);
+		// Clear cached credentials to ensure fresh values are read
+		clearCredentialCache(configDir);
 
-    return { success: true };
-  } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : String(error);
-    console.error('[CredentialUtils:macOS:Update] Failed to update Keychain credentials:', errorMessage);
-    return { success: false, error: `Keychain update failed: ${errorMessage}` };
-  }
+		return { success: true };
+	} catch (error) {
+		const errorMessage = error instanceof Error ? error.message : String(error);
+		console.error(
+			"[CredentialUtils:macOS:Update] Failed to update Keychain credentials:",
+			errorMessage,
+		);
+		return { success: false, error: `Keychain update failed: ${errorMessage}` };
+	}
 }
 
 /**
  * Update credentials in Linux Secret Service with new tokens
  */
 function updateLinuxSecretServiceCredentials(
-  configDir: string | undefined,
-  credentials: {
-    accessToken: string;
-    refreshToken: string;
-    expiresAt: number;
-    scopes?: string[];
-  }
+	configDir: string | undefined,
+	credentials: {
+		accessToken: string;
+		refreshToken: string;
+		expiresAt: number;
+		scopes?: string[];
+	},
 ): UpdateCredentialsResult {
-  const attribute = getSecretServiceAttribute(configDir);
-  const isDebug = process.env.DEBUG === 'true';
+	const attribute = getSecretServiceAttribute(configDir);
+	const isDebug = process.env.DEBUG === "true";
 
-  // Find secret-tool executable
-  const secretToolPath = findSecretToolPath();
-  if (!secretToolPath) {
-    if (isDebug) {
-      console.warn('[CredentialUtils:Linux:SecretService:Update] secret-tool not found');
-    }
-    return { success: false, error: 'secret-tool not found' };
-  }
+	// Find secret-tool executable
+	const secretToolPath = findSecretToolPath();
+	if (!secretToolPath) {
+		if (isDebug) {
+			console.warn(
+				"[CredentialUtils:Linux:SecretService:Update] secret-tool not found",
+			);
+		}
+		return { success: false, error: "secret-tool not found" };
+	}
 
-  try {
-    // Read existing credentials to preserve email, subscriptionType, and rateLimitTier
-    const existing = getFullCredentialsFromLinuxSecretService(configDir);
+	try {
+		// Read existing credentials to preserve email, subscriptionType, and rateLimitTier
+		const existing = getFullCredentialsFromLinuxSecretService(configDir);
 
-    // Build new credential JSON with all fields
-    // IMPORTANT: Preserve subscriptionType and rateLimitTier from existing credentials
-    const newCredentialData = {
-      claudeAiOauth: {
-        accessToken: credentials.accessToken,
-        refreshToken: credentials.refreshToken,
-        expiresAt: credentials.expiresAt,
-        scopes: credentials.scopes || existing.scopes || [],
-        email: existing.email || undefined,
-        emailAddress: existing.email || undefined,
-        subscriptionType: existing.subscriptionType || undefined,
-        rateLimitTier: existing.rateLimitTier || undefined
-      },
-      email: existing.email || undefined
-    };
+		// Build new credential JSON with all fields
+		// IMPORTANT: Preserve subscriptionType and rateLimitTier from existing credentials
+		const newCredentialData = {
+			claudeAiOauth: {
+				accessToken: credentials.accessToken,
+				refreshToken: credentials.refreshToken,
+				expiresAt: credentials.expiresAt,
+				scopes: credentials.scopes || existing.scopes || [],
+				email: existing.email || undefined,
+				emailAddress: existing.email || undefined,
+				subscriptionType: existing.subscriptionType || undefined,
+				rateLimitTier: existing.rateLimitTier || undefined,
+			},
+			email: existing.email || undefined,
+		};
 
-    const credentialsJson = JSON.stringify(newCredentialData);
+		const credentialsJson = JSON.stringify(newCredentialData);
 
-    // Use secret-tool store to update credentials
-    // secret-tool store --label="Claude Code-credentials" application claude-code
-    execFileSync(
-      secretToolPath,
-      ['store', '--label=Claude Code-credentials', 'application', attribute],
-      {
-        encoding: 'utf-8',
-        timeout: LINUX_SECRET_TOOL_TIMEOUT_MS,
-        input: credentialsJson,
-        windowsHide: true,
-      }
-    );
+		// Use secret-tool store to update credentials
+		// secret-tool store --label="Claude Code-credentials" application claude-code
+		execFileSync(
+			secretToolPath,
+			["store", "--label=Claude Code-credentials", "application", attribute],
+			{
+				encoding: "utf-8",
+				timeout: LINUX_SECRET_TOOL_TIMEOUT_MS,
+				input: credentialsJson,
+				windowsHide: true,
+			},
+		);
 
-    if (isDebug) {
-      console.warn('[CredentialUtils:Linux:SecretService:Update] Successfully updated Secret Service credentials for attribute:', attribute);
-    }
+		if (isDebug) {
+			console.warn(
+				"[CredentialUtils:Linux:SecretService:Update] Successfully updated Secret Service credentials for attribute:",
+				attribute,
+			);
+		}
 
-    // Clear cached credentials to ensure fresh values are read
-    clearCredentialCache(configDir);
+		// Clear cached credentials to ensure fresh values are read
+		clearCredentialCache(configDir);
 
-    return { success: true };
-  } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : String(error);
-    console.error('[CredentialUtils:Linux:SecretService:Update] Failed to update Secret Service credentials:', errorMessage);
-    return { success: false, error: `Secret Service update failed: ${errorMessage}` };
-  }
+		return { success: true };
+	} catch (error) {
+		const errorMessage = error instanceof Error ? error.message : String(error);
+		console.error(
+			"[CredentialUtils:Linux:SecretService:Update] Failed to update Secret Service credentials:",
+			errorMessage,
+		);
+		return {
+			success: false,
+			error: `Secret Service update failed: ${errorMessage}`,
+		};
+	}
 }
 
 /**
  * Update credentials in Linux - tries Secret Service first, falls back to file
  */
 function updateLinuxCredentials(
-  configDir: string | undefined,
-  credentials: {
-    accessToken: string;
-    refreshToken: string;
-    expiresAt: number;
-    scopes?: string[];
-  }
+	configDir: string | undefined,
+	credentials: {
+		accessToken: string;
+		refreshToken: string;
+		expiresAt: number;
+		scopes?: string[];
+	},
 ): UpdateCredentialsResult {
-  const isDebug = process.env.DEBUG === 'true';
+	const isDebug = process.env.DEBUG === "true";
 
-  // Try Secret Service first
-  const secretToolPath = findSecretToolPath();
-  if (secretToolPath) {
-    const secretServiceResult = updateLinuxSecretServiceCredentials(configDir, credentials);
-    if (secretServiceResult.success) {
-      return secretServiceResult;
-    }
-    if (isDebug) {
-      console.warn('[CredentialUtils:Linux:Update] Secret Service update failed, trying file fallback:', secretServiceResult.error);
-    }
-  }
+	// Try Secret Service first
+	const secretToolPath = findSecretToolPath();
+	if (secretToolPath) {
+		const secretServiceResult = updateLinuxSecretServiceCredentials(
+			configDir,
+			credentials,
+		);
+		if (secretServiceResult.success) {
+			return secretServiceResult;
+		}
+		if (isDebug) {
+			console.warn(
+				"[CredentialUtils:Linux:Update] Secret Service update failed, trying file fallback:",
+				secretServiceResult.error,
+			);
+		}
+	}
 
-  // Fall back to file-based storage
-  return updateLinuxFileCredentials(configDir, credentials);
+	// Fall back to file-based storage
+	return updateLinuxFileCredentials(configDir, credentials);
 }
 
 /**
  * Update credentials in Linux .credentials.json file with new tokens (fallback)
  */
 function updateLinuxFileCredentials(
-  configDir: string | undefined,
-  credentials: {
-    accessToken: string;
-    refreshToken: string;
-    expiresAt: number;
-    scopes?: string[];
-  }
+	configDir: string | undefined,
+	credentials: {
+		accessToken: string;
+		refreshToken: string;
+		expiresAt: number;
+		scopes?: string[];
+	},
 ): UpdateCredentialsResult {
-  const credentialsPath = getLinuxCredentialsPath(configDir);
-  const isDebug = process.env.DEBUG === 'true';
+	const credentialsPath = getLinuxCredentialsPath(configDir);
+	const isDebug = process.env.DEBUG === "true";
 
+	// Defense-in-depth: Validate credentials path
+	if (!isValidCredentialsPath(credentialsPath)) {
+		return { success: false, error: "Invalid credentials path" };
+	}
 
-  // Defense-in-depth: Validate credentials path
-  if (!isValidCredentialsPath(credentialsPath)) {
-    return { success: false, error: 'Invalid credentials path' };
-  }
+	try {
+		// Read existing credentials to preserve email, subscriptionType, and rateLimitTier
+		const existing = getFullCredentialsFromLinuxFile(configDir);
 
-  try {
-    // Read existing credentials to preserve email, subscriptionType, and rateLimitTier
-    const existing = getFullCredentialsFromLinuxFile(configDir);
+		// Build new credential JSON with all fields
+		// IMPORTANT: Preserve subscriptionType and rateLimitTier from existing credentials
+		const newCredentialData = {
+			claudeAiOauth: {
+				accessToken: credentials.accessToken,
+				refreshToken: credentials.refreshToken,
+				expiresAt: credentials.expiresAt,
+				scopes: credentials.scopes || existing.scopes || [],
+				email: existing.email || undefined,
+				emailAddress: existing.email || undefined,
+				subscriptionType: existing.subscriptionType || undefined,
+				rateLimitTier: existing.rateLimitTier || undefined,
+			},
+			email: existing.email || undefined,
+		};
 
-    // Build new credential JSON with all fields
-    // IMPORTANT: Preserve subscriptionType and rateLimitTier from existing credentials
-    const newCredentialData = {
-      claudeAiOauth: {
-        accessToken: credentials.accessToken,
-        refreshToken: credentials.refreshToken,
-        expiresAt: credentials.expiresAt,
-        scopes: credentials.scopes || existing.scopes || [],
-        email: existing.email || undefined,
-        emailAddress: existing.email || undefined,
-        subscriptionType: existing.subscriptionType || undefined,
-        rateLimitTier: existing.rateLimitTier || undefined
-      },
-      email: existing.email || undefined
-    };
+		const credentialsJson = JSON.stringify(newCredentialData, null, 2);
 
-    const credentialsJson = JSON.stringify(newCredentialData, null, 2);
+		// Ensure directory exists (matching Windows behavior)
+		const dirPath = dirname(credentialsPath);
+		if (!existsSync(dirPath)) {
+			mkdirSync(dirPath, { recursive: true, mode: 0o700 });
+		}
 
-    // Ensure directory exists (matching Windows behavior)
-    const dirPath = dirname(credentialsPath);
-    if (!existsSync(dirPath)) {
-      mkdirSync(dirPath, { recursive: true, mode: 0o700 });
-    }
+		// Write to file with secure permissions (0600)
+		writeFileSync(credentialsPath, credentialsJson, {
+			mode: 0o600,
+			encoding: "utf-8",
+		});
 
-    // Write to file with secure permissions (0600)
-    writeFileSync(credentialsPath, credentialsJson, { mode: 0o600, encoding: 'utf-8' });
+		if (isDebug) {
+			console.warn(
+				"[CredentialUtils:Linux:Update] Successfully updated credentials file:",
+				credentialsPath,
+			);
+		}
 
-    if (isDebug) {
-      console.warn('[CredentialUtils:Linux:Update] Successfully updated credentials file:', credentialsPath);
-    }
+		// Clear cached credentials to ensure fresh values are read
+		clearCredentialCache(configDir);
 
-    // Clear cached credentials to ensure fresh values are read
-    clearCredentialCache(configDir);
-
-    return { success: true };
-  } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : String(error);
-    console.error('[CredentialUtils:Linux:Update] Failed to update credentials file:', errorMessage);
-    return { success: false, error: `File update failed: ${errorMessage}` };
-  }
+		return { success: true };
+	} catch (error) {
+		const errorMessage = error instanceof Error ? error.message : String(error);
+		console.error(
+			"[CredentialUtils:Linux:Update] Failed to update credentials file:",
+			errorMessage,
+		);
+		return { success: false, error: `File update failed: ${errorMessage}` };
+	}
 }
 
 /**
  * Update credentials in Windows Credential Manager with new tokens
  */
 function updateWindowsCredentialManagerCredentials(
-  configDir: string | undefined,
-  credentials: {
-    accessToken: string;
-    refreshToken: string;
-    expiresAt: number;
-    scopes?: string[];
-  }
+	configDir: string | undefined,
+	credentials: {
+		accessToken: string;
+		refreshToken: string;
+		expiresAt: number;
+		scopes?: string[];
+	},
 ): UpdateCredentialsResult {
-  const targetName = getWindowsCredentialTarget(configDir);
-  const isDebug = process.env.DEBUG === 'true';
+	const targetName = getWindowsCredentialTarget(configDir);
+	const isDebug = process.env.DEBUG === "true";
 
-  // Defense-in-depth: Validate target name format
-  if (!isValidTargetName(targetName)) {
-    return { success: false, error: 'Invalid credential target name format' };
-  }
+	// Defense-in-depth: Validate target name format
+	if (!isValidTargetName(targetName)) {
+		return { success: false, error: "Invalid credential target name format" };
+	}
 
-  // Find PowerShell executable
-  const psPath = findPowerShellPath();
-  if (!psPath) {
-    return { success: false, error: 'PowerShell not found' };
-  }
+	// Find PowerShell executable
+	const psPath = findPowerShellPath();
+	if (!psPath) {
+		return { success: false, error: "PowerShell not found" };
+	}
 
-  try {
-    // Read existing credentials to preserve email, subscriptionType, and rateLimitTier
-    const existing = getFullCredentialsFromWindowsCredentialManager(configDir);
+	try {
+		// Read existing credentials to preserve email, subscriptionType, and rateLimitTier
+		const existing = getFullCredentialsFromWindowsCredentialManager(configDir);
 
-    // Build new credential JSON with all fields
-    // IMPORTANT: Preserve subscriptionType and rateLimitTier from existing credentials
-    const newCredentialData = {
-      claudeAiOauth: {
-        accessToken: credentials.accessToken,
-        refreshToken: credentials.refreshToken,
-        expiresAt: credentials.expiresAt,
-        scopes: credentials.scopes || existing.scopes || [],
-        email: existing.email || undefined,
-        emailAddress: existing.email || undefined,
-        subscriptionType: existing.subscriptionType || undefined,
-        rateLimitTier: existing.rateLimitTier || undefined
-      },
-      email: existing.email || undefined
-    };
+		// Build new credential JSON with all fields
+		// IMPORTANT: Preserve subscriptionType and rateLimitTier from existing credentials
+		const newCredentialData = {
+			claudeAiOauth: {
+				accessToken: credentials.accessToken,
+				refreshToken: credentials.refreshToken,
+				expiresAt: credentials.expiresAt,
+				scopes: credentials.scopes || existing.scopes || [],
+				email: existing.email || undefined,
+				emailAddress: existing.email || undefined,
+				subscriptionType: existing.subscriptionType || undefined,
+				rateLimitTier: existing.rateLimitTier || undefined,
+			},
+			email: existing.email || undefined,
+		};
 
-    const credentialsJson = JSON.stringify(newCredentialData);
-    // Use base64 encoding for maximum security - prevents all injection attacks
-    const base64Json = encodeBase64ForPowerShell(credentialsJson);
+		const credentialsJson = JSON.stringify(newCredentialData);
+		// Use base64 encoding for maximum security - prevents all injection attacks
+		const base64Json = encodeBase64ForPowerShell(credentialsJson);
 
-    // PowerShell script to write to Credential Manager
-    //
-    // NOTE: This CREDENTIAL struct uses string types for TargetName, Comment, etc.
-    // because CredWrite accepts data FROM us, and the .NET marshaler can automatically
-    // convert string fields to the appropriate Unicode pointers when CALLING Windows APIs.
-    // This differs from the CredRead struct (see getCredentialsFromWindowsCredentialManager)
-    // which must use IntPtr because we're RECEIVING data from Windows and need to manually
-    // marshal the strings from Windows-allocated memory.
-    const psScript = `
+		// PowerShell script to write to Credential Manager
+		//
+		// NOTE: This CREDENTIAL struct uses string types for TargetName, Comment, etc.
+		// because CredWrite accepts data FROM us, and the .NET marshaler can automatically
+		// convert string fields to the appropriate Unicode pointers when CALLING Windows APIs.
+		// This differs from the CredRead struct (see getCredentialsFromWindowsCredentialManager)
+		// which must use IntPtr because we're RECEIVING data from Windows and need to manually
+		// marshal the strings from Windows-allocated memory.
+		const psScript = `
       $ErrorActionPreference = 'Stop'
 
       # Use CredWrite from advapi32.dll to write generic credentials
@@ -1960,33 +2558,49 @@ function updateWindowsCredentialManagerCredentials(
       }
     `;
 
-    const result = execFileSync(
-      psPath,
-      ['-NoProfile', '-NonInteractive', '-ExecutionPolicy', 'Bypass', '-Command', psScript],
-      {
-        encoding: 'utf-8',
-        timeout: WINDOWS_CREDMAN_TIMEOUT_MS,
-        windowsHide: true,
-      }
-    );
+		const result = execFileSync(
+			psPath,
+			[
+				"-NoProfile",
+				"-NonInteractive",
+				"-ExecutionPolicy",
+				"Bypass",
+				"-Command",
+				psScript,
+			],
+			{
+				encoding: "utf-8",
+				timeout: WINDOWS_CREDMAN_TIMEOUT_MS,
+				windowsHide: true,
+			},
+		);
 
-    if (result.trim() !== 'SUCCESS') {
-      return { success: false, error: 'Credential Manager update failed' };
-    }
+		if (result.trim() !== "SUCCESS") {
+			return { success: false, error: "Credential Manager update failed" };
+		}
 
-    if (isDebug) {
-      console.warn('[CredentialUtils:Windows:Update] Successfully updated Credential Manager for target:', targetName);
-    }
+		if (isDebug) {
+			console.warn(
+				"[CredentialUtils:Windows:Update] Successfully updated Credential Manager for target:",
+				targetName,
+			);
+		}
 
-    // Clear cached credentials to ensure fresh values are read
-    clearCredentialCache(configDir);
+		// Clear cached credentials to ensure fresh values are read
+		clearCredentialCache(configDir);
 
-    return { success: true };
-  } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : String(error);
-    console.error('[CredentialUtils:Windows:Update] Failed to update Credential Manager:', errorMessage);
-    return { success: false, error: `Credential Manager update failed: ${errorMessage}` };
-  }
+		return { success: true };
+	} catch (error) {
+		const errorMessage = error instanceof Error ? error.message : String(error);
+		console.error(
+			"[CredentialUtils:Windows:Update] Failed to update Credential Manager:",
+			errorMessage,
+		);
+		return {
+			success: false,
+			error: `Credential Manager update failed: ${errorMessage}`,
+		};
+	}
 }
 
 /**
@@ -1996,36 +2610,42 @@ function updateWindowsCredentialManagerCredentials(
  * @param filePath - Path to the file to secure
  */
 function restrictWindowsFilePermissions(filePath: string): void {
-  const isDebug = process.env.DEBUG === 'true';
+	const isDebug = process.env.DEBUG === "true";
 
-  try {
-    // Use icacls to:
-    // 1. Disable inheritance and remove all inherited permissions (/inheritance:r)
-    // 2. Grant full control to the current user only (/grant:r %USERNAME%:F)
-    // This mimics Unix 0600 permissions (owner read/write only)
-    const username = userInfo().username;
+	try {
+		// Use icacls to:
+		// 1. Disable inheritance and remove all inherited permissions (/inheritance:r)
+		// 2. Grant full control to the current user only (/grant:r %USERNAME%:F)
+		// This mimics Unix 0600 permissions (owner read/write only)
+		const username = userInfo().username;
 
-    // First, disable inheritance and remove inherited permissions
-    execFileSync('icacls', [filePath, '/inheritance:r'], {
-      windowsHide: true,
-      timeout: 5000,
-    });
+		// First, disable inheritance and remove inherited permissions
+		execFileSync("icacls", [filePath, "/inheritance:r"], {
+			windowsHide: true,
+			timeout: 5000,
+		});
 
-    // Then grant full control to current user only
-    execFileSync('icacls', [filePath, '/grant:r', `${username}:F`], {
-      windowsHide: true,
-      timeout: 5000,
-    });
+		// Then grant full control to current user only
+		execFileSync("icacls", [filePath, "/grant:r", `${username}:F`], {
+			windowsHide: true,
+			timeout: 5000,
+		});
 
-    if (isDebug) {
-      console.warn('[CredentialUtils:Windows] Set restrictive permissions on:', filePath);
-    }
-  } catch (error) {
-    // Non-fatal: log warning but don't fail the operation
-    // The file is still protected by the user's home directory permissions
-    const errorMessage = error instanceof Error ? error.message : String(error);
-    console.warn('[CredentialUtils:Windows] Could not set restrictive file permissions:', errorMessage);
-  }
+		if (isDebug) {
+			console.warn(
+				"[CredentialUtils:Windows] Set restrictive permissions on:",
+				filePath,
+			);
+		}
+	} catch (error) {
+		// Non-fatal: log warning but don't fail the operation
+		// The file is still protected by the user's home directory permissions
+		const errorMessage = error instanceof Error ? error.message : String(error);
+		console.warn(
+			"[CredentialUtils:Windows] Could not set restrictive file permissions:",
+			errorMessage,
+		);
+	}
 }
 
 /**
@@ -2044,88 +2664,94 @@ function restrictWindowsFilePermissions(filePath: string): void {
  * @returns Result indicating success or failure
  */
 function updateWindowsFileCredentials(
-  configDir: string | undefined,
-  credentials: {
-    accessToken: string;
-    refreshToken: string;
-    expiresAt: number;
-    scopes?: string[];
-  }
+	configDir: string | undefined,
+	credentials: {
+		accessToken: string;
+		refreshToken: string;
+		expiresAt: number;
+		scopes?: string[];
+	},
 ): UpdateCredentialsResult {
-  const credentialsPath = getWindowsCredentialsPath(configDir);
-  const isDebug = process.env.DEBUG === 'true';
+	const credentialsPath = getWindowsCredentialsPath(configDir);
+	const isDebug = process.env.DEBUG === "true";
 
-  // Defense-in-depth: Validate credentials path
-  if (!isValidCredentialsPath(credentialsPath)) {
-    return { success: false, error: 'Invalid credentials path' };
-  }
+	// Defense-in-depth: Validate credentials path
+	if (!isValidCredentialsPath(credentialsPath)) {
+		return { success: false, error: "Invalid credentials path" };
+	}
 
-  try {
-    // Read existing credentials to preserve email and other fields
-    const existing = getFullCredentialsFromWindowsFile(configDir);
+	try {
+		// Read existing credentials to preserve email and other fields
+		const existing = getFullCredentialsFromWindowsFile(configDir);
 
-    // Build new credential JSON with all fields
-    const newCredentialData = {
-      claudeAiOauth: {
-        accessToken: credentials.accessToken,
-        refreshToken: credentials.refreshToken,
-        expiresAt: credentials.expiresAt,
-        scopes: credentials.scopes || existing.scopes || [],
-        email: existing.email || undefined,
-        emailAddress: existing.email || undefined,
-        subscriptionType: existing.subscriptionType || undefined,
-        rateLimitTier: existing.rateLimitTier || undefined
-      },
-      email: existing.email || undefined
-    };
+		// Build new credential JSON with all fields
+		const newCredentialData = {
+			claudeAiOauth: {
+				accessToken: credentials.accessToken,
+				refreshToken: credentials.refreshToken,
+				expiresAt: credentials.expiresAt,
+				scopes: credentials.scopes || existing.scopes || [],
+				email: existing.email || undefined,
+				emailAddress: existing.email || undefined,
+				subscriptionType: existing.subscriptionType || undefined,
+				rateLimitTier: existing.rateLimitTier || undefined,
+			},
+			email: existing.email || undefined,
+		};
 
-    const credentialsJson = JSON.stringify(newCredentialData, null, 2);
+		const credentialsJson = JSON.stringify(newCredentialData, null, 2);
 
-    // Ensure directory exists with secure permissions
-    const dirPath = dirname(credentialsPath);
-    if (!existsSync(dirPath)) {
-      mkdirSync(dirPath, { recursive: true });
-      // Restrict directory permissions to current user only (mimics Unix 0700)
-      restrictWindowsFilePermissions(dirPath);
-    }
+		// Ensure directory exists with secure permissions
+		const dirPath = dirname(credentialsPath);
+		if (!existsSync(dirPath)) {
+			mkdirSync(dirPath, { recursive: true });
+			// Restrict directory permissions to current user only (mimics Unix 0700)
+			restrictWindowsFilePermissions(dirPath);
+		}
 
-    // Atomic file write: write to temp file, set permissions, then rename.
-    // This prevents a race condition where the file briefly exists with default permissions.
-    const tempPath = `${credentialsPath}.${Date.now()}.tmp`;
-    try {
-      // Write to temp file
-      writeFileSync(tempPath, credentialsJson, { encoding: 'utf-8' });
+		// Atomic file write: write to temp file, set permissions, then rename.
+		// This prevents a race condition where the file briefly exists with default permissions.
+		const tempPath = `${credentialsPath}.${Date.now()}.tmp`;
+		try {
+			// Write to temp file
+			writeFileSync(tempPath, credentialsJson, { encoding: "utf-8" });
 
-      // Restrict temp file permissions to current user only (mimics Unix 0600)
-      restrictWindowsFilePermissions(tempPath);
+			// Restrict temp file permissions to current user only (mimics Unix 0600)
+			restrictWindowsFilePermissions(tempPath);
 
-      // Atomic rename (on same filesystem, this is atomic on Windows)
-      renameSync(tempPath, credentialsPath);
-    } catch (writeError) {
-      // Clean up temp file on error
-      try {
-        if (existsSync(tempPath)) {
-          unlinkSync(tempPath);
-        }
-      } catch {
-        // Ignore cleanup errors
-      }
-      throw writeError;
-    }
+			// Atomic rename (on same filesystem, this is atomic on Windows)
+			renameSync(tempPath, credentialsPath);
+		} catch (writeError) {
+			// Clean up temp file on error
+			try {
+				if (existsSync(tempPath)) {
+					unlinkSync(tempPath);
+				}
+			} catch {
+				// Ignore cleanup errors
+			}
+			throw writeError;
+		}
 
-    if (isDebug) {
-      console.warn('[CredentialUtils:Windows:Update] Successfully updated credentials file:', credentialsPath);
-    }
+		if (isDebug) {
+			console.warn(
+				"[CredentialUtils:Windows:Update] Successfully updated credentials file:",
+				credentialsPath,
+			);
+		}
 
-    // Clear cached credentials to ensure fresh values are read
-    clearCredentialCache(configDir);
+		// Clear cached credentials to ensure fresh values are read
+		clearCredentialCache(configDir);
 
-    return { success: true };
-  } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : String(error);
-    console.error('[CredentialUtils:Windows:Update] Failed to update credentials file:', errorMessage);
-    return { success: false, error: `File update failed: ${errorMessage}` };
-  }
+		return { success: true };
+	} catch (error) {
+		const errorMessage = error instanceof Error ? error.message : String(error);
+		console.error(
+			"[CredentialUtils:Windows:Update] Failed to update credentials file:",
+			errorMessage,
+		);
+		return { success: false, error: `File update failed: ${errorMessage}` };
+	}
 }
 
 /**
@@ -2145,39 +2771,48 @@ function updateWindowsFileCredentials(
  * @returns Result indicating success or failure
  */
 function updateWindowsCredentials(
-  configDir: string | undefined,
-  credentials: {
-    accessToken: string;
-    refreshToken: string;
-    expiresAt: number;
-    scopes?: string[];
-  }
+	configDir: string | undefined,
+	credentials: {
+		accessToken: string;
+		refreshToken: string;
+		expiresAt: number;
+		scopes?: string[];
+	},
 ): UpdateCredentialsResult {
-  const isDebug = process.env.DEBUG === 'true';
+	const isDebug = process.env.DEBUG === "true";
 
-  // Write to file FIRST - this is what Claude CLI reads on Windows
-  const fileResult = updateWindowsFileCredentials(configDir, credentials);
-  if (!fileResult.success) {
-    // File write failed - don't proceed with Credential Manager to avoid inconsistent state
-    console.error('[CredentialUtils:Windows:Update] File update failed:', fileResult.error);
-    return fileResult;
-  }
+	// Write to file FIRST - this is what Claude CLI reads on Windows
+	const fileResult = updateWindowsFileCredentials(configDir, credentials);
+	if (!fileResult.success) {
+		// File write failed - don't proceed with Credential Manager to avoid inconsistent state
+		console.error(
+			"[CredentialUtils:Windows:Update] File update failed:",
+			fileResult.error,
+		);
+		return fileResult;
+	}
 
-  // File write succeeded - now update Credential Manager for forward compatibility
-  const psPath = findPowerShellPath();
-  if (psPath) {
-    const credManagerResult = updateWindowsCredentialManagerCredentials(configDir, credentials);
-    if (!credManagerResult.success) {
-      // Credential Manager failed but file succeeded - this is acceptable
-      // Claude CLI will use the file, which has the latest tokens
-      if (isDebug) {
-        console.warn('[CredentialUtils:Windows:Update] Credential Manager update failed (file update succeeded):', credManagerResult.error);
-      }
-    }
-  }
+	// File write succeeded - now update Credential Manager for forward compatibility
+	const psPath = findPowerShellPath();
+	if (psPath) {
+		const credManagerResult = updateWindowsCredentialManagerCredentials(
+			configDir,
+			credentials,
+		);
+		if (!credManagerResult.success) {
+			// Credential Manager failed but file succeeded - this is acceptable
+			// Claude CLI will use the file, which has the latest tokens
+			if (isDebug) {
+				console.warn(
+					"[CredentialUtils:Windows:Update] Credential Manager update failed (file update succeeded):",
+					credManagerResult.error,
+				);
+			}
+		}
+	}
 
-  // Return success since file (primary storage) was updated successfully
-  return { success: true };
+	// Return success since file (primary storage) was updated successfully
+	return { success: true };
 }
 
 /**
@@ -2192,27 +2827,27 @@ function updateWindowsCredentials(
  * @returns Result indicating success or failure
  */
 export function updateKeychainCredentials(
-  configDir: string | undefined,
-  credentials: {
-    accessToken: string;
-    refreshToken: string;
-    expiresAt: number;
-    scopes?: string[];
-  }
+	configDir: string | undefined,
+	credentials: {
+		accessToken: string;
+		refreshToken: string;
+		expiresAt: number;
+		scopes?: string[];
+	},
 ): UpdateCredentialsResult {
-  if (isMacOS()) {
-    return updateMacOSKeychainCredentials(configDir, credentials);
-  }
+	if (isMacOS()) {
+		return updateMacOSKeychainCredentials(configDir, credentials);
+	}
 
-  if (isLinux()) {
-    return updateLinuxCredentials(configDir, credentials);
-  }
+	if (isLinux()) {
+		return updateLinuxCredentials(configDir, credentials);
+	}
 
-  if (isWindows()) {
-    return updateWindowsCredentials(configDir, credentials);
-  }
+	if (isWindows()) {
+		return updateWindowsCredentials(configDir, credentials);
+	}
 
-  return { success: false, error: `Unsupported platform: ${process.platform}` };
+	return { success: false, error: `Unsupported platform: ${process.platform}` };
 }
 
 // =============================================================================
@@ -2223,26 +2858,26 @@ export function updateKeychainCredentials(
  * Result of updating profile subscription metadata
  */
 export interface UpdateSubscriptionMetadataResult {
-  /** Whether subscriptionType was updated */
-  subscriptionTypeUpdated: boolean;
-  /** Whether rateLimitTier was updated */
-  rateLimitTierUpdated: boolean;
-  /** The subscriptionType value (if found) */
-  subscriptionType?: string | null;
-  /** The rateLimitTier value (if found) */
-  rateLimitTier?: string | null;
+	/** Whether subscriptionType was updated */
+	subscriptionTypeUpdated: boolean;
+	/** Whether rateLimitTier was updated */
+	rateLimitTierUpdated: boolean;
+	/** The subscriptionType value (if found) */
+	subscriptionType?: string | null;
+	/** The rateLimitTier value (if found) */
+	rateLimitTier?: string | null;
 }
 
 /**
  * Options for updateProfileSubscriptionMetadata
  */
 export interface UpdateSubscriptionMetadataOptions {
-  /**
-   * If true, only update fields that are currently missing (undefined/null/empty).
-   * This is useful for migration/initialization code that should not overwrite existing values.
-   * Default: false (always update if credentials have values)
-   */
-  onlyIfMissing?: boolean;
+	/**
+	 * If true, only update fields that are currently missing (undefined/null/empty).
+	 * This is useful for migration/initialization code that should not overwrite existing values.
+	 * Default: false (always update if credentials have values)
+	 */
+	onlyIfMissing?: boolean;
 }
 
 /**
@@ -2279,36 +2914,40 @@ export interface UpdateSubscriptionMetadataOptions {
  * ```
  */
 export function updateProfileSubscriptionMetadata(
-  profile: { subscriptionType?: string | null; rateLimitTier?: string | null },
-  configDirOrCredentials: string | undefined | FullOAuthCredentials,
-  options?: UpdateSubscriptionMetadataOptions
+	profile: { subscriptionType?: string | null; rateLimitTier?: string | null },
+	configDirOrCredentials: string | undefined | FullOAuthCredentials,
+	options?: UpdateSubscriptionMetadataOptions,
 ): UpdateSubscriptionMetadataResult {
-  const result: UpdateSubscriptionMetadataResult = {
-    subscriptionTypeUpdated: false,
-    rateLimitTierUpdated: false,
-  };
+	const result: UpdateSubscriptionMetadataResult = {
+		subscriptionTypeUpdated: false,
+		rateLimitTierUpdated: false,
+	};
 
-  const onlyIfMissing = options?.onlyIfMissing ?? false;
+	const onlyIfMissing = options?.onlyIfMissing ?? false;
 
-  // Determine if we received pre-fetched credentials or a configDir
-  const fullCreds: FullOAuthCredentials =
-    typeof configDirOrCredentials === 'object' && configDirOrCredentials !== null
-      ? configDirOrCredentials
-      : getFullCredentialsFromKeychain(configDirOrCredentials);
+	// Determine if we received pre-fetched credentials or a configDir
+	const fullCreds: FullOAuthCredentials =
+		typeof configDirOrCredentials === "object" &&
+		configDirOrCredentials !== null
+			? configDirOrCredentials
+			: getFullCredentialsFromKeychain(configDirOrCredentials);
 
-  // Update subscriptionType if credentials have it and (not onlyIfMissing OR profile doesn't have it)
-  if (fullCreds.subscriptionType && (!onlyIfMissing || !profile.subscriptionType)) {
-    profile.subscriptionType = fullCreds.subscriptionType;
-    result.subscriptionTypeUpdated = true;
-    result.subscriptionType = fullCreds.subscriptionType;
-  }
+	// Update subscriptionType if credentials have it and (not onlyIfMissing OR profile doesn't have it)
+	if (
+		fullCreds.subscriptionType &&
+		(!onlyIfMissing || !profile.subscriptionType)
+	) {
+		profile.subscriptionType = fullCreds.subscriptionType;
+		result.subscriptionTypeUpdated = true;
+		result.subscriptionType = fullCreds.subscriptionType;
+	}
 
-  // Update rateLimitTier if credentials have it and (not onlyIfMissing OR profile doesn't have it)
-  if (fullCreds.rateLimitTier && (!onlyIfMissing || !profile.rateLimitTier)) {
-    profile.rateLimitTier = fullCreds.rateLimitTier;
-    result.rateLimitTierUpdated = true;
-    result.rateLimitTier = fullCreds.rateLimitTier;
-  }
+	// Update rateLimitTier if credentials have it and (not onlyIfMissing OR profile doesn't have it)
+	if (fullCreds.rateLimitTier && (!onlyIfMissing || !profile.rateLimitTier)) {
+		profile.rateLimitTier = fullCreds.rateLimitTier;
+		result.rateLimitTierUpdated = true;
+		result.rateLimitTier = fullCreds.rateLimitTier;
+	}
 
-  return result;
+	return result;
 }

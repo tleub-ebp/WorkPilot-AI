@@ -1,127 +1,136 @@
-import { useState, useCallback } from 'react';
-import { FolderOpen, Plus, Trash2 } from 'lucide-react';
+import { FolderOpen, Plus, Trash2 } from "lucide-react";
+import { useCallback, useState } from "react";
+import type { Project } from "../../../shared/types";
+import { removeProject, useProjectStore } from "../../stores/project-store";
+import { AddProjectModal } from "../AddProjectModal";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue
-} from '../ui/select';
-import { Separator } from '../ui/separator';
-import { useProjectStore, removeProject } from '../../stores/project-store';
-import { AddProjectModal } from '../AddProjectModal';
-import type { Project } from '../../../shared/types';
+	Select,
+	SelectContent,
+	SelectItem,
+	SelectTrigger,
+	SelectValue,
+} from "../ui/select";
+import { Separator } from "../ui/separator";
 
 interface ProjectSelectorProps {
-  readonly selectedProjectId: string | null;
-  readonly onProjectChange: (projectId: string | null) => void;
-  readonly onProjectAdded?: (project: Project, needsInit: boolean) => void;
+	readonly selectedProjectId: string | null;
+	readonly onProjectChange: (projectId: string | null) => void;
+	readonly onProjectAdded?: (project: Project, needsInit: boolean) => void;
 }
 
 export function ProjectSelector({
-  selectedProjectId,
-  onProjectChange,
-  onProjectAdded
+	selectedProjectId,
+	onProjectChange,
+	onProjectAdded,
 }: ProjectSelectorProps) {
-  const projects = useProjectStore((state) => state.projects);
-  const [showAddModal, setShowAddModal] = useState(false);
-  const [open, setOpen] = useState(false);
+	const projects = useProjectStore((state) => state.projects);
+	const [showAddModal, setShowAddModal] = useState(false);
+	const [open, setOpen] = useState(false);
 
-  const handleValueChange = (value: string) => {
-    if (value === '__add_new__') {
-      setShowAddModal(true);
-      setOpen(false);
-    } else {
-      onProjectChange(value || null);
-      setOpen(false);
-    }
-  };
+	const handleValueChange = (value: string) => {
+		if (value === "__add_new__") {
+			setShowAddModal(true);
+			setOpen(false);
+		} else {
+			onProjectChange(value || null);
+			setOpen(false);
+		}
+	};
 
-  const handleRemoveProject = useCallback(async (projectId: string, e: React.MouseEvent) => {
-    e.stopPropagation();
-    e.preventDefault();
-    await removeProject(projectId);
-    setOpen(false);
-  }, []);
+	const handleRemoveProject = useCallback(
+		async (projectId: string, e: React.MouseEvent) => {
+			e.stopPropagation();
+			e.preventDefault();
+			await removeProject(projectId);
+			setOpen(false);
+		},
+		[],
+	);
 
-  const selectedProject = projects.find((p) => p.id === selectedProjectId);
+	const selectedProject = projects.find((p) => p.id === selectedProjectId);
 
-  return (
-    <div className="w-full max-w-68">
-      <Select
-        value={selectedProjectId || ''}
-        onValueChange={handleValueChange}
-        open={open}
-        onOpenChange={setOpen}
-      >
-        <SelectTrigger className="w-full [&_span]:truncate">
-          <div className="flex items-center gap-2 min-w-0 flex-1 overflow-hidden">
-            <FolderOpen className="h-4 w-4 shrink-0 text-muted-foreground" />
-            <SelectValue placeholder="Select a project..." className="truncate min-w-0 flex-1" />
-          </div>
-        </SelectTrigger>
-        <SelectContent 
-          className="w-80 min-w-0 max-w-68 overflow-hidden"
-          position="popper"
-          sideOffset={4}
-          collisionPadding={8}
-          avoidCollisions={true}
-        >
-          {projects.length === 0 ? (
-            <div className="px-2 py-4 text-center text-sm text-muted-foreground">
-              <p>No projects yet</p>
-            </div>
-          ) : (
-            projects.map((project) => (
-              <div key={project.id} className="relative flex items-center">
-                <SelectItem value={project.id} className="flex-1 pr-10 min-w-0">
-                  <span className="truncate block w-full" title={`${project.name} - ${project.path}`}>
-                    {project.name}
-                  </span>
-                </SelectItem>
-                <button
-                  type="button"
-                  className="absolute right-2 flex h-6 w-6 items-center justify-center rounded-md hover:bg-destructive/10 transition-colors"
-                  onPointerDown={(e) => {
-                    e.stopPropagation();
-                  }}
-                  onClick={(e) => handleRemoveProject(project.id, e)}
-                >
-                  <Trash2 className="h-3.5 w-3.5 text-destructive" />
-                </button>
-              </div>
-            ))
-          )}
-          <Separator className="my-1" />
-          <SelectItem value="__add_new__">
-            <div className="flex items-center gap-2">
-              <Plus className="h-4 w-4 shrink-0" />
-              <span>Add Project...</span>
-            </div>
-          </SelectItem>
-        </SelectContent>
-      </Select>
+	return (
+		<div className="w-full max-w-68">
+			<Select
+				value={selectedProjectId || ""}
+				onValueChange={handleValueChange}
+				open={open}
+				onOpenChange={setOpen}
+			>
+				<SelectTrigger className="w-full [&_span]:truncate">
+					<div className="flex items-center gap-2 min-w-0 flex-1 overflow-hidden">
+						<FolderOpen className="h-4 w-4 shrink-0 text-muted-foreground" />
+						<SelectValue
+							placeholder="Select a project..."
+							className="truncate min-w-0 flex-1"
+						/>
+					</div>
+				</SelectTrigger>
+				<SelectContent
+					className="w-80 min-w-0 max-w-68 overflow-hidden"
+					position="popper"
+					sideOffset={4}
+					collisionPadding={8}
+					avoidCollisions={true}
+				>
+					{projects.length === 0 ? (
+						<div className="px-2 py-4 text-center text-sm text-muted-foreground">
+							<p>No projects yet</p>
+						</div>
+					) : (
+						projects.map((project) => (
+							<div key={project.id} className="relative flex items-center">
+								<SelectItem value={project.id} className="flex-1 pr-10 min-w-0">
+									<span
+										className="truncate block w-full"
+										title={`${project.name} - ${project.path}`}
+									>
+										{project.name}
+									</span>
+								</SelectItem>
+								<button
+									type="button"
+									className="absolute right-2 flex h-6 w-6 items-center justify-center rounded-md hover:bg-destructive/10 transition-colors"
+									onPointerDown={(e) => {
+										e.stopPropagation();
+									}}
+									onClick={(e) => handleRemoveProject(project.id, e)}
+								>
+									<Trash2 className="h-3.5 w-3.5 text-destructive" />
+								</button>
+							</div>
+						))
+					)}
+					<Separator className="my-1" />
+					<SelectItem value="__add_new__">
+						<div className="flex items-center gap-2">
+							<Plus className="h-4 w-4 shrink-0" />
+							<span>Add Project...</span>
+						</div>
+					</SelectItem>
+				</SelectContent>
+			</Select>
 
-      {/* Project path - shown when project is selected */}
-      {selectedProject && (
-        <div className="mt-2">
-          <span
-            className="truncate block text-xs text-muted-foreground"
-            title={selectedProject.path}
-          >
-            {selectedProject.path}
-          </span>
-        </div>
-      )}
+			{/* Project path - shown when project is selected */}
+			{selectedProject && (
+				<div className="mt-2">
+					<span
+						className="truncate block text-xs text-muted-foreground"
+						title={selectedProject.path}
+					>
+						{selectedProject.path}
+					</span>
+				</div>
+			)}
 
-      <AddProjectModal
-        open={showAddModal}
-        onOpenChange={setShowAddModal}
-        onProjectAdded={(project, needsInit) => {
-          onProjectChange(project.id);
-          onProjectAdded?.(project, needsInit);
-        }}
-      />
-    </div>
-  );
+			<AddProjectModal
+				open={showAddModal}
+				onOpenChange={setShowAddModal}
+				onProjectAdded={(project, needsInit) => {
+					onProjectChange(project.id);
+					onProjectAdded?.(project, needsInit);
+				}}
+			/>
+		</div>
+	);
 }

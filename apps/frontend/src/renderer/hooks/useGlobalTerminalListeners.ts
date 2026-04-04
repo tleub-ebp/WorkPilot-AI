@@ -1,7 +1,7 @@
-import { useEffect } from 'react';
-import { writeToTerminal } from '../stores/terminal-store';
-import { terminalBufferManager } from '../lib/terminal-buffer-manager';
-import { debugLog, debugWarn } from '../../shared/utils/debug-logger';
+import { useEffect } from "react";
+import { debugLog, debugWarn } from "../../shared/utils/debug-logger";
+import { terminalBufferManager } from "../lib/terminal-buffer-manager";
+import { writeToTerminal } from "../stores/terminal-store";
 
 /**
  * Module-level cleanup function storage.
@@ -35,35 +35,43 @@ let globalCleanup: (() => void) | null = null;
  * This hook should be called once in App.tsx alongside useIpcListeners().
  */
 export function useGlobalTerminalListeners(): void {
-  useEffect(() => {
-    // Only register once - prevent duplicate listeners
-    if (globalCleanup) {
-      debugWarn('[GlobalTerminalListeners] Listener already registered, skipping');
-      return;
-    }
+	useEffect(() => {
+		// Only register once - prevent duplicate listeners
+		if (globalCleanup) {
+			debugWarn(
+				"[GlobalTerminalListeners] Listener already registered, skipping",
+			);
+			return;
+		}
 
-    debugLog('[GlobalTerminalListeners] Registering global terminal output listener');
+		debugLog(
+			"[GlobalTerminalListeners] Registering global terminal output listener",
+		);
 
-    // Register global terminal output listener
-    // This listener runs for ALL terminals, regardless of which project is active
-    globalCleanup = window.electronAPI.onTerminalOutput((terminalId: string, data: string) => {
-      // Use writeToTerminal which:
-      // 1. Always buffers to terminalBufferManager for persistence
-      // 2. Writes to xterm immediately if terminal has a registered callback (visible)
-      writeToTerminal(terminalId, data);
+		// Register global terminal output listener
+		// This listener runs for ALL terminals, regardless of which project is active
+		globalCleanup = window.electronAPI.onTerminalOutput(
+			(terminalId: string, data: string) => {
+				// Use writeToTerminal which:
+				// 1. Always buffers to terminalBufferManager for persistence
+				// 2. Writes to xterm immediately if terminal has a registered callback (visible)
+				writeToTerminal(terminalId, data);
 
-      debugLog(
-        `[GlobalTerminalListeners] Processed output for ${terminalId}, buffer size: ${terminalBufferManager.getSize(terminalId)}`
-      );
-    });
+				debugLog(
+					`[GlobalTerminalListeners] Processed output for ${terminalId}, buffer size: ${terminalBufferManager.getSize(terminalId)}`,
+				);
+			},
+		);
 
-    // Cleanup on unmount (app shutdown)
-    return () => {
-      if (globalCleanup) {
-        debugLog('[GlobalTerminalListeners] Cleaning up global terminal output listener');
-        globalCleanup();
-        globalCleanup = null;
-      }
-    };
-  }, []); // Empty deps - only run once on mount
+		// Cleanup on unmount (app shutdown)
+		return () => {
+			if (globalCleanup) {
+				debugLog(
+					"[GlobalTerminalListeners] Cleaning up global terminal output listener",
+				);
+				globalCleanup();
+				globalCleanup = null;
+			}
+		};
+	}, []); // Empty deps - only run once on mount
 }

@@ -1,40 +1,40 @@
 {
-  "title": "Pixel Office",
-  "description": "Visualize your AI agents as pixel art characters in a virtual office",
-  "emptyState": {
-    "title": "Your office is empty",
-    "description": "Open agent terminals to see your AI workers appear at their desks. Each terminal becomes a character with live activity tracking."
-  },
-  "toolbar": {
-    "zoomIn": "Zoom In",
-    "zoomOut": "Zoom Out",
-    "toggleGrid": "Toggle Grid",
-    "toggleSound": "Toggle Sound",
-    "addAgent": "New terminal"
-  },
-  "agents": {
-    "count_one": "{{count}} agent",
-    "count_other": "{{count}} agents",
-    "active": "{{count}} active",
-    "goToTerminal": "Go to Terminal",
-    "claudeMode": "Claude Mode"
-  },
-  "activity": {
-    "idle": "Idle",
-    "typing": "Coding",
-    "reading": "Analysing",
-    "running": "Running",
-    "waiting": "Waiting",
-    "exited": "Closed"
-  },
-  "bubble": {
-    "taskLabel": "Task:",
-    "sendPlaceholderWaiting": "Reply to the agent…",
-    "sendPlaceholder": "Give an order to the terminal…",
-    "sendHint": "↵ Enter to send · The message will be typed in the terminal",
-    "viewTerminal": "View terminal",
-    "interrupt": "Interrupt",
-    "resumeClaude": "Resume Claude",
-    "close": "Close"
-  }
+	"title": "Pixel Office",
+	"description": "Visualize your AI agents as pixel art characters in a virtual office",
+	"emptyState": {
+		"title": "Your office is empty",
+		"description": "Open agent terminals to see your AI workers appear at their desks. Each terminal becomes a character with live activity tracking."
+	},
+	"toolbar": {
+		"zoomIn": "Zoom In",
+		"zoomOut": "Zoom Out",
+		"toggleGrid": "Toggle Grid",
+		"toggleSound": "Toggle Sound",
+		"addAgent": "New terminal"
+	},
+	"agents": {
+		"count_one": "{{count}} agent",
+		"count_other": "{{count}} agents",
+		"active": "{{count}} active",
+		"goToTerminal": "Go to Terminal",
+		"claudeMode": "Claude Mode"
+	},
+	"activity": {
+		"idle": "Idle",
+		"typing": "Coding",
+		"reading": "Analysing",
+		"running": "Running",
+		"waiting": "Waiting",
+		"exited": "Closed"
+	},
+	"bubble": {
+		"taskLabel": "Task:",
+		"sendPlaceholderWaiting": "Reply to the agent…",
+		"sendPlaceholder": "Give an order to the terminal…",
+		"sendHint": "↵ Enter to send · The message will be typed in the terminal",
+		"viewTerminal": "View terminal",
+		"interrupt": "Interrupt",
+		"resumeClaude": "Resume Claude",
+		"close": "Close"
+	}
 }

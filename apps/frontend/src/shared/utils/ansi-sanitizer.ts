@@ -46,10 +46,10 @@ const ANSI_OSC_ST_PATTERN = /\x1b\][^\x1b]*\x1b\\/g;
  * ```
  */
 export function stripAnsiCodes(text: string): string {
-  if (!text) return '';
+	if (!text) return "";
 
-  return text
-    .replace(ANSI_CSI_PATTERN, '')
-    .replace(ANSI_OSC_BEL_PATTERN, '')
-    .replace(ANSI_OSC_ST_PATTERN, '');
+	return text
+		.replace(ANSI_CSI_PATTERN, "")
+		.replace(ANSI_OSC_BEL_PATTERN, "")
+		.replace(ANSI_OSC_ST_PATTERN, "");
 }

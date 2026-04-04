@@ -1,1 +1,1 @@
-export * from './sentry-electron-shared';
+export * from "./sentry-electron-shared";

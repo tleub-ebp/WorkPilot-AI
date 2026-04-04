@@ -11,50 +11,64 @@
  * existing WebSocket stream for the running task.
  */
 
-import { useState } from 'react';
-import { Film } from 'lucide-react';
-import { useTranslation } from 'react-i18next';
-import { Button } from '../ui/button';
-import { Dialog, DialogContent, DialogTitle, DialogDescription } from '../ui/dialog';
-import { StreamingSession } from './StreamingSession';
+import { Film } from "lucide-react";
+import { useState } from "react";
+import { useTranslation } from "react-i18next";
+import { Button } from "../ui/button";
+import {
+	Dialog,
+	DialogContent,
+	DialogDescription,
+	DialogTitle,
+} from "../ui/dialog";
+import { StreamingSession } from "./StreamingSession";
 
 interface StreamingSessionButtonProps {
-  readonly taskId: string;
-  readonly projectPath: string;
+	readonly taskId: string;
+	readonly projectPath: string;
 }
 
-export function StreamingSessionButton({ taskId, projectPath }: StreamingSessionButtonProps) {
-  const [isOpen, setIsOpen] = useState(false);
-  const { t } = useTranslation(['tasks', 'streaming']);
+export function StreamingSessionButton({
+	taskId,
+	projectPath,
+}: StreamingSessionButtonProps) {
+	const [isOpen, setIsOpen] = useState(false);
+	const { t } = useTranslation(["tasks", "streaming"]);
 
-  const handleWatchLive = () => {
-    setIsOpen(true);
-  };
+	const handleWatchLive = () => {
+		setIsOpen(true);
+	};
 
-  return (
-    <>
-      <Button
-        variant="outline"
-        size="sm"
-        onClick={handleWatchLive}
-        className="gap-2"
-      >
-        <Film className="w-4 h-4" />
-        {t('tasks:modal.actions.watchLive')}
-      </Button>
+	return (
+		<>
+			<Button
+				variant="outline"
+				size="sm"
+				onClick={handleWatchLive}
+				className="gap-2"
+			>
+				<Film className="w-4 h-4" />
+				{t("tasks:modal.actions.watchLive")}
+			</Button>
 
-      <Dialog open={isOpen} onOpenChange={setIsOpen}>
-        <DialogContent className="max-w-[95vw] h-[95vh] max-h-[95vh] p-0 overflow-hidden" aria-describedby={undefined}>
-          <DialogTitle className="sr-only">{t('streaming:dialogTitle')}</DialogTitle>
-          <DialogDescription className="sr-only">{t('streaming:dialogDescription')}</DialogDescription>
-          <StreamingSession
-            sessionId={taskId}
-            projectPath={projectPath}
-            onClose={() => setIsOpen(false)}
-          />
-        </DialogContent>
-      </Dialog>
-    </>
-  );
+			<Dialog open={isOpen} onOpenChange={setIsOpen}>
+				<DialogContent
+					className="max-w-[95vw] h-[95vh] max-h-[95vh] p-0 overflow-hidden"
+					aria-describedby={undefined}
+				>
+					<DialogTitle className="sr-only">
+						{t("streaming:dialogTitle")}
+					</DialogTitle>
+					<DialogDescription className="sr-only">
+						{t("streaming:dialogDescription")}
+					</DialogDescription>
+					<StreamingSession
+						sessionId={taskId}
+						projectPath={projectPath}
+						onClose={() => setIsOpen(false)}
+					/>
+				</DialogContent>
+			</Dialog>
+		</>
+	);
 }
-

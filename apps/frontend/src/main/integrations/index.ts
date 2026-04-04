@@ -11,7 +11,7 @@
  * 3. Register the adapter in this module
  */
 
-export * from './types';
+export * from "./types";
 
 // Future: Export concrete adapter implementations
 // export { CannyAdapter } from './canny-adapter';

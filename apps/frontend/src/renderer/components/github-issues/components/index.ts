@@ -1,8 +1,8 @@
-export { IssueListItem } from './IssueListItem';
-export { IssueDetail } from './IssueDetail';
-export { InvestigationDialog } from './InvestigationDialog';
-export { EmptyState, NotConnectedState } from './EmptyStates';
-export { IssueListHeader } from './IssueListHeader';
-export { IssueList } from './IssueList';
-export { AutoFixButton } from './AutoFixButton';
-export { BatchReviewWizard } from './BatchReviewWizard';
+export { AutoFixButton } from "./AutoFixButton";
+export { BatchReviewWizard } from "./BatchReviewWizard";
+export { EmptyState, NotConnectedState } from "./EmptyStates";
+export { InvestigationDialog } from "./InvestigationDialog";
+export { IssueDetail } from "./IssueDetail";
+export { IssueList } from "./IssueList";
+export { IssueListHeader } from "./IssueListHeader";
+export { IssueListItem } from "./IssueListItem";

@@ -3,38 +3,38 @@
  */
 
 export const contextMock = {
-  getProjectContext: async () => ({
-    success: true,
-    data: {
-      projectIndex: null,
-      memoryStatus: null,
-      memoryState: null,
-      recentMemories: [],
-      isLoading: false
-    }
-  }),
+	getProjectContext: async () => ({
+		success: true,
+		data: {
+			projectIndex: null,
+			memoryStatus: null,
+			memoryState: null,
+			recentMemories: [],
+			isLoading: false,
+		},
+	}),
 
-  refreshProjectIndex: async () => ({
-    success: false,
-    error: 'Not available in browser mock'
-  }),
+	refreshProjectIndex: async () => ({
+		success: false,
+		error: "Not available in browser mock",
+	}),
 
-  getMemoryStatus: async () => ({
-    success: true,
-    data: {
-      enabled: false,
-      available: false,
-      reason: 'Browser mock environment'
-    }
-  }),
+	getMemoryStatus: async () => ({
+		success: true,
+		data: {
+			enabled: false,
+			available: false,
+			reason: "Browser mock environment",
+		},
+	}),
 
-  searchMemories: async () => ({
-    success: true,
-    data: []
-  }),
+	searchMemories: async () => ({
+		success: true,
+		data: [],
+	}),
 
-  getRecentMemories: async () => ({
-    success: true,
-    data: []
-  })
+	getRecentMemories: async () => ({
+		success: true,
+		data: [],
+	}),
 };

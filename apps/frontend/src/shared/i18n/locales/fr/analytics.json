@@ -1,70 +1,85 @@
 {
-  "title": "Analytiques de Build",
-  "subtitle": "Surveillez les performances des agents, l'utilisation des tokens et les métriques de build",
-  "periodSelector": {
-    "last7Days": "Derniers 7 jours",
-    "last30Days": "Derniers 30 jours",
-    "last90Days": "Derniers 90 jours"
-  },
-  "actions": { "refresh": "Actualiser" },
-  "kpis": {
-    "totalBuilds": { "title": "Total des Tâches", "description": "Nombre total de tâches" },
-    "successfulBuilds": { "title": "Terminées", "description": "Tâches complétées avec succès" },
-    "successRate": { "title": "Taux de Succès", "description": "Taux de complétion des tâches" },
-    "totalTokens": { "title": "Total des Tokens", "description": "Sur toutes les tâches" },
-    "totalCost": { "title": "Coût Total", "description": "Coût d'utilisation LLM" }
-  },
-  "tabs": {
-    "overview": "Aperçu",
-    "costs": "Coûts",
-    "performance": "Performance",
-    "builds": "Builds",
-    "errors": "Erreurs"
-  },
-  "sections": {
-    "tasksByStatus": "Tâches par Statut",
-    "qaMetrics": "QA & Fusions",
-    "costByProvider": "Coût par Fournisseur",
-    "costByModel": "Coût par Modèle",
-    "tokensByProvider": "Tokens par Fournisseur",
-    "completionByComplexity": "Complétion Moy. par Complexité",
-    "tokenSplit": "Répartition des Tokens",
-    "recentBuilds": "Builds Récents",
-    "phasePerformance": "Performance par Phase",
-    "agentPerformance": "Performance des Agents",
-    "tokenUsageTrend": "Tendance d'Utilisation des Tokens",
-    "topErrorTypes": "Types d'Erreurs Principaux",
-    "allBuilds": "Tous les Builds"
-  },
-  "fields": {
-    "dailyAvg": "Moy. quotidienne",
-    "overDays": "Sur {{days}} jours",
-    "trend": "vs période préc.",
-    "qaPassRate": "Taux QA 1er passage",
-    "mergeAuto": "Fusion auto",
-    "mergeManual": "Fusion manuelle",
-    "totalTokens": "Total",
-    "inputTokens": "Entrée",
-    "outputTokens": "Sortie",
-    "duration": "Durée",
-    "tokens": "Tokens",
-    "cost": "Coût",
-    "qaIterations": "Itérations QA",
-    "successRate": "Taux de succès",
-    "avgDuration": "Durée moy.",
-    "avgTokens": "Tokens moy.",
-    "avgCost": "Coût moy.",
-    "builds": "builds",
-    "occurrences": "occurrences"
-  },
-  "badges": { "success": "Succès", "failed": "Échoué" },
-  "empty": { "noProject": "Sélectionnez un projet pour voir les analytiques" },
-  "status": {
-    "loading": "Chargement des analytiques...",
-    "error": "Erreur de Chargement des Analytiques",
-    "retry": "Réessayer",
-    "noData": "Aucune donnée disponible",
-    "noBuilds": "Aucun build trouvé",
-    "noErrors": "Aucune erreur trouvée"
-  }
+	"title": "Analytiques de Build",
+	"subtitle": "Surveillez les performances des agents, l'utilisation des tokens et les métriques de build",
+	"periodSelector": {
+		"last7Days": "Derniers 7 jours",
+		"last30Days": "Derniers 30 jours",
+		"last90Days": "Derniers 90 jours"
+	},
+	"actions": { "refresh": "Actualiser" },
+	"kpis": {
+		"totalBuilds": {
+			"title": "Total des Tâches",
+			"description": "Nombre total de tâches"
+		},
+		"successfulBuilds": {
+			"title": "Terminées",
+			"description": "Tâches complétées avec succès"
+		},
+		"successRate": {
+			"title": "Taux de Succès",
+			"description": "Taux de complétion des tâches"
+		},
+		"totalTokens": {
+			"title": "Total des Tokens",
+			"description": "Sur toutes les tâches"
+		},
+		"totalCost": {
+			"title": "Coût Total",
+			"description": "Coût d'utilisation LLM"
+		}
+	},
+	"tabs": {
+		"overview": "Aperçu",
+		"costs": "Coûts",
+		"performance": "Performance",
+		"builds": "Builds",
+		"errors": "Erreurs"
+	},
+	"sections": {
+		"tasksByStatus": "Tâches par Statut",
+		"qaMetrics": "QA & Fusions",
+		"costByProvider": "Coût par Fournisseur",
+		"costByModel": "Coût par Modèle",
+		"tokensByProvider": "Tokens par Fournisseur",
+		"completionByComplexity": "Complétion Moy. par Complexité",
+		"tokenSplit": "Répartition des Tokens",
+		"recentBuilds": "Builds Récents",
+		"phasePerformance": "Performance par Phase",
+		"agentPerformance": "Performance des Agents",
+		"tokenUsageTrend": "Tendance d'Utilisation des Tokens",
+		"topErrorTypes": "Types d'Erreurs Principaux",
+		"allBuilds": "Tous les Builds"
+	},
+	"fields": {
+		"dailyAvg": "Moy. quotidienne",
+		"overDays": "Sur {{days}} jours",
+		"trend": "vs période préc.",
+		"qaPassRate": "Taux QA 1er passage",
+		"mergeAuto": "Fusion auto",
+		"mergeManual": "Fusion manuelle",
+		"totalTokens": "Total",
+		"inputTokens": "Entrée",
+		"outputTokens": "Sortie",
+		"duration": "Durée",
+		"tokens": "Tokens",
+		"cost": "Coût",
+		"qaIterations": "Itérations QA",
+		"successRate": "Taux de succès",
+		"avgDuration": "Durée moy.",
+		"avgTokens": "Tokens moy.",
+		"avgCost": "Coût moy.",
+		"builds": "builds",
+		"occurrences": "occurrences"
+	},
+	"badges": { "success": "Succès", "failed": "Échoué" },
+	"empty": { "noProject": "Sélectionnez un projet pour voir les analytiques" },
+	"status": {
+		"loading": "Chargement des analytiques...",
+		"error": "Erreur de Chargement des Analytiques",
+		"retry": "Réessayer",
+		"noData": "Aucune donnée disponible",
+		"noBuilds": "Aucun build trouvé",
+		"noErrors": "Aucune erreur trouvée"
+	}
 }

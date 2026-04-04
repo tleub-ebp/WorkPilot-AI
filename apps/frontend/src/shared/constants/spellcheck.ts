@@ -11,20 +11,20 @@
  * Each app language can map to multiple spell checker languages for better coverage.
  */
 export const SPELL_CHECK_LANGUAGE_MAP: Record<string, string[]> = {
-  en: ['en-US', 'en-GB'],
-  fr: ['fr-FR', 'fr'],
+	en: ["en-US", "en-GB"],
+	fr: ["fr-FR", "fr"],
 };
 
 /**
  * Default spell check language when the preferred language isn't available.
  */
-export const DEFAULT_SPELL_CHECK_LANGUAGE = 'en-US';
+export const DEFAULT_SPELL_CHECK_LANGUAGE = "en-US";
 
 /**
  * Localized labels for "Add to Dictionary" context menu item.
  * Uses app language (not OS locale) to match the in-app language setting.
  */
 export const ADD_TO_DICTIONARY_LABELS: Record<string, string> = {
-  en: 'Add to Dictionary',
-  fr: 'Ajouter au dictionnaire',
+	en: "Add to Dictionary",
+	fr: "Ajouter au dictionnaire",
 };

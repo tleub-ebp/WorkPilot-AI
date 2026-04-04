@@ -1,20 +1,31 @@
-import { Radio, Import, Eye, EyeOff, Loader2, CheckCircle2, AlertCircle } from 'lucide-react';
-import { useTranslation } from 'react-i18next';
-import { Button } from '../../ui/button';
-import { Input } from '../../ui/input';
-import { Label } from '../../ui/label';
-import { Switch } from '../../ui/switch';
-import { Separator } from '../../ui/separator';
-import type { ProjectEnvConfig, LinearSyncStatus } from '../../../../shared/types';
+import {
+	AlertCircle,
+	CheckCircle2,
+	Eye,
+	EyeOff,
+	Import,
+	Loader2,
+	Radio,
+} from "lucide-react";
+import { useTranslation } from "react-i18next";
+import type {
+	LinearSyncStatus,
+	ProjectEnvConfig,
+} from "../../../../shared/types";
+import { Button } from "../../ui/button";
+import { Input } from "../../ui/input";
+import { Label } from "../../ui/label";
+import { Separator } from "../../ui/separator";
+import { Switch } from "../../ui/switch";
 
 interface LinearIntegrationProps {
-  readonly envConfig: ProjectEnvConfig | null;
-  readonly updateEnvConfig: (updates: Partial<ProjectEnvConfig>) => void;
-  readonly showLinearKey: boolean;
-  readonly setShowLinearKey: React.Dispatch<React.SetStateAction<boolean>>;
-  readonly linearConnectionStatus: LinearSyncStatus | null;
-  readonly isCheckingLinear: boolean;
-  readonly onOpenLinearImport: () => void;
+	readonly envConfig: ProjectEnvConfig | null;
+	readonly updateEnvConfig: (updates: Partial<ProjectEnvConfig>) => void;
+	readonly showLinearKey: boolean;
+	readonly setShowLinearKey: React.Dispatch<React.SetStateAction<boolean>>;
+	readonly linearConnectionStatus: LinearSyncStatus | null;
+	readonly isCheckingLinear: boolean;
+	readonly onOpenLinearImport: () => void;
 }
 
 /**
@@ -22,247 +33,285 @@ interface LinearIntegrationProps {
  * Manages Linear API key, connection status, and import functionality.
  */
 export function LinearIntegration({
-  envConfig,
-  updateEnvConfig,
-  showLinearKey,
-  setShowLinearKey,
-  linearConnectionStatus,
-  isCheckingLinear,
-  onOpenLinearImport
+	envConfig,
+	updateEnvConfig,
+	showLinearKey,
+	setShowLinearKey,
+	linearConnectionStatus,
+	isCheckingLinear,
+	onOpenLinearImport,
 }: LinearIntegrationProps) {
-  const { t } = useTranslation('settings');
+	const { t } = useTranslation("settings");
 
-  if (!envConfig) return null;
+	if (!envConfig) return null;
 
-  return (
-    <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <div className="space-y-0.5">
-          <Label className="font-normal text-foreground">{t('integrations.linear.enableLinearSync')}</Label>
-          <p className="text-xs text-muted-foreground">
-            {t('integrations.linear.enableLinearSyncDescription')}
-          </p>
-        </div>
-        <Switch
-          checked={envConfig.linearEnabled}
-          onCheckedChange={(checked) => updateEnvConfig({ linearEnabled: checked })}
-        />
-      </div>
+	return (
+		<div className="space-y-4">
+			<div className="flex items-center justify-between">
+				<div className="space-y-0.5">
+					<Label className="font-normal text-foreground">
+						{t("integrations.linear.enableLinearSync")}
+					</Label>
+					<p className="text-xs text-muted-foreground">
+						{t("integrations.linear.enableLinearSyncDescription")}
+					</p>
+				</div>
+				<Switch
+					checked={envConfig.linearEnabled}
+					onCheckedChange={(checked) =>
+						updateEnvConfig({ linearEnabled: checked })
+					}
+				/>
+			</div>
 
-      {envConfig.linearEnabled && (
-        <>
-          <div className="space-y-2">
-            <Label className="text-sm font-medium text-foreground">{t('integrations.linear.apiKey')}</Label>
-            <p className="text-xs text-muted-foreground">
-              {t('integrations.linear.apiKeyDescription')}{' '}
-              <a
-                href="https://linear.app/settings/api"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-info hover:underline"
-              >
-                {t('integrations.linear.apiKeyLink')}
-              </a>
-            </p>
-            <div className="relative">
-              <Input
-                type={showLinearKey ? 'text' : 'password'}
-                placeholder="lin_api_xxxxxxxx"
-                value={envConfig.linearApiKey || ''}
-                onChange={(e) => updateEnvConfig({ linearApiKey: e.target.value })}
-                className="pr-10"
-              />
-              <button
-                type="button"
-                onClick={() => setShowLinearKey(!showLinearKey)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-              >
-                {showLinearKey ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-              </button>
-            </div>
-          </div>
+			{envConfig.linearEnabled && (
+				<>
+					<div className="space-y-2">
+						<Label className="text-sm font-medium text-foreground">
+							{t("integrations.linear.apiKey")}
+						</Label>
+						<p className="text-xs text-muted-foreground">
+							{t("integrations.linear.apiKeyDescription")}{" "}
+							<a
+								href="https://linear.app/settings/api"
+								target="_blank"
+								rel="noopener noreferrer"
+								className="text-info hover:underline"
+							>
+								{t("integrations.linear.apiKeyLink")}
+							</a>
+						</p>
+						<div className="relative">
+							<Input
+								type={showLinearKey ? "text" : "password"}
+								placeholder="lin_api_xxxxxxxx"
+								value={envConfig.linearApiKey || ""}
+								onChange={(e) =>
+									updateEnvConfig({ linearApiKey: e.target.value })
+								}
+								className="pr-10"
+							/>
+							<button
+								type="button"
+								onClick={() => setShowLinearKey(!showLinearKey)}
+								className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+							>
+								{showLinearKey ? (
+									<EyeOff className="h-4 w-4" />
+								) : (
+									<Eye className="h-4 w-4" />
+								)}
+							</button>
+						</div>
+					</div>
 
-          {envConfig.linearApiKey && (
-            <ConnectionStatus
-              isChecking={isCheckingLinear}
-              connectionStatus={linearConnectionStatus}
-            />
-          )}
+					{envConfig.linearApiKey && (
+						<ConnectionStatus
+							isChecking={isCheckingLinear}
+							connectionStatus={linearConnectionStatus}
+						/>
+					)}
 
-          {linearConnectionStatus?.connected && (
-            <ImportTasksPrompt onOpenLinearImport={onOpenLinearImport} />
-          )}
+					{linearConnectionStatus?.connected && (
+						<ImportTasksPrompt onOpenLinearImport={onOpenLinearImport} />
+					)}
 
-          <Separator />
+					<Separator />
 
-          <RealtimeSyncToggle
-            enabled={envConfig.linearRealtimeSync || false}
-            onToggle={(checked) => updateEnvConfig({ linearRealtimeSync: checked })}
-          />
+					<RealtimeSyncToggle
+						enabled={envConfig.linearRealtimeSync || false}
+						onToggle={(checked) =>
+							updateEnvConfig({ linearRealtimeSync: checked })
+						}
+					/>
 
-          {envConfig.linearRealtimeSync && <RealtimeSyncWarning />}
+					{envConfig.linearRealtimeSync && <RealtimeSyncWarning />}
 
-          <Separator />
+					<Separator />
 
-          <TeamProjectIds
-            teamId={envConfig.linearTeamId || ''}
-            projectId={envConfig.linearProjectId || ''}
-            onTeamIdChange={(value) => updateEnvConfig({ linearTeamId: value })}
-            onProjectIdChange={(value) => updateEnvConfig({ linearProjectId: value })}
-          />
-        </>
-      )}
-    </div>
-  );
+					<TeamProjectIds
+						teamId={envConfig.linearTeamId || ""}
+						projectId={envConfig.linearProjectId || ""}
+						onTeamIdChange={(value) => updateEnvConfig({ linearTeamId: value })}
+						onProjectIdChange={(value) =>
+							updateEnvConfig({ linearProjectId: value })
+						}
+					/>
+				</>
+			)}
+		</div>
+	);
 }
 
 interface ConnectionStatusProps {
-  readonly isChecking: boolean;
-  readonly connectionStatus: LinearSyncStatus | null;
+	readonly isChecking: boolean;
+	readonly connectionStatus: LinearSyncStatus | null;
 }
 
-function ConnectionStatus({ isChecking, connectionStatus }: ConnectionStatusProps) {
-  const { t } = useTranslation('settings');
-  
-  const getConnectionText = () => {
-    if (isChecking) {
-      return t('projectSections.linear.checking');
-    }
-    
-    if (connectionStatus?.connected) {
-      if (connectionStatus.teamName) {
-        return t('projectSections.linear.connectedTo', { team: connectionStatus.teamName });
-      }
-      return t('projectSections.linear.connected');
-    }
-    
-    return connectionStatus?.error || t('projectSections.linear.notConnected');
-  };
-  
-  const getStatusIcon = () => {
-    if (isChecking) {
-      return <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />;
-    }
-    
-    if (connectionStatus?.connected) {
-      return <CheckCircle2 className="h-4 w-4 text-success" />;
-    }
-    
-    return <AlertCircle className="h-4 w-4 text-warning" />;
-  };
-  
-  return (
-    <div className="rounded-lg border border-border bg-muted/30 p-3">
-      <div className="flex items-center justify-between">
-        <div>
-          <p className="text-sm font-medium text-foreground">{t('projectSections.linear.connectionStatus')}</p>
-          <p className="text-xs text-muted-foreground">
-            {getConnectionText()}
-          </p>
-          {connectionStatus?.connected && connectionStatus.issueCount !== undefined && (
-            <p className="text-xs text-muted-foreground mt-1">
-              {t('projectSections.linear.tasksAvailable', { count: connectionStatus.issueCount })}
-            </p>
-          )}
-        </div>
-        {getStatusIcon()}
-      </div>
-    </div>
-  );
+function ConnectionStatus({
+	isChecking,
+	connectionStatus,
+}: ConnectionStatusProps) {
+	const { t } = useTranslation("settings");
+
+	const getConnectionText = () => {
+		if (isChecking) {
+			return t("projectSections.linear.checking");
+		}
+
+		if (connectionStatus?.connected) {
+			if (connectionStatus.teamName) {
+				return t("projectSections.linear.connectedTo", {
+					team: connectionStatus.teamName,
+				});
+			}
+			return t("projectSections.linear.connected");
+		}
+
+		return connectionStatus?.error || t("projectSections.linear.notConnected");
+	};
+
+	const getStatusIcon = () => {
+		if (isChecking) {
+			return <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />;
+		}
+
+		if (connectionStatus?.connected) {
+			return <CheckCircle2 className="h-4 w-4 text-success" />;
+		}
+
+		return <AlertCircle className="h-4 w-4 text-warning" />;
+	};
+
+	return (
+		<div className="rounded-lg border border-border bg-muted/30 p-3">
+			<div className="flex items-center justify-between">
+				<div>
+					<p className="text-sm font-medium text-foreground">
+						{t("projectSections.linear.connectionStatus")}
+					</p>
+					<p className="text-xs text-muted-foreground">{getConnectionText()}</p>
+					{connectionStatus?.connected &&
+						connectionStatus.issueCount !== undefined && (
+							<p className="text-xs text-muted-foreground mt-1">
+								{t("projectSections.linear.tasksAvailable", {
+									count: connectionStatus.issueCount,
+								})}
+							</p>
+						)}
+				</div>
+				{getStatusIcon()}
+			</div>
+		</div>
+	);
 }
 
 interface ImportTasksPromptProps {
-  readonly onOpenLinearImport: () => void;
+	readonly onOpenLinearImport: () => void;
 }
 
 function ImportTasksPrompt({ onOpenLinearImport }: ImportTasksPromptProps) {
-  return (
-    <div className="rounded-lg border border-info/30 bg-info/5 p-3">
-      <div className="flex items-start gap-3">
-        <Import className="h-5 w-5 text-info mt-0.5" />
-        <div className="flex-1">
-          <p className="text-sm font-medium text-foreground">Import Existing Tasks</p>
-          <p className="text-xs text-muted-foreground mt-1">
-            Select which Linear issues to import into AutoBuild as tasks.
-          </p>
-          <Button
-            size="sm"
-            variant="outline"
-            className="mt-2"
-            onClick={onOpenLinearImport}
-          >
-            <Import className="h-4 w-4 mr-2" />
-            Import Tasks from Linear
-          </Button>
-        </div>
-      </div>
-    </div>
-  );
+	return (
+		<div className="rounded-lg border border-info/30 bg-info/5 p-3">
+			<div className="flex items-start gap-3">
+				<Import className="h-5 w-5 text-info mt-0.5" />
+				<div className="flex-1">
+					<p className="text-sm font-medium text-foreground">
+						Import Existing Tasks
+					</p>
+					<p className="text-xs text-muted-foreground mt-1">
+						Select which Linear issues to import into AutoBuild as tasks.
+					</p>
+					<Button
+						size="sm"
+						variant="outline"
+						className="mt-2"
+						onClick={onOpenLinearImport}
+					>
+						<Import className="h-4 w-4 mr-2" />
+						Import Tasks from Linear
+					</Button>
+				</div>
+			</div>
+		</div>
+	);
 }
 
 interface RealtimeSyncToggleProps {
-  readonly enabled: boolean;
-  readonly onToggle: (checked: boolean) => void;
+	readonly enabled: boolean;
+	readonly onToggle: (checked: boolean) => void;
 }
 
 function RealtimeSyncToggle({ enabled, onToggle }: RealtimeSyncToggleProps) {
-  const { t } = useTranslation('settings');
-  
-  return (
-    <div className="flex items-center justify-between">
-      <div className="space-y-0.5">
-        <div className="flex items-center gap-2">
-          <Radio className="h-4 w-4 text-info" />
-          <Label className="font-normal text-foreground">{t('integrations.linear.realtimeSync')}</Label>
-        </div>
-        <p className="text-xs text-muted-foreground pl-6">
-          {t('integrations.linear.realtimeSyncDescription')}
-        </p>
-      </div>
-      <Switch checked={enabled} onCheckedChange={onToggle} />
-    </div>
-  );
+	const { t } = useTranslation("settings");
+
+	return (
+		<div className="flex items-center justify-between">
+			<div className="space-y-0.5">
+				<div className="flex items-center gap-2">
+					<Radio className="h-4 w-4 text-info" />
+					<Label className="font-normal text-foreground">
+						{t("integrations.linear.realtimeSync")}
+					</Label>
+				</div>
+				<p className="text-xs text-muted-foreground pl-6">
+					{t("integrations.linear.realtimeSyncDescription")}
+				</p>
+			</div>
+			<Switch checked={enabled} onCheckedChange={onToggle} />
+		</div>
+	);
 }
 
 function RealtimeSyncWarning() {
-  return (
-    <div className="rounded-lg border border-warning/30 bg-warning/5 p-3 ml-6">
-      <p className="text-xs text-warning">
-        When enabled, new Linear issues will be automatically imported into AutoBuild.
-        Make sure to configure your team/project filters below to control which issues are imported.
-      </p>
-    </div>
-  );
+	return (
+		<div className="rounded-lg border border-warning/30 bg-warning/5 p-3 ml-6">
+			<p className="text-xs text-warning">
+				When enabled, new Linear issues will be automatically imported into
+				AutoBuild. Make sure to configure your team/project filters below to
+				control which issues are imported.
+			</p>
+		</div>
+	);
 }
 
 interface TeamProjectIdsProps {
-  readonly teamId: string;
-  readonly projectId: string;
-  readonly onTeamIdChange: (value: string) => void;
-  readonly onProjectIdChange: (value: string) => void;
+	readonly teamId: string;
+	readonly projectId: string;
+	readonly onTeamIdChange: (value: string) => void;
+	readonly onProjectIdChange: (value: string) => void;
 }
 
-function TeamProjectIds({ teamId, projectId, onTeamIdChange, onProjectIdChange }: TeamProjectIdsProps) {
-  const { t } = useTranslation('settings');
-  
-  return (
-    <div className="grid grid-cols-2 gap-4">
-      <div className="space-y-2">
-        <Label className="text-sm font-medium text-foreground">{t('integrations.linear.teamId')}</Label>
-        <Input
-          placeholder={t('integrations.linear.teamIdPlaceholder')}
-          value={teamId}
-          onChange={(e) => onTeamIdChange(e.target.value)}
-        />
-      </div>
-      <div className="space-y-2">
-        <Label className="text-sm font-medium text-foreground">{t('integrations.linear.projectId')}</Label>
-        <Input
-          placeholder={t('integrations.linear.projectIdPlaceholder')}
-          value={projectId}
-          onChange={(e) => onProjectIdChange(e.target.value)}
-        />
-      </div>
-    </div>
-  );
+function TeamProjectIds({
+	teamId,
+	projectId,
+	onTeamIdChange,
+	onProjectIdChange,
+}: TeamProjectIdsProps) {
+	const { t } = useTranslation("settings");
+
+	return (
+		<div className="grid grid-cols-2 gap-4">
+			<div className="space-y-2">
+				<Label className="text-sm font-medium text-foreground">
+					{t("integrations.linear.teamId")}
+				</Label>
+				<Input
+					placeholder={t("integrations.linear.teamIdPlaceholder")}
+					value={teamId}
+					onChange={(e) => onTeamIdChange(e.target.value)}
+				/>
+			</div>
+			<div className="space-y-2">
+				<Label className="text-sm font-medium text-foreground">
+					{t("integrations.linear.projectId")}
+				</Label>
+				<Input
+					placeholder={t("integrations.linear.projectIdPlaceholder")}
+					value={projectId}
+					onChange={(e) => onProjectIdChange(e.target.value)}
+				/>
+			</div>
+		</div>
+	);
 }

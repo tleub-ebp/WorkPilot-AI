@@ -9,16 +9,16 @@
  * This data feeds into the profile scorer for smarter switching decisions.
  */
 
-import type { VelocityData, TimeToLimitData } from './profile-scorer';
+import type { TimeToLimitData, VelocityData } from "./profile-scorer";
 
 // ============================================
 // Types
 // ============================================
 
 interface UsageDataPoint {
-  sessionPercent: number;
-  weeklyPercent: number;
-  timestamp: number; // Date.now()
+	sessionPercent: number;
+	weeklyPercent: number;
+	timestamp: number; // Date.now()
 }
 
 // ============================================
@@ -44,188 +44,203 @@ const MIN_ELAPSED_MS = 30 * 1000;
  * each profile is consuming its quota.
  */
 class VelocityTracker {
-  private static instance: VelocityTracker;
+	private static instance: VelocityTracker;
 
-  /** Historical data points per profile (keyed by profileId) */
-  private dataPoints: Map<string, UsageDataPoint[]> = new Map();
+	/** Historical data points per profile (keyed by profileId) */
+	private dataPoints: Map<string, UsageDataPoint[]> = new Map();
 
-  private constructor() {}
+	private constructor() {}
 
-  static getInstance(): VelocityTracker {
-    if (!VelocityTracker.instance) {
-      VelocityTracker.instance = new VelocityTracker();
-    }
-    return VelocityTracker.instance;
-  }
+	static getInstance(): VelocityTracker {
+		if (!VelocityTracker.instance) {
+			VelocityTracker.instance = new VelocityTracker();
+		}
+		return VelocityTracker.instance;
+	}
 
-  /**
-   * Record a new usage data point for a profile.
-   * Automatically prunes old entries beyond MAX_DATA_POINTS and MAX_DATA_AGE_MS.
-   */
-  recordDataPoint(profileId: string, sessionPercent: number, weeklyPercent: number): void {
-    const now = Date.now();
-    const point: UsageDataPoint = { sessionPercent, weeklyPercent, timestamp: now };
+	/**
+	 * Record a new usage data point for a profile.
+	 * Automatically prunes old entries beyond MAX_DATA_POINTS and MAX_DATA_AGE_MS.
+	 */
+	recordDataPoint(
+		profileId: string,
+		sessionPercent: number,
+		weeklyPercent: number,
+	): void {
+		const now = Date.now();
+		const point: UsageDataPoint = {
+			sessionPercent,
+			weeklyPercent,
+			timestamp: now,
+		};
 
-    let points = this.dataPoints.get(profileId);
-    if (!points) {
-      points = [];
-      this.dataPoints.set(profileId, points);
-    }
+		let points = this.dataPoints.get(profileId);
+		if (!points) {
+			points = [];
+			this.dataPoints.set(profileId, points);
+		}
 
-    points.push(point);
+		points.push(point);
 
-    // Prune old data points
-    const cutoff = now - MAX_DATA_AGE_MS;
-    const pruned = points.filter(p => p.timestamp >= cutoff);
+		// Prune old data points
+		const cutoff = now - MAX_DATA_AGE_MS;
+		const pruned = points.filter((p) => p.timestamp >= cutoff);
 
-    // Keep only the most recent MAX_DATA_POINTS
-    if (pruned.length > MAX_DATA_POINTS) {
-      this.dataPoints.set(profileId, pruned.slice(-MAX_DATA_POINTS));
-    } else {
-      this.dataPoints.set(profileId, pruned);
-    }
-  }
+		// Keep only the most recent MAX_DATA_POINTS
+		if (pruned.length > MAX_DATA_POINTS) {
+			this.dataPoints.set(profileId, pruned.slice(-MAX_DATA_POINTS));
+		} else {
+			this.dataPoints.set(profileId, pruned);
+		}
+	}
 
-  /**
-   * Get the consumption velocity for a profile.
-   *
-   * Calculates the rate of change in usage (% per minute) using a weighted
-   * average of recent deltas. More recent deltas are weighted higher.
-   *
-   * @returns VelocityData with velocities and confidence level
-   */
-  getVelocity(profileId: string): VelocityData {
-    const points = this.dataPoints.get(profileId);
+	/**
+	 * Get the consumption velocity for a profile.
+	 *
+	 * Calculates the rate of change in usage (% per minute) using a weighted
+	 * average of recent deltas. More recent deltas are weighted higher.
+	 *
+	 * @returns VelocityData with velocities and confidence level
+	 */
+	getVelocity(profileId: string): VelocityData {
+		const points = this.dataPoints.get(profileId);
 
-    if (!points || points.length < 2) {
-      return {
-        sessionVelocity: 0,
-        weeklyVelocity: 0,
-        sampleCount: points?.length ?? 0,
-        confidence: 'low',
-      };
-    }
+		if (!points || points.length < 2) {
+			return {
+				sessionVelocity: 0,
+				weeklyVelocity: 0,
+				sampleCount: points?.length ?? 0,
+				confidence: "low",
+			};
+		}
 
-    // Calculate weighted average of deltas (more recent = higher weight)
-    let sessionVelocitySum = 0;
-    let weeklyVelocitySum = 0;
-    let weightSum = 0;
-    let validDeltas = 0;
+		// Calculate weighted average of deltas (more recent = higher weight)
+		let sessionVelocitySum = 0;
+		let weeklyVelocitySum = 0;
+		let weightSum = 0;
+		let validDeltas = 0;
 
-    for (let i = 1; i < points.length; i++) {
-      const prev = points[i - 1];
-      const curr = points[i];
-      const elapsedMs = curr.timestamp - prev.timestamp;
+		for (let i = 1; i < points.length; i++) {
+			const prev = points[i - 1];
+			const curr = points[i];
+			const elapsedMs = curr.timestamp - prev.timestamp;
 
-      // Skip deltas with too little time elapsed (avoid division by near-zero)
-      if (elapsedMs < MIN_ELAPSED_MS) {
-        continue;
-      }
+			// Skip deltas with too little time elapsed (avoid division by near-zero)
+			if (elapsedMs < MIN_ELAPSED_MS) {
+				continue;
+			}
 
-      const elapsedMinutes = elapsedMs / 60000;
-      const sessionDelta = (curr.sessionPercent - prev.sessionPercent) / elapsedMinutes;
-      const weeklyDelta = (curr.weeklyPercent - prev.weeklyPercent) / elapsedMinutes;
+			const elapsedMinutes = elapsedMs / 60000;
+			const sessionDelta =
+				(curr.sessionPercent - prev.sessionPercent) / elapsedMinutes;
+			const weeklyDelta =
+				(curr.weeklyPercent - prev.weeklyPercent) / elapsedMinutes;
 
-      // Weight: more recent deltas get higher weight (linear increase)
-      const weight = i;
-      sessionVelocitySum += sessionDelta * weight;
-      weeklyVelocitySum += weeklyDelta * weight;
-      weightSum += weight;
-      validDeltas++;
-    }
+			// Weight: more recent deltas get higher weight (linear increase)
+			const weight = i;
+			sessionVelocitySum += sessionDelta * weight;
+			weeklyVelocitySum += weeklyDelta * weight;
+			weightSum += weight;
+			validDeltas++;
+		}
 
-    if (weightSum === 0 || validDeltas === 0) {
-      return {
-        sessionVelocity: 0,
-        weeklyVelocity: 0,
-        sampleCount: points.length,
-        confidence: 'low',
-      };
-    }
+		if (weightSum === 0 || validDeltas === 0) {
+			return {
+				sessionVelocity: 0,
+				weeklyVelocity: 0,
+				sampleCount: points.length,
+				confidence: "low",
+			};
+		}
 
-    const sessionVelocity = sessionVelocitySum / weightSum;
-    const weeklyVelocity = weeklyVelocitySum / weightSum;
+		const sessionVelocity = sessionVelocitySum / weightSum;
+		const weeklyVelocity = weeklyVelocitySum / weightSum;
 
-    // Determine confidence based on number of valid deltas
-    let confidence: VelocityData['confidence'];
-    if (validDeltas >= 5) {
-      confidence = 'high';
-    } else if (validDeltas >= 2) {
-      confidence = 'medium';
-    } else {
-      confidence = 'low';
-    }
+		// Determine confidence based on number of valid deltas
+		let confidence: VelocityData["confidence"];
+		if (validDeltas >= 5) {
+			confidence = "high";
+		} else if (validDeltas >= 2) {
+			confidence = "medium";
+		} else {
+			confidence = "low";
+		}
 
-    return {
-      sessionVelocity: Math.round(sessionVelocity * 1000) / 1000,
-      weeklyVelocity: Math.round(weeklyVelocity * 1000) / 1000,
-      sampleCount: points.length,
-      confidence,
-    };
-  }
+		return {
+			sessionVelocity: Math.round(sessionVelocity * 1000) / 1000,
+			weeklyVelocity: Math.round(weeklyVelocity * 1000) / 1000,
+			sampleCount: points.length,
+			confidence,
+		};
+	}
 
-  /**
-   * Estimate how many minutes until a profile hits the given thresholds,
-   * based on current usage and velocity.
-   *
-   * @param profileId - Profile to check
-   * @param sessionThreshold - Session usage threshold (e.g., 95)
-   * @param weeklyThreshold - Weekly usage threshold (e.g., 99)
-   * @returns Time-to-limit prediction (null means not approaching limit)
-   */
-  getEstimatedTimeToLimit(
-    profileId: string,
-    sessionThreshold: number,
-    weeklyThreshold: number
-  ): TimeToLimitData {
-    const points = this.dataPoints.get(profileId);
-    const velocity = this.getVelocity(profileId);
+	/**
+	 * Estimate how many minutes until a profile hits the given thresholds,
+	 * based on current usage and velocity.
+	 *
+	 * @param profileId - Profile to check
+	 * @param sessionThreshold - Session usage threshold (e.g., 95)
+	 * @param weeklyThreshold - Weekly usage threshold (e.g., 99)
+	 * @returns Time-to-limit prediction (null means not approaching limit)
+	 */
+	getEstimatedTimeToLimit(
+		profileId: string,
+		sessionThreshold: number,
+		weeklyThreshold: number,
+	): TimeToLimitData {
+		const points = this.dataPoints.get(profileId);
+		const velocity = this.getVelocity(profileId);
 
-    // Need at least current usage to estimate
-    if (!points || points.length === 0) {
-      return { sessionMinutesRemaining: null, weeklyMinutesRemaining: null };
-    }
+		// Need at least current usage to estimate
+		if (!points || points.length === 0) {
+			return { sessionMinutesRemaining: null, weeklyMinutesRemaining: null };
+		}
 
-    const latest = points[points.length - 1];
+		const latest = points[points.length - 1];
 
-    // Session time-to-limit
-    let sessionMinutesRemaining: number | null = null;
-    if (velocity.sessionVelocity > 0 && latest.sessionPercent < sessionThreshold) {
-      const remainingPercent = sessionThreshold - latest.sessionPercent;
-      sessionMinutesRemaining = remainingPercent / velocity.sessionVelocity;
-    }
+		// Session time-to-limit
+		let sessionMinutesRemaining: number | null = null;
+		if (
+			velocity.sessionVelocity > 0 &&
+			latest.sessionPercent < sessionThreshold
+		) {
+			const remainingPercent = sessionThreshold - latest.sessionPercent;
+			sessionMinutesRemaining = remainingPercent / velocity.sessionVelocity;
+		}
 
-    // Weekly time-to-limit
-    let weeklyMinutesRemaining: number | null = null;
-    if (velocity.weeklyVelocity > 0 && latest.weeklyPercent < weeklyThreshold) {
-      const remainingPercent = weeklyThreshold - latest.weeklyPercent;
-      weeklyMinutesRemaining = remainingPercent / velocity.weeklyVelocity;
-    }
+		// Weekly time-to-limit
+		let weeklyMinutesRemaining: number | null = null;
+		if (velocity.weeklyVelocity > 0 && latest.weeklyPercent < weeklyThreshold) {
+			const remainingPercent = weeklyThreshold - latest.weeklyPercent;
+			weeklyMinutesRemaining = remainingPercent / velocity.weeklyVelocity;
+		}
 
-    return {
-      sessionMinutesRemaining: sessionMinutesRemaining !== null
-        ? Math.round(sessionMinutesRemaining * 10) / 10
-        : null,
-      weeklyMinutesRemaining: weeklyMinutesRemaining !== null
-        ? Math.round(weeklyMinutesRemaining * 10) / 10
-        : null,
-    };
-  }
+		return {
+			sessionMinutesRemaining:
+				sessionMinutesRemaining !== null
+					? Math.round(sessionMinutesRemaining * 10) / 10
+					: null,
+			weeklyMinutesRemaining:
+				weeklyMinutesRemaining !== null
+					? Math.round(weeklyMinutesRemaining * 10) / 10
+					: null,
+		};
+	}
 
-  /**
-   * Clear all data for a specific profile.
-   * Called on auth failure, manual reset, or profile removal.
-   */
-  clearProfile(profileId: string): void {
-    this.dataPoints.delete(profileId);
-  }
+	/**
+	 * Clear all data for a specific profile.
+	 * Called on auth failure, manual reset, or profile removal.
+	 */
+	clearProfile(profileId: string): void {
+		this.dataPoints.delete(profileId);
+	}
 
-  /**
-   * Clear all tracked data (e.g., on provider switch).
-   */
-  clear(): void {
-    this.dataPoints.clear();
-  }
+	/**
+	 * Clear all tracked data (e.g., on provider switch).
+	 */
+	clear(): void {
+		this.dataPoints.clear();
+	}
 }
 
 // ============================================
@@ -236,12 +251,12 @@ class VelocityTracker {
  * Get the singleton VelocityTracker instance.
  */
 export function getVelocityTracker(): VelocityTracker {
-  return VelocityTracker.getInstance();
+	return VelocityTracker.getInstance();
 }
 
 /**
  * Reset the tracker (for testing).
  */
 export function resetVelocityTracker(): void {
-  VelocityTracker.getInstance().clear();
+	VelocityTracker.getInstance().clear();
 }

@@ -3,7 +3,7 @@
  * Each integration manages its own configuration, connection status, and UI.
  */
 
-export { LinearIntegration } from './LinearIntegration';
-export { GitHubIntegration } from './GitHubIntegration';
-export { AzureDevOpsIntegration } from './AzureDevOpsIntegration';
-export { TeamsIntegration } from './TeamsIntegration';
+export { AzureDevOpsIntegration } from "./AzureDevOpsIntegration";
+export { GitHubIntegration } from "./GitHubIntegration";
+export { LinearIntegration } from "./LinearIntegration";
+export { TeamsIntegration } from "./TeamsIntegration";

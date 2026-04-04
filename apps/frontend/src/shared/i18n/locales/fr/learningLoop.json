@@ -1,43 +1,43 @@
 {
-  "title": "Boucle d'apprentissage",
-  "description": "Apprentissage automatique des agents par analyse des patterns de builds. Les patterns sont extraits des builds pass\u00e9s et inject\u00e9s dans les futurs prompts des agents.",
-  "summary": {
-    "totalPatterns": "Patterns totaux",
-    "enabled": "Actifs",
-    "avgConfidence": "Confiance moy.",
-    "buildsAnalyzed": "Builds analys\u00e9s"
-  },
-  "patterns": {
-    "title": "Patterns appris ({{count}})",
-    "instruction": "Instruction actionnable",
-    "applied": "Appliqu\u00e9 {{count}} fois",
-    "effectiveness": "{{rate}}% d'efficacit\u00e9",
-    "source": "Source"
-  },
-  "categories": {
-    "tool_sequence": "S\u00e9quence d'outils",
-    "prompt_strategy": "Strat\u00e9gie de prompt",
-    "error_resolution": "R\u00e9solution d'erreurs",
-    "qa_pattern": "Pattern QA",
-    "code_structure": "Structure de code"
-  },
-  "status": {
-    "analyzing": "Analyse de l'historique des builds...",
-    "complete": "Analyse termin\u00e9e. Patterns mis \u00e0 jour."
-  },
-  "actions": {
-    "analyze": "Analyser les builds",
-    "reanalyze": "R\u00e9-analyser les builds",
-    "enable": "Activer le pattern",
-    "disable": "D\u00e9sactiver le pattern",
-    "delete": "Supprimer le pattern",
-    "close": "Fermer"
-  },
-  "empty": {
-    "title": "Aucun pattern extrait",
-    "description": "Lancez une analyse pour extraire les patterns d'apprentissage de votre historique de builds."
-  },
-  "errors": {
-    "noProject": "Veuillez s\u00e9lectionner un projet \u00e0 analyser."
-  }
+	"title": "Boucle d'apprentissage",
+	"description": "Apprentissage automatique des agents par analyse des patterns de builds. Les patterns sont extraits des builds pass\u00e9s et inject\u00e9s dans les futurs prompts des agents.",
+	"summary": {
+		"totalPatterns": "Patterns totaux",
+		"enabled": "Actifs",
+		"avgConfidence": "Confiance moy.",
+		"buildsAnalyzed": "Builds analys\u00e9s"
+	},
+	"patterns": {
+		"title": "Patterns appris ({{count}})",
+		"instruction": "Instruction actionnable",
+		"applied": "Appliqu\u00e9 {{count}} fois",
+		"effectiveness": "{{rate}}% d'efficacit\u00e9",
+		"source": "Source"
+	},
+	"categories": {
+		"tool_sequence": "S\u00e9quence d'outils",
+		"prompt_strategy": "Strat\u00e9gie de prompt",
+		"error_resolution": "R\u00e9solution d'erreurs",
+		"qa_pattern": "Pattern QA",
+		"code_structure": "Structure de code"
+	},
+	"status": {
+		"analyzing": "Analyse de l'historique des builds...",
+		"complete": "Analyse termin\u00e9e. Patterns mis \u00e0 jour."
+	},
+	"actions": {
+		"analyze": "Analyser les builds",
+		"reanalyze": "R\u00e9-analyser les builds",
+		"enable": "Activer le pattern",
+		"disable": "D\u00e9sactiver le pattern",
+		"delete": "Supprimer le pattern",
+		"close": "Fermer"
+	},
+	"empty": {
+		"title": "Aucun pattern extrait",
+		"description": "Lancez une analyse pour extraire les patterns d'apprentissage de votre historique de builds."
+	},
+	"errors": {
+		"noProject": "Veuillez s\u00e9lectionner un projet \u00e0 analyser."
+	}
 }

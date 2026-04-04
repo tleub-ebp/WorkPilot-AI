@@ -8,16 +8,21 @@
  * Those are handled by the IPC handlers where they have full context.
  */
 
-import { app } from 'electron';
-import { existsSync, readFileSync, writeFileSync, mkdirSync } from 'fs';
-import { promises as fsPromises } from 'fs';
-import path from 'path';
+import { app } from "electron";
+import {
+	existsSync,
+	promises as fsPromises,
+	mkdirSync,
+	readFileSync,
+	writeFileSync,
+} from "fs";
+import path from "path";
 
 /**
  * Get the path to the settings file
  */
 export function getSettingsPath(): string {
-  return path.join(app.getPath('userData'), 'settings.json');
+	return path.join(app.getPath("userData"), "settings.json");
 }
 
 /**
@@ -28,19 +33,19 @@ export function getSettingsPath(): string {
  * Callers are responsible for merging with DEFAULT_APP_SETTINGS.
  */
 export function readSettingsFile(): Record<string, unknown> | undefined {
-  const settingsPath = getSettingsPath();
+	const settingsPath = getSettingsPath();
 
-  if (!existsSync(settingsPath)) {
-    return undefined;
-  }
+	if (!existsSync(settingsPath)) {
+		return undefined;
+	}
 
-  try {
-    const content = readFileSync(settingsPath, 'utf-8');
-    return JSON.parse(content);
-  } catch {
-    // Return undefined on parse error - caller will use defaults
-    return undefined;
-  }
+	try {
+		const content = readFileSync(settingsPath, "utf-8");
+		return JSON.parse(content);
+	} catch {
+		// Return undefined on parse error - caller will use defaults
+		return undefined;
+	}
 }
 
 /**
@@ -49,15 +54,15 @@ export function readSettingsFile(): Record<string, unknown> | undefined {
  * @param settings - The settings object to write
  */
 export function writeSettingsFile(settings: Record<string, unknown>): void {
-  const settingsPath = getSettingsPath();
+	const settingsPath = getSettingsPath();
 
-  // Ensure the directory exists
-  const dir = path.dirname(settingsPath);
-  if (!existsSync(dir)) {
-    mkdirSync(dir, { recursive: true });
-  }
+	// Ensure the directory exists
+	const dir = path.dirname(settingsPath);
+	if (!existsSync(dir)) {
+		mkdirSync(dir, { recursive: true });
+	}
 
-  writeFileSync(settingsPath, JSON.stringify(settings, null, 2), 'utf-8');
+	writeFileSync(settingsPath, JSON.stringify(settings, null, 2), "utf-8");
 }
 
 /**
@@ -70,20 +75,22 @@ export function writeSettingsFile(settings: Record<string, unknown>): void {
  * This function does NOT merge with defaults or perform any migrations.
  * Callers are responsible for merging with DEFAULT_APP_SETTINGS.
  */
-export async function readSettingsFileAsync(): Promise<Record<string, unknown> | undefined> {
-  const settingsPath = getSettingsPath();
+export async function readSettingsFileAsync(): Promise<
+	Record<string, unknown> | undefined
+> {
+	const settingsPath = getSettingsPath();
 
-  try {
-    await fsPromises.access(settingsPath);
-  } catch {
-    return undefined;
-  }
+	try {
+		await fsPromises.access(settingsPath);
+	} catch {
+		return undefined;
+	}
 
-  try {
-    const content = await fsPromises.readFile(settingsPath, 'utf-8');
-    return JSON.parse(content);
-  } catch {
-    // Return undefined on parse error - caller will use defaults
-    return undefined;
-  }
+	try {
+		const content = await fsPromises.readFile(settingsPath, "utf-8");
+		return JSON.parse(content);
+	} catch {
+		// Return undefined on parse error - caller will use defaults
+		return undefined;
+	}
 }

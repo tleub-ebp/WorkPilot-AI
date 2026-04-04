@@ -1,2146 +1,2146 @@
 {
-  "title": "Settings",
-  "common": {
-    "enabled": "Enabled",
-    "disabled": "Disabled"
-  },
-  "tabs": {
-    "app": "App Settings",
-    "project": "Project Settings"
-  },
-  "sections": {
-    "appearance": {
-      "title": "Appearance",
-      "description": "Customize how WorkPilot AI looks"
-    },
-    "display": {
-      "title": "Display",
-      "description": "Adjust the size of UI elements"
-    },
-    "language": {
-      "title": "Language",
-      "description": "Choose your preferred language"
-    },
-    "devtools": {
-      "title": "Developer Tools",
-      "description": "IDE and terminal preferences"
-    },
-    "agent": {
-      "title": "Agent Settings",
-      "description": "Default model and framework"
-    },
-    "paths": {
-      "title": "Paths",
-      "description": "CLI tools and framework paths"
-    },
-    "accounts": {
-      "title": "Accounts",
-      "description": "Accounts & API endpoints",
-      "form": {
-        "addAccount": "Add {{provider}} Account",
-        "name": "Account Name",
-        "namePlaceholder": "Account Name",
-        "apiKey": "API Key",
-        "apiKeyPlaceholder": "sk-...",
-        "baseUrl": "Base URL",
-        "baseUrlPlaceholder": "https://api.example.com",
-        "llmGatewayUrl": "LLM Gateway URL",
-        "llmGatewayUrlPlaceholder": "https://gateway.example.com",
-        "chooseModel": "-- Choose Model --",
-        "save": "Save",
-        "cancel": "Cancel"
-      },
-      "autoSwitching": {
-        "globalTitle": "Automatic Account Switching",
-        "globalDescription": "Automatically switch between your accounts based on usage and rate limits.",
-        "title": "Auto-switching",
-        "providerAdded": "Provider added to auto-switching",
-        "providerRemoved": "Provider removed from auto-switching",
-        "providerDescription": "{{providerName}} has been {{action}} to auto-switching list",
-        "syncError": "Sync Error",
-        "syncErrorDescription": "Failed to sync provider with auto-switching"
-      },
-      "providerConfig": {
-        "title": "Configuration",
-        "windsurfAuth": {
-          "description": "Automatically detect your Windsurf credentials from your local IDE installation.",
-          "oauthDetected": "Windsurf SSO authentication detected",
-          "tokenLoaded": "The Windsurf SSO token has been automatically loaded from your local IDE environment.",
-          "noConfigRequired": "No manual configuration required. Alternatively, use the API Key tab with a Service Key.",
-          "claudeCodeAuth": "Use Claude Code OAuth authentication to easily connect with your Claude account.",
-          "authenticating": "Authenticating...",
-          "connectWithClaude": "Connect with Claude Code",
-          "terminalInstructions": "This will open a terminal where you can run the `/login` command to authenticate.",
-          "detectFromIDE": "Detect from Windsurf IDE",
-          "detecting": "Detecting...",
-          "detectSuccess": "Token detected for {{userName}}!",
-          "detectFailed": "Could not detect token. Make sure Windsurf IDE is installed and you are signed in.",
-          "orManual": "Or sign in manually:",
-          "openWindsurfLogin": "windsurf.com/account",
-          "tokenDetected": "API key detected",
-          "saveAndConnect": "Save & Connect",
-          "saveSuccess": "Windsurf connection saved successfully!",
-          "accountInfo": "Authenticated Account",
-          "accountName": "Name",
-          "accountPlan": "Plan",
-          "accountCredits": "Credits",
-          "accountFlowActions": "Flow Actions"
-        },
-        "openaiAuth": {
-          "codexCliAuth": "Use an OpenAI API key from platform.openai.com to connect.",
-          "oauthNotSupported": "Codex CLI OAuth cannot be used for API calls",
-          "oauthExplanation": "OpenAI does not allow ChatGPT/Codex CLI OAuth tokens to call the API directly. A paid API key (sk-...) with billing is required.",
-          "useApiKeyInstead": "To use the OpenAI provider, get an API key from platform.openai.com:",
-          "step1": "Go to platform.openai.com/api-keys",
-          "step2": "Create a new API key (starts with sk-...)",
-          "step3": "Enter it in the \"API Key\" tab",
-          "openPlatform": "Open platform.openai.com"
-        }
-      },
-      "providerCard": {
-        "configure": "Configure",
-        "test": "Test",
-        "edit": "Edit",
-        "apiKey": "API Key",
-        "authentication": "Authentication",
-        "authCli": "CLI Auth",
-        "authOauth": "OAuth",
-        "authLocal": "Local",
-        "cliAuthenticated": "CLI authenticated",
-        "oauthConnected": "OAuth connected",
-        "localRunning": "Local instance",
-        "oauthCli": "OAuth (CLI)",
-        "notConfigured": "Not configured",
-        "lastTest": "Last test",
-        "neverTested": "Never tested",
-        "usage": "Usage",
-        "usageThisMonth": "Usage this month",
-        "week": "week",
-        "notAvailable": "Not available",
-        "source": "Source",
-        "statusLabel": "Status",
-        "status": {
-          "notConfigured": "Not configured",
-          "error": "Error",
-          "active": "Active"
-        },
-        "rateLimited": "Rate limited",
-        "needsReauth": "Needs re-authentication",
-        "statusNested": {
-          "notConfigured": "Not configured",
-          "error": "Error",
-          "active": "Active"
-        },
-        "testSuccess": "Test successful",
-        "testSuccessDescription": "The {{providerName}} provider is working correctly",
-        "testError": "Test failed",
-        "testErrorDescription": "The {{providerName}} provider failed: {{error}}",
-        "deleteConfirm": "Are you sure you want to delete this provider configuration?",
-        "testDetails": {
-          "modelsAvailable": "{{count}} models available",
-          "modelUsed": "Model used: {{model}}"
-        },
-        "errors": {
-          "unknownError": "Unknown error"
-        }
-      },
-      "providers": {
-        "meta": "Official Meta AI models",
-        "mistral": "Mistral AI models (Mistral, Codéal, etc.)",
-        "deepseek": "DeepSeek models (DeepSeek-Coder, etc.)",
-        "aws": "AWS Bedrock and Amazon services",
-        "copilot": "GitHub Copilot",
-        "grok": "Grok xAI models",
-        "windsurf": "Windsurf AI Provider",
-        "cursor": "Cursor AI Provider",
-        "ollama": "Local open-source models with Ollama",
-        "anthropic": "Anthropic Claude models",
-        "google": "Google and Google DeepMind API access",
-        "openai": "GPT-5 and other OpenAI models",
-        "loadError": "Failed to load provider list"
-      },
-      "providerToggle": {
-        "enabled": "Provider enabled",
-        "disabled": "Provider disabled",
-        "description": "{{providerId}} has been {{action}} successfully",
-        "error": "Error",
-        "errorDescription": "Failed to {{action}} provider {{providerId}}"
-      },
-      "alerts": {
-        "noProviders": "No providers configured. Configure your API keys to get started.",
-        "providerErrors": "{{count}} provider(s) with errors"
-      }
-    },
-    "updates": {
-      "title": "Updates",
-      "description": "WorkPilot AI updates"
-    },
-    "notifications": {
-      "title": "Notifications",
-      "description": "Alert preferences"
-    },
-    "debug": {
-      "title": "Debug & Logs",
-      "description": "Troubleshooting tools"
-    },
-    "terminal-fonts": {
-      "title": "Terminal Fonts",
-      "description": "Customize terminal font appearance"
-    },
-    "sandbox": {
-      "title": "Sandbox",
-      "description": "Agent execution isolation & rollback",
-      "defaultMode": {
-        "title": "Default Sandbox Mode",
-        "description": "Choose the default isolation mode for agent execution.",
-        "normal": {
-          "label": "Normal",
-          "description": "Whitelist + resource limits"
-        },
-        "restricted": {
-          "label": "Restricted",
-          "description": "Strict whitelist, reduced limits"
-        },
-        "dryRun": {
-          "label": "Dry-run",
-          "description": "Plan only, no file changes"
-        },
-        "docker": {
-          "label": "Docker",
-          "description": "Full container isolation"
-        }
-      },
-      "fileAccess": {
-        "title": "File Access Whitelist",
-        "description": "Paths agents are allowed to access. Sensitive paths (.git/, .env, .ssh/) are always blocked.",
-        "placeholder": "e.g. lib/ or config/app.json",
-        "read": "Read",
-        "write": "Write",
-        "readWrite": "Read/Write",
-        "readOnly": "Read Only",
-        "add": "Add"
-      },
-      "resourceLimits": {
-        "title": "Resource Limits",
-        "description": "Maximum resources an agent can consume per execution.",
-        "cpu": "CPU (%)",
-        "ram": "RAM (MB)",
-        "maxTime": "Max Time (s)",
-        "maxFiles": "Max Files",
-        "maxFileSize": "Max File Size (MB)"
-      },
-      "snapshots": {
-        "title": "Snapshots & Rollback",
-        "description": "A file snapshot is automatically created before each agent execution. If the agent fails, files are restored automatically.",
-        "warning": "Snapshots are created per-sandbox and stored in memory. Auto-rollback triggers when an agent execution fails or is terminated by the anomaly detector. Manual rollback is available in the task detail view."
-      },
-      "blockedCommands": {
-        "title": "Blocked Commands (default)",
-        "description": "These commands are always blocked inside the sandbox."
-      }
-    },
-    "anomaly-detection": {
-      "title": "Anomaly Detection",
-      "description": "Agent behavior monitoring & alerts",
-      "enable": {
-        "title": "Enable Anomaly Detection",
-        "description": "Monitor all agent sessions for suspicious behavior"
-      },
-      "trustScore": {
-        "title": "Trust Score Thresholds",
-        "description": "Each agent session starts at 100. Anomalies reduce the score. Actions trigger at these thresholds.",
-        "pauseThreshold": "Pause threshold",
-        "pauseDescription": "Agent is paused and a notification is sent",
-        "terminateThreshold": "Terminate threshold",
-        "terminateDescription": "Agent is terminated immediately"
-      },
-      "detectionLimits": {
-        "title": "Detection Limits",
-        "description": "Fine-tune when specific anomaly types trigger.",
-        "massDeletionCount": "Mass deletion count",
-        "massDeletionDesc": "File deletions before alert",
-        "maxRepetitiveErrors": "Max repetitive errors",
-        "maxRepetitiveDesc": "Errors before alert",
-        "rapidChangeWindow": "Rapid change window (s)",
-        "rapidChangeDesc": "Time window for rapid changes",
-        "tokenUsageMultiplier": "Token usage multiplier",
-        "tokenUsageDesc": "× baseline before alert"
-      },
-      "anomalyTypes": {
-        "title": "Anomaly Types",
-        "description": "10 anomaly types are monitored. Each reduces the trust score by a fixed amount.",
-        "anomaly": "Anomaly",
-        "severity": "Severity",
-        "scoreImpact": "Score Impact",
-        "types": {
-          "massFileDeletion": "Mass file deletion",
-          "sensitiveFileAccess": "Sensitive file access",
-          "dangerousCommand": "Dangerous command",
-          "unexpectedNetworkAccess": "Unexpected network access",
-          "pathTraversalAttempt": "Path traversal attempt",
-          "rapidFileChanges": "Rapid file changes",
-          "excessiveTokenUsage": "Excessive token usage",
-          "systemConfigModification": "System config modification",
-          "repetitiveErrors": "Repetitive errors",
-          "longRunningSession": "Long running session"
-        },
-        "severityLevels": {
-          "critical": "critical",
-          "high": "high",
-          "medium": "medium",
-          "low": "low"
-        }
-      },
-      "sensitivePaths": {
-        "title": "Sensitive Paths (always monitored)",
-        "description": "These paths are always monitored for suspicious activity."
-      }
-    }
-  },
-  "tasks": {
-    "title": "Scheduled Tasks",
-    "description": "Recurring and one-off tasks managed by the scheduler.",
-    "addTask": "Add Task",
-    "table": {
-      "task": "Task",
-      "cron": "Cron",
-      "priority": "Priority",
-      "status": "Status",
-      "nextRun": "Next Run"
-    },
-    "settings": {
-      "title": "Scheduler Settings",
-      "description": "Global configuration for the background task scheduler.",
-      "autoStart": {
-        "label": "Auto-start scheduler",
-        "description": "Start the scheduler daemon when the app launches"
-      },
-      "checkInterval": {
-        "label": "Check interval (seconds)",
-        "description": "How often the scheduler checks for due tasks"
-      }
-    },
-    "chains": {
-      "title": "Task Chains",
-      "description": "Sequential task pipelines. When one task completes, the next starts automatically. Optionally stop on error.",
-      "noChains": "No task chains configured"
-    },
-    "status": {
-      "pending": "pending",
-      "running": "running",
-      "paused": "paused",
-      "completed": "completed",
-      "failed": "failed"
-    },
-    "cronReference": {
-      "title": "Cron Expression Reference",
-      "description": "Standard 5-field POSIX cron syntax: minute hour day-of-month month day-of-week",
-      "table": {
-        "expression": "Expression",
-        "description": "Description"
-      },
-      "examples": {
-        "daily": "Every day at 22:00",
-        "every15min": "Every 15 minutes",
-        "weekly": "Every Monday at 03:00",
-        "monthly": "First day of each month at midnight",
-        "workHours": "Every hour, Mon-Fri, 9 AM to 5 PM"
-      }
-    },
-    "sampleTasks": {
-      "dailyScan": {
-        "name": "Daily security scan",
-        "nextRun": "Tonight 22:00"
-      },
-      "weeklyUpdate": {
-        "name": "Weekly dependency update",
-        "nextRun": "Monday 03:00"
-      },
-      "hourlyLog": {
-        "name": "Hourly log check"
-      },
-      "ciPipeline": "CI Pipeline"
-    },
-    "addButton": "Add Profile",
-    "presets": {
-      "anthropic": "Anthropic (Claude)",
-      "copilot": "GitHub Copilot",
-      "openai": "OpenAI",
-      "mistral": "Mistral AI",
-      "grok": "Grok (xAI)",
-      "gemini": "Gemini (Google)",
-      "windsurf": "Windsurf (Codeium)"
-    },
-    "fields": {
-      "name": "Name",
-      "preset": "Preset",
-      "baseUrl": "Base URL",
-      "apiKey": "API Key"
-    },
-    "placeholders": {
-      "name": "My Custom API",
-      "preset": "Choose a provider preset",
-      "baseUrl": "https://api.anthropic.com",
-      "apiKey": "sk-ant-..."
-    },
-    "hints": {
-      "preset": "Presets fill the base URL; you still need to paste your API key.",
-      "baseUrl": "Example: https://api.anthropic.com or http://localhost:8080"
-    },
-    "validation": {
-      "nameRequired": "Name is required",
-      "baseUrlRequired": "Base URL is required",
-      "baseUrlInvalid": "Invalid URL format (must be http:// or https://)",
-      "apiKeyRequired": "API Key is required",
-      "apiKeyInvalid": "Invalid API Key format"
-    },
-    "actions": {
-      "save": "Save Profile",
-      "saving": "Saving...",
-      "cancel": "Cancel",
-      "changeKey": "Change",
-      "cancelKeyChange": "Cancel"
-    },
-    "testConnection": {
-      "label": "Test Connection",
-      "testing": "Testing...",
-      "success": "Connection Successful",
-      "failure": "Connection Failed"
-    },
-    "models": {
-      "title": "Optional: Model Name Mappings",
-      "description": "Select models from your API provider. Leave blank to use defaults.",
-      "defaultLabel": "Default Model (Optional)",
-      "haikuLabel": "Haiku Model (Optional)",
-      "sonnetLabel": "Sonnet Model (Optional)",
-      "opusLabel": "Opus Model (Optional)",
-      "defaultPlaceholder": "e.g., claude-sonnet-4-5-20250929",
-      "haikuPlaceholder": "e.g., claude-haiku-4-5-20251001",
-      "sonnetPlaceholder": "e.g., claude-sonnet-4-5-20250929",
-      "opusPlaceholder": "e.g., claude-opus-4-5-20251101"
-    },
-    "empty": {
-      "title": "No API profiles configured",
-      "description": "Create a profile to configure custom API endpoints for your builds.",
-      "action": "Create First Profile"
-    },
-    "switchToOauth": {
-      "label": "Switch to OAuth",
-      "loading": "Switching..."
-    },
-    "activeBadge": "Active",
-    "customModels": "Custom models: {{models}}",
-    "setActive": {
-      "label": "Set Active",
-      "loading": "Setting..."
-    },
-    "tooltips": {
-      "edit": "Edit profile",
-      "deleteActive": "Switch to OAuth before deleting",
-      "deleteInactive": "Delete profile"
-    },
-    "deleteAriaLabel": "Delete profile {{name}}",
-    "toast": {
-      "create": {
-        "title": "Profile created",
-        "description": "\"{{name}}\" has been added successfully."
-      },
-      "update": {
-        "title": "Profile updated",
-        "description": "\"{{name}}\" has been updated successfully."
-      },
-      "delete": {
-        "title": "Profile deleted",
-        "description": "\"{{name}}\" has been removed.",
-        "errorTitle": "Failed to delete profile",
-        "errorFallback": "An error occurred while deleting the profile."
-      },
-      "switch": {
-        "oauthTitle": "Switched to OAuth",
-        "oauthDescription": "Now using OAuth authentication",
-        "profileTitle": "Profile activated",
-        "profileDescription": "Now using {{name}}",
-        "errorTitle": "Failed to switch authentication",
-        "errorFallback": "An error occurred while switching authentication method."
-      }
-    },
-    "dialog": {
-      "createTitle": "Add API Profile",
-      "editTitle": "Edit Profile",
-      "description": "Configure a custom Anthropic-compatible API endpoint for your builds.",
-      "deleteTitle": "Delete Profile?",
-      "deleteDescription": "Are you sure you want to delete \"{{name}}\"? This action cannot be undone.",
-      "cancel": "Cancel",
-      "delete": "Delete",
-      "deleting": "Deleting..."
-    }
-  },
-  "apiProfiles": {
-    "addButton": "Add Profile",
-    "presets": {
-      "anthropic": "Anthropic",
-      "copilot": "GitHub Copilot",
-      "openai": "OpenAI",
-      "mistral": "Mistral AI",
-      "grok": "Grok (xAI)",
-      "gemini": "Gemini (Google)",
-      "windsurf": "Windsurf (Codeium)",
-      "groq": "Groq",
-      "ollama": "Ollama",
-      "cohere": "Cohere",
-      "openrouter": "OpenRouter"
-    },
-    "fields": {
-      "name": "Name",
-      "preset": "Preset",
-      "baseUrl": "Base URL",
-      "apiKey": "API Key"
-    },
-    "placeholders": {
-      "name": "My Custom API",
-      "preset": "Choose a provider preset",
-      "baseUrl": "https://api.anthropic.com",
-      "apiKey": "sk-ant-..."
-    },
-    "hints": {
-      "preset": "Presets fill the base URL; you still need to paste your API key.",
-      "baseUrl": "Example: https://api.anthropic.com or http://localhost:8080"
-    },
-    "validation": {
-      "nameRequired": "Name is required",
-      "baseUrlRequired": "Base URL is required",
-      "baseUrlInvalid": "Invalid URL format (must be http:// or https://)",
-      "apiKeyRequired": "API Key is required",
-      "apiKeyInvalid": "Invalid API Key format"
-    },
-    "actions": {
-      "save": "Save Profile",
-      "saving": "Saving...",
-      "cancel": "Cancel",
-      "changeKey": "Change",
-      "cancelKeyChange": "Cancel"
-    },
-    "testConnection": {
-      "label": "Test Connection",
-      "testing": "Testing...",
-      "success": "Connection Successful",
-      "failure": "Connection Failed"
-    },
-    "models": {
-      "title": "Optional: Model Name Mappings",
-      "description": "Select models from your API provider. Leave blank to use defaults.",
-      "defaultLabel": "Default Model (Optional)",
-      "haikuLabel": "Haiku Model (Optional)",
-      "sonnetLabel": "Sonnet Model (Optional)",
-      "opusLabel": "Opus Model (Optional)",
-      "defaultPlaceholder": "e.g., claude-sonnet-4-5-20250929",
-      "haikuPlaceholder": "e.g., claude-haiku-4-5-20251001",
-      "sonnetPlaceholder": "e.g., claude-sonnet-4-5-20250929",
-      "opusPlaceholder": "e.g., claude-opus-4-5-20251101"
-    },
-    "empty": {
-      "title": "No API profiles configured",
-      "description": "Create a profile to configure custom API endpoints for your builds.",
-      "action": "Create First Profile"
-    },
-    "switchToOauth": {
-      "label": "Switch to OAuth",
-      "loading": "Switching..."
-    },
-    "activeBadge": "Active",
-    "customModels": "Custom models: {{models}}",
-    "setActive": {
-      "label": "Set Active",
-      "loading": "Setting..."
-    },
-    "tooltips": {
-      "edit": "Edit profile",
-      "deleteActive": "Switch to OAuth before deleting",
-      "deleteInactive": "Delete profile"
-    },
-    "deleteAriaLabel": "Delete profile {{name}}",
-    "toast": {
-      "create": {
-        "title": "Profile created",
-        "description": "\"{{name}}\" has been added successfully."
-      },
-      "update": {
-        "title": "Profile updated",
-        "description": "\"{{name}}\" has been updated successfully."
-      },
-      "delete": {
-        "title": "Profile deleted",
-        "description": "\"{{name}}\" has been removed.",
-        "errorTitle": "Failed to delete profile",
-        "errorFallback": "An error occurred while deleting the profile."
-      },
-      "switch": {
-        "oauthTitle": "Switched to OAuth",
-        "oauthDescription": "Now using OAuth authentication",
-        "profileTitle": "Profile activated",
-        "profileDescription": "Now using {{name}}",
-        "errorTitle": "Failed to switch authentication",
-        "errorFallback": "An error occurred while switching authentication method."
-      }
-    },
-    "dialog": {
-      "createTitle": "Add API Profile",
-      "editTitle": "Edit Profile",
-      "description": "Configure a custom Anthropic-compatible API endpoint for your builds.",
-      "deleteTitle": "Delete Profile?",
-      "deleteDescription": "Are you sure you want to delete \"{{name}}\"? This action cannot be undone.",
-      "cancel": "Cancel",
-      "delete": "Delete",
-      "deleting": "Deleting..."
-    }
-  },
-  "modelSelect": {
-    "placeholder": "Select a model or type manually",
-    "placeholderManual": "Enter model name (e.g., claude-sonnet-4-5-20250929)",
-    "searchPlaceholder": "Search models...",
-    "noResults": "No models match your search",
-    "discoveryNotAvailable": "Model discovery not available. Enter model name manually."
-  },
-  "language": {
-    "label": "Interface Language",
-    "description": "Select the language for the application interface"
-  },
-  "scale": {
-    "presets": "Scale Presets",
-    "presetsDescription": "Quick scale options for common preferences",
-    "fineTune": "Fine-tune Scale",
-    "fineTuneDescription": "Adjust from 75% to 200% in 5% increments",
-    "default": "Default",
-    "comfortable": "Comfortable",
-    "large": "Large"
-  },
-  "logOrder": {
-    "label": "Log Order",
-    "description": "Choose how logs are displayed in the task detail view",
-    "chronological": "Chronological (oldest first)",
-    "reverseChronological": "Reverse-chronological (newest first)"
-  },
-  "general": {
-    "providerSection": "AI Provider",
-    "providerSectionDescription": "Choose the AI provider to use for autonomous tasks. The model list below updates automatically.",
-    "otherAgentSettings": "Other Agent Settings",
-    "otherAgentSettingsDescription": "Additional agent configuration options",
-    "agentFramework": "Agent Framework",
-    "agentFrameworkDescription": "The coding framework used for autonomous tasks",
-    "agentFrameworkAutoClaude": "WorkPilot AI",
-    "aiTerminalNaming": "AI Terminal Naming",
-    "aiTerminalNamingDescription": "Automatically name terminals based on commands",
-    "featureModelSettings": "Feature Model Settings",
-    "featureModelSettingsDescription": "Model and thinking level for Insights, Ideation, and Roadmap",
-    "model": "Model",
-    "thinkingLevel": "Thinking Level",
-    "paths": "Paths",
-    "pathsDescription": "Configure executable and framework paths",
-    "pythonPath": "Python Path",
-    "pythonPathDescription": "Path to Python executable (leave empty for auto-detection)",
-    "pythonPathPlaceholder": "python3 (default)",
-    "gitPath": "Git Path",
-    "gitPathDescription": "Path to Git executable (leave empty for auto-detection)",
-    "gitPathPlaceholder": "git (default)",
-    "githubCLIPath": "GitHub CLI Path",
-    "githubCLIPathDescription": "Path to GitHub CLI (gh) executable (leave empty for auto-detection)",
-    "githubCLIPathPlaceholder": "gh (default)",
-    "gitlabCLIPath": "GitLab CLI Path",
-    "gitlabCLIPathDescription": "Path to GitLab CLI (glab) executable (leave empty for auto-detection)",
-    "gitlabCLIPathPlaceholder": "glab (default)",
-    "claudePath": "Claude CLI Path",
-    "claudePathDescription": "Path to Claude CLI executable (leave empty for auto-detection)",
-    "claudePathPlaceholder": "claude (default)",
-    "detectedPath": "Auto-detected",
-    "detectedVersion": "Version",
-    "detectedSource": "Source",
-    "sourceUserConfig": "User Configuration",
-    "sourceVenv": "Virtual Environment",
-    "sourceHomebrew": "Homebrew",
-    "sourceNvm": "NVM",
-    "sourceSystemPath": "System PATH",
-    "sourceBundled": "Bundled",
-    "sourceFallback": "Fallback",
-    "notDetected": "Not detected",
-    "autoClaudePath": "WorkPilot AI Path",
-    "autoClaudePathDescription": "Relative path to workpilot-ai directory in projects",
-    "autoClaudePathPlaceholder": "workpilot-ai (default)",
-    "autoNameTerminals": "Automatically name terminals",
-    "autoNameTerminalsDescription": "Use AI to generate descriptive names for terminal tabs based on their activity"
-  },
-  "theme": {
-    "title": "Appearance",
-    "description": "Customize how WorkPilot AI looks",
-    "mode": "Mode",
-    "modeDescription": "Choose between light and dark themes",
-    "light": "Light",
-    "dark": "Dark",
-    "system": "System",
-    "colorTheme": "Color Theme",
-    "colorThemeDescription": "Choose your preferred color palette",
-    "colorThemes": {
-      "default": "Oscura-inspired with pale yellow accent",
-      "dusk": "Warmer variant with slightly lighter dark mode",
-      "lime": "Fresh and energetic lime with purple accents",
-      "ocean": "Calm and professional blue tones",
-      "retro": "Warm and nostalgic amber atmospheres",
-      "neo": "Modern cyberpunk pink/magenta",
-      "forest": "Natural and earthy green tones"
-    }
-  },
-  "devtools": {
-    "title": "Developer Tools",
-    "description": "Configure your preferred IDE, terminal, and terminal font settings",
-    "detecting": "Detecting installed tools...",
-    "detectAgain": "Detect Again",
-    "tabTools": "Tools",
-    "tabTerminalFonts": "Terminal Fonts",
-    "ide": {
-      "label": "Preferred IDE",
-      "description": "WorkPilot AI will open worktrees in this editor",
-      "placeholder": "Select IDE...",
-      "customPath": "Custom IDE Path",
-      "customPathPlaceholder": "/path/to/your/ide"
-    },
-    "terminal": {
-      "label": "Preferred Terminal",
-      "description": "WorkPilot AI will open terminal sessions here",
-      "placeholder": "Select terminal...",
-      "customPath": "Custom Terminal Path",
-      "customPathPlaceholder": "/path/to/your/terminal"
-    },
-    "detected": "Detected",
-    "notInstalled": "Not installed",
-    "detectedSummary": "Detected on your system:",
-    "noToolsDetected": "No additional tools detected (VS Code and system terminal will be used)",
-    "autoNameClaude": {
-      "label": "Auto-name Claude terminals",
-      "description": "Use AI to generate a descriptive name for Claude terminals based on your first message"
-    },
-    "yoloMode": {
-      "label": "YOLO Mode",
-      "description": "Start Claude with --dangerously-skip-permissions flag, bypassing all safety prompts. Use with extreme caution.",
-      "warning": "This mode bypasses Claude's permission system. Only enable if you fully trust the code being executed."
-    }
-  },
-  "updates": {
-    "title": "Updates",
-    "description": "Manage WorkPilot AI updates",
-    "appUpdateReady": "App Update Ready",
-    "newVersion": "New Version",
-    "released": "Released",
-    "downloading": "Downloading...",
-    "updateDownloaded": "Update downloaded! Click Install to restart and apply the update.",
-    "installAndRestart": "Install and Restart",
-    "downloadUpdate": "Download Update",
-    "version": "Version",
-    "loading": "Loading...",
-    "checkingForUpdates": "Checking for updates...",
-    "newVersionAvailable": "New version available:",
-    "latestVersion": "You're running the latest version.",
-    "viewRelease": "View full release on GitHub",
-    "unableToCheck": "Unable to check for updates",
-    "checkForUpdates": "Check for Updates",
-    "autoUpdateProjects": "Auto-Update Projects",
-    "autoUpdateProjectsDescription": "Automatically update WorkPilot AI in projects when a new version is available",
-    "betaUpdates": "Beta Updates",
-    "betaUpdatesDescription": "Receive pre-release beta versions with new features (may be less stable)",
-    "stableDowngradeAvailable": "Stable Version Available",
-    "stableDowngradeDescription": "You're currently on a beta version. Since you've disabled beta updates, you can switch to the latest stable release.",
-    "stableVersion": "Stable Version",
-    "downloadStableVersion": "Download Stable Version",
-    "readOnlyVolumeTitle": "Cannot Install from Disk Image",
-    "readOnlyVolumeDescription": "WorkPilot AI is running from a read-only disk image (DMG). Please drag the app to your Applications folder and relaunch it from there to install updates.",
-    "downloadError": "Failed to download update"
-  },
-  "notifications": {
-    "title": "Notifications",
-    "description": "Configure default notification preferences",
-    "onTaskComplete": "On Task Complete",
-    "onTaskCompleteDescription": "Notify when a task finishes successfully",
-    "onTaskFailed": "On Task Failed",
-    "onTaskFailedDescription": "Notify when a task encounters an error",
-    "onReviewNeeded": "On Review Needed",
-    "onReviewNeededDescription": "Notify when QA requires your review",
-    "sound": "Sound",
-    "soundDescription": "Play sound with notifications"
-  },
-  "actions": {
-    "save": "Save Settings",
-    "rerunWizard": "Re-run Wizard",
-    "rerunWizardDescription": "Start the setup wizard again"
-  },
-  "projectSections": {
-    "general": {
-      "title": "General",
-      "description": "Auto-Build and agent config",
-      "configureFor": "Configure Auto-Build, agent model, and notifications for {{projectName}}",
-      "useClaudeMd": "Use CLAUDE.md",
-      "useClaudeMdDescription": "Include CLAUDE.md instructions in agent context"
-    },
-    "autoBuild": {
-      "title": "Auto-Build Integration",
-      "initialized": "Initialized",
-      "notInitialized": "Not Initialized",
-      "notInitializedDescription": "Initialize Auto-Build to enable task creation and agent workflows.",
-      "initializing": "Initializing...",
-      "initializeButton": "Initialize Auto-Build",
-      "checkingStatus": "Checking status..."
-    },
-    "agentConfiguration": {
-      "title": "Agent Configuration",
-      "model": "Claude Model"
-    },
-    "claude": {
-      "title": "Claude Auth",
-      "description": "Claude authentication"
-    },
-    "linear": {
-      "title": "Linear",
-      "description": "Linear integration",
-      "integrationTitle": "Linear Integration",
-      "integrationDescription": "Connect to Linear for issue tracking and task import",
-      "syncDescription": "Sync with Linear for issue tracking",
-      "connectionStatus": "Connection Status",
-      "checking": "Checking...",
-      "connectedTo": "Connected to {{team}}",
-      "connected": "Connected",
-      "notConnected": "Not connected",
-      "tasksAvailable": "{{count}}+ tasks available to import",
-      "connectionString": "https://api.linear.app/graphql",
-      "apiKey": "YOUR_LINEAR_API_KEY"
-    },
-    "github": {
-      "title": "GitHub",
-      "description": "GitHub issues sync",
-      "integrationTitle": "GitHub Integration",
-      "integrationDescription": "Connect to GitHub for issue tracking",
-      "syncDescription": "Sync with GitHub Issues",
-      "connectedViaCLI": "Connected via GitHub CLI",
-      "authenticatedAs": "Authenticated as {{username}}",
-      "useDifferentToken": "Use Different Token",
-      "connectionStatus": "Connection Status",
-      "checking": "Checking...",
-      "connectedTo": "Connected to {{repo}}",
-      "notConnected": "Not connected",
-      "issuesAvailable": "Issues Available",
-      "issuesAvailableDescription": "Access GitHub Issues from the sidebar to view, investigate, and create tasks from issues.",
-      "autoSyncOnLoad": "Auto-Sync on Load",
-      "autoSyncDescription": "Automatically fetch issues when the project loads",
-      "defaultBranch": {
-        "label": "Default Branch",
-        "description": "Base branch for creating task worktrees",
-        "autoDetect": "Auto-detect (main/master)",
-        "searchPlaceholder": "Search branches...",
-        "noBranchesFound": "No branches found",
-        "selectedBranchHelp": "All new tasks will branch from {{branch}}"
-      },
-      "connectionString": "https://api.github.com/graphql",
-      "personalAccessToken": "YOUR_GITHUB_PERSONAL_ACCESS_TOKEN",
-      "enableGitHubIssues": "Enable GitHub Issues",
-      "syncIssuesFromGitHubAndCreateTasksAutomatically": "Sync issues from GitHub and create tasks automatically"
-    },
-    "gitlab": {
-      "title": "GitLab",
-      "description": "GitLab issues sync",
-      "integrationTitle": "GitLab Integration",
-      "integrationDescription": "Connect to GitLab for issue tracking",
-      "syncDescription": "Sync with GitLab Issues"
-    },
-    "azure-devops": {
-      "title": "Azure DevOps",
-      "description": "Azure DevOps work items",
-      "integrationTitle": "Azure DevOps Integration",
-      "integrationDescription": "Connect to Azure DevOps for work item management",
-      "syncDescription": "Sync with Azure DevOps Backlog"
-    },
-    "memory": {
-      "title": "Memory (Graphiti)",
-      "description": "Graphiti memory backend",
-      "integrationTitle": "Memory Settings",
-      "integrationDescription": "Configure Graphiti memory backend for cross-session context",
-      "syncDescription": "Configure Graphiti memory"
-    },
-    "flagshipModel": "Flagship model: {{model}}",
-    "tierFlagship": "Flagship",
-    "supportsThinking": "Thinking",
-    "resetToProviderDefaults": "Reset to provider defaults",
-    "phaseConfigNoteProvider": "These model settings apply to the {{provider}} provider. They are saved independently and restored when you switch back to this provider.",
-    "customModelPlaceholder": "Enter model name (e.g. llama3.3:latest)",
-    "phases": {
-      "spec": {
-        "label": "Spec Creation",
-        "description": "Discovery, requirements, context gathering"
-      },
-      "planning": {
-        "label": "Planning",
-        "description": "Implementation planning and architecture"
-      },
-      "coding": {
-        "label": "Coding",
-        "description": "Actual code implementation"
-      },
-      "qa": {
-        "label": "QA Review",
-        "description": "Quality assurance and validation"
-      }
-    }
-  },
-  "workspace": {
-    "roles": {
-      "backend": "Backend",
-      "frontend": "Frontend",
-      "mobile": "Mobile",
-      "shared": "Shared",
-      "apiGateway": "API Gateway",
-      "worker": "Worker",
-      "other": "Other"
-    }
-  },
-  "integrations": {
-    "title": "Integrations",
-    "description": "Manage Claude accounts and API keys",
-    "claudeAccounts": "Claude Accounts",
-    "claudeAccountsDescription": "Add multiple Claude subscriptions to automatically switch between them when you hit rate limits.",
-    "claudeAccountsWarning": "When authenticating, ensure you're logged into the correct Claude account in your browser. Each profile should use a different subscription.",
-    "noAccountsYet": "No accounts configured yet",
-    "default": "Default",
-    "active": "Active",
-    "authenticated": "Authenticated",
-    "needsAuth": "Needs Auth",
-    "authenticate": "Authenticate",
-    "authenticating": "Authenticating...",
-    "setActive": "Set Active",
-    "manualTokenEntry": "Manual Token Entry",
-    "runSetupToken": "Run claude and type /login to authenticate",
-    "tokenPlaceholder": "sk-ant-oat01-...",
-    "emailPlaceholder": "Email (optional, for display)",
-    "saveToken": "Save Token",
-    "accountNamePlaceholder": "Account name (e.g., Work, Personal)",
-    "autoSwitching": "Automatic Account Switching",
-    "autoSwitchingDescription": "Automatically switch between Claude accounts to avoid interruptions. Configure proactive monitoring to switch before hitting limits.",
-    "enableAutoSwitching": "Enable automatic switching",
-    "masterSwitch": "Master switch for all auto-swap features",
-    "proactiveMonitoring": "Proactive Monitoring",
-    "proactiveDescription": "Check usage regularly and swap before hitting limits",
-    "checkUsageEvery": "Check usage every",
-    "seconds15": "15 seconds",
-    "seconds30": "30 seconds (recommended)",
-    "minute1": "1 minute",
-    "disabled": "Disabled",
-    "sessionThreshold": "Session usage threshold",
-    "sessionThresholdDescription": "Switch when session usage reaches this level (recommended: 95%)",
-    "weeklyThreshold": "Weekly usage threshold",
-    "weeklyThresholdDescription": "Switch when weekly usage reaches this level (recommended: 99%)",
-    "reactiveRecovery": "Reactive Recovery",
-    "reactiveDescription": "Auto-swap when unexpected rate limit is hit",
-    "autoSwitchOnAuthFailure": "Auto-switch on auth failure",
-    "autoSwitchOnAuthFailureDescription": "Automatically switch to another authenticated account when authentication fails",
-    "apiKeys": "API Keys",
-    "apiKeysInfo": "Keys set here are used as defaults. Individual projects can override these in their settings.",
-    "openaiKey": "OpenAI API Key",
-    "openaiKeyDescription": "Required for Graphiti memory backend (embeddings)",
-    "toast": {
-      "authSuccess": "Profile Authenticated",
-      "authSuccessWithEmail": "Connected as {{email}}",
-      "authSuccessGeneric": "Authentication complete. You can now use this profile.",
-      "authStartFailed": "Authentication Failed",
-      "addProfileFailed": "Failed to Add Profile",
-      "loadProfilesFailed": "Failed to Load Profiles",
-      "deleteProfileFailed": "Failed to Delete Profile",
-      "renameProfileFailed": "Failed to Rename Profile",
-      "setActiveProfileFailed": "Failed to Set Active Profile",
-      "profileCreatedAuthFailed": "Profile Created - Authentication Needed",
-      "profileCreatedAuthFailedDescription": "Profile was added but authentication could not start. Click the login button to authenticate.",
-      "tokenSaved": "Token Saved",
-      "tokenSavedDescription": "Your token has been saved successfully.",
-      "tokenSaveFailed": "Failed to Save Token",
-      "settingsUpdateFailed": "Failed to Update Settings",
-      "tryAgain": "Please try again.",
-      "terminalCreationFailed": "Failed to create authentication terminal",
-      "terminalCreationFailedDescription": "Unable to start the authentication process. {{error}}",
-      "maxTerminalsReached": "Maximum terminals reached",
-      "maxTerminalsReachedDescription": "Please close some terminals and try again. You can have up to 12 terminals open.",
-      "terminalError": "Terminal Error",
-      "terminalErrorDescription": "Failed to create terminal: {{error}}",
-      "authProcessFailed": "Authentication process failed to start",
-      "authProcessFailedDescription": "The authentication terminal could not be created. Please try again or check the logs for more details."
-    },
-    "alerts": {
-      "profileCreatedAuthFailed": "Profile created but failed to prepare authentication: {{error}}",
-      "authPrepareFailed": "Failed to prepare authentication: {{error}}",
-      "authStartFailedMessage": "Failed to start authentication. Please try again."
-    }
-  },
-  "accounts": {
-    "title": "Accounts",
-    "description": "Manage Claude accounts and API endpoints",
-    "multiConnector": {
-      "title": "AI Provider Management",
-      "description": "Connect and manage multiple AI providers (Claude, OpenAI, Mistral, etc.).",
-      "stats": {
-        "total": "{{count}} total",
-        "configured": "{{count}} configured",
-        "errors": "{{count}} errors"
-      },
-      "buttons": {
-        "refresh": "Refresh",
-        "addProvider": "Add Provider"
-      },
-      "loadingProviders": "Loading providers..."
-    },
-    "tabs": {
-      "aiProvider": "AI Authentication",
-      "llmProviders": "LLM Providers",
-      "customEndpoints": "Custom Endpoints"
-    },
-    "aiProvider": {
-      "description": "Add multiple Claude subscriptions to automatically switch between them when you hit rate limits.",
-      "noAccountsYet": "No accounts configured yet",
-      "default": "Default",
-      "active": "Active",
-      "authenticated": "Authenticated",
-      "needsAuth": "Needs Auth",
-      "authenticate": "Authenticate",
-      "authenticating": "Authenticating...",
-      "setActive": "Set Active",
-      "manualTokenEntry": "Manual Token Entry",
-      "runSetupToken": "Run claude and type /login to authenticate",
-      "tokenPlaceholder": "sk-ant-oat01-...",
-      "emailPlaceholder": "Email (optional, for display)",
-      "saveToken": "Save Token",
-      "accountNamePlaceholder": "Account name (e.g., Work, Personal)"
-    },
-    "customEndpoints": {
-      "description": "Configure custom Anthropic-compatible API endpoints",
-      "addButton": "Add Profile",
-      "activeBadge": "Active",
-      "customModels": "Custom models: {{models}}",
-      "setActive": {
-        "label": "Set Active",
-        "loading": "Setting..."
-      },
-      "switchToOauth": {
-        "label": "Use AI Authentication",
-        "loading": "Switching..."
-      },
-      "empty": {
-        "title": "No Custom Endpoints",
-        "description": "Configure custom Anthropic-compatible API endpoints to use alternative providers.",
-        "action": "Add Profile"
-      },
-      "dialog": {
-        "deleteTitle": "Delete Profile",
-        "deleteDescription": "Are you sure you want to delete \"{{name}}\"? This action cannot be undone.",
-        "cancel": "Cancel",
-        "delete": "Delete",
-        "deleting": "Deleting..."
-      },
-      "sections": {
-        "customized": {
-          "title": "Custom Endpoints",
-          "description": "Configure custom Anthropic-compatible API endpoints (OpenAI, Azure, etc.)",
-          "endpointCount": "{{count}} endpoint{{count > 1 ? 's' : ''}} configured",
-          "addButton": "Add Endpoint",
-          "empty": {
-            "title": "No endpoints configured",
-            "description": "Add custom API endpoints to extend your LLM options"
-          }
-        },
-        "standard": {
-          "title": "Standard Providers",
-          "description": "Configure API keys for standard LLM providers (OpenAI, Google, Meta, etc.)",
-          "addButton": "Add Account"
-        }
-      },
-      "buttons": {
-        "activate": "Activate",
-        "activating": "Activating...",
-        "deactivate": "Use AI Authentication",
-        "deactivating": "Switching...",
-        "edit": "Edit",
-        "delete": "Delete"
-      },
-      "tooltips": {
-        "edit": "Edit",
-        "deleteActive": "Cannot delete active endpoint",
-        "deleteInactive": "Delete"
-      }
-    },
-    "autoSwitching": {
-      "title": "Automatic Account Switching",
-      "description": "Automatically switch between accounts to avoid interruptions. Configure proactive monitoring to switch before hitting limits.",
-      "enableAutoSwitching": "Enable automatic switching",
-      "masterSwitch": "Master switch for all auto-swap features",
-      "proactiveMonitoring": "Proactive Monitoring",
-      "proactiveDescription": "Check usage regularly and swap before hitting limits",
-      "sessionThreshold": "Session usage threshold",
-      "sessionThresholdDescription": "Switch when session usage reaches this level (recommended: 95%)",
-      "weeklyThreshold": "Weekly usage threshold",
-      "weeklyThresholdDescription": "Switch when weekly usage reaches this level (recommended: 99%)",
-      "reactiveRecovery": "Reactive Recovery",
-      "reactiveDescription": "Auto-swap when unexpected rate limit is hit",
-      "autoSwitchOnAuthFailure": "Auto-switch on auth failure",
-      "autoSwitchOnAuthFailureDescription": "Automatically switch to another authenticated account when authentication fails"
-    },
-    "priority": {
-      "title": "Account Priority Order",
-      "description": "Drag to reorder. System will switch to the next available account in order.",
-      "noAccounts": "No accounts configured. Add accounts above to set priority.",
-      "noEmail": "No email",
-      "active": "Active",
-      "inUse": "In Use",
-      "next": "Next",
-      "unlimited": "Unlimited",
-      "unavailable": "Unavailable",
-      "typeOAuth": "OAuth",
-      "typeAPI": "API",
-      "payPerUse": "Pay-per-use",
-      "needsAuth": "Not authenticated",
-      "duplicateUsage": "Duplicate usage detected",
-      "duplicateUsageHint": "This profile has identical usage to another profile, suggesting they may be authenticated to the same Anthropic account. Re-authenticate with a different account to fix.",
-      "needsReauth": "Needs re-auth",
-      "needsReauthHint": "This profile's refresh token is invalid. Click to re-authenticate.",
-      "sessionUsage": "Session usage (5-hour window)",
-      "weeklyUsage": "Weekly usage (7-day window)",
-      "oauthSection": "Claude Accounts (cycle through first)",
-      "apiSection": "Fallback Endpoints (when all accounts exhausted)",
-      "tipTitle": "How priority works",
-      "tipDescription": "Claude accounts are included in your subscription and will be cycled through first. API endpoints charge per request and are used as fallbacks when all Claude accounts hit their limits.",
-      "status": {
-        "healthy": "Healthy",
-        "moderate": "Moderate",
-        "highUsage": "High usage",
-        "nearLimit": "Near limit",
-        "rateLimited": "Rate limited"
-      },
-      "providerAuth": "Authenticated via API key"
-    },
-    "priorityOrder": {
-      "title": "Provider priority order",
-      "up": "Move up",
-      "down": "Move down"
-    },
-    "toast": {
-      "loadProfilesFailed": "Failed to Load Profiles",
-      "addProfileFailed": "Failed to Add Profile",
-      "deleteProfileFailed": "Failed to Delete Profile",
-      "renameProfileFailed": "Failed to Rename Profile",
-      "setActiveProfileFailed": "Failed to Set Active Profile",
-      "tokenSaved": "Token Saved",
-      "tokenSavedDescription": "Your token has been saved successfully.",
-      "tokenSaveFailed": "Failed to Save Token",
-      "settingsUpdateFailed": "Failed to Update Settings",
-      "tryAgain": "Please try again.",
-      "permissionDenied": "Permission Denied",
-      "checkFilePermissions": "Please check your file permissions and try again.",
-      "pathNotFound": "Path Not Found",
-      "checkPath": "Please check the path exists and try again.",
-      "authFailed": "Authentication Failed"
-    },
-    "alerts": {
-      "profileCreatedAuthFailed": "Profile created but failed to prepare authentication: {{error}}",
-      "authPrepareFailed": "Failed to prepare authentication: {{error}}",
-      "authStartFailedMessage": "Failed to start authentication. Please try again."
-    },
-    "form": {
-      "addAccount": "Add a {{provider}} account",
-      "name": "Account name",
-      "namePlaceholder": "Account name",
-      "apiKey": "API Key",
-      "apiKeyPlaceholder": "sk-...",
-      "oauthToken": "OAuth Token",
-      "oauthTokenPlaceholder": "OAuth token (if required)",
-      "baseUrl": "Base URL (optional)",
-      "baseUrlPlaceholder": "https://api.example.com",
-      "chooseModel": "-- Choose a model --",
-      "save": "Save",
-      "cancel": "Cancel"
-    }
-  },
-  "debug": {
-    "title": "Debug & Logs",
-    "description": "Access logs and debug information for troubleshooting",
-    "errorReporting": {
-      "label": "Anonymous Error Reporting",
-      "description": "Send crash reports to help improve WorkPilot AI. No personal data or code is collected."
-    },
-    "openLogsFolder": "Open Logs Folder",
-    "copyDebugInfo": "Copy Debug Info",
-    "copied": "Copied!",
-    "loadInfo": "Load Debug Info",
-    "systemInfo": "System Information",
-    "logsLocation": "Logs Location",
-    "recentErrors": "Recent Errors",
-    "noRecentErrors": "No recent errors",
-    "helpTitle": "Reporting Issues",
-    "helpText": "When reporting bugs, click \"Copy Debug Info\" to get system information and recent errors that help us diagnose the issue."
-  },
-  "projectSettings": {
-    "noProjectSelected": {
-      "title": "No Project Selected",
-      "description": "Select a project from the sidebar to configure its settings."
-    }
-  },
-  "mcp": {
-    "title": "MCP Server Overview",
-    "titleWithProject": "MCP Server Overview for {{projectName}}",
-    "description": "Configure which MCP servers are available for agents in this project",
-    "descriptionNoProject": "Select a project to configure MCP servers",
-    "serversEnabled": "{{count}} servers enabled",
-    "configuration": "MCP Server Configuration",
-    "configurationHint": "Disabled servers reduce context usage and startup time",
-    "noProjectSelected": "No Project Selected",
-    "noProjectSelectedDescription": "Select a project from the dropdown to view and configure MCP servers.",
-    "projectNotInitialized": "Project Not Initialized",
-    "projectNotInitializedDescription": "Initialize WorkPilot AI for this project to configure MCP servers.",
-    "browserAutomation": "Browser Automation (QA agents only)",
-    "alwaysEnabled": "always enabled",
-    "addServer": "Add Server",
-    "addMcpTo": "Add MCP Server to {{agent}}",
-    "addMcpDescription": "Select an MCP server to add to this agent",
-    "allMcpsAdded": "All available MCP servers are already added",
-    "added": "added",
-    "removed": "removed",
-    "remove": "Remove",
-    "restore": "Restore",
-    "noMcpServers": "No MCP servers",
-    "searchPlaceholder": "Search MCP servers…",
-    "setupRequired": "Setup required",
-    "noSearchResults": "No servers match your search.",
-    "categories": {
-      "core": "Core",
-      "projectMgmt": "Project Management",
-      "devTools": "Dev Tools",
-      "search": "Search",
-      "testingQA": "Testing & QA",
-      "monitoring": "Monitoring",
-      "communication": "Communication",
-      "custom": "Custom"
-    },
-    "cannotRemove": "Cannot remove (required)",
-    "servers": {
-      "context7": {
-        "name": "Context7",
-        "description": "Documentation lookup for libraries"
-      },
-      "graphiti": {
-        "name": "Graphiti Memory",
-        "description": "Knowledge graph for cross-session context",
-        "notConfigured": "Requires memory configuration (see Memory settings)"
-      },
-      "linear": {
-        "name": "Linear",
-        "description": "Project management integration",
-        "notConfigured": "Requires Linear integration (see Linear settings)"
-      },
-      "electron": {
-        "name": "Electron",
-        "description": "Desktop app automation via Chrome DevTools"
-      },
-      "puppeteer": {
-        "name": "Puppeteer",
-        "description": "Web browser automation for testing"
-      },
-      "chromeDevtools": {
-        "name": "Chrome DevTools",
-        "description": "Browser automation via Chrome DevTools Protocol (coder + QA agents)"
-      },
-      "autoClaude": {
-        "name": "WorkPilot AI Tools",
-        "description": "Build progress tracking"
-      },
-      "github": {
-        "name": "GitHub",
-        "description": "GitHub API operations. Requires GITHUB_PERSONAL_ACCESS_TOKEN env var."
-      },
-      "braveSearch": {
-        "name": "Brave Search",
-        "description": "Privacy-focused web search. Requires BRAVE_API_KEY env var."
-      },
-      "jira": {
-        "name": "Jira",
-        "description": "Jira & Confluence issue tracking. Requires JIRA_URL, JIRA_USERNAME and JIRA_API_TOKEN env vars."
-      },
-      "azureDevops": {
-        "name": "Azure DevOps",
-        "description": "Azure Boards, Repos and Pipelines. Requires AZURE_DEVOPS_TOKEN and AZURE_DEVOPS_ORG env vars."
-      },
-      "sentry": {
-        "name": "Sentry",
-        "description": "Error monitoring and performance tracking. Requires SENTRY_AUTH_TOKEN env var."
-      },
-      "slack": {
-        "name": "Slack",
-        "description": "Send messages and read channels. Requires SLACK_BOT_TOKEN env var."
-      },
-      "postman": {
-        "name": "Postman",
-        "description": "Run and manage API collections and tests. Requires POSTMAN_API_KEY env var."
-      },
-      "teams": {
-        "name": "Microsoft Teams",
-        "description": "Send messages to Teams channels. Requires TEAMS_WEBHOOK_URL env var."
-      }
-    },
-    "customServers": "Custom Servers",
-    "addCustomServer": "Add Custom Server",
-    "editCustomServer": "Edit Custom Server",
-    "customServerDescription": "Add a command-based or HTTP-based MCP server",
-    "serverType": "Server Type",
-    "typeCommand": "Command (npx/npm)",
-    "typeHttp": "HTTP",
-    "serverName": "Name",
-    "serverNamePlaceholder": "My MCP Server",
-    "serverDescription": "Description",
-    "serverDescriptionPlaceholder": "What this server does",
-    "command": "Command",
-    "args": "Arguments",
-    "argsHint": "Space-separated arguments",
-    "url": "URL",
-    "headers": "Headers",
-    "headerName": "Header Name",
-    "headerValue": "Header Value",
-    "noCustomServers": "No custom servers configured. Add one to use with your agents.",
-    "errorNameRequired": "Server name is required",
-    "errorIdExists": "A server with this ID already exists",
-    "errorCommandRequired": "Command is required for command-based servers",
-    "errorUrlRequired": "URL is required for HTTP-based servers",
-    "testConnection": "Test",
-    "testing": "Testing...",
-    "authToken": "Authentication Token",
-    "authTokenPlaceholder": "Paste your API token or PAT here",
-    "authTokenHint": "Used as Bearer token in the Authorization header",
-    "advancedHeaders": "Additional Headers",
-    "status": {
-      "healthy": "Server is responding",
-      "unhealthy": "Server is not responding",
-      "needsAuth": "Authentication required",
-      "checking": "Checking...",
-      "unknown": "Status unknown"
-    },
-    "hints": {
-      "github": "This looks like a GitHub MCP server. You'll need a Personal Access Token with appropriate scopes.",
-      "createGithubPat": "Create GitHub PAT",
-      "google": "This looks like a Google API. You'll need an OAuth token or API key.",
-      "createGoogleToken": "Create Google Credentials",
-      "anthropic": "This looks like an Anthropic API. You'll need an API key.",
-      "createAnthropicKey": "Create Anthropic API Key",
-      "openai": "This looks like an OpenAI API. You'll need an API key.",
-      "createOpenaiKey": "Create OpenAI API Key"
-    }
-  },
-  "terminalFonts": {
-    "title": "Terminal Fonts",
-    "description": "Customize terminal font appearance and behavior",
-    "configActions": "Configuration:",
-    "export": "Export JSON",
-    "import": "Import JSON",
-    "copy": "Copy to Clipboard",
-    "fontConfig": {
-      "title": "Font Configuration",
-      "description": "Customize font family, size, weight, line height, and letter spacing",
-      "fontFamily": "Font Family",
-      "fontFamilyDescription": "Primary monospace font for terminal text",
-      "selectFont": "Select a font...",
-      "searchFont": "Search fonts...",
-      "noFonts": "No fonts found",
-      "fontChain": "Font chain:",
-      "fontSize": "Font Size",
-      "fontSizeDescription": "Base font size in pixels (10-24px)",
-      "decreaseFontSize": "Decrease font size by {{step}}px",
-      "increaseFontSize": "Increase font size by {{step}}px",
-      "pixels": "pixels",
-      "fontWeight": "Font Weight",
-      "fontWeightDescription": "Font weight from 100 (thin) to 900 (black), in steps of 100",
-      "commonWeights": "Common: 400 (normal), 600 (semi-bold), 700 (bold)",
-      "decreaseFontWeight": "Decrease font weight by {{step}}",
-      "increaseFontWeight": "Increase font weight by {{step}}",
-      "lineHeight": "Line Height",
-      "lineHeightDescription": "Line height as a multiple of font size (1.0-2.0)",
-      "letterSpacing": "Letter Spacing",
-      "letterSpacingDescription": "Horizontal spacing between characters (-2 to 5px)"
-    },
-    "cursorConfig": {
-      "title": "Cursor Configuration",
-      "description": "Customize cursor style, blinking behavior, and accent color",
-      "cursorStyle": "Cursor Style",
-      "cursorStyleDescription": "Choose the appearance of the terminal cursor",
-      "selectStyle": "Select cursor style...",
-      "currentStyle": "Current:",
-      "styleBlock": "Block",
-      "styleBlockDescription": "Full block cursor",
-      "styleUnderline": "Underline",
-      "styleUnderlineDescription": "Underline cursor",
-      "styleBar": "Bar",
-      "styleBarDescription": "Vertical bar cursor",
-      "cursorBlink": "Cursor Blink",
-      "cursorBlinkDescription": "Enable or disable cursor blinking animation",
-      "blinkStatus": "Status:",
-      "enabled": "Enabled",
-      "disabled": "Disabled",
-      "cursorAccentColor": "Cursor Accent Color",
-      "cursorAccentColorDescription": "Choose the color of the terminal cursor",
-      "cursorColorLabel": "Cursor accent color",
-      "cursorColorDescription": "Current color: {{color}}",
-      "pickColor": "Click to pick a color",
-      "resetColor": "Reset to black",
-      "reset": "Reset",
-      "preview": "Preview:"
-    },
-    "performanceConfig": {
-      "title": "Performance Settings",
-      "description": "Adjust scrollback limit and other performance-related settings",
-      "presets": "Quick Presets",
-      "presetsDescription": "Common scrollback limits for different use cases",
-      "scrollback": "Scrollback Limit",
-      "scrollbackDescription": "Maximum number of lines to keep in terminal history",
-      "scrollbackPresets": "Quick Presets",
-      "presetMinimal": "Minimal",
-      "presetMinimalDescription": "Minimal history (1K lines)",
-      "presetStandard": "Standard",
-      "presetStandardDescription": "Standard history (10K lines)",
-      "presetExtended": "Extended",
-      "presetExtendedDescription": "Extended history (50K lines)",
-      "presetMaximum": "Maximum",
-      "presetMaximumDescription": "Maximum history (100K lines)",
-      "decreaseScrollback": "Decrease scrollback by {{step}}",
-      "increaseScrollback": "Increase scrollback by {{step}}",
-      "lines": "lines",
-      "kValue": "{{value}}K",
-      "scrollbackValue": "{{value}} lines"
-    },
-    "presets": {
-      "title": "Quick Presets",
-      "description": "Apply pre-configured terminal font settings or save your own",
-      "builtin": "Built-in Presets",
-      "builtinDescription": "Click to apply a pre-configured preset",
-      "vscode": "Consolas 14px, block cursor",
-      "vscodeName": "VS Code",
-      "intellij": "JetBrains Mono 13px, block cursor",
-      "intellijName": "IntelliJ IDEA",
-      "macos": "SF Mono 13px, block cursor",
-      "macosName": "macOS Terminal",
-      "ubuntu": "Ubuntu Mono 13px, block cursor",
-      "ubuntuName": "Ubuntu Terminal",
-      "reset": "Reset to Defaults",
-      "resetDescription": "Restore the default settings for your operating system",
-      "resetToOS": "Reset to {{os}} defaults",
-      "resetButton": "Reset to OS Default",
-      "custom": "Custom Presets",
-      "customDescription": "Save your current configuration as a custom preset",
-      "presetNamePlaceholder": "Preset name...",
-      "savePreset": "Save current configuration as a preset",
-      "applyPreset": "Apply this preset",
-      "deletePreset": "Delete this preset",
-      "noCustomPresets": "No custom presets yet. Save your current configuration to get started.",
-      "duplicateName": "A preset with this name already exists",
-      "saved": "Preset \"{{name}}\" saved",
-      "deleted": "Preset \"{{name}}\" deleted",
-      "unknownFont": "Unknown",
-      "applyFailed": "Failed to apply preset \"{{name}}\"",
-      "presetNameLabel": "Preset name",
-      "summary": "{{font}}, {{size}}px, {{cursor}} cursor"
-    },
-    "preview": {
-      "title": "Live Preview",
-      "description": "Preview your terminal settings in real-time (updates within 300ms)",
-      "ariaLabel": "Terminal font preview",
-      "infoText": "This preview updates within 300ms of any change to show how your settings will look in actual terminals."
-    },
-    "importExport": {
-      "exportSuccess": "Settings exported successfully",
-      "exportFailed": "Failed to export settings",
-      "importSuccess": "Settings imported successfully",
-      "importFailed": "Failed to import settings: Invalid JSON format",
-      "importFailedRange": "Failed to import settings: Values out of valid range",
-      "copySuccess": "Settings copied to clipboard",
-      "copyFailed": "Failed to copy to clipboard",
-      "fileTooLarge": "Import file too large (max 10KB)",
-      "readError": "Failed to read file"
-    },
-    "slider": {
-      "decrease": "Decrease {{label}} by {{step}}",
-      "increase": "Increase {{label}} by {{step}}",
-      "currentValue": "Current value: {{value}}"
-    }
-  },
-  "agents": {
-    "categories": {
-      "spec": "Spec Creation",
-      "build": "Build",
-      "qa": "QA",
-      "utility": "Utility",
-      "ideation": "Ideation"
-    },
-    "agentsCount": "({{count}} agents)",
-    "forProject": "for {{name}}",
-    "availableTools": "Available Tools",
-    "textOnly": "Text-only (no tools)",
-    "spec_gatherer": {
-      "label": "Spec Gatherer",
-      "description": "Collects initial requirements from user"
-    },
-    "spec_researcher": {
-      "label": "Spec Researcher",
-      "description": "Validates external integrations and APIs"
-    },
-    "spec_writer": {
-      "label": "Spec Writer",
-      "description": "Creates the spec.md document"
-    },
-    "spec_critic": {
-      "label": "Spec Critic",
-      "description": "Self-critique using deep analysis"
-    },
-    "spec_discovery": {
-      "label": "Spec Discovery",
-      "description": "Initial project discovery and analysis"
-    },
-    "spec_context": {
-      "label": "Spec Context",
-      "description": "Builds context from existing codebase"
-    },
-    "spec_validation": {
-      "label": "Spec Validation",
-      "description": "Validates spec completeness and quality"
-    },
-    "planner": {
-      "label": "Planner",
-      "description": "Creates implementation plan with subtasks"
-    },
-    "coder": {
-      "label": "Coder",
-      "description": "Implements individual subtasks"
-    },
-    "qa_reviewer": {
-      "label": "QA Reviewer",
-      "description": "Validates acceptance criteria. Uses Electron or Puppeteer based on project type."
-    },
-    "qa_fixer": {
-      "label": "QA Fixer",
-      "description": "Fixes QA-reported issues. Uses Electron or Puppeteer based on project type."
-    },
-    "pr_reviewer": {
-      "label": "PR Reviewer",
-      "description": "Reviews GitHub pull requests"
-    },
-    "commit_message": {
-      "label": "Commit Message",
-      "description": "Generates commit messages"
-    },
-    "merge_resolver": {
-      "label": "Merge Resolver",
-      "description": "Resolves merge conflicts"
-    },
-    "insights": {
-      "label": "Insights",
-      "description": "Extracts code insights"
-    },
-    "analysis": {
-      "label": "Analysis",
-      "description": "Codebase analysis with context lookup"
-    },
-    "batch_analysis": {
-      "label": "Batch Analysis",
-      "description": "Batch processing of issues or items"
-    },
-    "ideation": {
-      "label": "Ideation",
-      "description": "Generates feature ideas"
-    },
-    "roadmap_discovery": {
-      "label": "Roadmap Discovery",
-      "description": "Discovers roadmap items"
-    },
-    "pr_template_filler": {
-      "label": "PR Template Filler",
-      "description": "AI-fills GitHub PR templates from code changes"
-    }
-  },
-  "agentProfile": {
-    "title": "Agent Profile",
-    "sectionDescription": "Configure agent behavior profile and thinking levels",
-    "profilesInfo": "Configure the model used for each pipeline phase. Settings are saved per provider and will be restored when you switch back to this provider.",
-    "profilesInfoProvider": "Configure the models and thinking levels for each pipeline phase. These settings are specific to the {{provider}} provider and will be restored when you switch back.",
-    "customized": "Customized",
-    "thinking": "Thinking",
-    "activeProvider": "Active provider: {{provider}}",
-    "flagshipModel": "Flagship model: {{model}}",
-    "model": "Model",
-    "selectModel": "Select a model",
-    "customModelPlaceholder": "Enter model name (e.g. llama3.3:latest)",
-    "thinkingLevel": "Thinking Level",
-    "tierFlagship": "Flagship",
-    "supportsThinking": "Thinking",
-    "phaseConfigNote": "These model settings apply to your Claude account. You can customize them per phase or reset to your profile defaults.",
-    "phaseConfigNoteProvider": "These model settings apply to the {{provider}} provider. They are saved independently and restored when you switch back to this provider.",
-    "resetToProfileDefaults": "Reset to {{profile}} defaults",
-    "resetToProviderDefaults": "Reset to provider defaults",
-    "label": "Agent Profile",
-    "custom": "Custom",
-    "customConfiguration": "Custom Configuration",
-    "customDescription": "Choose specific model and thinking level",
-    "clickToCustomize": "Click to customize",
-    "selectThinkingLevel": "Select thinking level",
-    "autoLabel": "Auto (Optimized)",
-    "autoDescription": "Uses Opus across all phases with optimized thinking levels",
-    "phaseConfiguration": "Phase Configuration",
-    "phaseConfigurationDescription": "Configure models and thinking levels for each development pipeline phase",
-    "phases": {
-      "spec": {
-        "label": "Spec Creation",
-        "description": "Discovery, requirements, context gathering"
-      },
-      "planning": {
-        "label": "Planning",
-        "description": "Implementation planning and architecture"
-      },
-      "coding": {
-        "label": "Coding",
-        "description": "Actual code implementation"
-      },
-      "qa": {
-        "label": "QA Review",
-        "description": "Quality assurance and validation"
-      }
-    }
-  },
-  "azureDevOpsImport": {
-    "title": "Import Azure DevOps Work Items",
-    "description": "Select Azure DevOps work items to import into WorkPilot AI",
-    "importSuccess": "{{count}} work item(s) imported successfully",
-    "importSuccessSingle": "Work item \"{{title}}\" imported successfully",
-    "successTitle": "Import Successful!",
-    "successCount": "Imported {{count}} work item.",
-    "successCount_plural": "Imported {{count}} work items.",
-    "successFailedSuffix": "{{count}} failed.",
-    "errorNotConfigured": "Azure DevOps not configured",
-    "errorCheckConnectionFailed": "Connection check failed",
-    "errorUnknown": "Unknown error",
-    "errorLoadWorkItemsFailed": "Failed to load work items",
-    "errorImportFailed": "Import failed",
-    "errorNoProject": "No project selected",
-    "projectLabel": "Project:",
-    "searchPlaceholder": "Search work items...",
-    "filterTypeLabel": "Work Item Type",
-    "filterTypeAll": "All Types",
-    "filterStateLabel": "State",
-    "filterStateAll": "All States",
-    "selectionCount": "{{selected}} of {{total}} selected",
-    "emptyTitle": "No work items found",
-    "emptySubtitle": "Try adjusting your filters",
-    "done": "Done",
-    "cancel": "Cancel",
-    "importing": "Importing...",
-    "importButton": "Import Work Items from Azure DevOps",
-    "importButton_plural": "Import {{count}} items",
-    "dropZone": "Drop items here",
-    "dropZoneItems": "{{count}} item(s) to import",
-    "dropToColumn": "Drop to {{column}} column",
-    "moreItems": "+{{count}} more item(s)",
-    "sidePanelTitle": "Import from Azure DevOps",
-    "sidePanelDescription": "Drag and drop items into Kanban columns",
-    "dragInstructions": "Select items then drag them to a column",
-    "noWorkItems": "No work items found",
-    "loadingWorkItems": "Loading items...",
-    "connectionError": "Azure DevOps connection error",
-    "configureFirst": "Configure Azure DevOps in project settings",
-    "configureButton": "Configure Azure DevOps",
-    "importConfirmTitle": "Import {{count}} work item(s)",
-    "importConfirmDescription": "The following items will be imported into the {{column}} column.",
-    "importConfirmButton": "Import {{count}} item(s)",
-    "selectedItems": "{{count}} item(s) selected",
-    "toggleSelection": "Toggle selection for work item {{id}}"
-  },
-  "azureDevOps": {
-    "enableSyncLabel": "Enable Azure DevOps Sync",
-    "enableSyncDescription": "Automatically manage work items from Azure DevOps backlog",
-    "autoSyncLabel": "Auto Sync",
-    "autoSyncDescription": "Automatically sync work items from Azure DevOps",
-    "autoSyncNoteLabel": "Note:",
-    "autoSyncNoteDescription": "Auto sync runs hourly and imports new work items.",
-    "orgUrlLabel": "Organization URL",
-    "orgUrlDescription": "Your Azure DevOps organization URL (e.g., https://dev.azure.com/your-org)",
-    "orgUrlPlaceholder": "https://dev.azure.com/your-org",
-    "patLabel": "Personal Access Token (PAT)",
-    "patDescriptionPrefix": "Generate a PAT from",
-    "patDescriptionSuffix": "Requires scope: Work Items (Read & Write).",
-    "patLinkLabel": "Azure DevOps User Settings",
-    "patPlaceholder": "Enter your PAT",
-    "repositoryLabel": "Repository",
-    "repositoryDescription": "Select the Azure DevOps repository to use for this project",
-    "repositoryPlaceholder": "Select a repository...",
-    "repositoryLoading": "Loading repositories...",
-    "repositoryError": "Error loading repositories",
-    "repositorySelectManual": "Enter manually",
-    "repositoryRefresh": "Refresh list",
-    "connectionStatusTitle": "Connection Status",
-    "connectionChecking": "Checking...",
-    "connectionConnected": "Connected",
-    "connectionConnectedProject": "Connected to project {{projectName}}",
-    "connectionNotConnected": "Not connected",
-    "connectionWorkItemCount": "{{count}}+ work items available to import",
-    "importPromptTitle": "Import Work Items",
-    "importPromptDescription": "Select and import work items from your Azure DevOps backlog to create WorkPilot AI tasks.",
-    "importPromptButton": "Select Work Items to Import",
-    "apiKey": "API Key",
-    "discoverModels": "Discover Models",
-    "discovering": "Discovering...",
-    "discoveryFailed": "Discovery Failed",
-    "discoveryFailedDesc": "Unable to connect to API. Check URL and API key.",
-    "modelsDiscovered": "Models Discovered",
-    "modelsDiscoveredDesc": "{{count}} models have been discovered and added automatically.",
-    "noModelsFound": "No Models Found",
-    "noModelsFoundDesc": "API returned no models. Check response format.",
-    "urlRequired": "URL Required",
-    "urlRequiredDesc": "Please enter your API URL before discovering models.",
-    "manualModels": "Manual Model Management",
-    "modelName": "Model Name",
-    "modelId": "Model ID",
-    "modelTier": "Tier",
-    "tierFlagship": "Flagship",
-    "tierStandard": "Standard",
-    "tierFast": "Fast",
-    "supportsThinking": "Supports Thinking",
-    "addModel": "Add",
-    "availableModels": "Available Models",
-    "noModelsConfigured": "No Models Configured",
-    "addModelsDesc": "Add models manually or use automatic discovery",
-    "modelInfoRequired": "Information Required",
-    "modelInfoRequiredDesc": "Please enter model name and ID.",
-    "modelAdded": "Model Added",
-    "modelAddedDesc": "{{name}} has been added to available models.",
-    "modelRemoved": "Model Removed",
-    "modelRemovedDesc": "Model has been removed from the list."
-  },
-  "autoSwitching": {
-    "title": "Auto-switching",
-    "enableLabel": "Enable auto-switching",
-    "enableDescription": "Automatically switch between accounts based on usage",
-    "enabled": "Auto-switching enabled",
-    "disabled": "Auto-switching disabled",
-    "enabledDescription": "Accounts will switch automatically",
-    "disabledDescription": "Accounts will no longer switch automatically",
-    "proactiveMonitoring": "Proactive Monitoring",
-    "proactiveDescription": "Switch before reaching limits",
-    "sessionThreshold": "Session Threshold",
-    "sessionThresholdDescription": "Switch when usage reaches this percentage",
-    "rateLimitSwitching": "Switch on Rate Limit",
-    "rateLimitDescription": "Change account when rate limit is reached",
-    "authFailureSwitching": "Switch on Auth Failure",
-    "authFailureDescription": "Change account if authentication fails",
-    "priorityOrder": {
-      "title": "Account Priority Order",
-      "description": "Define the order in which accounts will be used for auto-switching"
-    },
-    "debug": {
-      "accountsFound": "Debug: {{count}} account(s) found"
-    },
-    "toast": {
-      "error": "Error",
-      "errorDescription": "Unable to update settings"
-    }
-  },
-  "copilotOAuth": {
-    "title": "GitHub Copilot Authentication",
-    "description": "Web-based authentication using GitHub OAuth",
-    "descriptionNoCli": "Web-based authentication using GitHub OAuth (no CLI required)",
-    "checkingStatus": "Checking authentication status...",
-    "authenticated": "Authenticated",
-    "notAuthenticated": "Not Authenticated",
-    "defaultUser": "GitHub User",
-    "serverUnavailable": "OAuth server not available",
-    "serverUnavailableHint": "Please restart the application or check your network connection",
-    "authenticatedProfiles": "Authenticated Profiles",
-    "addedDate": "Added {{date}}",
-    "readyToUse": "Ready to use GitHub Copilot",
-    "addProfile": "Add Profile",
-    "noAuthFound": "No Authentication Found",
-    "noAuthFoundDesc": "Connect to GitHub Copilot using OAuth authentication",
-    "openingBrowser": "Opening Browser...",
-    "authenticating": "Authenticating...",
-    "authenticateButton": "Authenticate with GitHub",
-    "toast": {
-      "oauthStarted": "OAuth Started",
-      "oauthStartedDesc": "Please complete authentication in your browser",
-      "authSuccess": "Authentication Successful",
-      "authSuccessDesc": "Successfully authenticated as {{username}}",
-      "authFailed": "Authentication Failed",
-      "authRevoked": "Authentication Revoked",
-      "authRevokedDesc": "Successfully revoked authentication for {{username}}",
-      "revokeFailed": "Revoke Failed"
-    }
-  },
-  "jira": {
-    "title": "Jira Integration",
-    "description": "Configure and manage Jira Cloud issue synchronization",
-    "enable": "Enable Jira Integration",
-    "enableDescription": "Sync issues with Jira Cloud for bidirectional task tracking",
-    "instanceUrl": "Jira Instance URL",
-    "instanceUrlPlaceholder": "https://your-org.atlassian.net",
-    "instanceUrlDescription": "Your Jira Cloud instance URL (e.g., https://your-org.atlassian.net)",
-    "email": "Email",
-    "emailPlaceholder": "user@example.com",
-    "emailDescription": "The email address associated with your Atlassian account",
-    "apiToken": "API Token",
-    "apiTokenPlaceholder": "Enter your Jira API token",
-    "apiTokenDescription": "Generate a token at",
-    "apiTokenLink": "Atlassian API Tokens",
-    "projectKey": "Default Project Key",
-    "projectKeyPlaceholder": "PROJ",
-    "projectKeyDescription": "The Jira project key to sync issues from (e.g., PROJ, DEV, TEAM)",
-    "autoSync": "Auto-sync issues",
-    "autoSyncDescription": "Automatically sync Jira issues when the project is opened",
-    "testConnection": "Test Connection",
-    "connected": "Connected",
-    "connectionFailed": "Connection failed",
-    "authenticationFailed": "Authentication failed. Verify that your Jira email and API token are valid.",
-    "instance": "Instance",
-    "required": "*",
-    "fillAllFields": "Please fill in all required fields (Instance URL, Email, API Token)"
-  },
-  "teams": {
-    "title": "Microsoft Teams",
-    "description": "Receive notifications in Teams when tasks are done and PRs are created",
-    "initGuardDescription": "Initialize WorkPilot AI for this project to configure Teams notifications",
-    "enableNotifications": "Enable Teams notifications",
-    "enableNotificationsHint": "Send a message to your Teams channel when a task completes and a PR is created",
-    "webhookUrl": "Incoming Webhook URL",
-    "webhookUrlHint": "Paste the Incoming Webhook URL from your Teams channel connector",
-    "testWebhook": "Send test message",
-    "testSuccess": "Message sent!",
-    "testError": "Failed to reach webhook",
-    "testMessage": "WorkPilot AI — Test notification",
-    "testMessageBody": "This is a test message from WorkPilot AI. Your Teams notifications are configured correctly.",
-    "howToCreate": "How to create a webhook",
-    "triggers": "Notification triggers",
-    "triggerTaskDone": "When a Kanban task reaches 'Done' and a PR is created",
-    "triggerPrCreated": "When a PR is automatically created for human review"
-  },
-  "jiraImport": {
-    "title": "Import Jira Issues",
-    "description": "Select Jira issues to import into WorkPilot AI",
-    "importSuccess": "{{count}} issue(s) imported successfully",
-    "successTitle": "Import Successful!",
-    "successCount": "Imported {{count}} issue.",
-    "successCount_plural": "Imported {{count}} issues.",
-    "successFailedSuffix": "{{count}} failed.",
-    "errorNotConfigured": "Jira not configured",
-    "errorCheckConnectionFailed": "Connection check failed",
-    "errorUnknown": "Unknown error",
-    "errorLoadIssuesFailed": "Failed to load issues",
-    "errorImportFailed": "Import failed",
-    "errorNoProject": "No project selected",
-    "projectLabel": "Project:",
-    "searchPlaceholder": "Search issues...",
-    "filterTypeLabel": "Issue Type",
-    "filterTypeAll": "All Types",
-    "filterStateLabel": "State",
-    "filterStateAll": "All States",
-    "selectionCount": "{{selected}} of {{total}} selected",
-    "emptyTitle": "No issues found",
-    "emptySubtitle": "Try adjusting your filters",
-    "done": "Done",
-    "cancel": "Cancel",
-    "importing": "Importing...",
-    "importButton": "Import Issues from Jira",
-    "importButton_plural": "Import {{count}} items",
-    "dropZone": "Drop items here",
-    "dropZoneItems": "{{count}} item(s) to import",
-    "dropToColumn": "Drop to {{column}} column",
-    "moreItems": "+{{count}} more item(s)",
-    "sidePanelTitle": "Import from Jira",
-    "sidePanelDescription": "Drag and drop items into Kanban columns",
-    "dragInstructions": "Select items then drag them to a column",
-    "noIssues": "No issues found",
-    "loadingIssues": "Loading items...",
-    "connectionError": "Jira connection error",
-    "configureFirst": "Configure Jira in project settings",
-    "configureButton": "Configure Jira",
-    "importConfirmTitle": "Import {{count}} issue(s)",
-    "importConfirmDescription": "The following items will be imported into the {{column}} column.",
-    "importConfirmButton": "Import {{count}} item(s)",
-    "selectedItems": "{{count}} item(s) selected"
-  },
-  "instructions": {
-    "title": "GitHub Copilot Instructions",
-    "description": "GitHub Copilot authentication guide",
-    "authentication": {
-      "title": "Authentication",
-      "step1": "Open a terminal and run 'gh auth login'",
-      "step2": "Follow the instructions in the browser that opens",
-      "step3": "Configure the necessary permissions",
-      "installed": "Installed ({{version}})",
-      "notAuthenticated": "Not authenticated",
-      "authenticated": "Authenticated ({{username}})",
-      "authenticatedAs": "Authenticated as {{username}}"
-    },
-    "authenticate": "Authenticate",
-    "authTerminalTitle": "GitHub Copilot Authentication Terminal",
-    "authCloseWarning": "The terminal is authenticating. Are you sure you want to close?",
-    "authTerminal": {
-      "connecting": "Connecting...",
-      "authenticate": "Authenticate: {{profileName}}",
-      "completeSetup": "Complete setup: {{profileName}}",
-      "authenticatedAs": "Authenticated as {{username}}",
-      "authenticated": "Authenticated!",
-      "authError": "Authentication Error",
-      "authMethod": {
-        "title": "Authentication Method",
-        "description": "Choose your preferred authentication method for GitHub Copilot",
-        "selectLabel": "Authentication Method",
-        "selectPlaceholder": "Select a method",
-        "terminal": "GitHub CLI Terminal",
-        "token": "Manual Token"
-      }
-    },
-    "errors": {
-      "authFailed": "Authentication failed",
-      "saveFailed": "Save failed",
-      "removeFailed": "Remove failed",
-      "logoutFailed": "Logout failed",
-      "tokenRequired": "Token required",
-      "tokenRequiredDescription": "Please enter a valid GitHub Copilot token",
-      "unknownError": "Unknown error"
-    },
-    "logout": "Logout",
-    "logoutSuccess": "Logout successful",
-    "logoutSuccessDescription": "You have been logged out from GitHub Copilot",
-    "testSuccess": "Test successful",
-    "testFailed": "Test failed",
-    "testError": "Test error",
-    "tokenSaved": "Token saved",
-    "tokenSavedDescription": "GitHub Copilot token has been saved",
-    "tokenRemoved": "Token removed",
-    "tokenRemovedDescription": "GitHub Copilot token has been removed",
-    "token": {
-      "title": "GitHub Copilot Token",
-      "label": "GitHub Copilot Token for authentication",
-      "placeholder": "ghp_...",
-      "description": "GitHub personal token for Copilot authentication (starts with ghp_, gho_, or ghu_)",
-      "configured": "Token configured and ready to use",
-      "currentStatus": "Current token status",
-      "inputLabel": "GitHub Copilot Token",
-      "inputPlaceholder": "ghp_... or gho_... or ghu_...",
-      "remove": "Remove Token",
-      "save": "Save Token"
-    },
-    "instructions": {
-      "title": "GitHub Copilot Instructions",
-      "description": "GitHub Copilot authentication guide",
-      "authentication": {
-        "title": "Authentication",
-        "step1": "Open a terminal and run 'gh auth login'",
-        "step2": "Follow the instructions in the browser that opens",
-        "step3": "Configure the necessary permissions"
-      },
-      "token": {
-        "title": "GitHub Copilot Token",
-        "step1": "Generate a personal GitHub token from https://github.com/settings/tokens",
-        "step2": "Copy the token (starts with ghp_, gho_, or ghu_)",
-        "step3": "Configure the token in settings"
-      }
-    }
-  },
-  "providerGrid": {
-    "title": "AI Provider Management",
-    "description": "Connect and manage multiple AI providers",
-    "search": {
-      "placeholder": "Search for a provider...",
-      "results": "{{count}} result{{count > 1 ? 's' : ''}} for \"{{query}}\"",
-      "noResults": "No providers found",
-      "noProviders": "No providers available",
-      "adjustCriteria": "Try adjusting your search criteria.",
-      "addFirst": "Start by adding your first provider.",
-      "addFirstButton": "Add your first provider"
-    },
-    "filters": {
-      "placeholder": "Filter",
-      "all": "All",
-      "configured": "Configured",
-      "unconfigured": "Unconfigured",
-      "errors": "With errors"
-    },
-    "sort": {
-      "placeholder": "Sort by",
-      "name": "Name",
-      "category": "Category",
-      "status": "Status",
-      "usage": "Usage"
-    },
-    "stats": {
-      "total": "{{count}} total",
-      "configured": "{{count}} configured",
-      "errors": "{{count}} errors"
-    },
-    "actions": {
-      "refresh": "Refresh",
-      "add": "Add"
-    }
-  },
-  "collaboration": {
-    "title": "Collaboration",
-    "description": "Multi-user collaboration settings"
-  },
-  "copilot": {
-    "switchInstallation": "Switch Installation",
-    "versionUnknown": "version unknown",
-    "active": "Active",
-    "viewCopilotCliDocs": "View GitHub Copilot CLI Docs",
-    "updateCopilotCli": "Update GitHub Copilot CLI?",
-    "updateDescription": "This will update the GitHub Copilot CLI tool. A new terminal will open in the \"Terminaux Agent\" page to run the update command.",
-    "updateAvailable": "GitHub Copilot CLI Update Available",
-    "copilotCliUpdateAvailable": "Copilot CLI update available",
-    "autoUpdateDescription": "A new version of GitHub Copilot CLI is available. Would you like to open a terminal and update it automatically?",
-    "openTerminalAndUpdate": "Open Terminal & Update",
-    "switchGhCliInstallation": "Switch gh CLI installation?",
-    "switchDescription": "Switching installations will use a different gh binary for Copilot CLI.",
-    "switch": "Switch",
-    "checkingInstallationMethod": "Checking installation method...",
-    "updatingViaNpm": "Updating via npm...",
-    "updatingViaHomebrew": "Updating via Homebrew...",
-    "updatingViaWinget": "Updating via WinGet...",
-    "updatingViaChocolatey": "Updating via Chocolatey...",
-    "updatingViaScoop": "Updating via Scoop...",
-    "installingViaScript": "Installing via script...",
-    "updatingGitHubCli": "Updating GitHub CLI...",
-    "updatingGitHubCopilotCli": "Updating GitHub Copilot CLI...",
-    "manualDownloadRequired": "Manual download required. Please visit https://cli.github.com/",
-    "checkingCopilotCli": "Checking Copilot CLI...",
-    "copilotCliUpToDate": "Copilot CLI is up to date",
-    "copilotCliExtensionNotInstalled": "Copilot CLI extension not installed",
-    "gitHubCliNotFound": "GitHub CLI (gh) not found — required for Copilot",
-    "errorCheckingCopilotCli": "Error checking Copilot CLI",
-    "loadingInstallations": "Loading installations...",
-    "failedToLoadInstallations": "Failed to load installations",
-    "selectInstallation": "Select installation",
-    "installed": "Installed",
-    "extensionNotInstalled": "Extension not installed",
-    "gitHubCliNotFoundShort": "GitHub CLI not found",
-    "checking": "Checking...",
-    "error": "Error",
-    "llmRouter": {
-      "title": "LLM Router",
-      "description": "Configure intelligent provider routing with fallback chains, A/B testing, and strategy-based selection.",
-      "routingStrategy": {
-        "title": "Default Routing Strategy",
-        "description": "How the router selects a provider when multiple are available.",
-        "bestPerformance": "Best Performance",
-        "bestPerformanceDescription": "Prioritize quality score",
-        "cheapest": "Cheapest",
-        "cheapestDescription": "Minimize cost per task",
-        "lowestLatency": "Lowest Latency",
-        "lowestLatencyDescription": "Fastest response time",
-        "roundRobin": "Round Robin",
-        "roundRobinDescription": "Distribute evenly"
-      },
-      "registeredProviders": {
-        "title": "Registered Providers",
-        "description": "Providers available for routing. Configure accounts in Settings > Accounts.",
-        "table": {
-          "providerModel": "Provider / Model",
-          "capabilities": "Capabilities",
-          "priority": "Priority",
-          "status": "Status"
-        },
-        "status": {
-          "active": "Active",
-          "disabled": "Disabled",
-          "local": "local"
-        }
-      },
-      "fallbackChains": {
-        "title": "Fallback Chains",
-        "description": "If the primary provider is rate-limited or unavailable, the router automatically falls back to the next in the chain."
-      },
-      "abTesting": {
-        "title": "A/B Testing",
-        "description": "Compare two providers on the same task type. The router alternates between them and tracks quality, latency, and cost.",
-        "noActiveTests": "No active A/B tests",
-        "createTest": "Create a test from the Command Palette or from the task detail view."
-      }
-    },
-    "memoryLifecycle": {
-      "title": "Memory Lifecycle Manager",
-      "description": "Manage Graphiti memory — pruning, retention policies, freshness control",
-      "status": "Status",
-      "episodeCount": "Episodes stored",
-      "diskUsage": "Disk usage",
-      "retentionDays": "Retention (days)",
-      "maxEpisodes": "Max episodes",
-      "pruneStrategy": "Prune strategy",
-      "autoPrune": "Auto-prune",
-      "runPrune": "Run Prune Now",
-      "export": "Export Memories",
-      "pruneStrategies": {
-        "lru": "LRU (least recently used)",
-        "oldest": "Oldest first",
-        "duplicates": "Duplicates only"
-      }
-    },
-    "cicdTriggers": {
-      "title": "CI/CD Deployment Triggers",
-      "description": "Automatically trigger deployment pipelines after agent creates a PR",
-      "provider": "Provider",
-      "enabled": "Auto-trigger enabled",
-      "triggerOnPr": "Trigger on PR creation",
-      "triggerOnMerge": "Trigger on merge",
-      "recentRuns": "Recent pipeline runs",
-      "triggerNow": "Trigger Now",
-      "noRuns": "No pipeline runs yet",
-      "providers": {
-        "github": "GitHub Actions",
-        "gitlab": "GitLab CI",
-        "azure": "Azure DevOps",
-        "jenkins": "Jenkins"
-      },
-      "runStatus": {
-        "pending": "Pending",
-        "triggered": "Triggered",
-        "running": "Running",
-        "success": "Success",
-        "failed": "Failed"
-      }
-    },
-    "crossLangTranslation": {
-      "title": "Cross-Language Translation",
-      "description": "AI-powered code translation between programming languages",
-      "sourceLang": "Source language",
-      "targetLang": "Target language",
-      "inputCode": "Input code",
-      "outputCode": "Translated code",
-      "translate": "Translate",
-      "cancel": "Cancel",
-      "history": "Translation history",
-      "clearHistory": "Clear history",
-      "preserveComments": "Preserve comments",
-      "generateTests": "Generate tests",
-      "noHistory": "No translations yet",
-      "status": {
-        "pending": "Pending",
-        "complete": "Complete",
-        "failed": "Failed"
-      }
-    },
-    "specApproval": {
-      "title": "Spec Approval Workflow",
-      "description": "Review and approve AI-generated specifications before execution",
-      "pendingSpecs": "Pending approval",
-      "history": "Approval history",
-      "approve": "Approve",
-      "reject": "Reject",
-      "requestChanges": "Request Changes",
-      "amendments": "Amendments (optional)",
-      "feedback": "Feedback",
-      "noPending": "No specs awaiting approval",
-      "specContent": "Spec content",
-      "status": {
-        "pending": "Pending",
-        "approved": "Approved",
-        "rejected": "Rejected",
-        "changes_requested": "Changes requested"
-      }
-    }
-  }
+	"title": "Settings",
+	"common": {
+		"enabled": "Enabled",
+		"disabled": "Disabled"
+	},
+	"tabs": {
+		"app": "App Settings",
+		"project": "Project Settings"
+	},
+	"sections": {
+		"appearance": {
+			"title": "Appearance",
+			"description": "Customize how WorkPilot AI looks"
+		},
+		"display": {
+			"title": "Display",
+			"description": "Adjust the size of UI elements"
+		},
+		"language": {
+			"title": "Language",
+			"description": "Choose your preferred language"
+		},
+		"devtools": {
+			"title": "Developer Tools",
+			"description": "IDE and terminal preferences"
+		},
+		"agent": {
+			"title": "Agent Settings",
+			"description": "Default model and framework"
+		},
+		"paths": {
+			"title": "Paths",
+			"description": "CLI tools and framework paths"
+		},
+		"accounts": {
+			"title": "Accounts",
+			"description": "Accounts & API endpoints",
+			"form": {
+				"addAccount": "Add {{provider}} Account",
+				"name": "Account Name",
+				"namePlaceholder": "Account Name",
+				"apiKey": "API Key",
+				"apiKeyPlaceholder": "sk-...",
+				"baseUrl": "Base URL",
+				"baseUrlPlaceholder": "https://api.example.com",
+				"llmGatewayUrl": "LLM Gateway URL",
+				"llmGatewayUrlPlaceholder": "https://gateway.example.com",
+				"chooseModel": "-- Choose Model --",
+				"save": "Save",
+				"cancel": "Cancel"
+			},
+			"autoSwitching": {
+				"globalTitle": "Automatic Account Switching",
+				"globalDescription": "Automatically switch between your accounts based on usage and rate limits.",
+				"title": "Auto-switching",
+				"providerAdded": "Provider added to auto-switching",
+				"providerRemoved": "Provider removed from auto-switching",
+				"providerDescription": "{{providerName}} has been {{action}} to auto-switching list",
+				"syncError": "Sync Error",
+				"syncErrorDescription": "Failed to sync provider with auto-switching"
+			},
+			"providerConfig": {
+				"title": "Configuration",
+				"windsurfAuth": {
+					"description": "Automatically detect your Windsurf credentials from your local IDE installation.",
+					"oauthDetected": "Windsurf SSO authentication detected",
+					"tokenLoaded": "The Windsurf SSO token has been automatically loaded from your local IDE environment.",
+					"noConfigRequired": "No manual configuration required. Alternatively, use the API Key tab with a Service Key.",
+					"claudeCodeAuth": "Use Claude Code OAuth authentication to easily connect with your Claude account.",
+					"authenticating": "Authenticating...",
+					"connectWithClaude": "Connect with Claude Code",
+					"terminalInstructions": "This will open a terminal where you can run the `/login` command to authenticate.",
+					"detectFromIDE": "Detect from Windsurf IDE",
+					"detecting": "Detecting...",
+					"detectSuccess": "Token detected for {{userName}}!",
+					"detectFailed": "Could not detect token. Make sure Windsurf IDE is installed and you are signed in.",
+					"orManual": "Or sign in manually:",
+					"openWindsurfLogin": "windsurf.com/account",
+					"tokenDetected": "API key detected",
+					"saveAndConnect": "Save & Connect",
+					"saveSuccess": "Windsurf connection saved successfully!",
+					"accountInfo": "Authenticated Account",
+					"accountName": "Name",
+					"accountPlan": "Plan",
+					"accountCredits": "Credits",
+					"accountFlowActions": "Flow Actions"
+				},
+				"openaiAuth": {
+					"codexCliAuth": "Use an OpenAI API key from platform.openai.com to connect.",
+					"oauthNotSupported": "Codex CLI OAuth cannot be used for API calls",
+					"oauthExplanation": "OpenAI does not allow ChatGPT/Codex CLI OAuth tokens to call the API directly. A paid API key (sk-...) with billing is required.",
+					"useApiKeyInstead": "To use the OpenAI provider, get an API key from platform.openai.com:",
+					"step1": "Go to platform.openai.com/api-keys",
+					"step2": "Create a new API key (starts with sk-...)",
+					"step3": "Enter it in the \"API Key\" tab",
+					"openPlatform": "Open platform.openai.com"
+				}
+			},
+			"providerCard": {
+				"configure": "Configure",
+				"test": "Test",
+				"edit": "Edit",
+				"apiKey": "API Key",
+				"authentication": "Authentication",
+				"authCli": "CLI Auth",
+				"authOauth": "OAuth",
+				"authLocal": "Local",
+				"cliAuthenticated": "CLI authenticated",
+				"oauthConnected": "OAuth connected",
+				"localRunning": "Local instance",
+				"oauthCli": "OAuth (CLI)",
+				"notConfigured": "Not configured",
+				"lastTest": "Last test",
+				"neverTested": "Never tested",
+				"usage": "Usage",
+				"usageThisMonth": "Usage this month",
+				"week": "week",
+				"notAvailable": "Not available",
+				"source": "Source",
+				"statusLabel": "Status",
+				"status": {
+					"notConfigured": "Not configured",
+					"error": "Error",
+					"active": "Active"
+				},
+				"rateLimited": "Rate limited",
+				"needsReauth": "Needs re-authentication",
+				"statusNested": {
+					"notConfigured": "Not configured",
+					"error": "Error",
+					"active": "Active"
+				},
+				"testSuccess": "Test successful",
+				"testSuccessDescription": "The {{providerName}} provider is working correctly",
+				"testError": "Test failed",
+				"testErrorDescription": "The {{providerName}} provider failed: {{error}}",
+				"deleteConfirm": "Are you sure you want to delete this provider configuration?",
+				"testDetails": {
+					"modelsAvailable": "{{count}} models available",
+					"modelUsed": "Model used: {{model}}"
+				},
+				"errors": {
+					"unknownError": "Unknown error"
+				}
+			},
+			"providers": {
+				"meta": "Official Meta AI models",
+				"mistral": "Mistral AI models (Mistral, Codéal, etc.)",
+				"deepseek": "DeepSeek models (DeepSeek-Coder, etc.)",
+				"aws": "AWS Bedrock and Amazon services",
+				"copilot": "GitHub Copilot",
+				"grok": "Grok xAI models",
+				"windsurf": "Windsurf AI Provider",
+				"cursor": "Cursor AI Provider",
+				"ollama": "Local open-source models with Ollama",
+				"anthropic": "Anthropic Claude models",
+				"google": "Google and Google DeepMind API access",
+				"openai": "GPT-5 and other OpenAI models",
+				"loadError": "Failed to load provider list"
+			},
+			"providerToggle": {
+				"enabled": "Provider enabled",
+				"disabled": "Provider disabled",
+				"description": "{{providerId}} has been {{action}} successfully",
+				"error": "Error",
+				"errorDescription": "Failed to {{action}} provider {{providerId}}"
+			},
+			"alerts": {
+				"noProviders": "No providers configured. Configure your API keys to get started.",
+				"providerErrors": "{{count}} provider(s) with errors"
+			}
+		},
+		"updates": {
+			"title": "Updates",
+			"description": "WorkPilot AI updates"
+		},
+		"notifications": {
+			"title": "Notifications",
+			"description": "Alert preferences"
+		},
+		"debug": {
+			"title": "Debug & Logs",
+			"description": "Troubleshooting tools"
+		},
+		"terminal-fonts": {
+			"title": "Terminal Fonts",
+			"description": "Customize terminal font appearance"
+		},
+		"sandbox": {
+			"title": "Sandbox",
+			"description": "Agent execution isolation & rollback",
+			"defaultMode": {
+				"title": "Default Sandbox Mode",
+				"description": "Choose the default isolation mode for agent execution.",
+				"normal": {
+					"label": "Normal",
+					"description": "Whitelist + resource limits"
+				},
+				"restricted": {
+					"label": "Restricted",
+					"description": "Strict whitelist, reduced limits"
+				},
+				"dryRun": {
+					"label": "Dry-run",
+					"description": "Plan only, no file changes"
+				},
+				"docker": {
+					"label": "Docker",
+					"description": "Full container isolation"
+				}
+			},
+			"fileAccess": {
+				"title": "File Access Whitelist",
+				"description": "Paths agents are allowed to access. Sensitive paths (.git/, .env, .ssh/) are always blocked.",
+				"placeholder": "e.g. lib/ or config/app.json",
+				"read": "Read",
+				"write": "Write",
+				"readWrite": "Read/Write",
+				"readOnly": "Read Only",
+				"add": "Add"
+			},
+			"resourceLimits": {
+				"title": "Resource Limits",
+				"description": "Maximum resources an agent can consume per execution.",
+				"cpu": "CPU (%)",
+				"ram": "RAM (MB)",
+				"maxTime": "Max Time (s)",
+				"maxFiles": "Max Files",
+				"maxFileSize": "Max File Size (MB)"
+			},
+			"snapshots": {
+				"title": "Snapshots & Rollback",
+				"description": "A file snapshot is automatically created before each agent execution. If the agent fails, files are restored automatically.",
+				"warning": "Snapshots are created per-sandbox and stored in memory. Auto-rollback triggers when an agent execution fails or is terminated by the anomaly detector. Manual rollback is available in the task detail view."
+			},
+			"blockedCommands": {
+				"title": "Blocked Commands (default)",
+				"description": "These commands are always blocked inside the sandbox."
+			}
+		},
+		"anomaly-detection": {
+			"title": "Anomaly Detection",
+			"description": "Agent behavior monitoring & alerts",
+			"enable": {
+				"title": "Enable Anomaly Detection",
+				"description": "Monitor all agent sessions for suspicious behavior"
+			},
+			"trustScore": {
+				"title": "Trust Score Thresholds",
+				"description": "Each agent session starts at 100. Anomalies reduce the score. Actions trigger at these thresholds.",
+				"pauseThreshold": "Pause threshold",
+				"pauseDescription": "Agent is paused and a notification is sent",
+				"terminateThreshold": "Terminate threshold",
+				"terminateDescription": "Agent is terminated immediately"
+			},
+			"detectionLimits": {
+				"title": "Detection Limits",
+				"description": "Fine-tune when specific anomaly types trigger.",
+				"massDeletionCount": "Mass deletion count",
+				"massDeletionDesc": "File deletions before alert",
+				"maxRepetitiveErrors": "Max repetitive errors",
+				"maxRepetitiveDesc": "Errors before alert",
+				"rapidChangeWindow": "Rapid change window (s)",
+				"rapidChangeDesc": "Time window for rapid changes",
+				"tokenUsageMultiplier": "Token usage multiplier",
+				"tokenUsageDesc": "× baseline before alert"
+			},
+			"anomalyTypes": {
+				"title": "Anomaly Types",
+				"description": "10 anomaly types are monitored. Each reduces the trust score by a fixed amount.",
+				"anomaly": "Anomaly",
+				"severity": "Severity",
+				"scoreImpact": "Score Impact",
+				"types": {
+					"massFileDeletion": "Mass file deletion",
+					"sensitiveFileAccess": "Sensitive file access",
+					"dangerousCommand": "Dangerous command",
+					"unexpectedNetworkAccess": "Unexpected network access",
+					"pathTraversalAttempt": "Path traversal attempt",
+					"rapidFileChanges": "Rapid file changes",
+					"excessiveTokenUsage": "Excessive token usage",
+					"systemConfigModification": "System config modification",
+					"repetitiveErrors": "Repetitive errors",
+					"longRunningSession": "Long running session"
+				},
+				"severityLevels": {
+					"critical": "critical",
+					"high": "high",
+					"medium": "medium",
+					"low": "low"
+				}
+			},
+			"sensitivePaths": {
+				"title": "Sensitive Paths (always monitored)",
+				"description": "These paths are always monitored for suspicious activity."
+			}
+		}
+	},
+	"tasks": {
+		"title": "Scheduled Tasks",
+		"description": "Recurring and one-off tasks managed by the scheduler.",
+		"addTask": "Add Task",
+		"table": {
+			"task": "Task",
+			"cron": "Cron",
+			"priority": "Priority",
+			"status": "Status",
+			"nextRun": "Next Run"
+		},
+		"settings": {
+			"title": "Scheduler Settings",
+			"description": "Global configuration for the background task scheduler.",
+			"autoStart": {
+				"label": "Auto-start scheduler",
+				"description": "Start the scheduler daemon when the app launches"
+			},
+			"checkInterval": {
+				"label": "Check interval (seconds)",
+				"description": "How often the scheduler checks for due tasks"
+			}
+		},
+		"chains": {
+			"title": "Task Chains",
+			"description": "Sequential task pipelines. When one task completes, the next starts automatically. Optionally stop on error.",
+			"noChains": "No task chains configured"
+		},
+		"status": {
+			"pending": "pending",
+			"running": "running",
+			"paused": "paused",
+			"completed": "completed",
+			"failed": "failed"
+		},
+		"cronReference": {
+			"title": "Cron Expression Reference",
+			"description": "Standard 5-field POSIX cron syntax: minute hour day-of-month month day-of-week",
+			"table": {
+				"expression": "Expression",
+				"description": "Description"
+			},
+			"examples": {
+				"daily": "Every day at 22:00",
+				"every15min": "Every 15 minutes",
+				"weekly": "Every Monday at 03:00",
+				"monthly": "First day of each month at midnight",
+				"workHours": "Every hour, Mon-Fri, 9 AM to 5 PM"
+			}
+		},
+		"sampleTasks": {
+			"dailyScan": {
+				"name": "Daily security scan",
+				"nextRun": "Tonight 22:00"
+			},
+			"weeklyUpdate": {
+				"name": "Weekly dependency update",
+				"nextRun": "Monday 03:00"
+			},
+			"hourlyLog": {
+				"name": "Hourly log check"
+			},
+			"ciPipeline": "CI Pipeline"
+		},
+		"addButton": "Add Profile",
+		"presets": {
+			"anthropic": "Anthropic (Claude)",
+			"copilot": "GitHub Copilot",
+			"openai": "OpenAI",
+			"mistral": "Mistral AI",
+			"grok": "Grok (xAI)",
+			"gemini": "Gemini (Google)",
+			"windsurf": "Windsurf (Codeium)"
+		},
+		"fields": {
+			"name": "Name",
+			"preset": "Preset",
+			"baseUrl": "Base URL",
+			"apiKey": "API Key"
+		},
+		"placeholders": {
+			"name": "My Custom API",
+			"preset": "Choose a provider preset",
+			"baseUrl": "https://api.anthropic.com",
+			"apiKey": "sk-ant-..."
+		},
+		"hints": {
+			"preset": "Presets fill the base URL; you still need to paste your API key.",
+			"baseUrl": "Example: https://api.anthropic.com or http://localhost:8080"
+		},
+		"validation": {
+			"nameRequired": "Name is required",
+			"baseUrlRequired": "Base URL is required",
+			"baseUrlInvalid": "Invalid URL format (must be http:// or https://)",
+			"apiKeyRequired": "API Key is required",
+			"apiKeyInvalid": "Invalid API Key format"
+		},
+		"actions": {
+			"save": "Save Profile",
+			"saving": "Saving...",
+			"cancel": "Cancel",
+			"changeKey": "Change",
+			"cancelKeyChange": "Cancel"
+		},
+		"testConnection": {
+			"label": "Test Connection",
+			"testing": "Testing...",
+			"success": "Connection Successful",
+			"failure": "Connection Failed"
+		},
+		"models": {
+			"title": "Optional: Model Name Mappings",
+			"description": "Select models from your API provider. Leave blank to use defaults.",
+			"defaultLabel": "Default Model (Optional)",
+			"haikuLabel": "Haiku Model (Optional)",
+			"sonnetLabel": "Sonnet Model (Optional)",
+			"opusLabel": "Opus Model (Optional)",
+			"defaultPlaceholder": "e.g., claude-sonnet-4-5-20250929",
+			"haikuPlaceholder": "e.g., claude-haiku-4-5-20251001",
+			"sonnetPlaceholder": "e.g., claude-sonnet-4-5-20250929",
+			"opusPlaceholder": "e.g., claude-opus-4-5-20251101"
+		},
+		"empty": {
+			"title": "No API profiles configured",
+			"description": "Create a profile to configure custom API endpoints for your builds.",
+			"action": "Create First Profile"
+		},
+		"switchToOauth": {
+			"label": "Switch to OAuth",
+			"loading": "Switching..."
+		},
+		"activeBadge": "Active",
+		"customModels": "Custom models: {{models}}",
+		"setActive": {
+			"label": "Set Active",
+			"loading": "Setting..."
+		},
+		"tooltips": {
+			"edit": "Edit profile",
+			"deleteActive": "Switch to OAuth before deleting",
+			"deleteInactive": "Delete profile"
+		},
+		"deleteAriaLabel": "Delete profile {{name}}",
+		"toast": {
+			"create": {
+				"title": "Profile created",
+				"description": "\"{{name}}\" has been added successfully."
+			},
+			"update": {
+				"title": "Profile updated",
+				"description": "\"{{name}}\" has been updated successfully."
+			},
+			"delete": {
+				"title": "Profile deleted",
+				"description": "\"{{name}}\" has been removed.",
+				"errorTitle": "Failed to delete profile",
+				"errorFallback": "An error occurred while deleting the profile."
+			},
+			"switch": {
+				"oauthTitle": "Switched to OAuth",
+				"oauthDescription": "Now using OAuth authentication",
+				"profileTitle": "Profile activated",
+				"profileDescription": "Now using {{name}}",
+				"errorTitle": "Failed to switch authentication",
+				"errorFallback": "An error occurred while switching authentication method."
+			}
+		},
+		"dialog": {
+			"createTitle": "Add API Profile",
+			"editTitle": "Edit Profile",
+			"description": "Configure a custom Anthropic-compatible API endpoint for your builds.",
+			"deleteTitle": "Delete Profile?",
+			"deleteDescription": "Are you sure you want to delete \"{{name}}\"? This action cannot be undone.",
+			"cancel": "Cancel",
+			"delete": "Delete",
+			"deleting": "Deleting..."
+		}
+	},
+	"apiProfiles": {
+		"addButton": "Add Profile",
+		"presets": {
+			"anthropic": "Anthropic",
+			"copilot": "GitHub Copilot",
+			"openai": "OpenAI",
+			"mistral": "Mistral AI",
+			"grok": "Grok (xAI)",
+			"gemini": "Gemini (Google)",
+			"windsurf": "Windsurf (Codeium)",
+			"groq": "Groq",
+			"ollama": "Ollama",
+			"cohere": "Cohere",
+			"openrouter": "OpenRouter"
+		},
+		"fields": {
+			"name": "Name",
+			"preset": "Preset",
+			"baseUrl": "Base URL",
+			"apiKey": "API Key"
+		},
+		"placeholders": {
+			"name": "My Custom API",
+			"preset": "Choose a provider preset",
+			"baseUrl": "https://api.anthropic.com",
+			"apiKey": "sk-ant-..."
+		},
+		"hints": {
+			"preset": "Presets fill the base URL; you still need to paste your API key.",
+			"baseUrl": "Example: https://api.anthropic.com or http://localhost:8080"
+		},
+		"validation": {
+			"nameRequired": "Name is required",
+			"baseUrlRequired": "Base URL is required",
+			"baseUrlInvalid": "Invalid URL format (must be http:// or https://)",
+			"apiKeyRequired": "API Key is required",
+			"apiKeyInvalid": "Invalid API Key format"
+		},
+		"actions": {
+			"save": "Save Profile",
+			"saving": "Saving...",
+			"cancel": "Cancel",
+			"changeKey": "Change",
+			"cancelKeyChange": "Cancel"
+		},
+		"testConnection": {
+			"label": "Test Connection",
+			"testing": "Testing...",
+			"success": "Connection Successful",
+			"failure": "Connection Failed"
+		},
+		"models": {
+			"title": "Optional: Model Name Mappings",
+			"description": "Select models from your API provider. Leave blank to use defaults.",
+			"defaultLabel": "Default Model (Optional)",
+			"haikuLabel": "Haiku Model (Optional)",
+			"sonnetLabel": "Sonnet Model (Optional)",
+			"opusLabel": "Opus Model (Optional)",
+			"defaultPlaceholder": "e.g., claude-sonnet-4-5-20250929",
+			"haikuPlaceholder": "e.g., claude-haiku-4-5-20251001",
+			"sonnetPlaceholder": "e.g., claude-sonnet-4-5-20250929",
+			"opusPlaceholder": "e.g., claude-opus-4-5-20251101"
+		},
+		"empty": {
+			"title": "No API profiles configured",
+			"description": "Create a profile to configure custom API endpoints for your builds.",
+			"action": "Create First Profile"
+		},
+		"switchToOauth": {
+			"label": "Switch to OAuth",
+			"loading": "Switching..."
+		},
+		"activeBadge": "Active",
+		"customModels": "Custom models: {{models}}",
+		"setActive": {
+			"label": "Set Active",
+			"loading": "Setting..."
+		},
+		"tooltips": {
+			"edit": "Edit profile",
+			"deleteActive": "Switch to OAuth before deleting",
+			"deleteInactive": "Delete profile"
+		},
+		"deleteAriaLabel": "Delete profile {{name}}",
+		"toast": {
+			"create": {
+				"title": "Profile created",
+				"description": "\"{{name}}\" has been added successfully."
+			},
+			"update": {
+				"title": "Profile updated",
+				"description": "\"{{name}}\" has been updated successfully."
+			},
+			"delete": {
+				"title": "Profile deleted",
+				"description": "\"{{name}}\" has been removed.",
+				"errorTitle": "Failed to delete profile",
+				"errorFallback": "An error occurred while deleting the profile."
+			},
+			"switch": {
+				"oauthTitle": "Switched to OAuth",
+				"oauthDescription": "Now using OAuth authentication",
+				"profileTitle": "Profile activated",
+				"profileDescription": "Now using {{name}}",
+				"errorTitle": "Failed to switch authentication",
+				"errorFallback": "An error occurred while switching authentication method."
+			}
+		},
+		"dialog": {
+			"createTitle": "Add API Profile",
+			"editTitle": "Edit Profile",
+			"description": "Configure a custom Anthropic-compatible API endpoint for your builds.",
+			"deleteTitle": "Delete Profile?",
+			"deleteDescription": "Are you sure you want to delete \"{{name}}\"? This action cannot be undone.",
+			"cancel": "Cancel",
+			"delete": "Delete",
+			"deleting": "Deleting..."
+		}
+	},
+	"modelSelect": {
+		"placeholder": "Select a model or type manually",
+		"placeholderManual": "Enter model name (e.g., claude-sonnet-4-5-20250929)",
+		"searchPlaceholder": "Search models...",
+		"noResults": "No models match your search",
+		"discoveryNotAvailable": "Model discovery not available. Enter model name manually."
+	},
+	"language": {
+		"label": "Interface Language",
+		"description": "Select the language for the application interface"
+	},
+	"scale": {
+		"presets": "Scale Presets",
+		"presetsDescription": "Quick scale options for common preferences",
+		"fineTune": "Fine-tune Scale",
+		"fineTuneDescription": "Adjust from 75% to 200% in 5% increments",
+		"default": "Default",
+		"comfortable": "Comfortable",
+		"large": "Large"
+	},
+	"logOrder": {
+		"label": "Log Order",
+		"description": "Choose how logs are displayed in the task detail view",
+		"chronological": "Chronological (oldest first)",
+		"reverseChronological": "Reverse-chronological (newest first)"
+	},
+	"general": {
+		"providerSection": "AI Provider",
+		"providerSectionDescription": "Choose the AI provider to use for autonomous tasks. The model list below updates automatically.",
+		"otherAgentSettings": "Other Agent Settings",
+		"otherAgentSettingsDescription": "Additional agent configuration options",
+		"agentFramework": "Agent Framework",
+		"agentFrameworkDescription": "The coding framework used for autonomous tasks",
+		"agentFrameworkAutoClaude": "WorkPilot AI",
+		"aiTerminalNaming": "AI Terminal Naming",
+		"aiTerminalNamingDescription": "Automatically name terminals based on commands",
+		"featureModelSettings": "Feature Model Settings",
+		"featureModelSettingsDescription": "Model and thinking level for Insights, Ideation, and Roadmap",
+		"model": "Model",
+		"thinkingLevel": "Thinking Level",
+		"paths": "Paths",
+		"pathsDescription": "Configure executable and framework paths",
+		"pythonPath": "Python Path",
+		"pythonPathDescription": "Path to Python executable (leave empty for auto-detection)",
+		"pythonPathPlaceholder": "python3 (default)",
+		"gitPath": "Git Path",
+		"gitPathDescription": "Path to Git executable (leave empty for auto-detection)",
+		"gitPathPlaceholder": "git (default)",
+		"githubCLIPath": "GitHub CLI Path",
+		"githubCLIPathDescription": "Path to GitHub CLI (gh) executable (leave empty for auto-detection)",
+		"githubCLIPathPlaceholder": "gh (default)",
+		"gitlabCLIPath": "GitLab CLI Path",
+		"gitlabCLIPathDescription": "Path to GitLab CLI (glab) executable (leave empty for auto-detection)",
+		"gitlabCLIPathPlaceholder": "glab (default)",
+		"claudePath": "Claude CLI Path",
+		"claudePathDescription": "Path to Claude CLI executable (leave empty for auto-detection)",
+		"claudePathPlaceholder": "claude (default)",
+		"detectedPath": "Auto-detected",
+		"detectedVersion": "Version",
+		"detectedSource": "Source",
+		"sourceUserConfig": "User Configuration",
+		"sourceVenv": "Virtual Environment",
+		"sourceHomebrew": "Homebrew",
+		"sourceNvm": "NVM",
+		"sourceSystemPath": "System PATH",
+		"sourceBundled": "Bundled",
+		"sourceFallback": "Fallback",
+		"notDetected": "Not detected",
+		"autoClaudePath": "WorkPilot AI Path",
+		"autoClaudePathDescription": "Relative path to workpilot-ai directory in projects",
+		"autoClaudePathPlaceholder": "workpilot-ai (default)",
+		"autoNameTerminals": "Automatically name terminals",
+		"autoNameTerminalsDescription": "Use AI to generate descriptive names for terminal tabs based on their activity"
+	},
+	"theme": {
+		"title": "Appearance",
+		"description": "Customize how WorkPilot AI looks",
+		"mode": "Mode",
+		"modeDescription": "Choose between light and dark themes",
+		"light": "Light",
+		"dark": "Dark",
+		"system": "System",
+		"colorTheme": "Color Theme",
+		"colorThemeDescription": "Choose your preferred color palette",
+		"colorThemes": {
+			"default": "Oscura-inspired with pale yellow accent",
+			"dusk": "Warmer variant with slightly lighter dark mode",
+			"lime": "Fresh and energetic lime with purple accents",
+			"ocean": "Calm and professional blue tones",
+			"retro": "Warm and nostalgic amber atmospheres",
+			"neo": "Modern cyberpunk pink/magenta",
+			"forest": "Natural and earthy green tones"
+		}
+	},
+	"devtools": {
+		"title": "Developer Tools",
+		"description": "Configure your preferred IDE, terminal, and terminal font settings",
+		"detecting": "Detecting installed tools...",
+		"detectAgain": "Detect Again",
+		"tabTools": "Tools",
+		"tabTerminalFonts": "Terminal Fonts",
+		"ide": {
+			"label": "Preferred IDE",
+			"description": "WorkPilot AI will open worktrees in this editor",
+			"placeholder": "Select IDE...",
+			"customPath": "Custom IDE Path",
+			"customPathPlaceholder": "/path/to/your/ide"
+		},
+		"terminal": {
+			"label": "Preferred Terminal",
+			"description": "WorkPilot AI will open terminal sessions here",
+			"placeholder": "Select terminal...",
+			"customPath": "Custom Terminal Path",
+			"customPathPlaceholder": "/path/to/your/terminal"
+		},
+		"detected": "Detected",
+		"notInstalled": "Not installed",
+		"detectedSummary": "Detected on your system:",
+		"noToolsDetected": "No additional tools detected (VS Code and system terminal will be used)",
+		"autoNameClaude": {
+			"label": "Auto-name Claude terminals",
+			"description": "Use AI to generate a descriptive name for Claude terminals based on your first message"
+		},
+		"yoloMode": {
+			"label": "YOLO Mode",
+			"description": "Start Claude with --dangerously-skip-permissions flag, bypassing all safety prompts. Use with extreme caution.",
+			"warning": "This mode bypasses Claude's permission system. Only enable if you fully trust the code being executed."
+		}
+	},
+	"updates": {
+		"title": "Updates",
+		"description": "Manage WorkPilot AI updates",
+		"appUpdateReady": "App Update Ready",
+		"newVersion": "New Version",
+		"released": "Released",
+		"downloading": "Downloading...",
+		"updateDownloaded": "Update downloaded! Click Install to restart and apply the update.",
+		"installAndRestart": "Install and Restart",
+		"downloadUpdate": "Download Update",
+		"version": "Version",
+		"loading": "Loading...",
+		"checkingForUpdates": "Checking for updates...",
+		"newVersionAvailable": "New version available:",
+		"latestVersion": "You're running the latest version.",
+		"viewRelease": "View full release on GitHub",
+		"unableToCheck": "Unable to check for updates",
+		"checkForUpdates": "Check for Updates",
+		"autoUpdateProjects": "Auto-Update Projects",
+		"autoUpdateProjectsDescription": "Automatically update WorkPilot AI in projects when a new version is available",
+		"betaUpdates": "Beta Updates",
+		"betaUpdatesDescription": "Receive pre-release beta versions with new features (may be less stable)",
+		"stableDowngradeAvailable": "Stable Version Available",
+		"stableDowngradeDescription": "You're currently on a beta version. Since you've disabled beta updates, you can switch to the latest stable release.",
+		"stableVersion": "Stable Version",
+		"downloadStableVersion": "Download Stable Version",
+		"readOnlyVolumeTitle": "Cannot Install from Disk Image",
+		"readOnlyVolumeDescription": "WorkPilot AI is running from a read-only disk image (DMG). Please drag the app to your Applications folder and relaunch it from there to install updates.",
+		"downloadError": "Failed to download update"
+	},
+	"notifications": {
+		"title": "Notifications",
+		"description": "Configure default notification preferences",
+		"onTaskComplete": "On Task Complete",
+		"onTaskCompleteDescription": "Notify when a task finishes successfully",
+		"onTaskFailed": "On Task Failed",
+		"onTaskFailedDescription": "Notify when a task encounters an error",
+		"onReviewNeeded": "On Review Needed",
+		"onReviewNeededDescription": "Notify when QA requires your review",
+		"sound": "Sound",
+		"soundDescription": "Play sound with notifications"
+	},
+	"actions": {
+		"save": "Save Settings",
+		"rerunWizard": "Re-run Wizard",
+		"rerunWizardDescription": "Start the setup wizard again"
+	},
+	"projectSections": {
+		"general": {
+			"title": "General",
+			"description": "Auto-Build and agent config",
+			"configureFor": "Configure Auto-Build, agent model, and notifications for {{projectName}}",
+			"useClaudeMd": "Use CLAUDE.md",
+			"useClaudeMdDescription": "Include CLAUDE.md instructions in agent context"
+		},
+		"autoBuild": {
+			"title": "Auto-Build Integration",
+			"initialized": "Initialized",
+			"notInitialized": "Not Initialized",
+			"notInitializedDescription": "Initialize Auto-Build to enable task creation and agent workflows.",
+			"initializing": "Initializing...",
+			"initializeButton": "Initialize Auto-Build",
+			"checkingStatus": "Checking status..."
+		},
+		"agentConfiguration": {
+			"title": "Agent Configuration",
+			"model": "Claude Model"
+		},
+		"claude": {
+			"title": "Claude Auth",
+			"description": "Claude authentication"
+		},
+		"linear": {
+			"title": "Linear",
+			"description": "Linear integration",
+			"integrationTitle": "Linear Integration",
+			"integrationDescription": "Connect to Linear for issue tracking and task import",
+			"syncDescription": "Sync with Linear for issue tracking",
+			"connectionStatus": "Connection Status",
+			"checking": "Checking...",
+			"connectedTo": "Connected to {{team}}",
+			"connected": "Connected",
+			"notConnected": "Not connected",
+			"tasksAvailable": "{{count}}+ tasks available to import",
+			"connectionString": "https://api.linear.app/graphql",
+			"apiKey": "YOUR_LINEAR_API_KEY"
+		},
+		"github": {
+			"title": "GitHub",
+			"description": "GitHub issues sync",
+			"integrationTitle": "GitHub Integration",
+			"integrationDescription": "Connect to GitHub for issue tracking",
+			"syncDescription": "Sync with GitHub Issues",
+			"connectedViaCLI": "Connected via GitHub CLI",
+			"authenticatedAs": "Authenticated as {{username}}",
+			"useDifferentToken": "Use Different Token",
+			"connectionStatus": "Connection Status",
+			"checking": "Checking...",
+			"connectedTo": "Connected to {{repo}}",
+			"notConnected": "Not connected",
+			"issuesAvailable": "Issues Available",
+			"issuesAvailableDescription": "Access GitHub Issues from the sidebar to view, investigate, and create tasks from issues.",
+			"autoSyncOnLoad": "Auto-Sync on Load",
+			"autoSyncDescription": "Automatically fetch issues when the project loads",
+			"defaultBranch": {
+				"label": "Default Branch",
+				"description": "Base branch for creating task worktrees",
+				"autoDetect": "Auto-detect (main/master)",
+				"searchPlaceholder": "Search branches...",
+				"noBranchesFound": "No branches found",
+				"selectedBranchHelp": "All new tasks will branch from {{branch}}"
+			},
+			"connectionString": "https://api.github.com/graphql",
+			"personalAccessToken": "YOUR_GITHUB_PERSONAL_ACCESS_TOKEN",
+			"enableGitHubIssues": "Enable GitHub Issues",
+			"syncIssuesFromGitHubAndCreateTasksAutomatically": "Sync issues from GitHub and create tasks automatically"
+		},
+		"gitlab": {
+			"title": "GitLab",
+			"description": "GitLab issues sync",
+			"integrationTitle": "GitLab Integration",
+			"integrationDescription": "Connect to GitLab for issue tracking",
+			"syncDescription": "Sync with GitLab Issues"
+		},
+		"azure-devops": {
+			"title": "Azure DevOps",
+			"description": "Azure DevOps work items",
+			"integrationTitle": "Azure DevOps Integration",
+			"integrationDescription": "Connect to Azure DevOps for work item management",
+			"syncDescription": "Sync with Azure DevOps Backlog"
+		},
+		"memory": {
+			"title": "Memory (Graphiti)",
+			"description": "Graphiti memory backend",
+			"integrationTitle": "Memory Settings",
+			"integrationDescription": "Configure Graphiti memory backend for cross-session context",
+			"syncDescription": "Configure Graphiti memory"
+		},
+		"flagshipModel": "Flagship model: {{model}}",
+		"tierFlagship": "Flagship",
+		"supportsThinking": "Thinking",
+		"resetToProviderDefaults": "Reset to provider defaults",
+		"phaseConfigNoteProvider": "These model settings apply to the {{provider}} provider. They are saved independently and restored when you switch back to this provider.",
+		"customModelPlaceholder": "Enter model name (e.g. llama3.3:latest)",
+		"phases": {
+			"spec": {
+				"label": "Spec Creation",
+				"description": "Discovery, requirements, context gathering"
+			},
+			"planning": {
+				"label": "Planning",
+				"description": "Implementation planning and architecture"
+			},
+			"coding": {
+				"label": "Coding",
+				"description": "Actual code implementation"
+			},
+			"qa": {
+				"label": "QA Review",
+				"description": "Quality assurance and validation"
+			}
+		}
+	},
+	"workspace": {
+		"roles": {
+			"backend": "Backend",
+			"frontend": "Frontend",
+			"mobile": "Mobile",
+			"shared": "Shared",
+			"apiGateway": "API Gateway",
+			"worker": "Worker",
+			"other": "Other"
+		}
+	},
+	"integrations": {
+		"title": "Integrations",
+		"description": "Manage Claude accounts and API keys",
+		"claudeAccounts": "Claude Accounts",
+		"claudeAccountsDescription": "Add multiple Claude subscriptions to automatically switch between them when you hit rate limits.",
+		"claudeAccountsWarning": "When authenticating, ensure you're logged into the correct Claude account in your browser. Each profile should use a different subscription.",
+		"noAccountsYet": "No accounts configured yet",
+		"default": "Default",
+		"active": "Active",
+		"authenticated": "Authenticated",
+		"needsAuth": "Needs Auth",
+		"authenticate": "Authenticate",
+		"authenticating": "Authenticating...",
+		"setActive": "Set Active",
+		"manualTokenEntry": "Manual Token Entry",
+		"runSetupToken": "Run claude and type /login to authenticate",
+		"tokenPlaceholder": "sk-ant-oat01-...",
+		"emailPlaceholder": "Email (optional, for display)",
+		"saveToken": "Save Token",
+		"accountNamePlaceholder": "Account name (e.g., Work, Personal)",
+		"autoSwitching": "Automatic Account Switching",
+		"autoSwitchingDescription": "Automatically switch between Claude accounts to avoid interruptions. Configure proactive monitoring to switch before hitting limits.",
+		"enableAutoSwitching": "Enable automatic switching",
+		"masterSwitch": "Master switch for all auto-swap features",
+		"proactiveMonitoring": "Proactive Monitoring",
+		"proactiveDescription": "Check usage regularly and swap before hitting limits",
+		"checkUsageEvery": "Check usage every",
+		"seconds15": "15 seconds",
+		"seconds30": "30 seconds (recommended)",
+		"minute1": "1 minute",
+		"disabled": "Disabled",
+		"sessionThreshold": "Session usage threshold",
+		"sessionThresholdDescription": "Switch when session usage reaches this level (recommended: 95%)",
+		"weeklyThreshold": "Weekly usage threshold",
+		"weeklyThresholdDescription": "Switch when weekly usage reaches this level (recommended: 99%)",
+		"reactiveRecovery": "Reactive Recovery",
+		"reactiveDescription": "Auto-swap when unexpected rate limit is hit",
+		"autoSwitchOnAuthFailure": "Auto-switch on auth failure",
+		"autoSwitchOnAuthFailureDescription": "Automatically switch to another authenticated account when authentication fails",
+		"apiKeys": "API Keys",
+		"apiKeysInfo": "Keys set here are used as defaults. Individual projects can override these in their settings.",
+		"openaiKey": "OpenAI API Key",
+		"openaiKeyDescription": "Required for Graphiti memory backend (embeddings)",
+		"toast": {
+			"authSuccess": "Profile Authenticated",
+			"authSuccessWithEmail": "Connected as {{email}}",
+			"authSuccessGeneric": "Authentication complete. You can now use this profile.",
+			"authStartFailed": "Authentication Failed",
+			"addProfileFailed": "Failed to Add Profile",
+			"loadProfilesFailed": "Failed to Load Profiles",
+			"deleteProfileFailed": "Failed to Delete Profile",
+			"renameProfileFailed": "Failed to Rename Profile",
+			"setActiveProfileFailed": "Failed to Set Active Profile",
+			"profileCreatedAuthFailed": "Profile Created - Authentication Needed",
+			"profileCreatedAuthFailedDescription": "Profile was added but authentication could not start. Click the login button to authenticate.",
+			"tokenSaved": "Token Saved",
+			"tokenSavedDescription": "Your token has been saved successfully.",
+			"tokenSaveFailed": "Failed to Save Token",
+			"settingsUpdateFailed": "Failed to Update Settings",
+			"tryAgain": "Please try again.",
+			"terminalCreationFailed": "Failed to create authentication terminal",
+			"terminalCreationFailedDescription": "Unable to start the authentication process. {{error}}",
+			"maxTerminalsReached": "Maximum terminals reached",
+			"maxTerminalsReachedDescription": "Please close some terminals and try again. You can have up to 12 terminals open.",
+			"terminalError": "Terminal Error",
+			"terminalErrorDescription": "Failed to create terminal: {{error}}",
+			"authProcessFailed": "Authentication process failed to start",
+			"authProcessFailedDescription": "The authentication terminal could not be created. Please try again or check the logs for more details."
+		},
+		"alerts": {
+			"profileCreatedAuthFailed": "Profile created but failed to prepare authentication: {{error}}",
+			"authPrepareFailed": "Failed to prepare authentication: {{error}}",
+			"authStartFailedMessage": "Failed to start authentication. Please try again."
+		}
+	},
+	"accounts": {
+		"title": "Accounts",
+		"description": "Manage Claude accounts and API endpoints",
+		"multiConnector": {
+			"title": "AI Provider Management",
+			"description": "Connect and manage multiple AI providers (Claude, OpenAI, Mistral, etc.).",
+			"stats": {
+				"total": "{{count}} total",
+				"configured": "{{count}} configured",
+				"errors": "{{count}} errors"
+			},
+			"buttons": {
+				"refresh": "Refresh",
+				"addProvider": "Add Provider"
+			},
+			"loadingProviders": "Loading providers..."
+		},
+		"tabs": {
+			"aiProvider": "AI Authentication",
+			"llmProviders": "LLM Providers",
+			"customEndpoints": "Custom Endpoints"
+		},
+		"aiProvider": {
+			"description": "Add multiple Claude subscriptions to automatically switch between them when you hit rate limits.",
+			"noAccountsYet": "No accounts configured yet",
+			"default": "Default",
+			"active": "Active",
+			"authenticated": "Authenticated",
+			"needsAuth": "Needs Auth",
+			"authenticate": "Authenticate",
+			"authenticating": "Authenticating...",
+			"setActive": "Set Active",
+			"manualTokenEntry": "Manual Token Entry",
+			"runSetupToken": "Run claude and type /login to authenticate",
+			"tokenPlaceholder": "sk-ant-oat01-...",
+			"emailPlaceholder": "Email (optional, for display)",
+			"saveToken": "Save Token",
+			"accountNamePlaceholder": "Account name (e.g., Work, Personal)"
+		},
+		"customEndpoints": {
+			"description": "Configure custom Anthropic-compatible API endpoints",
+			"addButton": "Add Profile",
+			"activeBadge": "Active",
+			"customModels": "Custom models: {{models}}",
+			"setActive": {
+				"label": "Set Active",
+				"loading": "Setting..."
+			},
+			"switchToOauth": {
+				"label": "Use AI Authentication",
+				"loading": "Switching..."
+			},
+			"empty": {
+				"title": "No Custom Endpoints",
+				"description": "Configure custom Anthropic-compatible API endpoints to use alternative providers.",
+				"action": "Add Profile"
+			},
+			"dialog": {
+				"deleteTitle": "Delete Profile",
+				"deleteDescription": "Are you sure you want to delete \"{{name}}\"? This action cannot be undone.",
+				"cancel": "Cancel",
+				"delete": "Delete",
+				"deleting": "Deleting..."
+			},
+			"sections": {
+				"customized": {
+					"title": "Custom Endpoints",
+					"description": "Configure custom Anthropic-compatible API endpoints (OpenAI, Azure, etc.)",
+					"endpointCount": "{{count}} endpoint{{count > 1 ? 's' : ''}} configured",
+					"addButton": "Add Endpoint",
+					"empty": {
+						"title": "No endpoints configured",
+						"description": "Add custom API endpoints to extend your LLM options"
+					}
+				},
+				"standard": {
+					"title": "Standard Providers",
+					"description": "Configure API keys for standard LLM providers (OpenAI, Google, Meta, etc.)",
+					"addButton": "Add Account"
+				}
+			},
+			"buttons": {
+				"activate": "Activate",
+				"activating": "Activating...",
+				"deactivate": "Use AI Authentication",
+				"deactivating": "Switching...",
+				"edit": "Edit",
+				"delete": "Delete"
+			},
+			"tooltips": {
+				"edit": "Edit",
+				"deleteActive": "Cannot delete active endpoint",
+				"deleteInactive": "Delete"
+			}
+		},
+		"autoSwitching": {
+			"title": "Automatic Account Switching",
+			"description": "Automatically switch between accounts to avoid interruptions. Configure proactive monitoring to switch before hitting limits.",
+			"enableAutoSwitching": "Enable automatic switching",
+			"masterSwitch": "Master switch for all auto-swap features",
+			"proactiveMonitoring": "Proactive Monitoring",
+			"proactiveDescription": "Check usage regularly and swap before hitting limits",
+			"sessionThreshold": "Session usage threshold",
+			"sessionThresholdDescription": "Switch when session usage reaches this level (recommended: 95%)",
+			"weeklyThreshold": "Weekly usage threshold",
+			"weeklyThresholdDescription": "Switch when weekly usage reaches this level (recommended: 99%)",
+			"reactiveRecovery": "Reactive Recovery",
+			"reactiveDescription": "Auto-swap when unexpected rate limit is hit",
+			"autoSwitchOnAuthFailure": "Auto-switch on auth failure",
+			"autoSwitchOnAuthFailureDescription": "Automatically switch to another authenticated account when authentication fails"
+		},
+		"priority": {
+			"title": "Account Priority Order",
+			"description": "Drag to reorder. System will switch to the next available account in order.",
+			"noAccounts": "No accounts configured. Add accounts above to set priority.",
+			"noEmail": "No email",
+			"active": "Active",
+			"inUse": "In Use",
+			"next": "Next",
+			"unlimited": "Unlimited",
+			"unavailable": "Unavailable",
+			"typeOAuth": "OAuth",
+			"typeAPI": "API",
+			"payPerUse": "Pay-per-use",
+			"needsAuth": "Not authenticated",
+			"duplicateUsage": "Duplicate usage detected",
+			"duplicateUsageHint": "This profile has identical usage to another profile, suggesting they may be authenticated to the same Anthropic account. Re-authenticate with a different account to fix.",
+			"needsReauth": "Needs re-auth",
+			"needsReauthHint": "This profile's refresh token is invalid. Click to re-authenticate.",
+			"sessionUsage": "Session usage (5-hour window)",
+			"weeklyUsage": "Weekly usage (7-day window)",
+			"oauthSection": "Claude Accounts (cycle through first)",
+			"apiSection": "Fallback Endpoints (when all accounts exhausted)",
+			"tipTitle": "How priority works",
+			"tipDescription": "Claude accounts are included in your subscription and will be cycled through first. API endpoints charge per request and are used as fallbacks when all Claude accounts hit their limits.",
+			"status": {
+				"healthy": "Healthy",
+				"moderate": "Moderate",
+				"highUsage": "High usage",
+				"nearLimit": "Near limit",
+				"rateLimited": "Rate limited"
+			},
+			"providerAuth": "Authenticated via API key"
+		},
+		"priorityOrder": {
+			"title": "Provider priority order",
+			"up": "Move up",
+			"down": "Move down"
+		},
+		"toast": {
+			"loadProfilesFailed": "Failed to Load Profiles",
+			"addProfileFailed": "Failed to Add Profile",
+			"deleteProfileFailed": "Failed to Delete Profile",
+			"renameProfileFailed": "Failed to Rename Profile",
+			"setActiveProfileFailed": "Failed to Set Active Profile",
+			"tokenSaved": "Token Saved",
+			"tokenSavedDescription": "Your token has been saved successfully.",
+			"tokenSaveFailed": "Failed to Save Token",
+			"settingsUpdateFailed": "Failed to Update Settings",
+			"tryAgain": "Please try again.",
+			"permissionDenied": "Permission Denied",
+			"checkFilePermissions": "Please check your file permissions and try again.",
+			"pathNotFound": "Path Not Found",
+			"checkPath": "Please check the path exists and try again.",
+			"authFailed": "Authentication Failed"
+		},
+		"alerts": {
+			"profileCreatedAuthFailed": "Profile created but failed to prepare authentication: {{error}}",
+			"authPrepareFailed": "Failed to prepare authentication: {{error}}",
+			"authStartFailedMessage": "Failed to start authentication. Please try again."
+		},
+		"form": {
+			"addAccount": "Add a {{provider}} account",
+			"name": "Account name",
+			"namePlaceholder": "Account name",
+			"apiKey": "API Key",
+			"apiKeyPlaceholder": "sk-...",
+			"oauthToken": "OAuth Token",
+			"oauthTokenPlaceholder": "OAuth token (if required)",
+			"baseUrl": "Base URL (optional)",
+			"baseUrlPlaceholder": "https://api.example.com",
+			"chooseModel": "-- Choose a model --",
+			"save": "Save",
+			"cancel": "Cancel"
+		}
+	},
+	"debug": {
+		"title": "Debug & Logs",
+		"description": "Access logs and debug information for troubleshooting",
+		"errorReporting": {
+			"label": "Anonymous Error Reporting",
+			"description": "Send crash reports to help improve WorkPilot AI. No personal data or code is collected."
+		},
+		"openLogsFolder": "Open Logs Folder",
+		"copyDebugInfo": "Copy Debug Info",
+		"copied": "Copied!",
+		"loadInfo": "Load Debug Info",
+		"systemInfo": "System Information",
+		"logsLocation": "Logs Location",
+		"recentErrors": "Recent Errors",
+		"noRecentErrors": "No recent errors",
+		"helpTitle": "Reporting Issues",
+		"helpText": "When reporting bugs, click \"Copy Debug Info\" to get system information and recent errors that help us diagnose the issue."
+	},
+	"projectSettings": {
+		"noProjectSelected": {
+			"title": "No Project Selected",
+			"description": "Select a project from the sidebar to configure its settings."
+		}
+	},
+	"mcp": {
+		"title": "MCP Server Overview",
+		"titleWithProject": "MCP Server Overview for {{projectName}}",
+		"description": "Configure which MCP servers are available for agents in this project",
+		"descriptionNoProject": "Select a project to configure MCP servers",
+		"serversEnabled": "{{count}} servers enabled",
+		"configuration": "MCP Server Configuration",
+		"configurationHint": "Disabled servers reduce context usage and startup time",
+		"noProjectSelected": "No Project Selected",
+		"noProjectSelectedDescription": "Select a project from the dropdown to view and configure MCP servers.",
+		"projectNotInitialized": "Project Not Initialized",
+		"projectNotInitializedDescription": "Initialize WorkPilot AI for this project to configure MCP servers.",
+		"browserAutomation": "Browser Automation (QA agents only)",
+		"alwaysEnabled": "always enabled",
+		"addServer": "Add Server",
+		"addMcpTo": "Add MCP Server to {{agent}}",
+		"addMcpDescription": "Select an MCP server to add to this agent",
+		"allMcpsAdded": "All available MCP servers are already added",
+		"added": "added",
+		"removed": "removed",
+		"remove": "Remove",
+		"restore": "Restore",
+		"noMcpServers": "No MCP servers",
+		"searchPlaceholder": "Search MCP servers…",
+		"setupRequired": "Setup required",
+		"noSearchResults": "No servers match your search.",
+		"categories": {
+			"core": "Core",
+			"projectMgmt": "Project Management",
+			"devTools": "Dev Tools",
+			"search": "Search",
+			"testingQA": "Testing & QA",
+			"monitoring": "Monitoring",
+			"communication": "Communication",
+			"custom": "Custom"
+		},
+		"cannotRemove": "Cannot remove (required)",
+		"servers": {
+			"context7": {
+				"name": "Context7",
+				"description": "Documentation lookup for libraries"
+			},
+			"graphiti": {
+				"name": "Graphiti Memory",
+				"description": "Knowledge graph for cross-session context",
+				"notConfigured": "Requires memory configuration (see Memory settings)"
+			},
+			"linear": {
+				"name": "Linear",
+				"description": "Project management integration",
+				"notConfigured": "Requires Linear integration (see Linear settings)"
+			},
+			"electron": {
+				"name": "Electron",
+				"description": "Desktop app automation via Chrome DevTools"
+			},
+			"puppeteer": {
+				"name": "Puppeteer",
+				"description": "Web browser automation for testing"
+			},
+			"chromeDevtools": {
+				"name": "Chrome DevTools",
+				"description": "Browser automation via Chrome DevTools Protocol (coder + QA agents)"
+			},
+			"autoClaude": {
+				"name": "WorkPilot AI Tools",
+				"description": "Build progress tracking"
+			},
+			"github": {
+				"name": "GitHub",
+				"description": "GitHub API operations. Requires GITHUB_PERSONAL_ACCESS_TOKEN env var."
+			},
+			"braveSearch": {
+				"name": "Brave Search",
+				"description": "Privacy-focused web search. Requires BRAVE_API_KEY env var."
+			},
+			"jira": {
+				"name": "Jira",
+				"description": "Jira & Confluence issue tracking. Requires JIRA_URL, JIRA_USERNAME and JIRA_API_TOKEN env vars."
+			},
+			"azureDevops": {
+				"name": "Azure DevOps",
+				"description": "Azure Boards, Repos and Pipelines. Requires AZURE_DEVOPS_TOKEN and AZURE_DEVOPS_ORG env vars."
+			},
+			"sentry": {
+				"name": "Sentry",
+				"description": "Error monitoring and performance tracking. Requires SENTRY_AUTH_TOKEN env var."
+			},
+			"slack": {
+				"name": "Slack",
+				"description": "Send messages and read channels. Requires SLACK_BOT_TOKEN env var."
+			},
+			"postman": {
+				"name": "Postman",
+				"description": "Run and manage API collections and tests. Requires POSTMAN_API_KEY env var."
+			},
+			"teams": {
+				"name": "Microsoft Teams",
+				"description": "Send messages to Teams channels. Requires TEAMS_WEBHOOK_URL env var."
+			}
+		},
+		"customServers": "Custom Servers",
+		"addCustomServer": "Add Custom Server",
+		"editCustomServer": "Edit Custom Server",
+		"customServerDescription": "Add a command-based or HTTP-based MCP server",
+		"serverType": "Server Type",
+		"typeCommand": "Command (npx/npm)",
+		"typeHttp": "HTTP",
+		"serverName": "Name",
+		"serverNamePlaceholder": "My MCP Server",
+		"serverDescription": "Description",
+		"serverDescriptionPlaceholder": "What this server does",
+		"command": "Command",
+		"args": "Arguments",
+		"argsHint": "Space-separated arguments",
+		"url": "URL",
+		"headers": "Headers",
+		"headerName": "Header Name",
+		"headerValue": "Header Value",
+		"noCustomServers": "No custom servers configured. Add one to use with your agents.",
+		"errorNameRequired": "Server name is required",
+		"errorIdExists": "A server with this ID already exists",
+		"errorCommandRequired": "Command is required for command-based servers",
+		"errorUrlRequired": "URL is required for HTTP-based servers",
+		"testConnection": "Test",
+		"testing": "Testing...",
+		"authToken": "Authentication Token",
+		"authTokenPlaceholder": "Paste your API token or PAT here",
+		"authTokenHint": "Used as Bearer token in the Authorization header",
+		"advancedHeaders": "Additional Headers",
+		"status": {
+			"healthy": "Server is responding",
+			"unhealthy": "Server is not responding",
+			"needsAuth": "Authentication required",
+			"checking": "Checking...",
+			"unknown": "Status unknown"
+		},
+		"hints": {
+			"github": "This looks like a GitHub MCP server. You'll need a Personal Access Token with appropriate scopes.",
+			"createGithubPat": "Create GitHub PAT",
+			"google": "This looks like a Google API. You'll need an OAuth token or API key.",
+			"createGoogleToken": "Create Google Credentials",
+			"anthropic": "This looks like an Anthropic API. You'll need an API key.",
+			"createAnthropicKey": "Create Anthropic API Key",
+			"openai": "This looks like an OpenAI API. You'll need an API key.",
+			"createOpenaiKey": "Create OpenAI API Key"
+		}
+	},
+	"terminalFonts": {
+		"title": "Terminal Fonts",
+		"description": "Customize terminal font appearance and behavior",
+		"configActions": "Configuration:",
+		"export": "Export JSON",
+		"import": "Import JSON",
+		"copy": "Copy to Clipboard",
+		"fontConfig": {
+			"title": "Font Configuration",
+			"description": "Customize font family, size, weight, line height, and letter spacing",
+			"fontFamily": "Font Family",
+			"fontFamilyDescription": "Primary monospace font for terminal text",
+			"selectFont": "Select a font...",
+			"searchFont": "Search fonts...",
+			"noFonts": "No fonts found",
+			"fontChain": "Font chain:",
+			"fontSize": "Font Size",
+			"fontSizeDescription": "Base font size in pixels (10-24px)",
+			"decreaseFontSize": "Decrease font size by {{step}}px",
+			"increaseFontSize": "Increase font size by {{step}}px",
+			"pixels": "pixels",
+			"fontWeight": "Font Weight",
+			"fontWeightDescription": "Font weight from 100 (thin) to 900 (black), in steps of 100",
+			"commonWeights": "Common: 400 (normal), 600 (semi-bold), 700 (bold)",
+			"decreaseFontWeight": "Decrease font weight by {{step}}",
+			"increaseFontWeight": "Increase font weight by {{step}}",
+			"lineHeight": "Line Height",
+			"lineHeightDescription": "Line height as a multiple of font size (1.0-2.0)",
+			"letterSpacing": "Letter Spacing",
+			"letterSpacingDescription": "Horizontal spacing between characters (-2 to 5px)"
+		},
+		"cursorConfig": {
+			"title": "Cursor Configuration",
+			"description": "Customize cursor style, blinking behavior, and accent color",
+			"cursorStyle": "Cursor Style",
+			"cursorStyleDescription": "Choose the appearance of the terminal cursor",
+			"selectStyle": "Select cursor style...",
+			"currentStyle": "Current:",
+			"styleBlock": "Block",
+			"styleBlockDescription": "Full block cursor",
+			"styleUnderline": "Underline",
+			"styleUnderlineDescription": "Underline cursor",
+			"styleBar": "Bar",
+			"styleBarDescription": "Vertical bar cursor",
+			"cursorBlink": "Cursor Blink",
+			"cursorBlinkDescription": "Enable or disable cursor blinking animation",
+			"blinkStatus": "Status:",
+			"enabled": "Enabled",
+			"disabled": "Disabled",
+			"cursorAccentColor": "Cursor Accent Color",
+			"cursorAccentColorDescription": "Choose the color of the terminal cursor",
+			"cursorColorLabel": "Cursor accent color",
+			"cursorColorDescription": "Current color: {{color}}",
+			"pickColor": "Click to pick a color",
+			"resetColor": "Reset to black",
+			"reset": "Reset",
+			"preview": "Preview:"
+		},
+		"performanceConfig": {
+			"title": "Performance Settings",
+			"description": "Adjust scrollback limit and other performance-related settings",
+			"presets": "Quick Presets",
+			"presetsDescription": "Common scrollback limits for different use cases",
+			"scrollback": "Scrollback Limit",
+			"scrollbackDescription": "Maximum number of lines to keep in terminal history",
+			"scrollbackPresets": "Quick Presets",
+			"presetMinimal": "Minimal",
+			"presetMinimalDescription": "Minimal history (1K lines)",
+			"presetStandard": "Standard",
+			"presetStandardDescription": "Standard history (10K lines)",
+			"presetExtended": "Extended",
+			"presetExtendedDescription": "Extended history (50K lines)",
+			"presetMaximum": "Maximum",
+			"presetMaximumDescription": "Maximum history (100K lines)",
+			"decreaseScrollback": "Decrease scrollback by {{step}}",
+			"increaseScrollback": "Increase scrollback by {{step}}",
+			"lines": "lines",
+			"kValue": "{{value}}K",
+			"scrollbackValue": "{{value}} lines"
+		},
+		"presets": {
+			"title": "Quick Presets",
+			"description": "Apply pre-configured terminal font settings or save your own",
+			"builtin": "Built-in Presets",
+			"builtinDescription": "Click to apply a pre-configured preset",
+			"vscode": "Consolas 14px, block cursor",
+			"vscodeName": "VS Code",
+			"intellij": "JetBrains Mono 13px, block cursor",
+			"intellijName": "IntelliJ IDEA",
+			"macos": "SF Mono 13px, block cursor",
+			"macosName": "macOS Terminal",
+			"ubuntu": "Ubuntu Mono 13px, block cursor",
+			"ubuntuName": "Ubuntu Terminal",
+			"reset": "Reset to Defaults",
+			"resetDescription": "Restore the default settings for your operating system",
+			"resetToOS": "Reset to {{os}} defaults",
+			"resetButton": "Reset to OS Default",
+			"custom": "Custom Presets",
+			"customDescription": "Save your current configuration as a custom preset",
+			"presetNamePlaceholder": "Preset name...",
+			"savePreset": "Save current configuration as a preset",
+			"applyPreset": "Apply this preset",
+			"deletePreset": "Delete this preset",
+			"noCustomPresets": "No custom presets yet. Save your current configuration to get started.",
+			"duplicateName": "A preset with this name already exists",
+			"saved": "Preset \"{{name}}\" saved",
+			"deleted": "Preset \"{{name}}\" deleted",
+			"unknownFont": "Unknown",
+			"applyFailed": "Failed to apply preset \"{{name}}\"",
+			"presetNameLabel": "Preset name",
+			"summary": "{{font}}, {{size}}px, {{cursor}} cursor"
+		},
+		"preview": {
+			"title": "Live Preview",
+			"description": "Preview your terminal settings in real-time (updates within 300ms)",
+			"ariaLabel": "Terminal font preview",
+			"infoText": "This preview updates within 300ms of any change to show how your settings will look in actual terminals."
+		},
+		"importExport": {
+			"exportSuccess": "Settings exported successfully",
+			"exportFailed": "Failed to export settings",
+			"importSuccess": "Settings imported successfully",
+			"importFailed": "Failed to import settings: Invalid JSON format",
+			"importFailedRange": "Failed to import settings: Values out of valid range",
+			"copySuccess": "Settings copied to clipboard",
+			"copyFailed": "Failed to copy to clipboard",
+			"fileTooLarge": "Import file too large (max 10KB)",
+			"readError": "Failed to read file"
+		},
+		"slider": {
+			"decrease": "Decrease {{label}} by {{step}}",
+			"increase": "Increase {{label}} by {{step}}",
+			"currentValue": "Current value: {{value}}"
+		}
+	},
+	"agents": {
+		"categories": {
+			"spec": "Spec Creation",
+			"build": "Build",
+			"qa": "QA",
+			"utility": "Utility",
+			"ideation": "Ideation"
+		},
+		"agentsCount": "({{count}} agents)",
+		"forProject": "for {{name}}",
+		"availableTools": "Available Tools",
+		"textOnly": "Text-only (no tools)",
+		"spec_gatherer": {
+			"label": "Spec Gatherer",
+			"description": "Collects initial requirements from user"
+		},
+		"spec_researcher": {
+			"label": "Spec Researcher",
+			"description": "Validates external integrations and APIs"
+		},
+		"spec_writer": {
+			"label": "Spec Writer",
+			"description": "Creates the spec.md document"
+		},
+		"spec_critic": {
+			"label": "Spec Critic",
+			"description": "Self-critique using deep analysis"
+		},
+		"spec_discovery": {
+			"label": "Spec Discovery",
+			"description": "Initial project discovery and analysis"
+		},
+		"spec_context": {
+			"label": "Spec Context",
+			"description": "Builds context from existing codebase"
+		},
+		"spec_validation": {
+			"label": "Spec Validation",
+			"description": "Validates spec completeness and quality"
+		},
+		"planner": {
+			"label": "Planner",
+			"description": "Creates implementation plan with subtasks"
+		},
+		"coder": {
+			"label": "Coder",
+			"description": "Implements individual subtasks"
+		},
+		"qa_reviewer": {
+			"label": "QA Reviewer",
+			"description": "Validates acceptance criteria. Uses Electron or Puppeteer based on project type."
+		},
+		"qa_fixer": {
+			"label": "QA Fixer",
+			"description": "Fixes QA-reported issues. Uses Electron or Puppeteer based on project type."
+		},
+		"pr_reviewer": {
+			"label": "PR Reviewer",
+			"description": "Reviews GitHub pull requests"
+		},
+		"commit_message": {
+			"label": "Commit Message",
+			"description": "Generates commit messages"
+		},
+		"merge_resolver": {
+			"label": "Merge Resolver",
+			"description": "Resolves merge conflicts"
+		},
+		"insights": {
+			"label": "Insights",
+			"description": "Extracts code insights"
+		},
+		"analysis": {
+			"label": "Analysis",
+			"description": "Codebase analysis with context lookup"
+		},
+		"batch_analysis": {
+			"label": "Batch Analysis",
+			"description": "Batch processing of issues or items"
+		},
+		"ideation": {
+			"label": "Ideation",
+			"description": "Generates feature ideas"
+		},
+		"roadmap_discovery": {
+			"label": "Roadmap Discovery",
+			"description": "Discovers roadmap items"
+		},
+		"pr_template_filler": {
+			"label": "PR Template Filler",
+			"description": "AI-fills GitHub PR templates from code changes"
+		}
+	},
+	"agentProfile": {
+		"title": "Agent Profile",
+		"sectionDescription": "Configure agent behavior profile and thinking levels",
+		"profilesInfo": "Configure the model used for each pipeline phase. Settings are saved per provider and will be restored when you switch back to this provider.",
+		"profilesInfoProvider": "Configure the models and thinking levels for each pipeline phase. These settings are specific to the {{provider}} provider and will be restored when you switch back.",
+		"customized": "Customized",
+		"thinking": "Thinking",
+		"activeProvider": "Active provider: {{provider}}",
+		"flagshipModel": "Flagship model: {{model}}",
+		"model": "Model",
+		"selectModel": "Select a model",
+		"customModelPlaceholder": "Enter model name (e.g. llama3.3:latest)",
+		"thinkingLevel": "Thinking Level",
+		"tierFlagship": "Flagship",
+		"supportsThinking": "Thinking",
+		"phaseConfigNote": "These model settings apply to your Claude account. You can customize them per phase or reset to your profile defaults.",
+		"phaseConfigNoteProvider": "These model settings apply to the {{provider}} provider. They are saved independently and restored when you switch back to this provider.",
+		"resetToProfileDefaults": "Reset to {{profile}} defaults",
+		"resetToProviderDefaults": "Reset to provider defaults",
+		"label": "Agent Profile",
+		"custom": "Custom",
+		"customConfiguration": "Custom Configuration",
+		"customDescription": "Choose specific model and thinking level",
+		"clickToCustomize": "Click to customize",
+		"selectThinkingLevel": "Select thinking level",
+		"autoLabel": "Auto (Optimized)",
+		"autoDescription": "Uses Opus across all phases with optimized thinking levels",
+		"phaseConfiguration": "Phase Configuration",
+		"phaseConfigurationDescription": "Configure models and thinking levels for each development pipeline phase",
+		"phases": {
+			"spec": {
+				"label": "Spec Creation",
+				"description": "Discovery, requirements, context gathering"
+			},
+			"planning": {
+				"label": "Planning",
+				"description": "Implementation planning and architecture"
+			},
+			"coding": {
+				"label": "Coding",
+				"description": "Actual code implementation"
+			},
+			"qa": {
+				"label": "QA Review",
+				"description": "Quality assurance and validation"
+			}
+		}
+	},
+	"azureDevOpsImport": {
+		"title": "Import Azure DevOps Work Items",
+		"description": "Select Azure DevOps work items to import into WorkPilot AI",
+		"importSuccess": "{{count}} work item(s) imported successfully",
+		"importSuccessSingle": "Work item \"{{title}}\" imported successfully",
+		"successTitle": "Import Successful!",
+		"successCount": "Imported {{count}} work item.",
+		"successCount_plural": "Imported {{count}} work items.",
+		"successFailedSuffix": "{{count}} failed.",
+		"errorNotConfigured": "Azure DevOps not configured",
+		"errorCheckConnectionFailed": "Connection check failed",
+		"errorUnknown": "Unknown error",
+		"errorLoadWorkItemsFailed": "Failed to load work items",
+		"errorImportFailed": "Import failed",
+		"errorNoProject": "No project selected",
+		"projectLabel": "Project:",
+		"searchPlaceholder": "Search work items...",
+		"filterTypeLabel": "Work Item Type",
+		"filterTypeAll": "All Types",
+		"filterStateLabel": "State",
+		"filterStateAll": "All States",
+		"selectionCount": "{{selected}} of {{total}} selected",
+		"emptyTitle": "No work items found",
+		"emptySubtitle": "Try adjusting your filters",
+		"done": "Done",
+		"cancel": "Cancel",
+		"importing": "Importing...",
+		"importButton": "Import Work Items from Azure DevOps",
+		"importButton_plural": "Import {{count}} items",
+		"dropZone": "Drop items here",
+		"dropZoneItems": "{{count}} item(s) to import",
+		"dropToColumn": "Drop to {{column}} column",
+		"moreItems": "+{{count}} more item(s)",
+		"sidePanelTitle": "Import from Azure DevOps",
+		"sidePanelDescription": "Drag and drop items into Kanban columns",
+		"dragInstructions": "Select items then drag them to a column",
+		"noWorkItems": "No work items found",
+		"loadingWorkItems": "Loading items...",
+		"connectionError": "Azure DevOps connection error",
+		"configureFirst": "Configure Azure DevOps in project settings",
+		"configureButton": "Configure Azure DevOps",
+		"importConfirmTitle": "Import {{count}} work item(s)",
+		"importConfirmDescription": "The following items will be imported into the {{column}} column.",
+		"importConfirmButton": "Import {{count}} item(s)",
+		"selectedItems": "{{count}} item(s) selected",
+		"toggleSelection": "Toggle selection for work item {{id}}"
+	},
+	"azureDevOps": {
+		"enableSyncLabel": "Enable Azure DevOps Sync",
+		"enableSyncDescription": "Automatically manage work items from Azure DevOps backlog",
+		"autoSyncLabel": "Auto Sync",
+		"autoSyncDescription": "Automatically sync work items from Azure DevOps",
+		"autoSyncNoteLabel": "Note:",
+		"autoSyncNoteDescription": "Auto sync runs hourly and imports new work items.",
+		"orgUrlLabel": "Organization URL",
+		"orgUrlDescription": "Your Azure DevOps organization URL (e.g., https://dev.azure.com/your-org)",
+		"orgUrlPlaceholder": "https://dev.azure.com/your-org",
+		"patLabel": "Personal Access Token (PAT)",
+		"patDescriptionPrefix": "Generate a PAT from",
+		"patDescriptionSuffix": "Requires scope: Work Items (Read & Write).",
+		"patLinkLabel": "Azure DevOps User Settings",
+		"patPlaceholder": "Enter your PAT",
+		"repositoryLabel": "Repository",
+		"repositoryDescription": "Select the Azure DevOps repository to use for this project",
+		"repositoryPlaceholder": "Select a repository...",
+		"repositoryLoading": "Loading repositories...",
+		"repositoryError": "Error loading repositories",
+		"repositorySelectManual": "Enter manually",
+		"repositoryRefresh": "Refresh list",
+		"connectionStatusTitle": "Connection Status",
+		"connectionChecking": "Checking...",
+		"connectionConnected": "Connected",
+		"connectionConnectedProject": "Connected to project {{projectName}}",
+		"connectionNotConnected": "Not connected",
+		"connectionWorkItemCount": "{{count}}+ work items available to import",
+		"importPromptTitle": "Import Work Items",
+		"importPromptDescription": "Select and import work items from your Azure DevOps backlog to create WorkPilot AI tasks.",
+		"importPromptButton": "Select Work Items to Import",
+		"apiKey": "API Key",
+		"discoverModels": "Discover Models",
+		"discovering": "Discovering...",
+		"discoveryFailed": "Discovery Failed",
+		"discoveryFailedDesc": "Unable to connect to API. Check URL and API key.",
+		"modelsDiscovered": "Models Discovered",
+		"modelsDiscoveredDesc": "{{count}} models have been discovered and added automatically.",
+		"noModelsFound": "No Models Found",
+		"noModelsFoundDesc": "API returned no models. Check response format.",
+		"urlRequired": "URL Required",
+		"urlRequiredDesc": "Please enter your API URL before discovering models.",
+		"manualModels": "Manual Model Management",
+		"modelName": "Model Name",
+		"modelId": "Model ID",
+		"modelTier": "Tier",
+		"tierFlagship": "Flagship",
+		"tierStandard": "Standard",
+		"tierFast": "Fast",
+		"supportsThinking": "Supports Thinking",
+		"addModel": "Add",
+		"availableModels": "Available Models",
+		"noModelsConfigured": "No Models Configured",
+		"addModelsDesc": "Add models manually or use automatic discovery",
+		"modelInfoRequired": "Information Required",
+		"modelInfoRequiredDesc": "Please enter model name and ID.",
+		"modelAdded": "Model Added",
+		"modelAddedDesc": "{{name}} has been added to available models.",
+		"modelRemoved": "Model Removed",
+		"modelRemovedDesc": "Model has been removed from the list."
+	},
+	"autoSwitching": {
+		"title": "Auto-switching",
+		"enableLabel": "Enable auto-switching",
+		"enableDescription": "Automatically switch between accounts based on usage",
+		"enabled": "Auto-switching enabled",
+		"disabled": "Auto-switching disabled",
+		"enabledDescription": "Accounts will switch automatically",
+		"disabledDescription": "Accounts will no longer switch automatically",
+		"proactiveMonitoring": "Proactive Monitoring",
+		"proactiveDescription": "Switch before reaching limits",
+		"sessionThreshold": "Session Threshold",
+		"sessionThresholdDescription": "Switch when usage reaches this percentage",
+		"rateLimitSwitching": "Switch on Rate Limit",
+		"rateLimitDescription": "Change account when rate limit is reached",
+		"authFailureSwitching": "Switch on Auth Failure",
+		"authFailureDescription": "Change account if authentication fails",
+		"priorityOrder": {
+			"title": "Account Priority Order",
+			"description": "Define the order in which accounts will be used for auto-switching"
+		},
+		"debug": {
+			"accountsFound": "Debug: {{count}} account(s) found"
+		},
+		"toast": {
+			"error": "Error",
+			"errorDescription": "Unable to update settings"
+		}
+	},
+	"copilotOAuth": {
+		"title": "GitHub Copilot Authentication",
+		"description": "Web-based authentication using GitHub OAuth",
+		"descriptionNoCli": "Web-based authentication using GitHub OAuth (no CLI required)",
+		"checkingStatus": "Checking authentication status...",
+		"authenticated": "Authenticated",
+		"notAuthenticated": "Not Authenticated",
+		"defaultUser": "GitHub User",
+		"serverUnavailable": "OAuth server not available",
+		"serverUnavailableHint": "Please restart the application or check your network connection",
+		"authenticatedProfiles": "Authenticated Profiles",
+		"addedDate": "Added {{date}}",
+		"readyToUse": "Ready to use GitHub Copilot",
+		"addProfile": "Add Profile",
+		"noAuthFound": "No Authentication Found",
+		"noAuthFoundDesc": "Connect to GitHub Copilot using OAuth authentication",
+		"openingBrowser": "Opening Browser...",
+		"authenticating": "Authenticating...",
+		"authenticateButton": "Authenticate with GitHub",
+		"toast": {
+			"oauthStarted": "OAuth Started",
+			"oauthStartedDesc": "Please complete authentication in your browser",
+			"authSuccess": "Authentication Successful",
+			"authSuccessDesc": "Successfully authenticated as {{username}}",
+			"authFailed": "Authentication Failed",
+			"authRevoked": "Authentication Revoked",
+			"authRevokedDesc": "Successfully revoked authentication for {{username}}",
+			"revokeFailed": "Revoke Failed"
+		}
+	},
+	"jira": {
+		"title": "Jira Integration",
+		"description": "Configure and manage Jira Cloud issue synchronization",
+		"enable": "Enable Jira Integration",
+		"enableDescription": "Sync issues with Jira Cloud for bidirectional task tracking",
+		"instanceUrl": "Jira Instance URL",
+		"instanceUrlPlaceholder": "https://your-org.atlassian.net",
+		"instanceUrlDescription": "Your Jira Cloud instance URL (e.g., https://your-org.atlassian.net)",
+		"email": "Email",
+		"emailPlaceholder": "user@example.com",
+		"emailDescription": "The email address associated with your Atlassian account",
+		"apiToken": "API Token",
+		"apiTokenPlaceholder": "Enter your Jira API token",
+		"apiTokenDescription": "Generate a token at",
+		"apiTokenLink": "Atlassian API Tokens",
+		"projectKey": "Default Project Key",
+		"projectKeyPlaceholder": "PROJ",
+		"projectKeyDescription": "The Jira project key to sync issues from (e.g., PROJ, DEV, TEAM)",
+		"autoSync": "Auto-sync issues",
+		"autoSyncDescription": "Automatically sync Jira issues when the project is opened",
+		"testConnection": "Test Connection",
+		"connected": "Connected",
+		"connectionFailed": "Connection failed",
+		"authenticationFailed": "Authentication failed. Verify that your Jira email and API token are valid.",
+		"instance": "Instance",
+		"required": "*",
+		"fillAllFields": "Please fill in all required fields (Instance URL, Email, API Token)"
+	},
+	"teams": {
+		"title": "Microsoft Teams",
+		"description": "Receive notifications in Teams when tasks are done and PRs are created",
+		"initGuardDescription": "Initialize WorkPilot AI for this project to configure Teams notifications",
+		"enableNotifications": "Enable Teams notifications",
+		"enableNotificationsHint": "Send a message to your Teams channel when a task completes and a PR is created",
+		"webhookUrl": "Incoming Webhook URL",
+		"webhookUrlHint": "Paste the Incoming Webhook URL from your Teams channel connector",
+		"testWebhook": "Send test message",
+		"testSuccess": "Message sent!",
+		"testError": "Failed to reach webhook",
+		"testMessage": "WorkPilot AI — Test notification",
+		"testMessageBody": "This is a test message from WorkPilot AI. Your Teams notifications are configured correctly.",
+		"howToCreate": "How to create a webhook",
+		"triggers": "Notification triggers",
+		"triggerTaskDone": "When a Kanban task reaches 'Done' and a PR is created",
+		"triggerPrCreated": "When a PR is automatically created for human review"
+	},
+	"jiraImport": {
+		"title": "Import Jira Issues",
+		"description": "Select Jira issues to import into WorkPilot AI",
+		"importSuccess": "{{count}} issue(s) imported successfully",
+		"successTitle": "Import Successful!",
+		"successCount": "Imported {{count}} issue.",
+		"successCount_plural": "Imported {{count}} issues.",
+		"successFailedSuffix": "{{count}} failed.",
+		"errorNotConfigured": "Jira not configured",
+		"errorCheckConnectionFailed": "Connection check failed",
+		"errorUnknown": "Unknown error",
+		"errorLoadIssuesFailed": "Failed to load issues",
+		"errorImportFailed": "Import failed",
+		"errorNoProject": "No project selected",
+		"projectLabel": "Project:",
+		"searchPlaceholder": "Search issues...",
+		"filterTypeLabel": "Issue Type",
+		"filterTypeAll": "All Types",
+		"filterStateLabel": "State",
+		"filterStateAll": "All States",
+		"selectionCount": "{{selected}} of {{total}} selected",
+		"emptyTitle": "No issues found",
+		"emptySubtitle": "Try adjusting your filters",
+		"done": "Done",
+		"cancel": "Cancel",
+		"importing": "Importing...",
+		"importButton": "Import Issues from Jira",
+		"importButton_plural": "Import {{count}} items",
+		"dropZone": "Drop items here",
+		"dropZoneItems": "{{count}} item(s) to import",
+		"dropToColumn": "Drop to {{column}} column",
+		"moreItems": "+{{count}} more item(s)",
+		"sidePanelTitle": "Import from Jira",
+		"sidePanelDescription": "Drag and drop items into Kanban columns",
+		"dragInstructions": "Select items then drag them to a column",
+		"noIssues": "No issues found",
+		"loadingIssues": "Loading items...",
+		"connectionError": "Jira connection error",
+		"configureFirst": "Configure Jira in project settings",
+		"configureButton": "Configure Jira",
+		"importConfirmTitle": "Import {{count}} issue(s)",
+		"importConfirmDescription": "The following items will be imported into the {{column}} column.",
+		"importConfirmButton": "Import {{count}} item(s)",
+		"selectedItems": "{{count}} item(s) selected"
+	},
+	"instructions": {
+		"title": "GitHub Copilot Instructions",
+		"description": "GitHub Copilot authentication guide",
+		"authentication": {
+			"title": "Authentication",
+			"step1": "Open a terminal and run 'gh auth login'",
+			"step2": "Follow the instructions in the browser that opens",
+			"step3": "Configure the necessary permissions",
+			"installed": "Installed ({{version}})",
+			"notAuthenticated": "Not authenticated",
+			"authenticated": "Authenticated ({{username}})",
+			"authenticatedAs": "Authenticated as {{username}}"
+		},
+		"authenticate": "Authenticate",
+		"authTerminalTitle": "GitHub Copilot Authentication Terminal",
+		"authCloseWarning": "The terminal is authenticating. Are you sure you want to close?",
+		"authTerminal": {
+			"connecting": "Connecting...",
+			"authenticate": "Authenticate: {{profileName}}",
+			"completeSetup": "Complete setup: {{profileName}}",
+			"authenticatedAs": "Authenticated as {{username}}",
+			"authenticated": "Authenticated!",
+			"authError": "Authentication Error",
+			"authMethod": {
+				"title": "Authentication Method",
+				"description": "Choose your preferred authentication method for GitHub Copilot",
+				"selectLabel": "Authentication Method",
+				"selectPlaceholder": "Select a method",
+				"terminal": "GitHub CLI Terminal",
+				"token": "Manual Token"
+			}
+		},
+		"errors": {
+			"authFailed": "Authentication failed",
+			"saveFailed": "Save failed",
+			"removeFailed": "Remove failed",
+			"logoutFailed": "Logout failed",
+			"tokenRequired": "Token required",
+			"tokenRequiredDescription": "Please enter a valid GitHub Copilot token",
+			"unknownError": "Unknown error"
+		},
+		"logout": "Logout",
+		"logoutSuccess": "Logout successful",
+		"logoutSuccessDescription": "You have been logged out from GitHub Copilot",
+		"testSuccess": "Test successful",
+		"testFailed": "Test failed",
+		"testError": "Test error",
+		"tokenSaved": "Token saved",
+		"tokenSavedDescription": "GitHub Copilot token has been saved",
+		"tokenRemoved": "Token removed",
+		"tokenRemovedDescription": "GitHub Copilot token has been removed",
+		"token": {
+			"title": "GitHub Copilot Token",
+			"label": "GitHub Copilot Token for authentication",
+			"placeholder": "ghp_...",
+			"description": "GitHub personal token for Copilot authentication (starts with ghp_, gho_, or ghu_)",
+			"configured": "Token configured and ready to use",
+			"currentStatus": "Current token status",
+			"inputLabel": "GitHub Copilot Token",
+			"inputPlaceholder": "ghp_... or gho_... or ghu_...",
+			"remove": "Remove Token",
+			"save": "Save Token"
+		},
+		"instructions": {
+			"title": "GitHub Copilot Instructions",
+			"description": "GitHub Copilot authentication guide",
+			"authentication": {
+				"title": "Authentication",
+				"step1": "Open a terminal and run 'gh auth login'",
+				"step2": "Follow the instructions in the browser that opens",
+				"step3": "Configure the necessary permissions"
+			},
+			"token": {
+				"title": "GitHub Copilot Token",
+				"step1": "Generate a personal GitHub token from https://github.com/settings/tokens",
+				"step2": "Copy the token (starts with ghp_, gho_, or ghu_)",
+				"step3": "Configure the token in settings"
+			}
+		}
+	},
+	"providerGrid": {
+		"title": "AI Provider Management",
+		"description": "Connect and manage multiple AI providers",
+		"search": {
+			"placeholder": "Search for a provider...",
+			"results": "{{count}} result{{count > 1 ? 's' : ''}} for \"{{query}}\"",
+			"noResults": "No providers found",
+			"noProviders": "No providers available",
+			"adjustCriteria": "Try adjusting your search criteria.",
+			"addFirst": "Start by adding your first provider.",
+			"addFirstButton": "Add your first provider"
+		},
+		"filters": {
+			"placeholder": "Filter",
+			"all": "All",
+			"configured": "Configured",
+			"unconfigured": "Unconfigured",
+			"errors": "With errors"
+		},
+		"sort": {
+			"placeholder": "Sort by",
+			"name": "Name",
+			"category": "Category",
+			"status": "Status",
+			"usage": "Usage"
+		},
+		"stats": {
+			"total": "{{count}} total",
+			"configured": "{{count}} configured",
+			"errors": "{{count}} errors"
+		},
+		"actions": {
+			"refresh": "Refresh",
+			"add": "Add"
+		}
+	},
+	"collaboration": {
+		"title": "Collaboration",
+		"description": "Multi-user collaboration settings"
+	},
+	"copilot": {
+		"switchInstallation": "Switch Installation",
+		"versionUnknown": "version unknown",
+		"active": "Active",
+		"viewCopilotCliDocs": "View GitHub Copilot CLI Docs",
+		"updateCopilotCli": "Update GitHub Copilot CLI?",
+		"updateDescription": "This will update the GitHub Copilot CLI tool. A new terminal will open in the \"Terminaux Agent\" page to run the update command.",
+		"updateAvailable": "GitHub Copilot CLI Update Available",
+		"copilotCliUpdateAvailable": "Copilot CLI update available",
+		"autoUpdateDescription": "A new version of GitHub Copilot CLI is available. Would you like to open a terminal and update it automatically?",
+		"openTerminalAndUpdate": "Open Terminal & Update",
+		"switchGhCliInstallation": "Switch gh CLI installation?",
+		"switchDescription": "Switching installations will use a different gh binary for Copilot CLI.",
+		"switch": "Switch",
+		"checkingInstallationMethod": "Checking installation method...",
+		"updatingViaNpm": "Updating via npm...",
+		"updatingViaHomebrew": "Updating via Homebrew...",
+		"updatingViaWinget": "Updating via WinGet...",
+		"updatingViaChocolatey": "Updating via Chocolatey...",
+		"updatingViaScoop": "Updating via Scoop...",
+		"installingViaScript": "Installing via script...",
+		"updatingGitHubCli": "Updating GitHub CLI...",
+		"updatingGitHubCopilotCli": "Updating GitHub Copilot CLI...",
+		"manualDownloadRequired": "Manual download required. Please visit https://cli.github.com/",
+		"checkingCopilotCli": "Checking Copilot CLI...",
+		"copilotCliUpToDate": "Copilot CLI is up to date",
+		"copilotCliExtensionNotInstalled": "Copilot CLI extension not installed",
+		"gitHubCliNotFound": "GitHub CLI (gh) not found — required for Copilot",
+		"errorCheckingCopilotCli": "Error checking Copilot CLI",
+		"loadingInstallations": "Loading installations...",
+		"failedToLoadInstallations": "Failed to load installations",
+		"selectInstallation": "Select installation",
+		"installed": "Installed",
+		"extensionNotInstalled": "Extension not installed",
+		"gitHubCliNotFoundShort": "GitHub CLI not found",
+		"checking": "Checking...",
+		"error": "Error",
+		"llmRouter": {
+			"title": "LLM Router",
+			"description": "Configure intelligent provider routing with fallback chains, A/B testing, and strategy-based selection.",
+			"routingStrategy": {
+				"title": "Default Routing Strategy",
+				"description": "How the router selects a provider when multiple are available.",
+				"bestPerformance": "Best Performance",
+				"bestPerformanceDescription": "Prioritize quality score",
+				"cheapest": "Cheapest",
+				"cheapestDescription": "Minimize cost per task",
+				"lowestLatency": "Lowest Latency",
+				"lowestLatencyDescription": "Fastest response time",
+				"roundRobin": "Round Robin",
+				"roundRobinDescription": "Distribute evenly"
+			},
+			"registeredProviders": {
+				"title": "Registered Providers",
+				"description": "Providers available for routing. Configure accounts in Settings > Accounts.",
+				"table": {
+					"providerModel": "Provider / Model",
+					"capabilities": "Capabilities",
+					"priority": "Priority",
+					"status": "Status"
+				},
+				"status": {
+					"active": "Active",
+					"disabled": "Disabled",
+					"local": "local"
+				}
+			},
+			"fallbackChains": {
+				"title": "Fallback Chains",
+				"description": "If the primary provider is rate-limited or unavailable, the router automatically falls back to the next in the chain."
+			},
+			"abTesting": {
+				"title": "A/B Testing",
+				"description": "Compare two providers on the same task type. The router alternates between them and tracks quality, latency, and cost.",
+				"noActiveTests": "No active A/B tests",
+				"createTest": "Create a test from the Command Palette or from the task detail view."
+			}
+		},
+		"memoryLifecycle": {
+			"title": "Memory Lifecycle Manager",
+			"description": "Manage Graphiti memory — pruning, retention policies, freshness control",
+			"status": "Status",
+			"episodeCount": "Episodes stored",
+			"diskUsage": "Disk usage",
+			"retentionDays": "Retention (days)",
+			"maxEpisodes": "Max episodes",
+			"pruneStrategy": "Prune strategy",
+			"autoPrune": "Auto-prune",
+			"runPrune": "Run Prune Now",
+			"export": "Export Memories",
+			"pruneStrategies": {
+				"lru": "LRU (least recently used)",
+				"oldest": "Oldest first",
+				"duplicates": "Duplicates only"
+			}
+		},
+		"cicdTriggers": {
+			"title": "CI/CD Deployment Triggers",
+			"description": "Automatically trigger deployment pipelines after agent creates a PR",
+			"provider": "Provider",
+			"enabled": "Auto-trigger enabled",
+			"triggerOnPr": "Trigger on PR creation",
+			"triggerOnMerge": "Trigger on merge",
+			"recentRuns": "Recent pipeline runs",
+			"triggerNow": "Trigger Now",
+			"noRuns": "No pipeline runs yet",
+			"providers": {
+				"github": "GitHub Actions",
+				"gitlab": "GitLab CI",
+				"azure": "Azure DevOps",
+				"jenkins": "Jenkins"
+			},
+			"runStatus": {
+				"pending": "Pending",
+				"triggered": "Triggered",
+				"running": "Running",
+				"success": "Success",
+				"failed": "Failed"
+			}
+		},
+		"crossLangTranslation": {
+			"title": "Cross-Language Translation",
+			"description": "AI-powered code translation between programming languages",
+			"sourceLang": "Source language",
+			"targetLang": "Target language",
+			"inputCode": "Input code",
+			"outputCode": "Translated code",
+			"translate": "Translate",
+			"cancel": "Cancel",
+			"history": "Translation history",
+			"clearHistory": "Clear history",
+			"preserveComments": "Preserve comments",
+			"generateTests": "Generate tests",
+			"noHistory": "No translations yet",
+			"status": {
+				"pending": "Pending",
+				"complete": "Complete",
+				"failed": "Failed"
+			}
+		},
+		"specApproval": {
+			"title": "Spec Approval Workflow",
+			"description": "Review and approve AI-generated specifications before execution",
+			"pendingSpecs": "Pending approval",
+			"history": "Approval history",
+			"approve": "Approve",
+			"reject": "Reject",
+			"requestChanges": "Request Changes",
+			"amendments": "Amendments (optional)",
+			"feedback": "Feedback",
+			"noPending": "No specs awaiting approval",
+			"specContent": "Spec content",
+			"status": {
+				"pending": "Pending",
+				"approved": "Approved",
+				"rejected": "Rejected",
+				"changes_requested": "Changes requested"
+			}
+		}
+	}
 }

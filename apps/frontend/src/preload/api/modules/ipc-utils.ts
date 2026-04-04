@@ -1,4 +1,4 @@
-import { ipcRenderer } from 'electron';
+import { ipcRenderer } from "electron";
 
 /**
  * Utility type for IPC event listener cleanup function
@@ -13,16 +13,16 @@ export type IpcListenerCleanup = () => void;
  * @returns Cleanup function to remove the listener
  */
 export function createIpcListener<T extends unknown[]>(
-  channel: string,
-  callback: (...args: T) => void
+	channel: string,
+	callback: (...args: T) => void,
 ): IpcListenerCleanup {
-  const handler = (_event: Electron.IpcRendererEvent, ...args: T): void => {
-    callback(...args);
-  };
-  ipcRenderer.on(channel, handler);
-  return () => {
-    ipcRenderer.removeListener(channel, handler);
-  };
+	const handler = (_event: Electron.IpcRendererEvent, ...args: T): void => {
+		callback(...args);
+	};
+	ipcRenderer.on(channel, handler);
+	return () => {
+		ipcRenderer.removeListener(channel, handler);
+	};
 }
 
 /**
@@ -33,7 +33,7 @@ export function createIpcListener<T extends unknown[]>(
  * @returns Promise with the typed result
  */
 export function invokeIpc<T>(channel: string, ...args: unknown[]): Promise<T> {
-  return ipcRenderer.invoke(channel, ...args);
+	return ipcRenderer.invoke(channel, ...args);
 }
 
 /**
@@ -43,5 +43,5 @@ export function invokeIpc<T>(channel: string, ...args: unknown[]): Promise<T> {
  * @param args - Arguments to pass to the IPC handler
  */
 export function sendIpc(channel: string, ...args: unknown[]): void {
-  ipcRenderer.send(channel, ...args);
+	ipcRenderer.send(channel, ...args);
 }

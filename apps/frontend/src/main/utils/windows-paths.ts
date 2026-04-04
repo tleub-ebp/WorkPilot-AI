@@ -8,126 +8,127 @@
  * Follows the same pattern as homebrew-python.ts for platform-specific detection.
  */
 
-import { existsSync } from 'fs';
-import { access, constants } from 'fs/promises';
-import { execFileSync, execFile } from 'child_process';
-import { promisify } from 'util';
-import path from 'path';
-import os from 'os';
+import { execFile, execFileSync } from "child_process";
+import { existsSync } from "fs";
+import { access, constants } from "fs/promises";
+import os from "os";
+import path from "path";
+import { promisify } from "util";
 
 const execFileAsync = promisify(execFile);
 
 export interface WindowsToolPaths {
-  toolName: string;
-  executable: string;
-  patterns: string[];
+	toolName: string;
+	executable: string;
+	patterns: string[];
 }
 
 export const WINDOWS_GIT_PATHS: WindowsToolPaths = {
-  toolName: 'Git',
-  executable: 'git.exe',
-  patterns: [
-    '%PROGRAMFILES%\\Git\\cmd',
-    '%PROGRAMFILES(X86)%\\Git\\cmd',
-    '%LOCALAPPDATA%\\Programs\\Git\\cmd',
-    '%USERPROFILE%\\scoop\\apps\\git\\current\\cmd',
-    '%PROGRAMFILES%\\Git\\bin',
-    '%PROGRAMFILES(X86)%\\Git\\bin',
-    '%PROGRAMFILES%\\Git\\mingw64\\bin',
-  ],
+	toolName: "Git",
+	executable: "git.exe",
+	patterns: [
+		"%PROGRAMFILES%\\Git\\cmd",
+		"%PROGRAMFILES(X86)%\\Git\\cmd",
+		"%LOCALAPPDATA%\\Programs\\Git\\cmd",
+		"%USERPROFILE%\\scoop\\apps\\git\\current\\cmd",
+		"%PROGRAMFILES%\\Git\\bin",
+		"%PROGRAMFILES(X86)%\\Git\\bin",
+		"%PROGRAMFILES%\\Git\\mingw64\\bin",
+	],
 };
 
 export const WINDOWS_GLAB_PATHS: WindowsToolPaths = {
-  toolName: 'GitLab CLI',
-  executable: 'glab.exe',
-  patterns: [
-    // Official Inno Setup installer path (DefaultDirName={autopf}\glab)
-    '%PROGRAMFILES%\\glab',
-    '%PROGRAMFILES(X86)%\\glab',
-    '%LOCALAPPDATA%\\Programs\\glab',
-  ],
+	toolName: "GitLab CLI",
+	executable: "glab.exe",
+	patterns: [
+		// Official Inno Setup installer path (DefaultDirName={autopf}\glab)
+		"%PROGRAMFILES%\\glab",
+		"%PROGRAMFILES(X86)%\\glab",
+		"%LOCALAPPDATA%\\Programs\\glab",
+	],
 };
 
 export function isSecurePath(pathStr: string): boolean {
-  const dangerousPatterns = [
-    /[;&|`${}[\]<>!"^]/,  // Shell metacharacters (parentheses removed - safe when quoted)
-    /%[^%]+%/,              // Windows environment variable expansion (e.g., %PATH%)
-    /\.\.\//,               // Unix directory traversal
-    /\.\.\\/,               // Windows directory traversal
-    /[\r\n]/,               // Newlines (command injection)
-  ];
+	const dangerousPatterns = [
+		/[;&|`${}[\]<>!"^]/, // Shell metacharacters (parentheses removed - safe when quoted)
+		/%[^%]+%/, // Windows environment variable expansion (e.g., %PATH%)
+		/\.\.\//, // Unix directory traversal
+		/\.\.\\/, // Windows directory traversal
+		/[\r\n]/, // Newlines (command injection)
+	];
 
-  for (const pattern of dangerousPatterns) {
-    if (pattern.test(pathStr)) {
-      return false;
-    }
-  }
+	for (const pattern of dangerousPatterns) {
+		if (pattern.test(pathStr)) {
+			return false;
+		}
+	}
 
-  return true;
+	return true;
 }
 
 export function expandWindowsPath(pathPattern: string): string | null {
-  const envVars: Record<string, string | undefined> = {
-    '%PROGRAMFILES%': process.env.ProgramFiles || 'C:\\Program Files',
-    '%PROGRAMFILES(X86)%': process.env['ProgramFiles(x86)'] || 'C:\\Program Files (x86)',
-    '%LOCALAPPDATA%': process.env.LOCALAPPDATA,
-    '%APPDATA%': process.env.APPDATA,
-    '%USERPROFILE%': process.env.USERPROFILE || os.homedir(),
-  };
+	const envVars: Record<string, string | undefined> = {
+		"%PROGRAMFILES%": process.env.ProgramFiles || "C:\\Program Files",
+		"%PROGRAMFILES(X86)%":
+			process.env["ProgramFiles(x86)"] || "C:\\Program Files (x86)",
+		"%LOCALAPPDATA%": process.env.LOCALAPPDATA,
+		"%APPDATA%": process.env.APPDATA,
+		"%USERPROFILE%": process.env.USERPROFILE || os.homedir(),
+	};
 
-  let expandedPath = pathPattern;
+	let expandedPath = pathPattern;
 
-  for (const [placeholder, value] of Object.entries(envVars)) {
-    if (expandedPath.includes(placeholder)) {
-      if (!value) {
-        return null;
-      }
-      expandedPath = expandedPath.replace(placeholder, value);
-    }
-  }
+	for (const [placeholder, value] of Object.entries(envVars)) {
+		if (expandedPath.includes(placeholder)) {
+			if (!value) {
+				return null;
+			}
+			expandedPath = expandedPath.replace(placeholder, value);
+		}
+	}
 
-  // Verify no unexpanded placeholders remain (indicates unknown variable)
-  if (/%[^%]+%/.test(expandedPath)) {
-    return null;
-  }
+	// Verify no unexpanded placeholders remain (indicates unknown variable)
+	if (/%[^%]+%/.test(expandedPath)) {
+		return null;
+	}
 
-  // Normalize the path (resolve double backslashes, etc.)
-  return path.normalize(expandedPath);
+	// Normalize the path (resolve double backslashes, etc.)
+	return path.normalize(expandedPath);
 }
 
 export function getWindowsExecutablePaths(
-  toolPaths: WindowsToolPaths,
-  logPrefix: string = '[Windows Paths]'
+	toolPaths: WindowsToolPaths,
+	logPrefix: string = "[Windows Paths]",
 ): string[] {
-  // Only run on Windows
-  if (process.platform !== 'win32') {
-    return [];
-  }
+	// Only run on Windows
+	if (process.platform !== "win32") {
+		return [];
+	}
 
-  const validPaths: string[] = [];
+	const validPaths: string[] = [];
 
-  for (const pattern of toolPaths.patterns) {
-    const expandedDir = expandWindowsPath(pattern);
+	for (const pattern of toolPaths.patterns) {
+		const expandedDir = expandWindowsPath(pattern);
 
-    if (!expandedDir) {
-      console.warn(`${logPrefix} Could not expand path pattern: ${pattern}`);
-      continue;
-    }
+		if (!expandedDir) {
+			console.warn(`${logPrefix} Could not expand path pattern: ${pattern}`);
+			continue;
+		}
 
-    const fullPath = path.join(expandedDir, toolPaths.executable);
+		const fullPath = path.join(expandedDir, toolPaths.executable);
 
-    // Security validation - reject potentially dangerous paths
-    if (!isSecurePath(fullPath)) {
-      console.warn(`${logPrefix} Path failed security validation: ${fullPath}`);
-      continue;
-    }
+		// Security validation - reject potentially dangerous paths
+		if (!isSecurePath(fullPath)) {
+			console.warn(`${logPrefix} Path failed security validation: ${fullPath}`);
+			continue;
+		}
 
-    if (existsSync(fullPath)) {
-      validPaths.push(fullPath);
-    }
-  }
+		if (existsSync(fullPath)) {
+			validPaths.push(fullPath);
+		}
+	}
 
-  return validPaths;
+	return validPaths;
 }
 
 /**
@@ -139,8 +140,9 @@ export function getWindowsExecutablePaths(
  * @returns Full path to where.exe (e.g., C:\Windows\System32\where.exe)
  */
 export function getWhereExePath(): string {
-  const systemRoot = process.env.SystemRoot || process.env.SYSTEMROOT || 'C:\\Windows';
-  return path.join(systemRoot, 'System32', 'where.exe');
+	const systemRoot =
+		process.env.SystemRoot || process.env.SYSTEMROOT || "C:\\Windows";
+	return path.join(systemRoot, "System32", "where.exe");
 }
 
 /**
@@ -157,48 +159,50 @@ export function getWhereExePath(): string {
  * @returns The full path to the executable, or null if not found
  */
 export function findWindowsExecutableViaWhere(
-  executable: string,
-  logPrefix: string = '[Windows Where]'
+	executable: string,
+	logPrefix: string = "[Windows Where]",
 ): string | null {
-  if (process.platform !== 'win32') {
-    return null;
-  }
+	if (process.platform !== "win32") {
+		return null;
+	}
 
-  // Security: Only allow simple executable names (alphanumeric, dash, underscore, dot)
-  if (!/^[\w.-]+$/.test(executable)) {
-    console.warn(`${logPrefix} Invalid executable name: ${executable}`);
-    return null;
-  }
+	// Security: Only allow simple executable names (alphanumeric, dash, underscore, dot)
+	if (!/^[\w.-]+$/.test(executable)) {
+		console.warn(`${logPrefix} Invalid executable name: ${executable}`);
+		return null;
+	}
 
-  try {
-    // Use full path to where.exe to ensure it works even when System32 isn't in PATH
-    // This fixes issues in restricted environments or when Electron doesn't inherit system PATH
-    const whereExe = getWhereExePath();
-    const result = execFileSync(whereExe, [executable], {
-      encoding: 'utf-8',
-      timeout: 5000,
-      windowsHide: true,
-    }).trim();
+	try {
+		// Use full path to where.exe to ensure it works even when System32 isn't in PATH
+		// This fixes issues in restricted environments or when Electron doesn't inherit system PATH
+		const whereExe = getWhereExePath();
+		const result = execFileSync(whereExe, [executable], {
+			encoding: "utf-8",
+			timeout: 5000,
+			windowsHide: true,
+		}).trim();
 
-    // 'where' returns multiple paths separated by newlines if found in multiple locations
-    // Prefer paths with .cmd or .exe extensions (executable files)
-    const paths = result.split(/\r?\n/).filter(p => p.trim());
+		// 'where' returns multiple paths separated by newlines if found in multiple locations
+		// Prefer paths with .cmd or .exe extensions (executable files)
+		const paths = result.split(/\r?\n/).filter((p) => p.trim());
 
-    if (paths.length > 0) {
-      // Prefer .cmd, .bat, or .exe extensions, otherwise take first path
-      const foundPath = (paths.find(p => /\.(cmd|bat|exe)$/i.test(p)) || paths[0]).trim();
+		if (paths.length > 0) {
+			// Prefer .cmd, .bat, or .exe extensions, otherwise take first path
+			const foundPath = (
+				paths.find((p) => /\.(cmd|bat|exe)$/i.test(p)) || paths[0]
+			).trim();
 
-      // Validate the path exists and is secure
-      if (existsSync(foundPath) && isSecurePath(foundPath)) {
-        return foundPath;
-      }
-    }
+			// Validate the path exists and is secure
+			if (existsSync(foundPath) && isSecurePath(foundPath)) {
+				return foundPath;
+			}
+		}
 
-    return null;
-  } catch {
-    // 'where' returns exit code 1 if not found, which throws an error
-    return null;
-  }
+		return null;
+	} catch {
+		// 'where' returns exit code 1 if not found, which throws an error
+		return null;
+	}
 }
 
 /**
@@ -206,41 +210,41 @@ export function findWindowsExecutableViaWhere(
  * Use this in async contexts to avoid blocking the main process.
  */
 export async function getWindowsExecutablePathsAsync(
-  toolPaths: WindowsToolPaths,
-  logPrefix: string = '[Windows Paths]'
+	toolPaths: WindowsToolPaths,
+	logPrefix: string = "[Windows Paths]",
 ): Promise<string[]> {
-  // Only run on Windows
-  if (process.platform !== 'win32') {
-    return [];
-  }
+	// Only run on Windows
+	if (process.platform !== "win32") {
+		return [];
+	}
 
-  const validPaths: string[] = [];
+	const validPaths: string[] = [];
 
-  for (const pattern of toolPaths.patterns) {
-    const expandedDir = expandWindowsPath(pattern);
+	for (const pattern of toolPaths.patterns) {
+		const expandedDir = expandWindowsPath(pattern);
 
-    if (!expandedDir) {
-      console.warn(`${logPrefix} Could not expand path pattern: ${pattern}`);
-      continue;
-    }
+		if (!expandedDir) {
+			console.warn(`${logPrefix} Could not expand path pattern: ${pattern}`);
+			continue;
+		}
 
-    const fullPath = path.join(expandedDir, toolPaths.executable);
+		const fullPath = path.join(expandedDir, toolPaths.executable);
 
-    // Security validation - reject potentially dangerous paths
-    if (!isSecurePath(fullPath)) {
-      console.warn(`${logPrefix} Path failed security validation: ${fullPath}`);
-      continue;
-    }
+		// Security validation - reject potentially dangerous paths
+		if (!isSecurePath(fullPath)) {
+			console.warn(`${logPrefix} Path failed security validation: ${fullPath}`);
+			continue;
+		}
 
-    try {
-      await access(fullPath, constants.F_OK);
-      validPaths.push(fullPath);
-    } catch {
-      // File doesn't exist, skip
-    }
-  }
+		try {
+			await access(fullPath, constants.F_OK);
+			validPaths.push(fullPath);
+		} catch {
+			// File doesn't exist, skip
+		}
+	}
 
-  return validPaths;
+	return validPaths;
 }
 
 /**
@@ -260,51 +264,56 @@ export async function getWindowsExecutablePathsAsync(
  * @returns The full path to the executable, or null if not found
  */
 export async function findWindowsExecutableViaWhereAsync(
-  executable: string,
-  logPrefix: string = '[Windows Where]'
+	executable: string,
+	logPrefix: string = "[Windows Where]",
 ): Promise<string | null> {
-  if (process.platform !== 'win32') {
-    return null;
-  }
+	if (process.platform !== "win32") {
+		return null;
+	}
 
-  // Security: Only allow simple executable names (alphanumeric, dash, underscore, dot)
-  if (!/^[\w.-]+$/.test(executable)) {
-    console.warn(`${logPrefix} Invalid executable name: ${executable}`);
-    return null;
-  }
+	// Security: Only allow simple executable names (alphanumeric, dash, underscore, dot)
+	if (!/^[\w.-]+$/.test(executable)) {
+		console.warn(`${logPrefix} Invalid executable name: ${executable}`);
+		return null;
+	}
 
-  try {
-    // Use full path to where.exe to ensure it works even when System32 isn't in PATH
-    // This fixes issues in restricted environments or when Electron doesn't inherit system PATH
-    const whereExe = getWhereExePath();
-    const { stdout } = await execFileAsync(whereExe, [executable], {
-      encoding: 'utf-8',
-      timeout: 5000,
-      windowsHide: true,
-    });
+	try {
+		// Use full path to where.exe to ensure it works even when System32 isn't in PATH
+		// This fixes issues in restricted environments or when Electron doesn't inherit system PATH
+		const whereExe = getWhereExePath();
+		const { stdout } = await execFileAsync(whereExe, [executable], {
+			encoding: "utf-8",
+			timeout: 5000,
+			windowsHide: true,
+		});
 
-    // 'where' returns multiple paths separated by newlines if found in multiple locations
-    // Prefer paths with .cmd, .bat, or .exe extensions (executable files)
-    const paths = stdout.trim().split(/\r?\n/).filter(p => p.trim());
+		// 'where' returns multiple paths separated by newlines if found in multiple locations
+		// Prefer paths with .cmd, .bat, or .exe extensions (executable files)
+		const paths = stdout
+			.trim()
+			.split(/\r?\n/)
+			.filter((p) => p.trim());
 
-    if (paths.length > 0) {
-      // Prefer .cmd, .bat, or .exe extensions, otherwise take first path
-      const foundPath = (paths.find(p => /\.(cmd|bat|exe)$/i.test(p)) || paths[0]).trim();
+		if (paths.length > 0) {
+			// Prefer .cmd, .bat, or .exe extensions, otherwise take first path
+			const foundPath = (
+				paths.find((p) => /\.(cmd|bat|exe)$/i.test(p)) || paths[0]
+			).trim();
 
-      // Validate the path exists and is secure
-      try {
-        await access(foundPath, constants.F_OK);
-        if (isSecurePath(foundPath)) {
-          return foundPath;
-        }
-      } catch {
-        // Path doesn't exist
-      }
-    }
+			// Validate the path exists and is secure
+			try {
+				await access(foundPath, constants.F_OK);
+				if (isSecurePath(foundPath)) {
+					return foundPath;
+				}
+			} catch {
+				// Path doesn't exist
+			}
+		}
 
-    return null;
-  } catch {
-    // 'where' returns exit code 1 if not found, which throws an error
-    return null;
-  }
+		return null;
+	} catch {
+		// 'where' returns exit code 1 if not found, which throws an error
+		return null;
+	}
 }

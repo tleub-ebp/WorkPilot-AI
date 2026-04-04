@@ -1,20 +1,21 @@
 // Re-export all components
-export * from './Sidebar';
-export * from './KanbanBoard';
-export * from './TaskCard';
-export * from './TaskCreationWizard';
-export * from './TaskEditDialog';
+
+export * from "./AddProjectModal";
+export * from "./Changelog";
 // AppSettings has been refactored - import from './settings' instead
-export * from './Context';
-export * from './Ideation';
-export * from './GitHubIssues';
-export * from './Changelog';
-export * from './WelcomeScreen';
-export * from './EnvConfigModal';
-export * from './AddProjectModal';
-export * from './streaming';
-export * from './MigrationWizard';
-export * from './visual-to-code/VisualToCodeHub';
+export * from "./Context";
+export * from "./EnvConfigModal";
+export * from "./GitHubIssues";
+export * from "./Ideation";
+export * from "./KanbanBoard";
+export * from "./MigrationWizard";
 export { ProviderManager } from "./ProviderManager";
 export { ProviderSelector } from "./ProviderSelector";
-export * from './test-generation';
+export * from "./Sidebar";
+export * from "./streaming";
+export * from "./TaskCard";
+export * from "./TaskCreationWizard";
+export * from "./TaskEditDialog";
+export * from "./test-generation";
+export * from "./visual-to-code/VisualToCodeHub";
+export * from "./WelcomeScreen";

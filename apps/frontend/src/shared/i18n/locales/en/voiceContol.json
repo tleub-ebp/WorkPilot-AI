@@ -1,39 +1,39 @@
 {
-  "title": "Voice Control",
-  "description": "Control WorkPilot with your voice - record commands and navigate hands-free",
-  "recording": {
-    "level": "Audio Level",
-    "listening": "Listening for your command..."
-  },
-  "processing": {
-    "level": "Processing"
-  },
-  "status": {
-    "listening": "Listening...",
-    "processing": "Processing voice command...",
-    "error": "Voice Control Error"
-  },
-  "instructions": {
-    "clickToRecord": "Click the microphone button to start recording",
-    "clickToStop": "Click the microphone button to stop recording"
-  },
-  "result": {
-    "streamingOutput": "Processing Output",
-    "transcript": "Transcript",
-    "command": "Parsed Command",
-    "action": "Action",
-    "parameters": "Parameters"
-  },
-  "actions": {
-    "close": "Close",
-    "cancel": "Cancel",
-    "execute": "Execute Command",
-    "tryAgain": "Try Again",
-    "copy": "Copy",
-    "copied": "Copied"
-  },
-  "errors": {
-    "noProject": "Please select a project to use voice control",
-    "generic": "An error occurred during voice processing"
-  }
+	"title": "Voice Control",
+	"description": "Control WorkPilot with your voice - record commands and navigate hands-free",
+	"recording": {
+		"level": "Audio Level",
+		"listening": "Listening for your command..."
+	},
+	"processing": {
+		"level": "Processing"
+	},
+	"status": {
+		"listening": "Listening...",
+		"processing": "Processing voice command...",
+		"error": "Voice Control Error"
+	},
+	"instructions": {
+		"clickToRecord": "Click the microphone button to start recording",
+		"clickToStop": "Click the microphone button to stop recording"
+	},
+	"result": {
+		"streamingOutput": "Processing Output",
+		"transcript": "Transcript",
+		"command": "Parsed Command",
+		"action": "Action",
+		"parameters": "Parameters"
+	},
+	"actions": {
+		"close": "Close",
+		"cancel": "Cancel",
+		"execute": "Execute Command",
+		"tryAgain": "Try Again",
+		"copy": "Copy",
+		"copied": "Copied"
+	},
+	"errors": {
+		"noProject": "Please select a project to use voice control",
+		"generic": "An error occurred during voice processing"
+	}
 }

@@ -3,62 +3,69 @@
  * Central export point for all profile management functionality
  */
 
-// Core types
 export type {
-  ClaudeProfile,
-  ClaudeProfileSettings,
-  ClaudeUsageData,
-  ClaudeRateLimitEvent,
-  ClaudeAutoSwitchSettings
-} from './types';
-
-// Token encryption utilities
-export { encryptToken, decryptToken, isTokenEncrypted } from './token-encryption';
-
-// Usage parsing utilities
-export { parseUsageOutput, parseResetTime, classifyRateLimitType } from './usage-parser';
-
-// Rate limit management
+	ProfileScoreParams,
+	TimeToLimitData,
+	VelocityData,
+} from "./profile-scorer";
+// Profile scoring and auto-switch
 export {
-  recordRateLimitEvent,
-  isProfileRateLimited,
-  clearRateLimitEvents
-} from './rate-limit-manager';
+	calculateProfileScore,
+	getBestAvailableProfile,
+	getProfilesSortedByAvailability,
+	shouldProactivelySwitch,
+} from "./profile-scorer";
+// Profile selection lock (anti-race condition)
+export {
+	getProfileSelectionLock,
+	resetProfileSelectionLock,
+} from "./profile-selection-lock";
+export type { ProfileStoreData } from "./profile-storage";
 
 // Storage utilities
 export {
-  loadProfileStore,
-  saveProfileStore,
-  DEFAULT_AUTO_SWITCH_SETTINGS,
-  STORE_VERSION
-} from './profile-storage';
-export type { ProfileStoreData } from './profile-storage';
-
-// Profile scoring and auto-switch
-export {
-  getBestAvailableProfile,
-  shouldProactivelySwitch,
-  getProfilesSortedByAvailability,
-  calculateProfileScore
-} from './profile-scorer';
-export type { VelocityData, TimeToLimitData, ProfileScoreParams } from './profile-scorer';
-
-// Velocity tracking (predictive switching)
-export { getVelocityTracker, resetVelocityTracker } from './velocity-tracker';
-
-// Profile selection lock (anti-race condition)
-export { getProfileSelectionLock, resetProfileSelectionLock } from './profile-selection-lock';
-
+	DEFAULT_AUTO_SWITCH_SETTINGS,
+	loadProfileStore,
+	STORE_VERSION,
+	saveProfileStore,
+} from "./profile-storage";
 // Profile utilities
 export {
-  DEFAULT_CLAUDE_CONFIG_DIR,
-  CLAUDE_PROFILES_DIR,
-  generateProfileId,
-  createProfileDirectory,
-  isProfileAuthenticated,
-  hasValidToken,
-  expandHomePath
-} from './profile-utils';
-
+	CLAUDE_PROFILES_DIR,
+	createProfileDirectory,
+	DEFAULT_CLAUDE_CONFIG_DIR,
+	expandHomePath,
+	generateProfileId,
+	hasValidToken,
+	isProfileAuthenticated,
+} from "./profile-utils";
+// Rate limit management
+export {
+	clearRateLimitEvents,
+	isProfileRateLimited,
+	recordRateLimitEvent,
+} from "./rate-limit-manager";
+// Token encryption utilities
+export {
+	decryptToken,
+	encryptToken,
+	isTokenEncrypted,
+} from "./token-encryption";
+// Core types
+export type {
+	ClaudeAutoSwitchSettings,
+	ClaudeProfile,
+	ClaudeProfileSettings,
+	ClaudeRateLimitEvent,
+	ClaudeUsageData,
+} from "./types";
 // Usage monitoring (proactive account switching)
-export { UsageMonitor, getUsageMonitor } from './usage-monitor';
+export { getUsageMonitor, UsageMonitor } from "./usage-monitor";
+// Usage parsing utilities
+export {
+	classifyRateLimitType,
+	parseResetTime,
+	parseUsageOutput,
+} from "./usage-parser";
+// Velocity tracking (predictive switching)
+export { getVelocityTracker, resetVelocityTracker } from "./velocity-tracker";

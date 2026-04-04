@@ -1,75 +1,79 @@
-import { useState } from 'react';
-import { useTranslation } from 'react-i18next';
-import { FolderTree, Brain } from 'lucide-react';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/tabs';
-import { useContextStore } from '../../stores/context-store';
-import { useProjectContext, useRefreshIndex, useMemorySearch } from './hooks';
-import { ProjectIndexTab } from './ProjectIndexTab';
-import { MemoriesTab } from './MemoriesTab';
-import type { ContextProps } from './types';
+import { Brain, FolderTree } from "lucide-react";
+import { useState } from "react";
+import { useTranslation } from "react-i18next";
+import { useContextStore } from "../../stores/context-store";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "../ui/tabs";
+import { useMemorySearch, useProjectContext, useRefreshIndex } from "./hooks";
+import { MemoriesTab } from "./MemoriesTab";
+import { ProjectIndexTab } from "./ProjectIndexTab";
+import type { ContextProps } from "./types";
 
 export function Context(props: ContextProps) {
-  const { projectId } = props;
-  const { t } = useTranslation(['context']);
-  
-  const {
-    projectIndex,
-    indexLoading,
-    indexError,
-    memoryStatus,
-    memoryState,
-    recentMemories,
-    memoriesLoading,
-    searchResults,
-    searchLoading
-  } = useContextStore();
+	const { projectId } = props;
+	const { t } = useTranslation(["context"]);
 
-  const [activeTab, setActiveTab] = useState('index');
+	const {
+		projectIndex,
+		indexLoading,
+		indexError,
+		memoryStatus,
+		memoryState,
+		recentMemories,
+		memoriesLoading,
+		searchResults,
+		searchLoading,
+	} = useContextStore();
 
-  // Custom hooks
-  useProjectContext(projectId);
-  const handleRefreshIndex = useRefreshIndex(projectId);
-  const handleSearch = useMemorySearch(projectId);
+	const [activeTab, setActiveTab] = useState("index");
 
-  return (
-    <div className="flex h-full flex-col overflow-hidden">
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="flex flex-col h-full">
-        <div className="border-b border-border px-6 py-3">
-          <TabsList className="grid w-full max-w-md grid-cols-2">
-            <TabsTrigger value="index" className="gap-2">
-              <FolderTree className="h-4 w-4" />
-              {t('context:tabs.projectIndex')}
-            </TabsTrigger>
-            <TabsTrigger value="memories" className="gap-2">
-              <Brain className="h-4 w-4" />
-              {t('context:tabs.memories')}
-            </TabsTrigger>
-          </TabsList>
-        </div>
+	// Custom hooks
+	useProjectContext(projectId);
+	const handleRefreshIndex = useRefreshIndex(projectId);
+	const handleSearch = useMemorySearch(projectId);
 
-        {/* Project Index Tab */}
-        <TabsContent value="index" className="flex-1 overflow-hidden m-0">
-          <ProjectIndexTab
-            projectIndex={projectIndex}
-            indexLoading={indexLoading}
-            indexError={indexError}
-            onRefresh={handleRefreshIndex}
-          />
-        </TabsContent>
+	return (
+		<div className="flex h-full flex-col overflow-hidden">
+			<Tabs
+				value={activeTab}
+				onValueChange={setActiveTab}
+				className="flex flex-col h-full"
+			>
+				<div className="border-b border-border px-6 py-3">
+					<TabsList className="grid w-full max-w-md grid-cols-2">
+						<TabsTrigger value="index" className="gap-2">
+							<FolderTree className="h-4 w-4" />
+							{t("context:tabs.projectIndex")}
+						</TabsTrigger>
+						<TabsTrigger value="memories" className="gap-2">
+							<Brain className="h-4 w-4" />
+							{t("context:tabs.memories")}
+						</TabsTrigger>
+					</TabsList>
+				</div>
 
-        {/* Memories Tab */}
-        <TabsContent value="memories" className="flex-1 overflow-hidden m-0">
-          <MemoriesTab
-            memoryStatus={memoryStatus}
-            memoryState={memoryState}
-            recentMemories={recentMemories}
-            memoriesLoading={memoriesLoading}
-            searchResults={searchResults}
-            searchLoading={searchLoading}
-            onSearch={handleSearch}
-          />
-        </TabsContent>
-      </Tabs>
-    </div>
-  );
+				{/* Project Index Tab */}
+				<TabsContent value="index" className="flex-1 overflow-hidden m-0">
+					<ProjectIndexTab
+						projectIndex={projectIndex}
+						indexLoading={indexLoading}
+						indexError={indexError}
+						onRefresh={handleRefreshIndex}
+					/>
+				</TabsContent>
+
+				{/* Memories Tab */}
+				<TabsContent value="memories" className="flex-1 overflow-hidden m-0">
+					<MemoriesTab
+						memoryStatus={memoryStatus}
+						memoryState={memoryState}
+						recentMemories={recentMemories}
+						memoriesLoading={memoriesLoading}
+						searchResults={searchResults}
+						searchLoading={searchLoading}
+						onSearch={handleSearch}
+					/>
+				</TabsContent>
+			</Tabs>
+		</div>
+	);
 }

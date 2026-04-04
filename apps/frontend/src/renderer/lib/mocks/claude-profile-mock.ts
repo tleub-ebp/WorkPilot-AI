@@ -3,98 +3,118 @@
  */
 
 export const claudeProfileMock = {
-  getClaudeProfiles: async () => ({
-    success: true,
-    data: {
-      profiles: [],
-      activeProfileId: 'default'
-    }
-  }),
+	getClaudeProfiles: async () => ({
+		success: true,
+		data: {
+			profiles: [],
+			activeProfileId: "default",
+		},
+	}),
 
-  saveClaudeProfile: async (profile: { id: string; name: string; oauthToken?: string; email?: string; isDefault?: boolean; createdAt?: Date }) => ({
-    success: true,
-    data: {
-      id: profile.id,
-      name: profile.name,
-      oauthToken: profile.oauthToken,
-      email: profile.email,
-      isDefault: profile.isDefault ?? false,
-      createdAt: profile.createdAt ?? new Date(),
-    }
-  }),
+	saveClaudeProfile: async (profile: {
+		id: string;
+		name: string;
+		oauthToken?: string;
+		email?: string;
+		isDefault?: boolean;
+		createdAt?: Date;
+	}) => ({
+		success: true,
+		data: {
+			id: profile.id,
+			name: profile.name,
+			oauthToken: profile.oauthToken,
+			email: profile.email,
+			isDefault: profile.isDefault ?? false,
+			createdAt: profile.createdAt ?? new Date(),
+		},
+	}),
 
-  deleteClaudeProfile: async () => ({ success: true }),
+	deleteClaudeProfile: async () => ({ success: true }),
 
-  renameClaudeProfile: async () => ({ success: true }),
+	renameClaudeProfile: async () => ({ success: true }),
 
-  setActiveClaudeProfile: async () => ({ success: true }),
+	setActiveClaudeProfile: async () => ({ success: true }),
 
-  switchClaudeProfile: async () => ({ success: true }),
+	switchClaudeProfile: async () => ({ success: true }),
 
-  initializeClaudeProfile: async () => ({ success: true }),
+	initializeClaudeProfile: async () => ({ success: true }),
 
-  setClaudeProfileToken: async () => ({ success: true }),
+	setClaudeProfileToken: async () => ({ success: true }),
 
-  getAutoSwitchSettings: async () => ({
-    success: true,
-    data: {
-      enabled: false,
-      proactiveSwapEnabled: false,
-      sessionThreshold: 95,
-      weeklyThreshold: 99,
-      autoSwitchOnRateLimit: false,
-      autoSwitchOnAuthFailure: false,
-      usageCheckInterval: 30000
-    }
-  }),
+	getAutoSwitchSettings: async () => ({
+		success: true,
+		data: {
+			enabled: false,
+			proactiveSwapEnabled: false,
+			sessionThreshold: 95,
+			weeklyThreshold: 99,
+			autoSwitchOnRateLimit: false,
+			autoSwitchOnAuthFailure: false,
+			usageCheckInterval: 30000,
+		},
+	}),
 
-  updateAutoSwitchSettings: async () => ({ success: true }),
+	updateAutoSwitchSettings: async () => ({ success: true }),
 
-  getAccountPriorityOrder: async () => ({
-    success: true,
-    data: [] as string[]
-  }),
+	getAccountPriorityOrder: async () => ({
+		success: true,
+		data: [] as string[],
+	}),
 
-  setAccountPriorityOrder: async () => ({ success: true }),
+	setAccountPriorityOrder: async () => ({ success: true }),
 
-  fetchClaudeUsage: async () => ({ success: true }),
+	fetchClaudeUsage: async () => ({ success: true }),
 
-  getBestAvailableProfile: async () => ({
-    success: true,
-    data: null
-  }),
+	getBestAvailableProfile: async () => ({
+		success: true,
+		data: null,
+	}),
 
-  onSDKRateLimit: () => () => { /* noop */ },
+	onSDKRateLimit: () => () => {
+		/* noop */
+	},
 
-  onAuthFailure: () => () => { /* noop */ },
+	onAuthFailure: () => () => {
+		/* noop */
+	},
 
-  retryWithProfile: async () => ({ success: true }),
+	retryWithProfile: async () => ({ success: true }),
 
-  // Usage Monitoring (Proactive Account Switching)
-  requestUsageUpdate: async (_providerName?: string) => ({
-    success: true,
-    data: null // Simuler la réponse selon le provider si besoin
-  }),
+	// Usage Monitoring (Proactive Account Switching)
+	requestUsageUpdate: async (_providerName?: string) => ({
+		success: true,
+		data: null, // Simuler la réponse selon le provider si besoin
+	}),
 
-  requestAllProfilesUsage: async (_forceRefresh?: boolean) => ({
-    success: true,
-    data: null
-  }),
+	requestAllProfilesUsage: async (_forceRefresh?: boolean) => ({
+		success: true,
+		data: null,
+	}),
 
-  onUsageUpdated: () => () => { /* noop */ },
+	onUsageUpdated: () => () => {
+		/* noop */
+	},
 
-  onAllProfilesUsageUpdated: () => () => { /* noop */ },
+	onAllProfilesUsageUpdated: () => () => {
+		/* noop */
+	},
 
-  onProactiveSwapNotification: () => () => { /* noop */ },
+	onProactiveSwapNotification: () => () => {
+		/* noop */
+	},
 
-  // Returns terminal config for embedded authentication
-  authenticateClaudeProfile: async (profileId: string) => ({
-    success: true,
-    data: { terminalId: `claude-login-${profileId}-${Date.now()}`, configDir: '/mock/config' }
-  }),
+	// Returns terminal config for embedded authentication
+	authenticateClaudeProfile: async (profileId: string) => ({
+		success: true,
+		data: {
+			terminalId: `claude-login-${profileId}-${Date.now()}`,
+			configDir: "/mock/config",
+		},
+	}),
 
-  verifyClaudeProfileAuth: async (_profileId: string) => ({
-    success: true,
-    data: { authenticated: false, email: undefined }
-  })
+	verifyClaudeProfileAuth: async (_profileId: string) => ({
+		success: true,
+		data: { authenticated: false, email: undefined },
+	}),
 };

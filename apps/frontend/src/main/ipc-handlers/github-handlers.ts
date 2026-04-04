@@ -15,9 +15,9 @@
  * - github/types.ts - TypeScript type definitions
  */
 
-import type { BrowserWindow } from 'electron';
-import { AgentManager } from '../agent';
-import { registerGithubHandlers as registerModularHandlers } from './github';
+import type { BrowserWindow } from "electron";
+import type { AgentManager } from "../agent";
+import { registerGithubHandlers as registerModularHandlers } from "./github";
 
 /**
  * Register all GitHub-related IPC handlers
@@ -26,8 +26,8 @@ import { registerGithubHandlers as registerModularHandlers } from './github';
  * @param getMainWindow - Function to get the main browser window
  */
 export function registerGithubHandlers(
-  agentManager: AgentManager,
-  getMainWindow: () => BrowserWindow | null
+	agentManager: AgentManager,
+	getMainWindow: () => BrowserWindow | null,
 ): void {
-  registerModularHandlers(agentManager, getMainWindow);
+	registerModularHandlers(agentManager, getMainWindow);
 }
