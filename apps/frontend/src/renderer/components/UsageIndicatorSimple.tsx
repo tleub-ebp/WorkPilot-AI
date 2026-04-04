@@ -102,7 +102,7 @@ export function UsageIndicatorSimple() {
 			const event = new CustomEvent<AppSection>("open-app-settings", {
 				detail: "accounts",
 			});
-			window.dispatchEvent(event);
+			globalThis.dispatchEvent(event);
 		}, 100);
 	}, []);
 
@@ -252,13 +252,17 @@ export function UsageIndicatorSimple() {
 		: undefined;
 
 	const maxUsage = Math.max(sessionPercent, weeklyPercent);
-	const Icon = needsReauth
-		? AlertCircle
-		: maxUsage >= THRESHOLD_WARNING
-			? AlertCircle
-			: maxUsage >= THRESHOLD_ELEVATED
-				? TrendingUp
-				: Activity;
+	
+	let Icon;
+	if (needsReauth) {
+		Icon = AlertCircle;
+	} else if (maxUsage >= THRESHOLD_WARNING) {
+		Icon = AlertCircle;
+	} else if (maxUsage >= THRESHOLD_ELEVATED) {
+		Icon = TrendingUp;
+	} else {
+		Icon = Activity;
+	}
 
 	return (
 		<Popover open={isOpen} onOpenChange={handleOpenChange}>
@@ -355,18 +359,24 @@ export function UsageIndicatorSimple() {
 									</span>
 								</div>
 								<div className="w-full bg-muted rounded-full h-1.5">
-									<div
-										className={`h-1.5 rounded-full transition-all ${
-											sessionPercent >= THRESHOLD_CRITICAL
-												? "bg-red-500"
-												: sessionPercent >= THRESHOLD_WARNING
-													? "bg-orange-500"
-													: sessionPercent >= THRESHOLD_ELEVATED
-														? "bg-yellow-500"
-														: "bg-green-500"
-										}`}
-										style={{ width: `${Math.min(sessionPercent, 100)}%` }}
-									/>
+									{(() => {
+										let progressColorClass;
+										if (sessionPercent >= THRESHOLD_CRITICAL) {
+											progressColorClass = "bg-red-500";
+										} else if (sessionPercent >= THRESHOLD_WARNING) {
+											progressColorClass = "bg-orange-500";
+										} else if (sessionPercent >= THRESHOLD_ELEVATED) {
+											progressColorClass = "bg-yellow-500";
+										} else {
+											progressColorClass = "bg-green-500";
+										}
+										return (
+											<div
+												className={`h-1.5 rounded-full transition-all ${progressColorClass}`}
+												style={{ width: `${Math.min(sessionPercent, 100)}%` }}
+											/>
+										);
+									})()}
 								</div>
 								{sessionResetTime && (
 									<p className="text-[9px] text-muted-foreground">
@@ -386,18 +396,24 @@ export function UsageIndicatorSimple() {
 									</span>
 								</div>
 								<div className="w-full bg-muted rounded-full h-1.5">
-									<div
-										className={`h-1.5 rounded-full transition-all ${
-											weeklyPercent >= THRESHOLD_CRITICAL
-												? "bg-red-500"
-												: weeklyPercent >= THRESHOLD_WARNING
-													? "bg-orange-500"
-													: weeklyPercent >= THRESHOLD_ELEVATED
-														? "bg-yellow-500"
-														: "bg-green-500"
-										}`}
-										style={{ width: `${Math.min(weeklyPercent, 100)}%` }}
-									/>
+									{(() => {
+										let progressColorClass;
+										if (weeklyPercent >= THRESHOLD_CRITICAL) {
+											progressColorClass = "bg-red-500";
+										} else if (weeklyPercent >= THRESHOLD_WARNING) {
+											progressColorClass = "bg-orange-500";
+										} else if (weeklyPercent >= THRESHOLD_ELEVATED) {
+											progressColorClass = "bg-yellow-500";
+										} else {
+											progressColorClass = "bg-green-500";
+										}
+										return (
+											<div
+												className={`h-1.5 rounded-full transition-all ${progressColorClass}`}
+												style={{ width: `${Math.min(weeklyPercent, 100)}%` }}
+											/>
+										);
+									})()}
 								</div>
 								{weeklyResetTime && (
 									<p className="text-[9px] text-muted-foreground">

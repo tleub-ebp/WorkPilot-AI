@@ -4,8 +4,8 @@
  * Tests for credential retrieval on macOS, Linux, and Windows platforms.
  */
 
-import { createHash } from "crypto";
-import { join } from "path";
+import { createHash } from "node:crypto";
+import { join } from "node:path";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 // Mock dependencies before importing the module
@@ -39,9 +39,9 @@ vi.mock("os", () => {
 	return { ...mod, default: mod };
 });
 
-import { execFileSync } from "child_process";
-import { existsSync, readFileSync } from "fs";
-import { homedir } from "os";
+import { execFileSync } from "node:child_process";
+import { existsSync, readFileSync } from "node:fs";
+import { homedir } from "node:os";
 import { isLinux, isMacOS, isWindows } from "../platform";
 // Import after mocks are set up
 import {
@@ -89,10 +89,7 @@ describe("credential-utils", () => {
 			expect(getKeychainServiceName()).toBe("Claude Code-credentials");
 		});
 
-		it("should return default service name for undefined", () => {
-			expect(getKeychainServiceName(undefined)).toBe("Claude Code-credentials");
-		});
-
+		
 		it("should return hashed service name for custom configDir", () => {
 			const configDir = "/home/user/.claude-profiles/work";
 			const hash = calculateConfigDirHash(configDir);

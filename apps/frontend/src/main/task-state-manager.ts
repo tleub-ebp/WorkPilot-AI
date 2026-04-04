@@ -278,6 +278,7 @@ export class TaskStateManager {
 			: undefined;
 
 		if (contextEntry) {
+			/* intentionally empty */
 		} else {
 			// noop
 		}

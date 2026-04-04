@@ -164,11 +164,11 @@ export const ProviderManager: React.FC<{ selected: string }> = ({
 		if (globalThis.electronAPI?.requestAllProfilesUsage) {
 			globalThis.electronAPI
 				.requestAllProfilesUsage()
-				.then((result: any) => {
+				.then((result: { success: boolean; data?: { allProfiles?: Array<{ isActive?: boolean }> } }) => {
 					if (result?.success && result.data) {
 						setClaudeProfiles(result.data.allProfiles || []);
 						setActiveClaudeProfile(
-							result.data.allProfiles.find((p: any) => p.isActive) || null,
+							result.data.allProfiles?.find((p) => p.isActive) || null,
 						);
 					}
 					setClaudeAuthChecked(true);

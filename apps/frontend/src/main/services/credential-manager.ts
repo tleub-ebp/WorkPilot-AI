@@ -568,7 +568,7 @@ export class CredentialManager extends EventEmitter {
 	private async testWindsurfProvider(): Promise<{
 		success: boolean;
 		message: string;
-		details?: any;
+		details?: unknown;
 	}> {
 		try {
 			let serviceKey: string | undefined;
@@ -928,7 +928,7 @@ export class CredentialManager extends EventEmitter {
 
 					if (profiles.profiles && Array.isArray(profiles.profiles)) {
 						const oauthProfile = profiles.profiles.find(
-							(profile: any) => profile.isAuthenticated === true,
+							(profile: { isAuthenticated?: boolean }) => profile.isAuthenticated === true,
 						);
 
 						if (oauthProfile) {
@@ -1565,17 +1565,15 @@ export class CredentialManager extends EventEmitter {
 					const profile = profiles?.profiles.find((p) => {
 						try {
 							return (
-								(p as any).provider === selectedProvider ||
+								(p as Record<string, unknown>).provider === selectedProvider ||
 								p.baseUrl?.toLowerCase().includes(selectedProvider)
 							);
 						} catch {
 							return false;
 						}
 					});
-					// biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
-					if ((profile as any)?.apiKey) {
-						// biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
-						apiKey = (profile as any).apiKey;
+					if ((profile as Record<string, unknown>)?.apiKey) {
+						apiKey = (profile as Record<string, unknown>).apiKey as string;
 						baseUrl = profile?.baseUrl ?? "";
 					}
 				} catch {

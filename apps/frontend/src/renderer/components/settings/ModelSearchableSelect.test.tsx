@@ -21,8 +21,8 @@ describe("ModelSearchableSelect", () => {
 
 	beforeEach(() => {
 		vi.clearAllMocks();
-		// eslint-disable-next-line @typescript-eslint/no-explicit-any
 		vi.mocked(useSettingsStore).mockImplementation(
+			// biome-ignore lint/suspicious/noExplicitAny: Zustand mock requires flexible types in tests
 			(selector?: (state: any) => any): any => {
 				const state = { discoverModels: mockDiscoverModels };
 				return selector ? selector(state) : state;

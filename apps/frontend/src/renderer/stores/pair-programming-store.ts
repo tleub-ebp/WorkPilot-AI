@@ -93,7 +93,7 @@ export const usePairProgrammingStore = create<PairProgrammingState>(
 				statusMessage: message,
 				session: get().session
 					? {
-							...get().session!,
+							...(get().session as NonNullable<ReturnType<typeof get>["session"]>),
 							status: (status === "idle"
 								? get().session?.status
 								: status) as PairSession["status"],

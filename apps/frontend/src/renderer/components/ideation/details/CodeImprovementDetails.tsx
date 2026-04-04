@@ -5,7 +5,7 @@ import { Badge } from "../../ui/badge";
 import { Card } from "../../ui/card";
 
 interface CodeImprovementDetailsProps {
-	idea: CodeImprovementIdea;
+	readonly idea: CodeImprovementIdea;
 }
 
 export function CodeImprovementDetails({ idea }: CodeImprovementDetailsProps) {
@@ -37,9 +37,8 @@ export function CodeImprovementDetails({ idea }: CodeImprovementDetailsProps) {
 						Builds Upon
 					</h3>
 					<div className="flex flex-wrap gap-1">
-						{idea.buildsUpon.map((item, i) => (
-							// biome-ignore lint/suspicious/noArrayIndexKey: no stable key available
-							<Badge key={i} variant="outline" className="text-xs">
+						{idea.buildsUpon.map((item) => (
+							<Badge key={item} variant="outline" className="text-xs">
 								{item}
 							</Badge>
 						))}
@@ -68,9 +67,8 @@ export function CodeImprovementDetails({ idea }: CodeImprovementDetailsProps) {
 						Affected Files
 					</h3>
 					<ul className="space-y-1">
-						{idea.affectedFiles.map((file, i) => (
-							// biome-ignore lint/suspicious/noArrayIndexKey: no stable key available
-							<li key={i} className="text-sm font-mono text-muted-foreground">
+						{idea.affectedFiles.map((file) => (
+							<li key={file} className="text-sm font-mono text-muted-foreground">
 								{file}
 							</li>
 						))}
@@ -83,9 +81,9 @@ export function CodeImprovementDetails({ idea }: CodeImprovementDetailsProps) {
 				<div>
 					<h3 className="text-sm font-medium mb-2">Patterns to Follow</h3>
 					<ul className="space-y-1">
-						{idea.existingPatterns.map((pattern, i) => (
+						{idea.existingPatterns.map((pattern) => (
 							<li
-								key={i}
+								key={pattern}
 								className="text-sm text-muted-foreground flex items-start gap-2"
 							>
 								<Circle className="h-3 w-3 mt-1.5 shrink-0" />

@@ -148,7 +148,7 @@ interface StagedInProjectMessageProps {
  */
 export function StagedInProjectMessage({
 	task,
-	projectPath,
+	projectPath: _projectPath,
 	hasWorktree = false,
 	onClose,
 	onReviewAgain,

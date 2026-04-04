@@ -176,7 +176,7 @@ class GitHubCopilotServiceClass {
 	async testConnection(): Promise<{
 		success: boolean;
 		message: string;
-		details?: any;
+		details?: unknown;
 	}> {
 		this.ensureInitialized();
 

@@ -1,9 +1,10 @@
 import { Radio } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useToast } from "@/hooks/use-toast";
 import { Globe } from "@/lib/icons";
 import { addProject } from "@/stores/project-store";
+import type { Project } from "@shared/types/project";
 import { AzureDevOpsRemoteConfigModal } from "./AzureDevOpsRemoteConfigModal";
 import { GitHubRemoteConfigModal } from "./GitHubRemoteConfigModal";
 import { GitSetupModal } from "./GitSetupModal";
@@ -24,7 +25,7 @@ interface AddProjectModalProps {
 	readonly open: boolean;
 	readonly onOpenChange: (open: boolean) => void;
 	readonly onProjectAdded?: (
-		project: any,
+		project: Project,
 		skipped: boolean,
 	) => void | Promise<void>;
 }
@@ -124,7 +125,7 @@ export function AddProjectModal({
 		return undefined;
 	};
 
-	useEffect(() => {}, []);
+	useEffect(() => { /* intentionally empty */ }, []);
 
 	useEffect(() => {
 		if (open) {
@@ -148,7 +149,7 @@ export function AddProjectModal({
 	}, [step]);
 
 	// Function to detect repository provider from existing git repository
-	const detectRepositoryProvider = async (projectPath: string) => {
+	const detectRepositoryProvider = useCallback(async (projectPath: string) => {
 		// First try to read the .git/config file directly for more reliable detection
 		const gitConfigPath = `${projectPath}/.git/config`;
 
@@ -208,7 +209,7 @@ export function AddProjectModal({
 		}
 
 		return "unknown";
-	};
+	}, []);
 
 	// Auto-detect repository type when project path changes
 	useEffect(() => {

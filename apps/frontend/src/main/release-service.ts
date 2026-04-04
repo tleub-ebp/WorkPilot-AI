@@ -52,7 +52,7 @@ export class ReleaseService extends EventEmitter {
 
 			// Content is until next version header or end of file
 			const endIndex =
-				i < matches.length - 1 ? matches[i + 1].index! : content.length;
+				i < matches.length - 1 ? (matches[i + 1].index ?? content.length) : content.length;
 			const versionContent = content.slice(startIndex, endIndex).trim();
 
 			versions.push({

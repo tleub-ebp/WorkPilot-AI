@@ -200,7 +200,7 @@ export interface GitHubAPI {
 	getIssueComments: (
 		projectId: string,
 		issueNumber: number,
-	) => Promise<IPCResult<any[]>>;
+	) => Promise<IPCResult<unknown[]>>;
 	checkGitHubConnection: (
 		projectId: string,
 	) => Promise<IPCResult<GitHubSyncStatus>>;
@@ -682,7 +682,7 @@ export const createGitHubAPI = (): GitHubAPI => ({
 	getIssueComments: (
 		projectId: string,
 		issueNumber: number,
-	): Promise<IPCResult<any[]>> =>
+	): Promise<IPCResult<unknown[]>> =>
 		invokeIpc(IPC_CHANNELS.GITHUB_GET_ISSUE_COMMENTS, projectId, issueNumber),
 
 	checkGitHubConnection: (

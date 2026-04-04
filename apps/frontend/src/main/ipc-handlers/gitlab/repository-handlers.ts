@@ -22,6 +22,7 @@ const DEBUG =
 function debugLog(_message: string, data?: unknown): void {
 	if (DEBUG) {
 		if (data !== undefined) {
+			/* intentionally empty */
 		} else {
 			// noop
 		}

@@ -35,7 +35,7 @@ export interface ProvidersResponse {
  */
 export async function getStaticProviders(
 	profiles: APIProfile[] = [],
-	settings?: Record<string, any>,
+	settings?: Record<string, unknown>,
 ): Promise<ProvidersResponse> {
 	const allProviders = providerRegistry
 		.getAllProviders()

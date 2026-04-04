@@ -252,7 +252,7 @@ export class AppEmulatorService extends EventEmitter {
 					const frontendResult = this.findFrontendInSubdirs(projectDir, 3);
 					if (frontendResult) {
 						const frontendDir =
-							(frontendResult as any).projectDir ?? projectDir;
+							frontendResult.projectDir ?? projectDir;
 						return this.buildFullstackConfig(
 							{ framework, startCommand, port, projectDir },
 							{
@@ -353,7 +353,7 @@ export class AppEmulatorService extends EventEmitter {
 					const frontendResult = this.findFrontendInSubdirs(projectDir, 3);
 					if (frontendResult) {
 						const frontendDir =
-							(frontendResult as any).projectDir ?? projectDir;
+							frontendResult.projectDir ?? projectDir;
 						return this.buildFullstackConfig(
 							{ ...backendCfg, projectDir },
 							{
@@ -374,7 +374,7 @@ export class AppEmulatorService extends EventEmitter {
 			const frontendResult = this.findFrontendInSubdirs(projectDir, 3);
 			if (frontendResult) {
 				// biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
-				const frontendDir = (frontendResult as any).projectDir ?? projectDir;
+				const frontendDir = frontendResult.projectDir ?? projectDir;
 				return this.buildFullstackConfig(
 					{ framework: "go", startCommand: "go run .", port: 8080, projectDir },
 					{
@@ -448,7 +448,7 @@ export class AppEmulatorService extends EventEmitter {
 					// Fullstack: launch .NET backend AND frontend separately so both are reachable.
 					// The backend port becomes the API Studio base URL; the frontend runs in parallel.
 					// biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
-					const frontendDir = (frontendResult as any).projectDir ?? projectDir;
+					const frontendDir = frontendResult.projectDir ?? projectDir;
 					return this.buildFullstackConfig(
 						{
 							framework: "dotnet",
@@ -473,7 +473,7 @@ export class AppEmulatorService extends EventEmitter {
 					port: dotnetPort,
 					isWeb: true,
 					projectDir: dotnetDir,
-				} as any;
+				};
 			}
 		} catch {
 			/* ignore */
@@ -492,7 +492,7 @@ export class AppEmulatorService extends EventEmitter {
 	private findFrontendInSubdirs(
 		dir: string,
 		maxDepth: number,
-	): Omit<AppEmulatorConfig, "projectDir"> | null {
+	): (Omit<AppEmulatorConfig, "projectDir"> & { projectDir?: string }) | null {
 		if (maxDepth <= 0) return null;
 
 		try {
@@ -592,7 +592,7 @@ export class AppEmulatorService extends EventEmitter {
 								port,
 								isWeb: type === "web",
 								projectDir: fullPath,
-							} as any;
+							};
 						}
 					} catch {
 						/* ignore parse error */
@@ -813,7 +813,7 @@ export class AppEmulatorService extends EventEmitter {
 	 */
 	private detectBackendAt(
 		dir: string,
-	): { framework: string; startCommand: string; port: number } | null {
+	): { framework: string; startCommand: string; port: number; projectDir?: string } | null {
 		// Python
 		const hasManagePy = existsSync(path.join(dir, "manage.py"));
 		const hasAppPy = existsSync(path.join(dir, "app.py"));
@@ -901,7 +901,7 @@ export class AppEmulatorService extends EventEmitter {
 							startCommand: "dotnet run",
 							port: this.readDotnetPort(sub) ?? 5000,
 							projectDir: sub,
-						} as any;
+						};
 					}
 				} catch {
 					/* ignore */

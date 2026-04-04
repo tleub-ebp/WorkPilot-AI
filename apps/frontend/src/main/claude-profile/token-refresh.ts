@@ -14,7 +14,7 @@
  * Response: { access_token, refresh_token, expires_in: 28800, token_type: "Bearer" }
  */
 
-import { homedir } from "os";
+import { homedir } from "node:os";
 import {
 	clearKeychainCache,
 	getFullCredentialsFromKeychain,
@@ -602,7 +602,7 @@ export async function ensureValidToken(
 	// Step 4: Refresh the token (with concurrency lock)
 	const refreshPromise = (async (): Promise<EnsureValidTokenResult> => {
 		const refreshResult = await refreshOAuthToken(
-			creds.refreshToken!,
+			creds.refreshToken as string,
 			expandedConfigDir,
 		);
 
@@ -656,7 +656,16 @@ export async function ensureValidToken(
 		// Track if persistence failed - callers can alert user to re-authenticate
 		let persistenceFailed = false;
 
-		if (!updateResult.success) {
+		if (updateResult.success) {
+			if (isDebug) {
+				console.warn(
+					"[TokenRefresh:ensureValidToken] Successfully refreshed and persisted token",
+					{
+						newExpiresAt: new Date(refreshResult.expiresAt).toISOString(),
+					},
+				);
+			}
+		} else {
 			// This is a critical error - we have new tokens but can't persist them
 			console.error(
 				"[TokenRefresh:ensureValidToken] CRITICAL: Failed to persist refreshed tokens:",
@@ -674,15 +683,6 @@ export async function ensureValidToken(
 			// On restart, the revoked tokens will trigger re-authentication via Bugs #3 and #4 fixes
 			clearKeychainCache(expandedConfigDir);
 			// Still return the new token for this session
-		} else {
-			if (isDebug) {
-				console.warn(
-					"[TokenRefresh:ensureValidToken] Successfully refreshed and persisted token",
-					{
-						newExpiresAt: new Date(refreshResult.expiresAt).toISOString(),
-					},
-				);
-			}
 		}
 
 		// Step 6: Clear the credential cache so next read gets fresh data

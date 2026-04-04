@@ -273,7 +273,7 @@ export class TestGenerationService extends EventEmitter {
 			} else {
 				// Strip ANSI escape codes so the error message is readable
 				const clean = stderrOutput
-					.replaceAll(/\x1b\[[0-9;]*[A-Za-z]/g, "")
+					.replaceAll(/\u001b\[[0-9;]*[A-Za-z]/g, "")
 					.replaceAll(/[\u2500-\u257F]/g, "")
 					.trim();
 				if (clean.includes("rate_limit") || clean.includes("Rate limit")) {

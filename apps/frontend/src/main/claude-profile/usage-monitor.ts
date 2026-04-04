@@ -1656,7 +1656,7 @@ export class UsageMonitor extends EventEmitter {
 			try {
 				const currentProfilesFile = await loadProfilesFile();
 				const activeProfile = currentProfilesFile.profiles.find(
-					(p: any) => p.id === settings.activeProfileId,
+					(p: { id?: string }) => p.id === settings.activeProfileId,
 				);
 				if (activeProfile) {
 					const provider = detectProvider(activeProfile.baseUrl);

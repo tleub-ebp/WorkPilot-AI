@@ -155,7 +155,7 @@ export function registerFileHandlers(): void {
 			_,
 			dirPath: string,
 			fileName: string,
-			data: any,
+			data: unknown,
 		): Promise<IPCResult<boolean>> => {
 			try {
 				// Validate and normalize path

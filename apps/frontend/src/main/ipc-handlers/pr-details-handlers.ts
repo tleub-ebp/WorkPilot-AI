@@ -5,9 +5,11 @@
  * Routes to appropriate handlers based on URL detection
  */
 
+import { type ChildProcess } from "node:child_process";
 import { ipcMain } from "electron";
 import { IPC_CHANNELS } from "../../shared/constants";
 import type { IPCResult, PRDetailsResult, Project } from "../../shared/types";
+import { getGitHubConfig, githubFetch } from "./github/utils";
 import { findTaskAndProject } from "./task/shared";
 
 /**
@@ -37,7 +39,7 @@ export function registerPRDetailsHandlers(): void {
 				// If no PR URL from task, we need to determine the platform
 				// For now, we'll default to GitHub if no URL is found
 				if (!prUrl) {
-					return getGitHubPRDetails(prNumber, project);
+					return getGitHubPRDetails(prNumber, prUrl, project);
 				}
 
 				// Detect platform from URL and route accordingly
@@ -47,7 +49,7 @@ export function registerPRDetailsHandlers(): void {
 				) {
 					return getAzureDevOpsPRDetails(prNumber, prUrl, project);
 				} else if (prUrl.includes("github.com") || prUrl.includes("/pull/")) {
-					return getGitHubPRDetails(prNumber, project);
+					return getGitHubPRDetails(prNumber, prUrl, project);
 				} else {
 					return {
 						success: false,
@@ -67,70 +69,148 @@ export function registerPRDetailsHandlers(): void {
 }
 
 /**
- * Get GitHub PR details
+ * Extract owner/repo from a GitHub PR URL
+ */
+function extractRepoFromUrl(prUrl: string): string | null {
+	const match = /github\.com\/([^/]+\/[^/]+)/.exec(prUrl);
+	return match ? match[1].replace(/\.git$/, "") : null;
+}
+
+/**
+ * Map GitHub file status to PRFileData status
+ */
+function mapGitHubFileStatus(
+	status: string,
+): "added" | "removed" | "modified" | "renamed" {
+	switch (status) {
+		case "added":
+			return "added";
+		case "removed":
+			return "removed";
+		case "renamed":
+			return "renamed";
+		case "copied":
+			return "added";
+		default:
+			return "modified";
+	}
+}
+
+/**
+ * Get GitHub PR details using the GitHub REST API
  */
 async function getGitHubPRDetails(
 	prNumber: number,
-	_project: Project | null,
+	prUrl: string | null,
+	project: Project | null,
 ): Promise<IPCResult<PRDetailsResult>> {
 	try {
-		// For now, return a mock implementation for GitHub too
-		// TODO: Implement actual GitHub API call
-		const mockGitHubResult = {
+		// Resolve token and repo from project config or URL
+		let token: string | null = null;
+		let repo: string | null = null;
+
+		if (project) {
+			const config = getGitHubConfig(project);
+			if (config) {
+				token = config.token;
+				repo = config.repo;
+			}
+		}
+
+		// Try to extract repo from PR URL if not found in config
+		if (!repo && prUrl) {
+			repo = extractRepoFromUrl(prUrl);
+		}
+
+		if (!token || !repo) {
+			return {
+				success: false,
+				error:
+					"GitHub is not configured. Set GITHUB_TOKEN and GITHUB_REPO in your project .env file, or authenticate with `gh auth login`.",
+			};
+		}
+
+		// Fetch PR details and files in parallel
+		const [prData, filesData] = await Promise.all([
+			githubFetch(token, `/repos/${repo}/pulls/${prNumber}`) as Promise<{
+				number: number;
+				title: string;
+				body: string | null;
+				state: string;
+				html_url: string;
+				additions: number;
+				deletions: number;
+				changed_files: number;
+				head: { ref: string };
+				base: { ref: string };
+				user: { login: string };
+				created_at: string;
+				updated_at: string;
+				mergeable: boolean | null;
+				draft: boolean;
+				labels: Array<{ name: string }>;
+				requested_reviewers: Array<{ login: string }>;
+			}>,
+			githubFetch(
+				token,
+				`/repos/${repo}/pulls/${prNumber}/files?per_page=100`,
+			) as Promise<
+				Array<{
+					filename: string;
+					status: string;
+					additions: number;
+					deletions: number;
+					changes: number;
+					patch?: string;
+					previous_filename?: string;
+				}>
+			>,
+		]);
+
+		// Build combined diff from file patches
+		const combinedDiff = filesData
+			.filter((f) => f.patch)
+			.map(
+				(f) =>
+					`diff --git a/${f.previous_filename || f.filename} b/${f.filename}\n${f.patch}`,
+			)
+			.join("\n");
+
+		return {
 			success: true,
 			data: {
 				success: true,
 				data: {
-					number: prNumber,
-					title: `GitHub PR #${prNumber}`,
-					body: "Mock GitHub PR description",
-					state: "open",
-					url: `https://github.com/owner/repo/pull/${prNumber}`,
-					additions: 15,
-					deletions: 8,
-					changed_files: 3,
-					source_branch: "feature/branch",
-					target_branch: "main",
-					author: "MockUser",
-					created_at: new Date().toISOString(),
-					updated_at: new Date().toISOString(),
-					mergeable: true,
-					labels: [],
-					reviewers: [],
-					is_draft: false,
-					diff: "", // We'll need to fetch individual file diffs if needed
-					files: [
-						{
-							filename: "src/example.ts",
-							status: "modified" as const,
-							additions: 10,
-							deletions: 5,
-							changes: 15,
-							patch: "",
-						},
-						{
-							filename: "src/new-file.ts",
-							status: "added" as const,
-							additions: 5,
-							deletions: 0,
-							changes: 5,
-							patch: "",
-						},
-						{
-							filename: "src/old-file.ts",
-							status: "renamed" as const,
-							additions: 0,
-							deletions: 3,
-							changes: 3,
-							patch: "",
-							previous_filename: "src/renamed-file.ts",
-						},
-					],
+					number: prData.number,
+					title: prData.title,
+					body: prData.body ?? "",
+					state: prData.state,
+					url: prData.html_url,
+					additions: prData.additions,
+					deletions: prData.deletions,
+					changed_files: prData.changed_files,
+					source_branch: prData.head.ref,
+					target_branch: prData.base.ref,
+					author: prData.user.login,
+					created_at: prData.created_at,
+					updated_at: prData.updated_at,
+					mergeable: prData.mergeable ?? true,
+					labels: prData.labels.map((l) => l.name),
+					reviewers: prData.requested_reviewers.map((r) => r.login),
+					is_draft: prData.draft,
+					diff: combinedDiff,
+					files: filesData.map((f) => ({
+						filename: f.filename,
+						status: mapGitHubFileStatus(f.status),
+						additions: f.additions,
+						deletions: f.deletions,
+						changes: f.changes,
+						patch: f.patch ?? "",
+						previous_filename: f.previous_filename,
+					})),
 				},
 			},
 		};
-
-		return mockGitHubResult;
 	} catch (error) {
 		console.error("[PR_DETAILS] GitHub error:", error);
 		return {
@@ -160,9 +240,8 @@ async function getAzureDevOpsPRDetails(
 		}
 
 		// Parse Azure DevOps URL to extract organization and project
-		const urlMatch = prUrl.match(
-			/https:\/\/dev\.azure\.com\/([^/]+)\/([^/]+)\/_git\/([^/]+)\/pullrequest\/(\d+)/,
-		);
+		const azureDevOpsUrlRegex = /https:\/\/dev\.azure\.com\/([^/]+)\/([^/]+)\/_git\/([^/]+)\/pullrequest\/(\d+)/;
+		const urlMatch = azureDevOpsUrlRegex.exec(prUrl);
 		if (!urlMatch) {
 			return {
 				success: false,
@@ -173,7 +252,7 @@ async function getAzureDevOpsPRDetails(
 		const [, _organization, _projectName, repository, prNumFromUrl] = urlMatch;
 
 		// Validate PR number matches URL
-		if (parseInt(prNumFromUrl, 10) !== prNumber) {
+		if (Number.parseInt(prNumFromUrl, 10) !== prNumber) {
 			return {
 				success: false,
 				error: `PR number mismatch: requested ${prNumber} but URL contains ${prNumFromUrl}`,
@@ -219,6 +298,106 @@ async function getAzureDevOpsPRDetails(
 }
 
 /**
+ * Extract JSON from Python script output
+ */
+function extractJsonFromOutput(output: string): unknown {
+	const lines = output.trim().split("\n");
+	for (let i = lines.length - 1; i >= 0; i--) {
+		const line = lines[i].trim();
+		if (line.startsWith("{") || line.startsWith("[")) {
+			try {
+				return JSON.parse(line);
+			} catch {
+				// Not valid JSON, keep searching
+			}
+		}
+	}
+	return null;
+}
+
+/**
+ * Handle successful Python process execution
+ */
+function handlePythonSuccess(
+	output: string,
+	errorOutput: string,
+	resolve: (value: unknown) => void,
+	reject: (reason: unknown) => void,
+): void {
+	try {
+		const result = extractJsonFromOutput(output);
+		if (result) {
+			resolve(result);
+		} else {
+			console.error(
+				"[PR_DETAILS] No valid JSON found in Python output:",
+				output,
+			);
+			reject(new Error("No valid JSON found in Python output"));
+		}
+	} catch (error) {
+		console.error("[PR_DETAILS] Failed to parse Python output:", output);
+		reject(new Error(`Failed to parse Python output: ${error}`));
+	}
+}
+
+/**
+ * Handle failed Python process execution
+ */
+function handlePythonFailure(
+	code: number,
+	output: string,
+	errorOutput: string,
+	reject: (reason: unknown) => void,
+): void {
+	console.error("[PR_DETAILS] Python process failed with output:");
+	console.error("[PR_DETAILS] STDOUT:", output);
+	console.error("[PR_DETAILS] STDERR:", errorOutput);
+	reject(
+		new Error(
+			`Python process exited with code ${code}. Output: ${errorOutput || output}`,
+		),
+	);
+}
+
+/**
+ * Setup Python process event handlers
+ */
+function setupPythonProcessHandlers(
+	pythonProcess: ChildProcess,
+	resolve: (value: unknown) => void,
+	reject: (reason: unknown) => void,
+): { output: string; errorOutput: string } {
+	let output = "";
+	let errorOutput = "";
+
+	pythonProcess.stdout.on("data", (data: Buffer) => {
+		const dataStr = data.toString();
+		output += dataStr;
+	});
+
+	pythonProcess.stderr.on("data", (data: Buffer) => {
+		const dataStr = data.toString();
+		errorOutput += dataStr;
+		console.error("[PR_DETAILS] Python stderr:", dataStr);
+	});
+
+	pythonProcess.on("close", (code: number) => {
+		if (code === 0) {
+			handlePythonSuccess(output, errorOutput, resolve, reject);
+		} else {
+			handlePythonFailure(code, output, errorOutput, reject);
+		}
+	});
+
+	pythonProcess.on("error", (error: Error) => {
+		reject(error);
+	});
+
+	return { output, errorOutput };
+}
+
+/**
  * Call Azure DevOps Python connector using existing project configuration
  */
 async function callAzureDevOpsPythonWithExistingConfig(
@@ -230,10 +409,10 @@ async function callAzureDevOpsPythonWithExistingConfig(
 ): Promise<any> {
 	return new Promise((resolve, reject) => {
 		// Debug: Check Python executable and project path
-		const { exec } = require("child_process");
+		const { exec } = require("node:child_process");
 		exec(
 			"python --version",
-			(_error: Error | null, _stdout: string, _stderr: string) => {},
+			(_error: Error | null, _stdout: string, _stderr: string) => { /* intentionally empty */ },
 		);
 
 		const pythonScript = `
@@ -254,8 +433,8 @@ try:
     from dotenv import load_dotenv
     # Try loading .env from project path first, then common locations
     env_locations = [
-        os.path.join(r'${projectPath.replace(/\\/g, "\\\\")}', '.env'),
-        os.path.join(r'${projectPath.replace(/\\/g, "\\\\")}', 'apps', 'backend', '.env'),
+        os.path.join(r'${projectPath.split("\\\\").join("\\\\")}', '.env'),
+        os.path.join(r'${projectPath.split("\\\\").join("\\\\")}', 'apps', 'backend', '.env'),
     ]
     for env_path in env_locations:
         if os.path.exists(env_path):
@@ -519,7 +698,7 @@ except Exception as e:
     sys.exit(1)
 `;
 
-		const { spawn } = require("child_process");
+		const { spawn } = require("node:child_process");
 		const pythonProcess = spawn("python", ["-c", pythonScript], {
 			cwd: projectPath,
 			env: {
@@ -528,67 +707,7 @@ except Exception as e:
 			},
 		});
 
-		let output = "";
-		let errorOutput = "";
-
-		pythonProcess.stdout.on("data", (data: Buffer) => {
-			const dataStr = data.toString();
-			output += dataStr;
-		});
-
-		pythonProcess.stderr.on("data", (data: Buffer) => {
-			const dataStr = data.toString();
-			errorOutput += dataStr;
-			console.error("[PR_DETAILS] Python stderr:", dataStr);
-		});
-
-		pythonProcess.on("close", (code: number) => {
-			if (code === 0) {
-				try {
-					// The Python script prints debug messages before the JSON output.
-					// Extract only the last valid JSON line from stdout.
-					// biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
-					let result: any = null;
-					const lines = output.trim().split("\n");
-					for (let i = lines.length - 1; i >= 0; i--) {
-						const line = lines[i].trim();
-						if (line.startsWith("{") || line.startsWith("[")) {
-							try {
-								result = JSON.parse(line);
-								break;
-							} catch {
-								// Not valid JSON, keep searching
-							}
-						}
-					}
-					if (result) {
-						resolve(result);
-					} else {
-						console.error(
-							"[PR_DETAILS] No valid JSON found in Python output:",
-							output,
-						);
-						reject(new Error("No valid JSON found in Python output"));
-					}
-				} catch (error) {
-					console.error("[PR_DETAILS] Failed to parse Python output:", output);
-					reject(new Error(`Failed to parse Python output: ${error}`));
-				}
-			} else {
-				console.error("[PR_DETAILS] Python process failed with output:");
-				console.error("[PR_DETAILS] STDOUT:", output);
-				console.error("[PR_DETAILS] STDERR:", errorOutput);
-				reject(
-					new Error(
-						`Python process exited with code ${code}. Output: ${errorOutput || output}`,
-					),
-				);
-			}
-		});
-
-		pythonProcess.on("error", (error: Error) => {
-			reject(error);
-		});
+		setupPythonProcessHandlers(pythonProcess, resolve, reject);
 	});
 }
 
@@ -668,9 +787,8 @@ async function getMockAzureDevOpsPRDetails(
 	prUrl: string,
 ): Promise<IPCResult<PRDetailsResult>> {
 	// Extract real info from URL for more realistic mock data
-	const urlMatch = prUrl.match(
-		/https:\/\/dev\.azure\.com\/([^/]+)\/([^/]+)\/_git\/([^/]+)\/pullrequest\/(\d+)/,
-	);
+	const urlRegex = /https:\/\/dev\.azure\.com\/([^/]+)\/([^/]+)\/_git\/([^/]+)\/pullrequest\/(\d+)/;
+	const urlMatch = urlRegex.exec(prUrl);
 	const [, organization, projectName, repository] = urlMatch || [
 		undefined,
 		"Unknown Org",
@@ -730,31 +848,6 @@ async function getMockAzureDevOpsPRDetails(
 			},
 		},
 	};
-}
-
-/**
- * Helper functions
- */
-
-function _mapGitHubChangeType(
-	changeType: string,
-): "added" | "modified" | "renamed" {
-	switch (changeType) {
-		case "ADDED":
-			return "added";
-		case "MODIFIED":
-			return "modified";
-		case "DELETED":
-			return "renamed"; // Map GitHub 'deleted' to 'renamed' for compatibility
-		case "RENAMED":
-			return "renamed";
-		case "COPIED":
-			return "added";
-		case "CHANGED":
-			return "modified";
-		default:
-			return "modified";
-	}
 }
 
 function mapAzureDevOpsChangeType(

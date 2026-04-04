@@ -220,7 +220,7 @@ export function TaskFormFields({
 					const result = await window.electronAPI.loadImageThumbnail(
 						projectPath,
 						specId,
-						image.path!,
+						image.path ?? "",
 					);
 					if (result.success && result.data) {
 						thumbnailMap.set(image.id, result.data);

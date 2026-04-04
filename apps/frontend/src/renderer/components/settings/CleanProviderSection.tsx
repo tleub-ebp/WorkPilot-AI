@@ -11,7 +11,7 @@ import {
 } from "@shared/utils/providers";
 import { Activity, AlertCircle, Info, Loader2, X } from "lucide-react";
 import type React from "react";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useToast } from "@/hooks/use-toast";
 import {
@@ -398,7 +398,7 @@ export function CleanProviderSection({
 	};
 
 	// Get API key info for a provider
-	const getApiKeyInfo = (
+	const getApiKeyInfo = useCallback((
 		providerId: string,
 	): {
 		hasKey: boolean;
@@ -501,7 +501,7 @@ export function CleanProviderSection({
 		}
 
 		return { hasKey: false, authMethod };
-	};
+	}, [profiles, settings, providerStatus]);
 
 	// Helper function to detect provider from URL
 	const detectProviderFromUrl = (url: string): string => {

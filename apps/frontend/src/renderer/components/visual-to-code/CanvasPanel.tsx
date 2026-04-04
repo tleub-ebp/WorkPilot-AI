@@ -19,7 +19,7 @@ import {
 	Save,
 	Sparkles,
 } from "lucide-react";
-import React, { useEffect, useRef, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import ReactFlow, {
 	addEdge,
@@ -133,11 +133,11 @@ export const CanvasPanel: React.FC = () => {
 	const codeToVisualInputRef = useRef<HTMLInputElement>(null);
 
 	// Extracted event handlers to reduce nesting
-	const handleVisualProgrammingStatus = (msg: string) => {
+	const handleVisualProgrammingStatus = useCallback((msg: string) => {
 		setAiStatus(msg);
-	};
+	}, []);
 
-	const handleVisualProgrammingError = (err: string) => {
+	const handleVisualProgrammingError = useCallback((err: string) => {
 		setIsAiRunning(false);
 		setAiStatus("");
 		toast({
@@ -145,9 +145,9 @@ export const CanvasPanel: React.FC = () => {
 			description: err,
 			variant: "destructive",
 		});
-	};
+	}, [t, toast]);
 
-	const handleVisualProgrammingComplete = (payload: {
+	const handleVisualProgrammingComplete = useCallback((payload: {
 		action: string;
 		data: GenerateCodeResult | CodeToVisualResult;
 	}) => {
@@ -158,7 +158,8 @@ export const CanvasPanel: React.FC = () => {
 		} else if (payload.action === "code-to-visual") {
 			handleCodeToVisualComplete(payload.data as CodeToVisualResult);
 		}
-	};
+	// biome-ignore lint/correctness/useExhaustiveDependencies: handleGenerateCodeComplete and handleCodeToVisualComplete are stable local helpers
+	}, []);
 
 	const handleGenerateCodeComplete = (result: GenerateCodeResult) => {
 		setCodeResult(result);

@@ -150,7 +150,7 @@ export function registerLearningLoopHandlers(
 				const data = JSON.parse(raw);
 				const before = data.patterns?.length || 0;
 				data.patterns = (data.patterns || []).filter(
-					(p: any) => p.pattern_id !== patternId,
+					(p: { pattern_id: string; enabled?: boolean }) => p.pattern_id !== patternId,
 				);
 				const after = data.patterns.length;
 
@@ -188,7 +188,7 @@ export function registerLearningLoopHandlers(
 				const raw = readFileSync(patternsPath, "utf-8");
 				const data = JSON.parse(raw);
 				const pattern = (data.patterns || []).find(
-					(p: any) => p.pattern_id === patternId,
+					(p: { pattern_id: string; enabled?: boolean }) => p.pattern_id === patternId,
 				);
 
 				if (!pattern) {

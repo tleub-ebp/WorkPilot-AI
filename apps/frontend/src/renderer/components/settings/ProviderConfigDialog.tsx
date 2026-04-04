@@ -1,5 +1,5 @@
 import { AlertCircle, CheckCircle, Globe, Key, Users } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { cn } from "@/lib/utils";
 import {
@@ -191,7 +191,7 @@ export function ProviderConfigDialog({
 		return t("sections.accounts.providerConfig.windsurfAuth.claudeCodeAuth");
 	};
 
-	const getDefaultActiveTab = (
+	const getDefaultActiveTab = useCallback((
 		providerId: string,
 		hasOAuthSupport: boolean,
 	): ActiveTab => {
@@ -200,26 +200,26 @@ export function ProviderConfigDialog({
 		if (providerId === "openai") return "api"; // OpenAI defaults to API key tab, Codex CLI is secondary
 		if (hasOAuthSupport) return "oauth";
 		return "api";
-	};
+	}, []);
 
-	const initializeFormData = (
+	const initializeFormData = useCallback((
 		config: ProviderConfig,
-		currentSettings: any,
+		currentSettings: Record<string, unknown>,
 	): Record<string, string> => {
 		const initialData: Record<string, string> = {};
 
 		if (config.apiKey && currentSettings[config.apiKey]) {
-			initialData.apiKey = currentSettings[config.apiKey];
+			initialData.apiKey = currentSettings[config.apiKey] as string;
 		}
 		if (config.apiUrl && currentSettings[config.apiUrl]) {
-			initialData.apiUrl = currentSettings[config.apiUrl];
+			initialData.apiUrl = currentSettings[config.apiUrl] as string;
 		}
 		if (config.model && currentSettings[config.model]) {
-			initialData.model = currentSettings[config.model];
+			initialData.model = currentSettings[config.model] as string;
 		}
 
 		return initialData;
-	};
+	}, []);
 
 	useEffect(() => {
 		if (!provider || !providerConfig || !isOpen) return;

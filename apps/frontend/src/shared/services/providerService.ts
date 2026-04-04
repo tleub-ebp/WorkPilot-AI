@@ -14,6 +14,13 @@ export interface Provider {
 	description: string;
 }
 
+interface ProfileEntry {
+	baseUrl?: string;
+	apiKey?: string;
+	name?: string;
+	[key: string]: unknown;
+}
+
 export interface ProviderConfig {
 	api_key?: string;
 	base_url?: string;
@@ -159,7 +166,7 @@ class ProviderServiceClass {
 	 */
 	async testProvider(
 		providerName: string,
-	): Promise<{ success: boolean; message: string; details?: any }> {
+	): Promise<{ success: boolean; message: string; details?: unknown }> {
 		try {
 			// Essayer d'abord le nouveau système CredentialManager si disponible
 			const credentialResult = await this.tryCredentialManager(providerName);
@@ -186,7 +193,7 @@ class ProviderServiceClass {
 	 */
 	private async tryCredentialManager(
 		providerName: string,
-	): Promise<{ success: boolean; message: string; details?: any } | null> {
+	): Promise<{ success: boolean; message: string; details?: unknown } | null> {
 		if (!globalThis.electronAPI?.invoke) {
 			return null;
 		}
@@ -207,7 +214,7 @@ class ProviderServiceClass {
 	 */
 	private async testProviderLegacy(
 		providerName: string,
-	): Promise<{ success: boolean; message: string; details?: any }> {
+	): Promise<{ success: boolean; message: string; details?: unknown }> {
 		const { providers: staticProviders, status } = await this.getProviderData();
 
 		const provider = staticProviders.find((p) => p.name === providerName);
@@ -236,12 +243,11 @@ class ProviderServiceClass {
 		const { getStaticProviders } = await import("@shared/utils/providers");
 		const profiles = this.getCurrentProfiles();
 		// Pass settings to detect providers configured via global keys (e.g., globalWindsurfApiKey)
-		// biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
-		let settings: Record<string, any> | undefined;
+		let settings: Record<string, unknown> | undefined;
 		try {
 			const { useSettingsStore } = await import("@/stores/settings-store");
 			settings = {
-				...(useSettingsStore.getState().settings as Record<string, any>),
+				...(useSettingsStore.getState().settings as Record<string, unknown>),
 			};
 		} catch {
 			// settings store not available in some contexts
@@ -280,7 +286,7 @@ class ProviderServiceClass {
 	private handleUnconfiguredProvider(providerName: string): {
 		success: boolean;
 		message: string;
-		details?: any;
+		details?: unknown;
 	} {
 		if (providerName === "copilot") {
 			return {
@@ -343,12 +349,11 @@ class ProviderServiceClass {
 	 * Trouve le profile correspondant à un provider
 	 */
 	private findProviderProfile(
-		profiles: any[],
+		profiles: ProfileEntry[],
 		providerName: string,
 		detectProvider: (baseUrl: string) => string,
-	): any {
-		// biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
-		return profiles.find((p: any) => {
+	): ProfileEntry | undefined {
+		return profiles.find((p) => {
 			if (!p.baseUrl) return false;
 
 			const detectedProvider = detectProvider(p.baseUrl);
@@ -399,7 +404,7 @@ class ProviderServiceClass {
 		providerName: string,
 		apiKey?: string,
 		baseUrl?: string,
-	): Promise<{ success: boolean; message: string; details?: any }> {
+	): Promise<{ success: boolean; message: string; details?: unknown }> {
 		// Cas spécial pour Anthropic
 		if (providerName === "anthropic" || providerName === "claude") {
 			return await this.testAnthropicProvider();
@@ -432,7 +437,7 @@ class ProviderServiceClass {
 	private async testAnthropicProvider(): Promise<{
 		success: boolean;
 		message: string;
-		details?: any;
+		details?: unknown;
 	}> {
 		const { useSettingsStore } = await import("@/stores/settings-store");
 		const { testConnection } = useSettingsStore.getState();
@@ -480,21 +485,18 @@ class ProviderServiceClass {
 	/**
 	 * Récupère les profiles actuels
 	 */
-	// biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
-	private getCurrentProfiles(): any[] {
+	private getCurrentProfiles(): ProfileEntry[] {
 		return this.currentProfiles;
 	}
 
 	/**
 	 * Définit les profiles actuels pour les tests
 	 */
-	// biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
-	setProfiles(profiles: any[]): void {
+	setProfiles(profiles: ProfileEntry[]): void {
 		this.currentProfiles = profiles;
 	}
 
-	// biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
-	private currentProfiles: any[] = [];
+	private currentProfiles: ProfileEntry[] = [];
 
 	/**
 	 * Test de connexion pour OpenAI
@@ -502,7 +504,7 @@ class ProviderServiceClass {
 	private async testOpenAIConnection(
 		apiKey: string,
 		baseUrl?: string,
-	): Promise<{ success: boolean; message: string; details?: any }> {
+	): Promise<{ success: boolean; message: string; details?: unknown }> {
 		try {
 			const response = await fetch(
 				`${baseUrl || "https://api.openai.com"}/v1/models`,
@@ -543,7 +545,7 @@ class ProviderServiceClass {
 	private async testGoogleConnection(
 		apiKey: string,
 		baseUrl?: string,
-	): Promise<{ success: boolean; message: string; details?: any }> {
+	): Promise<{ success: boolean; message: string; details?: unknown }> {
 		try {
 			const response = await fetch(
 				`${baseUrl || "https://generativelanguage.googleapis.com"}/v1/models?key=${apiKey}`,
@@ -583,7 +585,7 @@ class ProviderServiceClass {
 	private async testMistralConnection(
 		apiKey: string,
 		baseUrl?: string,
-	): Promise<{ success: boolean; message: string; details?: any }> {
+	): Promise<{ success: boolean; message: string; details?: unknown }> {
 		try {
 			const response = await fetch(
 				`${baseUrl || "https://api.mistral.ai"}/v1/models`,
@@ -623,7 +625,7 @@ class ProviderServiceClass {
 	 */
 	private async testOllamaConnection(
 		baseUrl: string,
-	): Promise<{ success: boolean; message: string; details?: any }> {
+	): Promise<{ success: boolean; message: string; details?: unknown }> {
 		try {
 			const response = await fetch(`${baseUrl}/api/tags`, {
 				method: "GET",
@@ -660,7 +662,7 @@ class ProviderServiceClass {
 	private async testGenericConnection(
 		baseUrl: string,
 		apiKey?: string,
-	): Promise<{ success: boolean; message: string; details?: any }> {
+	): Promise<{ success: boolean; message: string; details?: unknown }> {
 		try {
 			const headers: Record<string, string> = {
 				"Content-Type": "application/json",

@@ -444,6 +444,8 @@
 		"delete": {
 			"title": "Delete Task",
 			"confirmMessage": "Are you sure you want to delete <strong>\"{{title}}\"</strong>?",
+			"confirmMessagePrefix": "Are you sure you want to delete",
+			"confirmMessageSuffix": "?",
 			"warningMessage": "This action cannot be undone. All task files, including the spec, implementation plan, and any generated code will be permanently deleted from the project.",
 			"cancel": "Cancel",
 			"deleting": "Deleting...",

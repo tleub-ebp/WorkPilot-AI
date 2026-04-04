@@ -58,7 +58,7 @@ function CodexIcon({ className }: CodexIconProps) {
  */
 export function CodexCliStatusBadge({
 	className,
-	onNavigateToTerminals,
+	onNavigateToTerminals: _onNavigateToTerminals,
 }: CodexCliStatusBadgeProps) {
 	const { t } = useTranslation(["common", "navigation"]);
 	const { data, refreshCodex } = useCliStatus();

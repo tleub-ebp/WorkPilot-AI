@@ -20,13 +20,6 @@ import { Label } from "../ui/label";
 import { Switch } from "../ui/switch";
 import { SettingsSection } from "./SettingsSection";
 
-// Type alias for module keys to avoid union type repetition
-type ModuleKey =
-	| "cicd_watcher"
-	| "dependency_sentinel"
-	| "issue_responder"
-	| "pr_reviewer";
-
 /**
  * Continuous AI settings panel.
  *

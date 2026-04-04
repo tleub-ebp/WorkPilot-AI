@@ -53,6 +53,7 @@ function _redactSensitiveData(data: unknown): unknown {
 function debugLog(_message: string, data?: unknown): void {
 	if (DEBUG) {
 		if (data !== undefined) {
+			/* intentionally empty */
 		} else {
 			// noop
 		}

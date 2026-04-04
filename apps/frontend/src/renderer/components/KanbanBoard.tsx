@@ -999,7 +999,7 @@ export function KanbanBoard({
 	onNewTaskClick,
 	onRefresh,
 	isRefreshing,
-	onWorkItemsImported,
+	onWorkItemsImported: _onWorkItemsImported,
 	onOpenJiraSettings,
 	onOpenAzureDevOpsSettings,
 }: KanbanBoardProps) {
@@ -1448,7 +1448,7 @@ export function KanbanBoard({
 	}, []);
 
 	// Handle bulk PR dialog completion - clear selection
-	const handleBulkPRComplete = useCallback(() => {}, []);
+	const handleBulkPRComplete = useCallback(() => { /* intentionally empty */ }, []);
 
 	// Handle viewing PR files
 	const handleViewPRFiles = useCallback((prUrl: string, taskId: string) => {
@@ -1531,13 +1531,14 @@ export function KanbanBoard({
 	// Handle confirmed single task delete
 	const handleConfirmSingleDelete = useCallback(async () => {
 		if (!singleDeleteConfirm.taskId) return;
+		const deletedTaskId = singleDeleteConfirm.taskId;
 
 		// Get the full task data before deletion for potential undo
 		const taskToDelete = useTaskStore
 			.getState()
-			.tasks.find((t) => t.id === singleDeleteConfirm.taskId);
+			.tasks.find((t) => t.id === deletedTaskId);
 
-		const result = await deleteTasks([singleDeleteConfirm.taskId]);
+		const result = await deleteTasks([deletedTaskId]);
 
 		// Close the dialog
 		setSingleDeleteConfirm({
@@ -1549,7 +1550,7 @@ export function KanbanBoard({
 		if (result.success && taskToDelete) {
 			// Store the deleted task for undo functionality
 			setRecentlyDeletedTasks((prev) =>
-				new Map(prev).set(singleDeleteConfirm.taskId!, taskToDelete),
+				new Map(prev).set(deletedTaskId, taskToDelete),
 			);
 
 			toast({

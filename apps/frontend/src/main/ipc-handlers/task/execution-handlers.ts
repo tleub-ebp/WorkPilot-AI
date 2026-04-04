@@ -213,17 +213,15 @@ function handleProviderChange(
  * Get provider-specific configurations from global settings
  */
 function getProviderConfigurations(projectProvider: string): {
-	// biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
-	providerPhaseModels: any;
-	// biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
-	providerPhaseThinking: any;
+	providerPhaseModels: unknown;
+	providerPhaseThinking: unknown;
 } {
 	const globalSettings = readSettingsFile() ?? {};
 	const providerPhaseModels = (
-		globalSettings.providerPhaseModels as Record<string, any> | undefined
+		globalSettings.providerPhaseModels as Record<string, unknown> | undefined
 	)?.[projectProvider];
 	const providerPhaseThinking = (
-		globalSettings.providerPhaseThinking as Record<string, any> | undefined
+		globalSettings.providerPhaseThinking as Record<string, unknown> | undefined
 	)?.[projectProvider];
 
 	return { providerPhaseModels, providerPhaseThinking };
@@ -1462,10 +1460,10 @@ print(json.dumps(result))
 	 * Update task metadata with new provider configuration
 	 */
 	async function updateTaskMetadata(
-		task: any,
+		task: Task,
 		specDir: string,
 		currentProvider: string,
-		globalSettings: any,
+		globalSettings: Record<string, unknown>,
 	): Promise<void> {
 		appLog.info(
 			`[TASK_RESUME_PAUSED] Provider changed. ` +
@@ -1476,12 +1474,12 @@ print(json.dumps(result))
 		try {
 			const providerPhaseModels =
 				(
-					globalSettings.providerPhaseModels as Record<string, any> | undefined
+					globalSettings.providerPhaseModels as Record<string, unknown> | undefined
 				)?.[currentProvider];
 			const providerPhaseThinking =
 				(
 					globalSettings.providerPhaseThinking as
-						| Record<string, any>
+						| Record<string, unknown>
 						| undefined
 				)?.[currentProvider];
 
@@ -1522,8 +1520,8 @@ print(json.dumps(result))
 	 * Check if provider changed and update metadata if needed
 	 */
 	async function handleProviderSwitch(
-		task: any,
-		_project: any,
+		task: Task,
+		_project: Project,
 		specDir: string,
 	): Promise<{ changed: boolean; currentProvider: string }> {
 		// Normalize 'anthropic' -> 'claude' for comparison purposes.
@@ -1547,8 +1545,8 @@ print(json.dumps(result))
 	 * Restart task with new provider
 	 */
 	async function restartTaskWithNewProvider(
-		task: any,
-		project: any,
+		task: Task,
+		project: Project,
 		_specDir: string,
 		_currentProvider: string,
 	): Promise<IPCResult> {
@@ -1580,8 +1578,8 @@ print(json.dumps(result))
 	 * Handle writing RESUME file to worktree if it exists
 	 */
 	async function handleWorktreeResumeFile(
-		task: any,
-		project: any,
+		task: Task,
+		project: Project,
 		specsBaseDir: string,
 		resumeContent: string,
 	): Promise<void> {
@@ -1622,8 +1620,8 @@ print(json.dumps(result))
 	 * Write RESUME file to signal existing subprocess to continue
 	 */
 	async function writeResumeFile(
-		task: any,
-		project: any,
+		task: Task,
+		project: Project,
 		specDir: string,
 		specsBaseDir: string,
 	): Promise<IPCResult> {
@@ -1802,7 +1800,7 @@ print(json.dumps(result))
 	 */
 	function getPlanPaths(
 		specPaths: ReturnType<typeof getSpecPaths>,
-		_project: any,
+		_project: Project,
 	): { primary: string; all: string[] } {
 		const planPath = path.join(
 			specPaths.specDir,

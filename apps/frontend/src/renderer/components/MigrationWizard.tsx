@@ -663,6 +663,7 @@ export const MigrationWizard: React.FC = () => {
 							<div className="space-y-2 max-h-64 overflow-y-auto">
 								{transformations.map((t, i) => (
 									<div
+										// biome-ignore lint/suspicious/noArrayIndexKey: list is static and never reordered
 										key={i}
 										className="flex items-center justify-between p-3 bg-gray-50 rounded"
 									>

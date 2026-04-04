@@ -7,7 +7,7 @@ import {
 	FileText,
 	Lightbulb,
 	ListTodo,
-	Map,
+	Map as MapIcon,
 	Plus,
 	RefreshCw,
 	Star,
@@ -76,7 +76,7 @@ function getSourceIcon(source: SDKRateLimitInfo["source"]) {
 		case "task":
 			return ListTodo;
 		case "roadmap":
-			return Map;
+			return MapIcon;
 		case "ideation":
 			return Lightbulb;
 		default:

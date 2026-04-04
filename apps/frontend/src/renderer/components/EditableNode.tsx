@@ -18,7 +18,7 @@ export const EditableNode: React.FC<NodeProps> = ({
 	xPos,
 	yPos,
 	dragging,
-	...rest
+	..._rest
 }) => {
 	const [editing, setEditing] = useState(false);
 	const [label, setLabel] = useState(data.label || "");

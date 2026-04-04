@@ -151,7 +151,7 @@ export function UsageIndicator() {
 	 * Handle timeout errors with retry logic
 	 */
 	const handleTimeoutError = async (
-		error: any,
+		error: unknown,
 		provider: string,
 		retryCount: number,
 	): Promise<void> => {
@@ -402,7 +402,7 @@ export function UsageIndicator() {
 
 					if (profilesResult.success && profilesResult.data?.profiles) {
 						const oauthProfile = profilesResult.data.profiles.find(
-							(profile: any) => profile.isAuthenticated === true,
+							(profile: { isAuthenticated?: boolean }) => profile.isAuthenticated === true,
 						);
 
 						if (oauthProfile) {
@@ -610,6 +610,7 @@ export function UsageIndicator() {
 		} else if (selectedProvider) {
 			setIsLoading(false);
 		} else {
+			/* intentionally empty */
 		}
 		// When selectedProvider is empty (''), keep isLoading=true to avoid
 		// flashing "N/D" while ProviderContext resolves the real provider
@@ -658,18 +659,15 @@ export function UsageIndicator() {
 
 		// Debug OpenAI
 		if (selectedProvider?.toLowerCase() === "openai") {
-			let debugProfiles = [];
-			if (
-				typeof globalThis !== "undefined" &&
-				(globalThis as any).debugProfiles
-			) {
-				// biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
-				debugProfiles = (globalThis as any).debugProfiles;
+			const globalAny = globalThis as Record<string, unknown>;
+			let debugProfiles: Array<{ name: string; baseUrl: string; detectedProvider: string }> = [];
+			if (typeof globalThis !== "undefined" && globalAny.debugProfiles) {
+				debugProfiles = globalAny.debugProfiles as typeof debugProfiles;
 			}
 			const openaiError =
 				typeof globalThis === "undefined"
 					? undefined
-					: (globalThis as any).lastOpenAIUsageError;
+					: globalAny.lastOpenAIUsageError;
 			return (
 				<TooltipProvider delayDuration={200}>
 					<Tooltip>
@@ -712,7 +710,7 @@ export function UsageIndicator() {
 									<b>{t("common:usage.debugProfiles")}</b>
 									<ul>
 										{debugProfiles.length > 0 ? (
-											debugProfiles.map((p: any) => (
+											debugProfiles.map((p) => (
 												<li key={`${p.name}-${p.baseUrl}`}>
 													{p.name} | {p.baseUrl} | provider:{" "}
 													{p.detectedProvider}

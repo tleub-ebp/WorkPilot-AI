@@ -8,12 +8,12 @@ import { ALL_IDEATION_TYPES } from "./constants";
 import { TypeIcon } from "./TypeIcon";
 
 interface IdeationEmptyStateProps {
-	config: IdeationConfig;
-	hasToken: boolean | null;
-	isCheckingToken: boolean;
-	onGenerate: () => void;
-	onOpenConfig: () => void;
-	onToggleIdeationType: (type: IdeationType) => void;
+	readonly config: IdeationConfig;
+	readonly hasToken: boolean | null;
+	readonly isCheckingToken: boolean;
+	readonly onGenerate: () => void;
+	readonly onOpenConfig: () => void;
+	readonly onToggleIdeationType: (type: IdeationType) => void;
 }
 
 export function IdeationEmptyState({

@@ -257,7 +257,7 @@ export class GitHubCopilotService extends EventEmitter {
 	async testConnection(): Promise<{
 		success: boolean;
 		message: string;
-		details?: any;
+		details?: unknown;
 	}> {
 		try {
 			if (!this.status.installed) {

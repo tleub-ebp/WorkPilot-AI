@@ -228,6 +228,7 @@ export function PerformanceProfilerDashboard(): React.ReactElement {
 									<div className="grid grid-cols-2 gap-2">
 										{result.report.benchmarks.map((b, i) => (
 											<div
+												// biome-ignore lint/suspicious/noArrayIndexKey: list is static and never reordered
 												key={i}
 												className="bg-[var(--bg-secondary)] rounded-lg p-3"
 											>
@@ -296,6 +297,7 @@ export function PerformanceProfilerDashboard(): React.ReactElement {
 									<div className="flex flex-col gap-3">
 										{result.report.suggestions.map((s, i) => (
 											<div
+												// biome-ignore lint/suspicious/noArrayIndexKey: list is static and never reordered
 												key={i}
 												className="bg-[var(--bg-secondary)] rounded-lg p-3"
 											>

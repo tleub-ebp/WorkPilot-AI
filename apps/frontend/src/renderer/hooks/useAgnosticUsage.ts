@@ -329,7 +329,7 @@ export function useAgnosticUsage(
 	const handleTestProvider = useCallback(
 		async (
 			providerName: string,
-		): Promise<{ success: boolean; message: string; details?: any }> => {
+		): Promise<{ success: boolean; message: string; details?: unknown }> => {
 			try {
 				setError(null);
 				return await credentialService.testProvider(providerName);

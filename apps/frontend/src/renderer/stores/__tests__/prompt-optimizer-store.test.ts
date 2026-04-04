@@ -403,7 +403,7 @@ describe("Prompt Optimizer Store", () => {
 			mockOnPromptOptimizerStatus.mockReturnValue(vi.fn());
 			mockOnPromptOptimizerError.mockReturnValue(vi.fn());
 			mockOnPromptOptimizerComplete.mockImplementation(
-				(cb: (result: any) => void) => {
+				(cb: (result: unknown) => void) => {
 					cb(mockResult);
 					return vi.fn();
 				},

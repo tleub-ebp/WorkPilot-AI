@@ -3,9 +3,9 @@
  * Helper functions for profile operations
  */
 
-import { existsSync, mkdirSync, readdirSync, readFileSync } from "fs";
-import { homedir } from "os";
-import { join } from "path";
+import { existsSync, mkdirSync, readdirSync, readFileSync } from "node:fs";
+import { homedir } from "node:os";
+import { join } from "node:path";
 import type { ClaudeProfile } from "../../shared/types";
 import { getCredentialsFromKeychain } from "./credential-utils";
 
@@ -28,8 +28,8 @@ export function generateProfileId(
 ): string {
 	const baseId = name
 		.toLowerCase()
-		.replace(/[^a-z0-9]+/g, "-")
-		.replace(/^-|-$/g, "");
+		.replaceAll(/[^a-z0-9]+/g, "-")
+		.replaceAll(/^-|-$/g, "");
 	let id = baseId;
 	let counter = 1;
 
@@ -52,7 +52,7 @@ export async function createProfileDirectory(
 	mkdirSync(CLAUDE_PROFILES_DIR, { recursive: true });
 
 	// Create directory for this profile
-	const sanitizedName = profileName.toLowerCase().replace(/[^a-z0-9]+/g, "-");
+	const sanitizedName = profileName.toLowerCase().replaceAll(/[^a-z0-9]+/g, "-");
 	const profileDir = join(CLAUDE_PROFILES_DIR, sanitizedName);
 
 	// mkdirSync with recursive:true is idempotent and won't throw if directory exists

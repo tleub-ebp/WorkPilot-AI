@@ -32,7 +32,7 @@ const OAUTH_TOKEN_PATTERN = /(sk-ant-oat01-[A-Za-z0-9_-]+)/;
  */
 // eslint-disable-next-line no-control-regex -- Intentionally matches ANSI escape sequences to exclude them from URLs
 const OAUTH_URL_PATTERN =
-	/https:\/\/claude\.ai\/oauth\/authorize\?[^\s\x1b\]]+/;
+	/https:\/\/claude\.ai\/oauth\/authorize\?[^\s\u001b\]]+/;
 
 /**
  * Patterns to detect email in Claude output

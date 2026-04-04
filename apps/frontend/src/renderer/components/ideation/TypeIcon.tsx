@@ -10,7 +10,7 @@ import {
 import type { IdeationType } from "../../../shared/types";
 
 interface TypeIconProps {
-	type: IdeationType;
+	readonly type: IdeationType;
 }
 
 export function TypeIcon({ type }: TypeIconProps) {

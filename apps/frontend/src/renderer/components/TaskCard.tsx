@@ -22,6 +22,7 @@ import {
 	type Zap,
 } from "lucide-react";
 import { memo, useEffect, useMemo, useRef, useState } from "react";
+import type { TFunction } from "i18next";
 import { useTranslation } from "react-i18next";
 import { useFormatRelativeTime } from "@/hooks/useFormatRelativeTime";
 import {
@@ -597,7 +598,7 @@ const getStatusBadgeVariant = (
 
 const getReviewReasonLabel = (
 	reason?: ReviewReason,
-	t?: any,
+	t?: TFunction,
 ): { label: string; variant: "success" | "destructive" | "warning" } | null => {
 	if (!reason || !t) return null;
 	switch (reason) {
@@ -729,6 +730,7 @@ function taskCardPropsAreEqual(
 		}
 
 		if (changes.length > 0) {
+			/* intentionally empty */
 		}
 	}
 

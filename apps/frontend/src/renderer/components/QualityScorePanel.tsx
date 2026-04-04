@@ -62,8 +62,8 @@ const CATEGORY_ICONS: Record<string, string> = {
 
 export function QualityScorePanel({
 	score,
-	isLoading,
-	onRefresh,
+	isLoading: _isLoading,
+	onRefresh: _onRefresh,
 }: QualityScorePanelProps) {
 	const { t } = useTranslation("qualityScore");
 	const [isExpanded, setIsExpanded] = useState(true);
@@ -232,7 +232,7 @@ export function QualityScorePanel({
 																		<div className="flex items-start gap-2">
 																			<SeverityIcon
 																				className={cn(
-																					"h-4 w-4 mt-0.5 flex-shrink-0",
+																					"h-4 w-4 mt-0.5 shrink-0",
 																					severityColor,
 																				)}
 																			/>

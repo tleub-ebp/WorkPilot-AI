@@ -1589,7 +1589,7 @@ export async function openTerminalWithCommand(command: string): Promise<void> {
 
 				break;
 
-			} catch {}
+			} catch { /* intentionally empty */ }
 		}
 
 		if (!opened) {

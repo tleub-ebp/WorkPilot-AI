@@ -237,7 +237,7 @@ export function GitHubSetupModal({
 			// Get branches from GitHub API
 			const result = await globalThis.electronAPI.getGitHubBranches(
 				repo,
-				githubToken!,
+				githubToken ?? "",
 			);
 			if (result.success && result.data) {
 				setBranches(result.data);
@@ -421,547 +421,573 @@ export function GitHubSetupModal({
 		return authSteps.includes(currentStep) ? 0 : 1;
 	};
 
+	// Step content components
+	const GitHubAuthStep = () => (
+		<>
+			<DialogHeader>
+				<DialogTitle className="flex items-center gap-2">
+					<Globe className="h-5 w-5" />
+					{t("githubSetup.connectTitle")}
+				</DialogTitle>
+				<DialogDescription>
+					{t("githubSetup.connectDescription")}
+				</DialogDescription>
+			</DialogHeader>
+
+			<div className="py-4">
+				<GitHubOAuthFlow
+					onSuccess={handleGitHubAuthSuccess}
+					onCancel={onSkip}
+				/>
+			</div>
+		</>
+	);
+
+	const ClaudeAuthStep = () => (
+		<>
+			<DialogHeader>
+				<DialogTitle className="flex items-center gap-2">
+					<Key className="h-5 w-5" />
+					{t("githubSetup.claudeTitle")}
+				</DialogTitle>
+				<DialogDescription>
+					{t("githubSetup.claudeDescription")}
+				</DialogDescription>
+			</DialogHeader>
+
+			<div className="py-4">
+				<ClaudeOAuthFlow
+					onSuccess={handleClaudeAuthSuccess}
+					onCancel={onSkip}
+				/>
+			</div>
+		</>
+	);
+
+	const RepoConfirmStep = () => (
+		<>
+			<DialogHeader>
+				<DialogTitle className="flex items-center gap-2">
+					<Globe className="h-5 w-5" />
+					Confirm Repository
+				</DialogTitle>
+				<DialogDescription>
+					We detected a GitHub repository for this project. Please confirm
+					or change it.
+				</DialogDescription>
+			</DialogHeader>
+
+			<div className="py-4 space-y-4">
+				<div className="rounded-lg border bg-muted/50 p-4">
+					<div className="flex items-center gap-3">
+						<CheckCircle2 className="h-6 w-6 text-green-500" />
+						<div>
+							<p className="font-medium">Repository Detected</p>
+							<p className="text-sm text-muted-foreground font-mono">
+								{detectedRepo}
+							</p>
+						</div>
+					</div>
+				</div>
+
+				<p className="text-sm text-muted-foreground">
+					{t("githubSetup.repoDescription")}
+				</p>
+
+				{error && (
+					<div className="rounded-lg bg-destructive/10 border border-destructive/30 p-3 text-sm text-destructive">
+						{error}
+					</div>
+				)}
+			</div>
+
+			<DialogFooter>
+				<Button variant="outline" onClick={handleChangeRepo}>
+					Use Different Repository
+				</Button>
+				<Button onClick={handleConfirmRepo}>
+					<CheckCircle2 className="mr-2 h-4 w-4" />
+					Confirm & Continue
+				</Button>
+			</DialogFooter>
+		</>
+	);
+
+	const RepoStep = () => (
+		<>
+			<DialogHeader>
+				<DialogTitle className="flex items-center gap-2">
+					<Globe className="h-5 w-5" />
+					Connect to GitHub
+				</DialogTitle>
+				<DialogDescription>
+					Your project needs a GitHub repository. Create a new one or link
+					to an existing repository.
+				</DialogDescription>
+			</DialogHeader>
+
+			<div className="py-4 space-y-4">
+				{/* Action selection */}
+				{!repoAction && (
+					<div className="grid grid-cols-2 gap-3">
+						<button
+							type="button"
+							onClick={() => setRepoAction("create")}
+							className="flex flex-col items-center gap-2 p-4 rounded-lg border-2 border-dashed hover:border-primary hover:bg-primary/5 transition-colors"
+							aria-label={t("githubSetup.createRepoAriaLabel")}
+						>
+							<Plus className="h-8 w-8 text-muted-foreground" />
+							<span className="text-sm font-medium">Create New Repo</span>
+							<span className="text-xs text-muted-foreground text-center">
+								Create a new repository on GitHub
+							</span>
+						</button>
+						<button
+							type="button"
+							onClick={() => setRepoAction("link")}
+							className="flex flex-col items-center gap-2 p-4 rounded-lg border-2 border-dashed hover:border-primary hover:bg-primary/5 transition-colors"
+							aria-label={t("githubSetup.linkRepoAriaLabel")}
+						>
+							<Link className="h-8 w-8 text-muted-foreground" />
+							<span className="text-sm font-medium">Link Existing</span>
+							<span className="text-xs text-muted-foreground text-center">
+								Connect to an existing repository
+							</span>
+						</button>
+					</div>
+				)}
+
+				{/* Create new repo form */}
+				{repoAction === "create" && <CreateRepoForm />}
+
+				{/* Link existing repo form */}
+				{repoAction === "link" && <LinkRepoForm />}
+
+				{error && (
+					<div className="rounded-lg bg-destructive/10 border border-destructive/30 p-3 text-sm text-destructive">
+						{error}
+					</div>
+				)}
+			</div>
+
+			<DialogFooter>
+				{onSkip && (
+					<Button
+						variant="outline"
+						onClick={onSkip}
+						disabled={isCreatingRepo}
+					>
+						Skip for now
+					</Button>
+				)}
+				{repoAction === "create" && (
+					<Button
+						onClick={handleCreateRepo}
+						disabled={isCreatingRepo || !newRepoName.trim()}
+					>
+						{isCreatingRepo ? (
+							<>
+								<Loader2 className="mr-2 h-4 w-4 animate-spin" />
+								Creating...
+							</>
+						) : (
+							<>
+								<Plus className="mr-2 h-4 w-4" />
+								Create Repository
+							</>
+						)}
+					</Button>
+				)}
+				{repoAction === "link" && (
+					<Button
+						onClick={handleLinkRepo}
+						disabled={isCreatingRepo || !existingRepoName.trim()}
+					>
+						{isCreatingRepo ? (
+							<>
+								<Loader2 className="mr-2 h-4 w-4 animate-spin" />
+								Linking...
+							</>
+						) : (
+							<>
+								<Link className="mr-2 h-4 w-4" />
+								Link Repository
+							</>
+						)}
+					</Button>
+				)}
+				{!repoAction && (
+					<Button
+						variant="outline"
+						onClick={detectRepository}
+						disabled={isLoadingRepo}
+					>
+						{isLoadingRepo ? (
+							<>
+								<Loader2 className="mr-2 h-4 w-4 animate-spin" />
+								Checking...
+							</>
+						) : (
+							"Retry Detection"
+						)}
+					</Button>
+				)}
+			</DialogFooter>
+		</>
+	);
+
+	const CreateRepoForm = () => (
+		<div className="space-y-4">
+			<div className="flex items-center gap-2 text-sm text-muted-foreground">
+				<button
+					type="button"
+					onClick={() => setRepoAction(null)}
+					className="text-primary hover:underline"
+					aria-label={t("githubSetup.goBackAriaLabel")}
+				>
+					← Back
+				</button>
+				<span>Create a new repository</span>
+			</div>
+
+			{/* Owner selection */}
+			<OwnerSelection />
+
+			<div className="space-y-2">
+				<Label htmlFor="repo-name">Repository Name</Label>
+				<div className="flex items-center gap-2">
+					<span className="text-sm text-muted-foreground">
+						{selectedOwner || "..."} /
+					</span>
+					<Input
+						id="repo-name"
+						value={newRepoName}
+						onChange={(e) => setNewRepoName(e.target.value)}
+						placeholder="my-project"
+						disabled={isCreatingRepo}
+						className="flex-1"
+					/>
+				</div>
+			</div>
+
+			<VisibilitySelection />
+		</div>
+	);
+
+	const OwnerSelection = () => (
+		<div className="space-y-2">
+			<Label>Owner</Label>
+			{isLoadingOrgs ? (
+				<div className="flex items-center gap-2 text-sm text-muted-foreground">
+					<Loader2 className="h-4 w-4 animate-spin" />
+					Loading accounts...
+				</div>
+			) : (
+				<div
+					className="flex flex-wrap gap-2"
+					role="radiogroup"
+					aria-label={t(
+						"common:accessibility.repositoryOwnerAriaLabel",
+					)}
+				>
+					{/* Personal account */}
+					{githubUsername && (
+						// biome-ignore lint/a11y/useSemanticElements: custom styled radio button within radiogroup
+						<button
+							type="button"
+							onClick={() => setSelectedOwner(githubUsername)}
+							className={`flex items-center gap-2 px-3 py-2 rounded-md border ${
+								selectedOwner === githubUsername
+									? "border-primary bg-primary/10 text-primary"
+									: "border-muted hover:border-primary/50"
+							}`}
+							disabled={isCreatingRepo}
+							role="radio"
+							aria-checked={selectedOwner === githubUsername}
+							aria-label={t("githubSetup.selectOwnerAriaLabel", {
+								owner: githubUsername,
+							})}
+						>
+							<User className="h-4 w-4" />
+							<span className="text-sm">{githubUsername}</span>
+						</button>
+					)}
+					{/* Organizations */}
+					{organizations.map((org) => (
+						// biome-ignore lint/a11y/useSemanticElements: custom styled radio button within radiogroup
+						<button
+							type="button"
+							key={org.login}
+							onClick={() => setSelectedOwner(org.login)}
+							className={`flex items-center gap-2 px-3 py-2 rounded-md border ${
+								selectedOwner === org.login
+									? "border-primary bg-primary/10 text-primary"
+									: "border-muted hover:border-primary/50"
+							}`}
+							disabled={isCreatingRepo}
+							role="radio"
+							aria-checked={selectedOwner === org.login}
+							aria-label={t("githubSetup.selectOrgAriaLabel", {
+								org: org.login,
+							})}
+						>
+							<Building className="h-4 w-4" />
+							<span className="text-sm">{org.login}</span>
+						</button>
+					))}
+				</div>
+			)}
+			{organizations.length > 0 && (
+				<p className="text-xs text-muted-foreground">
+					Select your personal account or an organization
+				</p>
+			)}
+		</div>
+	);
+
+	const VisibilitySelection = () => (
+		<div className="space-y-2">
+			<Label>Visibility</Label>
+			<div
+				className="flex gap-2"
+				role="radiogroup"
+				aria-label={t(
+					"common:accessibility.repositoryVisibilityAriaLabel",
+				)}
+			>
+				{/* biome-ignore lint/a11y/useSemanticElements: custom styled radio button within radiogroup */}
+				<button
+					type="button"
+					onClick={() => setIsPrivateRepo(true)}
+					className={`flex items-center gap-2 px-3 py-2 rounded-md border ${
+						isPrivateRepo
+							? "border-primary bg-primary/10 text-primary"
+							: "border-muted hover:border-primary/50"
+					}`}
+					disabled={isCreatingRepo}
+					role="radio"
+					aria-checked={isPrivateRepo}
+					aria-label={t("githubSetup.selectVisibilityAriaLabel", {
+						visibility: "private",
+					})}
+				>
+					<Lock className="h-4 w-4" />
+					<span className="text-sm">Private</span>
+				</button>
+				{/* biome-ignore lint/a11y/useSemanticElements: custom styled radio button within radiogroup */}
+				<button
+					type="button"
+					onClick={() => setIsPrivateRepo(false)}
+					className={`flex items-center gap-2 px-3 py-2 rounded-md border ${
+						isPrivateRepo
+							? "border-muted hover:border-primary/50"
+							: "border-primary bg-primary/10 text-primary"
+					}`}
+					disabled={isCreatingRepo}
+					role="radio"
+					aria-checked={!isPrivateRepo}
+					aria-label={t("githubSetup.selectVisibilityAriaLabel", {
+						visibility: "public",
+					})}
+				>
+					<Globe className="h-4 w-4" />
+					<span className="text-sm">Public</span>
+				</button>
+			</div>
+		</div>
+	);
+
+	const LinkRepoForm = () => (
+		<div className="space-y-4">
+			<div className="flex items-center gap-2 text-sm text-muted-foreground">
+				<button
+					type="button"
+					onClick={() => setRepoAction(null)}
+					className="text-primary hover:underline"
+					aria-label={t("githubSetup.goBackAriaLabel")}
+				>
+					← Back
+				</button>
+				<span>Link to existing repository</span>
+			</div>
+
+			<div className="space-y-2">
+				<Label htmlFor="existing-repo">Repository</Label>
+				<Input
+					id="existing-repo"
+					value={existingRepoName}
+					onChange={(e) => setExistingRepoName(e.target.value)}
+					placeholder="username/repository"
+					disabled={isCreatingRepo}
+				/>
+				<p className="text-xs text-muted-foreground">
+					Enter the full repository path (e.g., octocat/hello-world)
+				</p>
+			</div>
+		</div>
+	);
+
+	const BranchStep = () => (
+		<>
+			<DialogHeader>
+				<DialogTitle className="flex items-center gap-2">
+					<GitBranch className="h-5 w-5" />
+					Select Base Branch
+				</DialogTitle>
+				<DialogDescription>
+					Choose which branch WorkPilot AI should use as the base for
+					creating task branches.
+				</DialogDescription>
+			</DialogHeader>
+
+			<div className="py-4 space-y-4">
+				{/* Show detected repo */}
+				{detectedRepo && (
+					<div className="flex items-center gap-2 text-sm">
+						<Globe className="h-4 w-4 text-muted-foreground" />
+						<span className="text-muted-foreground">Repository:</span>
+						<code className="px-2 py-0.5 bg-muted rounded font-mono text-xs">
+							{detectedRepo}
+						</code>
+						<CheckCircle2 className="h-4 w-4 text-success" />
+					</div>
+				)}
+
+				{/* Branch selector */}
+				<BranchSelector />
+
+				{/* Info about branch selection */}
+				<div className="rounded-lg border border-info/30 bg-info/5 p-3">
+					<div className="flex items-start gap-2">
+						<Sparkles className="h-4 w-4 text-info mt-0.5" />
+						<div className="text-xs text-muted-foreground">
+							<p className="font-medium text-foreground">
+								Why select a branch?
+							</p>
+							<p className="mt-1">
+								WorkPilot AI creates isolated workspaces for each task.
+								Selecting the right base branch ensures your tasks start
+								with the latest code from your main development line.
+							</p>
+						</div>
+					</div>
+				</div>
+
+				{error && (
+					<div className="rounded-lg bg-destructive/10 border border-destructive/30 p-3 text-sm text-destructive">
+						{error}
+					</div>
+				)}
+			</div>
+
+			<DialogFooter>
+				{onSkip && (
+					<Button variant="outline" onClick={onSkip}>
+						Skip for now
+					</Button>
+				)}
+				<Button
+					onClick={handleComplete}
+					disabled={!selectedBranch || isLoadingBranches}
+				>
+					<CheckCircle2 className="mr-2 h-4 w-4" />
+					Complete Setup
+				</Button>
+			</DialogFooter>
+		</>
+	);
+
+	const BranchSelector = () => (
+		<div className="space-y-2">
+			<Label>Base Branch</Label>
+			<Select
+				value={selectedBranch || ""}
+				onValueChange={setSelectedBranch}
+				disabled={isLoadingBranches || branches.length === 0}
+			>
+				<SelectTrigger>
+					{isLoadingBranches ? (
+						<div className="flex items-center gap-2">
+							<Loader2 className="h-3 w-3 animate-spin" />
+							<span>Loading branches...</span>
+						</div>
+					) : (
+						<SelectValue placeholder="Select a branch" />
+					)}
+				</SelectTrigger>
+				<SelectContent>
+					{branches.map((branch) => (
+						<SelectItem key={branch} value={branch}>
+							<div className="flex items-center gap-2">
+								<span>{branch}</span>
+								{branch === recommendedBranch && (
+									<span className="flex items-center gap-1 text-xs text-success">
+										<Sparkles className="h-3 w-3" />
+										Recommended
+									</span>
+								)}
+							</div>
+						</SelectItem>
+					))}
+				</SelectContent>
+			</Select>
+			<p className="text-xs text-muted-foreground">
+				All tasks will be created from branches like{" "}
+				<code className="px-1 bg-muted rounded">
+					auto-claude/task-name
+				</code>
+				{selectedBranch && (
+					<>
+						{" "}
+						based on{" "}
+						<code className="px-1 bg-muted rounded">
+							{selectedBranch}
+						</code>
+					</>
+				)}
+			</p>
+		</div>
+	);
+
+	const CompleteStep = () => (
+		<>
+			<DialogHeader>
+				<DialogTitle className="flex items-center gap-2">
+					<CheckCircle2 className="h-5 w-5 text-success" />
+					Setup Complete
+				</DialogTitle>
+			</DialogHeader>
+
+			<div className="py-8 flex flex-col items-center justify-center">
+				<div className="h-16 w-16 rounded-full bg-success/10 flex items-center justify-center mb-4">
+					<CheckCircle2 className="h-8 w-8 text-success" />
+				</div>
+				<p className="text-sm text-muted-foreground text-center">
+					WorkPilot AI is ready to use! You can now create tasks that will
+					be automatically based on{" "}
+					<code className="px-1 bg-muted rounded">{selectedBranch}</code>.
+				</p>
+			</div>
+		</>
+	);
+
 	// Render step content
 	const renderStepContent = () => {
 		switch (step) {
 			case "github-auth":
-				return (
-					<>
-						<DialogHeader>
-							<DialogTitle className="flex items-center gap-2">
-								<Globe className="h-5 w-5" />
-								{t("githubSetup.connectTitle")}
-							</DialogTitle>
-							<DialogDescription>
-								{t("githubSetup.connectDescription")}
-							</DialogDescription>
-						</DialogHeader>
-
-						<div className="py-4">
-							<GitHubOAuthFlow
-								onSuccess={handleGitHubAuthSuccess}
-								onCancel={onSkip}
-							/>
-						</div>
-					</>
-				);
-
+				return <GitHubAuthStep />;
 			case "claude-auth":
-				return (
-					<>
-						<DialogHeader>
-							<DialogTitle className="flex items-center gap-2">
-								<Key className="h-5 w-5" />
-								{t("githubSetup.claudeTitle")}
-							</DialogTitle>
-							<DialogDescription>
-								{t("githubSetup.claudeDescription")}
-							</DialogDescription>
-						</DialogHeader>
-
-						<div className="py-4">
-							<ClaudeOAuthFlow
-								onSuccess={handleClaudeAuthSuccess}
-								onCancel={onSkip}
-							/>
-						</div>
-					</>
-				);
-
+				return <ClaudeAuthStep />;
 			case "repo-confirm":
-				return (
-					<>
-						<DialogHeader>
-							<DialogTitle className="flex items-center gap-2">
-								<Globe className="h-5 w-5" />
-								Confirm Repository
-							</DialogTitle>
-							<DialogDescription>
-								We detected a GitHub repository for this project. Please confirm
-								or change it.
-							</DialogDescription>
-						</DialogHeader>
-
-						<div className="py-4 space-y-4">
-							<div className="rounded-lg border bg-muted/50 p-4">
-								<div className="flex items-center gap-3">
-									<CheckCircle2 className="h-6 w-6 text-green-500" />
-									<div>
-										<p className="font-medium">Repository Detected</p>
-										<p className="text-sm text-muted-foreground font-mono">
-											{detectedRepo}
-										</p>
-									</div>
-								</div>
-							</div>
-
-							<p className="text-sm text-muted-foreground">
-								{t("githubSetup.repoDescription")}
-							</p>
-
-							{error && (
-								<div className="rounded-lg bg-destructive/10 border border-destructive/30 p-3 text-sm text-destructive">
-									{error}
-								</div>
-							)}
-						</div>
-
-						<DialogFooter>
-							<Button variant="outline" onClick={handleChangeRepo}>
-								Use Different Repository
-							</Button>
-							<Button onClick={handleConfirmRepo}>
-								<CheckCircle2 className="mr-2 h-4 w-4" />
-								Confirm & Continue
-							</Button>
-						</DialogFooter>
-					</>
-				);
-
+				return <RepoConfirmStep />;
 			case "repo":
-				return (
-					<>
-						<DialogHeader>
-							<DialogTitle className="flex items-center gap-2">
-								<Globe className="h-5 w-5" />
-								Connect to GitHub
-							</DialogTitle>
-							<DialogDescription>
-								Your project needs a GitHub repository. Create a new one or link
-								to an existing repository.
-							</DialogDescription>
-						</DialogHeader>
-
-						<div className="py-4 space-y-4">
-							{/* Action selection */}
-							{!repoAction && (
-								<div className="grid grid-cols-2 gap-3">
-									<button
-										type="button"
-										onClick={() => setRepoAction("create")}
-										className="flex flex-col items-center gap-2 p-4 rounded-lg border-2 border-dashed hover:border-primary hover:bg-primary/5 transition-colors"
-										aria-label={t("githubSetup.createRepoAriaLabel")}
-									>
-										<Plus className="h-8 w-8 text-muted-foreground" />
-										<span className="text-sm font-medium">Create New Repo</span>
-										<span className="text-xs text-muted-foreground text-center">
-											Create a new repository on GitHub
-										</span>
-									</button>
-									<button
-										type="button"
-										onClick={() => setRepoAction("link")}
-										className="flex flex-col items-center gap-2 p-4 rounded-lg border-2 border-dashed hover:border-primary hover:bg-primary/5 transition-colors"
-										aria-label={t("githubSetup.linkRepoAriaLabel")}
-									>
-										<Link className="h-8 w-8 text-muted-foreground" />
-										<span className="text-sm font-medium">Link Existing</span>
-										<span className="text-xs text-muted-foreground text-center">
-											Connect to an existing repository
-										</span>
-									</button>
-								</div>
-							)}
-
-							{/* Create new repo form */}
-							{repoAction === "create" && (
-								<div className="space-y-4">
-									<div className="flex items-center gap-2 text-sm text-muted-foreground">
-										<button
-											type="button"
-											onClick={() => setRepoAction(null)}
-											className="text-primary hover:underline"
-											aria-label={t("githubSetup.goBackAriaLabel")}
-										>
-											← Back
-										</button>
-										<span>Create a new repository</span>
-									</div>
-
-									{/* Owner selection */}
-									<div className="space-y-2">
-										<Label>Owner</Label>
-										{isLoadingOrgs ? (
-											<div className="flex items-center gap-2 text-sm text-muted-foreground">
-												<Loader2 className="h-4 w-4 animate-spin" />
-												Loading accounts...
-											</div>
-										) : (
-											<div
-												className="flex flex-wrap gap-2"
-												role="radiogroup"
-												aria-label={t(
-													"common:accessibility.repositoryOwnerAriaLabel",
-												)}
-											>
-												{/* Personal account */}
-												{githubUsername && (
-													// biome-ignore lint/a11y/useSemanticElements: custom styled radio button within radiogroup
-													<button
-														type="button"
-														onClick={() => setSelectedOwner(githubUsername)}
-														className={`flex items-center gap-2 px-3 py-2 rounded-md border ${
-															selectedOwner === githubUsername
-																? "border-primary bg-primary/10 text-primary"
-																: "border-muted hover:border-primary/50"
-														}`}
-														disabled={isCreatingRepo}
-														role="radio"
-														aria-checked={selectedOwner === githubUsername}
-														aria-label={t("githubSetup.selectOwnerAriaLabel", {
-															owner: githubUsername,
-														})}
-													>
-														<User className="h-4 w-4" />
-														<span className="text-sm">{githubUsername}</span>
-													</button>
-												)}
-												{/* Organizations */}
-												{organizations.map((org) => (
-													// biome-ignore lint/a11y/useSemanticElements: custom styled radio button within radiogroup
-													<button
-														type="button"
-														key={org.login}
-														onClick={() => setSelectedOwner(org.login)}
-														className={`flex items-center gap-2 px-3 py-2 rounded-md border ${
-															selectedOwner === org.login
-																? "border-primary bg-primary/10 text-primary"
-																: "border-muted hover:border-primary/50"
-														}`}
-														disabled={isCreatingRepo}
-														role="radio"
-														aria-checked={selectedOwner === org.login}
-														aria-label={t("githubSetup.selectOrgAriaLabel", {
-															org: org.login,
-														})}
-													>
-														<Building className="h-4 w-4" />
-														<span className="text-sm">{org.login}</span>
-													</button>
-												))}
-											</div>
-										)}
-										{organizations.length > 0 && (
-											<p className="text-xs text-muted-foreground">
-												Select your personal account or an organization
-											</p>
-										)}
-									</div>
-
-									<div className="space-y-2">
-										<Label htmlFor="repo-name">Repository Name</Label>
-										<div className="flex items-center gap-2">
-											<span className="text-sm text-muted-foreground">
-												{selectedOwner || "..."} /
-											</span>
-											<Input
-												id="repo-name"
-												value={newRepoName}
-												onChange={(e) => setNewRepoName(e.target.value)}
-												placeholder="my-project"
-												disabled={isCreatingRepo}
-												className="flex-1"
-											/>
-										</div>
-									</div>
-
-									<div className="space-y-2">
-										<Label>Visibility</Label>
-										<div
-											className="flex gap-2"
-											role="radiogroup"
-											aria-label={t(
-												"common:accessibility.repositoryVisibilityAriaLabel",
-											)}
-										>
-											{/* biome-ignore lint/a11y/useSemanticElements: custom styled radio button within radiogroup */}
-											<button
-												type="button"
-												onClick={() => setIsPrivateRepo(true)}
-												className={`flex items-center gap-2 px-3 py-2 rounded-md border ${
-													isPrivateRepo
-														? "border-primary bg-primary/10 text-primary"
-														: "border-muted hover:border-primary/50"
-												}`}
-												disabled={isCreatingRepo}
-												role="radio"
-												aria-checked={isPrivateRepo}
-												aria-label={t("githubSetup.selectVisibilityAriaLabel", {
-													visibility: "private",
-												})}
-											>
-												<Lock className="h-4 w-4" />
-												<span className="text-sm">Private</span>
-											</button>
-											{/* biome-ignore lint/a11y/useSemanticElements: custom styled radio button within radiogroup */}
-											<button
-												type="button"
-												onClick={() => setIsPrivateRepo(false)}
-												className={`flex items-center gap-2 px-3 py-2 rounded-md border ${
-													isPrivateRepo
-														? "border-muted hover:border-primary/50"
-														: "border-primary bg-primary/10 text-primary"
-												}`}
-												disabled={isCreatingRepo}
-												role="radio"
-												aria-checked={!isPrivateRepo}
-												aria-label={t("githubSetup.selectVisibilityAriaLabel", {
-													visibility: "public",
-												})}
-											>
-												<Globe className="h-4 w-4" />
-												<span className="text-sm">Public</span>
-											</button>
-										</div>
-									</div>
-								</div>
-							)}
-
-							{/* Link existing repo form */}
-							{repoAction === "link" && (
-								<div className="space-y-4">
-									<div className="flex items-center gap-2 text-sm text-muted-foreground">
-										<button
-											type="button"
-											onClick={() => setRepoAction(null)}
-											className="text-primary hover:underline"
-											aria-label={t("githubSetup.goBackAriaLabel")}
-										>
-											← Back
-										</button>
-										<span>Link to existing repository</span>
-									</div>
-
-									<div className="space-y-2">
-										<Label htmlFor="existing-repo">Repository</Label>
-										<Input
-											id="existing-repo"
-											value={existingRepoName}
-											onChange={(e) => setExistingRepoName(e.target.value)}
-											placeholder="username/repository"
-											disabled={isCreatingRepo}
-										/>
-										<p className="text-xs text-muted-foreground">
-											Enter the full repository path (e.g., octocat/hello-world)
-										</p>
-									</div>
-								</div>
-							)}
-
-							{error && (
-								<div className="rounded-lg bg-destructive/10 border border-destructive/30 p-3 text-sm text-destructive">
-									{error}
-								</div>
-							)}
-						</div>
-
-						<DialogFooter>
-							{onSkip && (
-								<Button
-									variant="outline"
-									onClick={onSkip}
-									disabled={isCreatingRepo}
-								>
-									Skip for now
-								</Button>
-							)}
-							{repoAction === "create" && (
-								<Button
-									onClick={handleCreateRepo}
-									disabled={isCreatingRepo || !newRepoName.trim()}
-								>
-									{isCreatingRepo ? (
-										<>
-											<Loader2 className="mr-2 h-4 w-4 animate-spin" />
-											Creating...
-										</>
-									) : (
-										<>
-											<Plus className="mr-2 h-4 w-4" />
-											Create Repository
-										</>
-									)}
-								</Button>
-							)}
-							{repoAction === "link" && (
-								<Button
-									onClick={handleLinkRepo}
-									disabled={isCreatingRepo || !existingRepoName.trim()}
-								>
-									{isCreatingRepo ? (
-										<>
-											<Loader2 className="mr-2 h-4 w-4 animate-spin" />
-											Linking...
-										</>
-									) : (
-										<>
-											<Link className="mr-2 h-4 w-4" />
-											Link Repository
-										</>
-									)}
-								</Button>
-							)}
-							{!repoAction && (
-								<Button
-									variant="outline"
-									onClick={detectRepository}
-									disabled={isLoadingRepo}
-								>
-									{isLoadingRepo ? (
-										<>
-											<Loader2 className="mr-2 h-4 w-4 animate-spin" />
-											Checking...
-										</>
-									) : (
-										"Retry Detection"
-									)}
-								</Button>
-							)}
-						</DialogFooter>
-					</>
-				);
-
+				return <RepoStep />;
 			case "branch":
-				return (
-					<>
-						<DialogHeader>
-							<DialogTitle className="flex items-center gap-2">
-								<GitBranch className="h-5 w-5" />
-								Select Base Branch
-							</DialogTitle>
-							<DialogDescription>
-								Choose which branch WorkPilot AI should use as the base for
-								creating task branches.
-							</DialogDescription>
-						</DialogHeader>
-
-						<div className="py-4 space-y-4">
-							{/* Show detected repo */}
-							{detectedRepo && (
-								<div className="flex items-center gap-2 text-sm">
-									<Globe className="h-4 w-4 text-muted-foreground" />
-									<span className="text-muted-foreground">Repository:</span>
-									<code className="px-2 py-0.5 bg-muted rounded font-mono text-xs">
-										{detectedRepo}
-									</code>
-									<CheckCircle2 className="h-4 w-4 text-success" />
-								</div>
-							)}
-
-							{/* Branch selector */}
-							<div className="space-y-2">
-								<Label>Base Branch</Label>
-								<Select
-									value={selectedBranch || ""}
-									onValueChange={setSelectedBranch}
-									disabled={isLoadingBranches || branches.length === 0}
-								>
-									<SelectTrigger>
-										{isLoadingBranches ? (
-											<div className="flex items-center gap-2">
-												<Loader2 className="h-3 w-3 animate-spin" />
-												<span>Loading branches...</span>
-											</div>
-										) : (
-											<SelectValue placeholder="Select a branch" />
-										)}
-									</SelectTrigger>
-									<SelectContent>
-										{branches.map((branch) => (
-											<SelectItem key={branch} value={branch}>
-												<div className="flex items-center gap-2">
-													<span>{branch}</span>
-													{branch === recommendedBranch && (
-														<span className="flex items-center gap-1 text-xs text-success">
-															<Sparkles className="h-3 w-3" />
-															Recommended
-														</span>
-													)}
-												</div>
-											</SelectItem>
-										))}
-									</SelectContent>
-								</Select>
-								<p className="text-xs text-muted-foreground">
-									All tasks will be created from branches like{" "}
-									<code className="px-1 bg-muted rounded">
-										auto-claude/task-name
-									</code>
-									{selectedBranch && (
-										<>
-											{" "}
-											based on{" "}
-											<code className="px-1 bg-muted rounded">
-												{selectedBranch}
-											</code>
-										</>
-									)}
-								</p>
-							</div>
-
-							{/* Info about branch selection */}
-							<div className="rounded-lg border border-info/30 bg-info/5 p-3">
-								<div className="flex items-start gap-2">
-									<Sparkles className="h-4 w-4 text-info mt-0.5" />
-									<div className="text-xs text-muted-foreground">
-										<p className="font-medium text-foreground">
-											Why select a branch?
-										</p>
-										<p className="mt-1">
-											WorkPilot AI creates isolated workspaces for each task.
-											Selecting the right base branch ensures your tasks start
-											with the latest code from your main development line.
-										</p>
-									</div>
-								</div>
-							</div>
-
-							{error && (
-								<div className="rounded-lg bg-destructive/10 border border-destructive/30 p-3 text-sm text-destructive">
-									{error}
-								</div>
-							)}
-						</div>
-
-						<DialogFooter>
-							{onSkip && (
-								<Button variant="outline" onClick={onSkip}>
-									Skip for now
-								</Button>
-							)}
-							<Button
-								onClick={handleComplete}
-								disabled={!selectedBranch || isLoadingBranches}
-							>
-								<CheckCircle2 className="mr-2 h-4 w-4" />
-								Complete Setup
-							</Button>
-						</DialogFooter>
-					</>
-				);
-
+				return <BranchStep />;
 			case "complete":
-				return (
-					<>
-						<DialogHeader>
-							<DialogTitle className="flex items-center gap-2">
-								<CheckCircle2 className="h-5 w-5 text-success" />
-								Setup Complete
-							</DialogTitle>
-						</DialogHeader>
-
-						<div className="py-8 flex flex-col items-center justify-center">
-							<div className="h-16 w-16 rounded-full bg-success/10 flex items-center justify-center mb-4">
-								<CheckCircle2 className="h-8 w-8 text-success" />
-							</div>
-							<p className="text-sm text-muted-foreground text-center">
-								WorkPilot AI is ready to use! You can now create tasks that will
-								be automatically based on{" "}
-								<code className="px-1 bg-muted rounded">{selectedBranch}</code>.
-							</p>
-						</div>
-					</>
-				);
+				return <CompleteStep />;
+			default:
+				return null;
 		}
 	};
 

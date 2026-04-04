@@ -6,9 +6,9 @@
  * and can be copied between profiles to enable session continuity after profile switches.
  */
 
-import { copyFileSync, cpSync, existsSync, mkdirSync, unlinkSync } from "fs";
-import { homedir } from "os";
-import { dirname, join } from "path";
+import { copyFileSync, cpSync, existsSync, mkdirSync, unlinkSync } from "node:fs";
+import { homedir } from "node:os";
+import { dirname, join } from "node:path";
 import { isNodeError } from "../utils/type-guards";
 
 /**
@@ -28,10 +28,10 @@ import { isNodeError } from "../utils/type-guards";
  */
 export function cwdToProjectPath(cwd: string): string {
 	// Normalize to forward slashes first (cross-platform: Windows C:\foo\bar -> C:/foo/bar)
-	const normalized = cwd.replace(/\\/g, "/");
+	const normalized = cwd.replaceAll("\\", "/");
 	// Remove Windows drive letter (C:, D:, etc.) to avoid colons in directory names
 	// Then replace all path separators with dashes (keeping leading dash for Unix paths)
-	return normalized.replace(/^[a-zA-Z]:/, "").replace(/\//g, "-");
+	return normalized.replace(/^[a-zA-Z]:/, "").replaceAll("/", "-");
 }
 
 /**
@@ -89,6 +89,101 @@ export interface SessionMigrationResult {
 }
 
 /**
+ * Copy the session file with proper error handling.
+ */
+function copySessionFile(
+	sourceFile: string,
+	targetFile: string,
+): { success: boolean; error?: string; filesCopied: number } {
+	try {
+		copyFileSync(sourceFile, targetFile);
+		console.warn(
+			"[SessionUtils] Copied session file:",
+			sourceFile,
+			"->",
+			targetFile,
+		);
+		return { success: true, filesCopied: 1 };
+	} catch (copyError) {
+		if (isNodeError(copyError)) {
+			if (copyError.code === "ENOENT") {
+				return {
+					success: false,
+					error: `Source session file not found: ${sourceFile}`,
+					filesCopied: 0,
+				};
+			} else if (copyError.code === "EEXIST") {
+				console.warn(
+					"[SessionUtils] Session already exists in target profile, skipping copy",
+				);
+				return { success: true, filesCopied: 0 };
+			}
+		}
+		return {
+			success: false,
+			error: copyError instanceof Error
+				? `Failed to copy session file: ${copyError.message}`
+				: "Unknown error copying session file",
+			filesCopied: 0,
+		};
+	}
+}
+
+/**
+ * Copy the session directory (tool-results) if it exists.
+ */
+function copySessionDirectory(
+	sourceDir: string,
+	targetDir: string,
+): void {
+	try {
+		cpSync(sourceDir, targetDir, { recursive: true });
+		console.warn(
+			"[SessionUtils] Copied session directory:",
+			sourceDir,
+			"->",
+			targetDir,
+		);
+	} catch (dirCopyError) {
+		if (isNodeError(dirCopyError) && dirCopyError.code === "ENOENT") {
+			console.warn(
+				"[SessionUtils] No session directory to copy (this is normal):",
+				sourceDir,
+			);
+		} else {
+			console.warn(
+				"[SessionUtils] Warning: Failed to copy session directory:",
+				dirCopyError instanceof Error
+					? dirCopyError.message
+					: "Unknown error",
+			);
+		}
+	}
+}
+
+/**
+ * Clean up partial migration on failure.
+ */
+function cleanupPartialMigration(targetFile: string): void {
+	try {
+		unlinkSync(targetFile);
+		console.warn(
+			"[SessionUtils] Cleaned up partial migration file:",
+			targetFile,
+		);
+	} catch (cleanupError) {
+		if (!(isNodeError(cleanupError) && cleanupError.code === "ENOENT")) {
+			console.error(
+				"[SessionUtils] Failed to cleanup partial migration:",
+				cleanupError instanceof Error
+					? cleanupError.message
+					: "Unknown cleanup error",
+			);
+		}
+	}
+}
+
+/**
  * Migrate a Claude Code session from one profile to another.
  *
  * This copies the session .jsonl file and any associated tool-results directory
@@ -117,14 +212,12 @@ export function migrateSession(
 		filesCopied: 0,
 	};
 
-	// Get source and target paths (declared outside try block for error cleanup)
 	const sourceFile = getSessionFilePath(sourceConfigDir, cwd, sessionId);
 	const targetFile = getSessionFilePath(targetConfigDir, cwd, sessionId);
 	const sourceDir = getSessionDirPath(sourceConfigDir, cwd, sessionId);
 	const targetDir = getSessionDirPath(targetConfigDir, cwd, sessionId);
 
 	try {
-		// Ensure target directory exists (do this first, before any file operations)
 		const targetParentDir = dirname(targetFile);
 		mkdirSync(targetParentDir, { recursive: true });
 		console.warn(
@@ -132,70 +225,18 @@ export function migrateSession(
 			targetParentDir,
 		);
 
-		// Attempt to copy the session .jsonl file
-		// This will throw if source doesn't exist or target cannot be written
-		try {
-			copyFileSync(sourceFile, targetFile);
-			result.filesCopied++;
-			console.warn(
-				"[SessionUtils] Copied session file:",
-				sourceFile,
-				"->",
-				targetFile,
-			);
-		} catch (copyError) {
-			// Check common error cases for better error messages
-			if (isNodeError(copyError)) {
-				if (copyError.code === "ENOENT") {
-					result.error = `Source session file not found: ${sourceFile}`;
-				} else if (copyError.code === "EEXIST") {
-					// Target already exists - this is OK, treat as successful skip
-					console.warn(
-						"[SessionUtils] Session already exists in target profile, skipping copy",
-					);
-					result.success = true;
-					result.filesCopied = 0;
-					return result;
-				} else {
-					result.error = `Failed to copy session file: ${copyError.message}`;
-				}
-			} else if (copyError instanceof Error) {
-				result.error = `Failed to copy session file: ${copyError.message}`;
-			} else {
-				result.error = "Unknown error copying session file";
-			}
+		const fileCopyResult = copySessionFile(sourceFile, targetFile);
+		if (!fileCopyResult.success) {
+			result.error = fileCopyResult.error;
 			console.warn("[SessionUtils] Migration failed:", result.error);
 			return result;
 		}
 
-		// Attempt to copy the session directory (tool-results) if it exists
-		// Use try-catch instead of existsSync to avoid TOCTOU race
-		try {
-			cpSync(sourceDir, targetDir, { recursive: true });
+		result.filesCopied = fileCopyResult.filesCopied;
+
+		if (fileCopyResult.filesCopied > 0) {
+			copySessionDirectory(sourceDir, targetDir);
 			result.filesCopied++;
-			console.warn(
-				"[SessionUtils] Copied session directory:",
-				sourceDir,
-				"->",
-				targetDir,
-			);
-		} catch (dirCopyError) {
-			// If source directory doesn't exist, that's fine - not all sessions have tool-results
-			if (isNodeError(dirCopyError) && dirCopyError.code === "ENOENT") {
-				console.warn(
-					"[SessionUtils] No session directory to copy (this is normal):",
-					sourceDir,
-				);
-			} else {
-				// Other errors are real problems, but we already copied the main file
-				// Log the error but continue (partial success)
-				console.warn(
-					"[SessionUtils] Warning: Failed to copy session directory:",
-					dirCopyError instanceof Error
-						? dirCopyError.message
-						: "Unknown error",
-				);
-			}
 		}
 
 		result.success = true;
@@ -210,26 +251,7 @@ export function migrateSession(
 			error instanceof Error ? error.message : "Unknown error during migration";
 		console.error("[SessionUtils] Migration error:", result.error);
 
-		// Clean up partially migrated session file to enable retry
-		// Use try-catch instead of existsSync to avoid TOCTOU race
-		try {
-			unlinkSync(targetFile);
-			console.warn(
-				"[SessionUtils] Cleaned up partial migration file:",
-				targetFile,
-			);
-		} catch (cleanupError) {
-			// If file doesn't exist during cleanup, that's fine
-			if (!(isNodeError(cleanupError) && cleanupError.code === "ENOENT")) {
-				console.error(
-					"[SessionUtils] Failed to cleanup partial migration:",
-					cleanupError instanceof Error
-						? cleanupError.message
-						: "Unknown cleanup error",
-				);
-			}
-		}
-
+		cleanupPartialMigration(targetFile);
 		return result;
 	}
 }

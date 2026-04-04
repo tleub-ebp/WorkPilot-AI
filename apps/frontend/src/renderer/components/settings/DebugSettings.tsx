@@ -244,6 +244,7 @@ export function DebugSettings() {
 								<div className="space-y-1 max-h-48 overflow-y-auto">
 									{debugInfo.recentErrors.map((error, index) => (
 										<div
+											// biome-ignore lint/suspicious/noArrayIndexKey: list is static and never reordered
 											key={index}
 											className="text-xs font-mono text-muted-foreground bg-muted/30 px-2 py-1 rounded"
 										>

@@ -128,8 +128,8 @@ export function useProviderAuth() {
 	const handleAuthTerminalSuccess = useCallback(
 		(
 			email?: string,
-			onSettingsChange?: (settings: any) => void,
-			settings?: any,
+			onSettingsChange?: (settings: Record<string, unknown>) => void,
+			settings?: Record<string, unknown>,
 			providerId?: string,
 		) => {
 			setIsAuthenticating(false);
@@ -200,10 +200,8 @@ export function useProviderAuth() {
 		(
 			windsurfSsoToken: string,
 			providerConfig: { apiKey?: string },
-			// biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
-			onSettingsChange: (settings: any) => void,
-			// biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
-			settings: any,
+			onSettingsChange: (settings: Record<string, unknown>) => void,
+			settings: Record<string, unknown>,
 			onProviderActivated?: (providerId: string) => void,
 			providerId?: string,
 			onOpenChange?: (open: boolean) => void,

@@ -40,7 +40,7 @@ export interface UsageData {
  * Service de gestion des credentials côté frontend
  */
 class CredentialService {
-	private eventListeners: Map<string, Set<Function>> = new Map();
+	private readonly eventListeners: Map<string, Set<Function>> = new Map();
 
 	constructor() {
 		this.initializeEventListeners();
@@ -50,7 +50,7 @@ class CredentialService {
 	 * Initialiser les écouteurs d'événements IPC
 	 */
 	private initializeEventListeners(): void {
-		if (!window.electronAPI) {
+		if (!globalThis.electronAPI) {
 			console.warn(
 				"[CredentialService] Electron API not available - running in browser environment",
 			);
@@ -58,15 +58,15 @@ class CredentialService {
 		}
 
 		// Vérifier si les méthodes existent
-		if (!window.electronAPI.on) {
+		if (!globalThis.electronAPI.on) {
 			console.warn(
-				"[CredentialService] window.electronAPI.on not available - running in development mode",
+				"[CredentialService] globalThis.electronAPI.on not available - running in development mode",
 			);
 			return;
 		}
 
 		// Écouter les mises à jour de credentials
-		window.electronAPI.on(
+		globalThis.electronAPI.on(
 			"credential:updated",
 			(credential: CredentialConfig | null) => {
 				this.emit("credential:updated", credential);
@@ -74,12 +74,12 @@ class CredentialService {
 		);
 
 		// Écouter les mises à jour d'usage
-		window.electronAPI.on("usage:changed", (data: UsageData) => {
+		globalThis.electronAPI.on("usage:changed", (data: UsageData) => {
 			this.emit("usage:changed", data);
 		});
 
 		// Écouter les changements de provider
-		window.electronAPI.on(
+		globalThis.electronAPI.on(
 			"provider:switched",
 			(data: { provider: string; type: "oauth" | "api_key" }) => {
 				this.emit("provider:switched", data);
@@ -91,13 +91,13 @@ class CredentialService {
 	 * Obtenir le credential actif
 	 */
 	async getActiveCredential(): Promise<CredentialConfig | null> {
-		if (!window.electronAPI?.invoke) {
+		if (!globalThis.electronAPI?.invoke) {
 			console.warn("[CredentialService] Electron API not available");
 			return null;
 		}
 
 		try {
-			return await window.electronAPI.invoke("credential:getActive");
+			return await globalThis.electronAPI.invoke("credential:getActive");
 		} catch (error) {
 			console.error(
 				"[CredentialService] Failed to get active credential:",
@@ -115,13 +115,13 @@ class CredentialService {
 		type: "oauth" | "api_key",
 		profileId?: string,
 	): Promise<void> {
-		if (!window.electronAPI?.invoke) {
+		if (!globalThis.electronAPI?.invoke) {
 			console.warn("[CredentialService] Electron API not available");
 			return;
 		}
 
 		try {
-			await window.electronAPI.invoke(
+			await globalThis.electronAPI.invoke(
 				"credential:setActive",
 				provider,
 				type,
@@ -140,13 +140,13 @@ class CredentialService {
 	 * Obtenir les données d'usage pour un provider
 	 */
 	async getUsageData(provider: string): Promise<UsageData | null> {
-		if (!window.electronAPI?.invoke) {
+		if (!globalThis.electronAPI?.invoke) {
 			console.warn("[CredentialService] Electron API not available");
 			return null;
 		}
 
 		try {
-			return await window.electronAPI.invoke("usage:getData", provider);
+			return await globalThis.electronAPI.invoke("usage:getData", provider);
 		} catch (error) {
 			console.error("[CredentialService] Failed to get usage data:", error);
 			return null;
@@ -157,13 +157,13 @@ class CredentialService {
 	 * Obtenir toutes les données d'usage
 	 */
 	async getAllUsageData(): Promise<Record<string, UsageData>> {
-		if (!window.electronAPI?.invoke) {
+		if (!globalThis.electronAPI?.invoke) {
 			console.warn("[CredentialService] Electron API not available");
 			return {};
 		}
 
 		try {
-			return await window.electronAPI.invoke("usage:getAllData");
+			return await globalThis.electronAPI.invoke("usage:getAllData");
 		} catch (error) {
 			console.error("[CredentialService] Failed to get all usage data:", error);
 			return {};
@@ -177,13 +177,13 @@ class CredentialService {
 		provider: string,
 		usageData: Partial<UsageData>,
 	): Promise<void> {
-		if (!window.electronAPI?.invoke) {
+		if (!globalThis.electronAPI?.invoke) {
 			console.warn("[CredentialService] Electron API not available");
 			return;
 		}
 
 		try {
-			await window.electronAPI.invoke("usage:updateData", provider, usageData);
+			await globalThis.electronAPI.invoke("usage:updateData", provider, usageData);
 		} catch (error) {
 			console.error("[CredentialService] Failed to update usage data:", error);
 		}
@@ -193,13 +193,13 @@ class CredentialService {
 	 * Valider les credentials actifs
 	 */
 	async validateCredentials(): Promise<boolean> {
-		if (!window.electronAPI?.invoke) {
+		if (!globalThis.electronAPI?.invoke) {
 			console.warn("[CredentialService] Electron API not available");
 			return false;
 		}
 
 		try {
-			return await window.electronAPI.invoke("credential:validate");
+			return await globalThis.electronAPI.invoke("credential:validate");
 		} catch (error) {
 			console.error(
 				"[CredentialService] Failed to validate credentials:",
@@ -214,14 +214,14 @@ class CredentialService {
 	 */
 	async testProvider(
 		provider: string,
-	): Promise<{ success: boolean; message: string; details?: any }> {
-		if (!window.electronAPI?.invoke) {
+	): Promise<{ success: boolean; message: string; details?: unknown }> {
+		if (!globalThis.electronAPI?.invoke) {
 			console.warn("[CredentialService] Electron API not available");
 			return { success: false, message: "Electron API not available" };
 		}
 
 		try {
-			return await window.electronAPI.invoke(
+			return await globalThis.electronAPI.invoke(
 				"credential:testProvider",
 				provider,
 			);
@@ -260,8 +260,7 @@ class CredentialService {
 	/**
 	 * Émettre un événement
 	 */
-	// biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
-	private emit(event: string, data: any): void {
+	private emit(event: string, data: CredentialConfig | null | UsageData | { provider: string; type: "oauth" | "api_key" }): void {
 		const listeners = this.eventListeners.get(event);
 		if (listeners) {
 			listeners.forEach((callback) => {

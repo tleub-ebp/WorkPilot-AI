@@ -89,9 +89,9 @@ export function forceEnableWindowsColors(): boolean {
 export function printColorDiagnostics(): void {
 	const diagnostics = getColorDiagnostics();
 
-	Object.entries(diagnostics.envVars).forEach(([_key, _value]) => {});
+	Object.entries(diagnostics.envVars).forEach(([_key, _value]) => { /* intentionally empty */ });
 
 	if (diagnostics.recommendations.length > 0) {
-		diagnostics.recommendations.forEach((_rec, _index) => {});
+		diagnostics.recommendations.forEach((_rec, _index) => { /* intentionally empty */ });
 	}
 }

@@ -37,11 +37,12 @@ function isValidMrState(state: string): state is MergeRequestState {
 const DEBUG =
 	process.env.DEBUG === "true" || process.env.NODE_ENV === "development";
 
-function debugLog(_message: string, data?: unknown): void {
+function debugLog(message: string, data?: unknown): void {
 	if (DEBUG) {
-		if (data !== undefined) {
+		if (data === undefined) {
+			console.log(`[GitLab MR Debug] ${message}`);
 		} else {
-			// noop
+			console.log(`[GitLab MR Debug] ${message}:`, data);
 		}
 	}
 }

@@ -275,6 +275,7 @@ export function DeepContextInsights({ deepContext }: DeepContextInsightsProps) {
 								<ul className="text-xs text-muted-foreground space-y-0.5 pl-3">
 									{deepContext.regressionRisks.slice(0, 5).map((risk, i) => (
 										<li
+											// biome-ignore lint/suspicious/noArrayIndexKey: list is static and never reordered
 											key={`risk-${i}`}
 											className="list-disc text-destructive/80"
 										>

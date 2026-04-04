@@ -34,14 +34,12 @@ export function convertToAgnosticUsage(
 	// Provider-specific details conversion
 	const details: ProviderSpecificDetails = {};
 
+	const snapshotExt = snapshot as Record<string, unknown>;
 	if (snapshot.providerName === "anthropic") {
 		details.anthropic = {
-			// biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
-			subscriptionType: (snapshot as any).subscriptionType,
-			// biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
-			rateLimitTier: (snapshot as any).rateLimitTier,
-			// biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
-			opusUsagePercent: (snapshot as any).opusUsagePercent,
+			subscriptionType: snapshotExt.subscriptionType,
+			rateLimitTier: snapshotExt.rateLimitTier,
+			opusUsagePercent: snapshotExt.opusUsagePercent,
 		};
 	} else if (snapshot.providerName === "openai") {
 		details.openai = snapshot.openaiUsageDetails || {};
@@ -49,25 +47,19 @@ export function convertToAgnosticUsage(
 		details.copilot = snapshot.copilotUsageDetails || {};
 	} else {
 		// Generic provider - store any extra data
-		// biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
-		details.generic = { ...(snapshot as any) };
+		details.generic = { ...snapshotExt };
 	}
 
 	// Error handling
 	let error: UsageError | undefined;
-	// biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
-	if ((snapshot as any).error) {
+	if (snapshotExt.error) {
 		error = {
-			// biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
-			code: (snapshot as any).error,
-			// biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
-			message: (snapshot as any).errorMessage || "Unknown error occurred",
-			// biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
-			suggestions: (snapshot as any).suggestions || [],
+			code: snapshotExt.error as string,
+			message: (snapshotExt.errorMessage as string) || "Unknown error occurred",
+			suggestions: (snapshotExt.suggestions as string[]) || [],
 			provider: snapshot.providerName,
 			requiresAction: true,
-			// biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
-			actionType: getActionTypeForError((snapshot as any).error),
+			actionType: getActionTypeForError(snapshotExt.error as string),
 		};
 	}
 
@@ -80,11 +72,10 @@ export function convertToAgnosticUsage(
 		details,
 		error,
 		isAuthenticated:
-			!(snapshot as any).isRateLimited ||
+			!snapshotExt.isRateLimited ||
 			snapshot.needsReauthentication !== true,
 		needsReauthentication: snapshot.needsReauthentication || false,
-		// biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
-		isRateLimited: (snapshot as any).isRateLimited || false,
+		isRateLimited: (snapshotExt.isRateLimited as boolean) || false,
 		rateLimitType: snapshot.limitType === "session" ? "session" : "periodic",
 		fetchedAt: snapshot.fetchedAt,
 		usageWindows: snapshot.usageWindows
@@ -101,7 +92,7 @@ export function convertToAgnosticUsage(
  */
 export function convertBackendError(
 	provider: string,
-	backendError: any,
+	backendError: Record<string, unknown>,
 ): UsageError {
 	const errorCode = backendError.error || backendError.code || "UNKNOWN_ERROR";
 

@@ -26,6 +26,7 @@ import type {
 	IPCResult,
 	SupportedIDE,
 	SupportedTerminal,
+	TaskStatus,
 	WorktreeCreatePROptions,
 	WorktreeCreatePRResult,
 	WorktreeDiff,
@@ -3111,7 +3112,7 @@ export function registerWorktreeHandlers(
 							// Route status change through TaskStateManager (XState) to avoid dual emission
 							taskStateManager.handleManualStatusChange(
 								taskId,
-								newStatus as any,
+								newStatus as TaskStatus,
 								task,
 								project,
 							);

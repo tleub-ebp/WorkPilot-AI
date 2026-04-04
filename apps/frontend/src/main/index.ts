@@ -589,7 +589,7 @@ async function launchStreamingServer() {
 		},
 	);
 
-	streamingServerProcess.stdout?.on("data", (_data: Buffer) => {});
+	streamingServerProcess.stdout?.on("data", (_data: Buffer) => { /* intentionally empty */ });
 	streamingServerProcess.stderr?.on("data", (data: Buffer) => {
 		console.warn("[streaming-server]", data.toString().trim());
 	});
@@ -706,7 +706,7 @@ function loadAndValidateSettings() {
 function validateAndMigrateAutoBuildPath(
 	autoBuildPath: string,
 	settingsPath: string,
-	settings: any,
+	settings: Record<string, unknown>,
 ): string | undefined {
 	const specRunnerPath = join(autoBuildPath, "runners", "spec_runner.py");
 	let specRunnerExists = false;

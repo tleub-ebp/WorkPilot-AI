@@ -87,7 +87,7 @@ export function OAuthStep({ onNext, onBack, onSkip }: OAuthStepProps) {
 	);
 
 	// Reusable function to load Claude profiles
-	const loadClaudeProfiles = async () => {
+	const loadClaudeProfiles = useCallback(async () => {
 		setIsLoadingProfiles(true);
 		setError(null);
 		try {
@@ -103,7 +103,7 @@ export function OAuthStep({ onNext, onBack, onSkip }: OAuthStepProps) {
 		} finally {
 			setIsLoadingProfiles(false);
 		}
-	};
+	}, []);
 
 	// Load Claude profiles on mount
 	useEffect(() => {

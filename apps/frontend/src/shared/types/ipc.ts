@@ -1533,7 +1533,7 @@ export interface ElectronAPI {
 	saveJsonFile: (
 		folderPath: string,
 		fileName: string,
-		data: any,
+		data: unknown,
 	) => Promise<{ success: boolean; error?: string }>;
 
 	/**

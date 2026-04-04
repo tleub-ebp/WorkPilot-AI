@@ -17,7 +17,7 @@ import { Badge } from "../../ui/badge";
 import { Card } from "../../ui/card";
 
 interface CodeQualityDetailsProps {
-	idea: CodeQualityIdea;
+	readonly idea: CodeQualityIdea;
 }
 
 export function CodeQualityDetails({ idea }: CodeQualityDetailsProps) {
@@ -155,9 +155,8 @@ export function CodeQualityDetails({ idea }: CodeQualityDetailsProps) {
 						Affected Files
 					</h3>
 					<ul className="space-y-1">
-						{idea.affectedFiles.map((file, i) => (
-							// biome-ignore lint/suspicious/noArrayIndexKey: no stable key available
-							<li key={i} className="text-sm font-mono text-muted-foreground">
+						{idea.affectedFiles.map((file) => (
+							<li key={file} className="text-sm font-mono text-muted-foreground">
 								{file}
 							</li>
 						))}
@@ -184,9 +183,9 @@ export function CodeQualityDetails({ idea }: CodeQualityDetailsProps) {
 						Prerequisites
 					</h3>
 					<ul className="space-y-1">
-						{idea.prerequisites.map((prereq, i) => (
+						{idea.prerequisites.map((prereq) => (
 							<li
-								key={i}
+								key={prereq}
 								className="text-sm text-muted-foreground flex items-start gap-2"
 							>
 								<span className="text-muted-foreground">â€¢</span>

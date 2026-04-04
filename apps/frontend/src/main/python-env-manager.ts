@@ -172,6 +172,7 @@ export class PythonEnvManager extends EventEmitter {
 			// Also check marker for logging purposes
 			const markerPath = path.join(sitePackagesPath, ".bundled");
 			if (existsSync(markerPath)) {
+				/* intentionally empty */
 			} else {
 				// noop
 			}

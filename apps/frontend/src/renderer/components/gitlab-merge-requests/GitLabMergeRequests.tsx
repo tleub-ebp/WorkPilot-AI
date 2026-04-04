@@ -8,13 +8,13 @@ import { MRDetail } from "./components/MRDetail";
 import { useGitLabMRs } from "./hooks/useGitLabMRs";
 
 interface GitLabMergeRequestsProps {
-	projectId: string;
-	onOpenSettings?: () => void;
+	readonly projectId: string;
+	readonly onOpenSettings?: () => void;
 }
 
 export function GitLabMergeRequests({
 	projectId,
-	onOpenSettings,
+	onOpenSettings: _onOpenSettings,
 }: GitLabMergeRequestsProps) {
 	const [stateFilter, setStateFilter] = useState<
 		"opened" | "closed" | "merged" | "all"

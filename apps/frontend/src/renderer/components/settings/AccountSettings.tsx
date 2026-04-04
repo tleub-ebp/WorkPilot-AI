@@ -96,7 +96,7 @@ export function AccountSettings({
 	onSettingsChange,
 	isOpen,
 	connector,
-	showAutoSwitching = true,
+	showAutoSwitching: _showAutoSwitching = true,
 }: AccountSettingsProps) {
 	const { t } = useTranslation("settings");
 	const { t: tCommon } = useTranslation("common");

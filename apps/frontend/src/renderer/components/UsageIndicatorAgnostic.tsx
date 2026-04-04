@@ -64,7 +64,6 @@ export function UsageIndicatorAgnostic({
 		sessionPercent,
 		periodicPercent,
 		refreshUsageData,
-		clearError,
 	} = useAgnosticUsage(selectedProvider);
 
 	// États UI locaux
@@ -170,9 +169,17 @@ export function UsageIndicatorAgnostic({
 		if (limitingPercent >= THRESHOLD_ELEVATED) return TrendingUp;
 
 		// Use provider-specific icon if available
-		// biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
-		const IconComponent = providerConfig.icon as any;
-		return IconComponent || Activity;
+		const iconMap: Record<string, React.ComponentType<any>> = {
+			Activity,
+			AlertCircle,
+			ChevronRight,
+			Clock,
+			LogIn,
+			RefreshCw,
+			TrendingUp,
+		};
+		const IconComponent = iconMap[providerConfig.icon] || Activity;
+		return IconComponent;
 	};
 
 	/**
@@ -238,42 +245,6 @@ export function UsageIndicatorAgnostic({
 					{t("common:usage.loading")}
 				</span>
 			</div>
-		);
-	}
-
-	// État d'erreur
-	if (error) {
-		return (
-			<TooltipProvider delayDuration={200}>
-				<Tooltip>
-					<TooltipTrigger asChild>
-						<button
-							type="button"
-							className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-md border bg-red-500/10 text-red-500"
-							onClick={clearError}
-						>
-							<AlertCircle className="h-3.5 w-3.5" />
-							<span className="text-xs font-semibold">Error</span>
-						</button>
-					</TooltipTrigger>
-					<TooltipContent side="bottom" className="text-xs w-64">
-						<p className="text-red-500">{error?.message || "Unknown error"}</p>
-						<p className="text-muted-foreground text-[10px] mt-1">
-							Click to dismiss
-						</p>
-						{error?.suggestions && error.suggestions.length > 0 && (
-							<div className="mt-2">
-								<p className="text-[10px] font-medium">Suggestions:</p>
-								<ul className="text-[10px] list-disc list-inside">
-									{error.suggestions.map((suggestion: string) => (
-										<li key={suggestion}>{suggestion}</li>
-									))}
-								</ul>
-							</div>
-						)}
-					</TooltipContent>
-				</Tooltip>
-			</TooltipProvider>
 		);
 	}
 
@@ -363,22 +334,18 @@ export function UsageIndicatorAgnostic({
 								<AlertCircle className="h-4 w-4 text-orange-500 shrink-0 mt-0.5" />
 								<div className="space-y-1">
 									<p className="text-xs font-medium text-orange-500">
-										{/* biome-ignore lint/suspicious/noExplicitAny: intentional */}
-										{(error as any).code?.replaceAll("_", " ") || "Error"}
+										{error.code?.replaceAll("_", " ") || "Error"}
 									</p>
 									<p className="text-[10px] text-muted-foreground leading-relaxed">
-										{/* biome-ignore lint/suspicious/noExplicitAny: intentional */}
-										{(error as any).message || "Unknown error occurred"}
+										{error.message || "Unknown error occurred"}
 									</p>
-									{/* biome-ignore lint/suspicious/noExplicitAny: intentional */}
-									{(error as any).suggestions &&
-										(error as any).suggestions.length > 0 && (
+									{error.suggestions &&
+										error.suggestions.length > 0 && (
 											<div className="text-[10px] text-muted-foreground">
 												<strong>Suggestions:</strong>
 												<ul className="list-disc list-inside space-y-0.5 mt-1">
-													{/* biome-ignore lint/suspicious/noExplicitAny: intentional */}
-													{(error as any).suggestions.map(
-														(suggestion: string, _idx: number) => (
+													{error.suggestions.map(
+														(suggestion: string) => (
 															<li key={suggestion}>{suggestion}</li>
 														),
 													)}
@@ -387,8 +354,7 @@ export function UsageIndicatorAgnostic({
 										)}
 								</div>
 							</div>
-							{/* biome-ignore lint/suspicious/noExplicitAny: intentional */}
-							{(error as any).actionType === "reauth" && (
+							{error.actionType === "reauth" && (
 								<button
 									type="button"
 									onClick={handleOpenAccounts}

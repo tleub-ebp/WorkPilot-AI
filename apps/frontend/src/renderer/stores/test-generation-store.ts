@@ -102,7 +102,7 @@ interface TestGenerationState {
 	reset: () => void;
 	createErrorHandler: (
 		cleanup: () => void,
-		reject: (reason?: any) => void,
+		reject: (reason?: unknown) => void,
 	) => (error: string) => void;
 	createCleanupHandler: (listeners: Array<() => void>) => () => void;
 
@@ -152,7 +152,7 @@ export const useTestGenerationStore = create<TestGenerationState>(
 		// Common error handler for test generation
 		createErrorHandler: (
 			cleanup: () => void,
-			reject: (reason?: any) => void,
+			reject: (reason?: unknown) => void,
 		) => {
 			const { setPhase, setError } = get();
 			return (error: string) => {

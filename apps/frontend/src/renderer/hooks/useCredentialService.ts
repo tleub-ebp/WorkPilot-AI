@@ -146,7 +146,7 @@ export function useCredentialService(
 	const testProvider = useCallback(
 		async (
 			provider: string,
-		): Promise<{ success: boolean; message: string; details?: any }> => {
+		): Promise<{ success: boolean; message: string; details?: unknown }> => {
 			try {
 				setError(null);
 				return await credentialService.testProvider(provider);

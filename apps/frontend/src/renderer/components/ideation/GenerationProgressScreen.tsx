@@ -21,17 +21,17 @@ import { TypeIcon } from "./TypeIcon";
 import { TypeStateIcon } from "./TypeStateIcon";
 
 interface GenerationProgressScreenProps {
-	generationStatus: IdeationGenerationStatus;
-	logs: string[];
-	typeStates: Record<IdeationType, IdeationTypeState>;
-	enabledTypes: IdeationType[];
-	session: IdeationSession | null;
-	onSelectIdea: (idea: Idea | null) => void;
-	selectedIdea: Idea | null;
-	onConvert: (idea: Idea) => void;
-	onGoToTask?: (taskId: string) => void;
-	onDismiss: (idea: Idea) => void;
-	onStop: () => void | Promise<void>;
+	readonly generationStatus: IdeationGenerationStatus;
+	readonly logs: string[];
+	readonly typeStates: Record<IdeationType, IdeationTypeState>;
+	readonly enabledTypes: IdeationType[];
+	readonly session: IdeationSession | null;
+	readonly onSelectIdea: (idea: Idea | null) => void;
+	readonly selectedIdea: Idea | null;
+	readonly onConvert: (idea: Idea) => void;
+	readonly onGoToTask?: (taskId: string) => void;
+	readonly onDismiss: (idea: Idea) => void;
+	readonly onStop: () => void | Promise<void>;
 }
 
 export function GenerationProgressScreen({
@@ -142,19 +142,25 @@ export function GenerationProgressScreen({
 
 				{/* Type Status Indicators */}
 				<div className="mt-3 flex flex-wrap gap-2">
-					{enabledTypes.map((type) => (
-						<div
-							key={type}
-							className={`flex items-center gap-1.5 px-2 py-1 rounded-md text-xs ${
-								typeStates[type] === "completed"
-									? "bg-success/10 text-success"
-									: typeStates[type] === "failed"
-										? "bg-destructive/10 text-destructive"
-										: typeStates[type] === "generating"
-											? "bg-primary/10 text-primary"
-											: "bg-muted text-muted-foreground"
-							}`}
-						>
+					{enabledTypes.map((type) => {
+						const isCompleted = typeStates[type] === "completed";
+						const isFailed = typeStates[type] === "failed";
+						const isGenerating = typeStates[type] === "generating";
+						
+						let stateClass = "bg-muted text-muted-foreground";
+						if (isCompleted) {
+							stateClass = "bg-success/10 text-success";
+						} else if (isFailed) {
+							stateClass = "bg-destructive/10 text-destructive";
+						} else if (isGenerating) {
+							stateClass = "bg-primary/10 text-primary";
+						}
+
+						return (
+							<div
+								key={type}
+								className={`flex items-center gap-1.5 px-2 py-1 rounded-md text-xs ${stateClass}`}
+							>
 							<TypeStateIcon state={typeStates[type]} />
 							<TypeIcon type={type} />
 							<span>{t(`ideation:types.${type}`)}</span>
@@ -164,7 +170,8 @@ export function GenerationProgressScreen({
 								</span>
 							)}
 						</div>
-					))}
+						);
+					})}
 				</div>
 			</div>
 
@@ -174,17 +181,15 @@ export function GenerationProgressScreen({
 					<ScrollArea className="h-32 rounded-md border border-border bg-muted/30">
 						<div className="p-3 space-y-1 font-mono text-xs">
 							{logs.map((log, index) => (
-								<>
-									<div
-										key={index}
-										className="text-muted-foreground leading-relaxed"
-									>
-										<span className="text-muted-foreground/50 mr-2 select-none">
-											{String(index + 1).padStart(3, "0")}
-										</span>
-										{log}
-									</div>
-								</>
+								<div
+									key={`${index}-${log.slice(0, 20)}`}
+									className="text-muted-foreground leading-relaxed"
+								>
+									<span className="text-muted-foreground/50 mr-2 select-none">
+										{String(index + 1).padStart(3, "0")}
+									</span>
+									{log}
+								</div>
 							))}
 							<div ref={logsEndRef} />
 						</div>

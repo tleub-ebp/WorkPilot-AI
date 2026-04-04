@@ -186,7 +186,7 @@ export function registerCredentialHandlers(): void {
 		async (
 			_event,
 			provider: string,
-		): Promise<{ success: boolean; message: string; details?: any }> => {
+		): Promise<{ success: boolean; message: string; details?: unknown }> => {
 			return await credentialManager.testProvider(provider);
 		},
 	);

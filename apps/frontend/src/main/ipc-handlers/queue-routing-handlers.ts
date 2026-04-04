@@ -85,11 +85,6 @@ export function registerQueueRoutingHandlers(
 					options?.excludeProfileId,
 				);
 
-				if (bestProfile) {
-				} else {
-					// noop
-				}
-
 				return { success: true, data: bestProfile };
 			} catch (error) {
 				console.error(

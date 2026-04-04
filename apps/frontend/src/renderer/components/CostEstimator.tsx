@@ -302,8 +302,8 @@ export function CostEstimator({ projectPath }: CostEstimatorProps) {
 	// Helper function to handle API response
 	const handleApiResponse = useCallback(
 		(
-			result: PromiseSettledResult<any>,
-			setter: (value: any) => void,
+			result: PromiseSettledResult<{ success: boolean; data?: unknown; error?: string }>,
+			setter: (value: unknown) => void,
 			silent: boolean,
 			errorKey: string,
 		) => {

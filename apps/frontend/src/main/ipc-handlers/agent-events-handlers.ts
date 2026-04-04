@@ -142,7 +142,7 @@ function restampXStateStatusIfNeeded(
  */
 function logCodingFailedEvent(
 	taskId: string,
-	event: any,
+	event: unknown,
 	projectId?: string,
 ): void {
 	console.error(
@@ -191,9 +191,9 @@ function initializeTaskSequenceIfNeeded(
  */
 function persistLastEventToAllPlans(
 	_taskId: string,
-	event: any,
-	task: any,
-	project: any,
+	event: unknown,
+	task: { specId: string },
+	project: { path: string },
 ): void {
 	const mainPlanPath = getPlanPath(project, task);
 	persistPlanLastEventSync(mainPlanPath, event);

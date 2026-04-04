@@ -14,19 +14,16 @@ export interface AutoRefactorRequest {
 export interface AutoRefactorResult {
 	analysis: {
 		status: string;
-		// biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
-		analysis: any;
+		analysis: unknown;
 		files_analyzed: number;
 	};
 	plan: {
 		status: string;
-		// biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
-		plan: any;
+		plan: unknown;
 	};
 	execution: {
 		status: string;
-		// biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
-		execution: any;
+		execution: unknown;
 		auto_executed: boolean;
 	};
 	summary: {
@@ -62,7 +59,7 @@ export interface AutoRefactorAPI {
 		callback: (result: AutoRefactorResult) => void,
 	) => () => void;
 	onAutoRefactorExecutionComplete: (
-		callback: (result: any) => void,
+		callback: (result: unknown) => void,
 	) => () => void;
 }
 

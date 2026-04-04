@@ -162,7 +162,9 @@ describe("Claude Profile IPC Integration", () => {
 			"../../main/ipc-handlers/terminal-handlers"
 		);
 		registerTerminalHandlers(
+			// biome-ignore lint/suspicious/noExplicitAny: test mock requires flexible casting
 			mockTerminalManager as any,
+			// biome-ignore lint/suspicious/noExplicitAny: test mock requires flexible casting
 			() => mockBrowserWindow as any,
 		);
 	});

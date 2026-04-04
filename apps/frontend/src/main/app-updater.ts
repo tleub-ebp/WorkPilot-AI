@@ -534,7 +534,7 @@ function handleResponseData(
 		const version = latestStable.tag_name.replace(/^v/, "");
 		// Sanitize version string for logging (remove control characters and limit length)
 		const safeVersion = String(version)
-			.replaceAll(/[\x00-\x1f\x7f]/g, "")
+			.replaceAll(/[\u0000-\u001f\u007f]/g, "")
 			.slice(0, 50);
 		console.warn("[app-updater] Found latest stable release:", safeVersion);
 

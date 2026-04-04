@@ -388,11 +388,11 @@ export function StreamingSession({
 	}, [sessionId, events, sessionStats]);
 
 	// Format duration
-	const formatDuration = (seconds: number): string => {
+	const formatDuration = useCallback((seconds: number): string => {
 		const mins = Math.floor(seconds / 60);
 		const secs = Math.floor(seconds % 60);
 		return `${mins}:${secs.toString().padStart(2, "0")}`;
-	};
+	}, []);
 
 	// Share session
 	const shareSession = useCallback(async () => {

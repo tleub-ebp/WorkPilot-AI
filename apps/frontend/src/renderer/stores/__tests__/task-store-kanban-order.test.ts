@@ -472,7 +472,7 @@ describe("Task Store — Kanban Order Management", () => {
 
 			expect(result).toBe(true);
 			const stored = JSON.parse(
-				localStorage.getItem("task-order-state-project-1")!,
+				localStorage.getItem("task-order-state-project-1") ?? "{}",
 			);
 			expect(stored).toEqual(order);
 		});

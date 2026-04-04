@@ -166,7 +166,7 @@ describe("Project Store — Core CRUD Operations", () => {
 
 			useProjectStore
 				.getState()
-				.updateProject("p1", { name: "Updated Name" } as any);
+				.updateProject("p1", { name: "Updated Name" } as never);
 
 			const project = useProjectStore.getState().projects[0];
 			expect(project.name).toBe("Updated Name");
@@ -182,7 +182,7 @@ describe("Project Store — Core CRUD Operations", () => {
 
 			useProjectStore
 				.getState()
-				.updateProject("p1", { model: "new-model" } as any);
+				.updateProject("p1", { model: "new-model" } as never);
 
 			expect(useProjectStore.getState().projects[1].name).toBe("Project 2");
 		});

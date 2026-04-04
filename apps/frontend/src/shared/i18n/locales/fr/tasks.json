@@ -444,6 +444,8 @@
 		"delete": {
 			"title": "Supprimer la tâche",
 			"confirmMessage": "Êtes-vous sûr de vouloir supprimer <strong>\"{{title}}\"</strong> ?",
+			"confirmMessagePrefix": "Êtes-vous sûr de vouloir supprimer",
+			"confirmMessageSuffix": " ?",
 			"warningMessage": "Cette action ne peut pas être annulée. Tous les fichiers de la tâche, y compris la spécification, le plan d'implémentation et tout code généré seront supprimés définitivement du projet.",
 			"cancel": "Annuler",
 			"deleting": "Suppression...",

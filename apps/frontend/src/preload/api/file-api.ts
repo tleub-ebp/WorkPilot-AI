@@ -12,7 +12,7 @@ export interface FileAPI {
 	saveJsonFile: (
 		dirPath: string,
 		fileName: string,
-		data: any,
+		data: unknown,
 	) => Promise<IPCResult<boolean>>;
 	getUserHome: () => string;
 }
@@ -28,7 +28,7 @@ export const createFileAPI = (): FileAPI => ({
 	saveJsonFile: (
 		dirPath: string,
 		fileName: string,
-		data: any,
+		data: unknown,
 	): Promise<IPCResult<boolean>> =>
 		ipcRenderer.invoke(
 			IPC_CHANNELS.FILE_EXPLORER_SAVE,

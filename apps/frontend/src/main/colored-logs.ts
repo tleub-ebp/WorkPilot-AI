@@ -174,7 +174,7 @@ function formatFrontendLog(
 	module: string = "frontend",
 	timestamp?: string,
 	// biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
-	...kwargs: any[]
+	...kwargs: unknown[]
 ): string {
 	if (!supportsColor()) {
 		// Return non-colored version for non-color terminals
@@ -232,7 +232,7 @@ function writeFrontendLog(
 	message: string,
 	level: string = "DEBUG",
 	module?: string,
-	...kwargs: any[]
+	...kwargs: unknown[]
 ): void {
 	const formatted = formatFrontendLog(
 		message,

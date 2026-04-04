@@ -142,6 +142,7 @@ export function LearningExplanationCard({
 								<div className="space-y-2">
 									{explanation.alternative_approaches.map((alt, idx) => (
 										<div
+											// biome-ignore lint/suspicious/noArrayIndexKey: list is static and never reordered
 											key={idx}
 											className="bg-muted/50 p-3 rounded-md text-xs"
 										>

@@ -26,7 +26,7 @@ export interface UseGitHubCopilotReturn {
 	testConnection: () => Promise<{
 		success: boolean;
 		message: string;
-		details?: any;
+		details?: unknown;
 	}>;
 	refreshStatus: () => Promise<void>;
 
@@ -136,7 +136,7 @@ export function useGitHubCopilot(): UseGitHubCopilotReturn {
 	const testConnection = useCallback(async (): Promise<{
 		success: boolean;
 		message: string;
-		details?: any;
+		details?: unknown;
 	}> => {
 		try {
 			setError(null);

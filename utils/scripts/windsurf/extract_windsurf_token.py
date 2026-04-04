@@ -10,32 +10,47 @@ def find_windsurf_token():
     """Cherche le token OAuth Windsurf dans les fichiers locaux"""
     print("🔍 Recherche du token Windsurf OAuth...")
     
-    # Chemins possibles pour le token
-    windsurf_paths = [
+    # Chercher dans les fichiers locaux
+    search_files_for_token()
+    
+    # Chercher dans les variables d'environnement
+    return search_environment_variables()
+
+def get_windsurf_paths():
+    """Retourne les chemins possibles pour le token Windsurf"""
+    return [
         os.path.expandvars(r"%APPDATA%\Windsurf"),
         os.path.expandvars(r"%LOCALAPPDATA%\Windsurf"),
         os.path.expanduser("~/.windsurf"),
     ]
+
+def search_files_for_token():
+    """Cherche le token dans les fichiers locaux"""
+    windsurf_paths = get_windsurf_paths()
     
     for base_path in windsurf_paths:
         if not os.path.exists(base_path):
             continue
             
         print(f"📁 Exploration de: {base_path}")
-        
-        # Chercher dans les fichiers JSON
-        for root, dirs, files in os.walk(base_path):
-            for file in files:
-                if file.endswith(('.json', '.db', '.sqlite', '.ldb')):
-                    file_path = os.path.join(root, file)
-                    try:
-                        search_in_file(file_path)
-                    except Exception as e:
-                        print(f"   ⚠️  Erreur lecture {file}: {e}")
-    
-    # Chercher dans les variables d'environnement
+        search_directory_files(base_path)
+
+def search_directory_files(base_path):
+    """Cherche dans les fichiers d'un répertoire"""
+    for root, dirs, files in os.walk(base_path):
+        for file in files:
+            if file.endswith(('.json', '.db', '.sqlite', '.ldb')):
+                file_path = os.path.join(root, file)
+                try:
+                    search_in_file(file_path)
+                except Exception as e:
+                    print(f"   ⚠️  Erreur lecture {file}: {e}")
+
+def search_environment_variables():
+    """Cherche le token dans les variables d'environnement"""
     print("\n🔍 Variables d'environnement:")
     env_vars = ['WINDSURF_TOKEN', 'WINDSURF_OAUTH_TOKEN', 'CODEIUM_TOKEN']
+    
     for var in env_vars:
         value = os.getenv(var)
         if value:
@@ -67,14 +82,14 @@ def search_in_file(file_path):
                 
                 # Essayer d'extraire le token
                 if pattern == b'access_token':
-                    extract_token_from_content(content, file_path)
+                    extract_token_from_content(content)
                 elif pattern == b'eyJ':
-                    extract_jwt_token(content, file_path)
+                    extract_jwt_token(content)
                     
-    except Exception as e:
+    except Exception:
         pass
 
-def extract_token_from_content(content, file_path):
+def extract_token_from_content(content):
     """Extrait le token du contenu"""
     try:
         content_str = content.decode('utf-8', errors='ignore')
@@ -90,7 +105,7 @@ def extract_token_from_content(content, file_path):
     except Exception:
         pass
 
-def extract_jwt_token(content, file_path):
+def extract_jwt_token(content):
     """Extrait un token JWT"""
     try:
         content_str = content.decode('utf-8', errors='ignore')
