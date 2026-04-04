@@ -426,3 +426,183 @@ class ABComparison:
             "unique_tools_a": self.unique_tools_a,
             "unique_tools_b": self.unique_tools_b,
         }
+
+
+# ===================================================================
+# Time Travel models — Checkpoints, Forks, Decision Scoring
+# ===================================================================
+
+
+class CheckpointType(str, Enum):
+    """Types of checkpoints for time travel."""
+
+    AUTO_DECISION = "auto_decision"
+    AUTO_FILE_CHANGE = "auto_file_change"
+    AUTO_TOOL_CALL = "auto_tool_call"
+    MANUAL = "manual"
+
+
+@dataclass
+class Checkpoint:
+    """A restorable snapshot at a specific step in the session."""
+
+    id: str = field(default_factory=lambda: str(uuid.uuid4())[:12])
+    session_id: str = ""
+    step_index: int = 0
+    step_id: str = ""
+    checkpoint_type: CheckpointType = CheckpointType.AUTO_DECISION
+    label: str = ""
+    description: str = ""
+    created_at: float = field(default_factory=time.time)
+
+    # Provider-agnostic conversation history up to this point
+    conversation_history: list[dict[str, Any]] = field(default_factory=list)
+
+    # Files state at this checkpoint (path -> content)
+    file_snapshots: dict[str, str] = field(default_factory=dict)
+
+    # Cumulative stats at this point
+    tokens_at_checkpoint: int = 0
+    cost_at_checkpoint: float = 0.0
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "id": self.id,
+            "session_id": self.session_id,
+            "step_index": self.step_index,
+            "step_id": self.step_id,
+            "checkpoint_type": self.checkpoint_type.value,
+            "label": self.label,
+            "description": self.description,
+            "created_at": self.created_at,
+            "conversation_history": self.conversation_history,
+            "file_snapshots": self.file_snapshots,
+            "tokens_at_checkpoint": self.tokens_at_checkpoint,
+            "cost_at_checkpoint": self.cost_at_checkpoint,
+        }
+
+    @classmethod
+    def from_dict(cls, data: dict[str, Any]) -> "Checkpoint":
+        return cls(
+            id=data["id"],
+            session_id=data.get("session_id", ""),
+            step_index=data.get("step_index", 0),
+            step_id=data.get("step_id", ""),
+            checkpoint_type=CheckpointType(data.get("checkpoint_type", "auto_decision")),
+            label=data.get("label", ""),
+            description=data.get("description", ""),
+            created_at=data.get("created_at", 0.0),
+            conversation_history=data.get("conversation_history", []),
+            file_snapshots=data.get("file_snapshots", {}),
+            tokens_at_checkpoint=data.get("tokens_at_checkpoint", 0),
+            cost_at_checkpoint=data.get("cost_at_checkpoint", 0.0),
+        )
+
+
+@dataclass
+class ForkRequest:
+    """Request to fork a session at a checkpoint and re-execute."""
+
+    checkpoint_id: str = ""
+    session_id: str = ""
+    modified_prompt: str = ""
+    additional_instructions: str = ""
+    # LLM config (can differ from original — works with any provider)
+    fork_provider: str = ""
+    fork_model: str = ""
+    fork_api_key: str = ""
+    fork_base_url: str = ""
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "checkpoint_id": self.checkpoint_id,
+            "session_id": self.session_id,
+            "modified_prompt": self.modified_prompt,
+            "additional_instructions": self.additional_instructions,
+            "fork_provider": self.fork_provider,
+            "fork_model": self.fork_model,
+            "fork_api_key": self.fork_api_key,
+            "fork_base_url": self.fork_base_url,
+        }
+
+    @classmethod
+    def from_dict(cls, data: dict[str, Any]) -> "ForkRequest":
+        return cls(
+            checkpoint_id=data.get("checkpoint_id", ""),
+            session_id=data.get("session_id", ""),
+            modified_prompt=data.get("modified_prompt", ""),
+            additional_instructions=data.get("additional_instructions", ""),
+            fork_provider=data.get("fork_provider", ""),
+            fork_model=data.get("fork_model", ""),
+            fork_api_key=data.get("fork_api_key", ""),
+            fork_base_url=data.get("fork_base_url", ""),
+        )
+
+
+@dataclass
+class ForkSession:
+    """A forked execution branch from a checkpoint."""
+
+    fork_id: str = field(default_factory=lambda: str(uuid.uuid4()))
+    original_session_id: str = ""
+    checkpoint_id: str = ""
+    fork_request: ForkRequest = field(default_factory=ForkRequest)
+    forked_session_id: str = ""
+    created_at: float = field(default_factory=time.time)
+    status: str = "pending"  # pending, running, completed, failed
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "fork_id": self.fork_id,
+            "original_session_id": self.original_session_id,
+            "checkpoint_id": self.checkpoint_id,
+            "fork_request": self.fork_request.to_dict(),
+            "forked_session_id": self.forked_session_id,
+            "created_at": self.created_at,
+            "status": self.status,
+        }
+
+    @classmethod
+    def from_dict(cls, data: dict[str, Any]) -> "ForkSession":
+        return cls(
+            fork_id=data["fork_id"],
+            original_session_id=data.get("original_session_id", ""),
+            checkpoint_id=data.get("checkpoint_id", ""),
+            fork_request=ForkRequest.from_dict(data.get("fork_request", {})),
+            forked_session_id=data.get("forked_session_id", ""),
+            created_at=data.get("created_at", 0.0),
+            status=data.get("status", "pending"),
+        )
+
+
+@dataclass
+class DecisionScore:
+    """Confidence/impact score for a decision point."""
+
+    step_id: str = ""
+    step_index: int = 0
+    confidence_score: float = 0.5
+    impact_score: float = 0.5
+    factors: list[str] = field(default_factory=list)
+    is_critical: bool = False
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "step_id": self.step_id,
+            "step_index": self.step_index,
+            "confidence_score": self.confidence_score,
+            "impact_score": self.impact_score,
+            "factors": self.factors,
+            "is_critical": self.is_critical,
+        }
+
+    @classmethod
+    def from_dict(cls, data: dict[str, Any]) -> "DecisionScore":
+        return cls(
+            step_id=data.get("step_id", ""),
+            step_index=data.get("step_index", 0),
+            confidence_score=data.get("confidence_score", 0.5),
+            impact_score=data.get("impact_score", 0.5),
+            factors=data.get("factors", []),
+            is_critical=data.get("is_critical", False),
+        )
