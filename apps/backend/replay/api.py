@@ -15,12 +15,15 @@ from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 
 from .recorder import get_replay_recorder
+from .time_travel import get_time_travel_engine
 
 logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/replay", tags=["replay"])
 
 SESSION_NOT_FOUND = "Replay session not found"
+CHECKPOINT_NOT_FOUND = "Checkpoint not found"
+FORK_NOT_FOUND = "Fork not found"
 
 
 # ---------------------------------------------------------------------------
@@ -41,6 +44,22 @@ class CompareSessionsRequest(BaseModel):
 
 class DeleteSessionsRequest(BaseModel):
     session_ids: list[str]
+
+
+class AddCheckpointRequest(BaseModel):
+    step_index: int
+    label: str = ""
+    description: str = ""
+
+
+class ForkSessionRequest(BaseModel):
+    checkpoint_id: str
+    modified_prompt: str = ""
+    additional_instructions: str = ""
+    fork_provider: str = ""
+    fork_model: str = ""
+    fork_api_key: str = ""
+    fork_base_url: str = ""
 
 
 # ---------------------------------------------------------------------------
@@ -323,3 +342,218 @@ async def compare_sessions(req: CompareSessionsRequest):
         "session_a": session_a.to_summary(),
         "session_b": session_b.to_summary(),
     }
+
+
+# ---------------------------------------------------------------------------
+# Time Travel - Checkpoints
+# ---------------------------------------------------------------------------
+
+
+@router.post(
+    "/sessions/{session_id}/checkpoints/generate",
+    responses={404: {"description": "Replay session not found"}},
+)
+async def generate_checkpoints(session_id: str):
+    """Generate checkpoints for all decision points in a session."""
+    recorder = get_replay_recorder()
+    session = recorder.load_session(session_id)
+    if not session:
+        raise HTTPException(status_code=404, detail=SESSION_NOT_FOUND)
+    engine = get_time_travel_engine()
+    checkpoints = engine.create_checkpoints_for_session(session_id)
+    return {
+        "success": True,
+        "checkpoints": [cp.to_dict() for cp in checkpoints],
+        "count": len(checkpoints),
+    }
+
+
+@router.get("/sessions/{session_id}/checkpoints")
+async def get_checkpoints(session_id: str):
+    """Get all checkpoints for a session."""
+    engine = get_time_travel_engine()
+    checkpoints = engine.get_checkpoints(session_id)
+    return {
+        "success": True,
+        "checkpoints": [cp.to_dict() for cp in checkpoints],
+        "count": len(checkpoints),
+    }
+
+
+@router.get(
+    "/sessions/{session_id}/checkpoints/{checkpoint_id}",
+    responses={404: {"description": "Checkpoint not found"}},
+)
+async def get_checkpoint(session_id: str, checkpoint_id: str):
+    """Get a specific checkpoint with full conversation history."""
+    engine = get_time_travel_engine()
+    checkpoint = engine.get_checkpoint(session_id, checkpoint_id)
+    if not checkpoint:
+        raise HTTPException(status_code=404, detail=CHECKPOINT_NOT_FOUND)
+    return {"success": True, "checkpoint": checkpoint.to_dict()}
+
+
+@router.post(
+    "/sessions/{session_id}/checkpoints",
+    responses={404: {"description": "Replay session not found"}},
+)
+async def add_manual_checkpoint(session_id: str, req: AddCheckpointRequest):
+    """Add a manual checkpoint at a specific step index."""
+    engine = get_time_travel_engine()
+    checkpoint = engine.add_manual_checkpoint(
+        session_id, step_index=req.step_index, label=req.label, description=req.description,
+    )
+    if not checkpoint:
+        raise HTTPException(status_code=404, detail=SESSION_NOT_FOUND)
+    return {"success": True, "checkpoint": checkpoint.to_dict()}
+
+
+@router.delete(
+    "/sessions/{session_id}/checkpoints/{checkpoint_id}",
+    responses={404: {"description": "Checkpoint not found"}},
+)
+async def delete_checkpoint(session_id: str, checkpoint_id: str):
+    """Delete a checkpoint."""
+    engine = get_time_travel_engine()
+    deleted = engine.delete_checkpoint(session_id, checkpoint_id)
+    if not deleted:
+        raise HTTPException(status_code=404, detail=CHECKPOINT_NOT_FOUND)
+    return {"success": True}
+
+
+# ---------------------------------------------------------------------------
+# Time Travel - Fork & Re-execute
+# ---------------------------------------------------------------------------
+
+
+@router.post(
+    "/sessions/{session_id}/fork",
+    responses={404: {"description": "Checkpoint not found"}},
+)
+async def fork_session(session_id: str, req: ForkSessionRequest):
+    """Fork a session at a checkpoint for re-execution with any LLM."""
+    from .models import ForkRequest as ForkRequestModel
+
+    engine = get_time_travel_engine()
+    checkpoint = engine.get_checkpoint(session_id, req.checkpoint_id)
+    if not checkpoint:
+        raise HTTPException(status_code=404, detail=CHECKPOINT_NOT_FOUND)
+
+    fork_request = ForkRequestModel(
+        checkpoint_id=req.checkpoint_id,
+        session_id=session_id,
+        modified_prompt=req.modified_prompt,
+        additional_instructions=req.additional_instructions,
+        fork_provider=req.fork_provider,
+        fork_model=req.fork_model,
+        fork_api_key=req.fork_api_key,
+        fork_base_url=req.fork_base_url,
+    )
+    fork = engine.create_fork(fork_request)
+    return {"success": True, "fork": fork.to_dict()}
+
+
+@router.get("/forks")
+async def list_all_forks(session_id: str | None = None):
+    """List all forks, optionally filtered by session."""
+    engine = get_time_travel_engine()
+    forks = engine.list_forks(session_id)
+    return {"success": True, "forks": [f.to_dict() for f in forks], "count": len(forks)}
+
+
+@router.get(
+    "/forks/{fork_id}",
+    responses={404: {"description": "Fork not found"}},
+)
+async def get_fork(fork_id: str):
+    """Get a specific fork."""
+    engine = get_time_travel_engine()
+    fork = engine.get_fork(fork_id)
+    if not fork:
+        raise HTTPException(status_code=404, detail=FORK_NOT_FOUND)
+    return {"success": True, "fork": fork.to_dict()}
+
+
+@router.get(
+    "/forks/{fork_id}/context",
+    responses={404: {"description": "Fork not found"}},
+)
+async def get_fork_context(fork_id: str):
+    """Get the provider-agnostic re-execution context for a fork."""
+    engine = get_time_travel_engine()
+    context = engine.get_fork_context(fork_id)
+    if not context:
+        raise HTTPException(status_code=404, detail=FORK_NOT_FOUND)
+    return {"success": True, "context": context}
+
+
+@router.patch(
+    "/forks/{fork_id}/status",
+    responses={404: {"description": "Fork not found"}},
+)
+async def update_fork_status(fork_id: str, status: str):
+    """Update the status of a fork."""
+    engine = get_time_travel_engine()
+    updated = engine.update_fork_status(fork_id, status)
+    if not updated:
+        raise HTTPException(status_code=404, detail=FORK_NOT_FOUND)
+    return {"success": True}
+
+
+@router.delete(
+    "/forks/{fork_id}",
+    responses={404: {"description": "Fork not found"}},
+)
+async def delete_fork(fork_id: str):
+    """Delete a fork."""
+    engine = get_time_travel_engine()
+    deleted = engine.delete_fork(fork_id)
+    if not deleted:
+        raise HTTPException(status_code=404, detail=FORK_NOT_FOUND)
+    return {"success": True}
+
+
+# ---------------------------------------------------------------------------
+# Time Travel - Decision Scoring & Heatmap
+# ---------------------------------------------------------------------------
+
+
+@router.post(
+    "/sessions/{session_id}/decisions/score",
+    responses={404: {"description": "Replay session not found"}},
+)
+async def score_decisions(session_id: str):
+    """Analyze and score all decision points in a session."""
+    recorder = get_replay_recorder()
+    session = recorder.load_session(session_id)
+    if not session:
+        raise HTTPException(status_code=404, detail=SESSION_NOT_FOUND)
+    engine = get_time_travel_engine()
+    scores = engine.score_decisions(session_id)
+    return {
+        "success": True,
+        "scores": [s.to_dict() for s in scores],
+        "count": len(scores),
+        "critical_count": sum(1 for s in scores if s.is_critical),
+    }
+
+
+@router.get("/sessions/{session_id}/decisions/scores")
+async def get_decision_scores(session_id: str):
+    """Get previously computed decision scores."""
+    engine = get_time_travel_engine()
+    scores = engine.get_decision_scores(session_id)
+    return {"success": True, "scores": [s.to_dict() for s in scores], "count": len(scores)}
+
+
+@router.get(
+    "/sessions/{session_id}/decisions/heatmap",
+    responses={404: {"description": "Replay session not found"}},
+)
+async def get_decision_heatmap(session_id: str):
+    """Get the decision heatmap for a session."""
+    engine = get_time_travel_engine()
+    heatmap = engine.get_decision_heatmap(session_id)
+    if not heatmap:
+        raise HTTPException(status_code=404, detail=SESSION_NOT_FOUND)
+    return {"success": True, "heatmap": heatmap}
