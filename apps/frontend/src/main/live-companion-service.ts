@@ -166,28 +166,28 @@ export class LiveCompanionService extends EventEmitter {
 				close: () => Promise<void>;
 			};
 
-			watcher.on("change", (filePath: string) => {
+			watcher.on("change", (...args: unknown[]) => {
 				this.handleFileChange(
 					projectDir,
-					filePath as string,
+					args[0] as string,
 					"modified",
 					config,
 				);
 			});
 
-			watcher.on("add", (filePath: string) => {
+			watcher.on("add", (...args: unknown[]) => {
 				this.handleFileChange(
 					projectDir,
-					filePath as string,
+					args[0] as string,
 					"created",
 					config,
 				);
 			});
 
-			watcher.on("unlink", (filePath: string) => {
+			watcher.on("unlink", (...args: unknown[]) => {
 				this.handleFileChange(
 					projectDir,
-					filePath as string,
+					args[0] as string,
 					"deleted",
 					config,
 				);

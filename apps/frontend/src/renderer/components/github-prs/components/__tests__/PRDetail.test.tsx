@@ -13,12 +13,11 @@
 
 import type { NewCommitsCheck } from "@preload/api/modules/github-api";
 import { describe, expect, it } from "vitest";
-// @ts-expect-error - vitest resolves this correctly
 import type {
 	PRData,
 	PRReviewProgress,
 	PRReviewResult,
-} from "../../../hooks/useGitHubPRs";
+} from "../../hooks/useGitHubPRs";
 
 /**
  * Factory function to create a mock PR data object

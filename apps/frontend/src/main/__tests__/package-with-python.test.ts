@@ -8,7 +8,6 @@
 import path from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 // Import from the scripts directory (relative to src/main/__tests__)
-// @ts-expect-error - TypeScript doesn't auto-resolve .d.ts for .cjs imports (types exist in package-with-python.d.ts)
 import {
 	SHELL_METACHARACTERS,
 	validateArgs,
