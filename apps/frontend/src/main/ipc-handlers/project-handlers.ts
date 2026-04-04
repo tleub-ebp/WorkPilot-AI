@@ -494,9 +494,6 @@ export function registerProjectHandlers(
 				if (existsSync(oldDir) && !existsSync(newDir)) {
 					try {
 						renameSync(oldDir, newDir);
-						console.log(
-							`[Project] Migrated .auto-claude → .workpilot in ${projectPath}`,
-						);
 					} catch (migrateErr) {
 						console.warn(
 							`[Project] Could not migrate .auto-claude to .workpilot: ${migrateErr}`,
@@ -535,9 +532,6 @@ export function registerProjectHandlers(
 				if (existsSync(oldDir) && !existsSync(newDir)) {
 					try {
 						renameSync(oldDir, newDir);
-						console.log(
-							`[Project] Migrated .auto-claude → .workpilot in ${proj.path}`,
-						);
 					} catch (migrateErr) {
 						console.warn(
 							`[Project] Could not migrate .auto-claude to .workpilot: ${migrateErr}`,

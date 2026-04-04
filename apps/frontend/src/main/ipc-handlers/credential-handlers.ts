@@ -20,6 +20,90 @@ import {
 } from "../services/credential-manager";
 
 /**
+ * Extract version from command output using regex
+ */
+function extractVersionFromOutput(output: string): string | undefined {
+	const versionRegex = /(\d+\.\d+\.\d+)/;
+	const match = versionRegex.exec(output.trim());
+	return match ? match[1] : undefined;
+}
+
+/**
+ * Try to get codex version using direct execution
+ */
+async function tryDirectCodexVersion(): Promise<string | undefined> {
+	try {
+		const result = await execFileAsync("codex", ["--version"], {
+			encoding: "utf-8",
+			timeout: 5000,
+			windowsHide: true,
+		});
+		return extractVersionFromOutput(result.stdout);
+	} catch {
+		return undefined;
+	}
+}
+
+/**
+ * Try to get codex version using shell execution
+ */
+async function tryShellCodexVersion(): Promise<string | undefined> {
+	try {
+		const result = await execFileAsync("codex", ["--version"], {
+			encoding: "utf-8",
+			timeout: 5000,
+			windowsHide: true,
+			shell: true,
+		});
+		return extractVersionFromOutput(result.stdout);
+	} catch {
+		return undefined;
+	}
+}
+
+/**
+ * Try to get codex version using Windows npm global path
+ */
+async function tryWindowsNpmCodexVersion(): Promise<string | undefined> {
+	try {
+		const os = await import("node:os");
+		const path = await import("node:path");
+		const codexCmd = path.join(os.homedir(), "AppData", "Roaming", "npm", "codex.cmd");
+		const { existsSync } = await import("node:fs");
+		
+		if (!existsSync(codexCmd)) {
+			return undefined;
+		}
+		
+		const cmdExe = process.env.ComSpec || "C:\\Windows\\System32\\cmd.exe";
+		const result = await execFileAsync(cmdExe, ["/d", "/s", "/c", `""${codexCmd}" --version"`], {
+			encoding: "utf-8",
+			timeout: 5000,
+			windowsHide: true,
+		});
+		return extractVersionFromOutput(result.stdout);
+	} catch {
+		return undefined;
+	}
+}
+
+/**
+ * Get codex CLI version using multiple fallback strategies
+ */
+async function getCodexVersion(): Promise<string | undefined> {
+	// Strategy 1: direct exec
+	let version = await tryDirectCodexVersion();
+	if (version) return version;
+	
+	// Strategy 2: shell execution
+	version = await tryShellCodexVersion();
+	if (version) return version;
+	
+	// Strategy 3: Windows npm global path
+	return await tryWindowsNpmCodexVersion();
+}
+
+/**
  * Enregistrer tous les handlers IPC pour les credentials
  */
 export function registerCredentialHandlers(): void {
@@ -234,12 +318,15 @@ export function registerCredentialHandlers(): void {
 
 	/**
 	 * Vérifier le statut OAuth OpenAI Codex CLI (vérifie les fichiers config CLI sur le disque)
-	 * Retourne si l'utilisateur est authentifié via OpenAI Codex CLI
+	 * Retourne si l'utilisateur est authentifié via OpenAI Codex CLI, avec la version CLI
 	 */
 	ipcMain.handle(
 		"credential:checkOpenAICodexOAuth",
-		async (): Promise<{ isAuthenticated: boolean; profileName?: string }> => {
-			return await credentialManager.checkOpenAICodexOAuthStatusPublic();
+		async (): Promise<{ isAuthenticated: boolean; profileName?: string; version?: string }> => {
+			const authStatus = await credentialManager.checkOpenAICodexOAuthStatusPublic();
+
+			const version = await getCodexVersion();
+			return { ...authStatus, version };
 		},
 	);
 }

@@ -243,9 +243,6 @@ describe("SmartEstimationDialog", () => {
 			expect(screen.getByTestId("dialog")).toBeInTheDocument();
 			expect(screen.getByTestId("dialog-title")).toBeInTheDocument();
 			expect(screen.getByTestId("dialog-description")).toBeInTheDocument();
-
-			// Debug: check what's actually rendered
-			console.log("Document body:", document.body.innerHTML);
 		});
 
 		it("should display task description input", () => {

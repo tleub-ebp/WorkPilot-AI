@@ -1,6 +1,5 @@
 import { create } from "zustand";
 import type {
-	ContextMeshCompleteResult,
 	ContextMeshSummary,
 	ContextualRecommendation,
 	CrossProjectPattern,

@@ -14,16 +14,14 @@
 
  */
 
-import { execFile, execFileSync, spawn } from "child_process";
+import { execFile, execFileSync, spawn } from "node:child_process";
 import { ipcMain } from "electron";
-
-import { existsSync, promises as fsPromises, readFileSync } from "fs";
-
-import { mkdir, rename, unlink } from "fs/promises";
-import os from "os";
-import path from "path";
+import { existsSync, promises as fsPromises, readFileSync } from "node:fs";
+import { mkdir, rename, unlink } from "node:fs/promises";
+import os from "node:os";
+import path from "node:path";
 import semver from "semver";
-import { promisify } from "util";
+import { promisify } from "node:util";
 import { DEFAULT_APP_SETTINGS, IPC_CHANNELS } from "../../shared/constants";
 import type { IPCResult } from "../../shared/types";
 import type {
@@ -725,10 +723,8 @@ export function createProxiedFetch(): typeof fetch {
 
 export function escapeAppleScriptString(str: string): string {
 	return str
-
-		.replace(/\\/g, "\\\\") // Escape backslashes first
-
-		.replace(/"/g, '\\"'); // Escape double quotes
+		.replaceAll(/\\/g, "\\\\") // Escape backslashes first
+		.replaceAll(/"/g, '\\"'); // Escape double quotes
 }
 
 /**
@@ -743,24 +739,15 @@ export function escapeAppleScriptString(str: string): string {
 
 export function escapePowerShellCommand(str: string): string {
 	return str
-
-		.replace(/`/g, "``") // Escape backticks (PowerShell escape char)
-
-		.replace(/"/g, '`"') // Escape double quotes
-
-		.replace(/\$/g, "`$") // Escape dollar signs (variable expansion)
-
-		.replace(/\(/g, "`(") // Escape opening parentheses
-
-		.replace(/\)/g, "`)") // Escape closing parentheses
-
-		.replace(/;/g, "`;") // Escape semicolons (statement separator)
-
-		.replace(/&/g, "`&") // Escape ampersands (call operator)
-
-		.replace(/\r/g, "`r") // Escape carriage returns
-
-		.replace(/\n/g, "`n"); // Escape newlines
+		.replaceAll(/`/g, "``") // Escape backticks (PowerShell escape char)
+		.replaceAll(/"/g, '`"') // Escape double quotes
+		.replaceAll(/\$/g, "`$") // Escape dollar signs (variable expansion)
+		.replaceAll(/\(/g, "`(") // Escape opening parentheses
+		.replaceAll(/\)/g, "`)") // Escape closing parentheses
+		.replaceAll(/;/g, "`;") // Escape semicolons (statement separator)
+		.replaceAll(/&/g, "`&") // Escape ampersands (call operator)
+		.replaceAll(/\r/g, "`r") // Escape carriage returns
+		.replaceAll(/\n/g, "`n"); // Escape newlines
 }
 
 /**
@@ -777,20 +764,13 @@ export function escapeGitBashCommand(str: string): string {
 	// semicolon, pipe, and exclamation mark (all bash metacharacters that could allow command injection)
 
 	return str
-
-		.replace(/\\/g, "\\\\") // Escape backslashes first
-
-		.replace(/"/g, '\\"') // Escape double quotes
-
-		.replace(/\$/g, "\\$") // Escape dollar signs
-
-		.replace(/`/g, "\\`") // Escape backticks
-
-		.replace(/;/g, "\\;") // Escape semicolons (command separator)
-
-		.replace(/\|/g, "\\|") // Escape pipes (command piping)
-
-		.replace(/!/g, "\\!"); // Escape exclamation marks (history expansion)
+		.replaceAll(/\\/g, "\\\\") // Escape backslashes first
+		.replaceAll(/"/g, '\\"') // Escape double quotes
+		.replaceAll(/\$/g, "\\$") // Escape dollar signs
+		.replaceAll(/`/g, "\\`") // Escape backticks
+		.replaceAll(/;/g, "\\;") // Escape semicolons (command separator)
+		.replaceAll(/\|/g, "\\|") // Escape pipes (command piping)
+		.replaceAll(/!/g, "\\!"); // Escape exclamation marks (history expansion)
 }
 
 /**
@@ -828,10 +808,16 @@ export async function openTerminalWithCommand(command: string): Promise<void> {
 
 	const preferredTerminal = settings?.preferredTerminal as string | undefined;
 
-	console.warn(
-		"[Claude Code] Platform:",
-		isWindows() ? "Windows" : isMacOS() ? "macOS" : "Linux",
-	);
+	let platform: string;
+	if (isWindows()) {
+		platform = "Windows";
+	} else if (isMacOS()) {
+		platform = "macOS";
+	} else {
+		platform = "Linux";
+	}
+
+	console.warn("[Claude Code] Platform:", platform);
 
 	console.warn("[Claude Code] Preferred terminal:", preferredTerminal);
 
@@ -1811,16 +1797,65 @@ export function registerClaudeCodeHandlers(): void {
 						JSON.stringify(detectionResult, null, 2),
 					);
 				} catch (detectionError) {
-					console.error("[Claude Code] Detection error:", detectionError);
-
-					throw new Error(
-						`Detection failed: ${detectionError instanceof Error ? detectionError.message : "Unknown error"}`,
-					);
+					console.warn("[Claude Code] Detection via cli-tool-manager failed, using empty result:", detectionError);
+					detectionResult = { found: false, source: "fallback" as const, message: "Detection failed" };
 				}
 
-				const installed = detectionResult.found
+				let installed = detectionResult.found
 					? detectionResult.version || null
 					: null;
+
+				// If version is unknown or null, try multiple fallback strategies
+				if (!installed || installed === "unknown") {
+					// Strategy 1: Try ~/.local/bin/claude.exe directly (npm native install)
+					if (isWindows()) {
+						const localBinClaude = path.join(os.homedir(), ".local", "bin", "claude.exe");
+						if (existsSync(localBinClaude)) {
+							try {
+								const directOut = (await execFileAsync(localBinClaude, ["--version"], { encoding: "utf-8", timeout: 5000, windowsHide: true })).stdout;
+								const directMatch = directOut.match(/(\d+\.\d+\.\d+)/);
+								if (directMatch) {
+									installed = directMatch[1];
+									detectionResult = { ...detectionResult, found: true, path: localBinClaude };
+									console.warn("[Claude Code] Version from ~/.local/bin (direct):", installed);
+								}
+							} catch {
+								// Direct exec failed, try PowerShell EncodedCommand
+								try {
+									const psExe = path.join(process.env.SystemRoot || "C:\\Windows", "System32", "WindowsPowerShell", "v1.0", "powershell.exe");
+									const psScript = `$r = & '${localBinClaude.replace(/'/g, "''")}' --version 2>&1; Write-Output $r`;
+									const encodedCmd = Buffer.from(psScript, "utf16le").toString("base64");
+									const psOut = (await execFileAsync(psExe, ["-NoProfile", "-NonInteractive", "-EncodedCommand", encodedCmd], { encoding: "utf-8", timeout: 8000, windowsHide: true })).stdout;
+									const psMatch = psOut.match(/(\d+\.\d+\.\d+)/);
+									if (psMatch) {
+										installed = psMatch[1];
+										detectionResult = { ...detectionResult, found: true, path: localBinClaude };
+										console.warn("[Claude Code] Version from ~/.local/bin (PS):", installed);
+									}
+								} catch (e) {
+									console.warn("[Claude Code] PS fallback for ~/.local/bin failed:", e);
+								}
+							}
+						}
+					}
+
+					// Strategy 2: Try `claude --version` with shell:true (uses system PATH)
+					if (!installed || installed === "unknown") {
+						try {
+							const shellOut = (await execFileAsync("claude", ["--version"], { encoding: "utf-8", timeout: 5000, windowsHide: true, shell: true })).stdout;
+							const shellMatch = shellOut.match(/(\d+\.\d+\.\d+)/);
+							if (shellMatch) {
+								installed = shellMatch[1];
+								if (!detectionResult.found) {
+									detectionResult = { ...detectionResult, found: true };
+								}
+								console.warn("[Claude Code] Version from shell:", installed);
+							}
+						} catch (e) {
+							console.warn("[Claude Code] shell fallback failed:", e);
+						}
+					}
+				}
 
 				console.warn("[Claude Code] Installed version:", installed);
 

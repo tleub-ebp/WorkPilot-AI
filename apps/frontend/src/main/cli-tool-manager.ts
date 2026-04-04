@@ -926,7 +926,20 @@ class CLIToolManager {
 			}
 		}
 
-		// 3. System PATH (augmented)
+		// 3a. On Windows, prefer ~/.local/bin/claude.exe (npm native install) before checking PATH
+		// because PATH may contain an older WinGet install that fails version detection.
+		if (isWindows()) {
+			const localBinPath = joinPaths(homeDir, ".local", "bin", `claude${getExecutableExtension()}`);
+			if (existsSync(localBinPath)) {
+				const validation = this.validateClaude(localBinPath);
+				if (validation.valid && validation.version && validation.version !== "unknown") {
+					const result = buildClaudeDetectionResult(localBinPath, validation, "system-path", "Using npm Claude CLI (~/.local/bin)");
+					if (result) return result;
+				}
+			}
+		}
+
+		// 3b. System PATH (augmented)
 		const systemClaudePath = findExecutable("claude");
 		if (systemClaudePath) {
 			const validation = this.validateClaude(systemClaudePath);

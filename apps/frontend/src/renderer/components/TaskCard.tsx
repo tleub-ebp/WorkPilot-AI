@@ -729,9 +729,6 @@ function taskCardPropsAreEqual(
 		}
 
 		if (changes.length > 0) {
-			console.log(
-				`TaskCard ${nextTask.id} re-rendering due to: ${changes.join(", ")}`,
-			);
 		}
 	}
 

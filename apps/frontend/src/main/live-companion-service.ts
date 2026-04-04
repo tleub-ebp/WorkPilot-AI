@@ -4,7 +4,6 @@ import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { app } from "electron";
-import { MODEL_ID_MAP } from "../shared/constants";
 import type { AppSettings } from "../shared/types";
 import type {
 	CompanionConfig,

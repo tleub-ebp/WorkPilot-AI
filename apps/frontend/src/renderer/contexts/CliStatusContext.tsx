@@ -172,9 +172,11 @@ export function CliStatusProvider({
 				codex: {
 					...prev.codex,
 					status,
-					versionInfo: result.isAuthenticated
-						? { installed: result.profileName ?? "OpenAI Codex CLI" }
-						: null,
+					versionInfo: result.version
+						? { installed: result.version }
+						: result.isAuthenticated
+							? { installed: result.profileName ?? "OpenAI Codex CLI" }
+							: null,
 					lastChecked: new Date(),
 				},
 			}));

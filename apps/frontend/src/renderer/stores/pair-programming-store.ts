@@ -19,7 +19,7 @@ import type {
 } from "../../preload/api/modules/pair-programming-api";
 
 // Re-export types for convenience
-export type { PairSession, PairMessage, AiAction, StartSessionParams };
+export type { PairSession, PairMessage, AiAction, StartSessionParams } from "../../preload/api/modules/pair-programming-api";
 
 // ---------------------------------------------------------------------------
 // Store types
@@ -92,7 +92,7 @@ export const usePairProgrammingStore = create<PairProgrammingState>(
 				status,
 				statusMessage: message,
 				session: get().session
-						{
+					? {
 							...get().session!,
 							status: (status === "idle"
 								? get().session?.status
@@ -169,7 +169,7 @@ export async function startPairSession(
 	store.reset();
 	store.setStatus("planning", "Starting pair programming session...");
 
-	const result = await window.electronAPI.startPairSession(params);
+	const result = await globalThis.electronAPI.startPairSession(params);
 	if (result.success && result.data) {
 		store.setSession(result.data);
 		store.setStatus("planning", "Analyzing project and planning AI scope...");
@@ -182,7 +182,7 @@ export async function stopPairSession(
 	projectId: string,
 	sessionId: string,
 ): Promise<void> {
-	await window.electronAPI.stopPairSession(projectId, sessionId);
+	await globalThis.electronAPI.stopPairSession(projectId, sessionId);
 	usePairProgrammingStore.getState().setStatus("completed", "Session stopped.");
 }
 
@@ -204,11 +204,11 @@ export function sendPairMessage(
 	store.setPendingMessage("");
 
 	// Send to main process
-	window.electronAPI.sendPairMessage(projectId, sessionId, message);
+	globalThis.electronAPI.sendPairMessage(projectId, sessionId, message);
 }
 
 export async function loadPairSession(projectId: string): Promise<void> {
-	const result = await window.electronAPI.getPairSession(projectId);
+	const result = await globalThis.electronAPI.getPairSession(projectId);
 	if (result.success && result.data) {
 		const store = usePairProgrammingStore.getState();
 		store.setSession(result.data);
@@ -223,7 +223,7 @@ export async function loadPairSession(projectId: string): Promise<void> {
 export function setupPairProgrammingListeners(projectId: string): () => void {
 	const store = usePairProgrammingStore.getState;
 
-	const unsubChunk = window.electronAPI.onPairStreamChunk(
+	const unsubChunk = globalThis.electronAPI.onPairStreamChunk(
 		(pid: string, chunk: PairStreamChunk) => {
 			if (pid !== projectId) return;
 			switch (chunk.type) {
@@ -255,35 +255,35 @@ export function setupPairProgrammingListeners(projectId: string): () => void {
 		},
 	);
 
-	const unsubStatus = window.electronAPI.onPairStatus(
+	const unsubStatus = globalThis.electronAPI.onPairStatus(
 		(pid: string, status: string, message: string) => {
 			if (pid !== projectId) return;
 			store().setStatus(status as PairStatus, message);
 		},
 	);
 
-	const unsubAction = window.electronAPI.onPairAiAction(
+	const unsubAction = globalThis.electronAPI.onPairAiAction(
 		(pid: string, action: AiAction) => {
 			if (pid !== projectId) return;
 			store().addAiAction(action);
 		},
 	);
 
-	const unsubConflict = window.electronAPI.onPairConflict(
+	const unsubConflict = globalThis.electronAPI.onPairConflict(
 		(pid: string, filePath: string, message: string) => {
 			if (pid !== projectId) return;
 			store().addConflict(filePath, message);
 		},
 	);
 
-	const unsubError = window.electronAPI.onPairError(
+	const unsubError = globalThis.electronAPI.onPairError(
 		(pid: string, error: string) => {
 			if (pid !== projectId) return;
 			store().setStatus("error", error);
 		},
 	);
 
-	const unsubComplete = window.electronAPI.onPairComplete(
+	const unsubComplete = globalThis.electronAPI.onPairComplete(
 		(pid: string, summary: string) => {
 			if (pid !== projectId) return;
 			store().finalizeAiMessage();
