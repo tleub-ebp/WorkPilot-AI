@@ -401,7 +401,10 @@ async def add_manual_checkpoint(session_id: str, req: AddCheckpointRequest):
     """Add a manual checkpoint at a specific step index."""
     engine = get_time_travel_engine()
     checkpoint = engine.add_manual_checkpoint(
-        session_id, step_index=req.step_index, label=req.label, description=req.description,
+        session_id,
+        step_index=req.step_index,
+        label=req.label,
+        description=req.description,
     )
     if not checkpoint:
         raise HTTPException(status_code=404, detail=SESSION_NOT_FOUND)
@@ -543,7 +546,11 @@ async def get_decision_scores(session_id: str):
     """Get previously computed decision scores."""
     engine = get_time_travel_engine()
     scores = engine.get_decision_scores(session_id)
-    return {"success": True, "scores": [s.to_dict() for s in scores], "count": len(scores)}
+    return {
+        "success": True,
+        "scores": [s.to_dict() for s in scores],
+        "count": len(scores),
+    }
 
 
 @router.get(

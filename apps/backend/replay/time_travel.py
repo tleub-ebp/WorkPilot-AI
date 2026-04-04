@@ -50,7 +50,9 @@ class TimeTravelEngine:
     """
 
     def __init__(self, storage_dir: Path | None = None):
-        self._storage_dir = storage_dir or Path.home() / ".workpilot" / "replays" / "time_travel"
+        self._storage_dir = (
+            storage_dir or Path.home() / ".workpilot" / "replays" / "time_travel"
+        )
         self._storage_dir.mkdir(parents=True, exist_ok=True)
         self._checkpoints_dir = self._storage_dir / "checkpoints"
         self._checkpoints_dir.mkdir(parents=True, exist_ok=True)
@@ -93,7 +95,9 @@ class TimeTravelEngine:
                 description=step.description,
                 created_at=time.time(),
                 conversation_history=[dict(m) for m in conversation_history],
-                file_snapshots=_collect_file_state(session.steps[: step.step_index + 1]),
+                file_snapshots=_collect_file_state(
+                    session.steps[: step.step_index + 1]
+                ),
                 tokens_at_checkpoint=step.cumulative_tokens,
                 cost_at_checkpoint=step.cumulative_cost_usd,
             )
@@ -273,13 +277,16 @@ class TimeTravelEngine:
             return []
 
         decision_steps = [
-            (i, s) for i, s in enumerate(session.steps)
+            (i, s)
+            for i, s in enumerate(session.steps)
             if s.step_type == ReplayStepType.DECISION
         ]
 
         scores: list[DecisionScore] = []
         for i, (step_idx, step) in enumerate(decision_steps):
-            steps_after = self._get_steps_after_decision(session, decision_steps, i, step_idx)
+            steps_after = self._get_steps_after_decision(
+                session, decision_steps, i, step_idx
+            )
             score = self._score_single_decision(step, steps_after)
             scores.append(score)
 
@@ -303,9 +310,15 @@ class TimeTravelEngine:
 
         confidence, factors = self._apply_duration_scoring(step, confidence, factors)
         confidence, factors = self._apply_options_scoring(step, confidence, factors)
-        confidence, impact, factors = self._apply_error_scoring(steps_after, confidence, impact, factors)
-        confidence, impact, factors = self._apply_file_change_scoring(steps_after, confidence, impact, factors)
-        confidence, impact, factors = self._apply_token_scoring(steps_after, confidence, impact, factors)
+        confidence, impact, factors = self._apply_error_scoring(
+            steps_after, confidence, impact, factors
+        )
+        confidence, impact, factors = self._apply_file_change_scoring(
+            steps_after, confidence, impact, factors
+        )
+        confidence, impact, factors = self._apply_token_scoring(
+            steps_after, confidence, impact, factors
+        )
 
         confidence = max(0.0, min(1.0, confidence))
         impact = max(0.0, min(1.0, impact))
@@ -343,7 +356,9 @@ class TimeTravelEngine:
 
     def _apply_error_scoring(self, steps_after, confidence, impact, factors):
         """Apply scoring based on errors that occurred after the decision."""
-        errors_after = sum(1 for s in steps_after if s.step_type == ReplayStepType.ERROR)
+        errors_after = sum(
+            1 for s in steps_after if s.step_type == ReplayStepType.ERROR
+        )
         if errors_after > 0:
             confidence -= 0.15 * min(errors_after, 3)
             impact += 0.2
@@ -353,8 +368,10 @@ class TimeTravelEngine:
     def _apply_file_change_scoring(self, steps_after, confidence, impact, factors):
         """Apply scoring based on file changes that occurred after the decision."""
         file_changes_after = sum(
-            len(s.file_diffs) for s in steps_after
-            if s.step_type in (
+            len(s.file_diffs)
+            for s in steps_after
+            if s.step_type
+            in (
                 ReplayStepType.FILE_CREATE,
                 ReplayStepType.FILE_UPDATE,
                 ReplayStepType.FILE_DELETE,
@@ -434,7 +451,9 @@ class TimeTravelEngine:
     def _save_checkpoints(self, session_id: str, checkpoints: list[Checkpoint]) -> None:
         filepath = self._checkpoints_dir / f"{session_id}.json"
         with open(filepath, "w", encoding="utf-8") as f:
-            json.dump([cp.to_dict() for cp in checkpoints], f, indent=2, ensure_ascii=False)
+            json.dump(
+                [cp.to_dict() for cp in checkpoints], f, indent=2, ensure_ascii=False
+            )
 
     def _load_checkpoints(self, session_id: str) -> list[Checkpoint]:
         filepath = self._checkpoints_dir / f"{session_id}.json"
@@ -465,7 +484,9 @@ class TimeTravelEngine:
             logger.error(f"Failed to load fork {fork_id}: {e}")
             return None
 
-    def _save_decision_scores(self, session_id: str, scores: list[DecisionScore]) -> None:
+    def _save_decision_scores(
+        self, session_id: str, scores: list[DecisionScore]
+    ) -> None:
         filepath = self._storage_dir / f"scores_{session_id}.json"
         with open(filepath, "w", encoding="utf-8") as f:
             json.dump([s.to_dict() for s in scores], f, indent=2, ensure_ascii=False)
@@ -565,7 +586,9 @@ def _step_to_conversation_message(step: ReplayStep) -> dict[str, Any] | None:
         }
     elif step.step_type in (ReplayStepType.COMMAND_RUN, ReplayStepType.COMMAND_OUTPUT):
         return {
-            "role": "assistant" if step.step_type == ReplayStepType.COMMAND_RUN else "tool",
+            "role": "assistant"
+            if step.step_type == ReplayStepType.COMMAND_RUN
+            else "tool",
             "content": step.description,
             "step_type": step.step_type.value,
             "step_index": step.step_index,

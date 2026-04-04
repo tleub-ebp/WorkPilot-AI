@@ -46,17 +46,34 @@ def main() -> int:
         "--action",
         type=str,
         required=True,
-        choices=["checkpoints", "score", "heatmap", "fork", "fork-context", "list-forks"],
+        choices=[
+            "checkpoints",
+            "score",
+            "heatmap",
+            "fork",
+            "fork-context",
+            "list-forks",
+        ],
         help="Time travel action to perform",
     )
     parser.add_argument("--session-id", type=str, help="Replay session ID")
     parser.add_argument("--checkpoint-id", type=str, help="Checkpoint ID (for fork)")
     parser.add_argument("--fork-id", type=str, help="Fork ID (for fork-context)")
-    parser.add_argument("--modified-prompt", type=str, default="", help="Modified prompt for fork")
-    parser.add_argument("--additional-instructions", type=str, default="", help="Extra instructions")
-    parser.add_argument("--fork-provider", type=str, default="", help="LLM provider for fork")
-    parser.add_argument("--fork-model", type=str, default="", help="Model name for fork")
-    parser.add_argument("--fork-api-key", type=str, default="", help="API key (optional)")
+    parser.add_argument(
+        "--modified-prompt", type=str, default="", help="Modified prompt for fork"
+    )
+    parser.add_argument(
+        "--additional-instructions", type=str, default="", help="Extra instructions"
+    )
+    parser.add_argument(
+        "--fork-provider", type=str, default="", help="LLM provider for fork"
+    )
+    parser.add_argument(
+        "--fork-model", type=str, default="", help="Model name for fork"
+    )
+    parser.add_argument(
+        "--fork-api-key", type=str, default="", help="API key (optional)"
+    )
     parser.add_argument("--fork-base-url", type=str, default="", help="Custom base URL")
     parser.add_argument("--output", type=str, choices=["json", "text"], default="json")
 
@@ -158,19 +175,23 @@ def main() -> int:
 def _print_text(result: dict) -> None:
     """Print result in human-readable format."""
     action = result.get("action", "")
-    print(f"\n{'='*60}")
+    print(f"\n{'=' * 60}")
     print(f" Agent Time Travel - {action.upper()}")
-    print(f"{'='*60}")
+    print(f"{'=' * 60}")
 
     if action == "checkpoints":
         print(f"\nSession: {result['session_id']}")
         print(f"Checkpoints created: {result['count']}")
         for cp in result.get("checkpoints", []):
-            print(f"  [{cp['step_index']:3d}] {cp['checkpoint_type']:20s} - {cp['label']}")
+            print(
+                f"  [{cp['step_index']:3d}] {cp['checkpoint_type']:20s} - {cp['label']}"
+            )
 
     elif action == "score":
         print(f"\nSession: {result['session_id']}")
-        print(f"Decisions scored: {result['count']} ({result['critical_count']} critical)")
+        print(
+            f"Decisions scored: {result['count']} ({result['critical_count']} critical)"
+        )
         for sc in result.get("scores", []):
             critical = " ** CRITICAL **" if sc["is_critical"] else ""
             print(
@@ -195,7 +216,9 @@ def _print_text(result: dict) -> None:
     elif action == "list-forks":
         print(f"\nForks: {result['count']}")
         for f in result.get("forks", []):
-            print(f"  {f['fork_id'][:12]} - session={f['original_session_id'][:12]} status={f['status']}")
+            print(
+                f"  {f['fork_id'][:12]} - session={f['original_session_id'][:12]} status={f['status']}"
+            )
 
     print()
 

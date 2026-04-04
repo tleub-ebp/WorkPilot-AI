@@ -488,7 +488,9 @@ class Checkpoint:
             session_id=data.get("session_id", ""),
             step_index=data.get("step_index", 0),
             step_id=data.get("step_id", ""),
-            checkpoint_type=CheckpointType(data.get("checkpoint_type", "auto_decision")),
+            checkpoint_type=CheckpointType(
+                data.get("checkpoint_type", "auto_decision")
+            ),
             label=data.get("label", ""),
             description=data.get("description", ""),
             created_at=data.get("created_at", 0.0),
