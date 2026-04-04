@@ -127,7 +127,10 @@ class Validator {
 						`Run: chmod +x ${script}`,
 					);
 				} catch (error) {
-					this.log(`  ⚠ Could not check ${script} permissions: ${error.message}`, "warning");
+					this.log(
+						`  ⚠ Could not check ${script} permissions: ${error.message}`,
+						"warning",
+					);
 				}
 			}
 		});

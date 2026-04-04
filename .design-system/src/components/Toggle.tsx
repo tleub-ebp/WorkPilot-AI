@@ -2,8 +2,8 @@ import React from "react";
 import { cn } from "../lib/utils";
 
 export interface ToggleProps {
-	checked: boolean;
-	onChange: (checked: boolean) => void;
+	readonly checked: boolean;
+	readonly onChange: (checked: boolean) => void;
 }
 
 export function Toggle({ checked, onChange }: ToggleProps) {

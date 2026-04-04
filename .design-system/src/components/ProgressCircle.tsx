@@ -2,9 +2,9 @@ import React from "react";
 import { cn } from "../lib/utils";
 
 export interface ProgressCircleProps {
-	value: number;
-	size?: "sm" | "md" | "lg";
-	color?: string;
+	readonly value: number;
+	readonly size?: "sm" | "md" | "lg";
+	readonly color?: string;
 }
 
 export function ProgressCircle({

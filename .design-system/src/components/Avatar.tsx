@@ -2,10 +2,10 @@ import React from "react";
 import { cn } from "../lib/utils";
 
 export interface AvatarProps {
-	src?: string;
-	name?: string;
-	size?: "xs" | "sm" | "md" | "lg" | "xl" | "2xl";
-	color?: string;
+	readonly src?: string;
+	readonly name?: string;
+	readonly size?: "xs" | "sm" | "md" | "lg" | "xl" | "2xl";
+	readonly color?: string;
 }
 
 export function Avatar({
@@ -56,8 +56,8 @@ export function Avatar({
 }
 
 interface AvatarGroupProps {
-	avatars: { name: string; src?: string }[];
-	max?: number;
+	readonly avatars: { readonly name: string; readonly src?: string }[];
+	readonly max?: number;
 }
 
 export function AvatarGroup({ avatars, max = 4 }: AvatarGroupProps) {
@@ -66,8 +66,8 @@ export function AvatarGroup({ avatars, max = 4 }: AvatarGroupProps) {
 
 	return (
 		<div className="flex -space-x-2">
-			{visible.map((avatar, i) => (
-				<Avatar key={i} {...avatar} size="sm" />
+			{visible.map((avatar) => (
+				<Avatar key={avatar.name} {...avatar} size="sm" />
 			))}
 			{remaining > 0 && (
 				<div className="w-8 h-8 rounded-full bg-(--color-background-secondary) flex items-center justify-center text-xs font-medium text-(--color-text-secondary) border-2 border-(--color-surface-card)">

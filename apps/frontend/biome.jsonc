@@ -1,5 +1,5 @@
 {
-	"root": true,
+	"root": false,
 	"$schema": "https://biomejs.dev/schemas/2.4.10/schema.json",
 	"vcs": {
 		"enabled": true,
@@ -74,6 +74,16 @@
 	// Biome linter used only for linting, keeping formatter separate
 	"formatter": {
 		"enabled": false
+	},
+	"css": {
+		"parser": {
+			"cssModules": false,
+			"allowWrongLineComments": false,
+			"tailwindDirectives": true
+		},
+		"linter": {
+			"enabled": true
+		}
 	},
 	"files": {
 		"includes": [

@@ -24,16 +24,10 @@ export class {
 
 	ngOnDestroy();
 	: void
-	{
-		// Cleanup resources
-	}
 
 	private
 	loadData();
 	: void
-	{
-		// Load data for the component
-	}
 
 	public
 	navigateToDetail(id: string)

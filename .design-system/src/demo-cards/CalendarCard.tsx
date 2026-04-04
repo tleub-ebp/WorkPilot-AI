@@ -34,13 +34,16 @@ export function CalendarCard() {
 					</div>
 				))}
 				{dates.flat().map((date, i) => {
-					const isCurrentMonth = !((i < 3 && date > 20) || (i > 30 && date < 10));
+					const isCurrentMonth = !(
+						(i < 3 && date > 20) ||
+						(i > 30 && date < 10)
+					);
 					const isSelected = date === 26 && isCurrentMonth;
 					const isToday = date === 16 && isCurrentMonth;
 
 					return (
 						<button
-							key={`date-${date}-${isCurrentMonth ? 'current' : 'other'}`}
+							key={`date-${date}-${isCurrentMonth ? "current" : "other"}`}
 							className={cn(
 								"w-9 h-9 rounded-md text-body-medium transition-colors",
 								!isCurrentMonth && "text-(--color-text-tertiary)",
