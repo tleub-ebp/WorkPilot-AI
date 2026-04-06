@@ -153,7 +153,7 @@ export class AppEmulatorService extends EventEmitter {
 	 */
 	private detectProjectInline(
 		projectDir: string,
-	): Omit<AppEmulatorConfig, "projectDir"> | null {
+	): AppEmulatorConfig | null {
 		// Node.js / frontend projects
 		const pkgPath = path.join(projectDir, "package.json");
 		if (existsSync(pkgPath)) {
@@ -492,7 +492,7 @@ export class AppEmulatorService extends EventEmitter {
 	private findFrontendInSubdirs(
 		dir: string,
 		maxDepth: number,
-	): (Omit<AppEmulatorConfig, "projectDir"> & { projectDir?: string }) | null {
+	): AppEmulatorConfig | null {
 		if (maxDepth <= 0) return null;
 
 		try {
@@ -1043,7 +1043,7 @@ export class AppEmulatorService extends EventEmitter {
 			port: number;
 			projectDir: string;
 		},
-	): Omit<AppEmulatorConfig, "projectDir"> {
+	): AppEmulatorConfig {
 		return {
 			type: "web",
 			framework: backend.framework,

@@ -16,6 +16,9 @@ import type {
 	ImplementationPlan,
 	SDKRateLimitInfo,
 } from "../../shared/types";
+import type { Project } from "../../shared/types/project";
+import type { Task } from "../../shared/types/task";
+import type { TaskEventPayload } from "../agent/task-event-schema";
 import type {
 	AgentManager,
 	ExecutionProgressData,
@@ -191,9 +194,9 @@ function initializeTaskSequenceIfNeeded(
  */
 function persistLastEventToAllPlans(
 	_taskId: string,
-	event: unknown,
-	task: { specId: string },
-	project: { path: string },
+	event: TaskEventPayload,
+	task: Task,
+	project: Project,
 ): void {
 	const mainPlanPath = getPlanPath(project, task);
 	persistPlanLastEventSync(mainPlanPath, event);

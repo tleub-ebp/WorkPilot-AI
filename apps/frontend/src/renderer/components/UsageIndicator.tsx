@@ -667,7 +667,7 @@ export function UsageIndicator() {
 			const openaiError =
 				typeof globalThis === "undefined"
 					? undefined
-					: globalAny.lastOpenAIUsageError;
+					: (globalAny.lastOpenAIUsageError as string | undefined);
 			return (
 				<TooltipProvider delayDuration={200}>
 					<Tooltip>

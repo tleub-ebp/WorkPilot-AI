@@ -34,12 +34,12 @@ export function convertToAgnosticUsage(
 	// Provider-specific details conversion
 	const details: ProviderSpecificDetails = {};
 
-	const snapshotExt = snapshot as Record<string, unknown>;
+	const snapshotExt = snapshot as unknown as Record<string, unknown>;
 	if (snapshot.providerName === "anthropic") {
 		details.anthropic = {
-			subscriptionType: snapshotExt.subscriptionType,
-			rateLimitTier: snapshotExt.rateLimitTier,
-			opusUsagePercent: snapshotExt.opusUsagePercent,
+			subscriptionType: snapshotExt.subscriptionType as string | undefined,
+			rateLimitTier: snapshotExt.rateLimitTier as string | undefined,
+			opusUsagePercent: snapshotExt.opusUsagePercent as number | undefined,
 		};
 	} else if (snapshot.providerName === "openai") {
 		details.openai = snapshot.openaiUsageDetails || {};
@@ -94,15 +94,15 @@ export function convertBackendError(
 	provider: string,
 	backendError: Record<string, unknown>,
 ): UsageError {
-	const errorCode = backendError.error || backendError.code || "UNKNOWN_ERROR";
+	const errorCode = (backendError.error || backendError.code || "UNKNOWN_ERROR") as string;
 
 	return {
 		code: errorCode,
 		message:
-			backendError.message ||
+			(backendError.message ||
 			backendError.errorMessage ||
-			"Unknown error occurred",
-		suggestions: backendError.suggestions || [],
+			"Unknown error occurred") as string,
+		suggestions: (backendError.suggestions || []) as string[],
 		provider,
 		requiresAction: true,
 		actionType: getActionTypeForError(errorCode),

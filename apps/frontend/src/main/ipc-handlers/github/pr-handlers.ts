@@ -2511,8 +2511,8 @@ export function registerPRHandlers(
 				}
 
 				// Normalize snake_case to camelCase for backwards compatibility with old saved files
-				const reviewedCommitSha =
-					review.reviewedCommitSha ?? (review as Record<string, unknown>).reviewed_commit_sha;
+				const reviewedCommitSha: string | undefined =
+					review.reviewedCommitSha ?? (review as unknown as Record<string, unknown>).reviewed_commit_sha as string | undefined;
 				if (!reviewedCommitSha) {
 					debugLog("No reviewedCommitSha in review", { prNumber });
 					return { hasNewCommits: false, newCommitCount: 0 };

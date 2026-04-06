@@ -6,6 +6,7 @@
  * maintaining a duplicate hardcoded list.
  */
 
+import type { APIProfile } from "@shared/types/profile";
 import { providerRegistry } from "./providerRegistry";
 
 export interface Provider {
@@ -14,12 +15,7 @@ export interface Provider {
 	description: string;
 }
 
-interface ProfileEntry {
-	baseUrl?: string;
-	apiKey?: string;
-	name?: string;
-	[key: string]: unknown;
-}
+type ProfileEntry = APIProfile;
 
 export interface ProviderConfig {
 	api_key?: string;
@@ -247,8 +243,8 @@ class ProviderServiceClass {
 		try {
 			const { useSettingsStore } = await import("@/stores/settings-store");
 			settings = {
-				...(useSettingsStore.getState().settings as Record<string, unknown>),
-			};
+				...useSettingsStore.getState().settings,
+			} as Record<string, unknown>;
 		} catch {
 			// settings store not available in some contexts
 		}

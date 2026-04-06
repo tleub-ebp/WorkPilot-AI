@@ -23,6 +23,10 @@ import type {
 	TaskStartOptions,
 	TaskStatus,
 } from "../../../shared/types";
+import type {
+	PhaseModelConfig,
+	PhaseThinkingConfig,
+} from "../../../shared/types/settings";
 import type { AgentManager } from "../../agent";
 import { getAppLanguage } from "../../app-language";
 import { appLog } from "../../app-logger";
@@ -1474,12 +1478,12 @@ print(json.dumps(result))
 		try {
 			const providerPhaseModels =
 				(
-					globalSettings.providerPhaseModels as Record<string, unknown> | undefined
+					globalSettings.providerPhaseModels as Record<string, PhaseModelConfig> | undefined
 				)?.[currentProvider];
 			const providerPhaseThinking =
 				(
 					globalSettings.providerPhaseThinking as
-						| Record<string, unknown>
+						| Record<string, PhaseThinkingConfig>
 						| undefined
 				)?.[currentProvider];
 

@@ -611,7 +611,7 @@ export function AddProjectModal({
 					!showGitCommitModal
 				) {
 					// Finaliser le projet d'abord
-					onProjectAdded?.(project, false);
+					if (project) onProjectAdded?.(project, false);
 
 					// Puis afficher le modal Git SEULEMENT si aucun remote n'a été configuré
 					// (car si un remote est configuré, le modal Git est déjà géré par les callbacks remote)
@@ -629,7 +629,7 @@ export function AddProjectModal({
 				description: t("addProject.successDescription"),
 				variant: "default",
 			});
-			onProjectAdded?.(project, false);
+			if (project) onProjectAdded?.(project, false);
 			onOpenChange(false); // FERMETURE TOTALE
 			// biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
 		} catch (err: any) {

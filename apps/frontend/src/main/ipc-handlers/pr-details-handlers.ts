@@ -371,12 +371,12 @@ function setupPythonProcessHandlers(
 	let output = "";
 	let errorOutput = "";
 
-	pythonProcess.stdout.on("data", (data: Buffer) => {
+	pythonProcess.stdout?.on("data", (data: Buffer) => {
 		const dataStr = data.toString();
 		output += dataStr;
 	});
 
-	pythonProcess.stderr.on("data", (data: Buffer) => {
+	pythonProcess.stderr?.on("data", (data: Buffer) => {
 		const dataStr = data.toString();
 		errorOutput += dataStr;
 		console.error("[PR_DETAILS] Python stderr:", dataStr);

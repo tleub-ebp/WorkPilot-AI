@@ -537,8 +537,8 @@ export const useTaskStore = create<TaskState>((set, get) => ({
 			incomingSeq: number,
 			currentSeq: number,
 			taskId: string,
-			progress: Record<string, unknown>,
-			existingProgress: Record<string, unknown>,
+			progress: Partial<ExecutionProgress>,
+			existingProgress: ExecutionProgress,
 		) => {
 			const normalizedCurrentSeq = isValidSequence(currentSeq) ? currentSeq : 0;
 

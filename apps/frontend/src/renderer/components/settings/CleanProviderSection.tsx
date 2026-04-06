@@ -397,6 +397,14 @@ export function CleanProviderSection({
 		return "api-key";
 	};
 
+	// Utiliser la même logique que ProviderSelector pour déterminer le statut
+	const [staticProviders, setStaticProviders] = useState<CanonicalProvider[]>(
+		[],
+	);
+	const [providerStatus, setProviderStatus] = useState<Record<string, boolean>>(
+		{},
+	);
+
 	// Get API key info for a provider
 	const getApiKeyInfo = useCallback((
 		providerId: string,
@@ -538,14 +546,6 @@ export function CleanProviderSection({
 	};
 
 	// Helper function to mask API key
-
-	// Utiliser la même logique que ProviderSelector pour déterminer le statut
-	const [staticProviders, setStaticProviders] = useState<CanonicalProvider[]>(
-		[],
-	);
-	const [providerStatus, setProviderStatus] = useState<Record<string, boolean>>(
-		{},
-	);
 
 	// Charger les providers de manière asynchrone
 	// eslint-disable-next-line react-hooks/exhaustive-deps

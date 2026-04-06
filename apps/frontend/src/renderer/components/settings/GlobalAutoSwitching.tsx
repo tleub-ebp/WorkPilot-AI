@@ -26,6 +26,12 @@ import {
 	type UnifiedAccount,
 } from "./AccountPriorityList";
 
+/** Profile usage data interface */
+interface ProfileUsageData {
+	readonly sessionPercent?: number;
+	readonly weeklyPercent?: number;
+}
+
 /** Authenticated provider entry for the priority list */
 interface AuthenticatedProvider {
 	id: string;
@@ -63,8 +69,7 @@ export function GlobalAutoSwitching({
 	// Priority order state
 	const [priorityOrder, setPriorityOrder] = useState<string[]>([]);
 	const [isSavingPriority, setIsSavingPriority] = useState(false);
-	// biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
-	const [profileUsageData] = useState<Map<string, any>>(new Map());
+	const [profileUsageData] = useState<Map<string, ProfileUsageData>>(new Map());
 
 	// Authenticated providers (Copilot, OpenAI, etc.)
 	const [authenticatedProviders, setAuthenticatedProviders] = useState<
@@ -234,7 +239,7 @@ export function GlobalAutoSwitching({
 		// Use parent's providerStatus when available (already OAuth-enriched, matches the grid exactly).
 		// Fall back to getStaticProviders for standalone usage (e.g. outside CleanProviderSection).
 		const { providers: staticProviders, status: fallbackStatus } =
-			await getStaticProviders(apiProfiles, settings);
+			await getStaticProviders(apiProfiles, settings as unknown as Record<string, unknown>);
 		const effectiveStatus = providerStatus ?? fallbackStatus;
 
 		// Copilot username (from async auth check) for a nicer identifier
@@ -421,8 +426,7 @@ export function GlobalAutoSwitching({
 		await handleUpdateSetting({ routingStrategy: strategy });
 	};
 
-	// biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
-	const handleUpdateSetting = async (updates: any) => {
+	const handleUpdateSetting = async (updates: Partial<AppSettings>) => {
 		setIsLoading(true);
 		try {
 			await new Promise((resolve) => setTimeout(resolve, 300));

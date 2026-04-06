@@ -1565,15 +1565,15 @@ export class CredentialManager extends EventEmitter {
 					const profile = profiles?.profiles.find((p) => {
 						try {
 							return (
-								(p as Record<string, unknown>).provider === selectedProvider ||
+								(p as unknown as Record<string, unknown>).provider === selectedProvider ||
 								p.baseUrl?.toLowerCase().includes(selectedProvider)
 							);
 						} catch {
 							return false;
 						}
 					});
-					if ((profile as Record<string, unknown>)?.apiKey) {
-						apiKey = (profile as Record<string, unknown>).apiKey as string;
+					if (profile?.apiKey) {
+						apiKey = profile.apiKey;
 						baseUrl = profile?.baseUrl ?? "";
 					}
 				} catch {

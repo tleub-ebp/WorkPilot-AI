@@ -308,9 +308,10 @@ export function CostEstimator({ projectPath }: CostEstimatorProps) {
 			errorKey: string,
 		) => {
 			if (result.status === "fulfilled" && result.value?.success) {
+				const value = result.value as Record<string, unknown>;
 				setter(
 					result.value.success
-						? result.value.summary || result.value.budget
+						? value.summary || value.budget
 						: null,
 				);
 				return true;
@@ -338,13 +339,13 @@ export function CostEstimator({ projectPath }: CostEstimatorProps) {
 
 				const summarySuccess = handleApiResponse(
 					summaryRes,
-					setSummary,
+					(v) => setSummary(v as CostSummary | null),
 					silent,
 					"error",
 				);
 				const budgetSuccess = handleApiResponse(
 					budgetRes,
-					setBudget,
+					(v) => setBudget(v as BudgetInfo | null),
 					silent,
 					"error",
 				);
