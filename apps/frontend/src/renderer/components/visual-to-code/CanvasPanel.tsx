@@ -154,49 +154,42 @@ export const CanvasPanel: React.FC = () => {
 		setIsAiRunning(false);
 		setAiStatus("");
 		if (payload.action === "generate-code") {
-			handleGenerateCodeComplete(payload.data as GenerateCodeResult);
+			const result = payload.data as GenerateCodeResult;
+			setCodeResult(result);
+			setSelectedCodeFile(0);
+			setShowCodeResult(true);
+			toast({
+				title: t("codeGenerated", "Code généré !"),
+				description: result.summary,
+			});
 		} else if (payload.action === "code-to-visual") {
-			handleCodeToVisualComplete(payload.data as CodeToVisualResult);
+			const result = payload.data as CodeToVisualResult;
+			const newNodes = result.nodes.map((n, i) => ({
+				id: n.id || `imported-${i}`,
+				position: { x: 120 + (i % 4) * 220, y: 80 + Math.floor(i / 4) * 120 },
+				data: {
+					label: n.label,
+					type: n.type,
+					framework: n.framework,
+				},
+				type: "editable" as const,
+			}));
+			const newEdges = result.edges.map((e, i) => ({
+				id: `imported-edge-${i}`,
+				source: e.source,
+				target: e.target,
+				data: { label: e.label || "" },
+			}));
+			setNodes(newNodes);
+			setEdges(newEdges);
+			setIsJsonSaved(false);
+			toast({
+				title: t("codeToVisualDone", "Diagramme généré !"),
+				description: result.summary,
+			});
 		}
-	// biome-ignore lint/correctness/useExhaustiveDependencies: handleGenerateCodeComplete and handleCodeToVisualComplete are stable local helpers
-	}, [handleCodeToVisualComplete, handleGenerateCodeComplete]);
-
-	const handleGenerateCodeComplete = (result: GenerateCodeResult) => {
-		setCodeResult(result);
-		setSelectedCodeFile(0);
-		setShowCodeResult(true);
-		toast({
-			title: t("codeGenerated", "Code généré !"),
-			description: result.summary,
-		});
-	};
-
-	const handleCodeToVisualComplete = (result: CodeToVisualResult) => {
-		const newNodes = result.nodes.map((n, i) => ({
-			id: n.id || `imported-${i}`,
-			position: { x: 120 + (i % 4) * 220, y: 80 + Math.floor(i / 4) * 120 },
-			data: {
-				label: n.label,
-				type: n.type,
-				framework: n.framework,
-				onRename: handleRenameNode,
-			},
-			type: "editable" as const,
-		}));
-		const newEdges = result.edges.map((e, i) => ({
-			id: `imported-edge-${i}`,
-			source: e.source,
-			target: e.target,
-			data: { label: e.label || "" },
-		}));
-		setNodes(newNodes);
-		setEdges(newEdges);
-		setIsJsonSaved(false);
-		toast({
-			title: t("codeToVisualDone", "Diagramme généré !"),
-			description: result.summary,
-		});
-	};
+	// biome-ignore lint/correctness/useExhaustiveDependencies: stable setters and toast
+	}, [t]);
 
 	// Subscribe to backend events once on mount
 	useEffect(() => {
