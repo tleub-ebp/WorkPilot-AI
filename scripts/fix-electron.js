@@ -36,7 +36,7 @@ function downloadAndExtract(url, destDir, cb) {
 			return;
 		}
 		if (res.statusCode !== 200) {
-			cb(new Error("Failed to download Electron zip: " + res.statusCode));
+			cb(new Error(`Failed to download Electron zip: ${res.statusCode}`));
 			return;
 		}
 		res

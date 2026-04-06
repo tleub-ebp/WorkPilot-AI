@@ -12,10 +12,10 @@
  *   pnpm merge-upstream -- --branch main
  */
 
-const { execSync } = require("child_process");
-const os = require("os");
-const path = require("path");
-const fs = require("fs");
+const { execSync } = require("node:child_process");
+const os = require("node:os");
+const path = require("node:path");
+const fs = require("node:fs");
 
 const isWindows = os.platform() === "win32";
 const rootDir = path.resolve(__dirname, "..");
@@ -52,7 +52,7 @@ if (isWindows) {
 		}
 
 		command = `powershell -NoProfile -ExecutionPolicy Bypass -File "${scriptPath}"${psArgs}`;
-	} catch (e) {
+	} catch (_e) {
 		// Fall back to batch
 		scriptPath = path.join(rootDir, "merge-upstream.bat");
 		command = `"${scriptPath}"`;

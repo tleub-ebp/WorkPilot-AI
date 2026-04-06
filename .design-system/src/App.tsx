@@ -1,26 +1,5 @@
-import {
-	AnimatePresence,
-	motion,
-	useMotionValue,
-	useSpring,
-	useTransform,
-} from "framer-motion";
-import {
-	Check,
-	ChevronLeft,
-	Heart,
-	Minus,
-	Moon,
-	Plus,
-	RotateCcw,
-	Sparkles,
-	Star,
-	Sun,
-	X,
-	Zap,
-} from "lucide-react";
+import { Moon, Sparkles, Sun } from "lucide-react";
 import { useState } from "react";
-import { animationVariants, transitions } from "./animations";
 import {
 	Avatar,
 	AvatarGroup,
@@ -42,13 +21,7 @@ import {
 } from "./demo-cards";
 import { cn } from "./lib/utils";
 // Import refactored modules
-import {
-	COLOR_THEMES,
-	ColorTheme,
-	Mode,
-	ThemeSelector,
-	useTheme,
-} from "./theme";
+import { ThemeSelector, useTheme } from "./theme";
 
 // ============================================
 // MAIN APP

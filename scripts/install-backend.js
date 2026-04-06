@@ -4,10 +4,10 @@
  * Handles Python venv creation and dependency installation on Windows/Mac/Linux
  */
 
-const { execSync, spawnSync } = require("child_process");
-const path = require("path");
-const fs = require("fs");
-const os = require("os");
+const { execSync, spawnSync } = require("node:child_process");
+const path = require("node:path");
+const fs = require("node:fs");
+const os = require("node:os");
 
 const isWindows = os.platform() === "win32";
 const backendDir = path.join(__dirname, "..", "apps", "backend");
@@ -21,7 +21,7 @@ function run(cmd, options = {}) {
 	try {
 		execSync(cmd, { stdio: "inherit", cwd: backendDir, ...options });
 		return true;
-	} catch (error) {
+	} catch (_error) {
 		return false;
 	}
 }
@@ -66,7 +66,7 @@ function findPython() {
 					}
 				}
 			}
-		} catch (e) {
+		} catch (_e) {
 			// Continue to next candidate
 		}
 	}

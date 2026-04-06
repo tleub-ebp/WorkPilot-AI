@@ -1,6 +1,5 @@
 import { CommonModule } from "@angular/common";
 import { Component, computed, effect, signal } from "@angular/core";
-import { Router } from "@angular/router";
 
 @Component({
 	selector: "app-{{componentName}}",
@@ -66,7 +65,7 @@ export class {
 				{ id: 2, name: "Item 2" },
 			];
 			this._data.set(mockData);
-		} catch (error) {
+		} catch (_error) {
 			this._error.set("Failed to load data");
 		} finally {
 			this._loading.set(false);

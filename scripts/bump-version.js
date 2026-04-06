@@ -27,9 +27,9 @@
  *      - Updates README
  */
 
-const fs = require("fs");
-const path = require("path");
-const { execSync } = require("child_process");
+const fs = require("node:fs");
+const path = require("node:path");
+const { execSync } = require("node:child_process");
 
 // Colors for terminal output
 const colors = {
@@ -70,9 +70,9 @@ function parseVersion(version) {
 		);
 	}
 	return {
-		major: parseInt(match[1]),
-		minor: parseInt(match[2]),
-		patch: parseInt(match[3]),
+		major: parseInt(match[1], 10),
+		minor: parseInt(match[2], 10),
+		patch: parseInt(match[3], 10),
 		prerelease: match[4] || null,
 	};
 }
@@ -137,13 +137,13 @@ function updatePackageJson(newVersion) {
 	const frontendJson = JSON.parse(fs.readFileSync(frontendPath, "utf8"));
 	const oldVersion = frontendJson.version;
 	frontendJson.version = newVersion;
-	fs.writeFileSync(frontendPath, JSON.stringify(frontendJson, null, 2) + "\n");
+	fs.writeFileSync(frontendPath, `${JSON.stringify(frontendJson, null, 2)}\n`);
 
 	// Update root package.json if it exists
 	if (fs.existsSync(rootPath)) {
 		const rootJson = JSON.parse(fs.readFileSync(rootPath, "utf8"));
 		rootJson.version = newVersion;
-		fs.writeFileSync(rootPath, JSON.stringify(rootJson, null, 2) + "\n");
+		fs.writeFileSync(rootPath, `${JSON.stringify(rootJson, null, 2)}\n`);
 	}
 
 	return { oldVersion, packagePath: frontendPath };
@@ -272,7 +272,7 @@ function main() {
 		warning(
 			"═══════════════════════════════════════════════════════════════════════",
 		);
-		warning("  CHANGELOG.md does not have an entry for version " + newVersion);
+		warning(`  CHANGELOG.md does not have an entry for version ${newVersion}`);
 		warning(
 			"═══════════════════════════════════════════════════════════════════════",
 		);

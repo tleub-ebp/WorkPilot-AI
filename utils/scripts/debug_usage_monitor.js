@@ -40,7 +40,7 @@ if (window.electronAPI.onUsageUpdated) {
 	console.log("✅ onUsageUpdated available");
 
 	// Set up a listener
-	const unsubscribe = window.electronAPI.onUsageUpdated((usage) => {
+	const _unsubscribe = window.electronAPI.onUsageUpdated((usage) => {
 		console.log("📨 Received usage update:", usage);
 	});
 

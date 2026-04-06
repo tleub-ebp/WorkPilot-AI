@@ -142,7 +142,7 @@ class BMADCLI {
 		console.log("✅ Claude Code integration configured");
 	}
 
-	async createConfiguration(modules, tools) {
+	async createConfiguration(_modules, _tools) {
 		const config = {
 			version: "1.0.0",
 			created: new Date().toISOString(),

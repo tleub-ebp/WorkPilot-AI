@@ -536,7 +536,7 @@ export function App() {
 			await new Promise((resolve) => setTimeout(resolve, 100));
 		}
 	// biome-ignore lint/correctness/useExhaustiveDependencies: detectSingleProject is a stable local helper
-	}, []);
+	}, [detectSingleProject]);
 
 	// Auto-detect repository types for loaded projects
 	useEffect(() => {

@@ -509,7 +509,7 @@ export function CleanProviderSection({
 		}
 
 		return { hasKey: false, authMethod };
-	}, [profiles, settings, providerStatus]);
+	}, [profiles, settings, providerStatus, detectProviderFromUrl, getProviderApiKeyField, getProviderAuthMethod]);
 
 	// Helper function to detect provider from URL
 	const detectProviderFromUrl = (url: string): string => {

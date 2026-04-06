@@ -14,12 +14,10 @@ import { encodeProjectPath, getGitLabConfig, gitlabFetch } from "./utils";
 const DEBUG =
 	process.env.DEBUG === "true" || process.env.NODE_ENV === "development";
 
-function debugLog(message: string, data?: unknown): void {
+function debugLog(_message: string, data?: unknown): void {
 	if (DEBUG) {
 		if (data === undefined) {
-			console.log(`[GitLab Issues Debug] ${message}`);
 		} else {
-			console.log(`[GitLab Issues Debug] ${message}:`, data);
 		}
 	}
 }

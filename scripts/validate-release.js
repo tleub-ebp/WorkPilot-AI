@@ -10,7 +10,7 @@
  * Example: node scripts/validate-release.js v2.7.2
  */
 
-const { execSync } = require("child_process");
+const { execSync } = require("node:child_process");
 
 function validateRelease(version) {
 	console.log(`Validating release: ${version}...`);

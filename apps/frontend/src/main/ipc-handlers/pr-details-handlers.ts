@@ -320,7 +320,7 @@ function extractJsonFromOutput(output: string): unknown {
  */
 function handlePythonSuccess(
 	output: string,
-	errorOutput: string,
+	_errorOutput: string,
 	resolve: (value: unknown) => void,
 	reject: (reason: unknown) => void,
 ): void {

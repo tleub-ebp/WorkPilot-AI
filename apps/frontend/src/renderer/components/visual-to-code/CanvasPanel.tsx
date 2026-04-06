@@ -145,7 +145,7 @@ export const CanvasPanel: React.FC = () => {
 			description: err,
 			variant: "destructive",
 		});
-	}, [t, toast]);
+	}, [t]);
 
 	const handleVisualProgrammingComplete = useCallback((payload: {
 		action: string;
@@ -159,7 +159,7 @@ export const CanvasPanel: React.FC = () => {
 			handleCodeToVisualComplete(payload.data as CodeToVisualResult);
 		}
 	// biome-ignore lint/correctness/useExhaustiveDependencies: handleGenerateCodeComplete and handleCodeToVisualComplete are stable local helpers
-	}, []);
+	}, [handleCodeToVisualComplete, handleGenerateCodeComplete]);
 
 	const handleGenerateCodeComplete = (result: GenerateCodeResult) => {
 		setCodeResult(result);

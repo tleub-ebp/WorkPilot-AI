@@ -4,10 +4,10 @@
  * Runs pytest using the correct virtual environment path for Windows/Mac/Linux
  */
 
-const { execSync } = require("child_process");
-const path = require("path");
-const fs = require("fs");
-const os = require("os");
+const { execSync } = require("node:child_process");
+const path = require("node:path");
+const fs = require("node:fs");
+const os = require("node:os");
 
 const isWindows = os.platform() === "win32";
 const rootDir = path.join(__dirname, "..");

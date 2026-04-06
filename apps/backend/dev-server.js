@@ -1,10 +1,10 @@
 // Cross-platform backend dev server launcher for pnpm
 // Ensures Python venv is activated and dependencies are installed before running Uvicorn
 
-import { spawn } from "child_process";
-import { existsSync } from "fs";
-import { dirname, join, resolve } from "path";
-import { fileURLToPath } from "url";
+import { spawn } from "node:child_process";
+import { existsSync } from "node:fs";
+import { dirname, join, resolve } from "node:path";
+import { fileURLToPath } from "node:url";
 
 const isWin = process.platform === "win32";
 const __filename = fileURLToPath(import.meta.url);

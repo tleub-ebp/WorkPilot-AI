@@ -25,7 +25,7 @@ export function CalendarCard() {
 			</div>
 
 			<div className="grid grid-cols-7 gap-1 text-center">
-				{days.map((day, i) => (
+				{days.map((day, _i) => (
 					<div
 						key={day}
 						className="text-label-small text-(--color-text-tertiary) py-2"
