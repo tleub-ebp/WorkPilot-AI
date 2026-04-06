@@ -397,6 +397,40 @@ export function CleanProviderSection({
 		return "api-key";
 	};
 
+	// Helper function to detect provider from URL
+	const detectProviderFromUrl = (url: string): string => {
+		const urlLower = url.toLowerCase();
+		if (urlLower.includes("api.anthropic.com")) return "anthropic";
+		if (urlLower.includes("api.openai.com")) return "openai";
+		if (urlLower.includes("googleapis.com")) return "google";
+		if (urlLower.includes("api.mistral.ai")) return "mistral";
+		if (urlLower.includes("api.deepseek.com")) return "deepseek";
+		if (urlLower.includes("api.x.ai")) return "grok";
+		if (urlLower.includes("api.meta.ai")) return "meta";
+		if (urlLower.includes("windsurf.com") || urlLower.includes("codeium.com"))
+			return "windsurf";
+		return "unknown";
+	};
+
+	// Helper function to get API key field for provider
+	const getProviderApiKeyField = (providerId: string): string | null => {
+		const apiKeyMap: Record<string, string> = {
+			openai: "globalOpenAIApiKey",
+			gemini: "globalGoogleApiKey",
+			google: "globalGoogleDeepMindApiKey",
+			meta: "globalMetaApiKey",
+			"meta-llama": "globalMetaLlamaApiKey",
+			mistral: "globalMistralApiKey",
+			deepseek: "globalDeepSeekApiKey",
+			grok: "globalGrokApiKey",
+			windsurf: "globalWindsurfApiKey",
+			cursor: "globalCursorApiKey",
+			aws: "globalAWSApiKey",
+			"azure-openai": "globalOpenAIApiKey",
+		};
+		return apiKeyMap[providerId] || null;
+	};
+
 	// Utiliser la même logique que ProviderSelector pour déterminer le statut
 	const [staticProviders, setStaticProviders] = useState<CanonicalProvider[]>(
 		[],
