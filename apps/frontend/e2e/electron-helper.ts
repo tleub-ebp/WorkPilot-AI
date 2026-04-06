@@ -3,7 +3,7 @@
  * Provides utilities for launching and interacting with the Electron app
  */
 import { _electron as electron, ElectronApplication, Page } from '@playwright/test';
-import path from 'path';
+import path from 'node:path';
 
 export interface ElectronTestContext {
   app: ElectronApplication;

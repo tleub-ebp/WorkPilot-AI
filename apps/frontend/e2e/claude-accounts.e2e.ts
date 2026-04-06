@@ -8,9 +8,9 @@
  * To run: npx playwright test claude-accounts.spec.ts --config=e2e/playwright.config.ts
  */
 import { test, expect, _electron as electron, ElectronApplication, Page } from '@playwright/test';
-import { mkdirSync, rmSync, existsSync, writeFileSync, readFileSync, mkdtempSync } from 'fs';
-import { tmpdir } from 'os';
-import path from 'path';
+import { mkdirSync, rmSync, existsSync, writeFileSync, readFileSync, mkdtempSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import path from 'node:path';
 
 // Test data directory - use secure temp directory with random suffix
 let TEST_DATA_DIR: string;

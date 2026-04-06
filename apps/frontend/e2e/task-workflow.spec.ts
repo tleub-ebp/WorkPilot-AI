@@ -8,9 +8,9 @@
  * To run: npx playwright test task-workflow --config=e2e/playwright.config.ts
  */
 import { test, expect } from '@playwright/test';
-import { mkdirSync, mkdtempSync, rmSync, existsSync, writeFileSync, readFileSync } from 'fs';
-import { tmpdir } from 'os';
-import path from 'path';
+import { mkdirSync, mkdtempSync, rmSync, existsSync, writeFileSync, readFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import path from 'node:path';
 
 // Test data directory - created securely with mkdtempSync to prevent TOCTOU attacks
 let TEST_DATA_DIR: string;

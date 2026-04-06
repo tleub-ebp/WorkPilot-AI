@@ -9,8 +9,8 @@
  * To run: npx playwright test --config=e2e/playwright.config.ts
  */
 import { test, expect, _electron as electron, ElectronApplication, Page } from '@playwright/test';
-import { mkdirSync, rmSync, existsSync, writeFileSync, readFileSync } from 'fs';
-import path from 'path';
+import { mkdirSync, rmSync, existsSync, writeFileSync, readFileSync } from 'node:fs';
+import path from 'node:path';
 
 // Test data directory
 const TEST_DATA_DIR = '/tmp/workpilot-ai-e2e';
