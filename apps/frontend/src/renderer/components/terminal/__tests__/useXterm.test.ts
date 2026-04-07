@@ -2,10 +2,9 @@
  * @vitest-environment jsdom
  */
 
+// @ts-nocheck - Allow accessing mocked functions without type checking
 import { act, render } from "@testing-library/react";
-import { Terminal as XTerm } from "@xterm/xterm";
 import React from "react";
-import type { Mock } from "vitest";
 /**
  * Unit tests for useXterm keyboard handlers
  * Tests terminal copy/paste keyboard shortcuts and platform detection
@@ -22,54 +21,86 @@ import {
 } from "vitest";
 import { useXterm } from "../useXterm";
 
-// Mock xterm.js
-vi.mock("@xterm/xterm", () => ({
-	Terminal: vi.fn().mockImplementation(() => ({
-		open: vi.fn(),
-		loadAddon: vi.fn(),
-		attachCustomKeyEventHandler: vi.fn(),
-		hasSelection: vi.fn(() => false),
-		getSelection: vi.fn(() => ""),
-		paste: vi.fn(),
-		input: vi.fn(),
-		onData: vi.fn(),
-		onResize: vi.fn(),
-		dispose: vi.fn(),
-		write: vi.fn(),
-		cols: 80,
-		rows: 24,
-		options: {
-			cursorBlink: true,
-			cursorStyle: "block",
-			fontSize: 14,
-			fontFamily: "monospace",
-			fontWeight: "normal",
-			lineHeight: 1,
-			letterSpacing: 0,
-			theme: { cursorAccent: "#000000" },
-			scrollback: 1000,
-		},
-		refresh: vi.fn(),
-	})),
-}));
+// Configurable factory for Terminal instances - allows per-test overrides
+// while keeping the class constructable via `new`
+let terminalFactory: (() => Record<string, unknown>) | null = null;
 
-// Mock xterm addons
-vi.mock("@xterm/addon-fit", () => ({
-	FitAddon: vi.fn().mockImplementation(() => ({
-		fit: vi.fn(),
-	})),
-}));
+// Mock xterm.js - use class syntax for constructability with `new`
+vi.mock("@xterm/xterm", () => {
+	class MockTerminal {
+		constructor() {
+			const props = terminalFactory
+				? terminalFactory()
+				: {
+						open: vi.fn(),
+						loadAddon: vi.fn(),
+						attachCustomKeyEventHandler: vi.fn(),
+						hasSelection: vi.fn(() => false),
+						getSelection: vi.fn(() => ""),
+						paste: vi.fn(),
+						input: vi.fn(),
+						onData: vi.fn(),
+						onResize: vi.fn(),
+						dispose: vi.fn(),
+						write: vi.fn(),
+						cols: 80,
+						rows: 24,
+						options: {
+							cursorBlink: true,
+							cursorStyle: "block",
+							fontSize: 14,
+							fontFamily: "monospace",
+							fontWeight: "normal",
+							lineHeight: 1,
+							letterSpacing: 0,
+							theme: { cursorAccent: "#000000" },
+							scrollback: 1000,
+						},
+						refresh: vi.fn(),
+					};
+			Object.assign(this, props);
+		}
+	}
+	return { Terminal: MockTerminal };
+});
 
-vi.mock("@xterm/addon-web-links", () => ({
-	WebLinksAddon: vi.fn(),
-}));
+// Configurable factories for addon instances
+let fitAddonFactory: (() => Record<string, unknown>) | null = null;
+let webLinksAddonFactory: (() => Record<string, unknown>) | null = null;
+let serializeAddonFactory: (() => Record<string, unknown>) | null = null;
 
-vi.mock("@xterm/addon-serialize", () => ({
-	SerializeAddon: vi.fn().mockImplementation(() => ({
-		serialize: vi.fn(() => ""),
-		dispose: vi.fn(),
-	})),
-}));
+// Mock xterm addons - use class syntax for constructability
+vi.mock("@xterm/addon-fit", () => {
+	class MockFitAddon {
+		constructor() {
+			Object.assign(this, fitAddonFactory ? fitAddonFactory() : { fit: vi.fn() });
+		}
+	}
+	return { FitAddon: MockFitAddon };
+});
+
+vi.mock("@xterm/addon-web-links", () => {
+	class MockWebLinksAddon {
+		constructor() {
+			if (webLinksAddonFactory) Object.assign(this, webLinksAddonFactory());
+		}
+	}
+	return { WebLinksAddon: MockWebLinksAddon };
+});
+
+vi.mock("@xterm/addon-serialize", () => {
+	class MockSerializeAddon {
+		constructor() {
+			Object.assign(
+				this,
+				serializeAddonFactory
+					? serializeAddonFactory()
+					: { serialize: vi.fn(() => ""), dispose: vi.fn() },
+			);
+		}
+	}
+	return { SerializeAddon: MockSerializeAddon };
+});
 
 // Mock terminal buffer manager
 vi.mock("../../../../lib/terminal-buffer-manager", () => ({
@@ -101,8 +132,8 @@ async function setupMockXterm(
 ) {
 	let keyEventHandler: ((event: KeyboardEvent) => boolean) | null = null;
 
-	// Override XTerm mock to be constructable
-	(XTerm as unknown as Mock).mockImplementation(() => ({
+	// Override Terminal factory with custom behavior for this test
+	terminalFactory = () => ({
 		open: vi.fn(),
 		loadAddon: vi.fn(),
 		attachCustomKeyEventHandler: vi.fn(
@@ -132,27 +163,22 @@ async function setupMockXterm(
 			scrollback: 1000,
 		},
 		refresh: vi.fn(),
-	}));
+	});
 
-	// Setup addon mocks
-	const { FitAddon } = await import("@xterm/addon-fit");
-	(FitAddon as unknown as Mock).mockImplementation(() => ({ fit: vi.fn() }));
-
-	const { WebLinksAddon } = await import("@xterm/addon-web-links");
-	(WebLinksAddon as unknown as Mock).mockImplementation(() => ({}));
-
-	const { SerializeAddon } = await import("@xterm/addon-serialize");
-	(SerializeAddon as unknown as Mock).mockImplementation(() => ({
+	// Setup addon factories
+	fitAddonFactory = () => ({ fit: vi.fn() });
+	webLinksAddonFactory = () => ({});
+	serializeAddonFactory = () => ({
 		serialize: vi.fn(() => ""),
 		dispose: vi.fn(),
-	}));
+	});
 
-	// Mock ResizeObserver
-	global.ResizeObserver = vi.fn().mockImplementation(() => ({
-		observe: vi.fn(),
-		unobserve: vi.fn(),
-		disconnect: vi.fn(),
-	}));
+	// Mock ResizeObserver with a constructable class
+	global.ResizeObserver = class MockResizeObserver {
+		observe = vi.fn();
+		unobserve = vi.fn();
+		disconnect = vi.fn();
+	} as unknown as typeof ResizeObserver;
 
 	// Create and render test wrapper component
 	const TestWrapper = () => {
@@ -241,6 +267,11 @@ describe("useXterm keyboard handlers", () => {
 			value: originalNavigatorPlatform,
 			writable: true,
 		});
+		// Reset mock factories to defaults
+		terminalFactory = null;
+		fitAddonFactory = null;
+		webLinksAddonFactory = null;
+		serializeAddonFactory = null;
 	});
 
 	describe("Platform detection", () => {

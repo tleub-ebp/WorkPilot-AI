@@ -3,7 +3,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { ClaudeCodeSettings } from "../types";
 
 // Mock fs module
-vi.mock("fs", () => {
+vi.mock("node:fs", () => {
 	const mod = {
 		existsSync: vi.fn(),
 		readFileSync: vi.fn(),
@@ -15,7 +15,7 @@ vi.mock("fs", () => {
 });
 
 // Mock os module
-vi.mock("os", () => {
+vi.mock("node:os", () => {
 	const mod = { homedir: vi.fn(() => "/home/testuser") };
 	return { ...mod, default: mod };
 });
