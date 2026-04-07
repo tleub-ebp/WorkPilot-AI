@@ -27,7 +27,7 @@ vi.mock("electron", () => ({
 }));
 
 // Mock fs module - mock the promises export which is used by profile-manager.ts
-vi.mock("fs", () => {
+vi.mock("node:fs", () => {
 	const promises = {
 		readFile: vi.fn(),
 		writeFile: vi.fn(),

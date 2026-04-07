@@ -16,7 +16,7 @@ vi.mock("../worktree-paths", () => ({
 	findTaskWorktree: vi.fn(() => null),
 }));
 
-vi.mock("fs", () => {
+vi.mock("node:fs", () => {
 	const mod = {
 		existsSync: vi.fn(() => false),
 		readFileSync: vi.fn(() => ""),
