@@ -1,7 +1,7 @@
 {
   "projects": [
     {
-      "id": "f305aa34-edc0-4e88-9c32-4369bdcbc4cd",
+      "id": "646c88af-17c9-4766-8372-987ce1bda678",
       "name": "test-project",
       "path": "C:\\Users\\thomas.leberre\\Repositories\\Auto-Claude_EBP\\tmp\\ipc-handlers-test\\test-project",
       "autoBuildPath": ".workpilot",
@@ -19,8 +19,8 @@
         "graphitiMcpUrl": "http://localhost:9000/mcp/",
         "useClaudeMd": true
       },
-      "createdAt": "2026-04-07T14:24:05.112Z",
-      "updatedAt": "2026-04-07T14:24:05.112Z"
+      "createdAt": "2026-04-07T14:30:49.537Z",
+      "updatedAt": "2026-04-07T14:30:49.537Z"
     }
   ],
   "settings": {}

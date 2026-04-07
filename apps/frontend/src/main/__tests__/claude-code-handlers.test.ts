@@ -97,7 +97,7 @@ vi.mock("node:child_process", () => ({
 		spawn: vi.fn(),
 		exec: vi.fn(),
 		execFile: vi.fn(
-			(cmd: string, args: string[], options: unknown, callback: Function) => {
+			(_cmd: string, _args: string[], _options: unknown, callback: Function) => {
 				// Reject all execFile calls immediately to prevent long delays
 				callback(new Error("Command not found"));
 			},
@@ -107,7 +107,7 @@ vi.mock("node:child_process", () => ({
 	spawn: vi.fn(),
 	exec: vi.fn(),
 	execFile: vi.fn(
-		(cmd: string, args: string[], options: unknown, callback: Function) => {
+		(_cmd: string, _args: string[], _options: unknown, callback: Function) => {
 			// Reject all execFile calls immediately to prevent long delays
 			callback(new Error("Command not found"));
 		},
@@ -121,12 +121,11 @@ globalThis.fetch = mockFetch;
 
 // Mock AbortSignal.timeout
 const mockAbortSignal = {
-	timeout: vi.fn((ms: number) => {
+	timeout: vi.fn((_ms: number) => {
 		// Return a mock abort signal
 		return { aborted: false } as AbortSignal;
 	}),
 };
-const originalAbortSignal = globalThis.AbortSignal;
 Object.defineProperty(globalThis, "AbortSignal", {
 	value: mockAbortSignal,
 	writable: true,
