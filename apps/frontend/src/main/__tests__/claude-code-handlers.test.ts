@@ -78,22 +78,60 @@ vi.mock("node:fs", () => ({
 	},
 }));
 
+// Mock os
+vi.mock("node:os", () => ({
+	default: {
+		homedir: vi.fn(() => "/home/user"),
+	},
+	homedir: vi.fn(() => "/home/user"),
+}));
+
+// Mock path - not needed, it's a standard module
+// vi.mock("node:path", async (importOriginal) => {
+// 	const actual = await importOriginal<typeof import("node:path")>();
+// 	return actual;
+// });
+
 vi.mock("node:child_process", () => ({
 	default: {
 		spawn: vi.fn(),
 		exec: vi.fn(),
-		execFile: vi.fn(),
+		execFile: vi.fn(
+			(cmd: string, args: string[], options: unknown, callback: Function) => {
+				// Reject all execFile calls immediately to prevent long delays
+				callback(new Error("Command not found"));
+			},
+		),
 		execFileSync: vi.fn(),
 	},
 	spawn: vi.fn(),
 	exec: vi.fn(),
-	execFile: vi.fn(),
+	execFile: vi.fn(
+		(cmd: string, args: string[], options: unknown, callback: Function) => {
+			// Reject all execFile calls immediately to prevent long delays
+			callback(new Error("Command not found"));
+		},
+	),
 	execFileSync: vi.fn(),
 }));
 
 // Mock global fetch
 const mockFetch = vi.fn();
 globalThis.fetch = mockFetch;
+
+// Mock AbortSignal.timeout
+const mockAbortSignal = {
+	timeout: vi.fn((ms: number) => {
+		// Return a mock abort signal
+		return { aborted: false } as AbortSignal;
+	}),
+};
+const originalAbortSignal = globalThis.AbortSignal;
+Object.defineProperty(globalThis, "AbortSignal", {
+	value: mockAbortSignal,
+	writable: true,
+	configurable: true,
+});
 
 // Import after mocks are set up
 import { IPC_CHANNELS } from "../../shared/constants";
@@ -320,37 +358,41 @@ describe("claude-code-handlers - Cache Invalidation", () => {
 			expect(mockFetch).toHaveBeenCalledTimes(1);
 		});
 
-		test("should handle null installed version (CLI not found)", async () => {
-			// Setup: CLI not found
-			mockGetToolInfo.mockReturnValue({
-				found: false,
-				version: null,
-				path: null,
-				source: "fallback",
-				message: "Not found",
-			});
+		test(
+			"should handle null installed version (CLI not found)",
+			async () => {
+				// Setup: CLI not found
+				mockGetToolInfo.mockReturnValue({
+					found: false,
+					version: null,
+					path: null,
+					source: "fallback",
+					message: "Not found",
+				});
 
-			// npm returns version
-			mockFetch.mockResolvedValueOnce({
-				ok: true,
-				json: async () => ({ version: "2.1.16" }),
-			});
+				// npm returns version
+				mockFetch.mockResolvedValueOnce({
+					ok: true,
+					json: async () => ({ version: "2.1.16" }),
+				});
 
-			// First call to populate cache
-			await checkVersionHandler({}, null);
+				// First call to populate cache
+				await checkVersionHandler({}, null);
 
-			// Second call: null installed should use cache
-			const result = (await checkVersionHandler({}, null)) as {
-				success: boolean;
-				data?: { installed: string | null; latest: string };
-			};
-			expect(result.success).toBe(true);
-			expect(result.data?.installed).toBeNull();
-			expect(result.data?.latest).toBe("2.1.16");
+				// Second call: null installed should use cache
+				const result = (await checkVersionHandler({}, null)) as {
+					success: boolean;
+					data?: { installed: string | null; latest: string };
+				};
+				expect(result.success).toBe(true);
+				expect(result.data?.installed).toBeNull();
+				expect(result.data?.latest).toBe("2.1.16");
 
-			// Should only fetch once
-			expect(mockFetch).toHaveBeenCalledTimes(1);
-		});
+				// Should only fetch once
+				expect(mockFetch).toHaveBeenCalledTimes(1);
+			},
+			10000,
+		); // 10s timeout instead of 30s default
 	});
 
 	describe("network error handling", () => {
