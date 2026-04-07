@@ -32,24 +32,26 @@ vi.mock("../../../../hooks/use-toast", () => ({
 }));
 
 // Mock xterm.js to prevent initialization errors in tests
-// vi.mock calls are hoisted to the top, so we use function keyword
-vi.mock("@xterm/xterm", () => ({
-	Terminal: vi.fn().mockImplementation(() => ({
-		open: vi.fn(),
-		write: vi.fn(),
-		loadAddon: vi.fn(),
-		options: {},
-		refresh: vi.fn(),
-		dispose: vi.fn(),
-		rows: 24,
-	})),
-}));
+// Use class syntax to ensure the mock is constructable with `new`
+vi.mock("@xterm/xterm", () => {
+	class MockTerminal {
+		open = vi.fn();
+		write = vi.fn();
+		loadAddon = vi.fn();
+		options = {};
+		refresh = vi.fn();
+		dispose = vi.fn();
+		rows = 24;
+	}
+	return { Terminal: MockTerminal };
+});
 
-vi.mock("@xterm/addon-fit", () => ({
-	FitAddon: vi.fn().mockImplementation(() => ({
-		fit: vi.fn(),
-	})),
-}));
+vi.mock("@xterm/addon-fit", () => {
+	class MockFitAddon {
+		fit = vi.fn();
+	}
+	return { FitAddon: MockFitAddon };
+});
 
 function renderWithI18n(ui: React.ReactElement) {
 	return render(<I18nextProvider i18n={i18n}>{ui}</I18nextProvider>);
