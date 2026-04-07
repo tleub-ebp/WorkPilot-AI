@@ -40,7 +40,7 @@ const mockFs = {
 	writeFileSync: vi.fn(),
 };
 
-vi.mock("fs", () => {
+vi.mock("node:fs", () => {
 	const mod = {
 		existsSync: (...args: unknown[]) => mockFs.existsSync(...args),
 		readFileSync: (...args: unknown[]) => mockFs.readFileSync(...args),
