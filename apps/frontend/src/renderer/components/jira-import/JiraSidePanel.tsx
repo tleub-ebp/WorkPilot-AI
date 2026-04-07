@@ -551,6 +551,7 @@ export function JiraSidePanel({
 				{filteredItems.map((item) => (
 					// biome-ignore lint/a11y/noStaticElementInteractions: draggable item with toggle
 					// biome-ignore lint/a11y/useKeyWithClickEvents: keyboard handled at parent level
+					// biome-ignore lint/a11y/noNoninteractiveElementInteractions: draggable Jira issue row
 					<div
 						key={item.id}
 						className={cn(
@@ -652,6 +653,8 @@ export function JiraSidePanel({
 	return (
 		<>
 			{/* Panel seulement - pas de conteneur qui bloque l'écran */}
+			{/* biome-ignore lint/a11y/noNoninteractiveElementInteractions: drop zone for Jira items */}
+			{/* biome-ignore lint/a11y/noStaticElementInteractions: drop zone for Jira items */}
 			<div
 				ref={panelRef}
 				className="fixed right-0 top-0 h-full bg-background border-l border-border shadow-2xl flex flex-col z-300"
@@ -869,6 +872,8 @@ export function JiraSidePanel({
 				)}
 
 				{/* Resize handle */}
+				{/* biome-ignore lint/a11y/noNoninteractiveElementInteractions: resize handle — mouse drag */}
+				{/* biome-ignore lint/a11y/noStaticElementInteractions: resize handle — mouse drag */}
 				<div
 					className="absolute left-0 top-0 bottom-0 w-1 cursor-col-resize hover:bg-primary/20 transition-colors"
 					onMouseDown={handleResizeStart}

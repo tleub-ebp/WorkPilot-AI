@@ -1,13 +1,13 @@
-import type { BrowserWindow } from "electron";
-import { ipcMain } from "electron";
 import {
 	existsSync,
 	mkdirSync,
 	readdirSync,
 	readFileSync,
 	writeFileSync,
-} from "fs";
-import path from "path";
+} from "node:fs";
+import path from "node:path";
+import type { BrowserWindow } from "electron";
+import { ipcMain } from "electron";
 import {
 	AUTO_BUILD_PATHS,
 	getSpecsDir,
@@ -50,7 +50,7 @@ export function registerLinearHandlers(
 		try {
 			const content = readFileSync(envPath, "utf-8");
 			const vars = parseEnvFile(content);
-			return vars["LINEAR_API_KEY"] || null;
+			return vars.LINEAR_API_KEY || null;
 		} catch {
 			return null;
 		}

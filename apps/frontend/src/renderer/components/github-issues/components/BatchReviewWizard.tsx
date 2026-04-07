@@ -322,6 +322,7 @@ export function BatchReviewWizard({
 									<>
 										{/* biome-ignore lint/a11y/noStaticElementInteractions: interactive handler is intentional */}
 										{/* biome-ignore lint/a11y/useKeyWithClickEvents: keyboard events handled elsewhere */}
+										{/* biome-ignore lint/a11y/noNoninteractiveElementInteractions: selectable issue row */}
 										<div
 											key={issue.issueNumber}
 											onClick={() =>

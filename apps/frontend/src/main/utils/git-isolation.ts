@@ -13,7 +13,7 @@
  * Backend equivalent: apps/backend/core/git_executable.py:get_isolated_git_env()
  */
 
-import { execFileSync } from "child_process";
+import { execFileSync } from "node:child_process";
 import { getToolPath } from "../cli-tool-manager";
 
 /**

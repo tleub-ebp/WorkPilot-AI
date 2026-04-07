@@ -60,7 +60,7 @@ describe("IPC Bridge Integration", () => {
 				data: { id: "1" },
 			});
 
-			const addProject = electronAPI["addProject"] as (
+			const addProject = electronAPI.addProject as (
 				path: string,
 			) => Promise<unknown>;
 			await addProject("/test/path");
@@ -72,7 +72,7 @@ describe("IPC Bridge Integration", () => {
 		});
 
 		it("should have removeProject method", async () => {
-			const removeProject = electronAPI["removeProject"] as (
+			const removeProject = electronAPI.removeProject as (
 				id: string,
 			) => Promise<unknown>;
 			await removeProject("project-id");
@@ -84,14 +84,14 @@ describe("IPC Bridge Integration", () => {
 		});
 
 		it("should have getProjects method", async () => {
-			const getProjects = electronAPI["getProjects"] as () => Promise<unknown>;
+			const getProjects = electronAPI.getProjects as () => Promise<unknown>;
 			await getProjects();
 
 			expect(ipcRenderer.invoke).toHaveBeenCalledWith("project:list");
 		});
 
 		it("should have updateProjectSettings method", async () => {
-			const updateProjectSettings = electronAPI["updateProjectSettings"] as (
+			const updateProjectSettings = electronAPI.updateProjectSettings as (
 				id: string,
 				settings: object,
 			) => Promise<unknown>;
@@ -120,7 +120,7 @@ describe("IPC Bridge Integration", () => {
 		});
 
 		it("should have getTasks method", async () => {
-			const getTasks = electronAPI["getTasks"] as (
+			const getTasks = electronAPI.getTasks as (
 				projectId: string,
 			) => Promise<unknown>;
 			await getTasks("project-id");
@@ -134,7 +134,7 @@ describe("IPC Bridge Integration", () => {
 		});
 
 		it("should have createTask method", async () => {
-			const createTask = electronAPI["createTask"] as (
+			const createTask = electronAPI.createTask as (
 				projectId: string,
 				title: string,
 				desc: string,
@@ -153,7 +153,7 @@ describe("IPC Bridge Integration", () => {
 		});
 
 		it("should have startTask method using send", async () => {
-			const startTask = electronAPI["startTask"] as (
+			const startTask = electronAPI.startTask as (
 				id: string,
 				options?: object,
 			) => void;
@@ -165,14 +165,14 @@ describe("IPC Bridge Integration", () => {
 		});
 
 		it("should have stopTask method using send", async () => {
-			const stopTask = electronAPI["stopTask"] as (id: string) => void;
+			const stopTask = electronAPI.stopTask as (id: string) => void;
 			stopTask("task-id");
 
 			expect(ipcRenderer.send).toHaveBeenCalledWith("task:stop", "task-id");
 		});
 
 		it("should have submitReview method", async () => {
-			const submitReview = electronAPI["submitReview"] as (
+			const submitReview = electronAPI.submitReview as (
 				id: string,
 				approved: boolean,
 				feedback?: string,
@@ -206,7 +206,7 @@ describe("IPC Bridge Integration", () => {
 
 		it("should register onTaskProgress listener", () => {
 			const callback = vi.fn();
-			const onTaskProgress = electronAPI["onTaskProgress"] as (
+			const onTaskProgress = electronAPI.onTaskProgress as (
 				cb: Function,
 			) => Function;
 			onTaskProgress(callback);
@@ -219,9 +219,7 @@ describe("IPC Bridge Integration", () => {
 
 		it("should register onTaskError listener", () => {
 			const callback = vi.fn();
-			const onTaskError = electronAPI["onTaskError"] as (
-				cb: Function,
-			) => Function;
+			const onTaskError = electronAPI.onTaskError as (cb: Function) => Function;
 			onTaskError(callback);
 
 			expect(ipcRenderer.on).toHaveBeenCalledWith(
@@ -232,7 +230,7 @@ describe("IPC Bridge Integration", () => {
 
 		it("should register onTaskLog listener", () => {
 			const callback = vi.fn();
-			const onTaskLog = electronAPI["onTaskLog"] as (cb: Function) => Function;
+			const onTaskLog = electronAPI.onTaskLog as (cb: Function) => Function;
 			onTaskLog(callback);
 
 			expect(ipcRenderer.on).toHaveBeenCalledWith(
@@ -243,7 +241,7 @@ describe("IPC Bridge Integration", () => {
 
 		it("should register onTaskStatusChange listener", () => {
 			const callback = vi.fn();
-			const onTaskStatusChange = electronAPI["onTaskStatusChange"] as (
+			const onTaskStatusChange = electronAPI.onTaskStatusChange as (
 				cb: Function,
 			) => Function;
 			onTaskStatusChange(callback);
@@ -256,7 +254,7 @@ describe("IPC Bridge Integration", () => {
 
 		it("should return cleanup function for listeners", () => {
 			const callback = vi.fn();
-			const onTaskProgress = electronAPI["onTaskProgress"] as (
+			const onTaskProgress = electronAPI.onTaskProgress as (
 				cb: Function,
 			) => Function;
 			const cleanup = onTaskProgress(callback);
@@ -288,14 +286,14 @@ describe("IPC Bridge Integration", () => {
 		});
 
 		it("should have getSettings method", async () => {
-			const getSettings = electronAPI["getSettings"] as () => Promise<unknown>;
+			const getSettings = electronAPI.getSettings as () => Promise<unknown>;
 			await getSettings();
 
 			expect(ipcRenderer.invoke).toHaveBeenCalledWith("settings:get");
 		});
 
 		it("should have saveSettings method", async () => {
-			const saveSettings = electronAPI["saveSettings"] as (
+			const saveSettings = electronAPI.saveSettings as (
 				settings: object,
 			) => Promise<unknown>;
 			await saveSettings({ theme: "dark" });
@@ -321,9 +319,8 @@ describe("IPC Bridge Integration", () => {
 		});
 
 		it("should have selectDirectory method", async () => {
-			const selectDirectory = electronAPI[
-				"selectDirectory"
-			] as () => Promise<unknown>;
+			const selectDirectory =
+				electronAPI.selectDirectory as () => Promise<unknown>;
 			await selectDirectory();
 
 			expect(ipcRenderer.invoke).toHaveBeenCalledWith("dialog:selectDirectory");
@@ -345,9 +342,7 @@ describe("IPC Bridge Integration", () => {
 		});
 
 		it("should have getAppVersion method", async () => {
-			const getAppVersion = electronAPI[
-				"getAppVersion"
-			] as () => Promise<unknown>;
+			const getAppVersion = electronAPI.getAppVersion as () => Promise<unknown>;
 			await getAppVersion();
 
 			// getAppVersion now uses the app-update channel (from AppUpdateAPI which is spread last)

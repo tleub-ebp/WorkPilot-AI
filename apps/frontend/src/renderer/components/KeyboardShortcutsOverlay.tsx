@@ -125,6 +125,9 @@ export function KeyboardShortcutsOverlay({
 			<div className="absolute inset-0 bg-black/50 backdrop-blur-sm" />
 
 			{/* Panel */}
+			{/* biome-ignore lint/a11y/noNoninteractiveElementInteractions: stop-propagation handler */}
+			{/* biome-ignore lint/a11y/noStaticElementInteractions: stop-propagation handler */}
+			{/* biome-ignore lint/a11y/useKeyWithClickEvents: keyboard events handled by outer overlay */}
 			<div
 				ref={overlayRef}
 				className="relative w-full max-w-2xl max-h-[80vh] overflow-hidden rounded-xl border border-border bg-card shadow-2xl animate-in fade-in slide-in-from-bottom-4 duration-200"

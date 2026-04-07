@@ -124,7 +124,7 @@ export function registerSpecApprovalHandlers(): void {
 				const specsDir = path.join(projectDir, ".workpilot", "specs");
 				const entries = fs
 					.readdirSync(specsDir)
-					.filter((e) => e.startsWith(specNumber + "-") || e === specNumber);
+					.filter((e) => e.startsWith(`${specNumber}-`) || e === specNumber);
 				if (entries.length === 0)
 					return { success: false, error: "Spec not found" };
 
@@ -167,7 +167,7 @@ export function registerSpecApprovalHandlers(): void {
 					.readdirSync(specsDir)
 					.filter(
 						(e) =>
-							e.startsWith(params.specNumber + "-") || e === params.specNumber,
+							e.startsWith(`${params.specNumber}-`) || e === params.specNumber,
 					);
 				if (entries.length === 0)
 					return { success: false, error: "Spec not found" };
@@ -200,7 +200,7 @@ export function registerSpecApprovalHandlers(): void {
 						const existing = fs.readFileSync(specMd, "utf-8");
 						fs.writeFileSync(
 							specMd,
-							existing + "\n\n## Human Amendments\n\n" + params.amendments,
+							`${existing}\n\n## Human Amendments\n\n${params.amendments}`,
 							"utf-8",
 						);
 					}
@@ -238,7 +238,7 @@ export function registerSpecApprovalHandlers(): void {
 					.readdirSync(specsDir)
 					.filter(
 						(e) =>
-							e.startsWith(params.specNumber + "-") || e === params.specNumber,
+							e.startsWith(`${params.specNumber}-`) || e === params.specNumber,
 					);
 				if (entries.length === 0)
 					return { success: false, error: "Spec not found" };
@@ -295,7 +295,7 @@ export function registerSpecApprovalHandlers(): void {
 					.readdirSync(specsDir)
 					.filter(
 						(e) =>
-							e.startsWith(params.specNumber + "-") || e === params.specNumber,
+							e.startsWith(`${params.specNumber}-`) || e === params.specNumber,
 					);
 				if (entries.length === 0)
 					return { success: false, error: "Spec not found" };

@@ -46,29 +46,34 @@ export interface TestGenerationAPI {
 	removeTestGenerationErrorListener: (
 		callback: (error: string) => void,
 	) => void;
-	// biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
-	removeTestGenerationResultListener: (callback: (result: any) => void) => void;
+	removeTestGenerationResultListener: (callback: (result: unknown) => void) => void;
 	removeTestGenerationCompleteListener: (
-		callback: (result: any) => void,
+		callback: (result: unknown) => void,
 	) => void;
 }
 
+// Type aliases for different callback signatures
+type StatusListenerFn = (status: string) => void;
+type ErrorListenerFn = (error: string) => void;
+type ResultListenerFn = (result: unknown) => void;
+type CompleteListenerFn = (result: unknown) => void;
+
 // Maps to store callback → actual IPC listener so removeListener can find the exact reference
 const statusListeners = new Map<
-	Function,
+	StatusListenerFn,
 	(event: IpcRendererEvent, status: string) => void
 >();
 const errorListeners = new Map<
-	Function,
+	ErrorListenerFn,
 	(event: IpcRendererEvent, error: string) => void
 >();
 const resultListeners = new Map<
-	Function,
-	(event: IpcRendererEvent, result: any) => void
+	ResultListenerFn,
+	(event: IpcRendererEvent, result: unknown) => void
 >();
 const completeListeners = new Map<
-	Function,
-	(event: IpcRendererEvent, result: any) => void
+	CompleteListenerFn,
+	(event: IpcRendererEvent, result: unknown) => void
 >();
 
 export const createTestGenerationAPI = (): TestGenerationAPI => ({

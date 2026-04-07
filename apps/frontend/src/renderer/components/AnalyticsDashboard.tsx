@@ -371,7 +371,7 @@ export function AnalyticsDashboard({
 		? Object.values(sn.tasks_by_status).reduce((a, b) => a + b, 0)
 		: 0;
 	const completedTasks = sn
-		? (sn.tasks_by_status["completed"] ?? sn.tasks_by_status["complete"] ?? 0)
+		? (sn.tasks_by_status.completed ?? sn.tasks_by_status.complete ?? 0)
 		: 0;
 	const successRate = totalTasks > 0 ? (completedTasks / totalTasks) * 100 : 0;
 	const totalCost = cs?.total_cost ?? sn?.total_cost ?? 0;

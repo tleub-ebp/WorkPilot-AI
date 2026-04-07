@@ -1,8 +1,8 @@
-import { type ChildProcess, spawn } from "child_process";
-import { EventEmitter } from "events";
-import { existsSync, unlinkSync, writeFileSync } from "fs";
-import os from "os";
-import path from "path";
+import { type ChildProcess, spawn } from "node:child_process";
+import { EventEmitter } from "node:events";
+import { existsSync, unlinkSync, writeFileSync } from "node:fs";
+import os from "node:os";
+import path from "node:path";
 import { MODEL_ID_MAP } from "../../shared/constants";
 import type {
 	InsightsChatMessage,
@@ -123,7 +123,7 @@ export class InsightsExecutor extends EventEmitter {
 
 		// Add model config if provided
 		if (modelConfig) {
-			const modelId = MODEL_ID_MAP[modelConfig.model] || MODEL_ID_MAP["sonnet"];
+			const modelId = MODEL_ID_MAP[modelConfig.model] || MODEL_ID_MAP.sonnet;
 			args.push("--model", modelId);
 			args.push("--thinking-level", modelConfig.thinkingLevel);
 		}
@@ -168,10 +168,10 @@ export class InsightsExecutor extends EventEmitter {
 					} else if (line.startsWith("__EXPLANATION__:")) {
 						this.handleExplanation(projectId, line);
 					} else if (line.trim()) {
-						fullResponse += line + "\n";
+						fullResponse += `${line}\n`;
 						this.emit("stream-chunk", projectId, {
 							type: "text",
-							content: line + "\n",
+							content: `${line}\n`,
 						} as InsightsStreamChunk);
 					}
 				}

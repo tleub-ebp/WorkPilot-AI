@@ -1,7 +1,7 @@
-import { execFileSync, execSync } from "child_process";
+import { execFileSync, execSync } from "node:child_process";
+import { accessSync, constants, existsSync } from "node:fs";
+import path from "node:path";
 import { app } from "electron";
-import { accessSync, constants, existsSync } from "fs";
-import path from "path";
 import { isWindows } from "./platform";
 import { findHomebrewPython as findHomebrewPythonUtil } from "./utils/homebrew-python";
 

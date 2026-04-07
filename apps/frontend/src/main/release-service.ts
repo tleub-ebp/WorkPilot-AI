@@ -1,7 +1,7 @@
-import { execFileSync, spawn } from "child_process";
-import { EventEmitter } from "events";
-import { existsSync, readdirSync, readFileSync, writeFileSync } from "fs";
-import path from "path";
+import { execFileSync, spawn } from "node:child_process";
+import { EventEmitter } from "node:events";
+import { existsSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
+import path from "node:path";
 import { DEFAULT_CHANGELOG_PATH } from "../shared/constants";
 import type {
 	CreateReleaseRequest,
@@ -52,7 +52,9 @@ export class ReleaseService extends EventEmitter {
 
 			// Content is until next version header or end of file
 			const endIndex =
-				i < matches.length - 1 ? (matches[i + 1].index ?? content.length) : content.length;
+				i < matches.length - 1
+					? (matches[i + 1].index ?? content.length)
+					: content.length;
 			const versionContent = content.slice(startIndex, endIndex).trim();
 
 			versions.push({
@@ -644,7 +646,7 @@ export class ReleaseService extends EventEmitter {
 
 			// Preserve formatting (detect indent)
 			const indent = pkgContent.match(/^(\s+)/m)?.[1] || "  ";
-			writeFileSync(pkgPath, JSON.stringify(pkg, null, indent) + "\n", "utf-8");
+			writeFileSync(pkgPath, `${JSON.stringify(pkg, null, indent)}\n`, "utf-8");
 
 			// Stage and commit only package.json
 			this.emitProgress(projectId, {

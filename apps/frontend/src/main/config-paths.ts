@@ -14,8 +14,8 @@
  * @see https://specifications.freedesktop.org/basedir-spec/basedir-spec-latest.html
  */
 
-import * as os from "os";
-import * as path from "path";
+import * as os from "node:os";
+import * as path from "node:path";
 import { isLinux } from "./platform";
 
 const APP_NAME = "auto-claude";

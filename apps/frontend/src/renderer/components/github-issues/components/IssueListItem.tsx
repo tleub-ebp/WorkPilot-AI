@@ -16,6 +16,7 @@ export function IssueListItem({
 	return (
 		// biome-ignore lint/a11y/noStaticElementInteractions: interactive handler is intentional
 		// biome-ignore lint/a11y/useKeyWithClickEvents: keyboard events handled elsewhere
+		// biome-ignore lint/a11y/noNoninteractiveElementInteractions: selectable issue row
 		<div
 			className={`group p-3 rounded-lg cursor-pointer transition-colors ${
 				isSelected

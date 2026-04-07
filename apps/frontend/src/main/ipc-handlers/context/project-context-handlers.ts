@@ -1,8 +1,8 @@
-import { spawn } from "child_process";
+import { spawn } from "node:child_process";
+import { existsSync, readFileSync } from "node:fs";
+import path from "node:path";
 import type { BrowserWindow } from "electron";
 import { ipcMain } from "electron";
-import { existsSync, readFileSync } from "fs";
-import path from "path";
 import {
 	AUTO_BUILD_PATHS,
 	getSpecsDir,

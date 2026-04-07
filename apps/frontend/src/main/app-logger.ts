@@ -14,11 +14,11 @@
  * - Beta version detection for enhanced logging
  */
 
+import { existsSync, readdirSync, readFileSync, statSync } from "node:fs";
+import os from "node:os";
+import { dirname, join } from "node:path";
 import { app } from "electron";
 import log from "electron-log/main.js";
-import { existsSync, readdirSync, readFileSync, statSync } from "fs";
-import os from "os";
-import { dirname, join } from "path";
 import { PROVIDER_MODELS_MAP } from "../shared/constants/models";
 // Import the colored logs utility
 import { frontendLog } from "./colored-logs";

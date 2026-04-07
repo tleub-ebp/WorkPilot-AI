@@ -10,9 +10,9 @@ import {
 	readFileSync,
 	rmSync,
 	writeFileSync,
-} from "fs";
-import { tmpdir } from "os";
-import path from "path";
+} from "node:fs";
+import { tmpdir } from "node:os";
+import path from "node:path";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 // Test directories - will be set in beforeEach with unique temp dir

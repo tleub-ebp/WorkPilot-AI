@@ -3,9 +3,9 @@
  * Tests CLAUDE_PROFILE_SAVE and CLAUDE_PROFILE_INITIALIZE IPC handlers
  */
 
-import { existsSync, mkdirSync, mkdtempSync, rmSync } from "fs";
-import { tmpdir } from "os";
-import path from "path";
+import { existsSync, mkdirSync, mkdtempSync, rmSync } from "node:fs";
+import { tmpdir } from "node:os";
+import path from "node:path";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { ClaudeProfile, IPCResult } from "../../shared/types";
 

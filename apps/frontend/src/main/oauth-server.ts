@@ -5,8 +5,8 @@
  * Runs on localhost:3000 to receive GitHub OAuth callbacks.
  */
 
-import { createServer } from "http";
-import { URL } from "url";
+import { createServer } from "node:http";
+import { URL } from "node:url";
 import { handleCopilotOAuthCallback } from "./copilot-oauth";
 
 export interface OAuthCallbackData {

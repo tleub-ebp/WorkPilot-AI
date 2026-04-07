@@ -248,7 +248,7 @@ export function TaskEditDialog({
 			// This prevents stale closure issues with rapid consecutive drops
 			setDescription((prev) => {
 				const separator = prev.endsWith(" ") || prev === "" ? "" : " ";
-				return prev + separator + reference + " ";
+				return `${prev + separator + reference} `;
 			});
 		},
 		[],

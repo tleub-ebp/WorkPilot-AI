@@ -678,13 +678,13 @@ describe("Roadmap Store", () => {
 				const stats = getFeatureStats(roadmap);
 
 				expect(stats.total).toBe(3);
-				expect(stats.byPriority["must"]).toBe(2);
-				expect(stats.byPriority["should"]).toBe(1);
-				expect(stats.byStatus["under_review"]).toBe(2);
-				expect(stats.byStatus["planned"]).toBe(1);
-				expect(stats.byComplexity["high"]).toBe(1);
-				expect(stats.byComplexity["medium"]).toBe(1);
-				expect(stats.byComplexity["low"]).toBe(1);
+				expect(stats.byPriority.must).toBe(2);
+				expect(stats.byPriority.should).toBe(1);
+				expect(stats.byStatus.under_review).toBe(2);
+				expect(stats.byStatus.planned).toBe(1);
+				expect(stats.byComplexity.high).toBe(1);
+				expect(stats.byComplexity.medium).toBe(1);
+				expect(stats.byComplexity.low).toBe(1);
 			});
 
 			it("should return zero stats for null roadmap", () => {

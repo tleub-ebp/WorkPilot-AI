@@ -3,9 +3,9 @@
  * Manages terminal session persistence, restoration, and Claude session tracking
  */
 
-import * as fs from "fs";
-import * as os from "os";
-import * as path from "path";
+import * as fs from "node:fs";
+import * as os from "node:os";
+import * as path from "node:path";
 import { IPC_CHANNELS } from "../../shared/constants";
 import { debugError, debugLog } from "../../shared/utils/debug-logger";
 import { safeSendToRenderer } from "../ipc-handlers/utils";

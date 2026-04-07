@@ -52,9 +52,7 @@ export interface CostAPI {
 		limit: number,
 		period?: string,
 	): Promise<{ success: boolean; error?: string }>;
-	getDashboardSnapshot(
-		projectPath: string,
-	): Promise<{
+	getDashboardSnapshot(projectPath: string): Promise<{
 		success: boolean;
 		snapshot?: DashboardSnapshot;
 		error?: string;

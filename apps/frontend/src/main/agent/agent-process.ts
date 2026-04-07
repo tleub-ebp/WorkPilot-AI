@@ -231,7 +231,7 @@ export class AgentProcessManager {
 				if (gitInfo.found && gitInfo.path) {
 					const bashPath = deriveGitBashPath(gitInfo.path);
 					if (bashPath) {
-						gitBashEnv["CLAUDE_CODE_GIT_BASH_PATH"] = bashPath;
+						gitBashEnv.CLAUDE_CODE_GIT_BASH_PATH = bashPath;
 						appLog.info(
 							"[AgentProcess] Setting CLAUDE_CODE_GIT_BASH_PATH:",
 							bashPath,
@@ -666,12 +666,12 @@ export class AgentProcessManager {
 			if (project.settings.graphitiMcpEnabled) {
 				const graphitiUrl =
 					project.settings.graphitiMcpUrl || "http://localhost:8000/mcp/";
-				env["GRAPHITI_MCP_URL"] = graphitiUrl;
+				env.GRAPHITI_MCP_URL = graphitiUrl;
 			}
 
 			// CLAUDE.md integration (enabled by default)
 			if (project.settings.useClaudeMd !== false) {
-				env["USE_CLAUDE_MD"] = "true";
+				env.USE_CLAUDE_MD = "true";
 			}
 		}
 
@@ -1160,7 +1160,7 @@ export class AgentProcessManager {
 						hookErrorSuppressionLines--;
 						continue;
 					}
-					this.emitter.emit("log", taskId, line + "\n", projectId);
+					this.emitter.emit("log", taskId, `${line}\n`, projectId);
 					processLog(line);
 					if (isDebug) {
 						appLog.debug(`[Agent:${taskId}] ${line}`);
@@ -1197,11 +1197,11 @@ export class AgentProcessManager {
 			}
 
 			if (stdoutBuffer.trim()) {
-				this.emitter.emit("log", taskId, stdoutBuffer + "\n", projectId);
+				this.emitter.emit("log", taskId, `${stdoutBuffer}\n`, projectId);
 				processLog(stdoutBuffer);
 			}
 			if (stderrBuffer.trim()) {
-				this.emitter.emit("log", taskId, stderrBuffer + "\n", projectId);
+				this.emitter.emit("log", taskId, `${stderrBuffer}\n`, projectId);
 				processLog(stderrBuffer);
 			}
 

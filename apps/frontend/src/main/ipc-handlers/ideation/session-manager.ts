@@ -2,8 +2,8 @@
  * Ideation session CRUD operations
  */
 
+import path from "node:path";
 import type { IpcMainInvokeEvent } from "electron";
-import path from "path";
 import { AUTO_BUILD_PATHS } from "../../../shared/constants";
 import type { IdeationSession, IPCResult } from "../../../shared/types";
 import { projectStore } from "../../project-store";

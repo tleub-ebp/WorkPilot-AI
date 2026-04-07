@@ -4,6 +4,8 @@
  * Red phase - write failing tests first
  */
 
+// @ts-nocheck - Allow access to private members in tests
+
 // Mock child_process before any imports that use it
 vi.mock("node:child_process", () => ({
 	spawn: vi.fn(() => {
@@ -197,7 +199,7 @@ describe("usage-monitor", () => {
 			monitor.start();
 
 			// Verify monitor started (has intervalId set)
-			expect(monitor["intervalId"]).not.toBeNull();
+			expect(monitor.intervalId).not.toBeNull();
 
 			monitor.stop();
 		});
@@ -206,12 +208,12 @@ describe("usage-monitor", () => {
 			const monitor = getUsageMonitor();
 
 			monitor.start();
-			const firstIntervalId = monitor["intervalId"];
+			const firstIntervalId = monitor.intervalId;
 
 			monitor.start(); // Second call should be ignored
 
 			// Should still have the same intervalId (not recreated)
-			expect(monitor["intervalId"]).toBe(firstIntervalId);
+			expect(monitor.intervalId).toBe(firstIntervalId);
 
 			monitor.stop();
 		});
@@ -220,12 +222,12 @@ describe("usage-monitor", () => {
 			const monitor = getUsageMonitor();
 
 			monitor.start();
-			expect(monitor["intervalId"]).not.toBeNull();
+			expect(monitor.intervalId).not.toBeNull();
 
 			monitor.stop();
 
 			// Verify intervalId is cleared
-			expect(monitor["intervalId"]).toBeNull();
+			expect(monitor.intervalId).toBeNull();
 		});
 
 		it("should return current usage snapshot", () => {
@@ -240,7 +242,7 @@ describe("usage-monitor", () => {
 				fetchedAt: new Date(),
 			};
 			// biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
-			monitor["currentUsage"] = seeded as any;
+			monitor.currentUsage = seeded as any;
 
 			const usage = monitor.getCurrentUsage();
 
@@ -313,7 +315,7 @@ describe("usage-monitor", () => {
 				seven_day_reset_at: "2025-01-20T12:00:00Z",
 			};
 
-			const usage = monitor["normalizeAnthropicResponse"](
+			const usage = monitor.normalizeAnthropicResponse(
 				rawData,
 				"test-profile-1",
 				"Anthropic Profile",
@@ -336,7 +338,7 @@ describe("usage-monitor", () => {
 				// Missing: seven_day_utilization, reset times
 			};
 
-			const usage = monitor["normalizeAnthropicResponse"](
+			const usage = monitor.normalizeAnthropicResponse(
 				rawData,
 				"test-profile-1",
 				"Test Profile",
@@ -373,7 +375,7 @@ describe("usage-monitor", () => {
 
 			// 401 errors should throw
 			await expect(
-				monitor["fetchUsageViaAPI"](
+				monitor.fetchUsageViaAPI(
 					"invalid-token",
 					"test-profile-1",
 					"Test Profile",
@@ -411,7 +413,7 @@ describe("usage-monitor", () => {
 
 			// 403 errors should throw
 			await expect(
-				monitor["fetchUsageViaAPI"](
+				monitor.fetchUsageViaAPI(
 					"expired-token",
 					"test-profile-1",
 					"Test Profile",
@@ -438,7 +440,7 @@ describe("usage-monitor", () => {
 				/* noop */
 			});
 
-			const usage = await monitor["fetchUsageViaAPI"](
+			const usage = await monitor.fetchUsageViaAPI(
 				"valid-token",
 				"test-profile-1",
 				"Test Profile",
@@ -460,7 +462,7 @@ describe("usage-monitor", () => {
 				/* noop */
 			});
 
-			const usage = await monitor["fetchUsageViaAPI"](
+			const usage = await monitor.fetchUsageViaAPI(
 				"valid-token",
 				"test-profile-1",
 				"Test Profile",
@@ -489,7 +491,7 @@ describe("usage-monitor", () => {
 				/* noop */
 			});
 
-			const usage = await monitor["fetchUsageViaAPI"](
+			const usage = await monitor.fetchUsageViaAPI(
 				"valid-token",
 				"test-profile-1",
 				"Test Profile",
@@ -522,7 +524,7 @@ describe("usage-monitor", () => {
 
 			// 401 errors should throw with proper message
 			await expect(
-				monitor["fetchUsageViaAPI"](
+				monitor.fetchUsageViaAPI(
 					"invalid-token",
 					"test-profile-1",
 					"Test Profile",
@@ -541,7 +543,7 @@ describe("usage-monitor", () => {
 			const monitor = getUsageMonitor();
 
 			// Call fetchUsage without credential
-			const usage = await monitor["fetchUsage"]("test-profile-1", undefined);
+			const usage = await monitor.fetchUsage("test-profile-1", undefined);
 
 			// Should fall back to CLI method (which returns null)
 			expect(usage).toBeNull();
@@ -553,7 +555,7 @@ describe("usage-monitor", () => {
 				/* noop */
 			});
 
-			const usage = await monitor["fetchUsage"]("test-profile-1", "");
+			const usage = await monitor.fetchUsage("test-profile-1", "");
 
 			// Should fall back to CLI method
 			expect(usage).toBeNull();
@@ -591,7 +593,7 @@ describe("usage-monitor", () => {
 
 			// Call checkUsageAndSwap directly to test null profile handling
 			// Should complete without throwing an error
-			await expect(monitor["checkUsageAndSwap"]()).resolves.toBeUndefined();
+			await expect(monitor.checkUsageAndSwap()).resolves.toBeUndefined();
 		});
 
 		it("should handle profile with missing required fields", async () => {
@@ -600,7 +602,7 @@ describe("usage-monitor", () => {
 				// Missing all required fields
 			};
 
-			const usage = monitor["normalizeAnthropicResponse"](
+			const usage = monitor.normalizeAnthropicResponse(
 				rawData,
 				"test-profile-1",
 				"Test Profile",
@@ -642,7 +644,7 @@ describe("usage-monitor", () => {
 				version: 1,
 			});
 
-			const usage = await monitor["fetchUsageViaAPI"](
+			const usage = await monitor.fetchUsageViaAPI(
 				"unknown-api-key",
 				"unknown-profile-1",
 				"Unknown Profile",
@@ -660,17 +662,17 @@ describe("usage-monitor", () => {
 			const monitor = getUsageMonitor();
 
 			// Start first check (it will take some time)
-			const firstCheck = monitor["checkUsageAndSwap"]();
+			const firstCheck = monitor.checkUsageAndSwap();
 
 			// Try to start second check immediately (should be ignored)
-			const secondCheck = monitor["checkUsageAndSwap"]();
+			const secondCheck = monitor.checkUsageAndSwap();
 
 			// Both should resolve
 			await firstCheck;
 			await secondCheck;
 
 			// Verify check completed (isChecking should be false after both complete)
-			expect(monitor["isChecking"]).toBe(false);
+			expect(monitor.isChecking).toBe(false);
 		});
 	});
 
@@ -690,7 +692,7 @@ describe("usage-monitor", () => {
 				});
 
 				// Should fall back to OAuth profile
-				const credential = await monitor["getCredential"]();
+				const credential = await monitor.getCredential();
 
 				// Should get OAuth token from profile manager
 				expect(credential).toBe("mock-decrypted-token");
@@ -718,7 +720,7 @@ describe("usage-monitor", () => {
 					/* noop */
 				});
 
-				const credential = await monitor["getCredential"]();
+				const credential = await monitor.getCredential();
 
 				// Should prefer API key over OAuth token
 				expect(credential).toBe("sk-ant-api-key");
@@ -739,7 +741,7 @@ describe("usage-monitor", () => {
 					/* noop */
 				});
 
-				const credential = await monitor["getCredential"]();
+				const credential = await monitor.getCredential();
 
 				// Should fall back to OAuth
 				expect(credential).toBe("mock-decrypted-token");
@@ -787,7 +789,7 @@ describe("usage-monitor", () => {
 				monitor.start();
 
 				// Should have started monitoring
-				expect(monitor["intervalId"]).not.toBeNull();
+				expect(monitor.intervalId).not.toBeNull();
 
 				monitor.stop();
 			});
@@ -831,7 +833,7 @@ describe("usage-monitor", () => {
 				monitor.start();
 
 				// Should have started successfully
-				expect(monitor["intervalId"]).not.toBeNull();
+				expect(monitor.intervalId).not.toBeNull();
 
 				monitor.stop();
 			});
@@ -849,7 +851,7 @@ describe("usage-monitor", () => {
 					seven_day_reset_at: "2025-01-20T12:00:00Z",
 				};
 
-				const usage = monitor["normalizeAnthropicResponse"](
+				const usage = monitor.normalizeAnthropicResponse(
 					legacyData,
 					"test-profile-1",
 					"Legacy Profile",
@@ -870,7 +872,7 @@ describe("usage-monitor", () => {
 					// Missing reset times
 				};
 
-				const usage = monitor["normalizeAnthropicResponse"](
+				const usage = monitor.normalizeAnthropicResponse(
 					minimalData,
 					"test-profile-1",
 					"Minimal Profile",
@@ -894,7 +896,7 @@ describe("usage-monitor", () => {
 					seven_day_reset_at: "2025-01-20T12:00:00Z",
 				};
 
-				const usage = monitor["normalizeAnthropicResponse"](
+				const usage = monitor.normalizeAnthropicResponse(
 					zeroData,
 					"test-profile-1",
 					"Zero Usage Profile",
@@ -914,7 +916,7 @@ describe("usage-monitor", () => {
 					// Missing seven_day data
 				};
 
-				const usage = monitor["normalizeAnthropicResponse"](
+				const usage = monitor.normalizeAnthropicResponse(
 					partialData,
 					"test-profile-1",
 					"Partial Profile",
@@ -987,7 +989,7 @@ describe("usage-monitor", () => {
 					version: 1,
 				});
 
-				const credential = await monitor["getCredential"]();
+				const credential = await monitor.getCredential();
 
 				// Should use API profile when active
 				expect(credential).toBe("sk-ant-api-key");
@@ -1015,7 +1017,7 @@ describe("usage-monitor", () => {
 					version: 1,
 				});
 
-				let credential = await monitor["getCredential"]();
+				let credential = await monitor.getCredential();
 				expect(credential).toBe("sk-ant-api-key");
 
 				// Then, no active API profile (should fall back to OAuth)
@@ -1025,7 +1027,7 @@ describe("usage-monitor", () => {
 					version: 1,
 				});
 
-				credential = await monitor["getCredential"]();
+				credential = await monitor.getCredential();
 				expect(credential).toBe("mock-decrypted-token");
 
 				consoleSpy.mockRestore();
@@ -1057,7 +1059,7 @@ describe("usage-monitor", () => {
 		beforeEach(() => {
 			// Clear any existing failure timestamps before each test
 			const monitor = getUsageMonitor();
-			monitor["apiFailureTimestamps"].clear();
+			monitor.apiFailureTimestamps.clear();
 		});
 
 		it("should record API failure timestamp on error", async () => {
@@ -1076,7 +1078,7 @@ describe("usage-monitor", () => {
 			const profileId = "test-profile-cooldown";
 
 			// Call fetchUsageViaAPI which should fail and record timestamp
-			await monitor["fetchUsageViaAPI"](
+			await monitor.fetchUsageViaAPI(
 				"valid-token",
 				profileId,
 				"Test Profile",
@@ -1084,7 +1086,7 @@ describe("usage-monitor", () => {
 			);
 
 			// Verify failure timestamp was recorded
-			const failureTimestamp = monitor["apiFailureTimestamps"].get(profileId);
+			const failureTimestamp = monitor.apiFailureTimestamps.get(profileId);
 			expect(failureTimestamp).toBeDefined();
 			expect(typeof failureTimestamp).toBe("number");
 			// Should be recent (within last second)
@@ -1101,11 +1103,11 @@ describe("usage-monitor", () => {
 
 			// Set a failure timestamp that's just before the cooldown period
 			const expiredFailureTime =
-				now - UsageMonitor["API_FAILURE_COOLDOWN_MS"] - 1000; // 1 second past cooldown
-			monitor["apiFailureTimestamps"].set(profileId, expiredFailureTime);
+				now - UsageMonitor.API_FAILURE_COOLDOWN_MS - 1000; // 1 second past cooldown
+			monitor.apiFailureTimestamps.set(profileId, expiredFailureTime);
 
 			// shouldUseApiMethod should return true (cooldown expired)
-			const shouldUseApi = monitor["shouldUseApiMethod"](profileId);
+			const shouldUseApi = monitor.shouldUseApiMethod(profileId);
 			expect(shouldUseApi).toBe(true);
 		});
 
@@ -1116,10 +1118,10 @@ describe("usage-monitor", () => {
 
 			// Set a recent failure timestamp (well within cooldown period)
 			const recentFailureTime = now - 1000; // 1 second ago
-			monitor["apiFailureTimestamps"].set(profileId, recentFailureTime);
+			monitor.apiFailureTimestamps.set(profileId, recentFailureTime);
 
 			// shouldUseApiMethod should return false (still in cooldown)
-			const shouldUseApi = monitor["shouldUseApiMethod"](profileId);
+			const shouldUseApi = monitor.shouldUseApiMethod(profileId);
 			expect(shouldUseApi).toBe(false);
 		});
 
@@ -1128,10 +1130,10 @@ describe("usage-monitor", () => {
 			const profileId = "test-profile-no-failure";
 
 			// No failure timestamp recorded for this profile
-			expect(monitor["apiFailureTimestamps"].has(profileId)).toBe(false);
+			expect(monitor.apiFailureTimestamps.has(profileId)).toBe(false);
 
 			// shouldUseApiMethod should return true (no previous failure)
-			const shouldUseApi = monitor["shouldUseApiMethod"](profileId);
+			const shouldUseApi = monitor.shouldUseApiMethod(profileId);
 			expect(shouldUseApi).toBe(true);
 		});
 
@@ -1141,11 +1143,11 @@ describe("usage-monitor", () => {
 			const now = Date.now();
 
 			// Set failure timestamp exactly at cooldown boundary
-			const boundaryTime = now - UsageMonitor["API_FAILURE_COOLDOWN_MS"];
-			monitor["apiFailureTimestamps"].set(profileId, boundaryTime);
+			const boundaryTime = now - UsageMonitor.API_FAILURE_COOLDOWN_MS;
+			monitor.apiFailureTimestamps.set(profileId, boundaryTime);
 
 			// At exact boundary, should allow retry (cooldown period has passed)
-			const shouldUseApi = monitor["shouldUseApiMethod"](profileId);
+			const shouldUseApi = monitor.shouldUseApiMethod(profileId);
 			expect(shouldUseApi).toBe(true);
 		});
 
@@ -1156,17 +1158,17 @@ describe("usage-monitor", () => {
 			const now = Date.now();
 
 			// Set recent failure for profile1
-			monitor["apiFailureTimestamps"].set(profile1, now - 1000);
+			monitor.apiFailureTimestamps.set(profile1, now - 1000);
 			// Set expired failure for profile2
-			monitor["apiFailureTimestamps"].set(
+			monitor.apiFailureTimestamps.set(
 				profile2,
-				now - UsageMonitor["API_FAILURE_COOLDOWN_MS"] - 1000,
+				now - UsageMonitor.API_FAILURE_COOLDOWN_MS - 1000,
 			);
 
 			// Profile 1 should be in cooldown
-			expect(monitor["shouldUseApiMethod"](profile1)).toBe(false);
+			expect(monitor.shouldUseApiMethod(profile1)).toBe(false);
 			// Profile 2 should be allowed
-			expect(monitor["shouldUseApiMethod"](profile2)).toBe(true);
+			expect(monitor.shouldUseApiMethod(profile2)).toBe(true);
 		});
 	});
 
@@ -1219,7 +1221,7 @@ describe("usage-monitor", () => {
 			};
 
 			// Call fetchUsageViaAPI with predetermined profile
-			const usage = await monitor["fetchUsageViaAPI"](
+			const usage = await monitor.fetchUsageViaAPI(
 				"sk-ant-api-key",
 				"api-profile-1",
 				"API Profile",
@@ -1279,7 +1281,7 @@ describe("usage-monitor", () => {
 
 			// Call fetchUsageViaAPI WITHOUT predetermined profile
 			// Should fall back to detecting profile from activeProfileId
-			const usage = await monitor["fetchUsageViaAPI"](
+			const usage = await monitor.fetchUsageViaAPI(
 				"sk-ant-api-key",
 				"api-profile-1",
 				"API Profile",
@@ -1322,7 +1324,7 @@ describe("usage-monitor", () => {
 			};
 
 			// Call fetchUsageViaAPI with OAuth profile
-			const usage = await monitor["fetchUsageViaAPI"](
+			const usage = await monitor.fetchUsageViaAPI(
 				"oauth-token",
 				"oauth-profile",
 				"OAuth Profile",

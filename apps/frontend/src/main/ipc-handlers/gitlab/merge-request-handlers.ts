@@ -33,16 +33,8 @@ function isValidMrState(state: string): state is MergeRequestState {
 	return VALID_MR_STATES.includes(state as MergeRequestState);
 }
 
-// Debug logging helper - enabled in development OR when DEBUG flag is set
-const DEBUG =
-	process.env.DEBUG === "true" || process.env.NODE_ENV === "development";
-
-function debugLog(_message: string, data?: unknown): void {
-	if (DEBUG) {
-		if (data === undefined) {
-		} else {
-		}
-	}
+function debugLog(_message: string, _data?: unknown): void {
+	// No-op: debug logging disabled
 }
 
 /**

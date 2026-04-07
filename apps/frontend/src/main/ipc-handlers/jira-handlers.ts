@@ -1,9 +1,9 @@
-import { spawn } from "child_process";
+import { spawn } from "node:child_process";
+import { existsSync, readFileSync } from "node:fs";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
 import type { BrowserWindow } from "electron";
 import { ipcMain } from "electron";
-import { existsSync, readFileSync } from "fs";
-import path from "path";
-import { fileURLToPath } from "url";
 import { IPC_CHANNELS } from "../../shared/constants";
 import type {
 	IPCResult,
@@ -59,10 +59,10 @@ export function registerJiraHandlers(
 			const content = readFileSync(envPath, "utf-8");
 			const vars = parseEnvFile(content);
 			return {
-				instanceUrl: vars["JIRA_INSTANCE_URL"] || null,
-				email: vars["JIRA_EMAIL"] || null,
-				apiToken: vars["JIRA_API_TOKEN"] || null,
-				projectKey: vars["JIRA_PROJECT_KEY"] || null,
+				instanceUrl: vars.JIRA_INSTANCE_URL || null,
+				email: vars.JIRA_EMAIL || null,
+				apiToken: vars.JIRA_API_TOKEN || null,
+				projectKey: vars.JIRA_PROJECT_KEY || null,
 			};
 		} catch {
 			return {

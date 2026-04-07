@@ -13,7 +13,14 @@ import {
 	SortableContext,
 } from "@dnd-kit/sortable";
 import { debugLog } from "@shared/utils/debug-logger";
-import { lazy, Suspense, useCallback, useEffect, useRef, useState } from "react";
+import {
+	lazy,
+	Suspense,
+	useCallback,
+	useEffect,
+	useRef,
+	useState,
+} from "react";
 import { useTranslation } from "react-i18next";
 import {
 	KanbanBoard,
@@ -527,16 +534,17 @@ export function App() {
 	};
 
 	// Helper function to detect multiple projects with delays
-	const detectProjectsWithDelay = useCallback(async (
-		projectsToDetect: Project[],
-	): Promise<void> => {
-		for (const project of projectsToDetect) {
-			await detectSingleProject(project);
-			// Small delay between projects to avoid overwhelming the system
-			await new Promise((resolve) => setTimeout(resolve, 100));
-		}
-	// biome-ignore lint/correctness/useExhaustiveDependencies: detectSingleProject is a stable local helper
-	}, [detectSingleProject]);
+	const detectProjectsWithDelay = useCallback(
+		async (projectsToDetect: Project[]): Promise<void> => {
+			for (const project of projectsToDetect) {
+				await detectSingleProject(project);
+				// Small delay between projects to avoid overwhelming the system
+				await new Promise((resolve) => setTimeout(resolve, 100));
+			}
+		},
+		// biome-ignore lint/correctness/useExhaustiveDependencies: detectSingleProject is a stable local helper
+		[detectSingleProject],
+	);
 
 	// Auto-detect repository types for loaded projects
 	useEffect(() => {
@@ -1434,7 +1442,9 @@ export function App() {
 												{activeView === "roadmap" &&
 													(activeProjectId || selectedProjectId) && (
 														<Roadmap
-															projectId={(activeProjectId || selectedProjectId) as string}
+															projectId={
+																(activeProjectId || selectedProjectId) as string
+															}
 															onGoToTask={handleGoToTask}
 														/>
 													)}
@@ -1452,14 +1462,18 @@ export function App() {
 												{activeView === "ideation" &&
 													(activeProjectId || selectedProjectId) && (
 														<Ideation
-															projectId={(activeProjectId || selectedProjectId) as string}
+															projectId={
+																(activeProjectId || selectedProjectId) as string
+															}
 															onGoToTask={handleGoToTask}
 														/>
 													)}
 												{activeView === "insights" &&
 													(activeProjectId || selectedProjectId) && (
 														<Insights
-															projectId={(activeProjectId || selectedProjectId) as string}
+															projectId={
+																(activeProjectId || selectedProjectId) as string
+															}
 														/>
 													)}
 												{activeView === "github-issues" &&
@@ -1501,8 +1515,9 @@ export function App() {
 												{activeView === "gitlab-merge-requests" &&
 													(activeProjectId || selectedProjectId) && (
 														<GitLabMergeRequests
-															// biome-ignore lint/style/noNonNullAssertion: value is guaranteed by context
-															projectId={(activeProjectId || selectedProjectId) as string}
+															projectId={
+																(activeProjectId || selectedProjectId) as string
+															}
 															onOpenSettings={() => {
 																setSettingsInitialProjectSection("gitlab");
 																setIsSettingsDialogOpen(true);
@@ -1514,7 +1529,9 @@ export function App() {
 												{activeView === "worktrees" &&
 													(activeProjectId || selectedProjectId) && (
 														<Worktrees
-															projectId={(activeProjectId || selectedProjectId) as string}
+															projectId={
+																(activeProjectId || selectedProjectId) as string
+															}
 														/>
 													)}
 												{activeView === "migration" && <MigrationWizard />}
@@ -1533,19 +1550,25 @@ export function App() {
 												{activeView === "code-review" &&
 													(activeProjectId || selectedProjectId) && (
 														<CodeReview
-															projectId={(activeProjectId || selectedProjectId) as string}
+															projectId={
+																(activeProjectId || selectedProjectId) as string
+															}
 														/>
 													)}
 												{activeView === "refactoring" &&
 													(activeProjectId || selectedProjectId) && (
 														<RefactoringView
-															projectId={(activeProjectId || selectedProjectId) as string}
+															projectId={
+																(activeProjectId || selectedProjectId) as string
+															}
 														/>
 													)}
 												{activeView === "documentation" &&
 													(activeProjectId || selectedProjectId) && (
 														<DocumentationView
-															projectId={(activeProjectId || selectedProjectId) as string}
+															projectId={
+																(activeProjectId || selectedProjectId) as string
+															}
 														/>
 													)}
 												{activeView === "cost-estimator" &&
@@ -1555,13 +1578,17 @@ export function App() {
 												{activeView === "session-history" &&
 													(activeProjectId || selectedProjectId) && (
 														<SessionHistory
-															projectId={(activeProjectId || selectedProjectId) as string}
+															projectId={
+																(activeProjectId || selectedProjectId) as string
+															}
 														/>
 													)}
 												{activeView === "pair-programming" &&
 													(activeProjectId || selectedProjectId) && (
 														<PairProgramming
-															projectId={(activeProjectId || selectedProjectId) as string}
+															projectId={
+																(activeProjectId || selectedProjectId) as string
+															}
 														/>
 													)}
 												{activeView === "pipeline-generator" &&
@@ -1588,7 +1615,6 @@ export function App() {
 
 						{(activeProjectId || selectedProjectId) && (
 							<TaskCreationWizard
-								// biome-ignore lint/style/noNonNullAssertion: value is guaranteed by context
 								projectId={(activeProjectId || selectedProjectId) as string}
 								open={isNewTaskDialogOpen}
 								onOpenChange={setIsNewTaskDialogOpen}

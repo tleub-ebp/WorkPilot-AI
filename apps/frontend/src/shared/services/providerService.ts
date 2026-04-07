@@ -665,7 +665,7 @@ class ProviderServiceClass {
 			};
 
 			if (apiKey) {
-				headers["Authorization"] = `Bearer ${apiKey}`;
+				headers.Authorization = `Bearer ${apiKey}`;
 			}
 
 			const response = await fetch(`${baseUrl}/health`, {

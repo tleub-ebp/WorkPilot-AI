@@ -5,10 +5,10 @@
  * Handles connection management, automatic reconnection, and message routing.
  */
 
-import { type ChildProcess, spawn } from "child_process";
-import * as net from "net";
-import * as path from "path";
-import { fileURLToPath } from "url";
+import { type ChildProcess, spawn } from "node:child_process";
+import * as net from "node:net";
+import * as path from "node:path";
+import { fileURLToPath } from "node:url";
 import { GRACEFUL_KILL_TIMEOUT_MS, isWindows } from "../platform";
 import { getIsShuttingDown } from "./pty-manager";
 
@@ -279,7 +279,7 @@ class PtyDaemonClient {
 				}
 			});
 
-			this.socket?.write(JSON.stringify({ ...msg, requestId }) + "\n");
+			this.socket?.write(`${JSON.stringify({ ...msg, requestId })}\n`);
 		});
 	}
 
@@ -291,7 +291,7 @@ class PtyDaemonClient {
 			console.warn("[PtyDaemonClient] Cannot send - not connected");
 			return;
 		}
-		this.socket.write(JSON.stringify(msg) + "\n");
+		this.socket.write(`${JSON.stringify(msg)}\n`);
 	}
 
 	// ===== Public API =====

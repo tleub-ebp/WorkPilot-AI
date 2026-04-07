@@ -252,8 +252,8 @@ export function UsageIndicatorSimple() {
 		: undefined;
 
 	const maxUsage = Math.max(sessionPercent, weeklyPercent);
-	
-	let Icon;
+
+	let Icon: React.ComponentType<{ className?: string }>;
 	if (needsReauth) {
 		Icon = AlertCircle;
 	} else if (maxUsage >= THRESHOLD_WARNING) {
@@ -360,7 +360,7 @@ export function UsageIndicatorSimple() {
 								</div>
 								<div className="w-full bg-muted rounded-full h-1.5">
 									{(() => {
-										let progressColorClass;
+										let progressColorClass: string;
 										if (sessionPercent >= THRESHOLD_CRITICAL) {
 											progressColorClass = "bg-red-500";
 										} else if (sessionPercent >= THRESHOLD_WARNING) {
@@ -397,7 +397,7 @@ export function UsageIndicatorSimple() {
 								</div>
 								<div className="w-full bg-muted rounded-full h-1.5">
 									{(() => {
-										let progressColorClass;
+										let progressColorClass: string;
 										if (weeklyPercent >= THRESHOLD_CRITICAL) {
 											progressColorClass = "bg-red-500";
 										} else if (weeklyPercent >= THRESHOLD_WARNING) {

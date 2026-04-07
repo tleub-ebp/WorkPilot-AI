@@ -11,11 +11,11 @@
  * - Version registry: GitHub releases (github/gh-copilot), not npm
  */
 
-import { execFile, spawn } from "child_process";
+import { execFile, spawn } from "node:child_process";
+import { existsSync } from "node:fs";
+import path from "node:path";
+import { promisify } from "node:util";
 import { ipcMain } from "electron";
-import { existsSync } from "fs";
-import path from "path";
-import { promisify } from "util";
 import { DEFAULT_APP_SETTINGS, IPC_CHANNELS } from "../../shared/constants";
 import type { IPCResult } from "../../shared/types";
 import type {
@@ -226,7 +226,7 @@ async function fetchLatestCopilotVersion(): Promise<string> {
 
 	// Fallback: fetch from GitHub API directly - get all releases and filter for stable ones
 	try {
-		const https = await import("https");
+		const https = await import("node:https");
 		const data = await new Promise<string>((resolve, reject) => {
 			const req = https.get(
 				"https://api.github.com/repos/github/copilot-cli/releases",
@@ -341,7 +341,7 @@ async function checkCopilotAuth(
 		const authError = authStatusStderr.trim();
 
 		// Combine stdout and stderr for parsing (gh auth status outputs to both)
-		const fullOutput = authOutput + "\n" + authError;
+		const fullOutput = `${authOutput}\n${authError}`;
 
 		// gh auth status shows "Logged in to github.com account USERNAME" on success
 		const usernameMatch = fullOutput.match(/account\s+(\S+)/);
@@ -397,7 +397,7 @@ async function checkCopilotAuth(
 		const stdout = (error as { stdout?: string }).stdout || "";
 
 		// Combine both outputs for parsing
-		const fullOutput = stdout + "\n" + stderr;
+		const fullOutput = `${stdout}\n${stderr}`;
 
 		// Check if we can still find authentication info despite the error
 		const usernameMatch = fullOutput.match(/account\s+(\S+)/);

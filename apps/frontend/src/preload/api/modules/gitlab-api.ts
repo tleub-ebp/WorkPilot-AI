@@ -261,9 +261,7 @@ export interface GitLabAPI {
 	getGitLabUser: (
 		instanceUrl?: string,
 	) => Promise<IPCResult<{ username: string; name?: string }>>;
-	listGitLabUserProjects: (
-		instanceUrl?: string,
-	) => Promise<
+	listGitLabUserProjects: (instanceUrl?: string) => Promise<
 		IPCResult<{
 			projects: Array<{
 				pathWithNamespace: string;

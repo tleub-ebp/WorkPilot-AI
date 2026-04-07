@@ -4,8 +4,8 @@
  * Provides consistent project validation and error handling across all handlers.
  */
 
-import * as fs from "fs";
-import * as path from "path";
+import * as fs from "node:fs";
+import * as path from "node:path";
 import type { Project } from "../../../../shared/types";
 import { projectStore } from "../../../project-store";
 

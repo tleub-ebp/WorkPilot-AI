@@ -10,16 +10,8 @@ import { projectStore } from "../../project-store";
 import type { GitLabAPIIssue, GitLabAPINote } from "./types";
 import { encodeProjectPath, getGitLabConfig, gitlabFetch } from "./utils";
 
-// Debug logging helper - enabled in development OR when DEBUG flag is set
-const DEBUG =
-	process.env.DEBUG === "true" || process.env.NODE_ENV === "development";
-
-function debugLog(_message: string, data?: unknown): void {
-	if (DEBUG) {
-		if (data === undefined) {
-		} else {
-		}
-	}
+function debugLog(_message: string, _data?: unknown): void {
+	// No-op: debug logging disabled
 }
 
 /**

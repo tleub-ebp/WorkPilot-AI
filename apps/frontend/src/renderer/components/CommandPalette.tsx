@@ -648,6 +648,9 @@ export function CommandPalette({
 			<div className="absolute inset-0 bg-black/50 backdrop-blur-sm" />
 
 			{/* Palette */}
+			{/* biome-ignore lint/a11y/noNoninteractiveElementInteractions: stop-propagation handler, not a primary interaction */}
+			{/* biome-ignore lint/a11y/noStaticElementInteractions: stop-propagation handler, not a primary interaction */}
+			{/* biome-ignore lint/a11y/useKeyWithClickEvents: keyboard events handled by outer container */}
 			<div
 				className="absolute left-1/2 top-[20%] w-full max-w-lg -translate-x-1/2 animate-in fade-in slide-in-from-top-4 duration-200"
 				onClick={(e) => e.stopPropagation()}

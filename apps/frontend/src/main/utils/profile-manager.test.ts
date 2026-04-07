@@ -4,7 +4,7 @@
  * Red phase - write failing tests first
  */
 
-import { promises as fsPromises } from "fs";
+import { promises as fsPromises } from "node:fs";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { ProfilesFile } from "../../shared/types/profile";
 import {

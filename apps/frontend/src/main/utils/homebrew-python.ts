@@ -6,8 +6,8 @@
  * consistent Python detection across the application.
  */
 
-import { existsSync } from "fs";
-import path from "path";
+import { existsSync } from "node:fs";
+import path from "node:path";
 
 /**
  * Validation result for a Python installation.

@@ -1,4 +1,4 @@
-import path from "path";
+import path from "node:path";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const mockGetToolPath = vi.fn<() => string>();

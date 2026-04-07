@@ -3,8 +3,8 @@
  * Handles creating task specs from GitLab issues
  */
 
-import { mkdir, readFile, stat, writeFile } from "fs/promises";
-import path from "path";
+import { mkdir, readFile, stat, writeFile } from "node:fs/promises";
+import path from "node:path";
 import type { Project } from "../../../shared/types";
 import { labelMatchesWholeWord } from "../shared/label-utils";
 import { sanitizeStringArray, sanitizeText } from "../shared/sanitize";

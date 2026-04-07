@@ -22,6 +22,9 @@ export function Toaster() {
 		<ToastProvider>
 			{toasts.map(({ id, title, description, action, onClick, ...props }) => (
 				<Toast key={id} {...props}>
+					{/* biome-ignore lint/a11y/noNoninteractiveElementInteractions: clickable toast body */}
+					{/* biome-ignore lint/a11y/noStaticElementInteractions: clickable toast body */}
+					{/* biome-ignore lint/a11y/useKeyWithClickEvents: keyboard handled by Toast component */}
 					<div
 						className={onClick ? "grid gap-1 cursor-pointer" : "grid gap-1"}
 						onClick={

@@ -472,8 +472,8 @@ export function GitHubSetupModal({
 					Confirm Repository
 				</DialogTitle>
 				<DialogDescription>
-					We detected a GitHub repository for this project. Please confirm
-					or change it.
+					We detected a GitHub repository for this project. Please confirm or
+					change it.
 				</DialogDescription>
 			</DialogHeader>
 
@@ -521,8 +521,8 @@ export function GitHubSetupModal({
 					Connect to GitHub
 				</DialogTitle>
 				<DialogDescription>
-					Your project needs a GitHub repository. Create a new one or link
-					to an existing repository.
+					Your project needs a GitHub repository. Create a new one or link to an
+					existing repository.
 				</DialogDescription>
 			</DialogHeader>
 
@@ -572,11 +572,7 @@ export function GitHubSetupModal({
 
 			<DialogFooter>
 				{onSkip && (
-					<Button
-						variant="outline"
-						onClick={onSkip}
-						disabled={isCreatingRepo}
-					>
+					<Button variant="outline" onClick={onSkip} disabled={isCreatingRepo}>
 						Skip for now
 					</Button>
 				)}
@@ -686,9 +682,7 @@ export function GitHubSetupModal({
 				<div
 					className="flex flex-wrap gap-2"
 					role="radiogroup"
-					aria-label={t(
-						"common:accessibility.repositoryOwnerAriaLabel",
-					)}
+					aria-label={t("common:accessibility.repositoryOwnerAriaLabel")}
 				>
 					{/* Personal account */}
 					{githubUsername && (
@@ -751,9 +745,7 @@ export function GitHubSetupModal({
 			<div
 				className="flex gap-2"
 				role="radiogroup"
-				aria-label={t(
-					"common:accessibility.repositoryVisibilityAriaLabel",
-				)}
+				aria-label={t("common:accessibility.repositoryVisibilityAriaLabel")}
 			>
 				{/* biome-ignore lint/a11y/useSemanticElements: custom styled radio button within radiogroup */}
 				<button
@@ -835,8 +827,8 @@ export function GitHubSetupModal({
 					Select Base Branch
 				</DialogTitle>
 				<DialogDescription>
-					Choose which branch WorkPilot AI should use as the base for
-					creating task branches.
+					Choose which branch WorkPilot AI should use as the base for creating
+					task branches.
 				</DialogDescription>
 			</DialogHeader>
 
@@ -866,8 +858,8 @@ export function GitHubSetupModal({
 							</p>
 							<p className="mt-1">
 								WorkPilot AI creates isolated workspaces for each task.
-								Selecting the right base branch ensures your tasks start
-								with the latest code from your main development line.
+								Selecting the right base branch ensures your tasks start with
+								the latest code from your main development line.
 							</p>
 						</div>
 					</div>
@@ -933,16 +925,12 @@ export function GitHubSetupModal({
 			</Select>
 			<p className="text-xs text-muted-foreground">
 				All tasks will be created from branches like{" "}
-				<code className="px-1 bg-muted rounded">
-					auto-claude/task-name
-				</code>
+				<code className="px-1 bg-muted rounded">auto-claude/task-name</code>
 				{selectedBranch && (
 					<>
 						{" "}
 						based on{" "}
-						<code className="px-1 bg-muted rounded">
-							{selectedBranch}
-						</code>
+						<code className="px-1 bg-muted rounded">{selectedBranch}</code>
 					</>
 				)}
 			</p>
@@ -963,8 +951,8 @@ export function GitHubSetupModal({
 					<CheckCircle2 className="h-8 w-8 text-success" />
 				</div>
 				<p className="text-sm text-muted-foreground text-center">
-					WorkPilot AI is ready to use! You can now create tasks that will
-					be automatically based on{" "}
+					WorkPilot AI is ready to use! You can now create tasks that will be
+					automatically based on{" "}
 					<code className="px-1 bg-muted rounded">{selectedBranch}</code>.
 				</p>
 			</div>

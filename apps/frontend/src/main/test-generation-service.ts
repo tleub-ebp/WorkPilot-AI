@@ -273,6 +273,7 @@ export class TestGenerationService extends EventEmitter {
 			} else {
 				// Strip ANSI escape codes so the error message is readable
 				const clean = stderrOutput
+					// biome-ignore lint/suspicious/noControlCharactersInRegex: intentional — strips ANSI escape codes from error output
 					.replaceAll(/\u001b\[[0-9;]*[A-Za-z]/g, "")
 					.replaceAll(/[\u2500-\u257F]/g, "")
 					.trim();

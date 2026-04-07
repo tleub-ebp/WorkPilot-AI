@@ -89,7 +89,7 @@ describe("AgentState - Queue Routing", () => {
 
 			const result = state.getRunningTasksByProfile();
 
-			expect(result.byProfile["default"]).toContain("task-1");
+			expect(result.byProfile.default).toContain("task-1");
 			expect(result.totalRunning).toBe(1);
 		});
 	});

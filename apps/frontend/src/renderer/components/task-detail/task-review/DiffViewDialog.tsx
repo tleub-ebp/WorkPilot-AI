@@ -122,6 +122,9 @@ function FileTreeNode({
 	if (node.isFolder) {
 		return (
 			<>
+				{/* biome-ignore lint/a11y/noNoninteractiveElementInteractions: collapsible folder row */}
+				{/* biome-ignore lint/a11y/noStaticElementInteractions: collapsible folder row */}
+				{/* biome-ignore lint/a11y/useKeyWithClickEvents: keyboard handled elsewhere */}
 				<div
 					className="flex items-center justify-between p-1.5 rounded-lg hover:bg-secondary/50 transition-colors cursor-pointer select-none"
 					style={{ paddingLeft: depth * 16 + 8 }}
@@ -165,6 +168,7 @@ function FileTreeNode({
 	return (
 		// biome-ignore lint/a11y/noStaticElementInteractions: interactive handler is intentional
 		// biome-ignore lint/a11y/useKeyWithClickEvents: keyboard events handled elsewhere
+		// biome-ignore lint/a11y/noNoninteractiveElementInteractions: selectable file row
 		<div
 			className="flex items-center justify-between p-1.5 rounded-lg bg-secondary/30 hover:bg-secondary/50 transition-colors cursor-pointer"
 			style={{ paddingLeft: depth * 16 + 8 }}
@@ -270,6 +274,7 @@ export function DiffViewDialog({
 					{worktreeDiff?.files.map((file, idx) => (
 						// biome-ignore lint/a11y/noStaticElementInteractions: interactive handler is intentional
 						// biome-ignore lint/a11y/useKeyWithClickEvents: keyboard events handled elsewhere
+						// biome-ignore lint/a11y/noNoninteractiveElementInteractions: selectable file row
 						<div
 							// biome-ignore lint/suspicious/noArrayIndexKey: no stable key available
 							key={idx}
@@ -300,7 +305,7 @@ export function DiffViewDialog({
 										file.status === "renamed" && "bg-warning/10 text-warning",
 									)}
 								>
-									{t("taskReview:diff.status." + file.status)}
+									{t(`taskReview:diff.status.${file.status}`)}
 								</Badge>
 								<span className="text-xs text-success">+{file.additions}</span>
 								<span className="text-xs text-destructive">
@@ -377,7 +382,7 @@ export function DiffViewDialog({
 					</div>
 					<AlertDialogDescription>
 						{selectedFile
-							? `${selectedFile.path} - ${t("taskReview:diff.status." + selectedFile.status)} (+${selectedFile.additions}, -${selectedFile.deletions})`
+							? `${selectedFile.path} - ${t(`taskReview:diff.status.${selectedFile.status}`)} (+${selectedFile.additions}, -${selectedFile.deletions})`
 							: worktreeDiff?.summary || t("taskReview:diff.noChanges")}
 					</AlertDialogDescription>
 				</AlertDialogHeader>

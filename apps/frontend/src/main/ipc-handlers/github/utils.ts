@@ -2,10 +2,10 @@
  * GitHub utility functions
  */
 
-import { execFile, execFileSync } from "child_process";
-import { existsSync, readFileSync } from "fs";
-import path from "path";
-import { promisify } from "util";
+import { execFile, execFileSync } from "node:child_process";
+import { existsSync, readFileSync } from "node:fs";
+import path from "node:path";
+import { promisify } from "node:util";
 import type { Project } from "../../../shared/types";
 import { getToolPath } from "../../cli-tool-manager";
 import { getAugmentedEnv } from "../../env-utils";
@@ -73,8 +73,8 @@ export function getGitHubConfig(project: Project): GitHubConfig | null {
 	try {
 		const content = readFileSync(envPath, "utf-8");
 		const vars = parseEnvFile(content);
-		let token: string | undefined = vars["GITHUB_TOKEN"];
-		const repo = vars["GITHUB_REPO"];
+		let token: string | undefined = vars.GITHUB_TOKEN;
+		const repo = vars.GITHUB_REPO;
 
 		// If no token in .env, try to get it from gh CLI (sync version for sync function)
 		if (!token) {

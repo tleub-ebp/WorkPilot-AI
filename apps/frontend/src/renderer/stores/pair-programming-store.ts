@@ -19,7 +19,12 @@ import type {
 } from "../../preload/api/modules/pair-programming-api";
 
 // Re-export types for convenience
-export type { AiAction, PairMessage, PairSession, StartSessionParams } from "../../preload/api/modules/pair-programming-api";
+export type {
+	AiAction,
+	PairMessage,
+	PairSession,
+	StartSessionParams,
+} from "../../preload/api/modules/pair-programming-api";
 
 // ---------------------------------------------------------------------------
 // Store types
@@ -93,7 +98,9 @@ export const usePairProgrammingStore = create<PairProgrammingState>(
 				statusMessage: message,
 				session: get().session
 					? {
-							...(get().session as NonNullable<ReturnType<typeof get>["session"]>),
+							...(get().session as NonNullable<
+								ReturnType<typeof get>["session"]
+							>),
 							status: (status === "idle"
 								? get().session?.status
 								: status) as PairSession["status"],

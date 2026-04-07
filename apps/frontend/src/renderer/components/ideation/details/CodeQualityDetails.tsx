@@ -156,7 +156,10 @@ export function CodeQualityDetails({ idea }: CodeQualityDetailsProps) {
 					</h3>
 					<ul className="space-y-1">
 						{idea.affectedFiles.map((file) => (
-							<li key={file} className="text-sm font-mono text-muted-foreground">
+							<li
+								key={file}
+								className="text-sm font-mono text-muted-foreground"
+							>
 								{file}
 							</li>
 						))}

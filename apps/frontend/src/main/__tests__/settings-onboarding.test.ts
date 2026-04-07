@@ -301,7 +301,7 @@ describe("SETTINGS_CLAUDE_CODE_GET_ONBOARDING_STATUS handler", () => {
 			// Override readFileSync to throw error for our specific file
 			readFileSyncMock.mockImplementation((path: string) => {
 				if (path === claudeJsonPath) {
-					throw new Error("EACCES: permission denied, open '" + path + "'");
+					throw new Error(`EACCES: permission denied, open '${path}'`);
 				}
 				return originalReadFileSync(path);
 			});

@@ -72,8 +72,7 @@ export function convertToAgnosticUsage(
 		details,
 		error,
 		isAuthenticated:
-			!snapshotExt.isRateLimited ||
-			snapshot.needsReauthentication !== true,
+			!snapshotExt.isRateLimited || snapshot.needsReauthentication !== true,
 		needsReauthentication: snapshot.needsReauthentication || false,
 		isRateLimited: (snapshotExt.isRateLimited as boolean) || false,
 		rateLimitType: snapshot.limitType === "session" ? "session" : "periodic",
@@ -94,12 +93,13 @@ export function convertBackendError(
 	provider: string,
 	backendError: Record<string, unknown>,
 ): UsageError {
-	const errorCode = (backendError.error || backendError.code || "UNKNOWN_ERROR") as string;
+	const errorCode = (backendError.error ||
+		backendError.code ||
+		"UNKNOWN_ERROR") as string;
 
 	return {
 		code: errorCode,
-		message:
-			(backendError.message ||
+		message: (backendError.message ||
 			backendError.errorMessage ||
 			"Unknown error occurred") as string,
 		suggestions: (backendError.suggestions || []) as string[],
@@ -158,7 +158,7 @@ export function formatUsageValue(
 
 		case "tokens":
 			if (usageData.details?.copilot?.totalTokens) {
-				return formatCompactNumber(usageData.details.copilot.totalTokens) + "T";
+				return `${formatCompactNumber(usageData.details.copilot.totalTokens)}T`;
 			}
 			if (usageData.metrics.periodicUsageValue) {
 				return formatCompactNumber(usageData.metrics.periodicUsageValue);
@@ -229,9 +229,7 @@ function formatCustomValue(usageData: AgnosticUsageData): string {
 			if (usageData.details?.copilot?.acceptanceRate) {
 				return `${usageData.details.copilot.acceptanceRate.toFixed(1)}%`;
 			}
-			return (
-				formatCompactNumber(usageData.details?.copilot?.totalTokens || 0) + "T"
-			);
+			return `${formatCompactNumber(usageData.details?.copilot?.totalTokens || 0)}T`;
 
 		default:
 			return `${Math.round(usageData.metrics.periodicPercent)}%`;

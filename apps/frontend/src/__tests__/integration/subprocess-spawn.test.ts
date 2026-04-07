@@ -34,10 +34,16 @@ vi.mock("electron", () => ({
 	},
 }));
 
-import { EventEmitter } from "events";
-import { existsSync, mkdirSync, mkdtempSync, rmSync, writeFileSync } from "fs";
-import { tmpdir } from "os";
-import path from "path";
+import { EventEmitter } from "node:events";
+import {
+	existsSync,
+	mkdirSync,
+	mkdtempSync,
+	rmSync,
+	writeFileSync,
+} from "node:fs";
+import { tmpdir } from "node:os";
+import path from "node:path";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
 	findPythonCommand,
@@ -301,7 +307,7 @@ describe("Subprocess Spawn Integration", () => {
 			}
 
 			try {
-				const { spawn } = await import("child_process");
+				const { spawn } = await import("node:child_process");
 				const { AgentManager } = await import("../../main/agent");
 
 				const manager = new AgentManager();
@@ -346,7 +352,7 @@ describe("Subprocess Spawn Integration", () => {
 				await new Promise((resolve) => setTimeout(resolve, setupMockDelay));
 			}
 
-			const { spawn } = await import("child_process");
+			const { spawn } = await import("node:child_process");
 			const { AgentManager } = await import("../../main/agent");
 
 			const manager = new AgentManager();
@@ -384,7 +390,7 @@ describe("Subprocess Spawn Integration", () => {
 				await new Promise((resolve) => setTimeout(resolve, setupMockDelay));
 			}
 
-			const { spawn } = await import("child_process");
+			const { spawn } = await import("node:child_process");
 			const { AgentManager } = await import("../../main/agent");
 
 			const manager = new AgentManager();
@@ -424,7 +430,7 @@ describe("Subprocess Spawn Integration", () => {
 			}
 
 			// Note: --parallel was removed from run.py CLI - parallel execution is handled internally by the agent
-			const { spawn } = await import("child_process");
+			const { spawn } = await import("node:child_process");
 			const { AgentManager } = await import("../../main/agent");
 
 			const manager = new AgentManager();
@@ -656,7 +662,7 @@ describe("Subprocess Spawn Integration", () => {
 				await new Promise((resolve) => setTimeout(resolve, setupMockDelay));
 			}
 
-			const { spawn } = await import("child_process");
+			const { spawn } = await import("node:child_process");
 			const { AgentManager } = await import("../../main/agent");
 
 			const manager = new AgentManager();

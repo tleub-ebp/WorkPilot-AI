@@ -2,10 +2,10 @@
  * Ideation generation handlers (start/stop generation)
  */
 
+import { existsSync, readFileSync } from "node:fs";
+import path from "node:path";
 import type { BrowserWindow, IpcMainEvent, IpcMainInvokeEvent } from "electron";
 import { app } from "electron";
-import { existsSync, readFileSync } from "fs";
-import path from "path";
 import {
 	DEFAULT_APP_SETTINGS,
 	DEFAULT_FEATURE_MODELS,

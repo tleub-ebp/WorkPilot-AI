@@ -5,9 +5,9 @@
  * Each tool has a dedicated resolver function.
  */
 
-import { existsSync, readdirSync } from "fs";
-import * as os from "os";
-import * as path from "path";
+import { existsSync, readdirSync } from "node:fs";
+import * as os from "node:os";
+import * as path from "node:path";
 import { getWhereExePath } from "../utils/windows-paths";
 import {
 	getExecutableExtension,
@@ -100,10 +100,7 @@ function expandDirPattern(parentDir: string, pattern: string): string[] {
 
 	try {
 		// Convert glob pattern to regex (only support simple * wildcard)
-		const regexPattern = new RegExp(
-			"^" + pattern.replace(/\*/g, ".*") + "$",
-			"i",
-		);
+		const regexPattern = new RegExp(`^${pattern.replace(/\*/g, ".*")}$`, "i");
 		const entries = readdirSync(parentDir, { withFileTypes: true });
 
 		return entries

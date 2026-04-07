@@ -1,6 +1,6 @@
+import { existsSync } from "node:fs";
+import path from "node:path";
 import { type BrowserWindow, ipcMain } from "electron";
-import { existsSync } from "fs";
-import path from "path";
 import { getSpecsDir, IPC_CHANNELS } from "../../../shared/constants";
 import type {
 	IPCResult,

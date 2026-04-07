@@ -17,7 +17,7 @@
  * - Any other Claude SDK subprocess
  */
 
-import { EventEmitter } from "events";
+import { EventEmitter } from "node:events";
 
 /**
  * Types of operations that use Claude SDK

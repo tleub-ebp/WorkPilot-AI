@@ -102,7 +102,7 @@ function createFallbackDate(resetTimeStr: string, now: Date): Date {
 	const isWeekly =
 		resetTimeStr.toLowerCase().includes("week") ||
 		/[a-z]{3}\s+\d+/i.test(resetTimeStr); // Has a date like "Dec 17"
-	
+
 	if (isWeekly) {
 		return new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
 	}

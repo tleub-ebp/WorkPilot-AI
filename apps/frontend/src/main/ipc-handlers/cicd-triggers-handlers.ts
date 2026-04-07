@@ -123,7 +123,7 @@ function writeCicdConfig(
 		if (regex.test(content)) {
 			content = content.replace(regex, line);
 		} else {
-			content = content.trimEnd() + "\n" + line + "\n";
+			content = `${content.trimEnd()}\n${line}\n`;
 		}
 	}
 	fs.mkdirSync(path.dirname(envPath), { recursive: true });
@@ -164,27 +164,27 @@ export function registerCICDTriggersHandlers(): void {
 			return {
 				success: true,
 				data: {
-					provider: cfg["CICD_PROVIDER"] ?? "",
-					enabled: cfg["CICD_AUTO_TRIGGER"] === "true",
-					trigger_on_pr: cfg["CICD_TRIGGER_ON_PR"] !== "false",
-					trigger_on_merge: cfg["CICD_TRIGGER_ON_MERGE"] !== "false",
+					provider: cfg.CICD_PROVIDER ?? "",
+					enabled: cfg.CICD_AUTO_TRIGGER === "true",
+					trigger_on_pr: cfg.CICD_TRIGGER_ON_PR !== "false",
+					trigger_on_merge: cfg.CICD_TRIGGER_ON_MERGE !== "false",
 					// GitHub Actions
-					github_token: cfg["CICD_GITHUB_TOKEN"] ? "***" : "",
-					github_workflow: cfg["CICD_GITHUB_WORKFLOW"] ?? "",
-					github_ref: cfg["CICD_GITHUB_REF"] ?? "main",
+					github_token: cfg.CICD_GITHUB_TOKEN ? "***" : "",
+					github_workflow: cfg.CICD_GITHUB_WORKFLOW ?? "",
+					github_ref: cfg.CICD_GITHUB_REF ?? "main",
 					// GitLab CI
-					gitlab_token: cfg["CICD_GITLAB_TOKEN"] ? "***" : "",
-					gitlab_project_id: cfg["CICD_GITLAB_PROJECT_ID"] ?? "",
-					gitlab_ref: cfg["CICD_GITLAB_REF"] ?? "main",
+					gitlab_token: cfg.CICD_GITLAB_TOKEN ? "***" : "",
+					gitlab_project_id: cfg.CICD_GITLAB_PROJECT_ID ?? "",
+					gitlab_ref: cfg.CICD_GITLAB_REF ?? "main",
 					// Azure DevOps
-					azure_token: cfg["CICD_AZURE_TOKEN"] ? "***" : "",
-					azure_org: cfg["CICD_AZURE_ORG"] ?? "",
-					azure_project: cfg["CICD_AZURE_PROJECT"] ?? "",
-					azure_pipeline_id: cfg["CICD_AZURE_PIPELINE_ID"] ?? "",
+					azure_token: cfg.CICD_AZURE_TOKEN ? "***" : "",
+					azure_org: cfg.CICD_AZURE_ORG ?? "",
+					azure_project: cfg.CICD_AZURE_PROJECT ?? "",
+					azure_pipeline_id: cfg.CICD_AZURE_PIPELINE_ID ?? "",
 					// Jenkins
-					jenkins_url: cfg["CICD_JENKINS_URL"] ?? "",
-					jenkins_token: cfg["CICD_JENKINS_TOKEN"] ? "***" : "",
-					jenkins_job: cfg["CICD_JENKINS_JOB"] ?? "",
+					jenkins_url: cfg.CICD_JENKINS_URL ?? "",
+					jenkins_token: cfg.CICD_JENKINS_TOKEN ? "***" : "",
+					jenkins_job: cfg.CICD_JENKINS_JOB ?? "",
 				},
 			};
 		} catch (err) {

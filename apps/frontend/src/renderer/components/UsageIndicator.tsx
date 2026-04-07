@@ -402,7 +402,8 @@ export function UsageIndicator() {
 
 					if (profilesResult.success && profilesResult.data?.profiles) {
 						const oauthProfile = profilesResult.data.profiles.find(
-							(profile: { isAuthenticated?: boolean }) => profile.isAuthenticated === true,
+							(profile: { isAuthenticated?: boolean }) =>
+								profile.isAuthenticated === true,
 						);
 
 						if (oauthProfile) {
@@ -660,7 +661,11 @@ export function UsageIndicator() {
 		// Debug OpenAI
 		if (selectedProvider?.toLowerCase() === "openai") {
 			const globalAny = globalThis as Record<string, unknown>;
-			let debugProfiles: Array<{ name: string; baseUrl: string; detectedProvider: string }> = [];
+			let debugProfiles: Array<{
+				name: string;
+				baseUrl: string;
+				detectedProvider: string;
+			}> = [];
 			if (typeof globalThis !== "undefined" && globalAny.debugProfiles) {
 				debugProfiles = globalAny.debugProfiles as typeof debugProfiles;
 			}

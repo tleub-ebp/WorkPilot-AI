@@ -150,7 +150,7 @@ export class TitleGenerator extends EventEmitter {
 
 		debug(
 			"Generating title for description:",
-			description.substring(0, 100) + "...",
+			`${description.substring(0, 100)}...`,
 		);
 
 		const autoBuildEnv = this.loadAutoBuildEnv();
@@ -364,7 +364,7 @@ asyncio.run(generate_title())
 
 		// Truncate if too long (max 100 chars)
 		if (cleaned.length > 100) {
-			cleaned = cleaned.substring(0, 97) + "...";
+			cleaned = `${cleaned.substring(0, 97)}...`;
 		}
 
 		return cleaned.trim();

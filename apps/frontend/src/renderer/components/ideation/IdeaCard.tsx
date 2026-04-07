@@ -68,6 +68,9 @@ export function IdeaCard({
 		>
 			<div className="flex items-start gap-3">
 				{/* Selection checkbox */}
+				{/* biome-ignore lint/a11y/noNoninteractiveElementInteractions: checkbox toggle proxy */}
+				{/* biome-ignore lint/a11y/noStaticElementInteractions: checkbox toggle proxy */}
+				{/* biome-ignore lint/a11y/useKeyWithClickEvents: keyboard handled by card */}
 				<div
 					className="pt-0.5"
 					onClick={(e) => {

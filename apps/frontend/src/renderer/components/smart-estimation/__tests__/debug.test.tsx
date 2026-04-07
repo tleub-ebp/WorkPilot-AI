@@ -92,7 +92,6 @@ import SmartEstimationDialog from "../SmartEstimationDialog";
 
 describe("Debug Test", () => {
 	it("should render dialog when open", () => {
-
 		render(<SmartEstimationDialog />);
 
 		expect(screen.getByTestId("dialog")).toBeInTheDocument();

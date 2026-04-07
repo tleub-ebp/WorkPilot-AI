@@ -79,6 +79,7 @@ const CommentsList = ({
 					<>
 						{/* biome-ignore lint/a11y/noStaticElementInteractions: interactive handler is intentional */}
 						{/* biome-ignore lint/a11y/useKeyWithClickEvents: keyboard events handled elsewhere */}
+						{/* biome-ignore lint/a11y/noNoninteractiveElementInteractions: selectable comment row */}
 						<div
 							key={comment.id}
 							className="flex gap-3 p-3 rounded-lg border border-border bg-card hover:bg-accent/50 transition-colors cursor-pointer"

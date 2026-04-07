@@ -283,7 +283,7 @@ function setupContextMenu(mainWindow: BrowserWindow): void {
 				// getAppLanguage() tracks the user's in-app language setting, updated via SPELLCHECK_SET_LANGUAGES IPC
 				const addToDictionaryLabel =
 					ADD_TO_DICTIONARY_LABELS[getAppLanguage()] ||
-					ADD_TO_DICTIONARY_LABELS["en"];
+					ADD_TO_DICTIONARY_LABELS.en;
 				menu.append(
 					new MenuItem({
 						label: addToDictionaryLabel,
@@ -420,8 +420,8 @@ function createWindow(): void {
 
 	// Load the renderer
 	if (mainWindow) {
-		if (is.dev && process.env["ELECTRON_RENDERER_URL"]) {
-			mainWindow.loadURL(process.env["ELECTRON_RENDERER_URL"]);
+		if (is.dev && process.env.ELECTRON_RENDERER_URL) {
+			mainWindow.loadURL(process.env.ELECTRON_RENDERER_URL);
 		} else {
 			mainWindow.loadFile(join(__dirname, "../renderer/index.html"));
 		}
@@ -589,7 +589,9 @@ async function launchStreamingServer() {
 		},
 	);
 
-	streamingServerProcess.stdout?.on("data", (_data: Buffer) => { /* intentionally empty */ });
+	streamingServerProcess.stdout?.on("data", (_data: Buffer) => {
+		/* intentionally empty */
+	});
 	streamingServerProcess.stderr?.on("data", (data: Buffer) => {
 		console.warn("[streaming-server]", data.toString().trim());
 	});

@@ -318,7 +318,7 @@ export class CredentialManager extends EventEmitter {
 	 */
 	async testProvider(
 		provider: string,
-	): Promise<{ success: boolean; message: string; details?: any }> {
+	): Promise<{ success: boolean; message: string; details?: unknown }> {
 		try {
 			// Cas spécial pour Copilot - utilise GitHub CLI auth
 			if (provider === "copilot") {
@@ -458,7 +458,7 @@ export class CredentialManager extends EventEmitter {
 					apiKey = apiProfile.apiKey;
 					baseUrl = apiProfile.baseUrl;
 					profileName = apiProfile.name;
-					_source = "API profile (" + (profileName || "unnamed") + ")";
+					_source = `API profile (${profileName || "unnamed"})`;
 				}
 			} catch {
 				// profiles.json not available
@@ -490,7 +490,7 @@ export class CredentialManager extends EventEmitter {
 							if (globalKey?.trim()) {
 								apiKey = globalKey.trim();
 								profileName = provider;
-								_source = "global settings (" + settingsKey + ")";
+								_source = `global settings (${settingsKey})`;
 								break;
 							}
 						}
@@ -521,7 +521,7 @@ export class CredentialManager extends EventEmitter {
 
 			// Debug: log which source provided the key (mask most of the key for security)
 			const _maskedKey =
-				apiKey.length > 8 ? apiKey.substring(0, 8) + "..." : "***";
+				apiKey.length > 8 ? `${apiKey.substring(0, 8)}...` : "***";
 
 			// Tester la connexion avec le endpoint approprié pour chaque provider
 			try {
@@ -928,7 +928,8 @@ export class CredentialManager extends EventEmitter {
 
 					if (profiles.profiles && Array.isArray(profiles.profiles)) {
 						const oauthProfile = profiles.profiles.find(
-							(profile: { isAuthenticated?: boolean }) => profile.isAuthenticated === true,
+							(profile: { isAuthenticated?: boolean }) =>
+								profile.isAuthenticated === true,
 						);
 
 						if (oauthProfile) {
@@ -1565,7 +1566,8 @@ export class CredentialManager extends EventEmitter {
 					const profile = profiles?.profiles.find((p) => {
 						try {
 							return (
-								(p as unknown as Record<string, unknown>).provider === selectedProvider ||
+								(p as unknown as Record<string, unknown>).provider ===
+									selectedProvider ||
 								p.baseUrl?.toLowerCase().includes(selectedProvider)
 							);
 						} catch {
@@ -2095,9 +2097,7 @@ function decodeVarint(buf: Buffer, pos: number): [number, number] {
  *     - sub-field 8: total messages
  *     - sub-field 9: total flow actions
  */
-function extractBillingCycleFromProtobuf(
-	protoB64: string,
-): {
+function extractBillingCycleFromProtobuf(protoB64: string): {
 	startSeconds: number;
 	endSeconds: number;
 	totalMessages: number;

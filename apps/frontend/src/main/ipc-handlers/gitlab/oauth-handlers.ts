@@ -3,7 +3,7 @@
  * Provides OAuth flow similar to GitHub's gh CLI
  */
 
-import { execFileSync, spawn } from "child_process";
+import { execFileSync, spawn } from "node:child_process";
 import { ipcMain, shell } from "electron";
 import { IPC_CHANNELS } from "../../../shared/constants";
 import type { IPCResult } from "../../../shared/types";

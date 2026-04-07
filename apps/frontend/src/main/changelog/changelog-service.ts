@@ -1,8 +1,8 @@
+import { EventEmitter } from "node:events";
+import { existsSync, readFileSync, writeFileSync } from "node:fs";
+import * as path from "node:path";
+import { fileURLToPath } from "node:url";
 import { app } from "electron";
-import { EventEmitter } from "events";
-import { existsSync, readFileSync, writeFileSync } from "fs";
-import * as path from "path";
-import { fileURLToPath } from "url";
 
 // ESM-compatible __dirname
 const __filename = fileURLToPath(import.meta.url);

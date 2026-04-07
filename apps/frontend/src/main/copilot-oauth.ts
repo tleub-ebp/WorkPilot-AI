@@ -12,12 +12,12 @@
  * 5. Store token in keychain for future use
  */
 
-import { execFile } from "child_process";
-import { randomBytes } from "crypto";
+import { execFile } from "node:child_process";
+import { randomBytes } from "node:crypto";
+import os from "node:os";
+import path from "node:path";
+import { promisify } from "node:util";
 import { app } from "electron";
-import os from "os";
-import path from "path";
-import { promisify } from "util";
 import { isWindows } from "./platform";
 
 const _execFileAsync = promisify(execFile);
@@ -65,7 +65,7 @@ async function openOAuthBrowser(url: string): Promise<void> {
 	return new Promise<void>((resolve, reject) => {
 		try {
 			if (isWindows()) {
-				const { exec } = require("child_process");
+				const { exec } = require("node:child_process");
 				// Use exec with shell: true to properly handle URL with parameters
 				exec(`start "" "${url}"`, (error: Error | null) => {
 					if (error) reject(error);
@@ -190,7 +190,7 @@ async function storeCopilotToken(
 	const tokenFile = path.join(configDir, `${username}.json`);
 
 	try {
-		await require("fs").promises.mkdir(configDir, { recursive: true });
+		await require("node:fs").promises.mkdir(configDir, { recursive: true });
 
 		const tokenData = {
 			username,
@@ -200,7 +200,7 @@ async function storeCopilotToken(
 			provider: "copilot",
 		};
 
-		await require("fs").promises.writeFile(
+		await require("node:fs").promises.writeFile(
 			tokenFile,
 			JSON.stringify(tokenData, null, 2),
 		);
@@ -222,7 +222,7 @@ async function getCopilotToken(username: string): Promise<{
 	const tokenFile = path.join(configDir, `${username}.json`);
 
 	try {
-		const data = await require("fs").promises.readFile(tokenFile, "utf-8");
+		const data = await require("node:fs").promises.readFile(tokenFile, "utf-8");
 		return JSON.parse(data);
 	} catch (_error) {
 		return null;
@@ -245,7 +245,7 @@ export async function startCopilotOAuth(profileName: string): Promise<{
 
 		// Store state for callback verification
 		const stateFile = path.join(app.getPath("temp"), "copilot-oauth-state.txt");
-		await require("fs").promises.writeFile(stateFile, state);
+		await require("node:fs").promises.writeFile(stateFile, state);
 
 		// Open browser for OAuth
 		await openOAuthBrowser(oauthUrl);
@@ -281,7 +281,7 @@ export async function handleCopilotOAuthCallback(
 		// Verify state
 		const stateFile = path.join(app.getPath("temp"), "copilot-oauth-state.txt");
 		try {
-			const storedState = await require("fs").promises.readFile(
+			const storedState = await require("node:fs").promises.readFile(
 				stateFile,
 				"utf-8",
 			);
@@ -289,7 +289,7 @@ export async function handleCopilotOAuthCallback(
 				throw new Error("Invalid OAuth state");
 			}
 			// Clean up state file
-			await require("fs").promises.unlink(stateFile);
+			await require("node:fs").promises.unlink(stateFile);
 		} catch (_error) {
 			throw new Error("Invalid or missing OAuth state");
 		}
@@ -346,7 +346,7 @@ export async function getCopilotAuthStatus(): Promise<{
 		const configDir = path.join(os.homedir(), ".workpilot", "copilot-profiles");
 
 		try {
-			const files = await require("fs").promises.readdir(configDir);
+			const files = await require("node:fs").promises.readdir(configDir);
 			const profiles: Array<{
 				username: string;
 				profileName: string;
@@ -409,7 +409,7 @@ export async function revokeCopilotAuth(username: string): Promise<{
 		const configDir = path.join(os.homedir(), ".workpilot", "copilot-profiles");
 		const tokenFile = path.join(configDir, `${username}.json`);
 
-		await require("fs").promises.unlink(tokenFile);
+		await require("node:fs").promises.unlink(tokenFile);
 
 		return {
 			success: true,

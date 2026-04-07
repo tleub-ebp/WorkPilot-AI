@@ -8,15 +8,15 @@
  * Those are handled by the IPC handlers where they have full context.
  */
 
-import { app } from "electron";
 import {
 	existsSync,
 	promises as fsPromises,
 	mkdirSync,
 	readFileSync,
 	writeFileSync,
-} from "fs";
-import path from "path";
+} from "node:fs";
+import path from "node:path";
+import { app } from "electron";
 
 /**
  * Get the path to the settings file

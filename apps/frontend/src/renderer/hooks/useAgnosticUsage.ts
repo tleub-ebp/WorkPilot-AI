@@ -50,7 +50,7 @@ export interface UseAgnosticUsageReturn {
 	validateCredentials: () => Promise<boolean>;
 	testProvider: (
 		provider: string,
-	) => Promise<{ success: boolean; message: string; details?: any }>;
+	) => Promise<{ success: boolean; message: string; details?: unknown }>;
 	clearError: () => void;
 
 	// Utility functions

@@ -2,9 +2,9 @@
  * Convert ideation ideas to tasks
  */
 
+import { existsSync, mkdirSync, writeFileSync } from "node:fs";
+import path from "node:path";
 import type { IpcMainInvokeEvent } from "electron";
-import { existsSync, mkdirSync, writeFileSync } from "fs";
-import path from "path";
 import { AUTO_BUILD_PATHS, getSpecsDir } from "../../../shared/constants";
 import type {
 	ImplementationPlan,

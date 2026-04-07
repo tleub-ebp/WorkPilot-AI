@@ -183,7 +183,11 @@ class CredentialService {
 		}
 
 		try {
-			await globalThis.electronAPI.invoke("usage:updateData", provider, usageData);
+			await globalThis.electronAPI.invoke(
+				"usage:updateData",
+				provider,
+				usageData,
+			);
 		} catch (error) {
 			console.error("[CredentialService] Failed to update usage data:", error);
 		}
@@ -260,7 +264,14 @@ class CredentialService {
 	/**
 	 * Émettre un événement
 	 */
-	private emit(event: string, data: CredentialConfig | null | UsageData | { provider: string; type: "oauth" | "api_key" }): void {
+	private emit(
+		event: string,
+		data:
+			| CredentialConfig
+			| null
+			| UsageData
+			| { provider: string; type: "oauth" | "api_key" },
+	): void {
 		const listeners = this.eventListeners.get(event);
 		if (listeners) {
 			listeners.forEach((callback) => {

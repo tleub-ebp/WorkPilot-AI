@@ -4,7 +4,7 @@
  * Handles IPC requests for checking MCP server health and connectivity.
  */
 
-import { spawn } from "child_process";
+import { spawn } from "node:child_process";
 import { ipcMain } from "electron";
 import { IPC_CHANNELS } from "../../shared/constants/ipc";
 import type {
@@ -506,20 +506,19 @@ async function testCommandConnection(
 		}, 15000); // 15 second timeout (matches spawn timeout)
 
 		// Send MCP initialize request
-		const initRequest =
-			JSON.stringify({
-				jsonrpc: "2.0",
-				id: 1,
-				method: "initialize",
-				params: {
-					protocolVersion: "2024-11-05",
-					capabilities: {},
-					clientInfo: {
-						name: "auto-claude-health-check",
-						version: "1.0.0",
-					},
+		const initRequest = `${JSON.stringify({
+			jsonrpc: "2.0",
+			id: 1,
+			method: "initialize",
+			params: {
+				protocolVersion: "2024-11-05",
+				capabilities: {},
+				clientInfo: {
+					name: "auto-claude-health-check",
+					version: "1.0.0",
 				},
-			}) + "\n";
+			},
+		})}\n`;
 
 		proc.stdin.write(initRequest);
 

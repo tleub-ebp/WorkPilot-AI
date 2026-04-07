@@ -7,10 +7,10 @@
  * 3. Apply labels to issues
  */
 
+import fs from "node:fs";
+import path from "node:path";
 import type { BrowserWindow } from "electron";
 import { ipcMain } from "electron";
-import fs from "fs";
-import path from "path";
 import {
 	DEFAULT_FEATURE_MODELS,
 	DEFAULT_FEATURE_THINKING,
@@ -222,7 +222,7 @@ function getGitHubIssuesSettings(): { model: string; thinkingLevel: string } {
 		featureThinking.githubIssues ?? DEFAULT_FEATURE_THINKING.githubIssues;
 
 	// Convert model short name to full model ID
-	const model = MODEL_ID_MAP[modelShort] ?? MODEL_ID_MAP["opus"];
+	const model = MODEL_ID_MAP[modelShort] ?? MODEL_ID_MAP.opus;
 
 	debugLog("GitHub Issues settings", { modelShort, model, thinkingLevel });
 
@@ -501,7 +501,7 @@ export function registerTriageHandlers(
 								}
 
 								if (safeLabels.length > 0) {
-									const { execFileSync } = await import("child_process");
+									const { execFileSync } = await import("node:child_process");
 									// Use execFileSync with arguments array to prevent command injection
 									execFileSync(
 										"gh",

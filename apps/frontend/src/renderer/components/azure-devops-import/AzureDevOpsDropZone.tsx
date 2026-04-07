@@ -92,6 +92,7 @@ export function AzureDevOpsDropZone({
 	const hasItems = draggedWorkItems.length > 0;
 
 	return (
+		// biome-ignore lint/a11y/noNoninteractiveElementInteractions: drop zone for work items
 		<section
 			className={cn("relative flex-1", className)}
 			onDragOver={handleDragOver}

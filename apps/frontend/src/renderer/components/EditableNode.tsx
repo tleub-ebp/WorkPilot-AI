@@ -41,6 +41,7 @@ export const EditableNode: React.FC<NodeProps> = ({
 
 	return (
 		// biome-ignore lint/a11y/noStaticElementInteractions: interactive handler is intentional
+		// biome-ignore lint/a11y/noNoninteractiveElementInteractions: Electron desktop app — double-click on node is intentional
 		<div
 			onDoubleClick={handleDoubleClick}
 			style={{

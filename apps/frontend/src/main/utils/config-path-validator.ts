@@ -6,8 +6,8 @@
  * arbitrary paths like /etc or C:\Windows\System32\config.
  */
 
-import os from "os";
-import path from "path";
+import os from "node:os";
+import path from "node:path";
 
 /**
  * Validate that a config directory path is safe and within expected boundaries.

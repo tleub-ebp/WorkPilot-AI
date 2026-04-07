@@ -113,6 +113,7 @@ export function RoadmapTabs({
 									{features.map((feature: RoadmapFeature) => (
 										// biome-ignore lint/a11y/noStaticElementInteractions: interactive handler is intentional
 										// biome-ignore lint/a11y/useKeyWithClickEvents: keyboard events handled elsewhere
+										// biome-ignore lint/a11y/noNoninteractiveElementInteractions: selectable feature row
 										<div
 											key={feature.id}
 											className="p-2 rounded-md bg-muted/50 hover:bg-muted cursor-pointer transition-colors"

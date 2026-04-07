@@ -2,9 +2,9 @@
  * GitLab utility functions
  */
 
-import { execFileSync } from "child_process";
-import { access, readFile } from "fs/promises";
-import path from "path";
+import { execFileSync } from "node:child_process";
+import { access, readFile } from "node:fs/promises";
+import path from "node:path";
 import type { Project } from "../../../shared/types";
 import { getAugmentedEnv } from "../../env-utils";
 import { getIsolatedGitEnv } from "../../utils/git-isolation";

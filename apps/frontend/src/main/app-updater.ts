@@ -534,6 +534,7 @@ function handleResponseData(
 		const version = latestStable.tag_name.replace(/^v/, "");
 		// Sanitize version string for logging (remove control characters and limit length)
 		const safeVersion = String(version)
+			// biome-ignore lint/suspicious/noControlCharactersInRegex: intentional control character matching for sanitization
 			.replaceAll(/[\u0000-\u001f\u007f]/g, "")
 			.slice(0, 50);
 		console.warn("[app-updater] Found latest stable release:", safeVersion);

@@ -52,7 +52,9 @@ export async function createProfileDirectory(
 	mkdirSync(CLAUDE_PROFILES_DIR, { recursive: true });
 
 	// Create directory for this profile
-	const sanitizedName = profileName.toLowerCase().replaceAll(/[^a-z0-9]+/g, "-");
+	const sanitizedName = profileName
+		.toLowerCase()
+		.replaceAll(/[^a-z0-9]+/g, "-");
 	const profileDir = join(CLAUDE_PROFILES_DIR, sanitizedName);
 
 	// mkdirSync with recursive:true is idempotent and won't throw if directory exists

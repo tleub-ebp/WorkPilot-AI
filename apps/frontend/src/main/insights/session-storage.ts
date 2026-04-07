@@ -5,8 +5,8 @@ import {
 	readFileSync,
 	unlinkSync,
 	writeFileSync,
-} from "fs";
-import path from "path";
+} from "node:fs";
+import path from "node:path";
 import type {
 	InsightsSession,
 	InsightsSessionSummary,

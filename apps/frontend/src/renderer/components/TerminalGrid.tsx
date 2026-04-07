@@ -537,7 +537,7 @@ export function TerminalGrid({
 					? `"${activeData.path}"`
 					: activeData.path;
 				// Insert the file path into the terminal with a trailing space
-				globalThis.electronAPI.sendTerminalInput(terminalId, quotedPath + " ");
+				globalThis.electronAPI.sendTerminalInput(terminalId, `${quotedPath} `);
 			}
 		},
 		[reorderTerminals, terminals, projectPath],

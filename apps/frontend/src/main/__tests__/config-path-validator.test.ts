@@ -55,8 +55,8 @@
  * - Platform-specific paths (Windows C:\, Unix /etc) are tested conditionally
  */
 
-import os from "os";
-import path from "path";
+import os from "node:os";
+import path from "node:path";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { isValidConfigDir } from "../utils/config-path-validator";
 
@@ -260,7 +260,7 @@ describe("isValidConfigDir - Security Validation", () => {
 			const homeDir = os.homedir();
 
 			// If homeDir is /home/alice, reject /home/alice-malicious
-			const similarPath = homeDir + "-malicious";
+			const similarPath = `${homeDir}-malicious`;
 			expect(isValidConfigDir(similarPath)).toBe(false);
 
 			// Try with subdirectory
@@ -277,7 +277,7 @@ describe("isValidConfigDir - Security Validation", () => {
 			expect(isValidConfigDir(claudeLikePath)).toBe(true);
 
 			// But paths that try to escape home boundaries are rejected
-			const homeDirMaliciousSuffix = homeDir + "-malicious";
+			const homeDirMaliciousSuffix = `${homeDir}-malicious`;
 			expect(isValidConfigDir(homeDirMaliciousSuffix)).toBe(false);
 		});
 
@@ -296,7 +296,7 @@ describe("isValidConfigDir - Security Validation", () => {
 			// Example: if home is /home/user, test /home/username
 			const homeDirParent = path.dirname(homeDir);
 			const homeBasename = path.basename(homeDir);
-			const similarName = path.join(homeDirParent, homeBasename + "name");
+			const similarName = path.join(homeDirParent, `${homeBasename}name`);
 
 			// Only reject if this isn't actually within our home (which it shouldn't be)
 			if (

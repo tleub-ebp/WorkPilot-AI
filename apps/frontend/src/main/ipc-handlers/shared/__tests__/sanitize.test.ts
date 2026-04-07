@@ -257,7 +257,7 @@ describe("sanitizeUrl", () => {
 		});
 
 		it("should reject URLs exceeding maxLength", () => {
-			const longUrl = "https://example.com/" + "a".repeat(3000);
+			const longUrl = `https://example.com/${"a".repeat(3000)}`;
 			expect(sanitizeUrl(longUrl)).toBe("");
 		});
 	});

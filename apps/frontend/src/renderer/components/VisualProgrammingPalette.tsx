@@ -133,11 +133,12 @@ export const VisualProgrammingPalette: React.FC<{ compact?: boolean }> = ({
 						<div className="flex flex-wrap gap-2">
 							{cat.blocks.map((tpl) => (
 								// biome-ignore lint/a11y/noStaticElementInteractions: draggable palette block
+								// biome-ignore lint/a11y/noNoninteractiveElementInteractions: draggable palette block
 								<div
 									key={tpl.type}
 									className="flex items-center gap-2 p-2 rounded cursor-grab hover:bg-muted/60"
 									draggable
-									title={t(tpl.labelKey + "Desc", "")}
+									title={t(`${tpl.labelKey}Desc`, "")}
 									onDragStart={(e) => handleDragStart(e, tpl.type)}
 								>
 									<span>{tpl.icon}</span>

@@ -16,7 +16,7 @@ export function RepoSelector() {
 	const handleAddRepo = () => {
 		if (!repoInput.trim() || !pathInput.trim()) return;
 
-		const id = repoInput.replace(/[^\w-]/g, "_") + "_" + Date.now();
+		const id = `${repoInput.replace(/[^\w-]/g, "_")}_${Date.now()}`;
 		const newRepo: RepoTarget = {
 			id,
 			repo: repoInput.trim(),

@@ -621,6 +621,7 @@ export function AzureDevOpsSidePanel({
 	return (
 		<>
 			{/* Panel seulement - pas de conteneur qui bloque l'écran */}
+			{/* biome-ignore lint/a11y/noNoninteractiveElementInteractions: drop zone for work items */}
 			<section
 				ref={panelRef}
 				className="fixed right-0 top-0 h-full bg-background border-l border-border shadow-2xl flex flex-col z-300"
@@ -833,6 +834,7 @@ export function AzureDevOpsSidePanel({
 						<div className="p-4 space-y-2">
 							{filteredItems.map((item) => (
 								// biome-ignore lint/a11y/noLabelWithoutControl: Radix Checkbox renders a hidden input
+								// biome-ignore lint/a11y/noNoninteractiveElementInteractions: label is draggable work item
 								<label
 									key={item.id}
 									className={cn(

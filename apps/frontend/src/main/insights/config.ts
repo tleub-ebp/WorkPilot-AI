@@ -1,5 +1,5 @@
-import { existsSync, readFileSync } from "fs";
-import path from "path";
+import { existsSync, readFileSync } from "node:fs";
+import path from "node:path";
 import { getOAuthModeClearVars } from "../agent/env-utils";
 import { getAugmentedEnv } from "../env-utils";
 import { isWindows } from "../platform";

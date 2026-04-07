@@ -15,8 +15,8 @@ import {
 	readFileSync,
 	unlinkSync,
 	writeFileSync,
-} from "fs";
-import path from "path";
+} from "node:fs";
+import path from "node:path";
 
 export class SpecNumberLockError extends Error {
 	constructor(message: string) {

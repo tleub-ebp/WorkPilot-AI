@@ -4,8 +4,8 @@
  * Tests the killProcessGracefully utility for cross-platform process termination.
  */
 
-import type { ChildProcess } from "child_process";
-import { EventEmitter } from "events";
+import type { ChildProcess } from "node:child_process";
+import { EventEmitter } from "node:events";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 // Mock child_process before importing the module
@@ -39,7 +39,7 @@ vi.mock("child_process", () => {
 	};
 });
 
-import { spawn } from "child_process";
+import { spawn } from "node:child_process";
 // Import after mocking
 import { GRACEFUL_KILL_TIMEOUT_MS, killProcessGracefully } from "../index";
 

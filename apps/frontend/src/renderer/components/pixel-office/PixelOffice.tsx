@@ -343,7 +343,7 @@ export function PixelOffice({
 	const handleSendCommand = useCallback(
 		(cmd: string) => {
 			if (!selectedAgentId) return;
-			globalThis.electronAPI.sendTerminalInput(selectedAgentId, cmd + "\n");
+			globalThis.electronAPI.sendTerminalInput(selectedAgentId, `${cmd}\n`);
 		},
 		[selectedAgentId],
 	);

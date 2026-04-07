@@ -440,146 +440,115 @@ export function CleanProviderSection({
 	);
 
 	// Get API key info for a provider
-	const getApiKeyInfo = useCallback((
-		providerId: string,
-	): {
-		hasKey: boolean;
-		keyPreview?: string;
-		provider?: string;
-		isOAuth?: boolean;
-		authMethod?: AuthMethod;
-	} => {
-		// Determine auth method from registry
-		const authMethod = getProviderAuthMethod(providerId);
-		const isOAuthOrCLI = authMethod === "cli" || authMethod === "oauth";
+	// biome-ignore lint/correctness/useExhaustiveDependencies: detectProviderFromUrl and getProviderApiKeyField are pure helpers; getProviderAuthMethod is stable
+	const getApiKeyInfo = useCallback(
+		(
+			providerId: string,
+		): {
+			hasKey: boolean;
+			keyPreview?: string;
+			provider?: string;
+			isOAuth?: boolean;
+			authMethod?: AuthMethod;
+		} => {
+			// Determine auth method from registry
+			const authMethod = getProviderAuthMethod(providerId);
+			const isOAuthOrCLI = authMethod === "cli" || authMethod === "oauth";
 
-		// Special handling for OAuth providers like Windsurf that don't need profiles
-		if (isOAuthOrCLI && providerId === "windsurf") {
-			// Check if Windsurf OAuth token is available via backend status
-			const isConfigured = providerStatus[providerId] || false;
-			if (isConfigured) {
+			// Special handling for OAuth providers like Windsurf that don't need profiles
+			if (isOAuthOrCLI && providerId === "windsurf") {
+				// Check if Windsurf OAuth token is available via backend status
+				const isConfigured = providerStatus[providerId] || false;
+				if (isConfigured) {
+					return {
+						hasKey: true,
+						keyPreview: undefined,
+						provider: "Windsurf OAuth",
+						isOAuth: true,
+						authMethod: "oauth",
+					};
+				}
+			}
+
+			// Check profiles for API keys
+			const profile = profiles.find((p) => {
+				if (!p.baseUrl) return false;
+				const detectedProvider = detectProviderFromUrl(p.baseUrl);
+				return (
+					detectedProvider === providerId ||
+					(providerId === "claude" && detectedProvider === "anthropic") ||
+					(providerId === "gemini" && p.baseUrl.includes("googleapis.com")) ||
+					(providerId === "google" && p.baseUrl.includes("googleapis.com"))
+				);
+			});
+
+			if (profile?.apiKey) {
+				return {
+					hasKey: true,
+					keyPreview: profile.apiKey,
+					provider: profile.name,
+					isOAuth: false,
+					authMethod: "api-key",
+				};
+			}
+
+			// Check settings for API keys (for providers like OpenAI, etc.)
+			const apiKeyField = getProviderApiKeyField(providerId);
+			// biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
+			if (apiKeyField && (settings as any)[apiKeyField]) {
+				return {
+					hasKey: true,
+					// biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
+					keyPreview: (settings as any)[apiKeyField],
+					isOAuth: false,
+					authMethod: "api-key",
+				};
+			}
+
+			// For other OAuth/CLI providers, check if they are configured (even without API key)
+			if (isOAuthOrCLI && profile) {
 				return {
 					hasKey: true,
 					keyPreview: undefined,
-					provider: "Windsurf OAuth",
+					provider: profile.name,
 					isOAuth: true,
-					authMethod: "oauth",
+					authMethod,
 				};
 			}
-		}
 
-		// Check profiles for API keys
-		const profile = profiles.find((p) => {
-			if (!p.baseUrl) return false;
-			const detectedProvider = detectProviderFromUrl(p.baseUrl);
-			return (
-				detectedProvider === providerId ||
-				(providerId === "claude" && detectedProvider === "anthropic") ||
-				(providerId === "gemini" && p.baseUrl.includes("googleapis.com")) ||
-				(providerId === "google" && p.baseUrl.includes("googleapis.com"))
-			);
-		});
-
-		if (profile?.apiKey) {
-			return {
-				hasKey: true,
-				keyPreview: profile.apiKey,
-				provider: profile.name,
-				isOAuth: false,
-				authMethod: "api-key",
-			};
-		}
-
-		// Check settings for API keys (for providers like OpenAI, etc.)
-		const apiKeyField = getProviderApiKeyField(providerId);
-		// biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
-		if (apiKeyField && (settings as any)[apiKeyField]) {
-			return {
-				hasKey: true,
-				// biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
-				keyPreview: (settings as any)[apiKeyField],
-				isOAuth: false,
-				authMethod: "api-key",
-			};
-		}
-
-		// For other OAuth/CLI providers, check if they are configured (even without API key)
-		if (isOAuthOrCLI && profile) {
-			return {
-				hasKey: true,
-				keyPreview: undefined,
-				provider: profile.name,
-				isOAuth: true,
-				authMethod,
-			};
-		}
-
-		// For local providers (e.g. Ollama), mark as configured without a key
-		if (authMethod === "local") {
-			return {
-				hasKey: true,
-				keyPreview: undefined,
-				isOAuth: false,
-				authMethod: "local",
-			};
-		}
-
-		// Fallback: if the provider is active but no API key was found,
-		// detect the real auth method from the registry and provider status.
-		if (providerStatus[providerId]) {
-			// CLI providers (e.g. Copilot via gh CLI) are configured without a key/profile
-			const registryProvider = getRegistryProvider(providerId);
-			if (registryProvider?.requiresCLI) {
-				return { hasKey: true, isOAuth: false, authMethod: "cli" };
-			}
-			// Anthropic/OpenAI: active without an API key → user is authenticated via OAuth
-			if (registryProvider?.requiresOAuth) {
+			// For local providers (e.g. Ollama), mark as configured without a key
+			if (authMethod === "local") {
 				return {
 					hasKey: true,
-					isOAuth: true,
-					authMethod: "oauth",
+					keyPreview: undefined,
+					isOAuth: false,
+					authMethod: "local",
 				};
 			}
-		}
 
-		return { hasKey: false, authMethod };
-	}, [profiles, settings, providerStatus, detectProviderFromUrl, getProviderApiKeyField, getProviderAuthMethod]);
+			// Fallback: if the provider is active but no API key was found,
+			// detect the real auth method from the registry and provider status.
+			if (providerStatus[providerId]) {
+				// CLI providers (e.g. Copilot via gh CLI) are configured without a key/profile
+				const registryProvider = getRegistryProvider(providerId);
+				if (registryProvider?.requiresCLI) {
+					return { hasKey: true, isOAuth: false, authMethod: "cli" };
+				}
+				// Anthropic/OpenAI: active without an API key → user is authenticated via OAuth
+				if (registryProvider?.requiresOAuth) {
+					return {
+						hasKey: true,
+						isOAuth: true,
+						authMethod: "oauth",
+					};
+				}
+			}
 
-	// Helper function to detect provider from URL
-	const detectProviderFromUrl = (url: string): string => {
-		const urlLower = url.toLowerCase();
-		if (urlLower.includes("api.anthropic.com")) return "anthropic";
-		if (urlLower.includes("api.openai.com")) return "openai";
-		if (urlLower.includes("googleapis.com")) return "google";
-		if (urlLower.includes("api.mistral.ai")) return "mistral";
-		if (urlLower.includes("api.deepseek.com")) return "deepseek";
-		if (urlLower.includes("api.x.ai")) return "grok";
-		if (urlLower.includes("api.meta.ai")) return "meta";
-		if (urlLower.includes("windsurf.com") || urlLower.includes("codeium.com"))
-			return "windsurf";
-		return "unknown";
-	};
-
-	// Helper function to get API key field for provider
-	const getProviderApiKeyField = (providerId: string): string | null => {
-		const apiKeyMap: Record<string, string> = {
-			openai: "globalOpenAIApiKey",
-			gemini: "globalGoogleApiKey",
-			google: "globalGoogleDeepMindApiKey",
-			meta: "globalMetaApiKey",
-			"meta-llama": "globalMetaLlamaApiKey",
-			mistral: "globalMistralApiKey",
-			deepseek: "globalDeepSeekApiKey",
-			grok: "globalGrokApiKey",
-			windsurf: "globalWindsurfApiKey",
-			cursor: "globalCursorApiKey",
-			aws: "globalAWSApiKey",
-			"azure-openai": "globalOpenAIApiKey",
-		};
-		return apiKeyMap[providerId] || null;
-	};
-
-	// Helper function to mask API key
+			return { hasKey: false, authMethod };
+		},
+		// biome-ignore lint/correctness/useExhaustiveDependencies: detectProviderFromUrl and getProviderApiKeyField are pure helpers defined in component scope; getProviderAuthMethod is a stable registry lookup
+		[profiles, settings, providerStatus, getProviderAuthMethod],
+	);
 
 	// Charger les providers de manière asynchrone
 	// eslint-disable-next-line react-hooks/exhaustive-deps

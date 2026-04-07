@@ -200,7 +200,7 @@ function prettifyXml(value: string): string {
 		const trimmed = line.trim();
 		if (!trimmed) continue;
 		if (trimmed.startsWith("</")) indent = Math.max(0, indent - 1);
-		formatted += "  ".repeat(indent) + trimmed + "\n";
+		formatted += `${"  ".repeat(indent) + trimmed}\n`;
 		if (
 			!trimmed.endsWith("/>") &&
 			!trimmed.startsWith("</") &&
@@ -1424,13 +1424,12 @@ function RequestPanel({
 
 		// Authentication
 		if (requestAuth.type === "bearer" && requestAuth.bearer) {
-			headers["Authorization"] = `Bearer ${requestAuth.bearer}`;
+			headers.Authorization = `Bearer ${requestAuth.bearer}`;
 		} else if (
 			requestAuth.type === "basic" &&
 			(requestAuth.username || requestAuth.password)
 		) {
-			headers["Authorization"] =
-				`Basic ${btoa(`${requestAuth.username}:${requestAuth.password}`)}`;
+			headers.Authorization = `Basic ${btoa(`${requestAuth.username}:${requestAuth.password}`)}`;
 		} else if (
 			requestAuth.type === "apikey" &&
 			requestAuth.keyName &&
@@ -1446,14 +1445,14 @@ function RequestPanel({
 		} else if (requestAuth.type === "inherited") {
 			if (
 				activeEnv?.token &&
-				!headers["Authorization"] &&
-				!headers["authorization"]
+				!headers.Authorization &&
+				!headers.authorization
 			) {
-				headers["Authorization"] = `Bearer ${activeEnv.token}`;
+				headers.Authorization = `Bearer ${activeEnv.token}`;
 			}
 		} else if (requestAuth.type === "oauth2" && requestAuth.oauth2AccessToken) {
 			const prefix = requestAuth.oauth2HeaderPrefix || "Bearer";
-			headers["Authorization"] = `${prefix} ${requestAuth.oauth2AccessToken}`;
+			headers.Authorization = `${prefix} ${requestAuth.oauth2AccessToken}`;
 		}
 		// type === 'none' → no Authorization header added
 
@@ -2325,6 +2324,8 @@ function RequestPanel({
 			{(responseStatus !== null || isSendingRequest) && (
 				<>
 					{/* Drag handle */}
+					{/* biome-ignore lint/a11y/noNoninteractiveElementInteractions: resize drag handle */}
+					{/* biome-ignore lint/a11y/noStaticElementInteractions: resize drag handle */}
 					<div
 						className="shrink-0 h-2 flex items-center justify-center cursor-row-resize group select-none"
 						onMouseDown={(e) => {

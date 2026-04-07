@@ -1,4 +1,3 @@
-import { app } from "electron";
 import {
 	existsSync,
 	promises as fsPromises,
@@ -7,8 +6,9 @@ import {
 	renameSync,
 	unlinkSync,
 	writeFileSync,
-} from "fs";
-import { join } from "path";
+} from "node:fs";
+import { join } from "node:path";
+import { app } from "electron";
 import type { TerminalWorktreeConfig } from "../shared/types";
 import { debugLog } from "../shared/utils/debug-logger";
 
@@ -74,7 +74,7 @@ function getDateLabel(dateStr: string): string {
 		return "Yesterday";
 	} else {
 		// Format as "Dec 10" or similar
-		const date = new Date(dateStr + "T00:00:00");
+		const date = new Date(`${dateStr}T00:00:00`);
 		return date.toLocaleDateString("en-US", { month: "short", day: "numeric" });
 	}
 }

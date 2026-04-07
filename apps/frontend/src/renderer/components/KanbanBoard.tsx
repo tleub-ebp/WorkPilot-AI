@@ -914,6 +914,7 @@ const DroppableColumn = memo(function DroppableColumn({
 			{/* Resize handle on right edge */}
 			{onResizeStart && onResizeEnd && (
 				// biome-ignore lint/a11y/noStaticElementInteractions: interactive handler is intentional
+				// biome-ignore lint/a11y/noNoninteractiveElementInteractions: resize handle — drag interaction
 				<div
 					className={cn(
 						"absolute right-0 top-0 bottom-0 w-1 touch-none z-10",
@@ -1448,7 +1449,9 @@ export function KanbanBoard({
 	}, []);
 
 	// Handle bulk PR dialog completion - clear selection
-	const handleBulkPRComplete = useCallback(() => { /* intentionally empty */ }, []);
+	const handleBulkPRComplete = useCallback(() => {
+		/* intentionally empty */
+	}, []);
 
 	// Handle viewing PR files
 	const handleViewPRFiles = useCallback((prUrl: string, taskId: string) => {

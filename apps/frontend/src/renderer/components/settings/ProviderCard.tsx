@@ -90,7 +90,7 @@ export function ProviderCard({
 
 	const Icon = providerIcons[provider.id] || Bot;
 	const category =
-		providerCategories[provider.category] || providerCategories["independent"];
+		providerCategories[provider.category] || providerCategories.independent;
 
 	const getStatusBadge = () => {
 		if (!provider.isConfigured) {

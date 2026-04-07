@@ -1,15 +1,15 @@
-﻿import { spawn } from "child_process";
-import type { BrowserWindow } from "electron";
-import { ipcMain } from "electron";
+﻿import { spawn } from "node:child_process";
 import {
 	existsSync,
 	mkdirSync,
 	readdirSync,
 	readFileSync,
 	writeFileSync,
-} from "fs";
-import path from "path";
-import { fileURLToPath } from "url";
+} from "node:fs";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
+import type { BrowserWindow } from "electron";
+import { ipcMain } from "electron";
 import {
 	AUTO_BUILD_PATHS,
 	getSpecsDir,
@@ -66,9 +66,9 @@ export function registerAzureDevOpsHandlers(
 			const content = readFileSync(envPath, "utf-8");
 			const vars = parseEnvFile(content);
 			return {
-				pat: vars["AZURE_DEVOPS_PAT"] || null,
-				orgUrl: vars["AZURE_DEVOPS_ORG_URL"] || null,
-				projectName: vars["AZURE_DEVOPS_PROJECT"] || null,
+				pat: vars.AZURE_DEVOPS_PAT || null,
+				orgUrl: vars.AZURE_DEVOPS_ORG_URL || null,
+				projectName: vars.AZURE_DEVOPS_PROJECT || null,
 			};
 		} catch {
 			return { pat: null, orgUrl: null, projectName: null };

@@ -169,7 +169,7 @@ export class PipelineGeneratorService extends EventEmitter {
 						/* ignore */
 					}
 				} else if (line.trim()) {
-					this.emit("stream-chunk", line + "\n");
+					this.emit("stream-chunk", `${line}\n`);
 					// Parse status lines for UI feedback
 					if (line.includes("Analyzing project")) {
 						this.emit("status", "Analyzing project stack...");

@@ -611,11 +611,9 @@ export function useGitHubPRs(
 					);
 					if (result) {
 						// Preserve newCommitsCheck - posting doesn't change whether there are new commits
-						usePRReviewStore
-							.getState()
-							.setPRReviewResult(projectId, result, {
-								preserveNewCommitsCheck: true,
-							});
+						usePRReviewStore.getState().setPRReviewResult(projectId, result, {
+							preserveNewCommitsCheck: true,
+						});
 					}
 				}
 				return success;
@@ -726,11 +724,9 @@ export function useGitHubPRs(
 					prNumber,
 				);
 				if (result) {
-					usePRReviewStore
-						.getState()
-						.setPRReviewResult(projectId, result, {
-							preserveNewCommitsCheck: true,
-						});
+					usePRReviewStore.getState().setPRReviewResult(projectId, result, {
+						preserveNewCommitsCheck: true,
+					});
 				}
 			}
 		},

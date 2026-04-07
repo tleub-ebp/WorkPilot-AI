@@ -5,8 +5,8 @@
  * to ensure consistent validation and path resolution.
  */
 
-import { existsSync, readdirSync } from "fs";
-import path from "path";
+import { existsSync, readdirSync } from "node:fs";
+import path from "node:path";
 import { getTaskWorktreeDir } from "../worktree-paths";
 
 /**

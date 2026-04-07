@@ -8,10 +8,10 @@
  * 4. Apply fixes
  */
 
+import fs from "node:fs";
+import path from "node:path";
 import type { BrowserWindow } from "electron";
 import { ipcMain } from "electron";
-import fs from "fs";
-import path from "path";
 import {
 	DEFAULT_FEATURE_MODELS,
 	DEFAULT_FEATURE_THINKING,
@@ -1330,7 +1330,7 @@ function getGitHubPRSettings(): { model: string; thinkingLevel: string } {
 		featureThinking.githubPrs ?? DEFAULT_FEATURE_THINKING.githubPrs;
 
 	// Convert model short name to full model ID
-	const model = MODEL_ID_MAP[modelShort] ?? MODEL_ID_MAP["opus"];
+	const model = MODEL_ID_MAP[modelShort] ?? MODEL_ID_MAP.opus;
 
 	debugLog("GitHub PR settings", { modelShort, model, thinkingLevel });
 
@@ -1663,7 +1663,7 @@ export function registerPRHandlers(
 				if (!config) return null;
 
 				try {
-					const { execFileSync } = await import("child_process");
+					const { execFileSync } = await import("node:child_process");
 					// Validate prNumber to prevent command injection
 					if (!Number.isInteger(prNumber) || prNumber <= 0) {
 						throw new Error("Invalid PR number");
@@ -2196,9 +2196,9 @@ export function registerPRHandlers(
 			debugLog("postPRComment handler called", { projectId, prNumber });
 			const postResult = await withProjectOrNull(projectId, async (project) => {
 				try {
-					const { execFileSync } = await import("child_process");
-					const { writeFileSync, unlinkSync } = await import("fs");
-					const { join } = await import("path");
+					const { execFileSync } = await import("node:child_process");
+					const { writeFileSync, unlinkSync } = await import("node:fs");
+					const { join } = await import("node:path");
 
 					debugLog("Posting comment to PR", { prNumber });
 
@@ -2341,7 +2341,7 @@ export function registerPRHandlers(
 				projectId,
 				async (project) => {
 					try {
-						const { execFileSync } = await import("child_process");
+						const { execFileSync } = await import("node:child_process");
 						debugLog("Merging PR", { prNumber, method: mergeMethod });
 
 						// Validate prNumber to prevent command injection
@@ -2512,7 +2512,10 @@ export function registerPRHandlers(
 
 				// Normalize snake_case to camelCase for backwards compatibility with old saved files
 				const reviewedCommitSha: string | undefined =
-					review.reviewedCommitSha ?? (review as unknown as Record<string, unknown>).reviewed_commit_sha as string | undefined;
+					review.reviewedCommitSha ??
+					((review as unknown as Record<string, unknown>).reviewed_commit_sha as
+						| string
+						| undefined);
 				if (!reviewedCommitSha) {
 					debugLog("No reviewedCommitSha in review", { prNumber });
 					return { hasNewCommits: false, newCommitCount: 0 };
@@ -2835,8 +2838,8 @@ export function registerPRHandlers(
 				projectId,
 				async (project) => {
 					try {
-						const { execFile } = await import("child_process");
-						const { promisify } = await import("util");
+						const { execFile } = await import("node:child_process");
+						const { promisify } = await import("node:util");
 						const execFileAsync = promisify(execFile);
 						debugLog("Updating PR branch", { prNumber });
 

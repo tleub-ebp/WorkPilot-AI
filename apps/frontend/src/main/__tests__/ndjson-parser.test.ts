@@ -134,7 +134,7 @@ describe("NDJSON Parser", () => {
 				completed: 500000000,
 				total: 1000000000,
 			});
-			const chunk = ollamaProgress + "\n";
+			const chunk = `${ollamaProgress}\n`;
 			const results = parseNDJSON(chunk, bufferRef);
 
 			expect(results).toHaveLength(1);
@@ -149,7 +149,7 @@ describe("NDJSON Parser", () => {
 				{ status: "downloading", completed: 200000000, total: 1000000000 },
 				{ status: "downloading", completed: 300000000, total: 1000000000 },
 			];
-			const chunk = updates.map((u) => JSON.stringify(u)).join("\n") + "\n";
+			const chunk = `${updates.map((u) => JSON.stringify(u)).join("\n")}\n`;
 			const results = parseNDJSON(chunk, bufferRef);
 
 			expect(results).toHaveLength(3);
@@ -171,11 +171,10 @@ describe("NDJSON Parser", () => {
 
 			// Simulate streaming 3 progress updates
 			for (let i = 1; i <= 3; i++) {
-				const chunk =
-					JSON.stringify({
-						completed: i * 100000000,
-						total: 670000000,
-					}) + "\n";
+				const chunk = `${JSON.stringify({
+					completed: i * 100000000,
+					total: 670000000,
+				})}\n`;
 				const results = parseNDJSON(chunk, bufferRef);
 				allResults = allResults.concat(results);
 			}
@@ -191,7 +190,7 @@ describe("NDJSON Parser", () => {
 				total: 987654321,
 				extra: "x".repeat(100),
 			};
-			const chunk = JSON.stringify(obj) + "\n";
+			const chunk = `${JSON.stringify(obj)}\n`;
 			const results = parseNDJSON(chunk, bufferRef);
 
 			expect(results).toHaveLength(1);

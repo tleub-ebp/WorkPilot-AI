@@ -3,9 +3,15 @@
  * Tests spec completion to subtask loading workflow (IPC communication)
  */
 
-import { existsSync, mkdirSync, mkdtempSync, rmSync, writeFileSync } from "fs";
-import { tmpdir } from "os";
-import path from "path";
+import {
+	existsSync,
+	mkdirSync,
+	mkdtempSync,
+	rmSync,
+	writeFileSync,
+} from "node:fs";
+import { tmpdir } from "node:os";
+import path from "node:path";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 // Test directories - created securely with mkdtempSync to prevent TOCTOU attacks
@@ -132,7 +138,7 @@ describe("Task Lifecycle Integration", () => {
 
 			// Import preload script to get electronAPI
 			await import("../../preload/index");
-			const electronAPI = exposedApis["electronAPI"] as Record<string, unknown>;
+			const electronAPI = exposedApis.electronAPI as Record<string, unknown>;
 
 			// Mock IPC response for getTasks (loads implementation_plan.json)
 			mockIpcRenderer.invoke.mockResolvedValueOnce({
@@ -149,7 +155,7 @@ describe("Task Lifecycle Integration", () => {
 			});
 
 			// Call getTasks to load plan data
-			const getTasks = electronAPI["getTasks"] as (
+			const getTasks = electronAPI.getTasks as (
 				projectId: string,
 			) => Promise<unknown>;
 			const result = await getTasks("project-id");
@@ -196,7 +202,7 @@ describe("Task Lifecycle Integration", () => {
 			writeFileSync(planPath, JSON.stringify(incompletePlan, null, 2));
 
 			await import("../../preload/index");
-			const electronAPI = exposedApis["electronAPI"] as Record<string, unknown>;
+			const electronAPI = exposedApis.electronAPI as Record<string, unknown>;
 
 			// Mock IPC response for getTasks
 			mockIpcRenderer.invoke.mockResolvedValueOnce({
@@ -212,7 +218,7 @@ describe("Task Lifecycle Integration", () => {
 				],
 			});
 
-			const getTasks = electronAPI["getTasks"] as (
+			const getTasks = electronAPI.getTasks as (
 				projectId: string,
 			) => Promise<unknown>;
 			const result = await getTasks("project-id");
@@ -233,11 +239,11 @@ describe("Task Lifecycle Integration", () => {
 
 		it("should emit task:statusChange event when task transitions from planning to spec_complete", async () => {
 			await import("../../preload/index");
-			const electronAPI = exposedApis["electronAPI"] as Record<string, unknown>;
+			const electronAPI = exposedApis.electronAPI as Record<string, unknown>;
 
 			// Setup event listener
 			const callback = vi.fn();
-			const onTaskStatusChange = electronAPI["onTaskStatusChange"] as (
+			const onTaskStatusChange = electronAPI.onTaskStatusChange as (
 				cb: Function,
 			) => Function;
 			onTaskStatusChange(callback);
@@ -270,11 +276,11 @@ describe("Task Lifecycle Integration", () => {
 
 		it("should emit task:progress event with updated plan during spec creation", async () => {
 			await import("../../preload/index");
-			const electronAPI = exposedApis["electronAPI"] as Record<string, unknown>;
+			const electronAPI = exposedApis.electronAPI as Record<string, unknown>;
 
 			// Setup event listener
 			const callback = vi.fn();
-			const onTaskProgress = electronAPI["onTaskProgress"] as (
+			const onTaskProgress = electronAPI.onTaskProgress as (
 				cb: Function,
 			) => Function;
 			onTaskProgress(callback);
@@ -318,7 +324,7 @@ describe("Task Lifecycle Integration", () => {
 			writeFileSync(planPath, JSON.stringify(plan, null, 2));
 
 			await import("../../preload/index");
-			const electronAPI = exposedApis["electronAPI"] as Record<string, unknown>;
+			const electronAPI = exposedApis.electronAPI as Record<string, unknown>;
 
 			// Mock IPC response for task start (resume)
 			mockIpcRenderer.invoke.mockResolvedValueOnce({
@@ -327,7 +333,7 @@ describe("Task Lifecycle Integration", () => {
 			});
 
 			// Call startTask (resume)
-			const startTask = electronAPI["startTask"] as (
+			const startTask = electronAPI.startTask as (
 				id: string,
 				options?: object,
 			) => void;
@@ -370,10 +376,10 @@ describe("Task Lifecycle Integration", () => {
 	describe("Event listener cleanup", () => {
 		it("should cleanup task:progress listener when cleanup function is called", async () => {
 			await import("../../preload/index");
-			const electronAPI = exposedApis["electronAPI"] as Record<string, unknown>;
+			const electronAPI = exposedApis.electronAPI as Record<string, unknown>;
 
 			const callback = vi.fn();
-			const onTaskProgress = electronAPI["onTaskProgress"] as (
+			const onTaskProgress = electronAPI.onTaskProgress as (
 				cb: Function,
 			) => Function;
 			const cleanup = onTaskProgress(callback);
@@ -391,10 +397,10 @@ describe("Task Lifecycle Integration", () => {
 
 		it("should cleanup task:statusChange listener when cleanup function is called", async () => {
 			await import("../../preload/index");
-			const electronAPI = exposedApis["electronAPI"] as Record<string, unknown>;
+			const electronAPI = exposedApis.electronAPI as Record<string, unknown>;
 
 			const callback = vi.fn();
-			const onTaskStatusChange = electronAPI["onTaskStatusChange"] as (
+			const onTaskStatusChange = electronAPI.onTaskStatusChange as (
 				cb: Function,
 			) => Function;
 			const cleanup = onTaskStatusChange(callback);

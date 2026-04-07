@@ -2,9 +2,9 @@
  * Path resolution utilities for WorkPilot AI updater
  */
 
+import { existsSync, readFileSync } from "node:fs";
+import path from "node:path";
 import { app } from "electron";
-import { existsSync, readFileSync } from "fs";
-import path from "path";
 
 /**
  * Get the path to the bundled backend source

@@ -9,9 +9,9 @@
  * Communication: Unix socket (Linux/macOS) or Named Pipe (Windows)
  */
 
+import * as fs from "node:fs";
+import * as net from "node:net";
 import * as pty from "@lydell/node-pty";
-import * as fs from "fs";
-import * as net from "net";
 import { isUnix, isWindows } from "../platform";
 
 const SOCKET_PATH = isWindows()
@@ -503,7 +503,7 @@ class PtyDaemon {
 	 */
 	private send(socket: net.Socket, response: DaemonResponse): void {
 		try {
-			socket.write(JSON.stringify(response) + "\n");
+			socket.write(`${JSON.stringify(response)}\n`);
 		} catch {
 			// Socket may be closed, ignore
 			console.warn("[PTY Daemon] Failed to send response (socket closed?)");

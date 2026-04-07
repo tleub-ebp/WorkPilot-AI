@@ -15,9 +15,9 @@
  * Related issue: https://github.com/AndyMik90/Auto-Claude/issues/1539
  */
 
-import { execFileSync } from "child_process";
-import { existsSync } from "fs";
-import { rm } from "fs/promises";
+import { execFileSync } from "node:child_process";
+import { existsSync } from "node:fs";
+import { rm } from "node:fs/promises";
 import { getToolPath } from "../cli-tool-manager";
 import { getTaskWorktreeDir, isPathWithinBase } from "../worktree-paths";
 import { getIsolatedGitEnv } from "./git-isolation";

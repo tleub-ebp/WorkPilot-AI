@@ -66,7 +66,9 @@ export function ClaudeCodeStatusBadge({
 	const selectedProjectId = useProjectStore((state) => state.selectedProjectId);
 	const currentProject = projects.find((p) => p.id === selectedProjectId);
 	const projectPath = currentProject?.path || ".";
-	const addExternalTerminal = useTerminalStore((state) => state.addExternalTerminal);
+	const addExternalTerminal = useTerminalStore(
+		(state) => state.addExternalTerminal,
+	);
 
 	const [isOpen, setIsOpen] = useState(false);
 	const [showUpdateWarning, setShowUpdateWarning] = useState(false);
@@ -191,7 +193,11 @@ export function ClaudeCodeStatusBadge({
 	}, [isOpen, installations.length, fetchInstallations]);
 
 	// Helper: open an internal terminal with a command and navigate to the terminals page
-	const openInternalTerminal = async (terminalId: string, label: string, command: string) => {
+	const openInternalTerminal = async (
+		terminalId: string,
+		label: string,
+		command: string,
+	) => {
 		if (!globalThis.electronAPI?.createTerminal) return false;
 
 		const terminalResult = await globalThis.electronAPI.createTerminal({
@@ -215,7 +221,7 @@ export function ClaudeCodeStatusBadge({
 		}
 
 		// Small delay to let the terminal initialize before sending the command
-		await new Promise(resolve => setTimeout(resolve, 300));
+		await new Promise((resolve) => setTimeout(resolve, 300));
 		globalThis.electronAPI.sendTerminalInput(terminalId, command);
 		return true;
 	};
@@ -227,7 +233,8 @@ export function ClaudeCodeStatusBadge({
 		setInstallError(null);
 		try {
 			const terminalId = `claude-code-update-${Date.now()}`;
-			const label = status === "outdated" ? "Claude Code Update" : "Claude Code Install";
+			const label =
+				status === "outdated" ? "Claude Code Update" : "Claude Code Install";
 			const command = `claude install --force latest\n`;
 
 			const opened = await openInternalTerminal(terminalId, label, command);
@@ -242,7 +249,9 @@ export function ClaudeCodeStatusBadge({
 			setTimeout(() => refreshClaude(), VERSION_RECHECK_DELAY_MS * 6);
 		} catch (err) {
 			console.error("Failed to install Claude Code:", err);
-			setInstallError(err instanceof Error ? err.message : "Installation failed");
+			setInstallError(
+				err instanceof Error ? err.message : "Installation failed",
+			);
 		} finally {
 			setIsInstalling(false);
 		}
@@ -273,7 +282,9 @@ export function ClaudeCodeStatusBadge({
 			setTimeout(() => refreshClaude(), VERSION_RECHECK_DELAY_MS * 6);
 		} catch (err) {
 			console.error("Failed to switch Claude Code version:", err);
-			setInstallError(err instanceof Error ? err.message : "Failed to switch version");
+			setInstallError(
+				err instanceof Error ? err.message : "Failed to switch version",
+			);
 		} finally {
 			setIsInstalling(false);
 			setSelectedVersion(null);

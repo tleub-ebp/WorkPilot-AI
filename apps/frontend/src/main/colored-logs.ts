@@ -155,7 +155,7 @@ function formatValue(value: any, maxLength: number = 200): string {
 		try {
 			const formatted = JSON.stringify(value, null, 2);
 			return formatted.length > maxLength
-				? formatted.substring(0, maxLength) + "..."
+				? `${formatted.substring(0, maxLength)}...`
 				: formatted;
 		} catch (_error) {
 			return String(value).substring(0, maxLength);
@@ -164,7 +164,7 @@ function formatValue(value: any, maxLength: number = 200): string {
 
 	const strValue = String(value);
 	return strValue.length > maxLength
-		? strValue.substring(0, maxLength) + "..."
+		? `${strValue.substring(0, maxLength)}...`
 		: strValue;
 }
 
@@ -173,7 +173,6 @@ function formatFrontendLog(
 	level: string = "DEBUG",
 	module: string = "frontend",
 	timestamp?: string,
-	// biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
 	...kwargs: unknown[]
 ): string {
 	if (!supportsColor()) {
@@ -243,7 +242,7 @@ function writeFrontendLog(
 	);
 	// Use process.stderr.write to avoid recursion with overridden console methods
 	if (process.stderr?.write) {
-		process.stderr.write(formatted + "\n");
+		process.stderr.write(`${formatted}\n`);
 	} else {
 		// Fallback to original console if available
 		// biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
@@ -253,7 +252,7 @@ function writeFrontendLog(
 		} else {
 			// Last resort - use writeFileSync
 			try {
-				require("fs").writeFileSync(1, formatted + "\n");
+				require("node:fs").writeFileSync(1, `${formatted}\n`);
 			} catch (_e) {
 				// If all else fails, stay silent to avoid infinite recursion
 			}

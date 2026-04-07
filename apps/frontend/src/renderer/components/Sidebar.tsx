@@ -1511,6 +1511,7 @@ export function Sidebar({
 				{/* Resize handle */}
 				{!isCollapsed && (
 					// biome-ignore lint/a11y/noStaticElementInteractions: interactive handler is intentional
+					// biome-ignore lint/a11y/noNoninteractiveElementInteractions: resize handle — mouse drag interaction
 					<div
 						onMouseDown={handleResizeStart}
 						className={cn(

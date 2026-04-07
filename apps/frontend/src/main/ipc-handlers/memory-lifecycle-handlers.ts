@@ -120,7 +120,7 @@ function writePolicy(projectDir: string, config: Record<string, string>): void {
 		if (regex.test(content)) {
 			content = content.replace(regex, line);
 		} else {
-			content = content.trimEnd() + "\n" + line + "\n";
+			content = `${content.trimEnd()}\n${line}\n`;
 		}
 	}
 	fs.mkdirSync(path.dirname(envPath), { recursive: true });
@@ -152,12 +152,12 @@ export function registerMemoryLifecycleHandlers(): void {
 					episode_count: episodeCount,
 					disk_usage_bytes: diskUsageBytes,
 					graphiti_enabled:
-						process.env["GRAPHITI_ENABLED"] === "true" ||
-						policy["GRAPHITI_ENABLED"] === "true",
-					retention_days: Number(policy["MEMORY_RETENTION_DAYS"] ?? 90),
-					max_episodes: Number(policy["MEMORY_MAX_EPISODES"] ?? 10000),
-					prune_strategy: policy["MEMORY_PRUNE_STRATEGY"] ?? "lru",
-					auto_prune: policy["MEMORY_AUTO_PRUNE"] === "true",
+						process.env.GRAPHITI_ENABLED === "true" ||
+						policy.GRAPHITI_ENABLED === "true",
+					retention_days: Number(policy.MEMORY_RETENTION_DAYS ?? 90),
+					max_episodes: Number(policy.MEMORY_MAX_EPISODES ?? 10000),
+					prune_strategy: policy.MEMORY_PRUNE_STRATEGY ?? "lru",
+					auto_prune: policy.MEMORY_AUTO_PRUNE === "true",
 				},
 			};
 		} catch (err) {
@@ -242,13 +242,13 @@ export function registerMemoryLifecycleHandlers(): void {
 			try {
 				const envConfig: Record<string, string> = {};
 				if (policy.retention_days !== undefined)
-					envConfig["MEMORY_RETENTION_DAYS"] = String(policy.retention_days);
+					envConfig.MEMORY_RETENTION_DAYS = String(policy.retention_days);
 				if (policy.max_episodes !== undefined)
-					envConfig["MEMORY_MAX_EPISODES"] = String(policy.max_episodes);
+					envConfig.MEMORY_MAX_EPISODES = String(policy.max_episodes);
 				if (policy.prune_strategy !== undefined)
-					envConfig["MEMORY_PRUNE_STRATEGY"] = policy.prune_strategy;
+					envConfig.MEMORY_PRUNE_STRATEGY = policy.prune_strategy;
 				if (policy.auto_prune !== undefined)
-					envConfig["MEMORY_AUTO_PRUNE"] = policy.auto_prune ? "true" : "false";
+					envConfig.MEMORY_AUTO_PRUNE = policy.auto_prune ? "true" : "false";
 				writePolicy(projectDir, envConfig);
 				return { success: true };
 			} catch (err) {

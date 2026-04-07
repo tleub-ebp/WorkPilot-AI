@@ -1,7 +1,7 @@
+import { existsSync, readdirSync, readFileSync, statSync } from "node:fs";
+import path from "node:path";
 import type { BrowserWindow } from "electron";
 import { ipcMain } from "electron";
-import { existsSync, readdirSync, readFileSync, statSync } from "fs";
-import path from "path";
 import { getSpecsDir, IPC_CHANNELS } from "../../../shared/constants";
 import type {
 	ContextSearchResult,

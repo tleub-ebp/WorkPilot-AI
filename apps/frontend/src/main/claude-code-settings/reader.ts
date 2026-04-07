@@ -12,9 +12,9 @@
  * 4. Managed:        Platform-specific system path (highest precedence)
  */
 
-import { existsSync, readFileSync } from "fs";
-import { homedir } from "os";
-import path from "path";
+import { existsSync, readFileSync } from "node:fs";
+import { homedir } from "node:os";
+import path from "node:path";
 import { debugError, debugLog } from "../../shared/utils/debug-logger";
 import { isMacOS, isWindows } from "../platform";
 import { mergeClaudeCodeSettings } from "./merger";

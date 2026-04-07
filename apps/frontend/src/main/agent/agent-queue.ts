@@ -479,14 +479,13 @@ export class AgentQueueManager {
 		};
 
 		// Debug: Show OAuth token source (token values intentionally omitted for security - AC4)
-		const tokenSource = profileEnv["CLAUDE_CODE_OAUTH_TOKEN"]
+		const tokenSource = profileEnv.CLAUDE_CODE_OAUTH_TOKEN
 			? "Electron app profile"
-			: combinedEnv["CLAUDE_CODE_OAUTH_TOKEN"]
+			: combinedEnv.CLAUDE_CODE_OAUTH_TOKEN
 				? "auto-claude/.env"
 				: "not found";
-		const hasToken = !!(finalEnv as Record<string, string | undefined>)[
-			"CLAUDE_CODE_OAUTH_TOKEN"
-		];
+		const hasToken = !!(finalEnv as Record<string, string | undefined>)
+			.CLAUDE_CODE_OAUTH_TOKEN;
 		debugLog("[Agent Queue] OAuth token status:", {
 			source: tokenSource,
 			hasToken,
@@ -895,14 +894,13 @@ export class AgentQueueManager {
 		};
 
 		// Debug: Show OAuth token source (token values intentionally omitted for security - AC4)
-		const tokenSource = profileEnv["CLAUDE_CODE_OAUTH_TOKEN"]
+		const tokenSource = profileEnv.CLAUDE_CODE_OAUTH_TOKEN
 			? "Electron app profile"
-			: combinedEnv["CLAUDE_CODE_OAUTH_TOKEN"]
+			: combinedEnv.CLAUDE_CODE_OAUTH_TOKEN
 				? "auto-claude/.env"
 				: "not found";
-		const hasToken = !!(finalEnv as Record<string, string | undefined>)[
-			"CLAUDE_CODE_OAUTH_TOKEN"
-		];
+		const hasToken = !!(finalEnv as Record<string, string | undefined>)
+			.CLAUDE_CODE_OAUTH_TOKEN;
 		debugLog("[Agent Queue] OAuth token status:", {
 			source: tokenSource,
 			hasToken,

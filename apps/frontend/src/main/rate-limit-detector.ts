@@ -124,7 +124,7 @@ const MAX_ERROR_LENGTH = 500;
 function sanitizeErrorOutput(output: string): string {
 	// Truncate long output to limit exposure of internal details
 	if (output.length > MAX_ERROR_LENGTH) {
-		return output.substring(0, MAX_ERROR_LENGTH) + "... (truncated)";
+		return `${output.substring(0, MAX_ERROR_LENGTH)}... (truncated)`;
 	}
 	return output;
 }

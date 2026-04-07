@@ -45,31 +45,113 @@ export interface NaturalLanguageGitAPI {
 }
 
 // Track handler wrappers so removeListener can find the correct ipcRenderer handler
-const handlerMap = new WeakMap<
-	Function,
-	(_event: Electron.IpcRendererEvent, ...args: unknown[]) => void
+const statusHandlerMap = new WeakMap<
+	(status: string) => void,
+	(_event: Electron.IpcRendererEvent, status: string) => void
+>();
+const chunkHandlerMap = new WeakMap<
+	(chunk: string) => void,
+	(_event: Electron.IpcRendererEvent, chunk: string) => void
+>();
+const errorHandlerMap = new WeakMap<
+	(error: string) => void,
+	(_event: Electron.IpcRendererEvent, error: string) => void
+>();
+const completeHandlerMap = new WeakMap<
+	(result: NaturalLanguageGitResult) => void,
+	(_event: Electron.IpcRendererEvent, result: NaturalLanguageGitResult) => void
 >();
 
-function registerListener<T extends unknown[]>(
-	channel: string,
-	callback: (...args: T) => void,
+function registerStatusListener(
+	callback: (status: string) => void,
 ): () => void {
-	const handler = (_event: Electron.IpcRendererEvent, ...args: unknown[]) => {
-		(callback as (...a: unknown[]) => void)(...args);
+	const handler = (_event: Electron.IpcRendererEvent, status: string) => {
+		callback(status);
 	};
-	handlerMap.set(callback, handler);
-	ipcRenderer.on(channel, handler);
+	statusHandlerMap.set(callback, handler);
+	ipcRenderer.on("natural-language-git-status", handler);
 	return () => {
-		ipcRenderer.removeListener(channel, handler);
-		handlerMap.delete(callback);
+		ipcRenderer.removeListener("natural-language-git-status", handler);
+		statusHandlerMap.delete(callback);
 	};
 }
 
-function removeListener(channel: string, callback: Function): void {
-	const handler = handlerMap.get(callback);
+function registerChunkListener(
+	callback: (chunk: string) => void,
+): () => void {
+	const handler = (_event: Electron.IpcRendererEvent, chunk: string) => {
+		callback(chunk);
+	};
+	chunkHandlerMap.set(callback, handler);
+	ipcRenderer.on("natural-language-git-stream-chunk", handler);
+	return () => {
+		ipcRenderer.removeListener("natural-language-git-stream-chunk", handler);
+		chunkHandlerMap.delete(callback);
+	};
+}
+
+function registerErrorListener(
+	callback: (error: string) => void,
+): () => void {
+	const handler = (_event: Electron.IpcRendererEvent, error: string) => {
+		callback(error);
+	};
+	errorHandlerMap.set(callback, handler);
+	ipcRenderer.on("natural-language-git-error", handler);
+	return () => {
+		ipcRenderer.removeListener("natural-language-git-error", handler);
+		errorHandlerMap.delete(callback);
+	};
+}
+
+function registerCompleteListener(
+	callback: (result: NaturalLanguageGitResult) => void,
+): () => void {
+	const handler = (
+		_event: Electron.IpcRendererEvent,
+		result: NaturalLanguageGitResult,
+	) => {
+		callback(result);
+	};
+	completeHandlerMap.set(callback, handler);
+	ipcRenderer.on("natural-language-git-complete", handler);
+	return () => {
+		ipcRenderer.removeListener("natural-language-git-complete", handler);
+		completeHandlerMap.delete(callback);
+	};
+}
+
+function removeStatusListener(callback: (status: string) => void): void {
+	const handler = statusHandlerMap.get(callback);
 	if (handler) {
-		ipcRenderer.removeListener(channel, handler);
-		handlerMap.delete(callback);
+		ipcRenderer.removeListener("natural-language-git-status", handler);
+		statusHandlerMap.delete(callback);
+	}
+}
+
+function removeChunkListener(callback: (chunk: string) => void): void {
+	const handler = chunkHandlerMap.get(callback);
+	if (handler) {
+		ipcRenderer.removeListener("natural-language-git-stream-chunk", handler);
+		chunkHandlerMap.delete(callback);
+	}
+}
+
+function removeErrorListener(callback: (error: string) => void): void {
+	const handler = errorHandlerMap.get(callback);
+	if (handler) {
+		ipcRenderer.removeListener("natural-language-git-error", handler);
+		errorHandlerMap.delete(callback);
+	}
+}
+
+function removeCompleteListener(
+	callback: (result: NaturalLanguageGitResult) => void,
+): void {
+	const handler = completeHandlerMap.get(callback);
+	if (handler) {
+		ipcRenderer.removeListener("natural-language-git-complete", handler);
+		completeHandlerMap.delete(callback);
 	}
 }
 
@@ -78,23 +160,23 @@ export const createNaturalLanguageGitAPI = (): NaturalLanguageGitAPI => ({
 		invokeIpc("execute-natural-language-git", request),
 	cancelNaturalLanguageGit: () => invokeIpc("cancel-natural-language-git"),
 	onNaturalLanguageGitStatus: (callback: (status: string) => void) =>
-		registerListener("natural-language-git-status", callback),
+		registerStatusListener(callback),
 	onNaturalLanguageGitStreamChunk: (callback: (chunk: string) => void) =>
-		registerListener("natural-language-git-stream-chunk", callback),
+		registerChunkListener(callback),
 	onNaturalLanguageGitError: (callback: (error: string) => void) =>
-		registerListener("natural-language-git-error", callback),
+		registerErrorListener(callback),
 	onNaturalLanguageGitComplete: (
 		callback: (result: NaturalLanguageGitResult) => void,
-	) => registerListener("natural-language-git-complete", callback),
+	) => registerCompleteListener(callback),
 	removeNaturalLanguageGitStatusListener: (
 		callback: (status: string) => void,
-	) => removeListener("natural-language-git-status", callback),
+	) => removeStatusListener(callback),
 	removeNaturalLanguageGitStreamChunkListener: (
 		callback: (chunk: string) => void,
-	) => removeListener("natural-language-git-stream-chunk", callback),
+	) => removeChunkListener(callback),
 	removeNaturalLanguageGitErrorListener: (callback: (error: string) => void) =>
-		removeListener("natural-language-git-error", callback),
+		removeErrorListener(callback),
 	removeNaturalLanguageGitCompleteListener: (
 		callback: (result: NaturalLanguageGitResult) => void,
-	) => removeListener("natural-language-git-complete", callback),
+	) => removeCompleteListener(callback),
 });

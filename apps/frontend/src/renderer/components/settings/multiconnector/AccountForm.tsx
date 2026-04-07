@@ -267,7 +267,7 @@ const providerFields: Record<
 };
 
 const getFieldsForProvider = (provider: string) => {
-	return providerFields[provider] || providerFields["openai"]; // fallback générique
+	return providerFields[provider] || providerFields.openai; // fallback générique
 };
 
 const AccountForm: React.FC<Props> = ({ provider, onSave, onCancel }) => {
@@ -299,14 +299,14 @@ const AccountForm: React.FC<Props> = ({ provider, onSave, onCancel }) => {
 
 	const handleSave = (e: React.FormEvent<HTMLFormElement>) => {
 		e.preventDefault();
-		const model = formState["model"] || "";
+		const model = formState.model || "";
 		// biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
 		const config: any = { model };
-		if (formState["apiKey"]) config.api_key = formState["apiKey"];
-		if (formState["oauthToken"]) config.oauth_token = formState["oauthToken"];
-		if (formState["baseUrl"]) config.base_url = formState["baseUrl"];
-		if (formState["llmGatewayUrl"])
-			config.llm_gateway_url = formState["llmGatewayUrl"];
+		if (formState.apiKey) config.api_key = formState.apiKey;
+		if (formState.oauthToken) config.oauth_token = formState.oauthToken;
+		if (formState.baseUrl) config.base_url = formState.baseUrl;
+		if (formState.llmGatewayUrl)
+			config.llm_gateway_url = formState.llmGatewayUrl;
 		saveUserProviderConfig(provider, config);
 		onSave({ ...formState, model });
 	};
@@ -338,7 +338,7 @@ const AccountForm: React.FC<Props> = ({ provider, onSave, onCancel }) => {
 							id="model"
 							name="model"
 							required
-							value={formState["model"] || ""}
+							value={formState.model || ""}
 							onChange={handleChange}
 							className="w-full p-2 border border-input rounded-md bg-background"
 						>

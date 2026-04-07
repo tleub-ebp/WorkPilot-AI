@@ -484,7 +484,7 @@ describe("useTerminalFileDrop Hook", () => {
 				}),
 			);
 
-			const longPath = "/path/" + "a".repeat(200) + "/file.ts";
+			const longPath = `/path/${"a".repeat(200)}/file.ts`;
 			const dragData = createFileReferenceDragData(longPath, "file.ts");
 			const mockEvent = createMockDragEvent(dragData);
 
@@ -793,6 +793,7 @@ describe("Terminal File Drop - Component Integration", () => {
 
 		return (
 			// biome-ignore lint/a11y/noStaticElementInteractions: interactive handler is intentional
+			// biome-ignore lint/a11y/noNoninteractiveElementInteractions: test drop zone
 			<div
 				data-testid="drop-zone"
 				onDragOver={handleNativeDragOver}

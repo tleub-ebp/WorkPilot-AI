@@ -176,21 +176,11 @@ export class LiveCompanionService extends EventEmitter {
 			});
 
 			watcher.on("add", (...args: unknown[]) => {
-				this.handleFileChange(
-					projectDir,
-					args[0] as string,
-					"created",
-					config,
-				);
+				this.handleFileChange(projectDir, args[0] as string, "created", config);
 			});
 
 			watcher.on("unlink", (...args: unknown[]) => {
-				this.handleFileChange(
-					projectDir,
-					args[0] as string,
-					"deleted",
-					config,
-				);
+				this.handleFileChange(projectDir, args[0] as string, "deleted", config);
 			});
 
 			// Start takeover check interval

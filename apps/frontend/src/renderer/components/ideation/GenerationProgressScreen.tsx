@@ -146,7 +146,7 @@ export function GenerationProgressScreen({
 						const isCompleted = typeStates[type] === "completed";
 						const isFailed = typeStates[type] === "failed";
 						const isGenerating = typeStates[type] === "generating";
-						
+
 						let stateClass = "bg-muted text-muted-foreground";
 						if (isCompleted) {
 							stateClass = "bg-success/10 text-success";
@@ -161,15 +161,15 @@ export function GenerationProgressScreen({
 								key={type}
 								className={`flex items-center gap-1.5 px-2 py-1 rounded-md text-xs ${stateClass}`}
 							>
-							<TypeStateIcon state={typeStates[type]} />
-							<TypeIcon type={type} />
-							<span>{t(`ideation:types.${type}`)}</span>
-							{typeStates[type] === "completed" && session && (
-								<span className="ml-1 font-medium">
-									({getStreamingIdeasByType(type).length})
-								</span>
-							)}
-						</div>
+								<TypeStateIcon state={typeStates[type]} />
+								<TypeIcon type={type} />
+								<span>{t(`ideation:types.${type}`)}</span>
+								{typeStates[type] === "completed" && session && (
+									<span className="ml-1 font-medium">
+										({getStreamingIdeasByType(type).length})
+									</span>
+								)}
+							</div>
 						);
 					})}
 				</div>

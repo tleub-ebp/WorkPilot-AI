@@ -1,6 +1,6 @@
-import { EventEmitter } from "events";
-import { existsSync } from "fs";
-import path from "path";
+import { EventEmitter } from "node:events";
+import { existsSync } from "node:fs";
+import path from "node:path";
 import type { IdeationConfig } from "../../shared/types";
 import { getOperationRegistry } from "../claude-profile/operation-registry";
 import type { ClaudeProfileManager } from "../claude-profile-manager";

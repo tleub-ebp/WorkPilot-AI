@@ -121,7 +121,7 @@ export function sanitizeMarkdownForDisplay(
 
 	// Truncate if needed (0 means no truncation)
 	if (maxLength > 0 && sanitized.length > maxLength) {
-		sanitized = sanitized.substring(0, maxLength).trim() + "...";
+		sanitized = `${sanitized.substring(0, maxLength).trim()}...`;
 	}
 
 	return sanitized;

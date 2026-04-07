@@ -795,6 +795,7 @@ export function AgentBubble({
 	})();
 
 	return (
+		// biome-ignore lint/a11y/noNoninteractiveElementInteractions: stop-propagation on dialog container
 		<div
 			ref={bubbleRef}
 			role="dialog"

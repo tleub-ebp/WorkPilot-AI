@@ -252,7 +252,7 @@ export function registerPairProgrammingHandlers(
 							getMainWindow,
 							IPC_CHANNELS.PAIR_PROGRAMMING_STREAM_CHUNK,
 							projectId,
-							{ type: "stream", content: trimmed + "\n" },
+							{ type: "stream", content: `${trimmed}\n` },
 						);
 					}
 				}

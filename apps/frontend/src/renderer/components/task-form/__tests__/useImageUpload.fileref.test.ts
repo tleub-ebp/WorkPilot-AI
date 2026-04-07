@@ -591,7 +591,7 @@ describe("useImageUpload - File Reference Handling", () => {
 				}),
 			);
 
-			const longPath = "/path/" + "a".repeat(200) + "/file.ts";
+			const longPath = `/path/${"a".repeat(200)}/file.ts`;
 			const fileRefData = createFileReferenceData(longPath, "file.ts");
 			const mockEvent = createMockFileRefDragEvent(fileRefData, "@file.ts");
 

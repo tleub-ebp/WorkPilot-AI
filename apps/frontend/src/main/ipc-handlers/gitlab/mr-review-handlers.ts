@@ -10,11 +10,11 @@
  * 6. Approve MR
  */
 
-import { randomUUID } from "crypto";
+import { randomUUID } from "node:crypto";
+import fs from "node:fs";
+import path from "node:path";
 import type { BrowserWindow } from "electron";
 import { ipcMain } from "electron";
-import fs from "fs";
-import path from "path";
 import {
 	DEFAULT_FEATURE_MODELS,
 	DEFAULT_FEATURE_THINKING,
@@ -175,7 +175,7 @@ function getGitLabMRSettings(): { model: string; thinkingLevel: string } {
 		featureThinking.githubPrs ?? DEFAULT_FEATURE_THINKING.githubPrs;
 
 	// Convert model short name to full model ID
-	const model = MODEL_ID_MAP[modelShort] ?? MODEL_ID_MAP["opus"];
+	const model = MODEL_ID_MAP[modelShort] ?? MODEL_ID_MAP.opus;
 
 	debugLog("GitLab MR settings", { modelShort, model, thinkingLevel });
 
@@ -878,7 +878,10 @@ export function registerMRReviewHandlers(
 				}
 
 				const reviewedCommitSha: string | undefined =
-					review.reviewedCommitSha || (review as unknown as Record<string, unknown>).reviewed_commit_sha as string | undefined;
+					review.reviewedCommitSha ||
+					((review as unknown as Record<string, unknown>).reviewed_commit_sha as
+						| string
+						| undefined);
 				if (!reviewedCommitSha) {
 					debugLog("No reviewedCommitSha in review", { mrIid });
 					return { hasNewCommits: false };

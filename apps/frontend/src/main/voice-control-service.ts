@@ -271,8 +271,8 @@ export class VoiceControlService extends EventEmitter {
 			!line.startsWith("WARNING:") &&
 			!line.startsWith("DEBUG:")
 		) {
-			outputState.fullOutput += line + "\n";
-			this.emit("stream-chunk", line + "\n");
+			outputState.fullOutput += `${line}\n`;
+			this.emit("stream-chunk", `${line}\n`);
 		}
 	}
 

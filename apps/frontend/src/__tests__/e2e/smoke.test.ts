@@ -11,9 +11,9 @@
  * click_by_text, etc.) against a running Electron app.
  */
 
-import { existsSync, mkdirSync, mkdtempSync, rmSync } from "fs";
-import { tmpdir } from "os";
-import path from "path";
+import { existsSync, mkdirSync, mkdtempSync, rmSync } from "node:fs";
+import { tmpdir } from "node:os";
+import path from "node:path";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 // Test directories - created securely with mkdtempSync to prevent TOCTOU attacks
@@ -160,7 +160,7 @@ describe("E2E Smoke Tests", { timeout: 30000 }, () => {
 		it("should complete full project creation flow via IPC", async () => {
 			// Import preload script to get electronAPI
 			await import("../../preload/index");
-			const electronAPI = exposedApis["electronAPI"] as Record<string, unknown>;
+			const electronAPI = exposedApis.electronAPI as Record<string, unknown>;
 
 			// Step 1: Open directory picker (simulates click on "Add Project" button)
 			mockIpcRenderer.invoke.mockResolvedValueOnce({
@@ -168,9 +168,8 @@ describe("E2E Smoke Tests", { timeout: 30000 }, () => {
 				data: TEST_PROJECT_PATH,
 			});
 
-			const selectDirectory = electronAPI[
-				"selectDirectory"
-			] as () => Promise<unknown>;
+			const selectDirectory =
+				electronAPI.selectDirectory as () => Promise<unknown>;
 			const dirResult = await selectDirectory();
 
 			expect(mockIpcRenderer.invoke).toHaveBeenCalledWith(
@@ -188,7 +187,7 @@ describe("E2E Smoke Tests", { timeout: 30000 }, () => {
 				data: project,
 			});
 
-			const addProject = electronAPI["addProject"] as (
+			const addProject = electronAPI.addProject as (
 				path: string,
 			) => Promise<unknown>;
 			const addResult = await addProject(TEST_PROJECT_PATH);
@@ -212,7 +211,7 @@ describe("E2E Smoke Tests", { timeout: 30000 }, () => {
 				data: [project],
 			});
 
-			const getProjects = electronAPI["getProjects"] as () => Promise<unknown>;
+			const getProjects = electronAPI.getProjects as () => Promise<unknown>;
 			const listResult = await getProjects();
 
 			expect(mockIpcRenderer.invoke).toHaveBeenCalledWith("project:list");
@@ -229,7 +228,7 @@ describe("E2E Smoke Tests", { timeout: 30000 }, () => {
 
 		it("should handle project creation with custom settings", async () => {
 			await import("../../preload/index");
-			const electronAPI = exposedApis["electronAPI"] as Record<string, unknown>;
+			const electronAPI = exposedApis.electronAPI as Record<string, unknown>;
 
 			// Add project first
 			const project = createTestProject();
@@ -238,7 +237,7 @@ describe("E2E Smoke Tests", { timeout: 30000 }, () => {
 				data: project,
 			});
 
-			const addProject = electronAPI["addProject"] as (
+			const addProject = electronAPI.addProject as (
 				path: string,
 			) => Promise<unknown>;
 			await addProject(TEST_PROJECT_PATH);
@@ -250,7 +249,7 @@ describe("E2E Smoke Tests", { timeout: 30000 }, () => {
 				data: { ...project, settings: newSettings },
 			});
 
-			const updateProjectSettings = electronAPI["updateProjectSettings"] as (
+			const updateProjectSettings = electronAPI.updateProjectSettings as (
 				id: string,
 				settings: object,
 			) => Promise<unknown>;
@@ -277,7 +276,7 @@ describe("E2E Smoke Tests", { timeout: 30000 }, () => {
 
 		it("should handle directory selection cancellation", async () => {
 			await import("../../preload/index");
-			const electronAPI = exposedApis["electronAPI"] as Record<string, unknown>;
+			const electronAPI = exposedApis.electronAPI as Record<string, unknown>;
 
 			// User cancels directory picker
 			mockIpcRenderer.invoke.mockResolvedValueOnce({
@@ -285,9 +284,8 @@ describe("E2E Smoke Tests", { timeout: 30000 }, () => {
 				error: "User cancelled",
 			});
 
-			const selectDirectory = electronAPI[
-				"selectDirectory"
-			] as () => Promise<unknown>;
+			const selectDirectory =
+				electronAPI.selectDirectory as () => Promise<unknown>;
 			const result = await selectDirectory();
 
 			expect(result).toMatchObject({
@@ -298,14 +296,14 @@ describe("E2E Smoke Tests", { timeout: 30000 }, () => {
 
 		it("should handle project removal flow", async () => {
 			await import("../../preload/index");
-			const electronAPI = exposedApis["electronAPI"] as Record<string, unknown>;
+			const electronAPI = exposedApis.electronAPI as Record<string, unknown>;
 
 			// Remove project
 			mockIpcRenderer.invoke.mockResolvedValueOnce({
 				success: true,
 			});
 
-			const removeProject = electronAPI["removeProject"] as (
+			const removeProject = electronAPI.removeProject as (
 				id: string,
 			) => Promise<unknown>;
 			const removeResult = await removeProject("project-001");
@@ -322,7 +320,7 @@ describe("E2E Smoke Tests", { timeout: 30000 }, () => {
 				data: [],
 			});
 
-			const getProjects = electronAPI["getProjects"] as () => Promise<unknown>;
+			const getProjects = electronAPI.getProjects as () => Promise<unknown>;
 			const listResult = await getProjects();
 
 			expect(listResult).toMatchObject({
@@ -335,7 +333,7 @@ describe("E2E Smoke Tests", { timeout: 30000 }, () => {
 	describe("Task Creation and Execution Flow", () => {
 		it("should complete full task creation and execution flow", async () => {
 			await import("../../preload/index");
-			const electronAPI = exposedApis["electronAPI"] as Record<string, unknown>;
+			const electronAPI = exposedApis.electronAPI as Record<string, unknown>;
 
 			// Step 1: Create a new task (simulates filling task form and clicking Create)
 			const task = createTestTask();
@@ -344,7 +342,7 @@ describe("E2E Smoke Tests", { timeout: 30000 }, () => {
 				data: task,
 			});
 
-			const createTask = electronAPI["createTask"] as (
+			const createTask = electronAPI.createTask as (
 				projectId: string,
 				title: string,
 				description: string,
@@ -373,7 +371,7 @@ describe("E2E Smoke Tests", { timeout: 30000 }, () => {
 			});
 
 			// Step 2: Start the task (simulates clicking "Run" button)
-			const startTask = electronAPI["startTask"] as (
+			const startTask = electronAPI.startTask as (
 				id: string,
 				options?: object,
 			) => void;
@@ -387,7 +385,7 @@ describe("E2E Smoke Tests", { timeout: 30000 }, () => {
 
 			// Step 3: Register progress listener to track task execution
 			const progressCallback = vi.fn();
-			const onTaskProgress = electronAPI["onTaskProgress"] as (
+			const onTaskProgress = electronAPI.onTaskProgress as (
 				cb: Function,
 			) => Function;
 			const cleanupProgress = onTaskProgress(progressCallback);
@@ -422,7 +420,7 @@ describe("E2E Smoke Tests", { timeout: 30000 }, () => {
 
 			// Step 4: Register status change listener
 			const statusCallback = vi.fn();
-			const onTaskStatusChange = electronAPI["onTaskStatusChange"] as (
+			const onTaskStatusChange = electronAPI.onTaskStatusChange as (
 				cb: Function,
 			) => Function;
 			const cleanupStatus = onTaskStatusChange(statusCallback);
@@ -459,7 +457,7 @@ describe("E2E Smoke Tests", { timeout: 30000 }, () => {
 
 		it("should handle task with metadata (Linear integration)", async () => {
 			await import("../../preload/index");
-			const electronAPI = exposedApis["electronAPI"] as Record<string, unknown>;
+			const electronAPI = exposedApis.electronAPI as Record<string, unknown>;
 
 			const linearMetadata = {
 				linearIssueId: "LIN-123",
@@ -472,7 +470,7 @@ describe("E2E Smoke Tests", { timeout: 30000 }, () => {
 				data: task,
 			});
 
-			const createTask = electronAPI["createTask"] as (
+			const createTask = electronAPI.createTask as (
 				projectId: string,
 				title: string,
 				description: string,
@@ -496,13 +494,11 @@ describe("E2E Smoke Tests", { timeout: 30000 }, () => {
 
 		it("should handle task error events", async () => {
 			await import("../../preload/index");
-			const electronAPI = exposedApis["electronAPI"] as Record<string, unknown>;
+			const electronAPI = exposedApis.electronAPI as Record<string, unknown>;
 
 			// Register error listener
 			const errorCallback = vi.fn();
-			const onTaskError = electronAPI["onTaskError"] as (
-				cb: Function,
-			) => Function;
+			const onTaskError = electronAPI.onTaskError as (cb: Function) => Function;
 			onTaskError(errorCallback);
 
 			expect(mockIpcRenderer.on).toHaveBeenCalledWith(
@@ -534,14 +530,14 @@ describe("E2E Smoke Tests", { timeout: 30000 }, () => {
 
 		it("should handle task stop flow", async () => {
 			await import("../../preload/index");
-			const electronAPI = exposedApis["electronAPI"] as Record<string, unknown>;
+			const electronAPI = exposedApis.electronAPI as Record<string, unknown>;
 
 			// Start task first
-			const startTask = electronAPI["startTask"] as (id: string) => void;
+			const startTask = electronAPI.startTask as (id: string) => void;
 			startTask("task-001");
 
 			// Stop task (simulates clicking "Stop" button)
-			const stopTask = electronAPI["stopTask"] as (id: string) => void;
+			const stopTask = electronAPI.stopTask as (id: string) => void;
 			stopTask("task-001");
 
 			expect(mockIpcRenderer.send).toHaveBeenCalledWith(
@@ -552,10 +548,10 @@ describe("E2E Smoke Tests", { timeout: 30000 }, () => {
 
 		it("should handle task resume flow", async () => {
 			await import("../../preload/index");
-			const electronAPI = exposedApis["electronAPI"] as Record<string, unknown>;
+			const electronAPI = exposedApis.electronAPI as Record<string, unknown>;
 
 			// Resume task with options
-			const startTask = electronAPI["startTask"] as (
+			const startTask = electronAPI.startTask as (
 				id: string,
 				options?: object,
 			) => void;
@@ -570,7 +566,7 @@ describe("E2E Smoke Tests", { timeout: 30000 }, () => {
 
 		it("should handle task list retrieval", async () => {
 			await import("../../preload/index");
-			const electronAPI = exposedApis["electronAPI"] as Record<string, unknown>;
+			const electronAPI = exposedApis.electronAPI as Record<string, unknown>;
 
 			const tasks = [
 				createTestTask({ id: "task-001", status: "completed" }),
@@ -591,7 +587,7 @@ describe("E2E Smoke Tests", { timeout: 30000 }, () => {
 				data: tasks,
 			});
 
-			const getTasks = electronAPI["getTasks"] as (
+			const getTasks = electronAPI.getTasks as (
 				projectId: string,
 			) => Promise<unknown>;
 			const result = await getTasks("project-001");
@@ -614,7 +610,7 @@ describe("E2E Smoke Tests", { timeout: 30000 }, () => {
 
 		it("should handle task creation with implementation plan loading", async () => {
 			await import("../../preload/index");
-			const electronAPI = exposedApis["electronAPI"] as Record<string, unknown>;
+			const electronAPI = exposedApis.electronAPI as Record<string, unknown>;
 
 			// Create task that includes implementation plan with subtasks
 			const taskWithPlan = createTestTask({
@@ -656,7 +652,7 @@ describe("E2E Smoke Tests", { timeout: 30000 }, () => {
 				data: taskWithPlan,
 			});
 
-			const createTask = electronAPI["createTask"] as (
+			const createTask = electronAPI.createTask as (
 				projectId: string,
 				title: string,
 				description: string,
@@ -695,11 +691,11 @@ describe("E2E Smoke Tests", { timeout: 30000 }, () => {
 
 		it("should track task lifecycle status progression", async () => {
 			await import("../../preload/index");
-			const electronAPI = exposedApis["electronAPI"] as Record<string, unknown>;
+			const electronAPI = exposedApis.electronAPI as Record<string, unknown>;
 
 			// Register status change listener
 			const statusCallback = vi.fn();
-			const onTaskStatusChange = electronAPI["onTaskStatusChange"] as (
+			const onTaskStatusChange = electronAPI.onTaskStatusChange as (
 				cb: Function,
 			) => Function;
 			const cleanupStatus = onTaskStatusChange(statusCallback);
@@ -742,7 +738,7 @@ describe("E2E Smoke Tests", { timeout: 30000 }, () => {
 
 		it("should handle task form validation with missing required fields", async () => {
 			await import("../../preload/index");
-			const electronAPI = exposedApis["electronAPI"] as Record<string, unknown>;
+			const electronAPI = exposedApis.electronAPI as Record<string, unknown>;
 
 			// Attempt to create task with empty title
 			mockIpcRenderer.invoke.mockResolvedValueOnce({
@@ -750,7 +746,7 @@ describe("E2E Smoke Tests", { timeout: 30000 }, () => {
 				error: "Title is required",
 			});
 
-			const createTask = electronAPI["createTask"] as (
+			const createTask = electronAPI.createTask as (
 				projectId: string,
 				title: string,
 				description: string,
@@ -765,11 +761,11 @@ describe("E2E Smoke Tests", { timeout: 30000 }, () => {
 
 		it("should handle task completion with subtask progress tracking", async () => {
 			await import("../../preload/index");
-			const electronAPI = exposedApis["electronAPI"] as Record<string, unknown>;
+			const electronAPI = exposedApis.electronAPI as Record<string, unknown>;
 
 			// Register progress listener
 			const progressCallback = vi.fn();
-			const onTaskProgress = electronAPI["onTaskProgress"] as (
+			const onTaskProgress = electronAPI.onTaskProgress as (
 				cb: Function,
 			) => Function;
 			const cleanupProgress = onTaskProgress(progressCallback);
@@ -830,7 +826,7 @@ describe("E2E Smoke Tests", { timeout: 30000 }, () => {
 
 		it("should handle task update with partial data", async () => {
 			await import("../../preload/index");
-			const electronAPI = exposedApis["electronAPI"] as Record<string, unknown>;
+			const electronAPI = exposedApis.electronAPI as Record<string, unknown>;
 
 			// Update task with only title change
 			const updatedTask = createTestTask({ title: "Updated Task Title" });
@@ -839,7 +835,7 @@ describe("E2E Smoke Tests", { timeout: 30000 }, () => {
 				data: updatedTask,
 			});
 
-			const updateTask = electronAPI["updateTask"] as (
+			const updateTask = electronAPI.updateTask as (
 				id: string,
 				updates: object,
 			) => Promise<unknown>;
@@ -864,11 +860,11 @@ describe("E2E Smoke Tests", { timeout: 30000 }, () => {
 
 		it("should handle subtask status update during build", async () => {
 			await import("../../preload/index");
-			const electronAPI = exposedApis["electronAPI"] as Record<string, unknown>;
+			const electronAPI = exposedApis.electronAPI as Record<string, unknown>;
 
 			// Register progress listener for subtask updates
 			const progressCallback = vi.fn();
-			const onTaskProgress = electronAPI["onTaskProgress"] as (
+			const onTaskProgress = electronAPI.onTaskProgress as (
 				cb: Function,
 			) => Function;
 			const cleanupProgress = onTaskProgress(progressCallback);
@@ -925,14 +921,14 @@ describe("E2E Smoke Tests", { timeout: 30000 }, () => {
 
 		it("should handle task deletion flow", async () => {
 			await import("../../preload/index");
-			const electronAPI = exposedApis["electronAPI"] as Record<string, unknown>;
+			const electronAPI = exposedApis.electronAPI as Record<string, unknown>;
 
 			// Delete task
 			mockIpcRenderer.invoke.mockResolvedValueOnce({
 				success: true,
 			});
 
-			const deleteTask = electronAPI["deleteTask"] as (
+			const deleteTask = electronAPI.deleteTask as (
 				id: string,
 			) => Promise<unknown>;
 			const deleteResult = await deleteTask("task-001");
@@ -949,7 +945,7 @@ describe("E2E Smoke Tests", { timeout: 30000 }, () => {
 				data: [],
 			});
 
-			const getTasks = electronAPI["getTasks"] as (
+			const getTasks = electronAPI.getTasks as (
 				projectId: string,
 			) => Promise<unknown>;
 			const listResult = await getTasks("project-001");
@@ -964,7 +960,7 @@ describe("E2E Smoke Tests", { timeout: 30000 }, () => {
 	describe("Settings Management Flow", () => {
 		it("should complete full settings modification flow", async () => {
 			await import("../../preload/index");
-			const electronAPI = exposedApis["electronAPI"] as Record<string, unknown>;
+			const electronAPI = exposedApis.electronAPI as Record<string, unknown>;
 
 			// Step 1: Get current settings (simulates navigating to Settings page)
 			const currentSettings = createTestSettings();
@@ -973,7 +969,7 @@ describe("E2E Smoke Tests", { timeout: 30000 }, () => {
 				data: currentSettings,
 			});
 
-			const getSettings = electronAPI["getSettings"] as () => Promise<unknown>;
+			const getSettings = electronAPI.getSettings as () => Promise<unknown>;
 			const getResult = await getSettings();
 
 			expect(mockIpcRenderer.invoke).toHaveBeenCalledWith("settings:get");
@@ -995,7 +991,7 @@ describe("E2E Smoke Tests", { timeout: 30000 }, () => {
 				data: newSettings,
 			});
 
-			const saveSettings = electronAPI["saveSettings"] as (
+			const saveSettings = electronAPI.saveSettings as (
 				settings: object,
 			) => Promise<unknown>;
 			const saveResult = await saveSettings(newSettings);
@@ -1031,7 +1027,7 @@ describe("E2E Smoke Tests", { timeout: 30000 }, () => {
 
 		it("should handle settings with all configurable options", async () => {
 			await import("../../preload/index");
-			const electronAPI = exposedApis["electronAPI"] as Record<string, unknown>;
+			const electronAPI = exposedApis.electronAPI as Record<string, unknown>;
 
 			const fullSettings = createTestSettings({
 				theme: "light",
@@ -1048,7 +1044,7 @@ describe("E2E Smoke Tests", { timeout: 30000 }, () => {
 				data: fullSettings,
 			});
 
-			const saveSettings = electronAPI["saveSettings"] as (
+			const saveSettings = electronAPI.saveSettings as (
 				settings: object,
 			) => Promise<unknown>;
 			await saveSettings(fullSettings);
@@ -1065,16 +1061,14 @@ describe("E2E Smoke Tests", { timeout: 30000 }, () => {
 
 		it("should handle app version retrieval", async () => {
 			await import("../../preload/index");
-			const electronAPI = exposedApis["electronAPI"] as Record<string, unknown>;
+			const electronAPI = exposedApis.electronAPI as Record<string, unknown>;
 
 			mockIpcRenderer.invoke.mockResolvedValueOnce({
 				success: true,
 				data: "2.5.0",
 			});
 
-			const getAppVersion = electronAPI[
-				"getAppVersion"
-			] as () => Promise<unknown>;
+			const getAppVersion = electronAPI.getAppVersion as () => Promise<unknown>;
 			const result = await getAppVersion();
 
 			// getAppVersion uses the app-update channel
@@ -1089,7 +1083,7 @@ describe("E2E Smoke Tests", { timeout: 30000 }, () => {
 
 		it("should handle settings reset to defaults flow", async () => {
 			await import("../../preload/index");
-			const electronAPI = exposedApis["electronAPI"] as Record<string, unknown>;
+			const electronAPI = exposedApis.electronAPI as Record<string, unknown>;
 
 			// Step 1: Get current custom settings
 			const customSettings = createTestSettings({
@@ -1103,7 +1097,7 @@ describe("E2E Smoke Tests", { timeout: 30000 }, () => {
 				data: customSettings,
 			});
 
-			const getSettings = electronAPI["getSettings"] as () => Promise<unknown>;
+			const getSettings = electronAPI.getSettings as () => Promise<unknown>;
 			await getSettings();
 
 			// Step 2: Reset to defaults (simulates clicking "Reset to Defaults" button)
@@ -1113,7 +1107,7 @@ describe("E2E Smoke Tests", { timeout: 30000 }, () => {
 				data: defaultSettings,
 			});
 
-			const saveSettings = electronAPI["saveSettings"] as (
+			const saveSettings = electronAPI.saveSettings as (
 				settings: object,
 			) => Promise<unknown>;
 			const resetResult = await saveSettings(defaultSettings);
@@ -1131,7 +1125,7 @@ describe("E2E Smoke Tests", { timeout: 30000 }, () => {
 
 		it("should handle settings validation with invalid values", async () => {
 			await import("../../preload/index");
-			const electronAPI = exposedApis["electronAPI"] as Record<string, unknown>;
+			const electronAPI = exposedApis.electronAPI as Record<string, unknown>;
 
 			// Attempt to save settings with invalid model
 			const invalidSettings = createTestSettings({
@@ -1142,7 +1136,7 @@ describe("E2E Smoke Tests", { timeout: 30000 }, () => {
 				error: "Invalid model selection: invalid-model",
 			});
 
-			const saveSettings = electronAPI["saveSettings"] as (
+			const saveSettings = electronAPI.saveSettings as (
 				settings: object,
 			) => Promise<unknown>;
 			const result = await saveSettings(invalidSettings);
@@ -1155,7 +1149,7 @@ describe("E2E Smoke Tests", { timeout: 30000 }, () => {
 
 		it("should handle partial settings update", async () => {
 			await import("../../preload/index");
-			const electronAPI = exposedApis["electronAPI"] as Record<string, unknown>;
+			const electronAPI = exposedApis.electronAPI as Record<string, unknown>;
 
 			// Get current settings first
 			const currentSettings = createTestSettings();
@@ -1164,7 +1158,7 @@ describe("E2E Smoke Tests", { timeout: 30000 }, () => {
 				data: currentSettings,
 			});
 
-			const getSettings = electronAPI["getSettings"] as () => Promise<unknown>;
+			const getSettings = electronAPI.getSettings as () => Promise<unknown>;
 			await getSettings();
 
 			// Update only the theme (simulates toggling theme switch)
@@ -1174,7 +1168,7 @@ describe("E2E Smoke Tests", { timeout: 30000 }, () => {
 				data: partialUpdate,
 			});
 
-			const saveSettings = electronAPI["saveSettings"] as (
+			const saveSettings = electronAPI.saveSettings as (
 				settings: object,
 			) => Promise<unknown>;
 			const result = await saveSettings(partialUpdate);
@@ -1196,7 +1190,7 @@ describe("E2E Smoke Tests", { timeout: 30000 }, () => {
 
 		it("should handle settings migration from older version", async () => {
 			await import("../../preload/index");
-			const electronAPI = exposedApis["electronAPI"] as Record<string, unknown>;
+			const electronAPI = exposedApis.electronAPI as Record<string, unknown>;
 
 			// Simulate loading settings from older version (missing new fields)
 			const legacySettings = {
@@ -1215,7 +1209,7 @@ describe("E2E Smoke Tests", { timeout: 30000 }, () => {
 				},
 			});
 
-			const getSettings = electronAPI["getSettings"] as () => Promise<unknown>;
+			const getSettings = electronAPI.getSettings as () => Promise<unknown>;
 			const result = await getSettings();
 
 			expect(result).toMatchObject({
@@ -1231,7 +1225,7 @@ describe("E2E Smoke Tests", { timeout: 30000 }, () => {
 
 		it("should handle settings save failure gracefully", async () => {
 			await import("../../preload/index");
-			const electronAPI = exposedApis["electronAPI"] as Record<string, unknown>;
+			const electronAPI = exposedApis.electronAPI as Record<string, unknown>;
 
 			// Simulate write failure (e.g., disk full, permissions)
 			mockIpcRenderer.invoke.mockResolvedValueOnce({
@@ -1239,7 +1233,7 @@ describe("E2E Smoke Tests", { timeout: 30000 }, () => {
 				error: "Failed to save settings: Permission denied",
 			});
 
-			const saveSettings = electronAPI["saveSettings"] as (
+			const saveSettings = electronAPI.saveSettings as (
 				settings: object,
 			) => Promise<unknown>;
 			const result = await saveSettings(createTestSettings({ theme: "dark" }));
@@ -1252,10 +1246,10 @@ describe("E2E Smoke Tests", { timeout: 30000 }, () => {
 
 		it("should handle concurrent settings operations", async () => {
 			await import("../../preload/index");
-			const electronAPI = exposedApis["electronAPI"] as Record<string, unknown>;
+			const electronAPI = exposedApis.electronAPI as Record<string, unknown>;
 
-			const getSettings = electronAPI["getSettings"] as () => Promise<unknown>;
-			const saveSettings = electronAPI["saveSettings"] as (
+			const getSettings = electronAPI.getSettings as () => Promise<unknown>;
+			const saveSettings = electronAPI.saveSettings as (
 				settings: object,
 			) => Promise<unknown>;
 
@@ -1288,9 +1282,9 @@ describe("E2E Smoke Tests", { timeout: 30000 }, () => {
 
 		it("should handle theme toggle cycle (system -> light -> dark -> system)", async () => {
 			await import("../../preload/index");
-			const electronAPI = exposedApis["electronAPI"] as Record<string, unknown>;
+			const electronAPI = exposedApis.electronAPI as Record<string, unknown>;
 
-			const saveSettings = electronAPI["saveSettings"] as (
+			const saveSettings = electronAPI.saveSettings as (
 				settings: object,
 			) => Promise<unknown>;
 
@@ -1324,7 +1318,7 @@ describe("E2E Smoke Tests", { timeout: 30000 }, () => {
 	describe("QA Review Flow", () => {
 		it("should complete QA review approval flow", async () => {
 			await import("../../preload/index");
-			const electronAPI = exposedApis["electronAPI"] as Record<string, unknown>;
+			const electronAPI = exposedApis.electronAPI as Record<string, unknown>;
 
 			// Submit positive review (simulates QA approving the build)
 			mockIpcRenderer.invoke.mockResolvedValueOnce({
@@ -1332,7 +1326,7 @@ describe("E2E Smoke Tests", { timeout: 30000 }, () => {
 				data: { status: "approved" },
 			});
 
-			const submitReview = electronAPI["submitReview"] as (
+			const submitReview = electronAPI.submitReview as (
 				id: string,
 				approved: boolean,
 				feedback?: string,
@@ -1357,7 +1351,7 @@ describe("E2E Smoke Tests", { timeout: 30000 }, () => {
 
 		it("should complete QA review rejection flow with feedback", async () => {
 			await import("../../preload/index");
-			const electronAPI = exposedApis["electronAPI"] as Record<string, unknown>;
+			const electronAPI = exposedApis.electronAPI as Record<string, unknown>;
 
 			// Submit negative review with feedback
 			mockIpcRenderer.invoke.mockResolvedValueOnce({
@@ -1365,7 +1359,7 @@ describe("E2E Smoke Tests", { timeout: 30000 }, () => {
 				data: { status: "rejected", feedback: "Missing error handling" },
 			});
 
-			const submitReview = electronAPI["submitReview"] as (
+			const submitReview = electronAPI.submitReview as (
 				id: string,
 				approved: boolean,
 				feedback?: string,
@@ -1394,7 +1388,7 @@ describe("E2E Smoke Tests", { timeout: 30000 }, () => {
 
 		it("should handle QA review with screenshot attachments", async () => {
 			await import("../../preload/index");
-			const electronAPI = exposedApis["electronAPI"] as Record<string, unknown>;
+			const electronAPI = exposedApis.electronAPI as Record<string, unknown>;
 
 			const screenshots = [
 				{ path: "/tmp/screenshot1.png", type: "image/png" },
@@ -1406,7 +1400,7 @@ describe("E2E Smoke Tests", { timeout: 30000 }, () => {
 				data: { status: "rejected", feedback: "UI issue", attachments: 2 },
 			});
 
-			const submitReview = electronAPI["submitReview"] as (
+			const submitReview = electronAPI.submitReview as (
 				id: string,
 				approved: boolean,
 				feedback?: string,
@@ -1432,7 +1426,7 @@ describe("E2E Smoke Tests", { timeout: 30000 }, () => {
 	describe("Tab State Persistence Flow", () => {
 		it("should persist and restore tab state", async () => {
 			await import("../../preload/index");
-			const electronAPI = exposedApis["electronAPI"] as Record<string, unknown>;
+			const electronAPI = exposedApis.electronAPI as Record<string, unknown>;
 
 			// Save tab state
 			const tabState = {
@@ -1443,7 +1437,7 @@ describe("E2E Smoke Tests", { timeout: 30000 }, () => {
 
 			mockIpcRenderer.invoke.mockResolvedValueOnce({ success: true });
 
-			const saveTabState = electronAPI["saveTabState"] as (
+			const saveTabState = electronAPI.saveTabState as (
 				state: object,
 			) => Promise<unknown>;
 			await saveTabState(tabState);
@@ -1459,7 +1453,7 @@ describe("E2E Smoke Tests", { timeout: 30000 }, () => {
 				data: tabState,
 			});
 
-			const getTabState = electronAPI["getTabState"] as () => Promise<unknown>;
+			const getTabState = electronAPI.getTabState as () => Promise<unknown>;
 			const result = await getTabState();
 
 			expect(mockIpcRenderer.invoke).toHaveBeenCalledWith("tabState:get");
@@ -1476,11 +1470,11 @@ describe("E2E Smoke Tests", { timeout: 30000 }, () => {
 	describe("Task Log Streaming Flow", () => {
 		it("should stream task logs during execution", async () => {
 			await import("../../preload/index");
-			const electronAPI = exposedApis["electronAPI"] as Record<string, unknown>;
+			const electronAPI = exposedApis.electronAPI as Record<string, unknown>;
 
 			// Register log listener
 			const logCallback = vi.fn();
-			const onTaskLog = electronAPI["onTaskLog"] as (cb: Function) => Function;
+			const onTaskLog = electronAPI.onTaskLog as (cb: Function) => Function;
 			const cleanupLog = onTaskLog(logCallback);
 
 			expect(mockIpcRenderer.on).toHaveBeenCalledWith(
@@ -1537,26 +1531,26 @@ describe("E2E Smoke Tests", { timeout: 30000 }, () => {
 	describe("Error Handling", () => {
 		it("should handle IPC timeout gracefully", async () => {
 			await import("../../preload/index");
-			const electronAPI = exposedApis["electronAPI"] as Record<string, unknown>;
+			const electronAPI = exposedApis.electronAPI as Record<string, unknown>;
 
 			// Simulate IPC timeout
 			mockIpcRenderer.invoke.mockRejectedValueOnce(new Error("IPC timeout"));
 
-			const getProjects = electronAPI["getProjects"] as () => Promise<unknown>;
+			const getProjects = electronAPI.getProjects as () => Promise<unknown>;
 
 			await expect(getProjects()).rejects.toThrow("IPC timeout");
 		});
 
 		it("should handle invalid project path", async () => {
 			await import("../../preload/index");
-			const electronAPI = exposedApis["electronAPI"] as Record<string, unknown>;
+			const electronAPI = exposedApis.electronAPI as Record<string, unknown>;
 
 			mockIpcRenderer.invoke.mockResolvedValueOnce({
 				success: false,
 				error: "Invalid project path: directory does not exist",
 			});
 
-			const addProject = electronAPI["addProject"] as (
+			const addProject = electronAPI.addProject as (
 				path: string,
 			) => Promise<unknown>;
 			const result = await addProject("/nonexistent/path");
@@ -1569,14 +1563,14 @@ describe("E2E Smoke Tests", { timeout: 30000 }, () => {
 
 		it("should handle task creation failure", async () => {
 			await import("../../preload/index");
-			const electronAPI = exposedApis["electronAPI"] as Record<string, unknown>;
+			const electronAPI = exposedApis.electronAPI as Record<string, unknown>;
 
 			mockIpcRenderer.invoke.mockResolvedValueOnce({
 				success: false,
 				error: "Project not found",
 			});
 
-			const createTask = electronAPI["createTask"] as (
+			const createTask = electronAPI.createTask as (
 				projectId: string,
 				title: string,
 				description: string,

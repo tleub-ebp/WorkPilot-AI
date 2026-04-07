@@ -152,7 +152,7 @@ function writeSyncConfig(
 		if (regex.test(content)) {
 			content = content.replace(regex, line);
 		} else {
-			content = content.trimEnd() + "\n" + line + "\n";
+			content = `${content.trimEnd()}\n${line}\n`;
 		}
 	}
 
@@ -222,11 +222,11 @@ function countImportedEpisodes(projectDir: string): number {
 /** Build a status object from local .workpilot data without spawning Python. */
 function getLocalStatus(projectDir: string): object {
 	const config = readSyncConfig(projectDir);
-	const syncPath = config["TEAM_SYNC_PATH"] || "";
-	const teamId = config["TEAM_SYNC_TEAM_ID"] || "default";
-	const memberId = config["TEAM_SYNC_MEMBER_ID"] || "";
-	const mode = config["TEAM_SYNC_MODE"] || "directory";
-	const serverUrl = config["TEAM_SYNC_SERVER_URL"] || "";
+	const syncPath = config.TEAM_SYNC_PATH || "";
+	const teamId = config.TEAM_SYNC_TEAM_ID || "default";
+	const memberId = config.TEAM_SYNC_MEMBER_ID || "";
+	const mode = config.TEAM_SYNC_MODE || "directory";
+	const serverUrl = config.TEAM_SYNC_SERVER_URL || "";
 	const enabled = mode === "directory" ? Boolean(syncPath) : Boolean(serverUrl);
 
 	const peerInfo = { peers: [], localEpisodeCount: 0, lastExport: null };
@@ -318,9 +318,9 @@ export function registerTeamSyncHandlers(): void {
 		): { success: boolean; data?: object[]; error?: string } => {
 			try {
 				const config = readSyncConfig(projectDir);
-				const syncPath = config["TEAM_SYNC_PATH"] || "";
-				const teamId = config["TEAM_SYNC_TEAM_ID"] || "default";
-				const memberId = config["TEAM_SYNC_MEMBER_ID"] || "";
+				const syncPath = config.TEAM_SYNC_PATH || "";
+				const teamId = config.TEAM_SYNC_TEAM_ID || "default";
+				const memberId = config.TEAM_SYNC_MEMBER_ID || "";
 				if (!syncPath) return { success: true, data: [] };
 
 				const teamDir = path.join(syncPath, teamId);
@@ -403,28 +403,25 @@ export function registerTeamSyncHandlers(): void {
 		): { success: boolean; error?: string } => {
 			try {
 				const envConfig: Record<string, string> = {};
-				if (config.mode !== undefined)
-					envConfig["TEAM_SYNC_MODE"] = config.mode;
+				if (config.mode !== undefined) envConfig.TEAM_SYNC_MODE = config.mode;
 				if (config.sync_path !== undefined)
-					envConfig["TEAM_SYNC_PATH"] = config.sync_path;
+					envConfig.TEAM_SYNC_PATH = config.sync_path;
 				if (config.team_id !== undefined)
-					envConfig["TEAM_SYNC_TEAM_ID"] = config.team_id;
+					envConfig.TEAM_SYNC_TEAM_ID = config.team_id;
 				if (config.member_id !== undefined)
-					envConfig["TEAM_SYNC_MEMBER_ID"] = config.member_id;
+					envConfig.TEAM_SYNC_MEMBER_ID = config.member_id;
 				if (config.server_url !== undefined)
-					envConfig["TEAM_SYNC_SERVER_URL"] = config.server_url;
+					envConfig.TEAM_SYNC_SERVER_URL = config.server_url;
 				if (config.server_host !== undefined)
-					envConfig["TEAM_SYNC_SERVER_HOST"] = config.server_host;
+					envConfig.TEAM_SYNC_SERVER_HOST = config.server_host;
 				if (config.server_port !== undefined)
-					envConfig["TEAM_SYNC_SERVER_PORT"] = String(config.server_port);
+					envConfig.TEAM_SYNC_SERVER_PORT = String(config.server_port);
 				if (config.auto_sync_interval !== undefined)
-					envConfig["TEAM_SYNC_AUTO_SYNC_INTERVAL"] = String(
+					envConfig.TEAM_SYNC_AUTO_SYNC_INTERVAL = String(
 						config.auto_sync_interval,
 					);
 				if (config.auto_push !== undefined)
-					envConfig["TEAM_SYNC_AUTO_PUSH"] = config.auto_push
-						? "true"
-						: "false";
+					envConfig.TEAM_SYNC_AUTO_PUSH = config.auto_push ? "true" : "false";
 
 				writeSyncConfig(projectDir, envConfig);
 				return { success: true };

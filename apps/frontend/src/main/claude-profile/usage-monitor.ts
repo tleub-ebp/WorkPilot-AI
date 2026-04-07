@@ -53,8 +53,8 @@ function getCredentialFingerprint(
 ): string {
 	if (!credential) return "null";
 	if (credential.length <= 16)
-		return credential.slice(0, 4) + "..." + credential.slice(-2);
-	return credential.slice(0, 8) + "..." + credential.slice(-4);
+		return `${credential.slice(0, 4)}...${credential.slice(-2)}`;
+	return `${credential.slice(0, 8)}...${credential.slice(-4)}`;
 }
 
 /**
@@ -361,7 +361,7 @@ export class UsageMonitor extends EventEmitter {
 		const settings = profileManager.getAutoSwitchSettings();
 		const interval = settings.usageCheckInterval || 60000; // 60 seconds — balanced between freshness and rate limits
 
-		this.debugLog("[UsageMonitor] Starting with interval: " + interval + " ms");
+		this.debugLog(`[UsageMonitor] Starting with interval: ${interval} ms`);
 
 		// Delay the initial check by 10 seconds so the renderer's useEffect
 		// calls (via getUsageForProvider) can complete first.  Without this
@@ -439,7 +439,7 @@ export class UsageMonitor extends EventEmitter {
 
 		if (wasInFailedList || wasNeedsReauth) {
 			this.debugLog(
-				"[UsageMonitor] Cleared auth failure status for profile: " + profileId,
+				`[UsageMonitor] Cleared auth failure status for profile: ${profileId}`,
 				{
 					wasInFailedList,
 					wasNeedsReauth,
@@ -1425,7 +1425,7 @@ export class UsageMonitor extends EventEmitter {
 								Math.round(timeToLimit.sessionMinutesRemaining) +
 								" min",
 							{
-								velocity: velocityData.sessionVelocity.toFixed(2) + "%/min",
+								velocity: `${velocityData.sessionVelocity.toFixed(2)}%/min`,
 								confidence: velocityData.confidence,
 							},
 						);
@@ -1440,7 +1440,7 @@ export class UsageMonitor extends EventEmitter {
 								Math.round(timeToLimit.weeklyMinutesRemaining) +
 								" min",
 							{
-								velocity: velocityData.weeklyVelocity.toFixed(2) + "%/min",
+								velocity: `${velocityData.weeklyVelocity.toFixed(2)}%/min`,
 								confidence: velocityData.confidence,
 							},
 						);
@@ -2579,7 +2579,7 @@ export class UsageMonitor extends EventEmitter {
 			const rawData = await response.json();
 
 			this.debugLog(
-				"[UsageMonitor:PROVIDER] Raw response from " + provider + ":",
+				`[UsageMonitor:PROVIDER] Raw response from ${provider}:`,
 				JSON.stringify(rawData, null, 2),
 			);
 
@@ -2632,7 +2632,7 @@ export class UsageMonitor extends EventEmitter {
 
 			if (!normalizedUsage) {
 				this.debugLog(
-					"[UsageMonitor] Failed to normalize response from " + provider,
+					`[UsageMonitor] Failed to normalize response from ${provider}`,
 				);
 				// Record failure timestamp for cooldown retry (normalization failure)
 				this.apiFailureTimestamps.set(profileId, Date.now());

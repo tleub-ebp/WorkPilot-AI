@@ -1,4 +1,4 @@
-import path from "path";
+import path from "node:path";
 
 const INSIGHTS_DIR = ".workpilot/insights";
 const SESSIONS_DIR = "sessions";

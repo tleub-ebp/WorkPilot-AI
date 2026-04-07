@@ -5,7 +5,7 @@
  * Routes to appropriate handlers based on URL detection
  */
 
-import { type ChildProcess } from "node:child_process";
+import type { ChildProcess } from "node:child_process";
 import { ipcMain } from "electron";
 import { IPC_CHANNELS } from "../../shared/constants";
 import type { IPCResult, PRDetailsResult, Project } from "../../shared/types";
@@ -240,7 +240,8 @@ async function getAzureDevOpsPRDetails(
 		}
 
 		// Parse Azure DevOps URL to extract organization and project
-		const azureDevOpsUrlRegex = /https:\/\/dev\.azure\.com\/([^/]+)\/([^/]+)\/_git\/([^/]+)\/pullrequest\/(\d+)/;
+		const azureDevOpsUrlRegex =
+			/https:\/\/dev\.azure\.com\/([^/]+)\/([^/]+)\/_git\/([^/]+)\/pullrequest\/(\d+)/;
 		const urlMatch = azureDevOpsUrlRegex.exec(prUrl);
 		if (!urlMatch) {
 			return {
@@ -412,7 +413,9 @@ async function callAzureDevOpsPythonWithExistingConfig(
 		const { exec } = require("node:child_process");
 		exec(
 			"python --version",
-			(_error: Error | null, _stdout: string, _stderr: string) => { /* intentionally empty */ },
+			(_error: Error | null, _stdout: string, _stderr: string) => {
+				/* intentionally empty */
+			},
 		);
 
 		const pythonScript = `
@@ -715,11 +718,13 @@ except Exception as e:
  * Transform Azure DevOps data to PRDetailsResult format
  */
 function transformAzureDevOpsData(
+	// biome-ignore lint/suspicious/noExplicitAny: Azure DevOps API response shape is not typed
 	prData: any,
 	prUrl: string,
 ): IPCResult<PRDetailsResult> {
 	try {
 		const files =
+			// biome-ignore lint/suspicious/noExplicitAny: Azure DevOps API response shape is not typed
 			prData.files?.map((file: any) => {
 				const status = mapAzureDevOpsChangeType(file.changeType);
 				return {
@@ -734,9 +739,11 @@ function transformAzureDevOpsData(
 			}) || [];
 
 		const reviewers = (prData.reviewers || [])
+			// biome-ignore lint/suspicious/noExplicitAny: Azure DevOps API response shape is not typed
 			.map((r: any) => r.displayName || r)
 			.filter(Boolean);
 		const labels = (prData.labels || [])
+			// biome-ignore lint/suspicious/noExplicitAny: Azure DevOps API response shape is not typed
 			.map((l: any) => (typeof l === "string" ? l : l.name))
 			.filter(Boolean);
 
@@ -787,7 +794,8 @@ async function getMockAzureDevOpsPRDetails(
 	prUrl: string,
 ): Promise<IPCResult<PRDetailsResult>> {
 	// Extract real info from URL for more realistic mock data
-	const urlRegex = /https:\/\/dev\.azure\.com\/([^/]+)\/([^/]+)\/_git\/([^/]+)\/pullrequest\/(\d+)/;
+	const urlRegex =
+		/https:\/\/dev\.azure\.com\/([^/]+)\/([^/]+)\/_git\/([^/]+)\/pullrequest\/(\d+)/;
 	const urlMatch = urlRegex.exec(prUrl);
 	const [, organization, projectName, repository] = urlMatch || [
 		undefined,

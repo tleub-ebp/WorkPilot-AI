@@ -14,7 +14,7 @@ export function encryptToken(token: string): string {
 		if (safeStorage.isEncryptionAvailable()) {
 			const encrypted = safeStorage.encryptString(token);
 			// Prefix with 'enc:' to identify encrypted tokens
-			return "enc:" + encrypted.toString("base64");
+			return `enc:${encrypted.toString("base64")}`;
 		}
 	} catch (error) {
 		console.warn(

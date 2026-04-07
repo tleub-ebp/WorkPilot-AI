@@ -8,12 +8,12 @@
  * Follows the same pattern as homebrew-python.ts for platform-specific detection.
  */
 
-import { execFile, execFileSync } from "child_process";
-import { existsSync } from "fs";
-import { access, constants } from "fs/promises";
-import os from "os";
-import path from "path";
-import { promisify } from "util";
+import { execFile, execFileSync } from "node:child_process";
+import { existsSync } from "node:fs";
+import { access, constants } from "node:fs/promises";
+import os from "node:os";
+import path from "node:path";
+import { promisify } from "node:util";
 
 const execFileAsync = promisify(execFile);
 

@@ -219,6 +219,7 @@ export function FileTreeItem({
 
 	return (
 		// biome-ignore lint/a11y/noStaticElementInteractions: interactive handler is intentional
+		// biome-ignore lint/a11y/noNoninteractiveElementInteractions: Electron desktop app — draggable file tree item
 		// biome-ignore lint/a11y/useAriaPropsSupportedByRole: ARIA attributes are valid for this role
 		<div
 			role={node.isDirectory ? "button" : undefined}

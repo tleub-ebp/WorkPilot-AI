@@ -336,8 +336,8 @@ class OutputProcessor {
 		} else if (line.startsWith("__TOOL_END__:")) {
 			// Tool completed, continue
 		} else if (line.trim()) {
-			this.fullOutput += line + "\n";
-			emitter.emit("stream-chunk", line + "\n");
+			this.fullOutput += `${line}\n`;
+			emitter.emit("stream-chunk", `${line}\n`);
 		}
 	}
 

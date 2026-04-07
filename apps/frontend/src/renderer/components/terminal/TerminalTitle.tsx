@@ -86,15 +86,17 @@ export function TerminalTitle({
 			<TooltipProvider>
 				<Tooltip>
 					<TooltipTrigger asChild>
-						<span
-							className={cn(
-								"text-xs font-medium text-foreground truncate cursor-text hover:text-primary/80 transition-colors",
-								maxWidthClass,
-							)}
-							onDoubleClick={(e) => {
-								e.stopPropagation();
-								handleStartEdit();
-							}}
+						{/* biome-ignore lint/a11y/noNoninteractiveElementInteractions: double-click to rename terminal */}
+					{/* biome-ignore lint/a11y/noStaticElementInteractions: double-click to rename terminal */}
+					<span
+						className={cn(
+							"text-xs font-medium text-foreground truncate cursor-text hover:text-primary/80 transition-colors",
+							maxWidthClass,
+						)}
+						onDoubleClick={(e) => {
+							e.stopPropagation();
+							handleStartEdit();
+						}}
 						>
 							{title}
 						</span>
@@ -114,6 +116,8 @@ export function TerminalTitle({
 		<TooltipProvider>
 			<Tooltip>
 				<TooltipTrigger asChild>
+					{/* biome-ignore lint/a11y/noNoninteractiveElementInteractions: double-click to rename terminal */}
+					{/* biome-ignore lint/a11y/noStaticElementInteractions: double-click to rename terminal */}
 					<span
 						className={cn(
 							"text-xs font-medium text-foreground truncate cursor-text hover:text-primary/80 transition-colors",

@@ -1,4 +1,4 @@
-import path from "path";
+import path from "node:path";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { ClaudeCodeSettings } from "../types";
 
@@ -33,8 +33,8 @@ vi.mock("../../../shared/utils/debug-logger", () => ({
 }));
 
 // Import mocked functions after vi.mock calls
-import { existsSync, readFileSync } from "fs";
-import { homedir } from "os";
+import { existsSync, readFileSync } from "node:fs";
+import { homedir } from "node:os";
 import { isMacOS, isWindows } from "../../platform";
 
 const mockExistsSync = vi.mocked(existsSync);

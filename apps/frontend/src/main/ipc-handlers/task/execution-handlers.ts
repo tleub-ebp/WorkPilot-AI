@@ -1476,16 +1476,16 @@ print(json.dumps(result))
 
 		const metadataPath = path.join(specDir, "task_metadata.json");
 		try {
-			const providerPhaseModels =
-				(
-					globalSettings.providerPhaseModels as Record<string, PhaseModelConfig> | undefined
-				)?.[currentProvider];
-			const providerPhaseThinking =
-				(
-					globalSettings.providerPhaseThinking as
-						| Record<string, PhaseThinkingConfig>
-						| undefined
-				)?.[currentProvider];
+			const providerPhaseModels = (
+				globalSettings.providerPhaseModels as
+					| Record<string, PhaseModelConfig>
+					| undefined
+			)?.[currentProvider];
+			const providerPhaseThinking = (
+				globalSettings.providerPhaseThinking as
+					| Record<string, PhaseThinkingConfig>
+					| undefined
+			)?.[currentProvider];
 
 			if (existsSync(metadataPath)) {
 				const content = safeReadFileSync(metadataPath);
@@ -1761,9 +1761,7 @@ print(json.dumps(result))
 	/**
 	 * Create response for running task
 	 */
-	function createRunningTaskResponse(
-		taskId: string,
-	): IPCResult<{
+	function createRunningTaskResponse(taskId: string): IPCResult<{
 		taskId: string;
 		recovered: boolean;
 		newStatus: TaskStatus;

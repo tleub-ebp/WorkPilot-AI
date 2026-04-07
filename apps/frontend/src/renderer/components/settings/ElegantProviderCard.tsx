@@ -408,7 +408,7 @@ export function ElegantProviderCard({
 		provider.isConfigured,
 	);
 	const categoryGradient =
-		categoryGradients[provider.category] || categoryGradients["independent"];
+		categoryGradients[provider.category] || categoryGradients.independent;
 
 	const getStatusIndicator = () => {
 		if (!provider.isConfigured) {
@@ -441,6 +441,8 @@ export function ElegantProviderCard({
 
 	return (
 		<TooltipProvider>
+			{/* biome-ignore lint/a11y/noNoninteractiveElementInteractions: hover-tracking card */}
+			{/* biome-ignore lint/a11y/noStaticElementInteractions: hover-tracking card */}
 			<div
 				className={cn(
 					"group relative overflow-hidden rounded-2xl border transition-all duration-500 ease-out",

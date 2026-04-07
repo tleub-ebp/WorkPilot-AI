@@ -517,7 +517,7 @@ export function GraphitiStep({ onNext, onBack, onSkip }: GraphitiStepProps) {
 						<div className="relative">
 							<Input
 								id="openai-key"
-								type={showApiKey["openai"] ? "text" : "password"}
+								type={showApiKey.openai ? "text" : "password"}
 								value={config.openaiApiKey}
 								onChange={(e) => {
 									setConfig((prev) => ({
@@ -535,7 +535,7 @@ export function GraphitiStep({ onNext, onBack, onSkip }: GraphitiStepProps) {
 								onClick={() => toggleShowApiKey("openai")}
 								className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
 							>
-								{showApiKey["openai"] ? (
+								{showApiKey.openai ? (
 									<EyeOff className="h-4 w-4" />
 								) : (
 									<Eye className="h-4 w-4" />
@@ -568,7 +568,7 @@ export function GraphitiStep({ onNext, onBack, onSkip }: GraphitiStepProps) {
 						<div className="relative">
 							<Input
 								id="anthropic-key"
-								type={showApiKey["anthropic"] ? "text" : "password"}
+								type={showApiKey.anthropic ? "text" : "password"}
 								value={config.anthropicApiKey}
 								onChange={(e) =>
 									setConfig((prev) => ({
@@ -585,7 +585,7 @@ export function GraphitiStep({ onNext, onBack, onSkip }: GraphitiStepProps) {
 								onClick={() => toggleShowApiKey("anthropic")}
 								className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
 							>
-								{showApiKey["anthropic"] ? (
+								{showApiKey.anthropic ? (
 									<EyeOff className="h-4 w-4" />
 								) : (
 									<Eye className="h-4 w-4" />
@@ -622,7 +622,7 @@ export function GraphitiStep({ onNext, onBack, onSkip }: GraphitiStepProps) {
 							<div className="relative">
 								<Input
 									id="azure-key"
-									type={showApiKey["azure"] ? "text" : "password"}
+									type={showApiKey.azure ? "text" : "password"}
 									value={config.azureOpenaiApiKey}
 									onChange={(e) =>
 										setConfig((prev) => ({
@@ -639,7 +639,7 @@ export function GraphitiStep({ onNext, onBack, onSkip }: GraphitiStepProps) {
 									onClick={() => toggleShowApiKey("azure")}
 									className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
 								>
-									{showApiKey["azure"] ? (
+									{showApiKey.azure ? (
 										<EyeOff className="h-4 w-4" />
 									) : (
 										<Eye className="h-4 w-4" />
@@ -732,7 +732,7 @@ export function GraphitiStep({ onNext, onBack, onSkip }: GraphitiStepProps) {
 						<div className="relative">
 							<Input
 								id="voyage-key"
-								type={showApiKey["voyage"] ? "text" : "password"}
+								type={showApiKey.voyage ? "text" : "password"}
 								value={config.voyageApiKey}
 								onChange={(e) =>
 									setConfig((prev) => ({
@@ -749,7 +749,7 @@ export function GraphitiStep({ onNext, onBack, onSkip }: GraphitiStepProps) {
 								onClick={() => toggleShowApiKey("voyage")}
 								className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
 							>
-								{showApiKey["voyage"] ? (
+								{showApiKey.voyage ? (
 									<EyeOff className="h-4 w-4" />
 								) : (
 									<Eye className="h-4 w-4" />
@@ -782,7 +782,7 @@ export function GraphitiStep({ onNext, onBack, onSkip }: GraphitiStepProps) {
 						<div className="relative">
 							<Input
 								id="google-key"
-								type={showApiKey["google"] ? "text" : "password"}
+								type={showApiKey.google ? "text" : "password"}
 								value={config.googleApiKey}
 								onChange={(e) =>
 									setConfig((prev) => ({
@@ -799,7 +799,7 @@ export function GraphitiStep({ onNext, onBack, onSkip }: GraphitiStepProps) {
 								onClick={() => toggleShowApiKey("google")}
 								className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
 							>
-								{showApiKey["google"] ? (
+								{showApiKey.google ? (
 									<EyeOff className="h-4 w-4" />
 								) : (
 									<Eye className="h-4 w-4" />
@@ -832,7 +832,7 @@ export function GraphitiStep({ onNext, onBack, onSkip }: GraphitiStepProps) {
 						<div className="relative">
 							<Input
 								id="groq-key"
-								type={showApiKey["groq"] ? "text" : "password"}
+								type={showApiKey.groq ? "text" : "password"}
 								value={config.groqApiKey}
 								onChange={(e) =>
 									setConfig((prev) => ({ ...prev, groqApiKey: e.target.value }))
@@ -846,7 +846,7 @@ export function GraphitiStep({ onNext, onBack, onSkip }: GraphitiStepProps) {
 								onClick={() => toggleShowApiKey("groq")}
 								className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
 							>
-								{showApiKey["groq"] ? (
+								{showApiKey.groq ? (
 									<EyeOff className="h-4 w-4" />
 								) : (
 									<Eye className="h-4 w-4" />
@@ -879,7 +879,7 @@ export function GraphitiStep({ onNext, onBack, onSkip }: GraphitiStepProps) {
 						<div className="relative">
 							<Input
 								id="openrouter-key"
-								type={showApiKey["openrouter"] ? "text" : "password"}
+								type={showApiKey.openrouter ? "text" : "password"}
 								value={config.openrouterApiKey}
 								onChange={(e) =>
 									setConfig((prev) => ({
@@ -896,7 +896,7 @@ export function GraphitiStep({ onNext, onBack, onSkip }: GraphitiStepProps) {
 								onClick={() => toggleShowApiKey("openrouter")}
 								className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
 							>
-								{showApiKey["openrouter"] ? (
+								{showApiKey.openrouter ? (
 									<EyeOff className="h-4 w-4" />
 								) : (
 									<Eye className="h-4 w-4" />

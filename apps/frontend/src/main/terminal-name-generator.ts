@@ -175,7 +175,7 @@ export class TerminalNameGenerator extends EventEmitter {
 
 		debug(
 			"Generating terminal name for command:",
-			command.substring(0, 100) + "...",
+			`${command.substring(0, 100)}...`,
 		);
 
 		const autoBuildEnv = this.loadAutoBuildEnv();
@@ -374,7 +374,7 @@ asyncio.run(generate_name())
 
 		// Truncate if too long (max 30 chars for terminal names)
 		if (cleaned.length > 30) {
-			cleaned = cleaned.substring(0, 27) + "...";
+			cleaned = `${cleaned.substring(0, 27)}...`;
 		}
 
 		return cleaned.trim();

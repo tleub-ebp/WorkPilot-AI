@@ -192,8 +192,8 @@ export class PerformanceProfilerService extends EventEmitter {
 						/* ignore */
 					}
 				} else if (line.trim()) {
-					fullOutput += line + "\n";
-					this.emit("stream-chunk", line + "\n");
+					fullOutput += `${line}\n`;
+					this.emit("stream-chunk", `${line}\n`);
 					if (line.includes("Phase")) this.emit("status", line.trim());
 				}
 			}

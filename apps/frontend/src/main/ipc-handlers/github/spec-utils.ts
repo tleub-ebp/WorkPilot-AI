@@ -2,8 +2,8 @@
  * Utility functions for spec creation and management
  */
 
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from "fs";
-import path from "path";
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import path from "node:path";
 import { AUTO_BUILD_PATHS, getSpecsDir } from "../../../shared/constants";
 import type { Project, TaskMetadata } from "../../../shared/types";
 import { withSpecNumberLock } from "../../utils/spec-number-lock";

@@ -280,8 +280,8 @@ class LearningLoopOutputProcessor {
 		if (line.startsWith("LEARNING_LOOP_EVENT:")) {
 			this.handleEvent(line, emitter);
 		} else if (line.trim()) {
-			this.fullOutput += line + "\n";
-			emitter.emit("stream-chunk", line + "\n");
+			this.fullOutput += `${line}\n`;
+			emitter.emit("stream-chunk", `${line}\n`);
 		}
 	}
 

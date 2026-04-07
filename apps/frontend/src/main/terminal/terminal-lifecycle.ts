@@ -3,8 +3,8 @@
  * Handles terminal creation, restoration, and destruction operations
  */
 
-import { existsSync } from "fs";
-import * as os from "os";
+import { existsSync } from "node:fs";
+import * as os from "node:os";
 import { IPC_CHANNELS } from "../../shared/constants";
 import type { TerminalCreateOptions } from "../../shared/types";
 import { debugError, debugLog } from "../../shared/utils/debug-logger";

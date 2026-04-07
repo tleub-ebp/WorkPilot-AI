@@ -151,9 +151,7 @@ export class AppEmulatorService extends EventEmitter {
 	/**
 	 * Fast inline detection — handles common project types without Python.
 	 */
-	private detectProjectInline(
-		projectDir: string,
-	): AppEmulatorConfig | null {
+	private detectProjectInline(projectDir: string): AppEmulatorConfig | null {
 		// Node.js / frontend projects
 		const pkgPath = path.join(projectDir, "package.json");
 		if (existsSync(pkgPath)) {
@@ -251,8 +249,7 @@ export class AppEmulatorService extends EventEmitter {
 				if (NODE_BACKEND.has(framework)) {
 					const frontendResult = this.findFrontendInSubdirs(projectDir, 3);
 					if (frontendResult) {
-						const frontendDir =
-							frontendResult.projectDir ?? projectDir;
+						const frontendDir = frontendResult.projectDir ?? projectDir;
 						return this.buildFullstackConfig(
 							{ framework, startCommand, port, projectDir },
 							{
@@ -352,8 +349,7 @@ export class AppEmulatorService extends EventEmitter {
 				if (backendCfg.isWeb) {
 					const frontendResult = this.findFrontendInSubdirs(projectDir, 3);
 					if (frontendResult) {
-						const frontendDir =
-							frontendResult.projectDir ?? projectDir;
+						const frontendDir = frontendResult.projectDir ?? projectDir;
 						return this.buildFullstackConfig(
 							{ ...backendCfg, projectDir },
 							{
@@ -373,7 +369,6 @@ export class AppEmulatorService extends EventEmitter {
 		if (existsSync(path.join(projectDir, "go.mod"))) {
 			const frontendResult = this.findFrontendInSubdirs(projectDir, 3);
 			if (frontendResult) {
-				// biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
 				const frontendDir = frontendResult.projectDir ?? projectDir;
 				return this.buildFullstackConfig(
 					{ framework: "go", startCommand: "go run .", port: 8080, projectDir },
@@ -447,7 +442,6 @@ export class AppEmulatorService extends EventEmitter {
 				if (frontendResult) {
 					// Fullstack: launch .NET backend AND frontend separately so both are reachable.
 					// The backend port becomes the API Studio base URL; the frontend runs in parallel.
-					// biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
 					const frontendDir = frontendResult.projectDir ?? projectDir;
 					return this.buildFullstackConfig(
 						{
@@ -811,9 +805,12 @@ export class AppEmulatorService extends EventEmitter {
 	 * Detect if a specific directory contains a backend server.
 	 * Returns config if found, null otherwise.
 	 */
-	private detectBackendAt(
-		dir: string,
-	): { framework: string; startCommand: string; port: number; projectDir?: string } | null {
+	private detectBackendAt(dir: string): {
+		framework: string;
+		startCommand: string;
+		port: number;
+		projectDir?: string;
+	} | null {
 		// Python
 		const hasManagePy = existsSync(path.join(dir, "manage.py"));
 		const hasAppPy = existsSync(path.join(dir, "app.py"));

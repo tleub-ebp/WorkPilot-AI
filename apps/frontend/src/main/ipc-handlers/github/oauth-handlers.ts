@@ -3,9 +3,9 @@
  * Provides a simpler OAuth flow than manual PAT creation
  */
 
-import { execFile, execFileSync, execSync, spawn } from "child_process";
+import { execFile, execFileSync, execSync, spawn } from "node:child_process";
+import { promisify } from "node:util";
 import { BrowserWindow, ipcMain, shell } from "electron";
-import { promisify } from "util";
 import { IPC_CHANNELS } from "../../../shared/constants";
 import type { IPCResult } from "../../../shared/types";
 import { getToolPath } from "../../cli-tool-manager";
@@ -959,7 +959,7 @@ export function registerCreateGitHubRepo(): void {
 							try {
 								execFileSync(
 									getToolPath("git"),
-									["branch", "--set-upstream-to=origin/" + branch, branch],
+									["branch", `--set-upstream-to=origin/${branch}`, branch],
 									{
 										cwd: options.projectPath,
 										encoding: "utf-8",

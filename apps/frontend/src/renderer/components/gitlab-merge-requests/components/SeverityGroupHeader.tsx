@@ -46,6 +46,9 @@ export function SeverityGroupHeader({
 		>
 			<div className="flex items-center gap-3">
 				{/* Group Checkbox */}
+				{/* biome-ignore lint/a11y/noNoninteractiveElementInteractions: clickable checkbox proxy */}
+				{/* biome-ignore lint/a11y/noStaticElementInteractions: clickable checkbox proxy */}
+				{/* biome-ignore lint/a11y/useKeyWithClickEvents: keyboard handled by outer button */}
 				<div onClick={onSelectAll} className="cursor-pointer">
 					{isFullySelected ? (
 						<CheckSquare className={cn("h-4 w-4", config.color)} />

@@ -191,35 +191,38 @@ export function ProviderConfigDialog({
 		return t("sections.accounts.providerConfig.windsurfAuth.claudeCodeAuth");
 	};
 
-	const getDefaultActiveTab = useCallback((
-		providerId: string,
-		hasOAuthSupport: boolean,
-	): ActiveTab => {
-		if (providerId === "copilot") return "github-copilot";
-		if (providerId === "windsurf") return "api"; // Windsurf defaults to API key tab, SSO is secondary
-		if (providerId === "openai") return "api"; // OpenAI defaults to API key tab, Codex CLI is secondary
-		if (hasOAuthSupport) return "oauth";
-		return "api";
-	}, []);
+	const getDefaultActiveTab = useCallback(
+		(providerId: string, hasOAuthSupport: boolean): ActiveTab => {
+			if (providerId === "copilot") return "github-copilot";
+			if (providerId === "windsurf") return "api"; // Windsurf defaults to API key tab, SSO is secondary
+			if (providerId === "openai") return "api"; // OpenAI defaults to API key tab, Codex CLI is secondary
+			if (hasOAuthSupport) return "oauth";
+			return "api";
+		},
+		[],
+	);
 
-	const initializeFormData = useCallback((
-		config: ProviderConfig,
-		currentSettings: Record<string, unknown>,
-	): Record<string, string> => {
-		const initialData: Record<string, string> = {};
+	const initializeFormData = useCallback(
+		(
+			config: ProviderConfig,
+			currentSettings: Record<string, unknown>,
+		): Record<string, string> => {
+			const initialData: Record<string, string> = {};
 
-		if (config.apiKey && currentSettings[config.apiKey]) {
-			initialData.apiKey = currentSettings[config.apiKey] as string;
-		}
-		if (config.apiUrl && currentSettings[config.apiUrl]) {
-			initialData.apiUrl = currentSettings[config.apiUrl] as string;
-		}
-		if (config.model && currentSettings[config.model]) {
-			initialData.model = currentSettings[config.model] as string;
-		}
+			if (config.apiKey && currentSettings[config.apiKey]) {
+				initialData.apiKey = currentSettings[config.apiKey] as string;
+			}
+			if (config.apiUrl && currentSettings[config.apiUrl]) {
+				initialData.apiUrl = currentSettings[config.apiUrl] as string;
+			}
+			if (config.model && currentSettings[config.model]) {
+				initialData.model = currentSettings[config.model] as string;
+			}
 
-		return initialData;
-	}, []);
+			return initialData;
+		},
+		[],
+	);
 
 	useEffect(() => {
 		if (!provider || !providerConfig || !isOpen) return;

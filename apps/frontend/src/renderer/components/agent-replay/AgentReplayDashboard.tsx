@@ -928,6 +928,7 @@ export const AgentReplayDashboard: React.FC<AgentReplayDashboardProps> = ({
 							{filteredSteps.map((step) => (
 								// biome-ignore lint/a11y/noStaticElementInteractions: interactive handler is intentional
 								// biome-ignore lint/a11y/useKeyWithClickEvents: keyboard events handled elsewhere
+								// biome-ignore lint/a11y/noNoninteractiveElementInteractions: selectable step row
 								<div
 									key={step.id}
 									className={`p-2 rounded cursor-pointer transition-colors text-xs mb-0.5 ${
@@ -1105,7 +1106,7 @@ export const AgentReplayDashboard: React.FC<AgentReplayDashboardProps> = ({
 												<div className="mt-1 space-y-1">
 													{currentStep.options_considered.map((opt) => (
 														<div
-															key={"opt-" + opt}
+															key={`opt-${opt}`}
 															className={`p-2 rounded text-xs ${
 																opt === currentStep.chosen_option
 																	? "bg-primary/10 border border-primary"
@@ -1151,7 +1152,7 @@ export const AgentReplayDashboard: React.FC<AgentReplayDashboardProps> = ({
 										};
 
 										return (
-											<Card key={"diff-" + diff.file_path}>
+											<Card key={`diff-${diff.file_path}`}>
 												<CardHeader className="py-2 px-3">
 													<div className="flex items-center justify-between">
 														<span className="text-sm font-mono">
@@ -1167,7 +1168,7 @@ export const AgentReplayDashboard: React.FC<AgentReplayDashboardProps> = ({
 														<pre className="text-xs font-mono overflow-auto max-h-60 bg-muted p-2 rounded">
 															{diff.diff_lines.map((line) => (
 																<div
-																	key={"line-" + line}
+																	key={`line-${line}`}
 																	className={getLineClassName(line)}
 																>
 																	{line}

@@ -107,9 +107,7 @@ export function CustomMcpDialog({
 			setArgsInput(server.args?.join(" ") || "");
 			// Extract bearer token from existing Authorization header
 			const authHeader =
-				server.headers?.["Authorization"] ||
-				server.headers?.["authorization"] ||
-				"";
+				server.headers?.Authorization || server.headers?.authorization || "";
 			if (authHeader.toLowerCase().startsWith("bearer ")) {
 				setBearerToken(authHeader.substring(7));
 			} else {
@@ -193,7 +191,7 @@ export function CustomMcpDialog({
 
 		// Add bearer token as Authorization header
 		if (bearerToken.trim()) {
-			finalHeaders["Authorization"] = `Bearer ${bearerToken.trim()}`;
+			finalHeaders.Authorization = `Bearer ${bearerToken.trim()}`;
 		}
 
 		return finalHeaders;

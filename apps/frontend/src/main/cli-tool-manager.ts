@@ -25,12 +25,12 @@ import {
 	type ExecFileSyncOptions,
 	execFile,
 	execFileSync,
-} from "child_process";
+} from "node:child_process";
+import { existsSync, promises as fsPromises, readdirSync } from "node:fs";
+import os from "node:os";
+import path from "node:path";
+import { promisify } from "node:util";
 import { app } from "electron";
-import { existsSync, promises as fsPromises, readdirSync } from "fs";
-import os from "os";
-import path from "path";
-import { promisify } from "util";
 import type { ToolDetectionResult } from "../shared/types";
 import {
 	existsAsync,
@@ -929,11 +929,25 @@ class CLIToolManager {
 		// 3a. On Windows, prefer ~/.local/bin/claude.exe (npm native install) before checking PATH
 		// because PATH may contain an older WinGet install that fails version detection.
 		if (isWindows()) {
-			const localBinPath = joinPaths(homeDir, ".local", "bin", `claude${getExecutableExtension()}`);
+			const localBinPath = joinPaths(
+				homeDir,
+				".local",
+				"bin",
+				`claude${getExecutableExtension()}`,
+			);
 			if (existsSync(localBinPath)) {
 				const validation = this.validateClaude(localBinPath);
-				if (validation.valid && validation.version && validation.version !== "unknown") {
-					const result = buildClaudeDetectionResult(localBinPath, validation, "system-path", "Using npm Claude CLI (~/.local/bin)");
+				if (
+					validation.valid &&
+					validation.version &&
+					validation.version !== "unknown"
+				) {
+					const result = buildClaudeDetectionResult(
+						localBinPath,
+						validation,
+						"system-path",
+						"Using npm Claude CLI (~/.local/bin)",
+					);
 					if (result) return result;
 				}
 			}
@@ -1347,11 +1361,18 @@ class CLIToolManager {
 							);
 							// Use EncodedCommand to avoid backslash corruption in paths
 							const psScript = `$r = & '${unquotedCmd.replace(/'/g, "''")}' --version 2>&1; Write-Output $r`;
-							const encodedCmd = Buffer.from(psScript, "utf16le").toString("base64");
+							const encodedCmd = Buffer.from(psScript, "utf16le").toString(
+								"base64",
+							);
 							version = normalizeExecOutput(
 								execFileSync(
 									psExe,
-									["-NoProfile", "-NonInteractive", "-EncodedCommand", encodedCmd],
+									[
+										"-NoProfile",
+										"-NonInteractive",
+										"-EncodedCommand",
+										encodedCmd,
+									],
 									{
 										encoding: "utf-8",
 										timeout: 8000,

@@ -69,19 +69,29 @@ async function tryWindowsNpmCodexVersion(): Promise<string | undefined> {
 	try {
 		const os = await import("node:os");
 		const path = await import("node:path");
-		const codexCmd = path.join(os.homedir(), "AppData", "Roaming", "npm", "codex.cmd");
+		const codexCmd = path.join(
+			os.homedir(),
+			"AppData",
+			"Roaming",
+			"npm",
+			"codex.cmd",
+		);
 		const { existsSync } = await import("node:fs");
-		
+
 		if (!existsSync(codexCmd)) {
 			return undefined;
 		}
-		
+
 		const cmdExe = process.env.ComSpec || "C:\\Windows\\System32\\cmd.exe";
-		const result = await execFileAsync(cmdExe, ["/d", "/s", "/c", `""${codexCmd}" --version"`], {
-			encoding: "utf-8",
-			timeout: 5000,
-			windowsHide: true,
-		});
+		const result = await execFileAsync(
+			cmdExe,
+			["/d", "/s", "/c", `""${codexCmd}" --version"`],
+			{
+				encoding: "utf-8",
+				timeout: 5000,
+				windowsHide: true,
+			},
+		);
 		return extractVersionFromOutput(result.stdout);
 	} catch {
 		return undefined;
@@ -95,11 +105,11 @@ async function getCodexVersion(): Promise<string | undefined> {
 	// Strategy 1: direct exec
 	let version = await tryDirectCodexVersion();
 	if (version) return version;
-	
+
 	// Strategy 2: shell execution
 	version = await tryShellCodexVersion();
 	if (version) return version;
-	
+
 	// Strategy 3: Windows npm global path
 	return await tryWindowsNpmCodexVersion();
 }
@@ -323,8 +333,13 @@ export function registerCredentialHandlers(): void {
 	 */
 	ipcMain.handle(
 		"credential:checkOpenAICodexOAuth",
-		async (): Promise<{ isAuthenticated: boolean; profileName?: string; version?: string }> => {
-			const authStatus = await credentialManager.checkOpenAICodexOAuthStatusPublic();
+		async (): Promise<{
+			isAuthenticated: boolean;
+			profileName?: string;
+			version?: string;
+		}> => {
+			const authStatus =
+				await credentialManager.checkOpenAICodexOAuthStatusPublic();
 
 			const version = await getCodexVersion();
 			return { ...authStatus, version };

@@ -6,8 +6,8 @@ import {
 	readFileSync,
 	statSync,
 	writeFileSync,
-} from "fs";
-import path from "path";
+} from "node:fs";
+import path from "node:path";
 
 export interface LogSession {
 	sessionId: string;
@@ -139,7 +139,7 @@ export class LogService {
 		}
 
 		try {
-			const content = buffer.join("\n") + "\n";
+			const content = `${buffer.join("\n")}\n`;
 			appendFileSync(session.logPath, content);
 			this.logBuffers.set(taskId, []); // Clear buffer
 		} catch (error) {
@@ -316,7 +316,7 @@ export class LogService {
 			for (const file of toDelete) {
 				const filePath = path.join(logsDir, file);
 				try {
-					require("fs").unlinkSync(filePath);
+					require("node:fs").unlinkSync(filePath);
 					console.warn(`[LogService] Deleted old log session: ${file}`);
 				} catch (_e) {
 					// Ignore deletion errors

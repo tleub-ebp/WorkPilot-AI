@@ -168,7 +168,9 @@ export function setupSmartEstimationListeners(): () => void {
 
 	// Listen for events (for future extensibility)
 	const unsubEvent = globalThis.electronAPI.onSmartEstimationEvent(
-		(_event: unknown) => { /* intentionally empty */ },
+		(_event: unknown) => {
+			/* intentionally empty */
+		},
 	);
 
 	return () => {

@@ -100,22 +100,22 @@ describe("XSTATE_TO_PHASE", () => {
 
 	it("should map settled states to non-active phases", () => {
 		// Settled states should map to phases that indicate completion or stoppage
-		expect(XSTATE_TO_PHASE["plan_review"]).toBe("planning");
-		expect(XSTATE_TO_PHASE["human_review"]).toBe("complete");
-		expect(XSTATE_TO_PHASE["error"]).toBe("failed");
-		expect(XSTATE_TO_PHASE["done"]).toBe("complete");
-		expect(XSTATE_TO_PHASE["pr_created"]).toBe("complete");
-		expect(XSTATE_TO_PHASE["creating_pr"]).toBe("complete");
+		expect(XSTATE_TO_PHASE.plan_review).toBe("planning");
+		expect(XSTATE_TO_PHASE.human_review).toBe("complete");
+		expect(XSTATE_TO_PHASE.error).toBe("failed");
+		expect(XSTATE_TO_PHASE.done).toBe("complete");
+		expect(XSTATE_TO_PHASE.pr_created).toBe("complete");
+		expect(XSTATE_TO_PHASE.creating_pr).toBe("complete");
 	});
 
 	it("should map active states to processing phases", () => {
-		expect(XSTATE_TO_PHASE["planning"]).toBe("planning");
-		expect(XSTATE_TO_PHASE["coding"]).toBe("coding");
-		expect(XSTATE_TO_PHASE["qa_review"]).toBe("qa_review");
-		expect(XSTATE_TO_PHASE["qa_fixing"]).toBe("qa_fixing");
+		expect(XSTATE_TO_PHASE.planning).toBe("planning");
+		expect(XSTATE_TO_PHASE.coding).toBe("coding");
+		expect(XSTATE_TO_PHASE.qa_review).toBe("qa_review");
+		expect(XSTATE_TO_PHASE.qa_fixing).toBe("qa_fixing");
 	});
 
 	it("should return undefined for unknown states", () => {
-		expect(XSTATE_TO_PHASE["nonexistent"]).toBeUndefined();
+		expect(XSTATE_TO_PHASE.nonexistent).toBeUndefined();
 	});
 });

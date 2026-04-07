@@ -211,7 +211,9 @@ async function validateClaudeCliAsync(
 
 						// Use EncodedCommand to avoid backslash corruption in WinGet paths
 						const psScript = `$r = & '${cliPath.replace(/'/g, "''")}' --version 2>&1; Write-Output $r`;
-						const encodedCmd = Buffer.from(psScript, "utf16le").toString("base64");
+						const encodedCmd = Buffer.from(psScript, "utf16le").toString(
+							"base64",
+						);
 
 						const psResult = await execFileAsync(
 							psExe,
@@ -1588,8 +1590,9 @@ export async function openTerminalWithCommand(command: string): Promise<void> {
 				console.warn("[Claude Code] Opened terminal:", cmd);
 
 				break;
-
-			} catch { /* intentionally empty */ }
+			} catch {
+				/* intentionally empty */
+			}
 		}
 
 		if (!opened) {
@@ -1797,8 +1800,15 @@ export function registerClaudeCodeHandlers(): void {
 						JSON.stringify(detectionResult, null, 2),
 					);
 				} catch (detectionError) {
-					console.warn("[Claude Code] Detection via cli-tool-manager failed, using empty result:", detectionError);
-					detectionResult = { found: false, source: "fallback" as const, message: "Detection failed" };
+					console.warn(
+						"[Claude Code] Detection via cli-tool-manager failed, using empty result:",
+						detectionError,
+					);
+					detectionResult = {
+						found: false,
+						source: "fallback" as const,
+						message: "Detection failed",
+					};
 				}
 
 				let installed = detectionResult.found
@@ -1809,31 +1819,78 @@ export function registerClaudeCodeHandlers(): void {
 				if (!installed || installed === "unknown") {
 					// Strategy 1: Try ~/.local/bin/claude.exe directly (npm native install)
 					if (isWindows()) {
-						const localBinClaude = path.join(os.homedir(), ".local", "bin", "claude.exe");
+						const localBinClaude = path.join(
+							os.homedir(),
+							".local",
+							"bin",
+							"claude.exe",
+						);
 						if (existsSync(localBinClaude)) {
 							try {
-								const directOut = (await execFileAsync(localBinClaude, ["--version"], { encoding: "utf-8", timeout: 5000, windowsHide: true })).stdout;
+								const directOut = (
+									await execFileAsync(localBinClaude, ["--version"], {
+										encoding: "utf-8",
+										timeout: 5000,
+										windowsHide: true,
+									})
+								).stdout;
 								const directMatch = directOut.match(/(\d+\.\d+\.\d+)/);
 								if (directMatch) {
 									installed = directMatch[1];
-									detectionResult = { ...detectionResult, found: true, path: localBinClaude };
-									console.warn("[Claude Code] Version from ~/.local/bin (direct):", installed);
+									detectionResult = {
+										...detectionResult,
+										found: true,
+										path: localBinClaude,
+									};
+									console.warn(
+										"[Claude Code] Version from ~/.local/bin (direct):",
+										installed,
+									);
 								}
 							} catch {
 								// Direct exec failed, try PowerShell EncodedCommand
 								try {
-									const psExe = path.join(process.env.SystemRoot || "C:\\Windows", "System32", "WindowsPowerShell", "v1.0", "powershell.exe");
+									const psExe = path.join(
+										process.env.SystemRoot || "C:\\Windows",
+										"System32",
+										"WindowsPowerShell",
+										"v1.0",
+										"powershell.exe",
+									);
 									const psScript = `$r = & '${localBinClaude.replace(/'/g, "''")}' --version 2>&1; Write-Output $r`;
-									const encodedCmd = Buffer.from(psScript, "utf16le").toString("base64");
-									const psOut = (await execFileAsync(psExe, ["-NoProfile", "-NonInteractive", "-EncodedCommand", encodedCmd], { encoding: "utf-8", timeout: 8000, windowsHide: true })).stdout;
+									const encodedCmd = Buffer.from(psScript, "utf16le").toString(
+										"base64",
+									);
+									const psOut = (
+										await execFileAsync(
+											psExe,
+											[
+												"-NoProfile",
+												"-NonInteractive",
+												"-EncodedCommand",
+												encodedCmd,
+											],
+											{ encoding: "utf-8", timeout: 8000, windowsHide: true },
+										)
+									).stdout;
 									const psMatch = psOut.match(/(\d+\.\d+\.\d+)/);
 									if (psMatch) {
 										installed = psMatch[1];
-										detectionResult = { ...detectionResult, found: true, path: localBinClaude };
-										console.warn("[Claude Code] Version from ~/.local/bin (PS):", installed);
+										detectionResult = {
+											...detectionResult,
+											found: true,
+											path: localBinClaude,
+										};
+										console.warn(
+											"[Claude Code] Version from ~/.local/bin (PS):",
+											installed,
+										);
 									}
 								} catch (e) {
-									console.warn("[Claude Code] PS fallback for ~/.local/bin failed:", e);
+									console.warn(
+										"[Claude Code] PS fallback for ~/.local/bin failed:",
+										e,
+									);
 								}
 							}
 						}
@@ -1842,7 +1899,14 @@ export function registerClaudeCodeHandlers(): void {
 					// Strategy 2: Try `claude --version` with shell:true (uses system PATH)
 					if (!installed || installed === "unknown") {
 						try {
-							const shellOut = (await execFileAsync("claude", ["--version"], { encoding: "utf-8", timeout: 5000, windowsHide: true, shell: true })).stdout;
+							const shellOut = (
+								await execFileAsync("claude", ["--version"], {
+									encoding: "utf-8",
+									timeout: 5000,
+									windowsHide: true,
+									shell: true,
+								})
+							).stdout;
 							const shellMatch = shellOut.match(/(\d+\.\d+\.\d+)/);
 							if (shellMatch) {
 								installed = shellMatch[1];

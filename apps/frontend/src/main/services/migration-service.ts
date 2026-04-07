@@ -2,9 +2,9 @@
  * Migration Service - Handles auto-migration operations
  */
 
-import { spawn } from "child_process";
+import { spawn } from "node:child_process";
+import path from "node:path";
 import { ipcMain } from "electron";
-import path from "path";
 
 export interface MigrationConfig {
 	projectPath: string;

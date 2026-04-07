@@ -116,6 +116,7 @@ function ParticipantCard({
 		<>
 			{/* biome-ignore lint/a11y/noStaticElementInteractions: interactive handler is intentional */}
 			{/* biome-ignore lint/a11y/useAriaPropsSupportedByRole: ARIA attributes are valid for this role */}
+			{/* biome-ignore lint/a11y/noNoninteractiveElementInteractions: votable arena card */}
 			<div
 				role={canVote ? "button" : undefined}
 				tabIndex={canVote ? 0 : undefined}

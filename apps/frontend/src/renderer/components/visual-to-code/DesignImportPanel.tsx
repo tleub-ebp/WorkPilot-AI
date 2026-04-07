@@ -386,6 +386,9 @@ export function DesignImportPanel() {
 						<ScrollArea className="h-full">
 							<div className="space-y-4 pr-4">
 								{/* Image Upload Zone */}
+								{/* biome-ignore lint/a11y/noNoninteractiveElementInteractions: drag-and-drop upload zone */}
+								{/* biome-ignore lint/a11y/noStaticElementInteractions: drag-and-drop upload zone */}
+								{/* biome-ignore lint/a11y/useKeyWithClickEvents: keyboard handled by file input */}
 								<div
 									className={`relative border-2 border-dashed rounded-xl p-8 text-center transition-all cursor-pointer ${
 										isDragging

@@ -91,7 +91,7 @@ export function OAuthStep({ onNext, onBack, onSkip }: OAuthStepProps) {
 		setIsLoadingProfiles(true);
 		setError(null);
 		try {
-			const result = await window.electronAPI.getClaudeProfiles();
+			const result = await globalThis.electronAPI.getClaudeProfiles();
 			if (result.success && result.data) {
 				setClaudeProfiles(result.data.profiles);
 				setActiveProfileId(result.data.activeProfileId);
@@ -108,7 +108,6 @@ export function OAuthStep({ onNext, onBack, onSkip }: OAuthStepProps) {
 	// Load Claude profiles on mount
 	useEffect(() => {
 		loadClaudeProfiles();
-		// biome-ignore lint/correctness/useExhaustiveDependencies: intentional dependency omission
 	}, [loadClaudeProfiles]);
 
 	// Profile management handlers - following patterns from IntegrationSettings.tsx
@@ -122,9 +121,9 @@ export function OAuthStep({ onNext, onBack, onSkip }: OAuthStepProps) {
 			// Sanitize slug: only allow alphanumeric and dashes, remove leading/trailing dashes
 			const profileSlug = profileName
 				.toLowerCase()
-				.replace(/[^a-z0-9]/g, "-")
-				.replace(/-+/g, "-")
-				.replace(/^-|-$/g, "");
+				.replaceAll(/[^a-z0-9]/g, "-")
+				.replaceAll(/-+/g, "-")
+				.replaceAll(/^-|-$/g, "");
 
 			// Validate that sanitized slug is not empty (e.g., "!!!" becomes "")
 			if (!profileSlug) {
@@ -133,7 +132,7 @@ export function OAuthStep({ onNext, onBack, onSkip }: OAuthStepProps) {
 				return;
 			}
 
-			const result = await window.electronAPI.saveClaudeProfile({
+			const result = await globalThis.electronAPI.saveClaudeProfile({
 				id: `profile-${Date.now()}`,
 				name: profileName,
 				configDir: `~/.claude-profiles/${profileSlug}`,
@@ -147,7 +146,7 @@ export function OAuthStep({ onNext, onBack, onSkip }: OAuthStepProps) {
 				setNewProfileName("");
 
 				// Get terminal config for authentication
-				const authResult = await window.electronAPI.authenticateClaudeProfile(
+				const authResult = await globalThis.electronAPI.authenticateClaudeProfile(
 					result.data.id,
 				);
 
@@ -190,7 +189,7 @@ export function OAuthStep({ onNext, onBack, onSkip }: OAuthStepProps) {
 		setDeletingProfileId(profileId);
 		setError(null);
 		try {
-			const result = await window.electronAPI.deleteClaudeProfile(profileId);
+			const result = await globalThis.electronAPI.deleteClaudeProfile(profileId);
 			if (result.success) {
 				await loadClaudeProfiles();
 			}
@@ -216,7 +215,7 @@ export function OAuthStep({ onNext, onBack, onSkip }: OAuthStepProps) {
 
 		setError(null);
 		try {
-			const result = await window.electronAPI.renameClaudeProfile(
+			const result = await globalThis.electronAPI.renameClaudeProfile(
 				editingProfileId,
 				editingProfileName.trim(),
 			);
@@ -234,7 +233,7 @@ export function OAuthStep({ onNext, onBack, onSkip }: OAuthStepProps) {
 	const handleSetActiveProfile = async (profileId: string) => {
 		setError(null);
 		try {
-			const result = await window.electronAPI.setActiveClaudeProfile(profileId);
+			const result = await globalThis.electronAPI.setActiveClaudeProfile(profileId);
 			if (result.success) {
 				setActiveProfileId(profileId);
 				await loadGlobalClaudeProfiles();
@@ -283,7 +282,7 @@ export function OAuthStep({ onNext, onBack, onSkip }: OAuthStepProps) {
 		try {
 			// Get terminal config from backend (terminalId and configDir)
 			const result =
-				await window.electronAPI.authenticateClaudeProfile(profileId);
+				await globalThis.electronAPI.authenticateClaudeProfile(profileId);
 
 			if (!result.success || !result.data) {
 				alert(
@@ -333,7 +332,7 @@ export function OAuthStep({ onNext, onBack, onSkip }: OAuthStepProps) {
 		setSavingTokenProfileId(profileId);
 		setError(null);
 		try {
-			const result = await window.electronAPI.setClaudeProfileToken(
+			const result = await globalThis.electronAPI.setClaudeProfileToken(
 				profileId,
 				manualToken.trim(),
 				manualTokenEmail.trim() || undefined,

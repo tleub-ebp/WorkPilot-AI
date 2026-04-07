@@ -1,4 +1,4 @@
-import path from "path";
+import path from "node:path";
 
 /**
  * Ensures a path is absolute. If it's already absolute, returns it as-is.

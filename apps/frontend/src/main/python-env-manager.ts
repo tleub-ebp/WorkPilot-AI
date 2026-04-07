@@ -1,8 +1,8 @@
-import { type ChildProcess, execSync, spawn } from "child_process";
+import { type ChildProcess, execSync, spawn } from "node:child_process";
+import { EventEmitter } from "node:events";
+import { existsSync, readdirSync } from "node:fs";
+import path from "node:path";
 import { app } from "electron";
-import { EventEmitter } from "events";
-import { existsSync, readdirSync } from "fs";
-import path from "path";
 import { getPathDelimiter, isLinux, isWindows } from "./platform";
 import { findPythonCommand, getBundledPythonPath } from "./python-detector";
 import { getIsolatedGitEnv } from "./utils/git-isolation";
@@ -283,7 +283,7 @@ if sys.version_info >= (3, 12):
 			return false;
 		}
 		// Vérification d'existence du binaire Python
-		const { existsSync } = require("fs");
+		const { existsSync } = require("node:fs");
 		if (!existsSync(systemPython)) {
 			const errorMsg = `Le binaire Python détecté n'existe pas : ${systemPython}\nCorrigez votre installation Python ou votre PATH système.`;
 			this.emit("error", errorMsg);
@@ -822,12 +822,12 @@ if sys.version_info >= (3, 12):
 			}
 
 			if (currentPath && !currentPath.includes(pywin32System32)) {
-				windowsEnv["PATH"] = `${pywin32System32};${currentPath}`;
+				windowsEnv.PATH = `${pywin32System32};${currentPath}`;
 			} else if (!currentPath) {
-				windowsEnv["PATH"] = pywin32System32;
+				windowsEnv.PATH = pywin32System32;
 			} else {
 				// pywin32System32 already in path, but still normalize to 'PATH'
-				windowsEnv["PATH"] = currentPath;
+				windowsEnv.PATH = currentPath;
 			}
 		}
 

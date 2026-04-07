@@ -29,7 +29,7 @@ export interface UseCredentialServiceReturn {
 	validateCredentials: () => Promise<boolean>;
 	testProvider: (
 		provider: string,
-	) => Promise<{ success: boolean; message: string; details?: any }>;
+	) => Promise<{ success: boolean; message: string; details?: unknown }>;
 
 	// Utilitaires
 	clearError: () => void;

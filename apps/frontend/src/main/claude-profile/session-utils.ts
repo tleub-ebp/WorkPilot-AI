@@ -6,7 +6,13 @@
  * and can be copied between profiles to enable session continuity after profile switches.
  */
 
-import { copyFileSync, cpSync, existsSync, mkdirSync, unlinkSync } from "node:fs";
+import {
+	copyFileSync,
+	cpSync,
+	existsSync,
+	mkdirSync,
+	unlinkSync,
+} from "node:fs";
 import { homedir } from "node:os";
 import { dirname, join } from "node:path";
 import { isNodeError } from "../utils/type-guards";
@@ -121,9 +127,10 @@ function copySessionFile(
 		}
 		return {
 			success: false,
-			error: copyError instanceof Error
-				? `Failed to copy session file: ${copyError.message}`
-				: "Unknown error copying session file",
+			error:
+				copyError instanceof Error
+					? `Failed to copy session file: ${copyError.message}`
+					: "Unknown error copying session file",
 			filesCopied: 0,
 		};
 	}
@@ -132,10 +139,7 @@ function copySessionFile(
 /**
  * Copy the session directory (tool-results) if it exists.
  */
-function copySessionDirectory(
-	sourceDir: string,
-	targetDir: string,
-): void {
+function copySessionDirectory(sourceDir: string, targetDir: string): void {
 	try {
 		cpSync(sourceDir, targetDir, { recursive: true });
 		console.warn(
@@ -153,9 +157,7 @@ function copySessionDirectory(
 		} else {
 			console.warn(
 				"[SessionUtils] Warning: Failed to copy session directory:",
-				dirCopyError instanceof Error
-					? dirCopyError.message
-					: "Unknown error",
+				dirCopyError instanceof Error ? dirCopyError.message : "Unknown error",
 			);
 		}
 	}

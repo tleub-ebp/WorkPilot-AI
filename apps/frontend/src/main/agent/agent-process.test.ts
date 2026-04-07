@@ -22,7 +22,7 @@ vi.mock("electron", () => ({
 	},
 }));
 
-import { EventEmitter } from "events";
+import { EventEmitter } from "node:events";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 // Create a mock process object that will be returned by spawn

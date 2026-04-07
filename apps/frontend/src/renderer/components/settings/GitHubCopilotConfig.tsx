@@ -170,7 +170,7 @@ export function GitHubCopilotConfig() {
 		toast({
 			title: t("githubCopilot.authSuccess"),
 			description: username
-				? t("githubCopilot.authSuccessDescription") + ` (${username})`
+				? `${t("githubCopilot.authSuccessDescription")} (${username})`
 				: t("githubCopilot.authSuccessDescription"),
 		});
 		await refreshStatus();

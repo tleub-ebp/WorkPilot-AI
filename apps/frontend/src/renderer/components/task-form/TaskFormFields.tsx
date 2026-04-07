@@ -456,6 +456,7 @@ export function TaskFormFields({
 							<div className="flex flex-wrap gap-2">
 								{images.map((image) => (
 									// biome-ignore lint/a11y/noStaticElementInteractions: interactive handler is intentional
+									// biome-ignore lint/a11y/noNoninteractiveElementInteractions: double-click to preview image
 									<div
 										key={image.id}
 										className="relative group rounded-md border border-border overflow-hidden cursor-pointer hover:ring-2 hover:ring-primary/50 transition-all"

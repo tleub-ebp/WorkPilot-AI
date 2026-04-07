@@ -295,6 +295,9 @@ export function ImageUpload({
 	return (
 		<div className={cn("space-y-3", className)}>
 			{/* Drop zone */}
+			{/* biome-ignore lint/a11y/noNoninteractiveElementInteractions: drag-and-drop zone */}
+			{/* biome-ignore lint/a11y/noStaticElementInteractions: drag-and-drop zone */}
+			{/* biome-ignore lint/a11y/useKeyWithClickEvents: keyboard handled by file input */}
 			<div
 				onDragOver={handleDragOver}
 				onDragLeave={handleDragLeave}

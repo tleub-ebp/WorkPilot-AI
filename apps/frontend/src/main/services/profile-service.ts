@@ -380,7 +380,7 @@ export async function testConnection(
 		const suggestions = getUrlSuggestions(originalUrl);
 		const message =
 			suggestions.length > 0
-				? `Invalid endpoint. Please check the Base URL.${suggestions.map((s) => " " + s).join("")}`
+				? `Invalid endpoint. Please check the Base URL.${suggestions.map((s) => ` ${s}`).join("")}`
 				: "Invalid endpoint. Please check the Base URL.";
 
 		return {
@@ -475,7 +475,7 @@ export async function testConnection(
 			const suggestions = getUrlSuggestions(baseUrl.trim());
 			const message =
 				suggestions.length > 0
-					? `Invalid endpoint. Please check the Base URL.${suggestions.map((s) => " " + s).join("")}`
+					? `Invalid endpoint. Please check the Base URL.${suggestions.map((s) => ` ${s}`).join("")}`
 					: "Invalid endpoint. Please check the Base URL.";
 
 			return {

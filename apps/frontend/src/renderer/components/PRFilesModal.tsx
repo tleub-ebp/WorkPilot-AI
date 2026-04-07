@@ -422,6 +422,9 @@ export function PRFilesModal({
 										key={file.filename}
 										className="border rounded-lg overflow-hidden"
 									>
+										{/* biome-ignore lint/a11y/noNoninteractiveElementInteractions: collapsible file row */}
+										{/* biome-ignore lint/a11y/noStaticElementInteractions: collapsible file row */}
+										{/* biome-ignore lint/a11y/useKeyWithClickEvents: keyboard expand handled elsewhere */}
 										<div
 											className={cn(
 												"flex items-center justify-between p-3 cursor-pointer hover:bg-muted/50 transition-colors",

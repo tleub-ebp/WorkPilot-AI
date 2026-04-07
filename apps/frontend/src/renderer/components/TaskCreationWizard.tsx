@@ -429,7 +429,7 @@ export function TaskCreationWizard({
 			const afterMention = description.slice(
 				autocomplete.startPos + 1 + autocomplete.query.length,
 			);
-			const newDescription = beforeMention + "@" + filename + afterMention;
+			const newDescription = `${beforeMention}@${filename}${afterMention}`;
 
 			setDescription(newDescription);
 			setAutocomplete(null);
@@ -486,7 +486,7 @@ export function TaskCreationWizard({
 						? ""
 						: " ";
 				handleDescriptionChange(
-					currentDescription + separator + reference + " ",
+					`${currentDescription + separator + reference} `,
 				);
 			}
 		},

@@ -1,5 +1,5 @@
+import os from "node:os";
 import { ipcRenderer } from "electron";
-import os from "os";
 import { IPC_CHANNELS } from "../../shared/constants";
 import type { IPCResult } from "../../shared/types";
 

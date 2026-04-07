@@ -156,8 +156,7 @@ function getNotification(
 		case "conflict_detected":
 			if (!settings.notifyConflicts) return null;
 			return {
-				title:
-					"⚠️ " + t("notifications.conflictDetected", { task: data.task_id }),
+				title: `⚠️ ${t("notifications.conflictDetected", { task: data.task_id })}`,
 				description: "",
 				variant: "destructive",
 			};

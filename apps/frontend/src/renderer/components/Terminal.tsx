@@ -808,7 +808,7 @@ ${selectedTask.description}
 
 Please confirm you're ready by saying: I'm ready to work on ${selectedTask.title} - Context is loaded.`;
 
-				globalThis.electronAPI.sendTerminalInput(id, contextMessage + "\r");
+				globalThis.electronAPI.sendTerminalInput(id, `${contextMessage}\r`);
 			},
 			[id, tasks, setAssociatedTask, updateTerminal],
 		);
@@ -926,6 +926,7 @@ Please confirm you're ready by saying: I'm ready to work on ${selectedTask.title
 		return (
 			// biome-ignore lint/a11y/noStaticElementInteractions: terminal container handles drag-drop and focus
 			// biome-ignore lint/a11y/useKeyWithClickEvents: keyboard handled by xterm.js terminal inside
+			// biome-ignore lint/a11y/noNoninteractiveElementInteractions: terminal container — drag-drop and focus
 			<div
 				ref={setDropRef}
 				className={cn(

@@ -1,5 +1,5 @@
-import * as childProcess from "child_process";
-import EventEmitter from "events";
+import * as childProcess from "node:child_process";
+import EventEmitter from "node:events";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { runPythonSubprocess } from "./subprocess-runner";
 

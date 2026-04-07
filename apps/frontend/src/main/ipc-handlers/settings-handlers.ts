@@ -1035,7 +1035,7 @@ export function registerSettingsHandlers(
 				if (envExists && envPath) {
 					const content = readFileSync(envPath, "utf-8");
 					const vars = parseEnvFile(content);
-					claudeOAuthToken = vars["CLAUDE_CODE_OAUTH_TOKEN"];
+					claudeOAuthToken = vars.CLAUDE_CODE_OAUTH_TOKEN;
 					hasClaudeToken = !!claudeOAuthToken && claudeOAuthToken.length > 0;
 				}
 
@@ -1104,7 +1104,7 @@ export function registerSettingsHandlers(
 
 				// Update with new values
 				if (config.claudeOAuthToken !== undefined) {
-					existingVars["CLAUDE_CODE_OAUTH_TOKEN"] = config.claudeOAuthToken;
+					existingVars.CLAUDE_CODE_OAUTH_TOKEN = config.claudeOAuthToken;
 				}
 
 				// Generate content
@@ -1113,7 +1113,7 @@ export function registerSettingsHandlers(
 					"# Managed by WorkPilot AI UI",
 					"",
 					"# Claude Code OAuth Token (REQUIRED)",
-					`CLAUDE_CODE_OAUTH_TOKEN=${existingVars["CLAUDE_CODE_OAUTH_TOKEN"] || ""}`,
+					`CLAUDE_CODE_OAUTH_TOKEN=${existingVars.CLAUDE_CODE_OAUTH_TOKEN || ""}`,
 					"",
 				];
 
@@ -1180,7 +1180,7 @@ export function registerSettingsHandlers(
 				if (envPath && existsSync(envPath)) {
 					const content = readFileSync(envPath, "utf-8");
 					const vars = parseEnvFile(content);
-					const token = vars["CLAUDE_CODE_OAUTH_TOKEN"];
+					const token = vars.CLAUDE_CODE_OAUTH_TOKEN;
 					hasEnvToken = !!token && token.length > 0;
 				}
 

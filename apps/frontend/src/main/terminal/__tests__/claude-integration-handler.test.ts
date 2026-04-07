@@ -1,9 +1,9 @@
 // @vitest-environment node
 
+import { writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
+import path from "node:path";
 import type * as pty from "@lydell/node-pty";
-import { writeFileSync } from "fs";
-import { tmpdir } from "os";
-import path from "path";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
 	buildCdCommand,
@@ -510,7 +510,7 @@ describe("claude-integration-handler", () => {
 				getPathPrefixExpectation(platform, "/opt/claude/bin:/usr/bin"),
 			);
 			expect(resumeCall).toContain(
-				getQuotedCommand(platform, "/opt/claude/bin/claude") + " --continue",
+				`${getQuotedCommand(platform, "/opt/claude/bin/claude")} --continue`,
 			);
 			expect(resumeCall).not.toContain("--resume");
 			// sessionId is cleared because --continue doesn't track specific sessions
@@ -525,7 +525,7 @@ describe("claude-integration-handler", () => {
 			resumeClaude(terminal, undefined, () => null);
 			const continueCall = mockWriteToPty.mock.calls[0][1] as string;
 			expect(continueCall).toContain(
-				getQuotedCommand(platform, "/opt/claude/bin/claude") + " --continue",
+				`${getQuotedCommand(platform, "/opt/claude/bin/claude")} --continue`,
 			);
 			expect(terminal.isClaudeMode).toBe(true);
 			expect(terminal.claudeSessionId).toBeUndefined();

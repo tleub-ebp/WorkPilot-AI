@@ -102,26 +102,26 @@ function maskEmail(email: string | null | undefined): string {
 	const atIndex = email.indexOf("@");
 	if (atIndex === -1) {
 		// Not a valid email format, mask most of it
-		return email.charAt(0) + "***";
+		return `${email.charAt(0)}***`;
 	}
 
 	const localPart = email.substring(0, atIndex);
 	const domainPart = email.substring(atIndex + 1);
 
 	// Mask local part (keep first char)
-	const maskedLocal = localPart.charAt(0) + "***";
+	const maskedLocal = `${localPart.charAt(0)}***`;
 
 	// Mask domain part (keep first char and TLD)
 	const domainDotIndex = domainPart.indexOf(".");
 	if (domainDotIndex === -1) {
 		// No TLD, just mask after first char
-		const maskedDomain = domainPart.charAt(0) + "***";
+		const maskedDomain = `${domainPart.charAt(0)}***`;
 		return `${maskedLocal}@${maskedDomain}`;
 	}
 
 	const domainName = domainPart.substring(0, domainDotIndex);
 	const tld = domainPart.substring(domainDotIndex); // includes the dot
-	const maskedDomain = domainName.charAt(0) + "***" + tld;
+	const maskedDomain = `${domainName.charAt(0)}***${tld}`;
 
 	return `${maskedLocal}@${maskedDomain}`;
 }

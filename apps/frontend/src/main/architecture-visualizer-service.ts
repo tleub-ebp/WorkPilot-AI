@@ -179,8 +179,8 @@ export class ArchitectureVisualizerService extends EventEmitter {
 						/* ignore */
 					}
 				} else if (line.trim()) {
-					fullOutput += line + "\n";
-					this.emit("stream-chunk", line + "\n");
+					fullOutput += `${line}\n`;
+					this.emit("stream-chunk", `${line}\n`);
 				}
 			}
 		});

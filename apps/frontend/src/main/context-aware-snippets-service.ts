@@ -224,8 +224,8 @@ export class ContextAwareSnippetsService extends EventEmitter {
 				} else if (line.startsWith("__TOOL_END__:")) {
 					// Tool completed, continue
 				} else if (line.trim()) {
-					fullOutput += line + "\n";
-					this.emit("stream-chunk", line + "\n");
+					fullOutput += `${line}\n`;
+					this.emit("stream-chunk", `${line}\n`);
 				}
 			}
 		});

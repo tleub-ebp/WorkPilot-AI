@@ -256,7 +256,7 @@ export function registerContinuousAIHandlers(
 			if (activeDaemonProcess?.stdin) {
 				try {
 					activeDaemonProcess.stdin.write(
-						JSON.stringify({ type: "approve", actionId }) + "\n",
+						`${JSON.stringify({ type: "approve", actionId })}\n`,
 					);
 					return { success: true };
 				} catch {
@@ -276,7 +276,7 @@ export function registerContinuousAIHandlers(
 			if (activeDaemonProcess?.stdin) {
 				try {
 					activeDaemonProcess.stdin.write(
-						JSON.stringify({ type: "reject", actionId }) + "\n",
+						`${JSON.stringify({ type: "reject", actionId })}\n`,
 					);
 					return { success: true };
 				} catch {

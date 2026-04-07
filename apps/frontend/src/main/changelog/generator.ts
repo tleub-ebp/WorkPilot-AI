@@ -1,7 +1,7 @@
-import { spawn } from "child_process";
-import { EventEmitter } from "events";
-import * as os from "os";
-import * as path from "path";
+import { spawn } from "node:child_process";
+import { EventEmitter } from "node:events";
+import * as os from "node:os";
+import * as path from "node:path";
 import type {
 	ChangelogGenerationProgress,
 	ChangelogGenerationRequest,
@@ -141,7 +141,7 @@ export class ChangelogGenerator extends EventEmitter {
 
 		this.debug("Prompt built", {
 			promptLength: prompt.length,
-			promptPreview: prompt.substring(0, 500) + "...",
+			promptPreview: `${prompt.substring(0, 500)}...`,
 		});
 
 		// Create Python script

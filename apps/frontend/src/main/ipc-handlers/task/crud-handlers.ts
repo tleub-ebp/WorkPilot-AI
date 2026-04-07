@@ -1,4 +1,3 @@
-import { ipcMain, nativeImage } from "electron";
 import {
 	type Dirent,
 	existsSync,
@@ -7,8 +6,9 @@ import {
 	readFileSync,
 	statSync,
 	writeFileSync,
-} from "fs";
-import path from "path";
+} from "node:fs";
+import path from "node:path";
+import { ipcMain, nativeImage } from "electron";
 import {
 	AUTO_BUILD_PATHS,
 	getSpecsDir,
@@ -342,7 +342,7 @@ export function registerTaskCRUDHandlers(agentManager: AgentManager): void {
 	ipcMain.handle(
 		IPC_CHANNELS.TASK_DELETE,
 		async (_, taskId: string): Promise<IPCResult> => {
-			const { rm } = await import("fs/promises");
+			const { rm } = await import("node:fs/promises");
 
 			// Find task and project
 			const { task, project } = findTaskAndProject(taskId);

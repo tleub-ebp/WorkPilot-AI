@@ -407,11 +407,11 @@ export const PROVIDER_MODELS_MAP: Record<string, ProviderModel[]> = {
 };
 
 // Alias for legacy providers listed in provider_api.py
-PROVIDER_MODELS_MAP["claude"] = PROVIDER_MODELS_MAP["anthropic"];
+PROVIDER_MODELS_MAP.claude = PROVIDER_MODELS_MAP.anthropic;
 
 /** Returns models for the currently selected provider, falling back to anthropic */
 export function getModelsForProvider(provider: string): ProviderModel[] {
-	return PROVIDER_MODELS_MAP[provider] ?? PROVIDER_MODELS_MAP["anthropic"];
+	return PROVIDER_MODELS_MAP[provider] ?? PROVIDER_MODELS_MAP.anthropic;
 }
 
 /** Returns the default (flagship) model ID for a given provider */

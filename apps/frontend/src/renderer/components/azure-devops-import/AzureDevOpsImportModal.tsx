@@ -313,7 +313,7 @@ export function AzureDevOpsImportModal({
 									</span>
 									<Badge
 										variant="outline"
-										className={getTypeColor(item.workItemType) + " shrink-0"}
+										className={`${getTypeColor(item.workItemType)} shrink-0`}
 									>
 										{item.workItemType}
 									</Badge>

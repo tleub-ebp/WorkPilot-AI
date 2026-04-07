@@ -191,7 +191,7 @@ export function registerTerminalHandlers(
 					}
 
 					// Ensure config directory exists
-					const { mkdirSync, existsSync } = await import("fs");
+					const { mkdirSync, existsSync } = await import("node:fs");
 					if (!existsSync(profile.configDir)) {
 						mkdirSync(profile.configDir, { recursive: true });
 					}

@@ -1,16 +1,22 @@
-import { exec, execFile, execFileSync, spawn, spawnSync } from "child_process";
-import { app, type BrowserWindow, ipcMain, shell } from "electron";
+import {
+	exec,
+	execFile,
+	execFileSync,
+	spawn,
+	spawnSync,
+} from "node:child_process";
 import {
 	existsSync,
 	promises as fsPromises,
 	readdirSync,
 	readFileSync,
 	statSync,
-} from "fs";
+} from "node:fs";
+import { homedir } from "node:os";
+import path from "node:path";
+import { promisify } from "node:util";
+import { app, type BrowserWindow, ipcMain, shell } from "electron";
 import { minimatch } from "minimatch";
-import { homedir } from "os";
-import path from "path";
-import { promisify } from "util";
 import {
 	AUTO_BUILD_PATHS,
 	DEFAULT_APP_SETTINGS,
@@ -2718,7 +2724,7 @@ export function registerWorktreeHandlers(
 							}
 
 							// Accumulate non-progress lines for final result parsing
-							stdout += line + "\n";
+							stdout += `${line}\n`;
 						}
 					});
 
@@ -2958,7 +2964,7 @@ export function registerWorktreeHandlers(
 								);
 								try {
 									if (existsSync(commitMsgPath)) {
-										const { promises: fsPromises } = require("fs");
+										const { promises: fsPromises } = require("node:fs");
 										suggestedCommitMessage = (
 											await fsPromises.readFile(commitMsgPath, "utf-8")
 										).trim();
@@ -3003,7 +3009,7 @@ export function registerWorktreeHandlers(
 								});
 							}
 
-							const { promises: fsPromises } = require("fs");
+							const { promises: fsPromises } = require("node:fs");
 
 							// Update plan file with retry logic for transient failures
 							// Uses EAFP pattern (try/catch) instead of LBYL (existsSync check) to avoid TOCTOU race conditions
@@ -3957,7 +3963,7 @@ export function registerWorktreeHandlers(
 				);
 
 				// Use EAFP pattern (try/catch) instead of LBYL (existsSync check) to avoid TOCTOU race conditions
-				const { promises: fsPromises } = require("fs");
+				const { promises: fsPromises } = require("node:fs");
 				const isFileNotFound = (err: unknown): boolean =>
 					!!(
 						err &&

@@ -1,6 +1,6 @@
+import { existsSync, readFileSync } from "node:fs";
+import path from "node:path";
 import { app } from "electron";
-import { existsSync, readFileSync } from "fs";
-import path from "path";
 
 export interface EnvironmentVars {
 	[key: string]: string;
@@ -107,7 +107,7 @@ export function loadGlobalSettings(): GlobalSettings {
  */
 export function isGraphitiEnabled(projectEnvVars: EnvironmentVars): boolean {
 	return (
-		projectEnvVars["GRAPHITI_ENABLED"]?.toLowerCase() === "true" ||
+		projectEnvVars.GRAPHITI_ENABLED?.toLowerCase() === "true" ||
 		process.env.GRAPHITI_ENABLED?.toLowerCase() === "true"
 	);
 }
@@ -121,7 +121,7 @@ export function hasOpenAIKey(
 	globalSettings: GlobalSettings,
 ): boolean {
 	return !!(
-		projectEnvVars["OPENAI_API_KEY"] ||
+		projectEnvVars.OPENAI_API_KEY ||
 		globalSettings.globalOpenAIApiKey ||
 		process.env.OPENAI_API_KEY
 	);
@@ -148,7 +148,7 @@ export function validateEmbeddingConfiguration(
 ): EmbeddingValidationResult {
 	// Get the configured embedding provider (default to openai for backwards compatibility)
 	const provider = (
-		projectEnvVars["GRAPHITI_EMBEDDER_PROVIDER"] ||
+		projectEnvVars.GRAPHITI_EMBEDDER_PROVIDER ||
 		process.env.GRAPHITI_EMBEDDER_PROVIDER ||
 		"openai"
 	).toLowerCase();
@@ -172,7 +172,7 @@ export function validateEmbeddingConfiguration(
 
 		case "google": {
 			const googleKey =
-				projectEnvVars["GOOGLE_API_KEY"] || process.env.GOOGLE_API_KEY;
+				projectEnvVars.GOOGLE_API_KEY || process.env.GOOGLE_API_KEY;
 			if (googleKey) {
 				return { valid: true, provider: "google" };
 			}
@@ -185,7 +185,7 @@ export function validateEmbeddingConfiguration(
 
 		case "voyage": {
 			const voyageKey =
-				projectEnvVars["VOYAGE_API_KEY"] || process.env.VOYAGE_API_KEY;
+				projectEnvVars.VOYAGE_API_KEY || process.env.VOYAGE_API_KEY;
 			if (voyageKey) {
 				return { valid: true, provider: "voyage" };
 			}
@@ -198,8 +198,7 @@ export function validateEmbeddingConfiguration(
 
 		case "azure_openai": {
 			const azureKey =
-				projectEnvVars["AZURE_OPENAI_API_KEY"] ||
-				process.env.AZURE_OPENAI_API_KEY;
+				projectEnvVars.AZURE_OPENAI_API_KEY || process.env.AZURE_OPENAI_API_KEY;
 			if (azureKey) {
 				return { valid: true, provider: "azure_openai" };
 			}
@@ -228,12 +227,16 @@ export function getGraphitiDatabaseDetails(
 	projectEnvVars: EnvironmentVars,
 ): GraphitiDatabaseDetails {
 	const dbPath =
-		projectEnvVars["GRAPHITI_DB_PATH"] ||
+		projectEnvVars.GRAPHITI_DB_PATH ||
 		process.env.GRAPHITI_DB_PATH ||
-		require("path").join(require("os").homedir(), ".workpilot", "memories");
+		require("node:path").join(
+			require("node:os").homedir(),
+			".workpilot",
+			"memories",
+		);
 
 	const database =
-		projectEnvVars["GRAPHITI_DATABASE"] ||
+		projectEnvVars.GRAPHITI_DATABASE ||
 		process.env.GRAPHITI_DATABASE ||
 		"auto_claude_memory";
 

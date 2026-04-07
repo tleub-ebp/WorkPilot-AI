@@ -403,9 +403,9 @@ describe("OperationRegistry", () => {
 			const allOps = registry.getAllOperationsByProfile();
 
 			expect(Object.keys(allOps)).toEqual(["profile1", "profile2", "profile3"]);
-			expect(allOps["profile1"]).toHaveLength(2);
-			expect(allOps["profile2"]).toHaveLength(1);
-			expect(allOps["profile3"]).toHaveLength(1);
+			expect(allOps.profile1).toHaveLength(2);
+			expect(allOps.profile2).toHaveLength(1);
+			expect(allOps.profile3).toHaveLength(1);
 		});
 
 		it("should return empty object when no operations", () => {
@@ -455,8 +455,8 @@ describe("OperationRegistry", () => {
 			const summary = registry.getSummary();
 
 			expect(summary.totalRunning).toBe(3);
-			expect(summary.byProfile["profile1"]).toEqual(["op1", "op2"]);
-			expect(summary.byProfile["profile2"]).toEqual(["op3"]);
+			expect(summary.byProfile.profile1).toEqual(["op1", "op2"]);
+			expect(summary.byProfile.profile2).toEqual(["op3"]);
 		});
 
 		it("should count operations by type", () => {
@@ -496,7 +496,7 @@ describe("OperationRegistry", () => {
 
 			expect(summary.byType["spec-creation"]).toBe(2);
 			expect(summary.byType["pr-review"]).toBe(1);
-			expect(summary.byType["insights"]).toBe(1);
+			expect(summary.byType.insights).toBe(1);
 		});
 
 		it("should return complete summary with multiple profiles and types", () => {

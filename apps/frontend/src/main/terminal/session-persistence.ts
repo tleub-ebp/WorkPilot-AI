@@ -5,9 +5,9 @@
  * This is the fallback recovery layer when the PTY daemon is not available.
  */
 
+import * as fs from "node:fs";
+import * as path from "node:path";
 import { app } from "electron";
-import * as fs from "fs";
-import * as path from "path";
 import type {
 	TerminalRecoveryInfo,
 	TerminalSessionState,

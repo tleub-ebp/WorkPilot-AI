@@ -102,7 +102,7 @@ export function useTerminalFileDrop({
 				// This handles all shell metacharacters (quotes, $, backticks, etc.)
 				const escapedPath = escapeShellArg(fileRef.path);
 				// Insert the file path into the terminal with a trailing space
-				sendTerminalInput(terminalId, escapedPath + " ");
+				sendTerminalInput(terminalId, `${escapedPath} `);
 			}
 		},
 		[terminalId, sendTerminalInput],

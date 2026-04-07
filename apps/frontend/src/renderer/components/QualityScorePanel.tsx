@@ -121,7 +121,7 @@ export function QualityScorePanel({
 								: "text-red-600 dark:text-red-400",
 						)}
 					>
-						{score.is_passing ? "✅ " + t("passed") : "❌ " + t("failed")}
+						{score.is_passing ? `✅ ${t("passed")}` : `❌ ${t("failed")}`}
 					</div>
 				</div>
 
@@ -205,7 +205,7 @@ export function QualityScorePanel({
 															)}
 															<span>{icon}</span>
 															<span className="font-medium capitalize">
-																{t("categories." + category, category)}
+																{t(`categories.${category}`, category)}
 															</span>
 															<Badge variant="outline" className="ml-2">
 																{issues.length}

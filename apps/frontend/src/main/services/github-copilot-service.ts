@@ -4,12 +4,12 @@
  * Similaire à claude-code-service.ts mais pour GitHub Copilot CLI
  */
 
-import { exec, spawn } from "child_process";
+import { exec, spawn } from "node:child_process";
+import { EventEmitter } from "node:events";
+import fs from "node:fs/promises";
+import path from "node:path";
+import { promisify } from "node:util";
 import { app } from "electron";
-import { EventEmitter } from "events";
-import fs from "fs/promises";
-import path from "path";
-import { promisify } from "util";
 
 const execAsync = promisify(exec);
 

@@ -912,6 +912,7 @@ function EditorTab() {
 				{editingHook.triggers.map((trigger) => (
 					// biome-ignore lint/a11y/noStaticElementInteractions: interactive handler is intentional
 					// biome-ignore lint/a11y/useKeyWithClickEvents: keyboard events handled elsewhere
+					// biome-ignore lint/a11y/noNoninteractiveElementInteractions: visual graph node
 					<div
 						key={trigger.id}
 						className={`absolute cursor-pointer rounded-lg border-2 px-3 py-2 w-[160px] transition-all ${
@@ -969,6 +970,7 @@ function EditorTab() {
 				{editingHook.actions.map((action) => (
 					// biome-ignore lint/a11y/noStaticElementInteractions: interactive handler is intentional
 					// biome-ignore lint/a11y/useKeyWithClickEvents: keyboard events handled elsewhere
+					// biome-ignore lint/a11y/noNoninteractiveElementInteractions: visual graph node
 					<div
 						key={action.id}
 						className={`absolute cursor-pointer rounded-lg border-2 px-3 py-2 w-[160px] transition-all ${

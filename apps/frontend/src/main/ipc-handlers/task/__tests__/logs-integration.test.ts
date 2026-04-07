@@ -2,8 +2,8 @@
  * Simplified integration tests for task logs loading flow
  */
 
+import path from "node:path";
 import { type BrowserWindow, ipcMain } from "electron";
-import path from "path";
 import { beforeEach, describe, expect, it, type Mock, vi } from "vitest";
 import type { IPCResult, TaskLogs } from "../../../../shared/types";
 
@@ -72,7 +72,7 @@ vi.mock("../../../../shared/utils/debug-logger", () => ({
 
 vi.mock("../../../utils/path-helpers", () => ({
 	ensureAbsolutePath: vi.fn((p: string) => {
-		const pathMod = require("path");
+		const pathMod = require("node:path");
 		return pathMod.isAbsolute(p) ? p : pathMod.resolve(p);
 	}),
 }));

@@ -15,8 +15,8 @@
  * Mirrors the functionality of apps/backend/core/auth.py get_token_from_keychain()
  */
 
-import { execFileSync } from "child_process";
-import { createHash } from "crypto";
+import { execFileSync } from "node:child_process";
+import { createHash } from "node:crypto";
 import {
 	existsSync,
 	mkdirSync,
@@ -24,9 +24,9 @@ import {
 	renameSync,
 	unlinkSync,
 	writeFileSync,
-} from "fs";
-import { homedir, userInfo } from "os";
-import { dirname, join } from "path";
+} from "node:fs";
+import { homedir, userInfo } from "node:os";
+import { dirname, join } from "node:path";
 import { isLinux, isMacOS, isWindows } from "../platform";
 
 /**
@@ -39,8 +39,8 @@ import { isLinux, isMacOS, isWindows } from "../platform";
  */
 function getTokenFingerprint(token: string | null | undefined): string {
 	if (!token) return "null";
-	if (token.length <= 16) return token.slice(0, 4) + "..." + token.slice(-2);
-	return token.slice(0, 8) + "..." + token.slice(-4);
+	if (token.length <= 16) return `${token.slice(0, 4)}...${token.slice(-2)}`;
+	return `${token.slice(0, 8)}...${token.slice(-4)}`;
 }
 
 /**
@@ -233,9 +233,7 @@ export function getWindowsCredentialTarget(configDir?: string): string {
  * @param data - Parsed JSON data from credential store
  * @returns true if data structure is valid, false otherwise
  */
-function validateCredentialData(
-	data: unknown,
-): data is {
+function validateCredentialData(data: unknown): data is {
 	claudeAiOauth?: {
 		accessToken?: string;
 		email?: string;
@@ -498,7 +496,7 @@ function getCredentialsFromFile(
 						credentialsPath,
 						hasToken: !!cached.credentials.token,
 						tokenFingerprint: getTokenFingerprint(cached.credentials.token),
-						cacheAge: Math.round(cacheAge / 1000) + "s",
+						cacheAge: `${Math.round(cacheAge / 1000)}s`,
 					},
 				);
 			}
@@ -815,7 +813,7 @@ function getCredentialsFromMacOSKeychain(
 						serviceName,
 						hasToken: !!cached.credentials.token,
 						tokenFingerprint: getTokenFingerprint(cached.credentials.token),
-						cacheAge: Math.round(cacheAge / 1000) + "s",
+						cacheAge: `${Math.round(cacheAge / 1000)}s`,
 					},
 				);
 			}
@@ -981,7 +979,7 @@ function getCredentialsFromLinuxSecretService(
 						attribute,
 						hasToken: !!cached.credentials.token,
 						tokenFingerprint: getTokenFingerprint(cached.credentials.token),
-						cacheAge: Math.round(cacheAge / 1000) + "s",
+						cacheAge: `${Math.round(cacheAge / 1000)}s`,
 					},
 				);
 			}
@@ -1164,7 +1162,7 @@ function getCredentialsFromWindowsCredentialManager(
 						targetName,
 						hasToken: !!cached.credentials.token,
 						tokenFingerprint: getTokenFingerprint(cached.credentials.token),
-						cacheAge: Math.round(cacheAge / 1000) + "s",
+						cacheAge: `${Math.round(cacheAge / 1000)}s`,
 					},
 				);
 			}

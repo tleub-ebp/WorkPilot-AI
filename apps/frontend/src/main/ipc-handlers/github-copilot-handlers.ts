@@ -65,7 +65,11 @@ export function registerGitHubCopilotHandlers(): void {
 	 */
 	ipcMain.handle(
 		"github-copilot:testConnection",
-		async (): Promise<{ success: boolean; message: string; details?: unknown }> => {
+		async (): Promise<{
+			success: boolean;
+			message: string;
+			details?: unknown;
+		}> => {
 			return await gitHubCopilotService.testConnection();
 		},
 	);

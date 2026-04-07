@@ -239,7 +239,10 @@ export function GlobalAutoSwitching({
 		// Use parent's providerStatus when available (already OAuth-enriched, matches the grid exactly).
 		// Fall back to getStaticProviders for standalone usage (e.g. outside CleanProviderSection).
 		const { providers: staticProviders, status: fallbackStatus } =
-			await getStaticProviders(apiProfiles, settings as unknown as Record<string, unknown>);
+			await getStaticProviders(
+				apiProfiles,
+				settings as unknown as Record<string, unknown>,
+			);
 		const effectiveStatus = providerStatus ?? fallbackStatus;
 
 		// Copilot username (from async auth check) for a nicer identifier

@@ -89,7 +89,6 @@ describe("credential-utils", () => {
 			expect(getKeychainServiceName()).toBe("Claude Code-credentials");
 		});
 
-		
 		it("should return hashed service name for custom configDir", () => {
 			const configDir = "/home/user/.claude-profiles/work";
 			const hash = calculateConfigDirHash(configDir);

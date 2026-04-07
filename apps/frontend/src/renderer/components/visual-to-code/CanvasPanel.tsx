@@ -137,59 +137,64 @@ export const CanvasPanel: React.FC = () => {
 		setAiStatus(msg);
 	}, []);
 
-	const handleVisualProgrammingError = useCallback((err: string) => {
-		setIsAiRunning(false);
-		setAiStatus("");
-		toast({
-			title: t("aiError", "Erreur IA"),
-			description: err,
-			variant: "destructive",
-		});
-	}, [t]);
+	const handleVisualProgrammingError = useCallback(
+		(err: string) => {
+			setIsAiRunning(false);
+			setAiStatus("");
+			toast({
+				title: t("aiError", "Erreur IA"),
+				description: err,
+				variant: "destructive",
+			});
+		},
+		[t],
+	);
 
-	const handleVisualProgrammingComplete = useCallback((payload: {
-		action: string;
-		data: GenerateCodeResult | CodeToVisualResult;
-	}) => {
-		setIsAiRunning(false);
-		setAiStatus("");
-		if (payload.action === "generate-code") {
-			const result = payload.data as GenerateCodeResult;
-			setCodeResult(result);
-			setSelectedCodeFile(0);
-			setShowCodeResult(true);
-			toast({
-				title: t("codeGenerated", "Code généré !"),
-				description: result.summary,
-			});
-		} else if (payload.action === "code-to-visual") {
-			const result = payload.data as CodeToVisualResult;
-			const newNodes = result.nodes.map((n, i) => ({
-				id: n.id || `imported-${i}`,
-				position: { x: 120 + (i % 4) * 220, y: 80 + Math.floor(i / 4) * 120 },
-				data: {
-					label: n.label,
-					type: n.type,
-					framework: n.framework,
-				},
-				type: "editable" as const,
-			}));
-			const newEdges = result.edges.map((e, i) => ({
-				id: `imported-edge-${i}`,
-				source: e.source,
-				target: e.target,
-				data: { label: e.label || "" },
-			}));
-			setNodes(newNodes);
-			setEdges(newEdges);
-			setIsJsonSaved(false);
-			toast({
-				title: t("codeToVisualDone", "Diagramme généré !"),
-				description: result.summary,
-			});
-		}
-	// biome-ignore lint/correctness/useExhaustiveDependencies: stable setters and toast
-	}, [t]);
+	const handleVisualProgrammingComplete = useCallback(
+		(payload: {
+			action: string;
+			data: GenerateCodeResult | CodeToVisualResult;
+		}) => {
+			setIsAiRunning(false);
+			setAiStatus("");
+			if (payload.action === "generate-code") {
+				const result = payload.data as GenerateCodeResult;
+				setCodeResult(result);
+				setSelectedCodeFile(0);
+				setShowCodeResult(true);
+				toast({
+					title: t("codeGenerated", "Code généré !"),
+					description: result.summary,
+				});
+			} else if (payload.action === "code-to-visual") {
+				const result = payload.data as CodeToVisualResult;
+				const newNodes = result.nodes.map((n, i) => ({
+					id: n.id || `imported-${i}`,
+					position: { x: 120 + (i % 4) * 220, y: 80 + Math.floor(i / 4) * 120 },
+					data: {
+						label: n.label,
+						type: n.type,
+						framework: n.framework,
+					},
+					type: "editable" as const,
+				}));
+				const newEdges = result.edges.map((e, i) => ({
+					id: `imported-edge-${i}`,
+					source: e.source,
+					target: e.target,
+					data: { label: e.label || "" },
+				}));
+				setNodes(newNodes);
+				setEdges(newEdges);
+				setIsJsonSaved(false);
+				toast({
+					title: t("codeToVisualDone", "Diagramme généré !"),
+					description: result.summary,
+				});
+			}
+		},
+		[t, setEdges, setNodes],
+	);
 
 	// Subscribe to backend events once on mount
 	useEffect(() => {

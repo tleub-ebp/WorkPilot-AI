@@ -10,16 +10,12 @@ import { createIpcListener, invokeIpc, sendIpc } from "./ipc-utils";
 
 export interface LearningLoopAPI {
 	// Operations
-	getLearningPatterns: (
-		projectId: string,
-	) => Promise<{
+	getLearningPatterns: (projectId: string) => Promise<{
 		success: boolean;
 		data?: LearningLoopTypes.LearningPattern[];
 		error?: string;
 	}>;
-	getLearningSummary: (
-		projectId: string,
-	) => Promise<{
+	getLearningSummary: (projectId: string) => Promise<{
 		success: boolean;
 		data?: LearningLoopTypes.LearningSummary;
 		error?: string;

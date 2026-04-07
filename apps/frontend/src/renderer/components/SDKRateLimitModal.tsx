@@ -335,8 +335,8 @@ export function SDKRateLimitModal() {
 										account: currentProfile?.name || "your account",
 									})}
 									{hasMultipleProfiles
-										? " " + t("rateLimit.sdk.switchBelow")
-										: " " + t("rateLimit.sdk.addAccountToContinue")}
+										? ` ${t("rateLimit.sdk.switchBelow")}`
+										: ` ${t("rateLimit.sdk.addAccountToContinue")}`}
 								</p>
 							</>
 						)}
@@ -579,8 +579,8 @@ export function SDKRateLimitModal() {
 								account: currentProfile?.name || "Default",
 							})}
 							{hasMultipleProfiles
-								? " " + t("rateLimit.sdk.switchRetryOrAdd")
-								: " " + t("rateLimit.sdk.addOrWait")}
+								? ` ${t("rateLimit.sdk.switchRetryOrAdd")}`
+								: ` ${t("rateLimit.sdk.addOrWait")}`}
 						</p>
 					</div>
 				</div>

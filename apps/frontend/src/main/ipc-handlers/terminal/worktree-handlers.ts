@@ -1,5 +1,4 @@
-import { execFile, execFileSync } from "child_process";
-import { ipcMain } from "electron";
+import { execFile, execFileSync } from "node:child_process";
 import {
 	existsSync,
 	lstatSync,
@@ -9,10 +8,11 @@ import {
 	rmSync,
 	symlinkSync,
 	writeFileSync,
-} from "fs";
+} from "node:fs";
+import path from "node:path";
+import { promisify } from "node:util";
+import { ipcMain } from "electron";
 import { minimatch } from "minimatch";
-import path from "path";
-import { promisify } from "util";
 import { IPC_CHANNELS } from "../../../shared/constants";
 import type {
 	CreateTerminalWorktreeRequest,
@@ -234,12 +234,12 @@ function getDefaultBranch(projectPath: string): string {
 		try {
 			const content = readFileSync(envPath, "utf-8");
 			const vars = parseEnvFile(content);
-			if (vars["DEFAULT_BRANCH"]) {
+			if (vars.DEFAULT_BRANCH) {
 				debugLog(
 					"[TerminalWorktree] Using DEFAULT_BRANCH from env config:",
-					vars["DEFAULT_BRANCH"],
+					vars.DEFAULT_BRANCH,
 				);
-				return vars["DEFAULT_BRANCH"];
+				return vars.DEFAULT_BRANCH;
 			}
 		} catch (error) {
 			debugError("[TerminalWorktree] Error reading env file:", error);
@@ -565,7 +565,7 @@ async function createTerminalWorktree(
 				},
 			);
 			debugLog(
-				"[TerminalWorktree] Fetched latest from origin/" + remoteBranchName,
+				`[TerminalWorktree] Fetched latest from origin/${remoteBranchName}`,
 			);
 		} catch {
 			debugLog(

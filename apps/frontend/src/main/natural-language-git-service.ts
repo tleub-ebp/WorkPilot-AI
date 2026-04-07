@@ -1,8 +1,8 @@
-import { type ChildProcess, spawn } from "child_process";
+import { type ChildProcess, spawn } from "node:child_process";
+import { EventEmitter } from "node:events";
+import { existsSync } from "node:fs";
+import path from "node:path";
 import { app } from "electron";
-import { EventEmitter } from "events";
-import { existsSync } from "fs";
-import path from "path";
 import { MODEL_ID_MAP } from "../shared/constants";
 import type { AppSettings } from "../shared/types";
 
@@ -161,7 +161,7 @@ export class NaturalLanguageGitService extends EventEmitter {
 		try {
 			const settingsPath = path.join(app.getPath("userData"), "settings.json");
 			if (existsSync(settingsPath)) {
-				const { readFileSync } = require("fs");
+				const { readFileSync } = require("node:fs");
 				const settings: AppSettings = JSON.parse(
 					readFileSync(settingsPath, "utf-8"),
 				);
@@ -214,8 +214,8 @@ export class NaturalLanguageGitService extends EventEmitter {
 					const error = line.substring("__ERROR__:".length);
 					this.emit("error", error);
 				} else if (line.trim()) {
-					fullOutput += line + "\n";
-					this.emit("stream-chunk", line + "\n");
+					fullOutput += `${line}\n`;
+					this.emit("stream-chunk", `${line}\n`);
 				}
 			}
 		});

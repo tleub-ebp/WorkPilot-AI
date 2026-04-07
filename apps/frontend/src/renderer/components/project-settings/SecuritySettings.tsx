@@ -181,7 +181,7 @@ export function SecuritySettings({
 			)}
 			<div className="relative">
 				<Input
-					type={showApiKey["openai"] ? "text" : "password"}
+					type={showApiKey.openai ? "text" : "password"}
 					placeholder={
 						envConfig.openaiKeyIsGlobal
 							? "Enter to override global key..."
@@ -200,10 +200,10 @@ export function SecuritySettings({
 					onClick={() => toggleShowApiKey("openai")}
 					className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
 					aria-label={
-						showApiKey["openai"] ? "Hide OpenAI API key" : "Show OpenAI API key"
+						showApiKey.openai ? "Hide OpenAI API key" : "Show OpenAI API key"
 					}
 				>
-					{showApiKey["openai"] ? (
+					{showApiKey.openai ? (
 						<EyeOff className="h-4 w-4" />
 					) : (
 						<Eye className="h-4 w-4" />
@@ -295,7 +295,7 @@ export function SecuritySettings({
 				<Label className="text-xs text-muted-foreground">API Key</Label>
 				<div className="relative">
 					<Input
-						type={showApiKey["azure"] ? "text" : "password"}
+						type={showApiKey.azure ? "text" : "password"}
 						value={envConfig.graphitiProviderConfig?.azureOpenaiApiKey || ""}
 						onChange={(e) =>
 							updateEnvConfig({
@@ -314,12 +314,12 @@ export function SecuritySettings({
 						onClick={() => toggleShowApiKey("azure")}
 						className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
 						aria-label={
-							showApiKey["azure"]
+							showApiKey.azure
 								? "Hide Azure OpenAI API key"
 								: "Show Azure OpenAI API key"
 						}
 					>
-						{showApiKey["azure"] ? (
+						{showApiKey.azure ? (
 							<EyeOff className="h-4 w-4" />
 						) : (
 							<Eye className="h-4 w-4" />

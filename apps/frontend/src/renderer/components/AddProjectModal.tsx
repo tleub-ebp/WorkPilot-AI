@@ -125,7 +125,9 @@ export function AddProjectModal({
 		return undefined;
 	};
 
-	useEffect(() => { /* intentionally empty */ }, []);
+	useEffect(() => {
+		/* intentionally empty */
+	}, []);
 
 	useEffect(() => {
 		if (open) {

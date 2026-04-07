@@ -1,12 +1,12 @@
-import { execFileSync } from "child_process";
+import { execFileSync } from "node:child_process";
 import {
 	appendFileSync,
 	existsSync,
 	mkdirSync,
 	readFileSync,
 	writeFileSync,
-} from "fs";
-import path from "path";
+} from "node:fs";
+import path from "node:path";
 import { getToolPath } from "./cli-tool-manager";
 
 /**
@@ -211,11 +211,7 @@ export function initializeGit(
 						try {
 							execFileSync(
 								git,
-								[
-									"branch",
-									"--set-upstream-to=" + remoteName + "/" + branch,
-									branch,
-								],
+								["branch", `--set-upstream-to=${remoteName}/${branch}`, branch],
 								{
 									cwd: projectPath,
 									encoding: "utf-8",
@@ -304,14 +300,14 @@ function ensureGitignoreEntries(projectPath: string, entries: string[]): void {
 
 		appendContent += "\n# WorkPilot AI data directory\n";
 		for (const entry of entriesToAdd) {
-			appendContent += entry + "\n";
+			appendContent += `${entry}\n`;
 		}
 
 		appendFileSync(gitignorePath, appendContent);
 	} else {
 		writeFileSync(
 			gitignorePath,
-			"# WorkPilot AI data directory\n" + entriesToAdd.join("\n") + "\n",
+			`# WorkPilot AI data directory\n${entriesToAdd.join("\n")}\n`,
 			"utf-8",
 		);
 	}

@@ -3,9 +3,9 @@
  * Handles low-level PTY process creation and lifecycle
  */
 
+import { existsSync } from "node:fs";
+import * as os from "node:os";
 import * as pty from "@lydell/node-pty";
-import { existsSync } from "fs";
-import * as os from "os";
 import { IPC_CHANNELS } from "../../shared/constants";
 import type { SupportedTerminal } from "../../shared/types/settings";
 import { debugError, debugLog } from "../../shared/utils/debug-logger";

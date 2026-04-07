@@ -6,10 +6,10 @@
  * Uses file locking to prevent race conditions in concurrent operations.
  */
 
+import { promises as fs } from "node:fs";
+import path from "node:path";
 import type { APIProfile, ProfilesFile } from "@shared/types/profile";
 import { app } from "electron";
-import { promises as fs } from "fs";
-import path from "path";
 // @ts-expect-error - no types available for proper-lockfile
 import * as lockfile from "proper-lockfile";
 

@@ -7,10 +7,10 @@
  * 3. Applying labels automatically
  */
 
+import fs from "node:fs";
+import path from "node:path";
 import type { BrowserWindow } from "electron";
 import { ipcMain } from "electron";
-import fs from "fs";
-import path from "path";
 import { IPC_CHANNELS } from "../../../shared/constants";
 import type { Project } from "../../../shared/types";
 import { withProjectOrNull } from "../github/utils/project-middleware";

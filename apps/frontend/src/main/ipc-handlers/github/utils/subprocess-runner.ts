@@ -5,12 +5,12 @@
  * with progress tracking, error handling, and result parsing.
  */
 
-import type { ChildProcess } from "child_process";
-import { exec, execFile, spawn } from "child_process";
-import fs from "fs";
-import path from "path";
-import { fileURLToPath } from "url";
-import { promisify } from "util";
+import type { ChildProcess } from "node:child_process";
+import { exec, execFile, spawn } from "node:child_process";
+import fs from "node:fs";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
+import { promisify } from "node:util";
 
 // ESM-compatible __dirname
 const __filename = fileURLToPath(import.meta.url);

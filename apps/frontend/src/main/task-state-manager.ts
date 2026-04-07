@@ -1,6 +1,6 @@
+import { existsSync } from "node:fs";
+import path from "node:path";
 import type { BrowserWindow } from "electron";
-import { existsSync } from "fs";
-import path from "path";
 import type { ActorRefFrom } from "xstate";
 import { createActor } from "xstate";
 import {

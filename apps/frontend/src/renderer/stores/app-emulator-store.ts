@@ -83,7 +83,7 @@ export const useAppEmulatorStore = create<AppEmulatorState>((set) => ({
 	setUrl: (url) => set({ url }),
 	appendOutput: (line) =>
 		set((state) => ({
-			output: (state.output + line + "\n").slice(-50000),
+			output: `${state.output + line}\n`.slice(-50000),
 		})),
 	setError: (error) => set({ error, phase: "error" }),
 	setStatus: (status) => set({ status }),

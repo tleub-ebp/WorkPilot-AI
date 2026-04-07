@@ -593,12 +593,10 @@ describe("Task Store", () => {
 			expect(hasRecentActivity("task-1")).toBe(false);
 
 			// Execution progress should record activity
-			useTaskStore
-				.getState()
-				.updateExecutionProgress("task-1", {
-					phase: "coding",
-					phaseProgress: 50,
-				});
+			useTaskStore.getState().updateExecutionProgress("task-1", {
+				phase: "coding",
+				phaseProgress: 50,
+			});
 
 			expect(hasRecentActivity("task-1")).toBe(true);
 		});

@@ -30,9 +30,8 @@ const OAUTH_TOKEN_PATTERN = /(sk-ant-oat01-[A-Za-z0-9_-]+)/;
  * The URL is displayed when /login is run and needs to be opened in browser
  * Uses \x1b to exclude ANSI escape sequences from URL matching
  */
-// eslint-disable-next-line no-control-regex -- Intentionally matches ANSI escape sequences to exclude them from URLs
-const OAUTH_URL_PATTERN =
-	/https:\/\/claude\.ai\/oauth\/authorize\?[^\s\u001b\]]+/;
+// biome-ignore lint/suspicious/noControlCharactersInRegex: intentional — matches ANSI escape sequences to exclude them from OAuth URLs
+const OAUTH_URL_PATTERN = /https:\/\/claude\.ai\/oauth\/authorize\?[^\s\u001b\]]+/;
 
 /**
  * Patterns to detect email in Claude output

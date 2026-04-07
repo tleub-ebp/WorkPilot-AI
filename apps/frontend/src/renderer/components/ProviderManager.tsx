@@ -166,7 +166,9 @@ export const ProviderManager: React.FC<{ selected: string }> = ({
 				.requestAllProfilesUsage()
 				.then((result) => {
 					if (result?.success && result.data) {
-						const data = result.data as { allProfiles?: Array<{ isActive?: boolean }> };
+						const data = result.data as {
+							allProfiles?: Array<{ isActive?: boolean }>;
+						};
 						setClaudeProfiles(data.allProfiles || []);
 						setActiveClaudeProfile(
 							data.allProfiles?.find((p) => p.isActive) || null,
@@ -352,7 +354,7 @@ export const ProviderManager: React.FC<{ selected: string }> = ({
 					<h4>
 						{t(
 							"providers:availableModels",
-							"Modèles disponibles pour «" + selected + "»",
+							`Modèles disponibles pour «${selected}»`,
 							{ provider: selected },
 						)}
 					</h4>
@@ -419,7 +421,7 @@ export const ProviderManager: React.FC<{ selected: string }> = ({
 							<h3>
 								{t(
 									"providers:providerCapabilities",
-									"Capacités du provider «" + selected + "» :",
+									`Capacités du provider «${selected}» :`,
 									{ provider: selected },
 								)}
 							</h3>
@@ -433,7 +435,7 @@ export const ProviderManager: React.FC<{ selected: string }> = ({
 								<h3>
 									{t(
 										"providers:providerCapabilities",
-										"Capacités du provider «" + selected + "» :",
+										`Capacités du provider «${selected}» :`,
 										{ provider: selected },
 									)}
 								</h3>
@@ -453,11 +455,9 @@ export const ProviderManager: React.FC<{ selected: string }> = ({
 							style={{ marginTop: 16, border: "1px solid #ccc", padding: 12 }}
 						>
 							<h4>
-								{t(
-									"providers:configureProvider",
-									"Configurer «" + selected + "»",
-									{ provider: selected },
-								)}
+								{t("providers:configureProvider", `Configurer «${selected}»`, {
+									provider: selected,
+								})}
 							</h4>
 							<span style={{ color: "blue" }}>
 								{t("common:loading", "Chargement...")}
@@ -471,7 +471,7 @@ export const ProviderManager: React.FC<{ selected: string }> = ({
 								<h4>
 									{t(
 										"providers:configureProvider",
-										"Configurer «" + selected + "»",
+										`Configurer «${selected}»`,
 										{ provider: selected },
 									)}
 								</h4>
@@ -536,7 +536,7 @@ export const ProviderManager: React.FC<{ selected: string }> = ({
 						<h4>
 							{t(
 								"providers:generateWithProvider",
-								"Générer avec «" + selected + "»",
+								`Générer avec «${selected}»`,
 								{ provider: selected },
 							)}
 						</h4>

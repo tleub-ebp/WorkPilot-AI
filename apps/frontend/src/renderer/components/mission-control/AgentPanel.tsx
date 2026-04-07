@@ -242,6 +242,9 @@ export function AgentPanel({
 				</div>
 
 				{/* Controls */}
+				{/* biome-ignore lint/a11y/noNoninteractiveElementInteractions: stop-propagation container */}
+				{/* biome-ignore lint/a11y/noStaticElementInteractions: stop-propagation container */}
+				{/* biome-ignore lint/a11y/useKeyWithClickEvents: keyboard handled by controls inside */}
 				<div
 					className="flex items-center gap-1.5 pt-1"
 					onClick={(e) => e.stopPropagation()}

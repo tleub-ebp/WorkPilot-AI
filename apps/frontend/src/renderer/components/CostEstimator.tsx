@@ -302,18 +302,18 @@ export function CostEstimator({ projectPath }: CostEstimatorProps) {
 	// Helper function to handle API response
 	const handleApiResponse = useCallback(
 		(
-			result: PromiseSettledResult<{ success: boolean; data?: unknown; error?: string }>,
+			result: PromiseSettledResult<{
+				success: boolean;
+				data?: unknown;
+				error?: string;
+			}>,
 			setter: (value: unknown) => void,
 			silent: boolean,
 			errorKey: string,
 		) => {
 			if (result.status === "fulfilled" && result.value?.success) {
 				const value = result.value as Record<string, unknown>;
-				setter(
-					result.value.success
-						? value.summary || value.budget
-						: null,
-				);
+				setter(result.value.success ? value.summary || value.budget : null);
 				return true;
 			}
 

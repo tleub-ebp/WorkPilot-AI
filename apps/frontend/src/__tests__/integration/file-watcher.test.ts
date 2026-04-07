@@ -3,9 +3,9 @@
  * Tests FileWatcher triggers on plan changes
  */
 
-import { EventEmitter } from "events";
-import { existsSync, mkdirSync, rmSync, writeFileSync } from "fs";
-import path from "path";
+import { EventEmitter } from "node:events";
+import { existsSync, mkdirSync, rmSync, writeFileSync } from "node:fs";
+import path from "node:path";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 // Test directories

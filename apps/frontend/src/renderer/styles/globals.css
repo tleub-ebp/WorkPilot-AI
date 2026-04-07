@@ -1044,13 +1044,13 @@ body {
 
 /* Azure DevOps imported tasks - negative styling */
 .azure-devops-task {
-  background-color: var(--muted) !important;
-  border-left: 4px solid var(--muted-foreground) !important;
+  background-color: var(--muted);
+  border-left: 4px solid var(--muted-foreground);
 }
 
 .dark .azure-devops-task {
-  background-color: var(--accent) !important;
-  border-left-color: var(--accent-foreground) !important;
+  background-color: var(--accent);
+  border-left-color: var(--accent-foreground);
 }
 
 /* Card styles - following design system card-based modularity */
@@ -1395,9 +1395,9 @@ body {
   *,
   *::before,
   *::after {
-    animation-duration: 0.01ms !important;
-    animation-iteration-count: 1 !important;
-    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms;
+    animation-iteration-count: 1;
+    transition-duration: 0.01ms;
   }
 }
 
@@ -1578,8 +1578,8 @@ body {
 
 /* Drop zone highlight when dragging over */
 .drop-zone-highlight {
-  border-color: var(--primary) !important;
-  background-color: rgba(214, 216, 118, 0.08) !important;
+  border-color: var(--primary);
+  background-color: rgba(214, 216, 118, 0.08);
 }
 
 /* Column count badge styling */
@@ -1884,7 +1884,7 @@ body {
   
   /* Supprimer les backgrounds blancs forcés */
   & * {
-    background-color: transparent !important;
+    background-color: transparent;
   }
   
   /* Override des styles inline qui définissent des couleurs noires */
@@ -1893,7 +1893,7 @@ body {
   & [style*="color: rgb(0, 0, 0)"],
   & [style*="color:rgb(0,0,0)"],
   & [style*="color: black"] {
-    color: hsl(var(--foreground)) !important;
+    color: hsl(var(--foreground));
   }
 }
 

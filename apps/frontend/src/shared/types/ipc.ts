@@ -1079,9 +1079,7 @@ export interface ElectronAPI {
 	getGitLabUser: (
 		hostname?: string,
 	) => Promise<IPCResult<{ username: string; name?: string }>>;
-	listGitLabUserProjects: (
-		hostname?: string,
-	) => Promise<
+	listGitLabUserProjects: (hostname?: string) => Promise<
 		IPCResult<{
 			projects: Array<{
 				pathWithNamespace: string;

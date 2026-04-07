@@ -152,6 +152,8 @@ export function ResizablePanels({
 			</div>
 
 			{/* Resizable divider */}
+			{/* biome-ignore lint/a11y/noNoninteractiveElementInteractions: resize drag handle */}
+			{/* biome-ignore lint/a11y/noStaticElementInteractions: resize drag handle */}
 			<div
 				className={cn(
 					"w-1 flex-shrink-0 relative cursor-col-resize touch-none",

@@ -169,7 +169,7 @@ export function UsageIndicatorAgnostic({
 		if (limitingPercent >= THRESHOLD_ELEVATED) return TrendingUp;
 
 		// Use provider-specific icon if available
-		const iconMap: Record<string, React.ComponentType<any>> = {
+		const iconMap: Record<string, React.ComponentType<Record<string, unknown>>> = {
 			Activity,
 			AlertCircle,
 			ChevronRight,
@@ -339,19 +339,16 @@ export function UsageIndicatorAgnostic({
 									<p className="text-[10px] text-muted-foreground leading-relaxed">
 										{error.message || "Unknown error occurred"}
 									</p>
-									{error.suggestions &&
-										error.suggestions.length > 0 && (
-											<div className="text-[10px] text-muted-foreground">
-												<strong>Suggestions:</strong>
-												<ul className="list-disc list-inside space-y-0.5 mt-1">
-													{error.suggestions.map(
-														(suggestion: string) => (
-															<li key={suggestion}>{suggestion}</li>
-														),
-													)}
-												</ul>
-											</div>
-										)}
+									{error.suggestions && error.suggestions.length > 0 && (
+										<div className="text-[10px] text-muted-foreground">
+											<strong>Suggestions:</strong>
+											<ul className="list-disc list-inside space-y-0.5 mt-1">
+												{error.suggestions.map((suggestion: string) => (
+													<li key={suggestion}>{suggestion}</li>
+												))}
+											</ul>
+										</div>
+									)}
 								</div>
 							</div>
 							{error.actionType === "reauth" && (

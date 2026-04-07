@@ -8,10 +8,10 @@
  * 4. Creating PRs when complete
  */
 
+import fs from "node:fs";
+import path from "node:path";
 import type { BrowserWindow } from "electron";
 import { ipcMain } from "electron";
-import fs from "fs";
-import path from "path";
 import { IPC_CHANNELS } from "../../../shared/constants";
 import type { Project } from "../../../shared/types";
 import type { AuthFailureInfo } from "../../../shared/types/terminal";
@@ -1053,7 +1053,7 @@ export function registerAutoFixHandlers(
 
 					// biome-ignore lint/style/noNonNullAssertion: value is guaranteed by context
 					const backendPath = validation.backendPath!;
-					const { execFileSync } = await import("child_process");
+					const { execFileSync } = await import("node:child_process");
 					// Use execFileSync with arguments array to prevent command injection
 					execFileSync(
 						getPythonPath(backendPath),
