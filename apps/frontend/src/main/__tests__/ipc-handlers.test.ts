@@ -54,7 +54,7 @@ vi.mock("@electron-toolkit/utils", () => ({
 }));
 
 // Mock fs to control existsSync behavior
-vi.mock("fs", () => {
+vi.mock("node:fs", () => {
 	const mockFs = {
 		existsSync: vi.fn(
 			(path: string) =>
