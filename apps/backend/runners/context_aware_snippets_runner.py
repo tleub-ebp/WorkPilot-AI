@@ -95,7 +95,7 @@ class ContextAwareSnippetsRunner:
 
         # Build context-aware prompt
         context_prompt = self._build_context_prompt(
-            snippet_type, description, target_language, project_context, patterns
+            description, target_language, project_context, patterns
         )
 
         print(f"Generating {target_language} snippet with project context...")
@@ -277,7 +277,6 @@ class ContextAwareSnippetsRunner:
 
     def _build_context_prompt(
         self,
-        snippet_type: str,
         description: str,
         language: str,
         project_context: dict[str, Any],

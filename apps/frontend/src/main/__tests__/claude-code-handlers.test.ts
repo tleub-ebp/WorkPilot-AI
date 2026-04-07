@@ -59,7 +59,7 @@ vi.mock("../claude-profile-manager", () => ({
 }));
 
 // Mock fs and child_process
-vi.mock("fs", () => ({
+vi.mock("node:fs", () => ({
 	default: {
 		existsSync: vi.fn(() => false),
 		readFileSync: vi.fn(),
@@ -78,7 +78,7 @@ vi.mock("fs", () => ({
 	},
 }));
 
-vi.mock("child_process", () => ({
+vi.mock("node:child_process", () => ({
 	default: {
 		spawn: vi.fn(),
 		exec: vi.fn(),

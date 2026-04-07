@@ -2,7 +2,7 @@ import path from "node:path";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 // Mock fs module before importing the module under test
-vi.mock("fs", () => {
+vi.mock("node:fs", () => {
 	const mod = {
 		existsSync: vi.fn(),
 		writeFileSync: vi.fn(),
