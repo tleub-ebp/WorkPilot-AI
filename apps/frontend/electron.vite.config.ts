@@ -1,7 +1,7 @@
-import { defineConfig, externalizeDepsPlugin } from 'electron-vite';
 import react from '@vitejs/plugin-react';
-import { resolve } from 'path';
 import { config as dotenvConfig } from 'dotenv';
+import { defineConfig, externalizeDepsPlugin } from 'electron-vite';
+import { resolve } from 'node:path';
 
 // Load root .env first, then frontend .env with override priority
 // This ensures SENTRY_DSN and other vars are found in either location

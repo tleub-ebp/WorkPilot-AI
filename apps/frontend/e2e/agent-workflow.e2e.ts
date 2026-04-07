@@ -9,10 +9,11 @@
  *
  * Improvement 6.1: E2E Playwright tests for critical workflows
  */
-import { test, expect } from '@playwright/test';
-import { mkdirSync, mkdtempSync, rmSync, existsSync, writeFileSync, readFileSync } from 'node:fs';
+
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
+import { expect, test } from '@playwright/test';
 
 // Test data directory
 let TEST_DATA_DIR: string;

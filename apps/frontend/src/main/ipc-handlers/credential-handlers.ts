@@ -9,6 +9,7 @@ import { promisify } from "node:util";
 import { ipcMain } from "electron";
 
 const execFileAsync = promisify(execFile);
+
 import type {
 	CredentialConfig,
 	UsageData,

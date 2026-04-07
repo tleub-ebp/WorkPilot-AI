@@ -18,12 +18,12 @@ import type {
 } from "../../shared/types";
 import type { Project } from "../../shared/types/project";
 import type { Task } from "../../shared/types/task";
-import type { TaskEventPayload } from "../agent/task-event-schema";
 import type {
 	AgentManager,
 	ExecutionProgressData,
 	ProcessType,
 } from "../agent";
+import type { TaskEventPayload } from "../agent/task-event-schema";
 import { getClaudeProfileManager } from "../claude-profile-manager";
 import { fileWatcher } from "../file-watcher";
 import { notificationService } from "../notification-service";

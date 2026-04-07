@@ -1,10 +1,10 @@
+import type { Project } from "@shared/types/project";
 import { Radio } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useToast } from "@/hooks/use-toast";
 import { Globe } from "@/lib/icons";
 import { addProject } from "@/stores/project-store";
-import type { Project } from "@shared/types/project";
 import { AzureDevOpsRemoteConfigModal } from "./AzureDevOpsRemoteConfigModal";
 import { GitHubRemoteConfigModal } from "./GitHubRemoteConfigModal";
 import { GitSetupModal } from "./GitSetupModal";

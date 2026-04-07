@@ -2,8 +2,9 @@
  * Helper utilities for Electron E2E tests
  * Provides utilities for launching and interacting with the Electron app
  */
-import { _electron as electron, ElectronApplication, Page } from '@playwright/test';
+
 import path from 'node:path';
+import { type ElectronApplication, _electron as electron, type Page } from '@playwright/test';
 
 export interface ElectronTestContext {
   app: ElectronApplication;

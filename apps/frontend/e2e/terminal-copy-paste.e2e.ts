@@ -7,10 +7,11 @@
  *
  * To run: npx playwright test terminal-copy-paste.e2e.ts --config=e2e/playwright.config.ts
  */
-import { test, expect, _electron as electron, ElectronApplication, Page } from '@playwright/test';
-import { mkdirSync, rmSync, existsSync } from 'node:fs';
-import path from 'node:path';
+
+import { existsSync, mkdirSync, rmSync } from 'node:fs';
 import * as os from 'node:os';
+import path from 'node:path';
+import { type ElectronApplication, _electron as electron, expect, type Page, test } from '@playwright/test';
 
 // Global Navigator declaration for clipboard
 declare global {

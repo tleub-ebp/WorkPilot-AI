@@ -6,10 +6,10 @@
  * eliminating the need for Visual Studio Build Tools on Windows.
  */
 
-const https = require('https');
-const fs = require('fs');
-const path = require('path');
-const { execSync } = require('child_process');
+const { execSync } = require('node:child_process');
+const fs = require('node:fs');
+const https = require('node:https');
+const path = require('node:path');
 
 const GITHUB_REPO = 'AndyMik90/Auto-Claude';
 
@@ -138,7 +138,7 @@ function downloadFile(url, destPath) {
  * Extract zip file (using built-in tools)
  */
 function extractZip(zipPath, destDir) {
-  const { execFileSync } = require('child_process');
+  const { execFileSync } = require('node:child_process');
 
   // Use PowerShell on Windows without going through a shell
   execFileSync('powershell', [

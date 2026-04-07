@@ -1,3 +1,4 @@
+import type { TFunction } from "i18next";
 import {
 	AlertTriangle,
 	Archive,
@@ -22,7 +23,6 @@ import {
 	type Zap,
 } from "lucide-react";
 import { memo, useEffect, useMemo, useRef, useState } from "react";
-import type { TFunction } from "i18next";
 import { useTranslation } from "react-i18next";
 import { useFormatRelativeTime } from "@/hooks/useFormatRelativeTime";
 import {

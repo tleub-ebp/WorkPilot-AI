@@ -15,12 +15,12 @@
  * If not specified, uses current platform/arch.
  */
 
-const https = require('https');
-const fs = require('fs');
-const path = require('path');
-const { spawnSync } = require('child_process');
-const os = require('os');
-const nodeCrypto = require('crypto');
+const { spawnSync } = require('node:child_process');
+const nodeCrypto = require('node:crypto');
+const fs = require('node:fs');
+const https = require('node:https');
+const os = require('node:os');
+const path = require('node:path');
 const { toNodePlatform } = require('../src/shared/platform.cjs');
 
 // Python version to bundle (must be 3.10+ for claude-agent-sdk, 3.12+ for full Graphiti support)

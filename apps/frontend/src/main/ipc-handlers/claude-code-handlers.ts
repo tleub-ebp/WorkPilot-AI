@@ -15,13 +15,13 @@
  */
 
 import { execFile, execFileSync, spawn } from "node:child_process";
-import { ipcMain } from "electron";
 import { existsSync, promises as fsPromises, readFileSync } from "node:fs";
 import { mkdir, rename, unlink } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
-import semver from "semver";
 import { promisify } from "node:util";
+import { ipcMain } from "electron";
+import semver from "semver";
 import { DEFAULT_APP_SETTINGS, IPC_CHANNELS } from "../../shared/constants";
 import type { IPCResult } from "../../shared/types";
 import type {

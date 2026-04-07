@@ -19,7 +19,7 @@ import type {
 } from "../../preload/api/modules/pair-programming-api";
 
 // Re-export types for convenience
-export type { PairSession, PairMessage, AiAction, StartSessionParams } from "../../preload/api/modules/pair-programming-api";
+export type { AiAction, PairMessage, PairSession, StartSessionParams } from "../../preload/api/modules/pair-programming-api";
 
 // ---------------------------------------------------------------------------
 // Store types
