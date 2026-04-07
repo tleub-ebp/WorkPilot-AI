@@ -9,7 +9,7 @@ import { EventEmitter } from "node:events";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 // Mock child_process before importing the module
-vi.mock("child_process", () => {
+vi.mock("node:child_process", () => {
 	const mockSpawn = vi.fn(() => {
 		const mockChildProcess = {
 			unref: vi.fn(),

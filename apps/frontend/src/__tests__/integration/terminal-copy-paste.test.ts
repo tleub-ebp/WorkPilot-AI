@@ -3,10 +3,6 @@
  */
 
 import { act, render } from "@testing-library/react";
-import { FitAddon } from "@xterm/addon-fit";
-import { SerializeAddon } from "@xterm/addon-serialize";
-import { WebLinksAddon } from "@xterm/addon-web-links";
-import { Terminal as XTerm } from "@xterm/xterm";
 import React from "react";
 import type { Mock } from "vitest";
 /**
@@ -15,53 +11,71 @@ import type { Mock } from "vitest";
  */
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-// Mock xterm.js and its addons
-vi.mock("@xterm/xterm", () => ({
-	Terminal: vi.fn().mockImplementation(() => ({
-		open: vi.fn(),
-		loadAddon: vi.fn(),
-		attachCustomKeyEventHandler: vi.fn(),
-		hasSelection: vi.fn(() => false),
-		getSelection: vi.fn(() => ""),
-		paste: vi.fn(),
-		input: vi.fn(),
-		onData: vi.fn(),
-		onResize: vi.fn(),
-		dispose: vi.fn(),
-		write: vi.fn(),
-		cols: 80,
-		rows: 24,
-		options: {
-			cursorBlink: true,
-			cursorStyle: "block",
-			fontSize: 14,
-			fontFamily: "monospace",
-			fontWeight: "normal",
-			lineHeight: 1,
-			letterSpacing: 0,
-			theme: { cursorAccent: "#000000" },
-			scrollback: 1000,
-		},
-		refresh: vi.fn(),
-	})),
-}));
+// Configurable factory for Terminal instances - allows per-test overrides
+// while keeping the class constructable via `new`
+let terminalFactory: (() => Record<string, unknown>) | null = null;
 
-vi.mock("@xterm/addon-fit", () => ({
-	FitAddon: vi.fn().mockImplementation(() => ({
-		fit: vi.fn(),
-	})),
-}));
+// Mock xterm.js and its addons - use class syntax for constructability with `new`
+vi.mock("@xterm/xterm", () => {
+	class MockTerminal {
+		constructor() {
+			const props = terminalFactory
+				? terminalFactory()
+				: {
+						open: vi.fn(),
+						loadAddon: vi.fn(),
+						attachCustomKeyEventHandler: vi.fn(),
+						hasSelection: vi.fn(() => false),
+						getSelection: vi.fn(() => ""),
+						paste: vi.fn(),
+						input: vi.fn(),
+						onData: vi.fn(),
+						onResize: vi.fn(),
+						dispose: vi.fn(),
+						write: vi.fn(),
+						cols: 80,
+						rows: 24,
+						options: {
+							cursorBlink: true,
+							cursorStyle: "block",
+							fontSize: 14,
+							fontFamily: "monospace",
+							fontWeight: "normal",
+							lineHeight: 1,
+							letterSpacing: 0,
+							theme: { cursorAccent: "#000000" },
+							scrollback: 1000,
+						},
+						refresh: vi.fn(),
+					};
+			Object.assign(this, props);
+		}
+	}
+	return { Terminal: MockTerminal };
+});
 
-vi.mock("@xterm/addon-web-links", () => ({
-	WebLinksAddon: vi.fn().mockImplementation(() => ({})),
-}));
+vi.mock("@xterm/addon-fit", () => {
+	class MockFitAddon {
+		constructor() {
+			Object.assign(this, { fit: vi.fn() });
+		}
+	}
+	return { FitAddon: MockFitAddon };
+});
 
-vi.mock("@xterm/addon-serialize", () => ({
-	SerializeAddon: vi.fn().mockImplementation(() => ({
-		serialize: vi.fn(() => ""),
-		dispose: vi.fn(),
-	})),
-}));
+vi.mock("@xterm/addon-web-links", () => {
+	class MockWebLinksAddon {}
+	return { WebLinksAddon: MockWebLinksAddon };
+});
+
+vi.mock("@xterm/addon-serialize", () => {
+	class MockSerializeAddon {
+		constructor() {
+			Object.assign(this, { serialize: vi.fn(() => ""), dispose: vi.fn() });
+		}
+	}
+	return { SerializeAddon: MockSerializeAddon };
+});
 
 describe("Terminal copy/paste integration", () => {
 	let mockClipboard: {
@@ -71,13 +85,15 @@ describe("Terminal copy/paste integration", () => {
 
 	beforeEach(() => {
 		vi.clearAllMocks();
+		// Reset terminal factory
+		terminalFactory = null;
 
-		// Mock ResizeObserver
-		global.ResizeObserver = vi.fn().mockImplementation(() => ({
-			observe: vi.fn(),
-			unobserve: vi.fn(),
-			disconnect: vi.fn(),
-		}));
+		// Mock ResizeObserver with constructable class
+		global.ResizeObserver = class MockResizeObserver {
+			observe = vi.fn();
+			unobserve = vi.fn();
+			disconnect = vi.fn();
+		} as unknown as typeof ResizeObserver;
 
 		// Mock requestAnimationFrame for xterm.js integration tests
 		global.requestAnimationFrame = vi.fn((callback: FrameRequestCallback) => {
@@ -118,8 +134,8 @@ describe("Terminal copy/paste integration", () => {
 			const mockHasSelection = vi.fn(() => true);
 			const mockGetSelection = vi.fn(() => "selected terminal text");
 
-			// Override XTerm mock to be constructable
-			(XTerm as unknown as Mock).mockImplementation(() => ({
+			// Override Terminal factory for this test
+			terminalFactory = () => ({
 				open: vi.fn(),
 				loadAddon: vi.fn(),
 				attachCustomKeyEventHandler: vi.fn(
@@ -149,19 +165,9 @@ describe("Terminal copy/paste integration", () => {
 					scrollback: 1000,
 				},
 				refresh: vi.fn(),
-			}));
+			});
 
-			// Need to also override the addon mocks to be constructable
-			(FitAddon as unknown as Mock).mockImplementation(() => ({
-				fit: vi.fn(),
-			}));
-
-			(WebLinksAddon as unknown as Mock).mockImplementation(() => ({}));
-
-			(SerializeAddon as unknown as Mock).mockImplementation(() => ({
-				serialize: vi.fn(() => ""),
-				dispose: vi.fn(),
-			}));
+			// Addon factories are handled by the class-based mocks
 
 			// Create a test wrapper component that provides the DOM element
 			const TestWrapper = () => {
@@ -206,8 +212,8 @@ describe("Terminal copy/paste integration", () => {
 			const mockHasSelection = vi.fn(() => false);
 			const mockGetSelection = vi.fn(() => "");
 
-			// Override XTerm mock to be constructable
-			(XTerm as unknown as Mock).mockImplementation(() => ({
+			// Override Terminal factory for this test
+			terminalFactory = () => ({
 				open: vi.fn(),
 				loadAddon: vi.fn(),
 				attachCustomKeyEventHandler: vi.fn(
@@ -237,19 +243,9 @@ describe("Terminal copy/paste integration", () => {
 					scrollback: 1000,
 				},
 				refresh: vi.fn(),
-			}));
+			});
 
-			// Need to also override the addon mocks to be constructable
-			(FitAddon as unknown as Mock).mockImplementation(() => ({
-				fit: vi.fn(),
-			}));
-
-			(WebLinksAddon as unknown as Mock).mockImplementation(() => ({}));
-
-			(SerializeAddon as unknown as Mock).mockImplementation(() => ({
-				serialize: vi.fn(() => ""),
-				dispose: vi.fn(),
-			}));
+			// Addon factories are handled by the class-based mocks
 
 			// Create a test wrapper component that provides the DOM element
 			const TestWrapper = () => {
@@ -311,8 +307,8 @@ describe("Terminal copy/paste integration", () => {
 			let keyEventHandler: ((event: KeyboardEvent) => boolean) | null = null;
 			const mockPaste = vi.fn();
 
-			// Override XTerm mock to be constructable
-			(XTerm as unknown as Mock).mockImplementation(() => ({
+			// Override Terminal factory for this test
+			terminalFactory = () => ({
 				open: vi.fn(),
 				loadAddon: vi.fn(),
 				attachCustomKeyEventHandler: vi.fn(
@@ -342,19 +338,9 @@ describe("Terminal copy/paste integration", () => {
 					scrollback: 1000,
 				},
 				refresh: vi.fn(),
-			}));
+			});
 
-			// Need to also override the addon mocks to be constructable
-			(FitAddon as unknown as Mock).mockImplementation(() => ({
-				fit: vi.fn(),
-			}));
-
-			(WebLinksAddon as unknown as Mock).mockImplementation(() => ({}));
-
-			(SerializeAddon as unknown as Mock).mockImplementation(() => ({
-				serialize: vi.fn(() => ""),
-				dispose: vi.fn(),
-			}));
+			// Addon factories are handled by the class-based mocks
 
 			mockClipboard.readText.mockResolvedValue("pasted text");
 
@@ -400,8 +386,8 @@ describe("Terminal copy/paste integration", () => {
 			let keyEventHandler: ((event: KeyboardEvent) => boolean) | null = null;
 			const mockPaste = vi.fn();
 
-			// Override XTerm mock to be constructable
-			(XTerm as unknown as Mock).mockImplementation(() => ({
+			// Override Terminal factory for this test
+			terminalFactory = () => ({
 				open: vi.fn(),
 				loadAddon: vi.fn(),
 				attachCustomKeyEventHandler: vi.fn(
@@ -431,19 +417,9 @@ describe("Terminal copy/paste integration", () => {
 					scrollback: 1000,
 				},
 				refresh: vi.fn(),
-			}));
+			});
 
-			// Need to also override the addon mocks to be constructable
-			(FitAddon as unknown as Mock).mockImplementation(() => ({
-				fit: vi.fn(),
-			}));
-
-			(WebLinksAddon as unknown as Mock).mockImplementation(() => ({}));
-
-			(SerializeAddon as unknown as Mock).mockImplementation(() => ({
-				serialize: vi.fn(() => ""),
-				dispose: vi.fn(),
-			}));
+			// Addon factories are handled by the class-based mocks
 
 			// Mock empty clipboard
 			mockClipboard.readText.mockResolvedValue("");
@@ -486,8 +462,8 @@ describe("Terminal copy/paste integration", () => {
 			let keyEventHandler: ((event: KeyboardEvent) => boolean) | null = null;
 			let eventCallOrder: string[] = [];
 
-			// Override XTerm mock to be constructable
-			(XTerm as unknown as Mock).mockImplementation(() => ({
+			// Override Terminal factory for this test
+			terminalFactory = () => ({
 				open: vi.fn(),
 				loadAddon: vi.fn(),
 				attachCustomKeyEventHandler: vi.fn(
@@ -519,19 +495,9 @@ describe("Terminal copy/paste integration", () => {
 					scrollback: 1000,
 				},
 				refresh: vi.fn(),
-			}));
+			});
 
-			// Need to also override the addon mocks to be constructable
-			(FitAddon as unknown as Mock).mockImplementation(() => ({
-				fit: vi.fn(),
-			}));
-
-			(WebLinksAddon as unknown as Mock).mockImplementation(() => ({}));
-
-			(SerializeAddon as unknown as Mock).mockImplementation(() => ({
-				serialize: vi.fn(() => ""),
-				dispose: vi.fn(),
-			}));
+			// Addon factories are handled by the class-based mocks
 
 			// Create a test wrapper component that provides the DOM element
 			const TestWrapper = () => {
@@ -600,8 +566,8 @@ describe("Terminal copy/paste integration", () => {
 			let handlerResults: { key: string; handled: boolean }[] = [];
 			const mockHasSelection = vi.fn(() => false);
 
-			// Override XTerm mock to be constructable
-			(XTerm as unknown as Mock).mockImplementation(() => ({
+			// Override Terminal factory for this test
+			terminalFactory = () => ({
 				open: vi.fn(),
 				loadAddon: vi.fn(),
 				attachCustomKeyEventHandler: vi.fn(
@@ -631,19 +597,9 @@ describe("Terminal copy/paste integration", () => {
 					scrollback: 1000,
 				},
 				refresh: vi.fn(),
-			}));
+			});
 
-			// Need to also override the addon mocks to be constructable
-			(FitAddon as unknown as Mock).mockImplementation(() => ({
-				fit: vi.fn(),
-			}));
-
-			(WebLinksAddon as unknown as Mock).mockImplementation(() => ({}));
-
-			(SerializeAddon as unknown as Mock).mockImplementation(() => ({
-				serialize: vi.fn(() => ""),
-				dispose: vi.fn(),
-			}));
+			// Addon factories are handled by the class-based mocks
 
 			// Create a test wrapper component that provides the DOM element
 			const TestWrapper = () => {
@@ -733,8 +689,8 @@ describe("Terminal copy/paste integration", () => {
 				sendTerminalInput: mockSendTerminalInput,
 			};
 
-			// Override XTerm mock to be constructable
-			(XTerm as unknown as Mock).mockImplementation(() => ({
+			// Override Terminal factory for this test
+			terminalFactory = () => ({
 				open: vi.fn(),
 				loadAddon: vi.fn(),
 				attachCustomKeyEventHandler: vi.fn(
@@ -766,19 +722,9 @@ describe("Terminal copy/paste integration", () => {
 					scrollback: 1000,
 				},
 				refresh: vi.fn(),
-			}));
+			});
 
-			// Need to also override the addon mocks to be constructable
-			(FitAddon as unknown as Mock).mockImplementation(() => ({
-				fit: vi.fn(),
-			}));
-
-			(WebLinksAddon as unknown as Mock).mockImplementation(() => ({}));
-
-			(SerializeAddon as unknown as Mock).mockImplementation(() => ({
-				serialize: vi.fn(() => ""),
-				dispose: vi.fn(),
-			}));
+			// Addon factories are handled by the class-based mocks
 
 			// Create a test wrapper component that provides the DOM element
 			const TestWrapper = () => {
