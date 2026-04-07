@@ -3,6 +3,7 @@
  * Tests CLI tool detection with focus on NVM path detection
  */
 
+// @ts-nocheck - Allow accessing mocked functions without type checking
 import { execFileSync } from "node:child_process";
 import { existsSync, readdirSync } from "node:fs";
 import os from "node:os";

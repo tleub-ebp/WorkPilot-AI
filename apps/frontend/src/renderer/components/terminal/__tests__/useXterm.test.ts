@@ -2,6 +2,7 @@
  * @vitest-environment jsdom
  */
 
+// @ts-nocheck - Allow accessing mocked functions without type checking
 import { act, render } from "@testing-library/react";
 import { Terminal as XTerm } from "@xterm/xterm";
 import React from "react";
@@ -23,53 +24,65 @@ import {
 import { useXterm } from "../useXterm";
 
 // Mock xterm.js
-vi.mock("@xterm/xterm", () => ({
-	Terminal: vi.fn().mockImplementation(() => ({
-		open: vi.fn(),
-		loadAddon: vi.fn(),
-		attachCustomKeyEventHandler: vi.fn(),
-		hasSelection: vi.fn(() => false),
-		getSelection: vi.fn(() => ""),
-		paste: vi.fn(),
-		input: vi.fn(),
-		onData: vi.fn(),
-		onResize: vi.fn(),
-		dispose: vi.fn(),
-		write: vi.fn(),
-		cols: 80,
-		rows: 24,
-		options: {
-			cursorBlink: true,
-			cursorStyle: "block",
-			fontSize: 14,
-			fontFamily: "monospace",
-			fontWeight: "normal",
-			lineHeight: 1,
-			letterSpacing: 0,
-			theme: { cursorAccent: "#000000" },
-			scrollback: 1000,
-		},
-		refresh: vi.fn(),
-	})),
-}));
+vi.mock("@xterm/xterm", () => {
+	return {
+		Terminal: vi.fn(function mockTerminal() {
+			return {
+				open: vi.fn(),
+				loadAddon: vi.fn(),
+				attachCustomKeyEventHandler: vi.fn(),
+				hasSelection: vi.fn(() => false),
+				getSelection: vi.fn(() => ""),
+				paste: vi.fn(),
+				input: vi.fn(),
+				onData: vi.fn(),
+				onResize: vi.fn(),
+				dispose: vi.fn(),
+				write: vi.fn(),
+				cols: 80,
+				rows: 24,
+				options: {
+					cursorBlink: true,
+					cursorStyle: "block",
+					fontSize: 14,
+					fontFamily: "monospace",
+					fontWeight: "normal",
+					lineHeight: 1,
+					letterSpacing: 0,
+					theme: { cursorAccent: "#000000" },
+					scrollback: 1000,
+				},
+				refresh: vi.fn(),
+			};
+		}),
+	};
+});
 
 // Mock xterm addons
-vi.mock("@xterm/addon-fit", () => ({
-	FitAddon: vi.fn().mockImplementation(() => ({
-		fit: vi.fn(),
-	})),
-}));
+vi.mock("@xterm/addon-fit", () => {
+	return {
+		FitAddon: vi.fn(function mockFitAddon() {
+			return {
+				fit: vi.fn(),
+			};
+		}),
+	};
+});
 
 vi.mock("@xterm/addon-web-links", () => ({
 	WebLinksAddon: vi.fn(),
 }));
 
-vi.mock("@xterm/addon-serialize", () => ({
-	SerializeAddon: vi.fn().mockImplementation(() => ({
-		serialize: vi.fn(() => ""),
-		dispose: vi.fn(),
-	})),
-}));
+vi.mock("@xterm/addon-serialize", () => {
+	return {
+		SerializeAddon: vi.fn(function mockSerializeAddon() {
+			return {
+				serialize: vi.fn(() => ""),
+				dispose: vi.fn(),
+			};
+		}),
+	};
+});
 
 // Mock terminal buffer manager
 vi.mock("../../../../lib/terminal-buffer-manager", () => ({
@@ -101,38 +114,40 @@ async function setupMockXterm(
 ) {
 	let keyEventHandler: ((event: KeyboardEvent) => boolean) | null = null;
 
-	// Override XTerm mock to be constructable
-	(XTerm as unknown as Mock).mockImplementation(() => ({
-		open: vi.fn(),
-		loadAddon: vi.fn(),
-		attachCustomKeyEventHandler: vi.fn(
-			(handler: (event: KeyboardEvent) => boolean) => {
-				keyEventHandler = handler;
+	// Override XTerm mock to be constructable with custom behavior
+	vi.mocked(XTerm).mockImplementation(() => {
+		return {
+			open: vi.fn(),
+			loadAddon: vi.fn(),
+			attachCustomKeyEventHandler: vi.fn(
+				(handler: (event: KeyboardEvent) => boolean) => {
+					keyEventHandler = handler;
+				},
+			),
+			hasSelection: overrides.hasSelection ?? vi.fn(() => false),
+			getSelection: overrides.getSelection ?? vi.fn(() => ""),
+			paste: overrides.paste ?? vi.fn(),
+			input: overrides.input ?? vi.fn(),
+			onData: vi.fn(),
+			onResize: vi.fn(),
+			dispose: vi.fn(),
+			write: vi.fn(),
+			cols: 80,
+			rows: 24,
+			options: {
+				cursorBlink: true,
+				cursorStyle: "block",
+				fontSize: 14,
+				fontFamily: "monospace",
+				fontWeight: "normal",
+				lineHeight: 1,
+				letterSpacing: 0,
+				theme: { cursorAccent: "#000000" },
+				scrollback: 1000,
 			},
-		),
-		hasSelection: overrides.hasSelection ?? vi.fn(() => false),
-		getSelection: overrides.getSelection ?? vi.fn(() => ""),
-		paste: overrides.paste ?? vi.fn(),
-		input: overrides.input ?? vi.fn(),
-		onData: vi.fn(),
-		onResize: vi.fn(),
-		dispose: vi.fn(),
-		write: vi.fn(),
-		cols: 80,
-		rows: 24,
-		options: {
-			cursorBlink: true,
-			cursorStyle: "block",
-			fontSize: 14,
-			fontFamily: "monospace",
-			fontWeight: "normal",
-			lineHeight: 1,
-			letterSpacing: 0,
-			theme: { cursorAccent: "#000000" },
-			scrollback: 1000,
-		},
-		refresh: vi.fn(),
-	}));
+			refresh: vi.fn(),
+		};
+	});
 
 	// Setup addon mocks
 	const { FitAddon } = await import("@xterm/addon-fit");
