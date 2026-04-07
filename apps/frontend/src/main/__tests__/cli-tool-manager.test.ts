@@ -3,6 +3,7 @@
  * Tests CLI tool detection with focus on NVM path detection
  */
 
+// @ts-nocheck - Allow accessing mocked functions without type checking
 import { execFileSync } from "node:child_process";
 import { existsSync, readdirSync } from "node:fs";
 import os from "node:os";
@@ -238,7 +239,7 @@ describe("cli-tool-manager - Claude CLI NVM detection", () => {
 			vi.mocked(existsSync).mockImplementation((filePath) => {
 				const pathStr = String(filePath);
 				// NVM versions directory exists (use normalized path to handle both / and \ separators)
-				const normalizedPath = pathStr.replace(/\\/g, "/");
+				const normalizedPath = pathStr.replaceAll(/\\/g, "/");
 				if (normalizedPath.includes(".nvm/versions/node")) {
 					return true;
 				}
@@ -369,7 +370,7 @@ describe("cli-tool-manager - Claude CLI NVM detection", () => {
 			vi.mocked(existsSync).mockImplementation((filePath) => {
 				const pathStr = String(filePath);
 				// Normalize separators for cross-platform matching
-				const normalizedPath = pathStr.replace(/\\/g, "/");
+				const normalizedPath = pathStr.replaceAll(/\\/g, "/");
 				if (normalizedPath.includes(".nvm/versions/node")) return true;
 				// Claude exists in all versions
 				if (normalizedPath.includes("/bin/claude")) return true;
@@ -794,7 +795,14 @@ describe("cli-tool-manager - Claude CLI Windows where.exe detection", () => {
 			String.raw`D:\Program Files\nvm4w\nodejs\claude.cmd`,
 		);
 
-		vi.mocked(existsSync).mockReturnValue(true);
+		// Only the where.exe path exists, not .local/bin
+		vi.mocked(existsSync).mockImplementation((filePath) => {
+			const pathStr = String(filePath);
+			if (pathStr.includes("nvm4w") && pathStr.includes("claude.cmd")) {
+				return true;
+			}
+			return false;
+		});
 		vi.mocked(execFileSync).mockReturnValue("claude-code version 1.0.0\n");
 
 		const result = getToolInfo("claude");

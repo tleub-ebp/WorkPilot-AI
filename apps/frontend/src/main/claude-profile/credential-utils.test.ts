@@ -15,7 +15,7 @@ vi.mock("../platform", () => ({
 	isLinux: vi.fn(() => false),
 }));
 
-vi.mock("fs", () => {
+vi.mock("node:fs", () => {
 	const mod = {
 		existsSync: vi.fn(() => false),
 		readFileSync: vi.fn(() => ""),
@@ -28,13 +28,13 @@ vi.mock("fs", () => {
 	return { ...mod, default: mod };
 });
 
-vi.mock("child_process", () => {
+vi.mock("node:child_process", () => {
 	const execFileSync = vi.fn(() => "");
 	const mod = { execFileSync };
 	return { ...mod, default: mod };
 });
 
-vi.mock("os", () => {
+vi.mock("node:os", () => {
 	const mod = { homedir: vi.fn(() => "/home/testuser") };
 	return { ...mod, default: mod };
 });
@@ -235,7 +235,7 @@ describe("credential-utils", () => {
 
 		// Helper to mock Secret Service not available (secret-tool not found)
 		const mockSecretServiceUnavailable = () => {
-			vi.mocked(existsSync).mockImplementation((path) => {
+			vi.mocked(existsSync).mockImplementation((path: string | Buffer | URL) => {
 				const pathStr = String(path);
 				// secret-tool not found
 				if (pathStr.includes("secret-tool")) return false;
@@ -294,7 +294,7 @@ describe("credential-utils", () => {
 		it("should use custom configDir for credentials path", () => {
 			const customConfigDir = "/home/user/.claude-profiles/work";
 			mockSecretServiceUnavailable();
-			vi.mocked(existsSync).mockImplementation((path) => {
+			vi.mocked(existsSync).mockImplementation((path: string | Buffer | URL) => {
 				const pathStr = String(path);
 				if (pathStr.includes("secret-tool")) return false;
 				return true; // credentials file exists

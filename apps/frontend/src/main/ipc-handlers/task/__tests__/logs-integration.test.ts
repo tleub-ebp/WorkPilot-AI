@@ -18,7 +18,7 @@ vi.mock("electron", () => ({
 
 // Mock fs module with proper named export
 const mockExistsSync = vi.fn();
-vi.mock("fs", () => ({
+vi.mock("node:fs", () => ({
 	existsSync: mockExistsSync,
 	readFileSync: vi.fn(),
 	watchFile: vi.fn(),

@@ -76,7 +76,7 @@ vi.mock("../../claude-profile-manager", () => ({
 	initializeClaudeProfileManager: mockInitializeClaudeProfileManager,
 }));
 
-vi.mock("fs", async (importOriginal) => {
+vi.mock("node:fs", async (importOriginal) => {
 	const actual = await importOriginal<typeof import("fs")>();
 	return {
 		...actual,
@@ -98,7 +98,7 @@ vi.mock("../pty-manager", () => ({
 	writeToPty: mockWriteToPty,
 }));
 
-vi.mock("os", async (importOriginal) => {
+vi.mock("node:os", async (importOriginal) => {
 	const actual = await importOriginal<typeof import("os")>();
 	return {
 		...actual,
