@@ -4,7 +4,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { runPythonSubprocess } from "./subprocess-runner";
 
 // Mock child_process completely
-vi.mock("child_process", () => {
+vi.mock("node:child_process", () => {
 	const mockSpawn = vi.fn();
 	const mockExec = vi.fn();
 	const mockExecFile = vi.fn();
