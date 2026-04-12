@@ -455,6 +455,18 @@ export function CleanProviderSection({
 			const authMethod = getProviderAuthMethod(providerId);
 			const isOAuthOrCLI = authMethod === "cli" || authMethod === "oauth";
 
+			const isGoogleApisHost = (urlString?: string): boolean => {
+				if (!urlString) return false;
+				try {
+					const hostname = new URL(urlString).hostname.toLowerCase();
+					return (
+						hostname === "googleapis.com" || hostname.endsWith(".googleapis.com")
+					);
+				} catch {
+					return false;
+				}
+			};
+
 			// Special handling for OAuth providers like Windsurf that don't need profiles
 			if (isOAuthOrCLI && providerId === "windsurf") {
 				// Check if Windsurf OAuth token is available via backend status
@@ -477,8 +489,8 @@ export function CleanProviderSection({
 				return (
 					detectedProvider === providerId ||
 					(providerId === "claude" && detectedProvider === "anthropic") ||
-					(providerId === "gemini" && p.baseUrl.includes("googleapis.com")) ||
-					(providerId === "google" && p.baseUrl.includes("googleapis.com"))
+					(providerId === "gemini" && isGoogleApisHost(p.baseUrl)) ||
+					(providerId === "google" && isGoogleApisHost(p.baseUrl))
 				);
 			});
 
