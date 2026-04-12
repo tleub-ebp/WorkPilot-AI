@@ -2,7 +2,7 @@ name: Release
 # Triggers on version tags (v*) to build and publish releases.
 # Can also be triggered manually via workflow_dispatch with a version input.
 #
-# IMPORTANT: If branch protection is enabled on 'main', the update-readme job
+# IMPORTANT: If branch protection is enabled on 'develop', the update-readme job
 # requires a PAT or GitHub App token with bypass permissions to push directly.
 # Currently uses GITHUB_TOKEN which works if "Allow GitHub Actions to create
 # and approve pull requests" is enabled OR branch protection is not configured.
@@ -666,7 +666,7 @@ jobs:
     steps:
       - uses: actions/checkout@v6
         with:
-          ref: main
+          ref: develop
           # Use PAT_TOKEN if configured, otherwise fall back to GITHUB_TOKEN
           token: ${{ secrets.PAT_TOKEN || github.token }}
 
@@ -722,4 +722,4 @@ jobs:
 
           git add README.md
           git commit -m "docs: update README to v${{ steps.version.outputs.version }} [skip ci]"
-          git push origin main
+          git push origin develop
