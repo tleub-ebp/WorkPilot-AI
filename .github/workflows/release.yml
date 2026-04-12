@@ -569,15 +569,18 @@ jobs:
           echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
 
       - name: Extract changelog from CHANGELOG.md
-        if: ${{ github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && inputs.dry_run != true && inputs.version != '') }}
+        if: ${{ github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && inputs.dry_run != true) }}
         id: changelog
         run: |
-          # Extract version: from tag on push, from input on workflow_dispatch
-          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+          # Extract version: from tag on push, from input, or from package.json
+          if [ "${{ github.event_name }}" = "push" ]; then
+            VERSION=${GITHUB_REF_NAME#v}
+          elif [ -n "${{ inputs.version }}" ]; then
             VERSION="${{ inputs.version }}"
             VERSION=${VERSION#v}
           else
-            VERSION=${GITHUB_REF_NAME#v}
+            VERSION=$(node -p "require('./apps/frontend/package.json').version")
+            echo "Extracted version from package.json: $VERSION"
           fi
           echo "version=$VERSION" >> $GITHUB_OUTPUT
           CHANGELOG_FILE="CHANGELOG.md"
@@ -634,10 +637,10 @@ jobs:
           } >> $GITHUB_OUTPUT
 
       - name: Create Release
-        if: ${{ github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && inputs.dry_run != true && inputs.version != '') }}
+        if: ${{ github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && inputs.dry_run != true) }}
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: ${{ github.event_name == 'workflow_dispatch' && format('v{0}', steps.changelog.outputs.version) || github.ref_name }}
+          tag_name: v${{ steps.changelog.outputs.version }}
           body: |
             ${{ steps.changelog.outputs.body }}
 
@@ -648,7 +651,7 @@ jobs:
             _VirusTotal scan results will be added automatically after release._
           files: release-assets/*
           draft: false
-          prerelease: ${{ contains(inputs.version || github.ref, 'beta') || contains(inputs.version || github.ref, 'alpha') }}
+          prerelease: ${{ contains(steps.changelog.outputs.version, 'beta') || contains(steps.changelog.outputs.version, 'alpha') }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
@@ -656,8 +659,8 @@ jobs:
   update-readme:
     needs: [create-release]
     runs-on: ubuntu-latest
-    # Run on tag push OR workflow_dispatch with version (skip dry runs without version)
-    if: ${{ github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && inputs.dry_run != true && inputs.version != '') }}
+    # Run on tag push OR workflow_dispatch (skip dry runs)
+    if: ${{ github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && inputs.dry_run != true) }}
     permissions:
       contents: write
     steps:
@@ -670,13 +673,15 @@ jobs:
       - name: Extract version and detect release type
         id: version
         run: |
-          # Extract version: from tag on push, from input on workflow_dispatch
-          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+          # Extract version: from tag on push, from input, or from package.json
+          if [ "${{ github.event_name }}" = "push" ]; then
+            VERSION=${GITHUB_REF_NAME#v}
+          elif [ -n "${{ inputs.version }}" ]; then
             VERSION="${{ inputs.version }}"
-            # Strip leading 'v' if present
             VERSION=${VERSION#v}
           else
-            VERSION=${GITHUB_REF_NAME#v}
+            VERSION=$(node -p "require('./apps/frontend/package.json').version")
+            echo "Extracted version from package.json: $VERSION"
           fi
 
           echo "version=$VERSION" >> $GITHUB_OUTPUT
