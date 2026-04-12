@@ -17,6 +17,34 @@ import sys
 # Semver pattern: X.Y.Z or X.Y.Z-prerelease.N
 SEMVER_PATTERN = re.compile(r"^\d+\.\d+\.\d+(-[a-zA-Z]+\.\d+)?$")
 
+# Semver regex for matching existing versions in README content
+# Prerelease MUST contain a dot (beta.10, alpha.1, rc.1) to avoid matching platform suffixes (win32, darwin)
+SEMVER_RE = r"\d+\.\d+\.\d+(?:-[a-zA-Z]+\.[a-zA-Z0-9.]+)?"
+# Shields.io escaped pattern (hyphens as --)
+SEMVER_BADGE_RE = r"\d+\.\d+\.\d+(?:--[a-zA-Z]+\.[a-zA-Z0-9.]+)?"
+
+# README section markers
+BETA_BADGE_START = "<!-- BETA_VERSION_BADGE -->"
+BETA_BADGE_END = "<!-- BETA_VERSION_BADGE_END -->"
+BETA_DL_START = "<!-- BETA_DOWNLOADS -->"
+BETA_DL_END = "<!-- BETA_DOWNLOADS_END -->"
+STABLE_BADGE_START = "<!-- STABLE_VERSION_BADGE -->"
+STABLE_BADGE_END = "<!-- STABLE_VERSION_BADGE_END -->"
+STABLE_DL_START = "<!-- STABLE_DOWNLOADS -->"
+STABLE_DL_END = "<!-- STABLE_DOWNLOADS_END -->"
+REPO_URL = "https://github.com/tleub-ebp/WorkPilot-AI"
+
+DOWNLOAD_TEMPLATE = """\
+| Platform | Download |
+|----------|----------|
+| **Windows** | [WorkPilot-AI-{v}-win32-x64.exe]({repo}/releases/download/v{v}/WorkPilot-AI-{v}-win32-x64.exe) |
+| **macOS (Apple Silicon)** | [WorkPilot-AI-{v}-darwin-arm64.dmg]({repo}/releases/download/v{v}/WorkPilot-AI-{v}-darwin-arm64.dmg) |
+| **macOS (Intel)** | [WorkPilot-AI-{v}-darwin-x64.dmg]({repo}/releases/download/v{v}/WorkPilot-AI-{v}-darwin-x64.dmg) |
+| **Linux** | [WorkPilot-AI-{v}-linux-x86_64.AppImage]({repo}/releases/download/v{v}/WorkPilot-AI-{v}-linux-x86_64.AppImage) |
+| **Linux (Debian)** | [WorkPilot-AI-{v}-linux-amd64.deb]({repo}/releases/download/v{v}/WorkPilot-AI-{v}-linux-amd64.deb) |
+| **Linux (Flatpak)** | [WorkPilot-AI-{v}-linux-x86_64.flatpak]({repo}/releases/download/v{v}/WorkPilot-AI-{v}-linux-x86_64.flatpak) |
+"""
+
 
 def validate_version(version: str) -> bool:
     """Validate version string matches semver format."""
@@ -38,102 +66,102 @@ def update_section(
     return re.sub(pattern, replace_section, text, flags=re.DOTALL)
 
 
+def replace_section_content(
+    text: str, start_marker: str, end_marker: str, new_content: str
+) -> str:
+    """Replace entire content between markers."""
+    pattern = f"({re.escape(start_marker)})(.*?)({re.escape(end_marker)})"
+    return re.sub(
+        pattern,
+        rf"\g<1>\n{new_content}\g<3>",
+        text,
+        flags=re.DOTALL,
+    )
+
+
+def section_has_links(text: str, start_marker: str, end_marker: str) -> bool:
+    """Check if a section already contains download links."""
+    pattern = f"{re.escape(start_marker)}(.*?){re.escape(end_marker)}"
+    match = re.search(pattern, text, flags=re.DOTALL)
+    if not match:
+        return False
+    return "WorkPilot-AI-" in match.group(1)
+
+
+def _update_or_generate_downloads(content, start, end, version, semver):
+    """Update existing download links or generate them if the section is empty."""
+    if section_has_links(content, start, end):
+        return update_section(content, start, end, [
+            (rf"WorkPilot-AI-{semver}", f"WorkPilot-AI-{version}"),
+            (rf"download/v{semver}/", f"download/v{version}/"),
+        ])
+    return replace_section_content(content, start, end, DOWNLOAD_TEMPLATE.format(v=version, repo=REPO_URL))
+
+
+def _update_beta(content, version, version_badge, semver, semver_badge):
+    """Update beta sections of README."""
+    print(f"Updating BETA section to {version} (badge: {version_badge})")
+
+    badge_line = f'[![Beta](https://img.shields.io/badge/beta-{version_badge}-orange?style=flat-square)]({REPO_URL}/releases/tag/v{version})\n'
+    if section_has_links(content, BETA_BADGE_START, BETA_BADGE_END):
+        content = re.sub(
+            rf"beta-{semver_badge}-orange", f"beta-{version_badge}-orange", content
+        )
+        content = update_section(
+            content, BETA_BADGE_START, BETA_BADGE_END,
+            [(rf"tag/v{semver}\)", f"tag/v{version})")],
+        )
+    else:
+        content = replace_section_content(content, BETA_BADGE_START, BETA_BADGE_END, badge_line)
+
+    content = _update_or_generate_downloads(content, BETA_DL_START, BETA_DL_END, version, semver)
+    return content
+
+
+def _update_stable(content, version, version_badge, semver, semver_badge):
+    """Update stable sections of README."""
+    print(f"Updating STABLE section to {version} (badge: {version_badge})")
+
+    # Stable version badge
+    stable_badge = f'[![Stable](https://img.shields.io/badge/stable-{version_badge}-blue?style=flat-square)]({REPO_URL}/releases/tag/v{version})\n'
+    if section_has_links(content, STABLE_BADGE_START, STABLE_BADGE_END):
+        content = update_section(content, STABLE_BADGE_START, STABLE_BADGE_END, [
+            (rf"stable-{semver_badge}-blue", f"stable-{version_badge}-blue"),
+            (rf"tag/v{semver}\)", f"tag/v{version})"),
+        ])
+    else:
+        content = replace_section_content(content, STABLE_BADGE_START, STABLE_BADGE_END, stable_badge)
+
+    # Download links
+    content = _update_or_generate_downloads(content, STABLE_DL_START, STABLE_DL_END, version, semver)
+
+    # Remove "no stable release yet" notice
+    content = re.sub(r"> No stable release yet\.[^\n]*\n\n?", "", content)
+
+    return content
+
+
 def update_readme(version: str, is_prerelease: bool) -> bool:
     """
     Update README.md with new version.
 
-    Args:
-        version: Version string (e.g., "2.8.0" or "2.8.0-beta.1")
-        is_prerelease: Whether this is a prerelease version
-
     Returns:
         True if changes were made, False otherwise
     """
-    # Shields.io escapes hyphens as --
     version_badge = version.replace("-", "--")
 
-    # Read README
     with open("README.md") as f:
         original_content = f.read()
 
-    content = original_content
-
-    # Semver pattern: matches X.Y.Z or X.Y.Z-prerelease (e.g., 2.7.2, 2.7.2-beta.10)
-    # Prerelease MUST contain a dot (beta.10, alpha.1, rc.1) to avoid matching platform suffixes (win32, darwin)
-    semver = r"\d+\.\d+\.\d+(?:-[a-zA-Z]+\.[a-zA-Z0-9.]+)?"
-    # Shields.io escaped pattern (hyphens as --)
-    semver_badge = r"\d+\.\d+\.\d+(?:--[a-zA-Z]+\.[a-zA-Z0-9.]+)?"
-
     if is_prerelease:
-        print(f"Updating BETA section to {version} (badge: {version_badge})")
-
-        # Update beta badge
-        content = re.sub(
-            rf"beta-{semver_badge}-orange", f"beta-{version_badge}-orange", content
-        )
-
-        # Update beta version badge link
-        content = update_section(
-            content,
-            "<!-- BETA_VERSION_BADGE -->",
-            "<!-- BETA_VERSION_BADGE_END -->",
-            [(rf"tag/v{semver}\)", f"tag/v{version})")],
-        )
-
-        # Update beta downloads
-        content = update_section(
-            content,
-            "<!-- BETA_DOWNLOADS -->",
-            "<!-- BETA_DOWNLOADS_END -->",
-            [
-                (rf"WorkPilot-AI-{semver}", f"WorkPilot-AI-{version}"),
-                (rf"download/v{semver}/", f"download/v{version}/"),
-            ],
-        )
+        content = _update_beta(original_content, version, version_badge, SEMVER_RE, SEMVER_BADGE_RE)
     else:
-        print(f"Updating STABLE section to {version} (badge: {version_badge})")
+        content = _update_stable(original_content, version, version_badge, SEMVER_RE, SEMVER_BADGE_RE)
 
-        # Update top version badge
-        content = update_section(
-            content,
-            "<!-- TOP_VERSION_BADGE -->",
-            "<!-- TOP_VERSION_BADGE_END -->",
-            [
-                (rf"version-{semver_badge}-blue", f"version-{version_badge}-blue"),
-                (rf"tag/v{semver}\)", f"tag/v{version})"),
-            ],
-        )
-
-        # Update stable badge
-        content = re.sub(
-            rf"stable-{semver_badge}-blue", f"stable-{version_badge}-blue", content
-        )
-
-        # Update stable version badge link
-        content = update_section(
-            content,
-            "<!-- STABLE_VERSION_BADGE -->",
-            "<!-- STABLE_VERSION_BADGE_END -->",
-            [(rf"tag/v{semver}\)", f"tag/v{version})")],
-        )
-
-        # Update stable downloads
-        content = update_section(
-            content,
-            "<!-- STABLE_DOWNLOADS -->",
-            "<!-- STABLE_DOWNLOADS_END -->",
-            [
-                (rf"WorkPilot-AI-{semver}", f"WorkPilot-AI-{version}"),
-                (rf"download/v{semver}/", f"download/v{version}/"),
-            ],
-        )
-
-    # Check if changes were made
     if content == original_content:
         print("No changes needed")
         return False
 
-    # Write updated README
     with open("README.md", "w") as f:
         f.write(content)
 
@@ -151,7 +179,6 @@ def main():
     )
     args = parser.parse_args()
 
-    # Validate version format
     if not validate_version(args.version):
         print(f"ERROR: Invalid version format: {args.version}", file=sys.stderr)
         print(
@@ -160,12 +187,10 @@ def main():
         )
         sys.exit(1)
 
-    # Auto-detect prerelease if not explicitly set
     is_prerelease = args.prerelease or ("-" in args.version)
 
     try:
-        changed = update_readme(args.version, is_prerelease)
-        sys.exit(0 if changed else 0)  # Exit 0 in both cases (no error)
+        update_readme(args.version, is_prerelease)
     except FileNotFoundError:
         print("ERROR: README.md not found", file=sys.stderr)
         sys.exit(1)

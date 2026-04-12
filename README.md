@@ -13,6 +13,24 @@
 
 ## Download
 
+### Stable Release
+
+> No stable release yet. See Beta below or [all releases](https://github.com/tleub-ebp/WorkPilot-AI/releases).
+
+<!-- STABLE_VERSION_BADGE -->
+<!-- STABLE_VERSION_BADGE_END -->
+
+<!-- STABLE_DOWNLOADS -->
+| Platform | Download |
+|----------|----------|
+| **Windows** | — |
+| **macOS (Apple Silicon)** | — |
+| **macOS (Intel)** | — |
+| **Linux** | — |
+| **Linux (Debian)** | — |
+| **Linux (Flatpak)** | — |
+<!-- STABLE_DOWNLOADS_END -->
+
 ### Beta Release
 
 > Beta releases may contain bugs and breaking changes. [View all releases](https://github.com/tleub-ebp/WorkPilot-AI/releases)
