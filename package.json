@@ -44,9 +44,7 @@
 		"electron"
 	],
 	"devDependencies": {
-		"concurrently": "^8.2.2",
-		"electron-vite": "5.0.0",
-		"jsdom": "^27.4.0"
+		"concurrently": "^8.2.2"
 	},
 	"dependencies": {
 		"@lydell/node-pty": "^1.1.0",
