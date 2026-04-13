@@ -64,12 +64,50 @@
 **Effort :** Moyen | **Impact :** Haut
 
 #### 2. Agent Replay — Sessions partageables & export
-**Aujourd'hui :** replay local uniquement.
-**Amélioration :**
-- Export d'une session en format partageable (lien signé + export JSON/MP4 timeline).
-- "Bookmark" sur un step pour discussion async en équipe.
-- Comparaison de **2 replays** côte à côte, pas juste A/B d'une tâche en cours.
-**Débloque :** revue de code assistée en équipe, onboarding ("regarde comment l'agent a résolu ça"), support client premium.
+
+**Aujourd'hui :** le replay est strictement local. La session enregistrée (tool calls, diffs, thinking) reste dans le `.workpilot/` du dev et n'est ni partageable, ni versionnable, ni collaborative. Résultat : impossible de dire « regarde comment l'agent a résolu ça » à un coéquipier sans screen share.
+
+**Amélioration proposée :**
+- **Export signé** : bouton « Share session » qui produit un bundle `.wpreplay` (JSON structuré compressé) avec URL signée temporaire (TTL 7j par défaut, configurable).
+- **Format video** : export MP4/WebM en rendu side-by-side (timeline + diff + thinking) pour demos marketing, stand-ups, issues GitHub.
+- **Bookmarks & annotations** : l'utilisateur pose des marqueurs sur un step (`t=2:34 → decision weird`) avec commentaire markdown, discutables en async.
+- **Comparaison 2 replays** : pas juste A/B live, mais deux sessions archivées (« comment cette refacto s'est passée en v2 vs v1 ? »).
+- **Viewer public minimal** : mini-app web (ou même statique, généré côté electron) qui charge un `.wpreplay` sans WorkPilot installé — utile pour onboarder ou partager à un client.
+
+**Fichiers à toucher :**
+- `apps/backend/agents/session_recorder.py` — ajout `export_session(session_id, format)`.
+- `apps/frontend/src/main/ipc-handlers/replay-handlers.ts` — IPC pour export + partage.
+- `apps/frontend/src/renderer/components/replay/ReplayViewer.tsx` — bookmarks UI, comparison mode.
+- `apps/frontend/src/renderer/components/replay/ReplayExportDialog.tsx` — nouveau dialog.
+- `apps/frontend/src/shared/types/replay.ts` — types Bookmark, ExportBundle.
+
+**Format `.wpreplay` (proposé) :**
+```json
+{
+  "version": "1.0",
+  "sessionId": "...",
+  "agent": { "role": "coder", "model": "claude-sonnet-4-6" },
+  "events": [{ "t": 0.0, "type": "tool_call", ... }],
+  "diffs": [{ "t": 12.3, "file": "...", "patch": "..." }],
+  "thinking": [{ "t": 1.2, "text": "..." }],
+  "bookmarks": [{ "t": 154.0, "note": "...", "author": "..." }],
+  "redacted": true
+}
+```
+
+**Sécurité & confidentialité :**
+- Redaction automatique des secrets (regex `API_KEY`, `Bearer`, chemins absolus du home dir) avant export.
+- Option « strip thinking » pour ne partager que les actions (cas enterprise strict).
+- URLs signées avec expiration, révocables depuis Settings.
+
+**Métriques :**
+- Nombre de sessions exportées / semaine.
+- Taux d'ouverture des liens partagés.
+- % de replays avec bookmarks (engagement).
+
+**Débloque :** revue async en équipe, onboarding visuel, démos marketing, support client premium (« envoyez-nous le replay, on regarde »).
+
+**Effort :** Moyen | **Impact :** Haut
 
 #### 3. Pixel Office — Gamification & métriques d'équipe
 **Aujourd'hui :** visualisation esthétique.
