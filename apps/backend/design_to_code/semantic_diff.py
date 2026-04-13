@@ -14,7 +14,6 @@ import logging
 import math
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -35,10 +34,10 @@ class ComponentType(str, Enum):
 
 
 class DiffAction(str, Enum):
-    MISSING = "missing"       # In design but not in code
-    EXTRA = "extra"           # In code but not in design
+    MISSING = "missing"  # In design but not in code
+    EXTRA = "extra"  # In code but not in design
     STYLE_MISMATCH = "style_mismatch"  # Present but styled differently
-    POSITION_OFF = "position_off"      # Present but wrong position
+    POSITION_OFF = "position_off"  # Present but wrong position
     CONTENT_MISMATCH = "content_mismatch"  # Wrong text/content
     MATCH = "match"
 
@@ -130,14 +129,16 @@ class SemanticDiffAnalyzer:
         for d_comp in design:
             best_match = self._find_best_match(d_comp, code, matched_code_ids)
             if best_match is None:
-                diffs.append(ComponentDiff(
-                    component_id=d_comp.id,
-                    component_type=d_comp.component_type,
-                    action=DiffAction.MISSING,
-                    design_spec=d_comp,
-                    description=f"Missing {d_comp.component_type.value}: '{d_comp.text or d_comp.id}'",
-                    correction_hint=f"Add {d_comp.component_type.value} '{d_comp.text or d_comp.id}' in {d_comp.region or 'page'}",
-                ))
+                diffs.append(
+                    ComponentDiff(
+                        component_id=d_comp.id,
+                        component_type=d_comp.component_type,
+                        action=DiffAction.MISSING,
+                        design_spec=d_comp,
+                        description=f"Missing {d_comp.component_type.value}: '{d_comp.text or d_comp.id}'",
+                        correction_hint=f"Add {d_comp.component_type.value} '{d_comp.text or d_comp.id}' in {d_comp.region or 'page'}",
+                    )
+                )
             else:
                 matched_code_ids.add(best_match.id)
                 diff = self._compare_components(d_comp, best_match)
@@ -146,14 +147,16 @@ class SemanticDiffAnalyzer:
         # Find extra components in code
         for c_comp in code:
             if c_comp.id not in matched_code_ids:
-                diffs.append(ComponentDiff(
-                    component_id=c_comp.id,
-                    component_type=c_comp.component_type,
-                    action=DiffAction.EXTRA,
-                    code_spec=c_comp,
-                    description=f"Extra {c_comp.component_type.value}: '{c_comp.text or c_comp.id}'",
-                    correction_hint=f"Consider removing {c_comp.component_type.value} '{c_comp.text or c_comp.id}'",
-                ))
+                diffs.append(
+                    ComponentDiff(
+                        component_id=c_comp.id,
+                        component_type=c_comp.component_type,
+                        action=DiffAction.EXTRA,
+                        code_spec=c_comp,
+                        description=f"Extra {c_comp.component_type.value}: '{c_comp.text or c_comp.id}'",
+                        correction_hint=f"Consider removing {c_comp.component_type.value} '{c_comp.text or c_comp.id}'",
+                    )
+                )
 
         # Compute stats
         total = len(design)
@@ -161,8 +164,14 @@ class SemanticDiffAnalyzer:
         missing = sum(1 for d in diffs if d.action == DiffAction.MISSING)
         extra = sum(1 for d in diffs if d.action == DiffAction.EXTRA)
         mismatched = sum(
-            1 for d in diffs
-            if d.action in (DiffAction.STYLE_MISMATCH, DiffAction.POSITION_OFF, DiffAction.CONTENT_MISMATCH)
+            1
+            for d in diffs
+            if d.action
+            in (
+                DiffAction.STYLE_MISMATCH,
+                DiffAction.POSITION_OFF,
+                DiffAction.CONTENT_MISMATCH,
+            )
         )
 
         fidelity = matched / total if total > 0 else 1.0
@@ -175,7 +184,9 @@ class SemanticDiffAnalyzer:
             mismatched=mismatched,
             fidelity_score=fidelity,
             diffs=diffs,
-            correction_hints=[d.correction_hint for d in diffs if d.is_issue and d.correction_hint],
+            correction_hints=[
+                d.correction_hint for d in diffs if d.is_issue and d.correction_hint
+            ],
         )
 
     def _find_best_match(
@@ -186,7 +197,8 @@ class SemanticDiffAnalyzer:
     ) -> ComponentSpec | None:
         """Find the best matching code component for a design component."""
         candidates = [
-            c for c in code_components
+            c
+            for c in code_components
             if c.id not in already_matched
             and c.component_type == design_comp.component_type
         ]
@@ -194,7 +206,8 @@ class SemanticDiffAnalyzer:
         if not candidates:
             # Try matching by text content and region
             candidates = [
-                c for c in code_components
+                c
+                for c in code_components
                 if c.id not in already_matched
                 and c.text == design_comp.text
                 and c.region == design_comp.region
@@ -270,9 +283,7 @@ class SemanticDiffAnalyzer:
             if dist > self._position_tolerance:
                 if action == DiffAction.MATCH:
                     action = DiffAction.POSITION_OFF
-                descriptions.append(
-                    f"Position off by {dist:.0f}px"
-                )
+                descriptions.append(f"Position off by {dist:.0f}px")
 
         # Check styles
         for key, expected in design.styles.items():

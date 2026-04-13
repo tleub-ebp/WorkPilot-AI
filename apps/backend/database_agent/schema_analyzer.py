@@ -14,7 +14,6 @@ import logging
 import re
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -48,7 +47,19 @@ class ColumnInfo:
     @property
     def is_numeric_type(self) -> bool:
         upper = self.data_type.upper()
-        return any(t in upper for t in ("INT", "FLOAT", "DECIMAL", "NUMERIC", "REAL", "DOUBLE", "SERIAL", "BIGSERIAL"))
+        return any(
+            t in upper
+            for t in (
+                "INT",
+                "FLOAT",
+                "DECIMAL",
+                "NUMERIC",
+                "REAL",
+                "DOUBLE",
+                "SERIAL",
+                "BIGSERIAL",
+            )
+        )
 
 
 @dataclass
@@ -133,15 +144,11 @@ class SchemaAnalyzer:
             table_name = match.group(2)
             body = match.group(3)
             columns = self._parse_columns(body)
-            tables.append(
-                TableInfo(name=table_name, schema=schema, columns=columns)
-            )
+            tables.append(TableInfo(name=table_name, schema=schema, columns=columns))
 
         return tables
 
-    def classify_change(
-        self, table: TableInfo, change_description: str
-    ) -> str:
+    def classify_change(self, table: TableInfo, change_description: str) -> str:
         """Classify a schema change as 'non_destructive' or 'destructive'.
 
         Simple heuristic based on keywords.
@@ -149,17 +156,29 @@ class SchemaAnalyzer:
         desc = change_description.lower()
 
         destructive_keywords = [
-            "rename column", "rename table", "change type", "alter type",
-            "drop column", "drop table", "split table", "merge table",
-            "remove column", "delete column",
+            "rename column",
+            "rename table",
+            "change type",
+            "alter type",
+            "drop column",
+            "drop table",
+            "split table",
+            "merge table",
+            "remove column",
+            "delete column",
         ]
         for kw in destructive_keywords:
             if kw in desc:
                 return "destructive"
 
         non_destructive_keywords = [
-            "add column", "add index", "add table", "create table",
-            "create index", "add constraint", "add nullable",
+            "add column",
+            "add index",
+            "add table",
+            "create table",
+            "create index",
+            "add constraint",
+            "add nullable",
         ]
         for kw in non_destructive_keywords:
             if kw in desc:
@@ -179,7 +198,9 @@ class SchemaAnalyzer:
                 continue
             # Skip constraints at the table level
             upper = part.upper().lstrip()
-            if upper.startswith(("PRIMARY KEY", "FOREIGN KEY", "UNIQUE", "CHECK", "CONSTRAINT", "INDEX")):
+            if upper.startswith(
+                ("PRIMARY KEY", "FOREIGN KEY", "UNIQUE", "CHECK", "CONSTRAINT", "INDEX")
+            ):
                 continue
 
             col = self._parse_single_column(part)
@@ -240,7 +261,9 @@ class SchemaAnalyzer:
 
         # Extract foreign key reference (use original case)
         fk = None
-        ref_match = re.search(r"REFERENCES\s+\"?(\w+)\"?\s*\(\"?(\w+)\"?\)", rest_raw, re.IGNORECASE)
+        ref_match = re.search(
+            r"REFERENCES\s+\"?(\w+)\"?\s*\(\"?(\w+)\"?\)", rest_raw, re.IGNORECASE
+        )
         if ref_match:
             fk = f"{ref_match.group(1)}.{ref_match.group(2)}"
 

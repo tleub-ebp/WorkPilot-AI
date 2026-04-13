@@ -11,9 +11,8 @@ from __future__ import annotations
 import logging
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any
 
-from .schema_analyzer import ColumnInfo, SchemaAnalyzer, TableInfo
+from .schema_analyzer import ColumnInfo, SchemaAnalyzer
 
 logger = logging.getLogger(__name__)
 
@@ -103,29 +102,35 @@ class MigrationPlanner:
             warnings=["Data in this column will be permanently lost."],
         )
 
-        plan.steps.append(MigrationStep(
-            phase=MigrationPhase.EXPAND,
-            description=f"Mark column '{column_name}' as deprecated (add comment)",
-            sql_up=f"COMMENT ON COLUMN {table_name}.{column_name} IS 'DEPRECATED - scheduled for removal';",
-            sql_down=f"COMMENT ON COLUMN {table_name}.{column_name} IS '';",
-        ))
+        plan.steps.append(
+            MigrationStep(
+                phase=MigrationPhase.EXPAND,
+                description=f"Mark column '{column_name}' as deprecated (add comment)",
+                sql_up=f"COMMENT ON COLUMN {table_name}.{column_name} IS 'DEPRECATED - scheduled for removal';",
+                sql_down=f"COMMENT ON COLUMN {table_name}.{column_name} IS '';",
+            )
+        )
 
-        plan.steps.append(MigrationStep(
-            phase=MigrationPhase.SWITCH,
-            description=f"Update application code to stop reading/writing '{column_name}'",
-            sql_up="-- No SQL: application code change required",
-            sql_down="-- No SQL: revert application code change",
-            is_reversible=True,
-        ))
+        plan.steps.append(
+            MigrationStep(
+                phase=MigrationPhase.SWITCH,
+                description=f"Update application code to stop reading/writing '{column_name}'",
+                sql_up="-- No SQL: application code change required",
+                sql_down="-- No SQL: revert application code change",
+                is_reversible=True,
+            )
+        )
 
-        plan.steps.append(MigrationStep(
-            phase=MigrationPhase.CONTRACT,
-            description=f"Drop column '{column_name}'",
-            sql_up=f"ALTER TABLE {table_name} DROP COLUMN {column_name};",
-            sql_down=f"-- WARNING: Cannot restore dropped column data",
-            requires_lock=True,
-            is_reversible=False,
-        ))
+        plan.steps.append(
+            MigrationStep(
+                phase=MigrationPhase.CONTRACT,
+                description=f"Drop column '{column_name}'",
+                sql_up=f"ALTER TABLE {table_name} DROP COLUMN {column_name};",
+                sql_down="-- WARNING: Cannot restore dropped column data",
+                requires_lock=True,
+                is_reversible=False,
+            )
+        )
 
         return plan
 
@@ -145,40 +150,50 @@ class MigrationPlanner:
         )
 
         # Step 1: Expand — add new column
-        plan.steps.append(MigrationStep(
-            phase=MigrationPhase.EXPAND,
-            description=f"Add new column '{new_name}'",
-            sql_up=f"ALTER TABLE {table_name} ADD COLUMN {new_name} {data_type};",
-            sql_down=f"ALTER TABLE {table_name} DROP COLUMN {new_name};",
-        ))
+        plan.steps.append(
+            MigrationStep(
+                phase=MigrationPhase.EXPAND,
+                description=f"Add new column '{new_name}'",
+                sql_up=f"ALTER TABLE {table_name} ADD COLUMN {new_name} {data_type};",
+                sql_down=f"ALTER TABLE {table_name} DROP COLUMN {new_name};",
+            )
+        )
 
         # Step 2: Migrate — backfill data
-        plan.steps.append(MigrationStep(
-            phase=MigrationPhase.MIGRATE,
-            description=f"Backfill data from '{old_name}' to '{new_name}'",
-            sql_up=f"UPDATE {table_name} SET {new_name} = {old_name};",
-            sql_down=f"UPDATE {table_name} SET {old_name} = {new_name};",
-            estimated_duration_seconds=self._estimate_backfill_time(estimated_rows),
-        ))
+        plan.steps.append(
+            MigrationStep(
+                phase=MigrationPhase.MIGRATE,
+                description=f"Backfill data from '{old_name}' to '{new_name}'",
+                sql_up=f"UPDATE {table_name} SET {new_name} = {old_name};",
+                sql_down=f"UPDATE {table_name} SET {old_name} = {new_name};",
+                estimated_duration_seconds=self._estimate_backfill_time(estimated_rows),
+            )
+        )
 
         # Step 3: Switch — update application code
-        plan.steps.append(MigrationStep(
-            phase=MigrationPhase.SWITCH,
-            description=f"Update application code to use '{new_name}' instead of '{old_name}'",
-            sql_up="-- No SQL: application code change required",
-            sql_down="-- No SQL: revert application code change",
-        ))
+        plan.steps.append(
+            MigrationStep(
+                phase=MigrationPhase.SWITCH,
+                description=f"Update application code to use '{new_name}' instead of '{old_name}'",
+                sql_up="-- No SQL: application code change required",
+                sql_down="-- No SQL: revert application code change",
+            )
+        )
 
         # Step 4: Contract — drop old column
-        plan.steps.append(MigrationStep(
-            phase=MigrationPhase.CONTRACT,
-            description=f"Drop old column '{old_name}'",
-            sql_up=f"ALTER TABLE {table_name} DROP COLUMN {old_name};",
-            sql_down=f"ALTER TABLE {table_name} ADD COLUMN {old_name} {data_type};",
-            requires_lock=True,
-        ))
+        plan.steps.append(
+            MigrationStep(
+                phase=MigrationPhase.CONTRACT,
+                description=f"Drop old column '{old_name}'",
+                sql_up=f"ALTER TABLE {table_name} DROP COLUMN {old_name};",
+                sql_down=f"ALTER TABLE {table_name} ADD COLUMN {old_name} {data_type};",
+                requires_lock=True,
+            )
+        )
 
-        plan.estimated_total_seconds = sum(s.estimated_duration_seconds for s in plan.steps)
+        plan.estimated_total_seconds = sum(
+            s.estimated_duration_seconds for s in plan.steps
+        )
         return plan
 
     def plan_change_type(
@@ -198,42 +213,52 @@ class MigrationPlanner:
 
         temp_col = f"{column_name}_new"
 
-        plan.steps.append(MigrationStep(
-            phase=MigrationPhase.EXPAND,
-            description=f"Add temporary column '{temp_col}' with type {new_type}",
-            sql_up=f"ALTER TABLE {table_name} ADD COLUMN {temp_col} {new_type};",
-            sql_down=f"ALTER TABLE {table_name} DROP COLUMN {temp_col};",
-        ))
+        plan.steps.append(
+            MigrationStep(
+                phase=MigrationPhase.EXPAND,
+                description=f"Add temporary column '{temp_col}' with type {new_type}",
+                sql_up=f"ALTER TABLE {table_name} ADD COLUMN {temp_col} {new_type};",
+                sql_down=f"ALTER TABLE {table_name} DROP COLUMN {temp_col};",
+            )
+        )
 
-        plan.steps.append(MigrationStep(
-            phase=MigrationPhase.MIGRATE,
-            description=f"Backfill data from '{column_name}' to '{temp_col}' with type cast",
-            sql_up=f"UPDATE {table_name} SET {temp_col} = CAST({column_name} AS {new_type});",
-            sql_down=f"-- Reverse cast may not be possible",
-            estimated_duration_seconds=self._estimate_backfill_time(estimated_rows),
-            warnings=[f"Cast from {old_type} to {new_type} may lose data."],
-        ))
+        plan.steps.append(
+            MigrationStep(
+                phase=MigrationPhase.MIGRATE,
+                description=f"Backfill data from '{column_name}' to '{temp_col}' with type cast",
+                sql_up=f"UPDATE {table_name} SET {temp_col} = CAST({column_name} AS {new_type});",
+                sql_down="-- Reverse cast may not be possible",
+                estimated_duration_seconds=self._estimate_backfill_time(estimated_rows),
+                warnings=[f"Cast from {old_type} to {new_type} may lose data."],
+            )
+        )
 
-        plan.steps.append(MigrationStep(
-            phase=MigrationPhase.SWITCH,
-            description="Update application code to use the new column",
-            sql_up="-- No SQL: application code change required",
-            sql_down="-- No SQL: revert application code change",
-        ))
+        plan.steps.append(
+            MigrationStep(
+                phase=MigrationPhase.SWITCH,
+                description="Update application code to use the new column",
+                sql_up="-- No SQL: application code change required",
+                sql_down="-- No SQL: revert application code change",
+            )
+        )
 
-        plan.steps.append(MigrationStep(
-            phase=MigrationPhase.CONTRACT,
-            description=f"Drop old column and rename new",
-            sql_up=(
-                f"ALTER TABLE {table_name} DROP COLUMN {column_name};\n"
-                f"ALTER TABLE {table_name} RENAME COLUMN {temp_col} TO {column_name};"
-            ),
-            sql_down=f"-- Manual restoration required",
-            requires_lock=True,
-            is_reversible=False,
-        ))
+        plan.steps.append(
+            MigrationStep(
+                phase=MigrationPhase.CONTRACT,
+                description="Drop old column and rename new",
+                sql_up=(
+                    f"ALTER TABLE {table_name} DROP COLUMN {column_name};\n"
+                    f"ALTER TABLE {table_name} RENAME COLUMN {temp_col} TO {column_name};"
+                ),
+                sql_down="-- Manual restoration required",
+                requires_lock=True,
+                is_reversible=False,
+            )
+        )
 
-        plan.estimated_total_seconds = sum(s.estimated_duration_seconds for s in plan.steps)
+        plan.estimated_total_seconds = sum(
+            s.estimated_duration_seconds for s in plan.steps
+        )
         return plan
 
     def plan_add_index(
@@ -255,13 +280,15 @@ class MigrationPlanner:
             migration_type=MigrationType.NON_DESTRUCTIVE,
         )
 
-        plan.steps.append(MigrationStep(
-            phase=MigrationPhase.SINGLE,
-            description=f"Create index '{index_name}' on ({cols})",
-            sql_up=f"CREATE {unique_kw}INDEX {concurrent_kw}{index_name} ON {table_name} ({cols});",
-            sql_down=f"DROP INDEX {index_name};",
-            requires_lock=not concurrent,
-        ))
+        plan.steps.append(
+            MigrationStep(
+                phase=MigrationPhase.SINGLE,
+                description=f"Create index '{index_name}' on ({cols})",
+                sql_up=f"CREATE {unique_kw}INDEX {concurrent_kw}{index_name} ON {table_name} ({cols});",
+                sql_down=f"DROP INDEX {index_name};",
+                requires_lock=not concurrent,
+            )
+        )
 
         if not concurrent:
             plan.warnings.append(
@@ -288,12 +315,14 @@ class MigrationPlanner:
             migration_type=MigrationType.NON_DESTRUCTIVE,
         )
 
-        plan.steps.append(MigrationStep(
-            phase=MigrationPhase.SINGLE,
-            description=f"Add column '{column.name}'",
-            sql_up=f"ALTER TABLE {table_name} ADD COLUMN {column.name} {column.data_type}{null_clause}{default_clause};",
-            sql_down=f"ALTER TABLE {table_name} DROP COLUMN {column.name};",
-        ))
+        plan.steps.append(
+            MigrationStep(
+                phase=MigrationPhase.SINGLE,
+                description=f"Add column '{column.name}'",
+                sql_up=f"ALTER TABLE {table_name} ADD COLUMN {column.name} {column.data_type}{null_clause}{default_clause};",
+                sql_down=f"ALTER TABLE {table_name} DROP COLUMN {column.name};",
+            )
+        )
 
         return plan
 
@@ -307,30 +336,38 @@ class MigrationPlanner:
             migration_type=MigrationType.DESTRUCTIVE,
         )
 
-        plan.steps.append(MigrationStep(
-            phase=MigrationPhase.EXPAND,
-            description=f"Add nullable column '{column.name}'",
-            sql_up=f"ALTER TABLE {table_name} ADD COLUMN {column.name} {column.data_type};",
-            sql_down=f"ALTER TABLE {table_name} DROP COLUMN {column.name};",
-        ))
+        plan.steps.append(
+            MigrationStep(
+                phase=MigrationPhase.EXPAND,
+                description=f"Add nullable column '{column.name}'",
+                sql_up=f"ALTER TABLE {table_name} ADD COLUMN {column.name} {column.data_type};",
+                sql_down=f"ALTER TABLE {table_name} DROP COLUMN {column.name};",
+            )
+        )
 
-        plan.steps.append(MigrationStep(
-            phase=MigrationPhase.MIGRATE,
-            description=f"Backfill default value for '{column.name}'",
-            sql_up=f"UPDATE {table_name} SET {column.name} = '' WHERE {column.name} IS NULL;",
-            sql_down="-- No reverse needed",
-            estimated_duration_seconds=self._estimate_backfill_time(estimated_rows),
-        ))
+        plan.steps.append(
+            MigrationStep(
+                phase=MigrationPhase.MIGRATE,
+                description=f"Backfill default value for '{column.name}'",
+                sql_up=f"UPDATE {table_name} SET {column.name} = '' WHERE {column.name} IS NULL;",
+                sql_down="-- No reverse needed",
+                estimated_duration_seconds=self._estimate_backfill_time(estimated_rows),
+            )
+        )
 
-        plan.steps.append(MigrationStep(
-            phase=MigrationPhase.CONTRACT,
-            description=f"Add NOT NULL constraint",
-            sql_up=f"ALTER TABLE {table_name} ALTER COLUMN {column.name} SET NOT NULL;",
-            sql_down=f"ALTER TABLE {table_name} ALTER COLUMN {column.name} DROP NOT NULL;",
-            requires_lock=True,
-        ))
+        plan.steps.append(
+            MigrationStep(
+                phase=MigrationPhase.CONTRACT,
+                description="Add NOT NULL constraint",
+                sql_up=f"ALTER TABLE {table_name} ALTER COLUMN {column.name} SET NOT NULL;",
+                sql_down=f"ALTER TABLE {table_name} ALTER COLUMN {column.name} DROP NOT NULL;",
+                requires_lock=True,
+            )
+        )
 
-        plan.estimated_total_seconds = sum(s.estimated_duration_seconds for s in plan.steps)
+        plan.estimated_total_seconds = sum(
+            s.estimated_duration_seconds for s in plan.steps
+        )
         return plan
 
     @staticmethod

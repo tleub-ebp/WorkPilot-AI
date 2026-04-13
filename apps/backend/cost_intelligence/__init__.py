@@ -20,7 +20,7 @@ from .budget_enforcer import (
     CircuitBreakerState,
     DegradationTier,
 )
-from .catalog import PricingCatalog, ModelPricing
+from .catalog import ModelPricing, PricingCatalog
 from .live_tracker import CostEvent, LiveCostTracker, TrackerSnapshot
 from .reservation import BudgetReservation, ReservationManager
 

@@ -11,7 +11,7 @@ from __future__ import annotations
 
 import logging
 import re
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from enum import Enum
 from typing import Any
 
@@ -60,7 +60,9 @@ class ConcurrencyAnalyzer:
             print(f"{f.issue_type}: {f.description}")
     """
 
-    def analyze_python_code(self, code: str, filename: str = "") -> list[ConcurrencyFinding]:
+    def analyze_python_code(
+        self, code: str, filename: str = ""
+    ) -> list[ConcurrencyFinding]:
         """Analyze Python source code for concurrency issues."""
         findings: list[ConcurrencyFinding] = []
         findings.extend(self._check_shared_mutable_state(code, filename))
@@ -96,12 +98,14 @@ class ConcurrencyAnalyzer:
 
             if len(threads) > 1 and has_write:
                 race_type = "read-write" if has_read else "write-write"
-                races.append(RaceCondition(
-                    resource=resource,
-                    description=f"Potential {race_type} race on '{resource}' across {len(threads)} threads",
-                    severity="critical" if race_type == "write-write" else "high",
-                    suggestion=f"Protect '{resource}' with a lock or use thread-safe data structure.",
-                ))
+                races.append(
+                    RaceCondition(
+                        resource=resource,
+                        description=f"Potential {race_type} race on '{resource}' across {len(threads)} threads",
+                        severity="critical" if race_type == "write-write" else "high",
+                        suggestion=f"Protect '{resource}' with a lock or use thread-safe data structure.",
+                    )
+                )
 
         return races
 
@@ -120,14 +124,16 @@ class ConcurrencyAnalyzer:
                     # Skip if it's a constant (ALL_CAPS)
                     var_name = stripped.split("=")[0].split(":")[0].strip()
                     if not var_name.isupper() and not var_name.startswith("_"):
-                        findings.append(ConcurrencyFinding(
-                            issue_type=ConcurrencyIssueType.SHARED_MUTABLE_STATE,
-                            description=f"Module-level mutable variable '{var_name}'",
-                            location=f"{filename}:{i}" if filename else f"line {i}",
-                            severity="medium",
-                            code_snippet=stripped,
-                            suggestion=f"Consider making '{var_name}' thread-local or protecting with a lock.",
-                        ))
+                        findings.append(
+                            ConcurrencyFinding(
+                                issue_type=ConcurrencyIssueType.SHARED_MUTABLE_STATE,
+                                description=f"Module-level mutable variable '{var_name}'",
+                                location=f"{filename}:{i}" if filename else f"line {i}",
+                                severity="medium",
+                                code_snippet=stripped,
+                                suggestion=f"Consider making '{var_name}' thread-local or protecting with a lock.",
+                            )
+                        )
 
         return findings
 
@@ -142,24 +148,28 @@ class ConcurrencyAnalyzer:
         has_lock = "Lock()" in code or "RLock()" in code or "Semaphore(" in code
 
         if has_threading and not has_lock:
-            findings.append(ConcurrencyFinding(
-                issue_type=ConcurrencyIssueType.MISSING_LOCK,
-                description="Threading used without any Lock/RLock/Semaphore",
-                location=filename or "module",
-                severity="high",
-                suggestion="Add locks to protect shared state accessed from threads.",
-            ))
+            findings.append(
+                ConcurrencyFinding(
+                    issue_type=ConcurrencyIssueType.MISSING_LOCK,
+                    description="Threading used without any Lock/RLock/Semaphore",
+                    location=filename or "module",
+                    severity="high",
+                    suggestion="Add locks to protect shared state accessed from threads.",
+                )
+            )
 
         if has_asyncio and not has_lock and "asyncio.Lock()" not in code:
             # Check for shared state modification in async code
             if re.search(r"self\.\w+\s*[+\-*/]?=", code) and "async def" in code:
-                findings.append(ConcurrencyFinding(
-                    issue_type=ConcurrencyIssueType.MISSING_LOCK,
-                    description="Async code modifies instance state without asyncio.Lock",
-                    location=filename or "module",
-                    severity="medium",
-                    suggestion="Use asyncio.Lock() to protect shared state in async code.",
-                ))
+                findings.append(
+                    ConcurrencyFinding(
+                        issue_type=ConcurrencyIssueType.MISSING_LOCK,
+                        description="Async code modifies instance state without asyncio.Lock",
+                        location=filename or "module",
+                        severity="medium",
+                        suggestion="Use asyncio.Lock() to protect shared state in async code.",
+                    )
+                )
 
         return findings
 
@@ -177,13 +187,15 @@ class ConcurrencyAnalyzer:
             matches = lock_pattern.findall(func)
             if len(matches) >= 2:
                 func_name = func.split("(")[0].strip() if "(" in func else "unknown"
-                findings.append(ConcurrencyFinding(
-                    issue_type=ConcurrencyIssueType.DEADLOCK_RISK,
-                    description=f"Multiple lock acquisitions in '{func_name}'",
-                    location=f"{filename}:{func_name}" if filename else func_name,
-                    severity="high",
-                    suggestion="Ensure consistent lock ordering or use a single coarser lock.",
-                ))
+                findings.append(
+                    ConcurrencyFinding(
+                        issue_type=ConcurrencyIssueType.DEADLOCK_RISK,
+                        description=f"Multiple lock acquisitions in '{func_name}'",
+                        location=f"{filename}:{func_name}" if filename else func_name,
+                        severity="high",
+                        suggestion="Ensure consistent lock ordering or use a single coarser lock.",
+                    )
+                )
 
         return findings
 
@@ -197,12 +209,14 @@ class ConcurrencyAnalyzer:
         for i, line in enumerate(lines, 1):
             if re.match(r"\s+global\s+\w+", line):
                 var = line.strip().replace("global ", "")
-                findings.append(ConcurrencyFinding(
-                    issue_type=ConcurrencyIssueType.SHARED_MUTABLE_STATE,
-                    description=f"'global {var}' used — shared mutable state risk",
-                    location=f"{filename}:{i}" if filename else f"line {i}",
-                    severity="medium",
-                    suggestion="Avoid global mutable state. Use dependency injection or thread-local storage.",
-                ))
+                findings.append(
+                    ConcurrencyFinding(
+                        issue_type=ConcurrencyIssueType.SHARED_MUTABLE_STATE,
+                        description=f"'global {var}' used — shared mutable state risk",
+                        location=f"{filename}:{i}" if filename else f"line {i}",
+                        severity="medium",
+                        suggestion="Avoid global mutable state. Use dependency injection or thread-local storage.",
+                    )
+                )
 
         return findings

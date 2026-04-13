@@ -15,10 +15,10 @@ logger = logging.getLogger(__name__)
 
 
 class OperationType(str, Enum):
-    SIMPLE_UPDATE = "simple_update"       # SET col = value
-    CAST_UPDATE = "cast_update"           # SET col = CAST(...)
-    COPY_TABLE = "copy_table"             # Full table rewrite
-    INDEX_BUILD = "index_build"           # CREATE INDEX
+    SIMPLE_UPDATE = "simple_update"  # SET col = value
+    CAST_UPDATE = "cast_update"  # SET col = CAST(...)
+    COPY_TABLE = "copy_table"  # Full table rewrite
+    INDEX_BUILD = "index_build"  # CREATE INDEX
     CONSTRAINT_VALIDATE = "constraint_validate"  # VALIDATE CONSTRAINT
 
 

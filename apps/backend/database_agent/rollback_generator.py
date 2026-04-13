@@ -14,7 +14,7 @@ import logging
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 
-from .migration_planner import MigrationPlan, MigrationStep
+from .migration_planner import MigrationPlan
 
 logger = logging.getLogger(__name__)
 
@@ -80,8 +80,7 @@ class RollbackGenerator:
                 )
             elif step.sql_down and not step.sql_down.startswith("--"):
                 rollback.steps.append(
-                    f"-- Rollback: {step.description}\n"
-                    f"{step.sql_down}"
+                    f"-- Rollback: {step.description}\n{step.sql_down}"
                 )
             else:
                 rollback.steps.append(

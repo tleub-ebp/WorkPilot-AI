@@ -13,7 +13,7 @@ Modules:
 """
 
 from .backfill_estimator import BackfillEstimate, BackfillEstimator
-from .lock_detector import LockDetector, LockWarning, LockSeverity
+from .lock_detector import LockDetector, LockSeverity, LockWarning
 from .migration_planner import (
     MigrationPlan,
     MigrationPlanner,

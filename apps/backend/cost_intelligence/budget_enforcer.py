@@ -11,9 +11,9 @@ from __future__ import annotations
 
 import logging
 import time
-from dataclasses import dataclass, field
+from collections.abc import Callable
+from dataclasses import dataclass
 from enum import Enum
-from typing import Any, Callable
 
 from .live_tracker import LiveCostTracker
 
@@ -22,17 +22,17 @@ logger = logging.getLogger(__name__)
 
 class AlertLevel(str, Enum):
     NONE = "none"
-    INFO_50 = "info_50"       # 50% of budget
+    INFO_50 = "info_50"  # 50% of budget
     WARNING_75 = "warning_75"  # 75% of budget
     CRITICAL_90 = "critical_90"  # 90% of budget
-    HARD_STOP = "hard_stop"    # 100% of budget
+    HARD_STOP = "hard_stop"  # 100% of budget
 
 
 class DegradationTier(str, Enum):
-    FLAGSHIP = "flagship"   # Opus, GPT-4.1, Gemini 2.5 Pro
-    STANDARD = "standard"   # Sonnet, GPT-4o, Gemini 2.5 Flash
-    FAST = "fast"           # Haiku, GPT-4o-mini, Gemini Flash
-    LOCAL = "local"         # Ollama models (cost $0)
+    FLAGSHIP = "flagship"  # Opus, GPT-4.1, Gemini 2.5 Pro
+    STANDARD = "standard"  # Sonnet, GPT-4o, Gemini 2.5 Flash
+    FAST = "fast"  # Haiku, GPT-4o-mini, Gemini Flash
+    LOCAL = "local"  # Ollama models (cost $0)
 
     @property
     def rank(self) -> int:
@@ -80,8 +80,8 @@ DEFAULT_TIER_MODELS: dict[DegradationTier, list[dict[str, str]]] = {
 
 
 class CircuitBreakerState(str, Enum):
-    CLOSED = "closed"   # Normal operation
-    OPEN = "open"       # Agent suspended
+    CLOSED = "closed"  # Normal operation
+    OPEN = "open"  # Agent suspended
     HALF_OPEN = "half_open"  # Testing if agent can resume
 
 
@@ -91,8 +91,8 @@ class BudgetConfig:
 
     scope: str = "spec"  # organisation | project | spec
     scope_id: str = ""
-    soft_warn: float = 0.0   # USD threshold for 50% alert
-    hard_stop: float = 0.0   # USD threshold for hard stop (100%)
+    soft_warn: float = 0.0  # USD threshold for 50% alert
+    hard_stop: float = 0.0  # USD threshold for hard stop (100%)
     auto_degrade: bool = True  # Enable automatic degradation
     circuit_breaker_multiplier: float = 3.0  # Trigger at 3× budget with no progress
     cooldown_seconds: float = 60.0  # Min time between alerts
@@ -171,7 +171,9 @@ class BudgetEnforcer:
             circuit_breaker_multiplier=circuit_breaker_multiplier,
         )
         self._budgets[key] = config
-        self._statuses[key] = BudgetStatus(config=config, current_tier=DegradationTier.FLAGSHIP)
+        self._statuses[key] = BudgetStatus(
+            config=config, current_tier=DegradationTier.FLAGSHIP
+        )
         return config
 
     def on_alert(self, callback: Callable[[BudgetStatus], None]) -> None:
@@ -222,7 +224,10 @@ class BudgetEnforcer:
             if new_tier.rank < status.current_tier.rank:
                 logger.info(
                     "Degrading %s from %s to %s (cost=$%.2f)",
-                    key, status.current_tier.value, new_tier.value, cost,
+                    key,
+                    status.current_tier.value,
+                    new_tier.value,
+                    cost,
                 )
                 status.current_tier = new_tier
 
@@ -308,7 +313,9 @@ class BudgetEnforcer:
         if time.time() - last_progress > config.cooldown_seconds:
             logger.warning(
                 "Circuit breaker OPEN for %s: cost=$%.2f > threshold=$%.2f with no progress",
-                key, cost, threshold,
+                key,
+                cost,
+                threshold,
             )
             return CircuitBreakerState.OPEN
 

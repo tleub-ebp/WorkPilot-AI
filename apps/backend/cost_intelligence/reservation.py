@@ -14,7 +14,6 @@ import uuid
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from enum import Enum
-from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -91,11 +90,15 @@ class ReservationManager:
             self._reservations[reservation.id] = reservation
             logger.info(
                 "Reserved $%.2f for spec %s (id=%s)",
-                estimated_usd, spec_id, reservation.id,
+                estimated_usd,
+                spec_id,
+                reservation.id,
             )
             return reservation
 
-    def release(self, reservation_id: str, actual_cost: float = 0.0) -> BudgetReservation:
+    def release(
+        self, reservation_id: str, actual_cost: float = 0.0
+    ) -> BudgetReservation:
         """Release a reservation, replacing estimated with actual cost."""
         with self._lock:
             res = self._reservations.get(reservation_id)
@@ -110,7 +113,9 @@ class ReservationManager:
             res.released_at = datetime.now(timezone.utc).isoformat()
             logger.info(
                 "Released reservation %s: estimated=$%.2f actual=$%.2f",
-                reservation_id, res.reserved_usd, actual_cost,
+                reservation_id,
+                res.reserved_usd,
+                actual_cost,
             )
             return res
 
@@ -141,7 +146,8 @@ class ReservationManager:
     def list_active(self, scope_id: str | None = None) -> list[BudgetReservation]:
         """List active reservations, optionally filtered by scope."""
         result = [
-            r for r in self._reservations.values()
+            r
+            for r in self._reservations.values()
             if r.status == ReservationStatus.ACTIVE
         ]
         if scope_id:

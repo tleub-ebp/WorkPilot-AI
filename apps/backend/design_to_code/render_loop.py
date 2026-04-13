@@ -13,11 +13,11 @@ from __future__ import annotations
 
 import logging
 import time
+from collections.abc import Callable
 from dataclasses import dataclass, field
-from typing import Any, Callable
 
-from .visual_diff import PixelGrid, VisualDiffConfig, VisualDiffEngine, VisualDiffResult
 from .semantic_diff import ComponentSpec, SemanticDiffAnalyzer, SemanticDiffResult
+from .visual_diff import PixelGrid, VisualDiffConfig, VisualDiffEngine, VisualDiffResult
 
 logger = logging.getLogger(__name__)
 
@@ -124,7 +124,8 @@ class RenderLoop:
             if elapsed > self._config.visual_budget_seconds:
                 logger.warning(
                     "Visual budget exhausted after %d iterations (%.1fs)",
-                    i, elapsed,
+                    i,
+                    elapsed,
                 )
                 break
 
@@ -133,8 +134,10 @@ class RenderLoop:
 
             # 2. Visual diff
             visual_diff = self._visual_engine.compare(
-                design_pixels, render_result.pixels,
-                design_width, design_height,
+                design_pixels,
+                render_result.pixels,
+                design_width,
+                design_height,
             )
             visual_diff.iteration = i + 1
 
@@ -151,7 +154,10 @@ class RenderLoop:
                 suggestions.extend(semantic_diff.correction_hints)
 
             passed = visual_diff.passed
-            if semantic_diff and semantic_diff.fidelity_score < self._config.target_similarity:
+            if (
+                semantic_diff
+                and semantic_diff.fidelity_score < self._config.target_similarity
+            ):
                 passed = False
 
             iteration = RenderIteration(
@@ -199,7 +205,10 @@ class RenderLoop:
             )
 
         passed = visual_diff.passed
-        if semantic_diff and semantic_diff.fidelity_score < self._config.target_similarity:
+        if (
+            semantic_diff
+            and semantic_diff.fidelity_score < self._config.target_similarity
+        ):
             passed = False
 
         return RenderIteration(

@@ -12,7 +12,7 @@ from __future__ import annotations
 
 import logging
 import re
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from enum import Enum
 
 logger = logging.getLogger(__name__)
@@ -20,9 +20,9 @@ logger = logging.getLogger(__name__)
 
 class LockSeverity(str, Enum):
     NONE = "none"
-    LOW = "low"          # Brief lock, milliseconds
-    MEDIUM = "medium"    # Seconds, may affect queries
-    HIGH = "high"        # Long lock, blocks reads/writes
+    LOW = "low"  # Brief lock, milliseconds
+    MEDIUM = "medium"  # Seconds, may affect queries
+    HIGH = "high"  # Long lock, blocks reads/writes
     CRITICAL = "critical"  # Very long lock on large tables
 
 
@@ -120,13 +120,15 @@ class LockDetector:
                 continue
             for rule in _LOCK_PATTERNS:
                 if rule["pattern"].search(stmt):
-                    warnings.append(LockWarning(
-                        sql_statement=stmt,
-                        severity=rule["severity"],
-                        lock_type=rule["lock_type"],
-                        description=rule["description"],
-                        suggestion=rule.get("suggestion"),
-                    ))
+                    warnings.append(
+                        LockWarning(
+                            sql_statement=stmt,
+                            severity=rule["severity"],
+                            lock_type=rule["lock_type"],
+                            description=rule["description"],
+                            suggestion=rule.get("suggestion"),
+                        )
+                    )
 
         return warnings
 

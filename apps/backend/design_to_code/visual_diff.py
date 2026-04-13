@@ -17,7 +17,6 @@ plugged in externally for deeper analysis.
 from __future__ import annotations
 
 import logging
-import math
 from dataclasses import dataclass, field
 from enum import Enum
 from typing import Any
@@ -39,9 +38,9 @@ class VisualDiffConfig:
 
 class DiffSeverity(str, Enum):
     NONE = "none"
-    MINOR = "minor"      # < 5% different
+    MINOR = "minor"  # < 5% different
     MODERATE = "moderate"  # 5-15% different
-    MAJOR = "major"       # > 15% different
+    MAJOR = "major"  # > 15% different
 
 
 @dataclass
@@ -113,7 +112,8 @@ class VisualDiffEngine:
         """
         if not design or not rendered:
             return VisualDiffResult(
-                overall_similarity=0.0, passed=False,
+                overall_similarity=0.0,
+                passed=False,
                 suggestions=["One or both images are empty."],
             )
 
@@ -169,7 +169,12 @@ class VisualDiffEngine:
         # footer (bottom 15%), sidebar (left 20% of content area)
         region_bounds = {
             "header": (0, 0, width, int(height * 0.15)),
-            "content": (int(width * 0.20), int(height * 0.15), width, int(height * 0.85)),
+            "content": (
+                int(width * 0.20),
+                int(height * 0.15),
+                width,
+                int(height * 0.85),
+            ),
             "footer": (0, int(height * 0.85), width, height),
             "sidebar": (0, int(height * 0.15), int(width * 0.20), int(height * 0.85)),
         }
@@ -182,8 +187,14 @@ class VisualDiffEngine:
             total = 0
             diff = 0
             for y in range(y1, min(y2, len(design), len(rendered))):
-                for x in range(x1, min(x2, len(design[y]) if y < len(design) else 0,
-                                       len(rendered[y]) if y < len(rendered) else 0)):
+                for x in range(
+                    x1,
+                    min(
+                        x2,
+                        len(design[y]) if y < len(design) else 0,
+                        len(rendered[y]) if y < len(rendered) else 0,
+                    ),
+                ):
                     total += 1
                     if not self._pixels_match(design[y][x], rendered[y][x], tolerance):
                         diff += 1
@@ -191,14 +202,16 @@ class VisualDiffEngine:
             sim = 1.0 - (diff / max(total, 1))
             severity = self._classify_severity(sim)
 
-            regions.append(RegionDiff(
-                region_name=name,
-                similarity=sim,
-                pixel_diff_count=diff,
-                total_pixels=total,
-                severity=severity,
-                description=self._severity_description(name, severity),
-            ))
+            regions.append(
+                RegionDiff(
+                    region_name=name,
+                    similarity=sim,
+                    pixel_diff_count=diff,
+                    total_pixels=total,
+                    severity=severity,
+                    description=self._severity_description(name, severity),
+                )
+            )
 
         return regions
 
@@ -238,7 +251,11 @@ class VisualDiffEngine:
         suggestions = []
         for r in regions:
             if r.severity == DiffSeverity.MAJOR:
-                suggestions.append(f"Rework {r.region_name}: {r.diff_percentage:.1f}% pixel difference")
+                suggestions.append(
+                    f"Rework {r.region_name}: {r.diff_percentage:.1f}% pixel difference"
+                )
             elif r.severity == DiffSeverity.MODERATE:
-                suggestions.append(f"Adjust {r.region_name}: {r.diff_percentage:.1f}% pixel difference")
+                suggestions.append(
+                    f"Adjust {r.region_name}: {r.diff_percentage:.1f}% pixel difference"
+                )
         return suggestions

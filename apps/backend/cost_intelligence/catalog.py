@@ -11,9 +11,8 @@ from __future__ import annotations
 
 import json
 import logging
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from pathlib import Path
-from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -55,8 +54,19 @@ class ModelPricing:
 # Built-in pricing catalog (can be overridden by a JSON/YAML file)
 _DEFAULT_CATALOG: dict[str, dict[str, dict[str, float]]] = {
     "anthropic": {
-        "claude-opus-4-6": {"input": 15.0, "output": 75.0, "cache_write": 18.75, "cache_read": 1.50, "thinking": 75.0},
-        "claude-sonnet-4-6": {"input": 3.0, "output": 15.0, "cache_write": 3.75, "cache_read": 0.30},
+        "claude-opus-4-6": {
+            "input": 15.0,
+            "output": 75.0,
+            "cache_write": 18.75,
+            "cache_read": 1.50,
+            "thinking": 75.0,
+        },
+        "claude-sonnet-4-6": {
+            "input": 3.0,
+            "output": 15.0,
+            "cache_write": 3.75,
+            "cache_read": 0.30,
+        },
         "claude-haiku-4-5": {"input": 0.80, "output": 4.0},
         "claude-opus-4-20250514": {"input": 15.0, "output": 75.0},
         "claude-sonnet-4-20250514": {"input": 3.0, "output": 15.0},
@@ -74,10 +84,26 @@ _DEFAULT_CATALOG: dict[str, dict[str, dict[str, float]]] = {
         "grok-4": {"input": 5.0, "output": 15.0},
     },
     "ollama": {
-        "llama-3.3-70b": {"input": 0.0, "output": 0.0, "energy_kwh_per_million_tok": 0.08},
-        "deepseek-coder-v3": {"input": 0.0, "output": 0.0, "energy_kwh_per_million_tok": 0.05},
-        "mistral-large": {"input": 0.0, "output": 0.0, "energy_kwh_per_million_tok": 0.06},
-        "qwen-2.5-72b": {"input": 0.0, "output": 0.0, "energy_kwh_per_million_tok": 0.07},
+        "llama-3.3-70b": {
+            "input": 0.0,
+            "output": 0.0,
+            "energy_kwh_per_million_tok": 0.08,
+        },
+        "deepseek-coder-v3": {
+            "input": 0.0,
+            "output": 0.0,
+            "energy_kwh_per_million_tok": 0.05,
+        },
+        "mistral-large": {
+            "input": 0.0,
+            "output": 0.0,
+            "energy_kwh_per_million_tok": 0.06,
+        },
+        "qwen-2.5-72b": {
+            "input": 0.0,
+            "output": 0.0,
+            "energy_kwh_per_million_tok": 0.07,
+        },
     },
     "groq": {
         "llama-3.3-70b": {"input": 0.59, "output": 0.79},

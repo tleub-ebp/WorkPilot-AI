@@ -22,8 +22,8 @@ from .adversarial_agent import (
     FindingSeverity,
 )
 from .concurrency_analyzer import ConcurrencyAnalyzer, ConcurrencyFinding, RaceCondition
-from .edge_case_generator import EdgeCase, EdgeCaseGenerator, EdgeCaseCategory
-from .fuzzer import FuzzResult, Fuzzer, FuzzStrategy
+from .edge_case_generator import EdgeCase, EdgeCaseCategory, EdgeCaseGenerator
+from .fuzzer import Fuzzer, FuzzResult, FuzzStrategy
 from .injection_tester import InjectionResult, InjectionTester, InjectionType
 
 __all__ = [

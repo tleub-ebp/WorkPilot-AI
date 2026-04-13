@@ -52,9 +52,7 @@ class EdgeCaseGenerator:
         )
     """
 
-    def for_function(
-        self, name: str, params: dict[str, str]
-    ) -> list[EdgeCase]:
+    def for_function(self, name: str, params: dict[str, str]) -> list[EdgeCase]:
         """Generate edge cases based on parameter names and types."""
         cases: list[EdgeCase] = []
 
@@ -78,16 +76,20 @@ class EdgeCaseGenerator:
 
         # Method-specific
         if method.upper() in ("POST", "PUT", "PATCH"):
-            cases.append(EdgeCase(
-                category=EdgeCaseCategory.EMPTY_INPUT,
-                description=f"{method} {path} with empty body",
-                inputs={"body": {}},
-            ))
-            cases.append(EdgeCase(
-                category=EdgeCaseCategory.TYPE_MISMATCH,
-                description=f"{method} {path} with string body instead of JSON",
-                inputs={"body": "not json"},
-            ))
+            cases.append(
+                EdgeCase(
+                    category=EdgeCaseCategory.EMPTY_INPUT,
+                    description=f"{method} {path} with empty body",
+                    inputs={"body": {}},
+                )
+            )
+            cases.append(
+                EdgeCase(
+                    category=EdgeCaseCategory.TYPE_MISMATCH,
+                    description=f"{method} {path} with string body instead of JSON",
+                    inputs={"body": "not json"},
+                )
+            )
 
         # Query params
         if params:
@@ -100,18 +102,22 @@ class EdgeCaseGenerator:
                 cases.extend(self._for_param(fld, ftype))
 
         # Auth edge cases
-        cases.append(EdgeCase(
-            category=EdgeCaseCategory.PERMISSION,
-            description=f"{method} {path} with expired token",
-            inputs={"auth": "expired_token"},
-            severity="high",
-        ))
-        cases.append(EdgeCase(
-            category=EdgeCaseCategory.PERMISSION,
-            description=f"{method} {path} with no auth header",
-            inputs={"auth": None},
-            severity="high",
-        ))
+        cases.append(
+            EdgeCase(
+                category=EdgeCaseCategory.PERMISSION,
+                description=f"{method} {path} with expired token",
+                inputs={"auth": "expired_token"},
+                severity="high",
+            )
+        )
+        cases.append(
+            EdgeCase(
+                category=EdgeCaseCategory.PERMISSION,
+                description=f"{method} {path} with no auth header",
+                inputs={"auth": None},
+                severity="high",
+            )
+        )
 
         return cases
 
@@ -135,23 +141,27 @@ class EdgeCaseGenerator:
             valid_actions = set(valid_from.get(state, []))
             invalid_actions = all_actions - valid_actions
             for action in invalid_actions:
-                cases.append(EdgeCase(
-                    category=EdgeCaseCategory.STATE_TRANSITION,
-                    description=f"Invalid transition: '{action}' from state '{state}'",
-                    inputs={"current_state": state, "action": action},
-                    severity="high",
-                ))
+                cases.append(
+                    EdgeCase(
+                        category=EdgeCaseCategory.STATE_TRANSITION,
+                        description=f"Invalid transition: '{action}' from state '{state}'",
+                        inputs={"current_state": state, "action": action},
+                        severity="high",
+                    )
+                )
 
         # Self-transitions
         for state in states:
             for _, action, to_s in transitions:
                 if to_s == state:
-                    cases.append(EdgeCase(
-                        category=EdgeCaseCategory.STATE_TRANSITION,
-                        description=f"Re-enter state '{state}' via '{action}'",
-                        inputs={"current_state": state, "action": action},
-                        severity="low",
-                    ))
+                    cases.append(
+                        EdgeCase(
+                            category=EdgeCaseCategory.STATE_TRANSITION,
+                            description=f"Re-enter state '{state}' via '{action}'",
+                            inputs={"current_state": state, "action": action},
+                            severity="low",
+                        )
+                    )
                     break
 
         return cases
@@ -162,11 +172,13 @@ class EdgeCaseGenerator:
         ptype_lower = ptype.lower()
 
         # Null/undefined
-        cases.append(EdgeCase(
-            category=EdgeCaseCategory.NULL_UNDEFINED,
-            description=f"'{name}' is None",
-            inputs={name: None},
-        ))
+        cases.append(
+            EdgeCase(
+                category=EdgeCaseCategory.NULL_UNDEFINED,
+                description=f"'{name}' is None",
+                inputs={name: None},
+            )
+        )
 
         if "str" in ptype_lower:
             cases.extend(self._string_edge_cases(name))
@@ -184,10 +196,20 @@ class EdgeCaseGenerator:
     @staticmethod
     def _string_edge_cases(name: str) -> list[EdgeCase]:
         return [
-            EdgeCase(EdgeCaseCategory.EMPTY_INPUT, f"'{name}' is empty string", {name: ""}),
-            EdgeCase(EdgeCaseCategory.BOUNDARY, f"'{name}' is whitespace only", {name: "   "}),
-            EdgeCase(EdgeCaseCategory.BOUNDARY, f"'{name}' has leading/trailing spaces", {name: "  value  "}),
-            EdgeCase(EdgeCaseCategory.TYPE_MISMATCH, f"'{name}' is a number", {name: 12345}),
+            EdgeCase(
+                EdgeCaseCategory.EMPTY_INPUT, f"'{name}' is empty string", {name: ""}
+            ),
+            EdgeCase(
+                EdgeCaseCategory.BOUNDARY, f"'{name}' is whitespace only", {name: "   "}
+            ),
+            EdgeCase(
+                EdgeCaseCategory.BOUNDARY,
+                f"'{name}' has leading/trailing spaces",
+                {name: "  value  "},
+            ),
+            EdgeCase(
+                EdgeCaseCategory.TYPE_MISMATCH, f"'{name}' is a number", {name: 12345}
+            ),
         ]
 
     @staticmethod
@@ -195,14 +217,22 @@ class EdgeCaseGenerator:
         return [
             EdgeCase(EdgeCaseCategory.BOUNDARY, f"'{name}' is zero", {name: 0}),
             EdgeCase(EdgeCaseCategory.BOUNDARY, f"'{name}' is negative", {name: -1}),
-            EdgeCase(EdgeCaseCategory.BOUNDARY, f"'{name}' is very large", {name: 2**53}),
-            EdgeCase(EdgeCaseCategory.TYPE_MISMATCH, f"'{name}' is string", {name: "abc"}),
+            EdgeCase(
+                EdgeCaseCategory.BOUNDARY, f"'{name}' is very large", {name: 2**53}
+            ),
+            EdgeCase(
+                EdgeCaseCategory.TYPE_MISMATCH, f"'{name}' is string", {name: "abc"}
+            ),
         ]
 
     @staticmethod
     def _boolean_edge_cases(name: str) -> list[EdgeCase]:
         return [
-            EdgeCase(EdgeCaseCategory.TYPE_MISMATCH, f"'{name}' is string 'true'", {name: "true"}),
+            EdgeCase(
+                EdgeCaseCategory.TYPE_MISMATCH,
+                f"'{name}' is string 'true'",
+                {name: "true"},
+            ),
             EdgeCase(EdgeCaseCategory.TYPE_MISMATCH, f"'{name}' is int 1", {name: 1}),
             EdgeCase(EdgeCaseCategory.TYPE_MISMATCH, f"'{name}' is int 0", {name: 0}),
         ]
@@ -210,20 +240,54 @@ class EdgeCaseGenerator:
     @staticmethod
     def _list_edge_cases(name: str) -> list[EdgeCase]:
         return [
-            EdgeCase(EdgeCaseCategory.EMPTY_INPUT, f"'{name}' is empty list", {name: []}),
-            EdgeCase(EdgeCaseCategory.BOUNDARY, f"'{name}' has one element", {name: ["single"]}),
-            EdgeCase(EdgeCaseCategory.BOUNDARY, f"'{name}' has duplicates", {name: ["a", "a", "a"]}),
-            EdgeCase(EdgeCaseCategory.BOUNDARY, f"'{name}' has 1000 elements", {name: list(range(1000))}),
+            EdgeCase(
+                EdgeCaseCategory.EMPTY_INPUT, f"'{name}' is empty list", {name: []}
+            ),
+            EdgeCase(
+                EdgeCaseCategory.BOUNDARY,
+                f"'{name}' has one element",
+                {name: ["single"]},
+            ),
+            EdgeCase(
+                EdgeCaseCategory.BOUNDARY,
+                f"'{name}' has duplicates",
+                {name: ["a", "a", "a"]},
+            ),
+            EdgeCase(
+                EdgeCaseCategory.BOUNDARY,
+                f"'{name}' has 1000 elements",
+                {name: list(range(1000))},
+            ),
         ]
 
     @staticmethod
     def _datetime_edge_cases(name: str) -> list[EdgeCase]:
         return [
-            EdgeCase(EdgeCaseCategory.TIMEZONE, f"'{name}' at midnight UTC", {name: "2025-01-01T00:00:00Z"}),
-            EdgeCase(EdgeCaseCategory.TIMEZONE, f"'{name}' at DST boundary", {name: "2025-03-09T02:30:00-05:00"}),
-            EdgeCase(EdgeCaseCategory.BOUNDARY, f"'{name}' is epoch", {name: "1970-01-01T00:00:00Z"}),
-            EdgeCase(EdgeCaseCategory.BOUNDARY, f"'{name}' is far future", {name: "2099-12-31T23:59:59Z"}),
-            EdgeCase(EdgeCaseCategory.TYPE_MISMATCH, f"'{name}' is invalid date", {name: "not-a-date"}),
+            EdgeCase(
+                EdgeCaseCategory.TIMEZONE,
+                f"'{name}' at midnight UTC",
+                {name: "2025-01-01T00:00:00Z"},
+            ),
+            EdgeCase(
+                EdgeCaseCategory.TIMEZONE,
+                f"'{name}' at DST boundary",
+                {name: "2025-03-09T02:30:00-05:00"},
+            ),
+            EdgeCase(
+                EdgeCaseCategory.BOUNDARY,
+                f"'{name}' is epoch",
+                {name: "1970-01-01T00:00:00Z"},
+            ),
+            EdgeCase(
+                EdgeCaseCategory.BOUNDARY,
+                f"'{name}' is far future",
+                {name: "2099-12-31T23:59:59Z"},
+            ),
+            EdgeCase(
+                EdgeCaseCategory.TYPE_MISMATCH,
+                f"'{name}' is invalid date",
+                {name: "not-a-date"},
+            ),
         ]
 
     @staticmethod
@@ -231,10 +295,12 @@ class EdgeCaseGenerator:
         """Generate edge cases that involve multiple parameters."""
         cases: list[EdgeCase] = []
         if len(params) >= 2:
-            cases.append(EdgeCase(
-                category=EdgeCaseCategory.EMPTY_INPUT,
-                description=f"All params of '{name}' are None",
-                inputs={p: None for p in params},
-                severity="high",
-            ))
+            cases.append(
+                EdgeCase(
+                    category=EdgeCaseCategory.EMPTY_INPUT,
+                    description=f"All params of '{name}' are None",
+                    inputs=dict.fromkeys(params),
+                    severity="high",
+                )
+            )
         return cases

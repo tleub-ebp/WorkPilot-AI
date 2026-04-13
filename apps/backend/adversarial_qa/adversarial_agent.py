@@ -11,11 +11,10 @@ import logging
 import time
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any
 
-from .concurrency_analyzer import ConcurrencyAnalyzer, ConcurrencyFinding
-from .edge_case_generator import EdgeCase, EdgeCaseGenerator
-from .fuzzer import FuzzResult, Fuzzer
+from .concurrency_analyzer import ConcurrencyAnalyzer
+from .edge_case_generator import EdgeCaseGenerator
+from .fuzzer import Fuzzer
 from .injection_tester import InjectionResult, InjectionTester
 
 logger = logging.getLogger(__name__)
@@ -133,7 +132,9 @@ class AdversarialAgent:
 
         if AttackMode.EDGE_CASES in modes and params:
             report.modes_run.append(AttackMode.EDGE_CASES)
-            edge_findings, edge_count = self._run_edge_cases(target, params, api_method, api_path)
+            edge_findings, edge_count = self._run_edge_cases(
+                target, params, api_method, api_path
+            )
             report.findings.extend(edge_findings)
             report.edge_cases_run = edge_count
 
@@ -154,7 +155,12 @@ class AdversarialAgent:
 
     def _resolve_modes(self) -> list[AttackMode]:
         if AttackMode.ALL in self._config.modes:
-            return [AttackMode.FUZZING, AttackMode.EDGE_CASES, AttackMode.INJECTION, AttackMode.CONCURRENCY]
+            return [
+                AttackMode.FUZZING,
+                AttackMode.EDGE_CASES,
+                AttackMode.INJECTION,
+                AttackMode.CONCURRENCY,
+            ]
         return list(self._config.modes)
 
     def _run_fuzzing(self, params: dict[str, str]) -> tuple[list[Finding], int]:
@@ -172,40 +178,49 @@ class AdversarialAgent:
             else:
                 cases = self._fuzzer.generate_for_string(name)
 
-            for case in cases[:self._config.max_fuzz_cases]:
+            for case in cases[: self._config.max_fuzz_cases]:
                 count += 1
                 # Each fuzz case is a potential finding to investigate
-                findings.append(Finding(
-                    mode=AttackMode.FUZZING,
-                    severity=FindingSeverity.LOW,
-                    title=f"Fuzz: {case.description}",
-                    description=f"Fuzz case for '{name}': {case.description}",
-                    tags=["fuzz", case.strategy.value],
-                ))
+                findings.append(
+                    Finding(
+                        mode=AttackMode.FUZZING,
+                        severity=FindingSeverity.LOW,
+                        title=f"Fuzz: {case.description}",
+                        description=f"Fuzz case for '{name}': {case.description}",
+                        tags=["fuzz", case.strategy.value],
+                    )
+                )
 
         return findings, count
 
     def _run_edge_cases(
-        self, target: str, params: dict[str, str],
-        api_method: str | None, api_path: str | None,
+        self,
+        target: str,
+        params: dict[str, str],
+        api_method: str | None,
+        api_path: str | None,
     ) -> tuple[list[Finding], int]:
         """Generate and report edge cases."""
         findings: list[Finding] = []
 
         if api_method and api_path:
-            cases = self._edge_gen.for_api_endpoint(api_method, api_path, body_fields=params)
+            cases = self._edge_gen.for_api_endpoint(
+                api_method, api_path, body_fields=params
+            )
         else:
             cases = self._edge_gen.for_function(target, params)
 
         for case in cases:
             severity = self._map_severity(case.severity)
-            findings.append(Finding(
-                mode=AttackMode.EDGE_CASES,
-                severity=severity,
-                title=f"Edge: {case.description}",
-                description=case.description,
-                tags=["edge_case", case.category.value],
-            ))
+            findings.append(
+                Finding(
+                    mode=AttackMode.EDGE_CASES,
+                    severity=severity,
+                    title=f"Edge: {case.description}",
+                    description=case.description,
+                    tags=["edge_case", case.category.value],
+                )
+            )
 
         return findings, len(cases)
 
@@ -227,15 +242,19 @@ class AdversarialAgent:
         if source_code and self._config.scan_code:
             code_findings = self._injection.scan_code_for_vulnerabilities(source_code)
             for cf in code_findings:
-                findings.append(Finding(
-                    mode=AttackMode.INJECTION,
-                    severity=FindingSeverity.CRITICAL if cf.is_vulnerable else FindingSeverity.MEDIUM,
-                    title=f"Injection: {cf.description}",
-                    description=cf.description,
-                    evidence=cf.evidence,
-                    remediation=cf.remediation,
-                    tags=["injection", cf.injection_type.value],
-                ))
+                findings.append(
+                    Finding(
+                        mode=AttackMode.INJECTION,
+                        severity=FindingSeverity.CRITICAL
+                        if cf.is_vulnerable
+                        else FindingSeverity.MEDIUM,
+                        title=f"Injection: {cf.description}",
+                        description=cf.description,
+                        evidence=cf.evidence,
+                        remediation=cf.remediation,
+                        tags=["injection", cf.injection_type.value],
+                    )
+                )
             count += len(code_findings)
 
         return findings, count
@@ -243,18 +262,22 @@ class AdversarialAgent:
     def _run_concurrency(self, source_code: str, target: str) -> list[Finding]:
         """Run concurrency analysis."""
         findings: list[Finding] = []
-        conc_findings = self._concurrency.analyze_python_code(source_code, filename=target)
+        conc_findings = self._concurrency.analyze_python_code(
+            source_code, filename=target
+        )
 
         for cf in conc_findings:
-            findings.append(Finding(
-                mode=AttackMode.CONCURRENCY,
-                severity=self._map_severity(cf.severity),
-                title=f"Concurrency: {cf.description}",
-                description=cf.description,
-                evidence=cf.code_snippet,
-                remediation=cf.suggestion,
-                tags=["concurrency", cf.issue_type.value],
-            ))
+            findings.append(
+                Finding(
+                    mode=AttackMode.CONCURRENCY,
+                    severity=self._map_severity(cf.severity),
+                    title=f"Concurrency: {cf.description}",
+                    description=cf.description,
+                    evidence=cf.code_snippet,
+                    remediation=cf.suggestion,
+                    tags=["concurrency", cf.issue_type.value],
+                )
+            )
 
         return findings
 
