@@ -193,4 +193,17 @@ __all__ = [
     "SubprocessResult",
     "SubprocessSecurityError",
     "check_tool_available",
+    # Prompt Injection Guard
+    "InjectionScanner",
+    "ScanResult",
+    "ThreatLevel",
+    "ScanFinding",
+    "InjectionClassifier",
+    "ClassificationResult",
+    "injection_patterns",
 ]
+
+# Prompt Injection Guard imports
+from .injection_scanner import InjectionScanner, ScanResult as InjectionScanResult, ThreatLevel, ScanFinding  # noqa: E402
+from .injection_classifier import InjectionClassifier, ClassificationResult  # noqa: E402
+from . import injection_patterns  # noqa: E402
