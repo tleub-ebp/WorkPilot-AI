@@ -1,11 +1,24 @@
 {
 	"title": "Accessibility Report",
-	"noData": "No accessibility report data available",
+	"noData": "No scan run yet. Click \"Run scan\" to start.",
 	"targetInfo": "Target: WCAG {{targetLevel}} · {{filesScanned}} files scanned",
 	"stats": {
 		"violations": "Violations",
 		"critical": "Critical",
 		"serious": "Serious",
 		"rulesPassed": "Rules Passed"
+	},
+	"actions": {
+		"runScan": "Run scan",
+		"cancel": "Cancel",
+		"scanning": "Scanning...",
+		"reset": "Reset"
+	},
+	"levels": {
+		"label": "WCAG level"
+	},
+	"errors": {
+		"noProject": "Select a project before running a scan.",
+		"failed": "Scan failed: {{error}}"
 	}
 }

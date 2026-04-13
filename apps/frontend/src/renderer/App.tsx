@@ -1688,7 +1688,9 @@ export function App() {
 													</div>
 												)}
 												{activeView === "api-watcher" && <ApiWatcherDashboard />}
-												{activeView === "accessibility-agent" && <A11yReportView />}
+												{activeView === "accessibility-agent" && (
+													<A11yReportView projectPath={selectedProject?.path} />
+												)}
 												{activeView === "i18n-agent" && <I18nReportView />}
 												{activeView === "onboarding-agent" && <OnboardingGuideView />}
 												{activeView === "flaky-tests" && <FlakyTestReport />}

@@ -1,5 +1,10 @@
 import i18n from "i18next";
 import { initReactI18next } from "react-i18next";
+import enAccessibility from "./locales/en/accessibility.json";
+import enAgentCoach from "./locales/en/agentCoach.json";
+import enFlakyTests from "./locales/en/flakyTests.json";
+import enI18nAgent from "./locales/en/i18nAgent.json";
+import enOnboardingAgent from "./locales/en/onboardingAgent.json";
 import enAnalytics from "./locales/en/analytics.json";
 import enApiExplorer from "./locales/en/apiExplorer.json";
 import enCarbonProfiler from "./locales/en/carbonProfiler.json";
@@ -65,6 +70,11 @@ import enVisualProgramming from "./locales/en/visualProgramming.json";
 import enVisualToCode from "./locales/en/visualToCode.json";
 import enVoiceControl from "./locales/en/voiceContol.json";
 import enWelcome from "./locales/en/welcome.json";
+import frAccessibility from "./locales/fr/accessibility.json";
+import frAgentCoach from "./locales/fr/agentCoach.json";
+import frFlakyTests from "./locales/fr/flakyTests.json";
+import frI18nAgent from "./locales/fr/i18nAgent.json";
+import frOnboardingAgent from "./locales/fr/onboardingAgent.json";
 import frAnalytics from "./locales/fr/analytics.json";
 import frApiExplorer from "./locales/fr/apiExplorer.json";
 import frCarbonProfiler from "./locales/fr/carbonProfiler.json";
@@ -135,6 +145,11 @@ export const defaultNS = "common";
 
 export const resources = {
 	en: {
+		accessibility: enAccessibility,
+		agentCoach: enAgentCoach,
+		flakyTests: enFlakyTests,
+		i18nAgent: enI18nAgent,
+		onboardingAgent: enOnboardingAgent,
 		appEmulator: enAppEmulator,
 		analytics: enAnalytics,
 		browserAgent: enBrowserAgent,
@@ -200,6 +215,11 @@ export const resources = {
 		continuousAI: enContinuousAI,
 	},
 	fr: {
+		accessibility: frAccessibility,
+		agentCoach: frAgentCoach,
+		flakyTests: frFlakyTests,
+		i18nAgent: frI18nAgent,
+		onboardingAgent: frOnboardingAgent,
 		appEmulator: frAppEmulator,
 		analytics: frAnalytics,
 		browserAgent: frBrowserAgent,
@@ -272,6 +292,11 @@ i18n.use(initReactI18next).init({
 	fallbackLng: "en",
 	defaultNS,
 	ns: [
+		"accessibility",
+		"agentCoach",
+		"flakyTests",
+		"i18nAgent",
+		"onboardingAgent",
 		"appEmulator",
 		"analytics",
 		"browserAgent",

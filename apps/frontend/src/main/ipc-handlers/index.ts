@@ -10,6 +10,7 @@ import type { AgentManager } from "../agent";
 import { notificationService } from "../notification-service";
 import type { PythonEnvManager } from "../python-env-manager";
 import type { TerminalManager } from "../terminal-manager";
+import { registerAccessibilityHandlers } from "./accessibility-handlers";
 import { registerAgenteventsHandlers } from "./agent-events-handlers";
 import { registerApiExplorerHandlers } from "./api-explorer-handlers";
 import { registerAppEmulatorHandlers } from "./app-emulator-handlers";
@@ -106,6 +107,7 @@ import {
 	setupVoiceControlEvents,
 } from "./voice-control-handlers";
 
+export { registerAccessibilityHandlers } from "./accessibility-handlers";
 export { registerAgenteventsHandlers } from "./agent-events-handlers";
 export { registerApiExplorerHandlers } from "./api-explorer-handlers";
 export { registerAppEmulatorHandlers } from "./app-emulator-handlers";
@@ -417,6 +419,9 @@ export function setupIpcHandlers(
 
 	// Agent Time Travel handlers (Temporal debugger for AI agents)
 	registerTimeTravelHandlers(getMainWindow);
+
+	// Accessibility Agent handlers (WCAG scanner)
+	registerAccessibilityHandlers();
 
 	console.warn("[IPC] All handler modules registered successfully");
 }

@@ -56,14 +56,14 @@ export function PipelineGenerator(): React.ReactElement {
 	}
 
 	return (
-		<div className="flex flex-col h-full bg-[var(--bg-primary)] text-[var(--text-primary)]">
+		<div className="flex flex-col h-full bg-(--bg-primary) text-(--text-primary)">
 			{/* Header */}
-			<div className="flex items-center justify-between px-6 py-4 border-b border-[var(--border-color)]">
+			<div className="flex items-center justify-between px-6 py-4 border-b border-(--border-color)">
 				<div>
 					<h1 className="text-xl font-semibold">
 						{t("pipelineGenerator:title")}
 					</h1>
-					<p className="text-sm text-[var(--text-secondary)] mt-0.5">
+					<p className="text-sm text-(--text-secondary) mt-0.5">
 						{t("pipelineGenerator:description")}
 					</p>
 				</div>
@@ -81,7 +81,7 @@ export function PipelineGenerator(): React.ReactElement {
 							type="button"
 							onClick={handleGenerate}
 							disabled={!activeProject || selectedPlatforms.length === 0}
-							className="px-4 py-2 rounded-lg bg-[var(--accent)] text-white hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed transition-opacity text-sm font-medium"
+							className="px-4 py-2 rounded-lg bg-(--accent) text-white hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed transition-opacity text-sm font-medium"
 						>
 							{isComplete
 								? t("pipelineGenerator:actions.regenerate")
@@ -93,10 +93,10 @@ export function PipelineGenerator(): React.ReactElement {
 
 			<div className="flex flex-1 overflow-hidden">
 				{/* Left sidebar */}
-				<div className="w-56 border-r border-[var(--border-color)] p-4 flex flex-col gap-4">
+				<div className="w-56 border-r border-(--border-color) p-4 flex flex-col gap-4">
 					{/* Project selection */}
 					<div>
-						<h3 className="text-xs font-semibold text-[var(--text-secondary)] uppercase tracking-wider mb-2">
+						<h3 className="text-xs font-semibold text-(--text-secondary) uppercase tracking-wider mb-2">
 							{t("pipelineGenerator:project")}
 						</h3>
 						<ProjectSelector
@@ -109,21 +109,21 @@ export function PipelineGenerator(): React.ReactElement {
 
 					{/* Platform selection */}
 					<div>
-						<h3 className="text-xs font-semibold text-[var(--text-secondary)] uppercase tracking-wider mb-2">
+						<h3 className="text-xs font-semibold text-(--text-secondary) uppercase tracking-wider mb-2">
 							{t("pipelineGenerator:platforms")}
 						</h3>
 						<div className="flex flex-col gap-1">
 							{CI_PLATFORMS.map((platform) => (
 								<label
 									key={platform}
-									className="flex items-center gap-2 px-2 py-1.5 rounded-md hover:bg-[var(--bg-secondary)] cursor-pointer"
+									className="flex items-center gap-2 px-2 py-1.5 rounded-md hover:bg-(--bg-secondary) cursor-pointer"
 								>
 									<input
 										type="checkbox"
 										checked={selectedPlatforms.includes(platform)}
 										onChange={() => togglePlatform(platform)}
 										disabled={isRunning}
-										className="rounded accent-[var(--accent)]"
+										className="rounded accent-(--accent)"
 									/>
 									<span className="text-sm">
 										{PLATFORM_ICONS[platform]} {PLATFORM_LABELS[platform]}
@@ -136,7 +136,7 @@ export function PipelineGenerator(): React.ReactElement {
 					{/* Pipeline view selector (after generation) */}
 					{isComplete && result && (
 						<div>
-							<h3 className="text-xs font-semibold text-[var(--text-secondary)] uppercase tracking-wider mb-2">
+							<h3 className="text-xs font-semibold text-(--text-secondary) uppercase tracking-wider mb-2">
 								{t("pipelineGenerator:viewPipeline")}
 							</h3>
 							<div className="flex flex-col gap-1">
@@ -145,16 +145,16 @@ export function PipelineGenerator(): React.ReactElement {
 										key={platform}
 										type="button"
 										onClick={() =>
-											setSelectedPlatformView(platform as CiPlatform)
+											setSelectedPlatformView(platform)
 										}
 										className={`flex items-center gap-2 px-2 py-1.5 rounded-md text-sm text-left transition-colors ${
 											selectedPlatformView === platform
-												? "bg-[var(--accent)]/20 text-[var(--accent)]"
-												: "hover:bg-[var(--bg-secondary)]"
+												? "bg-(--accent)/20 text-(--accent)"
+												: "hover:bg-(--bg-secondary)"
 										}`}
 									>
-										{PLATFORM_ICONS[platform as CiPlatform]}{" "}
-										{PLATFORM_LABELS[platform as CiPlatform]}
+										{PLATFORM_ICONS[platform]}{" "}
+										{PLATFORM_LABELS[platform]}
 									</button>
 								))}
 							</div>
@@ -164,10 +164,10 @@ export function PipelineGenerator(): React.ReactElement {
 					{/* Detected stack info */}
 					{isComplete && result?.stack && (
 						<div className="mt-auto">
-							<h3 className="text-xs font-semibold text-[var(--text-secondary)] uppercase tracking-wider mb-2">
+							<h3 className="text-xs font-semibold text-(--text-secondary) uppercase tracking-wider mb-2">
 								{t("pipelineGenerator:detectedStack")}
 							</h3>
-							<div className="flex flex-col gap-1 text-xs text-[var(--text-secondary)]">
+							<div className="flex flex-col gap-1 text-xs text-(--text-secondary)">
 								{result.stack.languages.length > 0 && (
 									<div>
 										<span className="opacity-70">
@@ -198,11 +198,11 @@ export function PipelineGenerator(): React.ReactElement {
 				<div className="flex-1 flex flex-col overflow-hidden">
 					{/* Status bar */}
 					{(isRunning || status) && (
-						<div className="px-4 py-2 bg-[var(--bg-secondary)] border-b border-[var(--border-color)] text-sm text-[var(--text-secondary)] flex items-center gap-2">
+						<div className="px-4 py-2 bg-(--bg-secondary) border-b border-(--border-color) text-sm text-(--text-secondary) flex items-center gap-2">
 							{isRunning && (
 								// biome-ignore lint/a11y/noSvgWithoutTitle: SVG is decorative
 								<svg
-									className="animate-spin w-4 h-4 text-[var(--accent)]"
+									className="animate-spin w-4 h-4 text-(--accent)"
 									fill="none"
 									viewBox="0 0 24 24"
 								>
@@ -243,7 +243,7 @@ export function PipelineGenerator(): React.ReactElement {
 									<h2 className="text-lg font-medium">
 										{PLATFORM_LABELS[selectedPlatformView as CiPlatform]}
 									</h2>
-									<span className="text-xs text-[var(--text-secondary)] ml-2 bg-[var(--bg-secondary)] px-2 py-0.5 rounded">
+									<span className="text-xs text-(--text-secondary) ml-2 bg-(--bg-secondary) px-2 py-0.5 rounded">
 										{selectedPipeline.split("\n").length}{" "}
 										{t("pipelineGenerator:lines")}
 									</span>
@@ -251,20 +251,20 @@ export function PipelineGenerator(): React.ReactElement {
 								<button
 									type="button"
 									onClick={handleCopyPipeline}
-									className="px-3 py-1.5 text-xs rounded-md bg-[var(--bg-secondary)] hover:bg-[var(--border-color)] transition-colors"
+									className="px-3 py-1.5 text-xs rounded-md bg-(--bg-secondary) hover:bg-(--border-color) transition-colors"
 								>
 									{t("pipelineGenerator:actions.copy")}
 								</button>
 							</div>
-							<div className="bg-[var(--bg-secondary)] rounded-lg p-4 overflow-auto">
+							<div className="bg-(--bg-secondary) rounded-lg p-4 overflow-auto">
 								<pre className="text-xs font-mono text-green-400 whitespace-pre overflow-x-auto">
 									{selectedPipeline}
 								</pre>
 							</div>
 							{result?.saved_files?.[selectedPlatformView as CiPlatform] && (
-								<p className="text-xs text-[var(--text-secondary)] mt-2">
+								<p className="text-xs text-(--text-secondary) mt-2">
 									{t("pipelineGenerator:savedTo")}{" "}
-									<code className="bg-[var(--bg-secondary)] px-1 rounded">
+									<code className="bg-(--bg-secondary) px-1 rounded">
 										{result.saved_files[selectedPlatformView as CiPlatform]}
 									</code>
 								</p>
@@ -275,7 +275,7 @@ export function PipelineGenerator(): React.ReactElement {
 					{/* Streaming log */}
 					{(isRunning || (!isComplete && streamingOutput)) && (
 						<div className="flex-1 overflow-auto p-4">
-							<pre className="text-xs font-mono text-[var(--text-secondary)] whitespace-pre-wrap">
+							<pre className="text-xs font-mono text-(--text-secondary) whitespace-pre-wrap">
 								{streamingOutput}
 							</pre>
 						</div>
@@ -285,11 +285,11 @@ export function PipelineGenerator(): React.ReactElement {
 					{phase === "idle" && !result && (
 						<div className="flex-1 flex items-center justify-center text-center p-8">
 							<div>
-								<div className="text-5xl mb-4">âš™ï¸</div>
+								<div className="text-5xl mb-4">⚙️</div>
 								<h3 className="text-lg font-medium mb-2">
 									{t("pipelineGenerator:emptyState.title")}
 								</h3>
-								<p className="text-sm text-[var(--text-secondary)] max-w-sm">
+								<p className="text-sm text-(--text-secondary) max-w-sm">
 									{t("pipelineGenerator:emptyState.description")}
 								</p>
 								{!activeProject && (

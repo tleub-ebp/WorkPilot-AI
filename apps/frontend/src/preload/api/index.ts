@@ -10,6 +10,10 @@ import {
 import { type AppUpdateAPI, createAppUpdateAPI } from "./app-update-api";
 import { createFileAPI, type FileAPI } from "./file-api";
 import {
+	type AccessibilityAPI,
+	createAccessibilityAPI,
+} from "./modules/accessibility-api";
+import {
 	type ApiExplorerAPI,
 	createApiExplorerAPI,
 } from "./modules/api-explorer-api";
@@ -130,6 +134,7 @@ export interface ElectronAPI
 		ArenaAPI,
 		TestGenerationAPI,
 		CostAPI,
+		AccessibilityAPI,
 		VisualProgrammingAPI {
 	github: GitHubAPI;
 	/** Queue routing API for rate limit recovery */
@@ -220,6 +225,7 @@ export const createElectronAPI = (): ElectronAPI => {
 		...createArenaAPI(),
 		...createTestGenerationAPI(),
 		...createCostAPI(),
+		...createAccessibilityAPI(),
 		...createVisualProgrammingAPI(),
 		github: createGitHubAPI(),
 		queue: createQueueAPI(), // Queue routing for rate limit recovery

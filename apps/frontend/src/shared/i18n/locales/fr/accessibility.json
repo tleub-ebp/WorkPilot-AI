@@ -1,11 +1,24 @@
 {
 	"title": "Rapport d'accessibilité",
-	"noData": "Aucune donnée de rapport d'accessibilité disponible",
+	"noData": "Aucun scan effectué. Cliquez sur « Lancer le scan » pour démarrer.",
 	"targetInfo": "Cible : WCAG {{targetLevel}} · {{filesScanned}} fichiers scannés",
 	"stats": {
 		"violations": "Violations",
 		"critical": "Critique",
 		"serious": "Sérieuse",
 		"rulesPassed": "Règles passées"
+	},
+	"actions": {
+		"runScan": "Lancer le scan",
+		"cancel": "Annuler",
+		"scanning": "Scan en cours...",
+		"reset": "Réinitialiser"
+	},
+	"levels": {
+		"label": "Niveau WCAG"
+	},
+	"errors": {
+		"noProject": "Sélectionnez un projet avant de lancer un scan.",
+		"failed": "Échec du scan : {{error}}"
 	}
 }
