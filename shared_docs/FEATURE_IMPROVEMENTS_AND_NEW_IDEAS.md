@@ -244,9 +244,48 @@ Dans les sections ci-dessous, chaque amélioration contient désormais un bloc *
 ### B. Qualité, Test & Review
 
 #### 5. Test Generation Agent — Mutation testing
-**Aujourd'hui :** génère des tests mais rien ne valide leur *qualité réelle*.
-**Amélioration :** intégrer un pass de mutation testing (Stryker/Mutmut) qui mesure si les tests générés détectent vraiment les bugs. Si score faible → l'agent régénère.
-**Débloque :** passer de "tests verts" à "tests qui protègent réellement", argument Enterprise majeur.
+
+**Aujourd'hui :** l'agent génère des tests, ils passent, on coche la case « couverture ajoutée ». Mais rien ne valide que ces tests détectent réellement les régressions. Un test qui ne fait qu'instancier la classe et vérifier qu'elle n'est pas `null` augmente la couverture sans protéger quoi que ce soit. Résultat : des suites de tests volumineuses mais peu utiles.
+
+**Amélioration proposée :**
+- **Mutation testing intégré** : après génération, lancer automatiquement un outil de mutation testing adapté au langage :
+  - Python : `mutmut` ou `cosmic-ray`
+  - JavaScript/TypeScript : `Stryker`
+  - Java : `PIT`
+  - Go : `go-mutesting`
+  - C# : `Stryker.NET`
+- **Score minimum configurable** : `mutation_score_threshold: 70%` dans le project config. Si le score est en-dessous, l'agent reçoit la liste des mutants survivants et itère : « mutant X ligne Y a survécu, renforce le test ».
+- **Affichage dans le QA report** : section dédiée « Mutation score: 84% — 2 survived mutants detected ». Cliquable pour voir les mutants non tués.
+- **Feedback loop avec Learning Loop** : les patterns de mutants survivants sont mémorisés et l'agent apprend à écrire des assertions plus strictes au fil du temps.
+- **Budget de mutation** : pour éviter les runs trop longs sur de gros modules, définir un échantillonnage (ex : tester 50 mutants aléatoires au lieu de tous).
+
+**Fichiers à toucher :**
+- `apps/backend/qa/mutation_runner.py` — nouveau module avec adaptateurs par langage.
+- `apps/backend/agents/test_generator.py` — intégration boucle génération → mutation → régénération.
+- `apps/backend/prompts/test_generator_mutation_feedback.md` — nouveau prompt pour l'itération.
+- `apps/frontend/src/renderer/components/qa/MutationReport.tsx` — affichage des résultats.
+- `apps/frontend/src/shared/types/mutation.ts` — types Mutant, MutationReport.
+
+**Edge cases :**
+- Tests non déterministes (flaky) qui font échouer le mutation runner → marquer et exclure de l'analyse.
+- Code avec side effects qui rend la mutation trop coûteuse → budget time-boxed + échantillonnage.
+- Langage non supporté → fallback sur métrique simple (branch coverage + assertion count).
+
+**Métriques :**
+- Mutation score moyen des specs générés avant / après la feature.
+- Nombre d'itérations moyennes pour atteindre le seuil.
+- Nombre de régressions prod évitées grâce à des tests renforcés (à mesurer post-hoc).
+
+**Multi-provider :**
+- L'agent générateur de tests tourne avec n'importe quel modèle capable de tool use : Claude Sonnet, GPT-4o, Gemini 1.5/2.5 Pro, Grok, Llama 3.3 via Ollama, Qwen Coder, DeepSeek Coder.
+- Les outils de mutation (Stryker, mutmut, PIT, etc.) sont 100% provider-agnostic — ils tournent sur le code, pas sur le LLM. La boucle « génère → mute → régénère » est identique quel que soit le provider.
+- Le prompt de feedback mutation (« mutant survived at line X ») est rédigé sans vocabulaire Claude-specific, testé sur ≥3 providers.
+- Si un modèle a un context window limité (ex : 32k), le prompt de feedback exclut les tests non pertinents et ne passe que le contexte minimal — adaptation via `get_phase_thinking_budget()` et capability detection.
+- Mode Ollama local : mutation testing + génération tourne entièrement offline, critique pour les repos air-gap.
+
+**Débloque :** passer de « tests verts » à « tests qui protègent vraiment », argument Enterprise majeur pour convaincre les équipes QA et les responsables compliance.
+
+**Effort :** Moyen | **Impact :** Très haut
 
 #### 6. Conflict Predictor — Planification d'exécution
 **Aujourd'hui :** prédit les conflits.
