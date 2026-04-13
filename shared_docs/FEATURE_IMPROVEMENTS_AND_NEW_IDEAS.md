@@ -366,10 +366,50 @@ Dans les sections ci-dessous, chaque amélioration contient désormais un bloc *
 
 **Effort :** Moyen | **Impact :** Haut
 
-#### 8. QA Security Scanner — Contexte runtime
-**Aujourd'hui :** scan statique.
-**Amélioration :** corréler avec les logs APM (via l'intégration Self-Healing Production déjà branchée à Sentry/Datadog) pour prioriser les vulnérabilités **réellement exposées** vs. dead code.
-**Débloque :** sortir du bruit "10 000 CVE" pour ne remonter que celles atteignables en prod.
+#### 8. QA Security Scanner — Contexte runtime & atteignabilité
+
+**Aujourd'hui :** le scanner remonte toutes les vulnérabilités statiques trouvées (CVE dans deps, patterns OWASP, secrets hardcodés, injection SQL potentielle). Problème : sur un gros repo, ça produit des centaines d'alertes dont 80% concernent du dead code, du code non exposé en prod, ou des chemins non atteignables. Les équipes sécurité apprennent vite à ignorer le rapport.
+
+**Amélioration proposée :**
+- **Corrélation avec APM** : via les intégrations Self-Healing Production (Sentry, Datadog, CloudWatch, New Relic), croiser chaque vulnérabilité avec les endpoints réellement touchés en prod dans les 30 derniers jours. Priorité = `(severity × exposure × reach)`.
+- **Reachability analysis** : à partir des points d'entrée (routes HTTP, handlers d'événements, CLI), calculer un graphe d'atteignabilité statique. Une fonction vulnérable jamais appelée est dégradée en « informational ».
+- **Score combiné** : `priority = base_cvss × reach_factor × runtime_hit_factor`. Affichage trié par score décroissant.
+- **Sections du rapport** :
+  1. 🔴 **Critical & exposed** : CVE critique dans du code atteint en prod cette semaine.
+  2. 🟠 **Critical but dormant** : CVE critique mais code non exécuté en prod (à surveiller).
+  3. 🟡 **Medium** : tout le reste trié.
+  4. 🟢 **Informational** : dead code, legacy non exposé.
+- **Traçage user-facing** : si la vulnérabilité touche un endpoint utilisé par N users (stat PAM), le report affiche cet impact.
+- **Auto-PR pour les critical & exposed** : intégration avec Self-Healing pour générer automatiquement une PR de fix quand le score dépasse un seuil.
+
+**Fichiers à toucher :**
+- `apps/backend/qa/security/reachability.py` — nouveau module d'analyse statique.
+- `apps/backend/qa/security/apm_correlator.py` — consomme les APIs Sentry/DD/CW.
+- `apps/backend/qa/security/priority_scorer.py` — calcul combiné.
+- `apps/backend/qa/security/scanner.py` — refactor pour intégrer les nouveaux scores.
+- `apps/frontend/src/renderer/components/qa/SecurityReport.tsx` — vue segmentée.
+- `apps/frontend/src/shared/types/security.ts` — types Finding, PriorityScore.
+
+**Edge cases :**
+- APM non configuré → fallback sur reachability seule + message explicite « corrélation APM désactivée, branchez Sentry pour plus de pertinence ».
+- Vulnérabilité dans une lib transitive → remonter quand même avec un tag « transitive » car exploitable indirectement.
+- Code généré au runtime (reflection, codegen) qui fausse la reachability statique → flag « dynamic code detected, reachability uncertain ».
+
+**Métriques :**
+- Nombre d'alertes `Critical & exposed` trouvées / scan (doit être bas mais utile).
+- Ratio bruit / signal avant et après la feature (objectif : diviser par 5 minimum).
+- Taux de fix dans les 48h des alertes top-priority.
+
+**Multi-provider :**
+- Le scan statique et la reachability analysis sont purement algorithmiques (AST, graphe d'appels, pattern matching), zéro LLM — 100% provider-indépendants.
+- Le LLM intervient pour l'explication pédagogique des findings (« cette injection SQL est due à... ») et pour la génération du fix auto-PR — modèle au choix de l'utilisateur, pas de dépendance à un provider particulier.
+- La corrélation APM consomme des APIs REST (Sentry, Datadog, etc.) — également LLM-free.
+- L'agent de génération de fix utilise `create_client()` avec le provider configuré ; un Llama 3.3 via Ollama peut générer les fixs sur un repo air-gap sans problème, avec le même pipeline de priorisation.
+- Le prompt de génération de fix de sécurité est volontairement court et structuré via tool use, pour maximiser la portabilité cross-provider.
+
+**Débloque :** sortir du bruit « 10 000 CVE », faire réellement vivre le rapport sécurité, crédibilité auprès des équipes sécu et RSSI, argument SOC2 / ISO 27001.
+
+**Effort :** Élevé | **Impact :** Très haut pour l'enterprise
 
 #### 9. Smart Estimation — Boucle de calibration
 **Aujourd'hui :** estimation one-shot.
