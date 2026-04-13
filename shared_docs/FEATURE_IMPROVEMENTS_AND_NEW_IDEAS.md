@@ -785,10 +785,48 @@ Dans les sections ci-dessous, chaque amélioration contient désormais un bloc *
 
 ### E. Mémoire & Apprentissage
 
-#### 17. Learning Loop → Spec Creation
-**Aujourd'hui :** alimente l'agent coder.
-**Amélioration :** injection directe dans le spec_writer : "sur ce repo, les specs Frontend prennent en moyenne 3 itérations QA — le spec writer doit donc être plus précis sur les critères d'acceptation UI dès le départ".
-**Débloque :** boucle d'amélioration de bout en bout, pas juste sur le coding.
+#### 17. Learning Loop — Injection dans la spec creation
+
+**Aujourd'hui :** le Learning Loop collecte des insights (patterns de succès, causes d'échec, préférences du repo) et les injecte principalement dans le prompt du coder au moment de l'exécution. Résultat : on corrige l'erreur après coup, alors qu'une spec mieux formulée dès le départ aurait évité des itérations. Le Learning Loop intervient trop tard dans le pipeline.
+
+**Amélioration proposée :**
+- **Feedback dans spec_writer** : quand un spec est créé, charger les insights pertinents du Learning Loop avant la rédaction. Exemples :
+  - « Les specs UI sur ce repo passent en moyenne 3 itérations QA — sois plus précis sur les critères d'acceptation visuels et ajoute systématiquement des cas de responsive. »
+  - « Les specs backend qui touchent le module `auth/` ont 80% de chances de casser les tests `session_*` — ajoute un requirement explicite sur la préservation des sessions. »
+  - « Les specs migrations DB ont échoué 4 fois sur 5 quand elles étaient one-shot — décompose systématiquement en migration additive + backfill + bascule code. »
+- **Feedback dans spec_critic** : le critic reçoit aussi les insights et peut flagger un spec comme « incomplet compte tenu de l'historique » avec suggestions concrètes.
+- **Templates enrichis** : les templates de spec (bug fix, new feature, refactor) sont auto-enrichis par les insights du repo — par ex. pour un « bug fix » sur un repo donné, ajouter automatiquement des checkpoints « reproduire en test unitaire avant de fixer ».
+- **Insights priorisés** : seuls les top-N insights sont injectés (éviter la dilution). Pondération par récence + pertinence contextuelle.
+- **Retour utilisateur** : l'UI affiche « 3 insights appliqués à la création de ce spec » avec possibilité de les consulter / désactiver ponctuellement.
+
+**Fichiers à toucher :**
+- `apps/backend/spec/spec_writer.py` — hook de chargement des insights pertinents.
+- `apps/backend/spec/insight_injector.py` — nouveau, matching insights ↔ contexte du spec.
+- `apps/backend/learning_loop/insight_store.py` — API `get_relevant_insights(domain, files, spec_type)`.
+- `apps/backend/prompts/spec_writer.md` — section dédiée pour les insights (formatage clair).
+- `apps/frontend/src/renderer/components/spec/InsightsApplied.tsx` — UI de transparence.
+
+**Edge cases :**
+- Repo neuf sans historique → fallback sur template générique, pas d'insights forcés.
+- Insights contradictoires → priorité à la récence + confidence score.
+- Insight obsolète (refacto majeur rend un insight caduque) → intégration avec Memory Lifecycle Manager (feature E.18).
+- Sur-injection (trop d'insights dans le prompt, noyage) → cap strict, rotation.
+
+**Métriques :**
+- Nombre moyen d'itérations QA par spec avant / après la feature (objectif : réduire).
+- % de specs créés qui référencent au moins 1 insight.
+- Corrélation insights appliqués ↔ taux de succès du spec.
+
+**Multi-provider :**
+- Le matching des insights (quel insight est pertinent pour ce spec ?) est fait par un LLM léger ou par recherche vectorielle locale (embeddings) — les deux chemins sont provider-agnostiques via l'abstraction `core.client.create_client()` ou via un modèle d'embedding local (sentence-transformers, multilingual-e5).
+- Le spec_writer final peut utiliser n'importe quel provider flagship ou standard (Claude Sonnet, GPT-4o, Gemini 2.5, Grok, Llama 3.3, Qwen 2.5). Les insights sont injectés en texte neutre dans le prompt.
+- Le stockage des insights est dans Graphiti (mémoire centralisée), indépendant du provider qui les a générés. Un insight capturé par un run Claude peut servir un run GPT-4o sans perte.
+- Mode Ollama disponible pour toute la chaîne (matching + writing + critic), utile en environnement air-gap.
+- Les prompts sont rédigés pour être rétro-compatibles avec les petits modèles (< 8k context) en priorisant les insights les plus pertinents et en tronquant si nécessaire.
+
+**Débloque :** boucle d'amélioration réellement de bout en bout (spec → code → QA → spec), moins d'itérations, confiance montante de l'équipe dans le système qui « apprend » visiblement.
+
+**Effort :** Moyen | **Impact :** Haut
 
 #### 18. Memory Lifecycle Manager — Explication des décisions
 **Aujourd'hui :** gère TTL et éviction.
