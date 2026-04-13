@@ -456,10 +456,50 @@ Dans les sections ci-dessous, chaque amélioration contient désormais un bloc *
 
 ### C. Self-Healing & Production
 
-#### 10. Mode Proactif — Tendances ML sur les métriques
-**Aujourd'hui :** score de risque instantané (complexité + churn + couverture).
-**Amélioration :** analyser la **trajectoire** sur 90 jours (un fichier qui passe de risque 30 à 70 en 2 semaines est plus alarmant qu'un fichier à risque 70 stable). Afficher des "canaris" temporels.
-**Débloque :** alertes early warning avant l'incident.
+#### 10. Self-Healing Mode Proactif — Tendances ML sur les métriques
+
+**Aujourd'hui :** le mode Proactif calcule un score de risque instantané à partir de trois métriques (complexité cyclomatique, churn git, couverture de tests). C'est une photo : `fichier X a un risque de 72 aujourd'hui`. Mais un fichier à risque 72 stable depuis 6 mois est moins inquiétant qu'un fichier qui est passé de 35 à 68 en 3 semaines — pourtant les deux apparaissent identiques.
+
+**Amélioration proposée :**
+- **Historisation** : snapshot hebdomadaire des scores par fichier, stocké dans `.workpilot/health_history.sqlite`.
+- **Analyse de trajectoire** : pour chaque fichier, calculer la dérivée et l'accélération du score de risque. Classer en 4 catégories :
+  - 🟢 Stable (bas ou haut, peu de variation).
+  - 📈 Dégradation lente (pente positive modérée).
+  - 🔥 Dégradation rapide (pente forte, risque d'incident imminent).
+  - ✅ Amélioration (le refactor paye).
+- **Canaris visuels** : sur l'onglet Self-Healing, une vue « hot list » des fichiers en dégradation rapide, avec courbe 90 jours.
+- **Alertes proactives** : notification quand un fichier entre en 🔥. Option « générer un spec de refacto préventif » qui alimente la Roadmap.
+- **Corrélation multi-fichiers** : détecter les clusters de fichiers qui se dégradent ensemble (signe d'un module entier en train de pourrir).
+- **Explications LLM** : « ce fichier se dégrade parce que sa complexité a augmenté de 40% suite aux 5 derniers commits, dont 3 incluent le mot-clé 'fix' ». Factuel, pas spéculatif.
+
+**Fichiers à toucher :**
+- `apps/backend/self_healing/proactive/history_store.py` — nouveau (SQLite snapshots).
+- `apps/backend/self_healing/proactive/trajectory_analyzer.py` — nouveau (analyse temporelle).
+- `apps/backend/self_healing/proactive/cluster_detector.py` — co-dégradation.
+- `apps/frontend/src/renderer/components/self-healing/ProactiveHotlist.tsx` — UI canaris.
+- `apps/frontend/src/renderer/components/self-healing/RiskTrajectoryChart.tsx` — sparkline par fichier.
+- Runner standalone : `runners/self_healing_runner.py proactive --trajectory`.
+
+**Edge cases :**
+- Fichier récemment créé (pas d'historique) → classé « neutre » jusqu'à 4 snapshots.
+- Fichier refactorisé massivement (reset du churn) → détection et exclusion temporaire.
+- Projet qui a migré de repo → seed initial avec l'historique git import.
+
+**Métriques :**
+- Nombre d'incidents prod précédés d'une alerte 🔥 dans les 14 jours précédents (taux de prédiction).
+- Temps moyen entre alerte 🔥 et résolution (refacto préventif ou incident).
+- Taux de faux positifs (🔥 sans incident dans les 30 jours).
+
+**Multi-provider :**
+- L'historisation, le calcul de trajectoire, la détection de clusters sont 100% déterministes et locaux — zéro LLM, zéro dépendance réseau, tournent sur n'importe quel repo y compris air-gap.
+- L'explication en langage naturel (« ce fichier se dégrade parce que... ») est produite par un LLM au choix : Haiku / GPT-4o-mini / Gemini Flash / Qwen / Llama via Ollama. C'est une feature cosmétique, désactivable.
+- Le prompt d'explication est court (< 500 tokens), testé sur ≥3 providers, sortie JSON contrainte via tool use.
+- La génération du spec de refacto préventif (si l'utilisateur clique « créer une tâche ») passe par le pipeline spec_writer standard, qui est déjà multi-provider.
+- Mode 100% offline possible avec Ollama pour toute la chaîne, utile pour les repos confidentiels.
+
+**Débloque :** alertes early warning avant l'incident, passage d'un self-healing réactif à *prédictif*, ROI démontrable (« 12 incidents évités ce trimestre grâce aux refactos proactifs »).
+
+**Effort :** Moyen | **Impact :** Haut
 
 #### 11. Mode Production — Groupement d'incidents
 **Aujourd'hui :** traite les erreurs individuellement.
