@@ -14,9 +14,8 @@ from __future__ import annotations
 import ast
 import logging
 import re
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from enum import Enum
-from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -124,7 +123,9 @@ class SemanticAnalyzer:
         violations.extend(self._check_raw_sql(file_path, added_lines))
         violations.extend(self._check_typescript_any(file_path, added_lines))
         violations.extend(self._check_security_sensitive(file_path, added_lines))
-        violations.extend(self._check_dependency_changes(file_path, added_lines, removed_lines))
+        violations.extend(
+            self._check_dependency_changes(file_path, added_lines, removed_lines)
+        )
 
         if full_content and file_path.endswith(".py"):
             violations.extend(self._check_python_ast(file_path, full_content))
@@ -232,8 +233,12 @@ class SemanticAnalyzer:
         removed_lines: list[str],
     ) -> list[SemanticViolation]:
         """Detect dependency changes in manifest files."""
-        filename = file_path.rsplit("/", maxsplit=1)[-1] if "/" in file_path else file_path
-        filename = filename.rsplit("\\", maxsplit=1)[-1] if "\\" in filename else filename
+        filename = (
+            file_path.rsplit("/", maxsplit=1)[-1] if "/" in file_path else file_path
+        )
+        filename = (
+            filename.rsplit("\\", maxsplit=1)[-1] if "\\" in filename else filename
+        )
 
         if filename not in self._DEPENDENCY_FILES:
             return []

@@ -156,7 +156,10 @@ class PolicyLoader:
         for rule in child.rules:
             if rule.id in parent_ids:
                 parent_rule = parent.get_rule(rule.id)
-                if parent_rule and rule.action.severity_rank < parent_rule.action.severity_rank:
+                if (
+                    parent_rule
+                    and rule.action.severity_rank < parent_rule.action.severity_rank
+                ):
                     raise PolicyValidationError(
                         f"Child policy cannot weaken rule '{rule.id}': "
                         f"parent={parent_rule.action.value} > child={rule.action.value}"

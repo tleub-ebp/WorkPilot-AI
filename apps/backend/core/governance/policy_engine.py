@@ -31,7 +31,6 @@ from .policy_loader import (
     PolicyFile,
     PolicyLoader,
     PolicyRule,
-    PolicyValidationError,
     RuleAction,
     RuleScope,
 )
@@ -192,10 +191,7 @@ class PolicyEngine:
                 results.append(PolicyEvaluation(verdict=PolicyVerdict.ALLOW))
             else:
                 verdict = self._most_restrictive(violations)
-                messages = [
-                    v.rule.message or v.rule.description
-                    for v in violations
-                ]
+                messages = [v.rule.message or v.rule.description for v in violations]
                 results.append(
                     PolicyEvaluation(
                         verdict=verdict, violations=violations, messages=messages
@@ -284,7 +280,11 @@ class PolicyEngine:
         if "diff adds new dependency" in condition:
             for line in action.diff_added:
                 stripped = line.strip()
-                if stripped and not stripped.startswith("#") and not stripped.startswith("//"):
+                if (
+                    stripped
+                    and not stripped.startswith("#")
+                    and not stripped.startswith("//")
+                ):
                     return True
         return False
 

@@ -14,7 +14,7 @@ Modules:
 
 from .approval_gate import ApprovalGate, ApprovalRequest, ApprovalStatus
 from .policy_engine import PolicyEngine, PolicyEvaluation, PolicyVerdict
-from .policy_loader import PolicyLoader, PolicyRule, PolicyFile, PolicyValidationError
+from .policy_loader import PolicyFile, PolicyLoader, PolicyRule, PolicyValidationError
 from .semantic_analyzer import SemanticAnalyzer, SemanticViolation
 
 __all__ = [

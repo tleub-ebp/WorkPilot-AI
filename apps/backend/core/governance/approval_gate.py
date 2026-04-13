@@ -162,7 +162,8 @@ class ApprovalGate:
         to_remove = [
             rid
             for rid, r in self._requests.items()
-            if r.status in (ApprovalStatus.APPROVED, ApprovalStatus.DENIED, ApprovalStatus.EXPIRED)
+            if r.status
+            in (ApprovalStatus.APPROVED, ApprovalStatus.DENIED, ApprovalStatus.EXPIRED)
         ]
         for rid in to_remove:
             del self._requests[rid]
