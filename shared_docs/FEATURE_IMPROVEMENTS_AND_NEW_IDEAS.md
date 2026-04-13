@@ -141,10 +141,43 @@
 
 **Effort :** Moyen | **Impact :** Moyen (fort sur perception produit)
 
-#### 4. Swarm Mode & Continuous AI — Gouvernance
-**Aujourd'hui :** exécution libre.
-**Amélioration :** **policies de garde-fou** (voir aussi feature nouvelle "Policy-as-Code" plus bas) : budget max, fichiers interdits, heures de travail autorisées, circuit breaker sur boucle infinie de l'agent.
-**Débloque :** adoption enterprise sereine du Continuous AI.
+#### 4. Swarm Mode & Continuous AI — Gouvernance & garde-fous
+
+**Aujourd'hui :** Swarm Mode et Continuous AI tournent en exécution libre. Aucune enveloppe de gouvernance : pas de plafond de tokens/h, pas de fenêtre horaire, pas de fichiers en liste rouge, pas de circuit breaker sur boucle infinie. Pour un dev solo c'est acceptable ; pour une équipe ou un déploiement nuit, c'est un non-starter.
+
+**Amélioration proposée :**
+- **Policies locales** (complément de la future feature Policy-as-Code décrite plus bas) : fichier `.workpilot/policies.yaml` versionné, chargé au démarrage de Swarm/Continuous.
+  - `budget.max_tokens_per_hour: 500000`
+  - `budget.max_cost_per_day: 50`
+  - `schedule.allowed_hours: ["08:00-19:00 Europe/Paris"]`
+  - `files.forbidden: ["**/migrations/**", ".env*", "package-lock.json"]`
+  - `files.requires_review: ["infra/**", ".github/workflows/**"]`
+  - `loop_detection.max_same_tool_call: 5`
+- **Circuit breaker** : si un agent répète le même tool call (même signature) N fois sans progrès mesurable, il est suspendu automatiquement et l'utilisateur est notifié.
+- **Kill switch global** : raccourci clavier + bouton UI « Stop all agents » qui termine proprement toutes les sessions en cours (sauvegarde de state pour reprise).
+- **Audit trail** : chaque action agent loggée avec `user, timestamp, spec, tool, file, decision` — exportable pour compliance.
+
+**Fichiers à toucher :**
+- `apps/backend/core/governance/policy_loader.py` — nouveau.
+- `apps/backend/core/governance/circuit_breaker.py` — nouveau (hook via `session recorder`).
+- `apps/backend/agents/continuous_ai.py` — intégration enforce avant chaque action.
+- `apps/frontend/src/main/ipc-handlers/governance-handlers.ts` — IPC kill switch.
+- `apps/frontend/src/renderer/components/settings/GovernancePanel.tsx` — éditeur visuel du fichier policies.
+- Schéma JSON pour validation du YAML.
+
+**Cas limites :**
+- Policy invalide au démarrage → refuser de lancer Swarm avec message explicite (pas de fallback silencieux).
+- Horaire frontière → agent en cours d'action au passage de `19:00` : laisser finir l'action atomique en cours, puis stopper.
+- Circuit breaker faux positif sur un agent qui vérifie légitimement 10 fichiers similaires → pondérer la détection par « progrès mesurable » (changement du diff, thinking token count qui évolue).
+
+**Métriques :**
+- Nombre de policies violations bloquées / jour.
+- Nombre de circuit breaker triggers / semaine.
+- Temps moyen entre kill switch et arrêt effectif des agents (doit être < 2s).
+
+**Débloque :** adoption enterprise sereine, déploiement en autonomie 24/7 avec confiance, compliance (SOC2 audit trail natif).
+
+**Effort :** Moyen-Élevé | **Impact :** Très haut pour l'enterprise
 
 ---
 
