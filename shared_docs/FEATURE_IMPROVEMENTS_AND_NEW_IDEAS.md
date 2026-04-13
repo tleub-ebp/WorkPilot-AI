@@ -641,10 +641,52 @@ Dans les sections ci-dessous, chaque amélioration contient désormais un bloc *
 
 **Effort :** Élevé | **Impact :** Très haut (wow effect + productivité)
 
-#### 14. App Emulator — Presets device & responsive matrix
-**Aujourd'hui :** preview d'app.
-**Amélioration :** grille de devices (iPhone 15, Pixel, iPad, desktop 4K) simultanée. Capture des screenshots pour chaque breakpoint, détection auto de bugs responsive.
-**Débloque :** QA visuel multi-device sans quitter WorkPilot.
+#### 14. App Emulator — Presets device & matrix responsive
+
+**Aujourd'hui :** App Emulator permet de prévisualiser une app dans une iframe unique, taille fixe. Tester le responsive impose de redimensionner à la main et on oublie des breakpoints. Pas de screenshot automatique, pas de détection de bug responsive, pas de vue « toutes les tailles en même temps ».
+
+**Amélioration proposée :**
+- **Bibliothèque de devices** : presets prêts à l'emploi — iPhone 15 / 15 Pro Max, Pixel 8 / 9, iPad Mini / Pro, Galaxy Fold, desktop 1920x1080, desktop 4K, TV 16:9. Chaque preset = (viewport, pixel ratio, user agent, orientation).
+- **Mode matrix** : grille 2×N affichant simultanément le même rendu sur N devices choisis, avec navigation synchronisée (scroll, state, events).
+- **Responsive detector** : analyse automatique des breakpoints (au premier rendu, puis sur chaque resize significatif) et détection des bugs classiques :
+  - Overflow horizontal.
+  - Texte tronqué / débordant.
+  - Éléments overlappés.
+  - Touch targets < 44×44 px (accessibilité mobile).
+  - Navigation cassée en mobile.
+- **Screenshots batch** : bouton « Capture all devices » qui exporte une grille PDF / PNG des rendus.
+- **Intégration Kanban** : lors du review d'une tâche UI, afficher automatiquement la matrix sur 3-4 devices critiques sans action de l'utilisateur.
+- **Hot reload cross-device** : quand le code change, les N iframes se mettent à jour simultanément.
+- **Device emulation avancée** : throttle réseau (Slow 3G, Fast 3G, 4G), throttle CPU (4x slowdown), cookies preset pour tester des personas utilisateur.
+
+**Fichiers à toucher :**
+- `apps/frontend/src/renderer/components/app-emulator/DeviceMatrix.tsx` — nouveau composant principal.
+- `apps/frontend/src/renderer/components/app-emulator/DevicePresets.ts` — catalogue.
+- `apps/frontend/src/renderer/components/app-emulator/ResponsiveDetector.tsx` — observation + alerting.
+- `apps/frontend/src/main/app-emulator/screenshot-service.ts` — capture via Electron capturePage.
+- `apps/frontend/src/shared/types/device.ts` — types DevicePreset, ResponsiveIssue.
+- i18n : `appEmulator.json` (noms de devices, messages d'erreur).
+
+**Edge cases :**
+- App lourde qui met 10s à charger × 6 devices = 60s → lazy loading par priorité (devices visibles d'abord).
+- CPU host surchargé par 6 iframes en parallèle → option « render sequential » plus lente mais moins gourmande.
+- Auth / session qui diffère selon user agent → option de synchro des cookies ou session.
+- Site qui bloque iframe (CSP, X-Frame-Options) → détection et fallback sur WebView natif.
+
+**Métriques :**
+- Nombre de sessions utilisant le mode matrix / semaine.
+- Nombre de bugs responsive détectés automatiquement.
+- Temps gagné vs. test manuel multi-device (mesurable via feedback user).
+
+**Multi-provider :**
+- App Emulator est une feature purement frontend (Electron + iframes + Chrome DevTools Protocol), zéro LLM impliqué dans son fonctionnement de base. 100% provider-indépendant par construction.
+- Si une couche d'assistance IA est ajoutée pour *expliquer* un bug responsive détecté (« le texte déborde parce que le `min-width` du parent est trop grand »), elle utilise `create_client()` avec le provider configuré.
+- Le screenshot batch + l'analyse visuelle des résultats peuvent être branchés sur la boucle Design-to-Code (D.13) pour valider qu'un changement UI n'a pas cassé le rendu sur d'autres devices — même contrat multi-provider vision-capable.
+- Mode 100% offline possible, rendu local, aucune dépendance provider.
+
+**Débloque :** QA visuel multi-device sans quitter WorkPilot, détection automatique des bugs responsive, argument fort pour les équipes frontend.
+
+**Effort :** Moyen | **Impact :** Haut
 
 #### 15. Voice Control — Streaming & interruption
 **Aujourd'hui :** commande vocale basique.
