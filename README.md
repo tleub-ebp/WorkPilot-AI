@@ -510,8 +510,7 @@ WorkPilot-AI/
 ├── apps/
 │   ├── backend/     # Python agents, specs, QA pipeline, integrations
 │   └── frontend/    # Electron desktop application (React + TypeScript)
-├── docs/            # Documentation
-├── guides/          # Additional guides
+├── docs/            # Documentation and guides
 ├── tests/           # Test suite
 └── scripts/         # Build and release utilities
 ```
@@ -530,7 +529,7 @@ python run.py --spec 001 --review     # Review
 python run.py --spec 001 --merge      # Merge
 ```
 
-See [guides/CLI-USAGE.md](guides/CLI-USAGE.md) for the full CLI reference.
+See [docs/CLI-USAGE.md](docs/CLI-USAGE.md) for the full CLI reference.
 
 ---
 
@@ -553,9 +552,9 @@ All releases include SHA256 checksums and VirusTotal scans.
 | [Setup Guide](docs/SETUP.md) | Installation, requirements, scripts, dev environment |
 | [Troubleshooting](docs/TROUBLESHOOTING.md) | Common issues and fixes |
 | [Providers Guide](docs/PROVIDERS.md) | Multi-provider LLM setup |
-| [CLI Usage](guides/CLI-USAGE.md) | Headless / CI usage |
+| [CLI Usage](docs/CLI-USAGE.md) | Headless / CI usage |
 | [Contributing](CONTRIBUTING.md) | Code style, testing, PR process |
-| [Linux Guide](guides/linux.md) | Flatpak, AppImage builds |
+| [Linux Guide](docs/linux.md) | Flatpak, AppImage builds |
 
 ---
 
