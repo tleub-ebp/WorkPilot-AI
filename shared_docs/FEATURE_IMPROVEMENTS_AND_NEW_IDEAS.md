@@ -932,10 +932,76 @@ Dans les sections ci-dessous, chaque amélioration contient désormais un bloc *
 
 ### F. Coûts & Analytics
 
-#### 20. Cost Intelligence — Budgets temps réel & circuit breaker
-**Aujourd'hui :** rapports post-hoc.
-**Amélioration :** budgets live par équipe/projet/spec avec **interruption auto** d'un agent qui explose le budget (avec escalade optionnelle). Dégradation progressive : Opus → Sonnet → Haiku selon consommation.
-**Débloque :** contrôle réel des coûts, adoption enterprise.
+#### 20. Cost Intelligence — Budgets live, dégradation & circuit breaker
+
+**Aujourd'hui :** Cost Intelligence produit des rapports post-hoc : coût du sprint passé, coût par spec, top modèles consommés. Utile mais rétrospectif. Quand un agent dérape et consomme $200 en 1h (boucle infinie, over-thinking, trop de parallélisme), personne ne s'en rend compte avant le rapport du lendemain.
+
+**Amélioration proposée :**
+- **Budgets live** : définis à 3 niveaux — `organization`, `project`, `spec`. Chacun a ses seuils `soft_warn, hard_stop`.
+- **Tracking temps réel** : chaque tool call / message LLM incrémente un compteur live (Redis ou SQLite + WAL). Latence d'affichage < 2s.
+- **Alertes progressives** :
+  - À 50% du budget : notification passive dans l'UI.
+  - À 75% : notification modale + suggestion de dégradation.
+  - À 90% : suggestion forte de stop ou switch vers un modèle moins cher.
+  - À 100% : hard stop automatique (configurable).
+- **Dégradation automatique** : quand un seuil est franchi, le système peut automatiquement :
+  1. Switcher du tier flagship (Opus, GPT-4.1, Gemini 2.5 Pro) vers le tier standard (Sonnet, GPT-4o, Gemini 2.5 Flash).
+  2. Puis vers le fast tier (Haiku, GPT-4o-mini, Gemini Flash, Llama local).
+  3. Puis vers Ollama local (coût effectif = 0).
+- **Circuit breaker intelligent** : si un agent consomme >3x son budget estimé sans progresser (diff vide), il est suspendu avec notification — distinct d'une simple dégradation de modèle.
+- **Réservation budgétaire** : avant de lancer un spec, « réserver » le budget estimé dans l'enveloppe globale pour éviter les dépassements simultanés.
+- **Rapport en direct** : dashboard live avec heatmap par équipe / projet / agent et burn rate.
+- **Export compliance** : format CSV/JSON pour facturation refacturée (charge back) aux équipes.
+
+**Fichiers à toucher :**
+- `apps/backend/cost_intelligence/live_tracker.py` — nouveau, tracking temps réel.
+- `apps/backend/cost_intelligence/budget_enforcer.py` — circuit breaker + dégradation.
+- `apps/backend/cost_intelligence/reservation.py` — réservation budgétaire.
+- `apps/backend/cost_intelligence/catalog.py` — catalogue de prix versionné (voir multi-provider ci-dessous).
+- `apps/frontend/src/renderer/components/cost/LiveDashboard.tsx` — UI live.
+- `apps/frontend/src/renderer/components/cost/BudgetAlert.tsx` — notifications progressives.
+- `apps/backend/core/client.py` — hook d'enforcement avant chaque call.
+
+**Edge cases :**
+- Rate limit du provider qui cause des retries → ne pas compter les retries échoués dans le budget.
+- Facturation à la session Claude OAuth (pas à l'API) → différencier les profils OAuth (budget = quotas conversation) vs. API (budget = $).
+- Budget soft_warn trop bas → spam de notifications → cooldown + throttling.
+- Perte de connexion Redis / SQLite → fallback mémoire + resync.
+
+**Métriques :**
+- Nombre de circuit breaker triggers / semaine (doit rester bas après stabilisation).
+- Δ coût moyen par spec avant / après la feature (objectif : -20%).
+- Taux de dépassements budget / total specs (objectif : < 2%).
+- Adoption des alertes live (utilisateurs qui configurent des budgets).
+
+**Multi-provider :**
+- **Catalogue de prix versionné** : fichier JSON/YAML qui couvre TOUS les providers supportés avec leurs prix par modèle et par type de token (input / output / cache read / cache write / vision tokens / thinking tokens). Exemple :
+  ```yaml
+  anthropic:
+    claude-opus-4-6: { input: 15.00, output: 75.00, cache_write: 18.75, cache_read: 1.50, thinking: 75.00 }
+    claude-sonnet-4-6: { input: 3.00, output: 15.00, cache_write: 3.75, cache_read: 0.30 }
+    claude-haiku-4-5: { input: 0.80, output: 4.00 }
+  openai:
+    gpt-4.1: { input: 2.50, output: 10.00 }
+    gpt-4o-mini: { input: 0.15, output: 0.60 }
+  google:
+    gemini-2.5-pro: { input: 1.25, output: 5.00 }
+  xai:
+    grok-4: { input: 5.00, output: 15.00 }
+  ollama:
+    llama-3.3-70b: { input: 0.00, output: 0.00, energy_kwh_per_million_tok: 0.08 }
+  ```
+- Le catalogue est mis à jour via un script `runners/update_pricing_catalog.py` qui peut récupérer les prix depuis les pages tarifs officielles (hebdomadaire).
+- L'unité normalisée est l'USD. Les coûts Ollama sont tracés en kWh (voir feature Carbon Profiler nouvelle Tier B).
+- Le tracker est indépendant du provider : il intercepte chaque call via `core.client.create_client()` et compte les tokens retournés par le SDK correspondant, converti en USD via le catalogue.
+- La dégradation progressive utilise des tiers abstraits (`flagship → standard → fast → local`) plutôt que des noms de modèles, ce qui permet des compositions mixed-provider. Exemple : un agent peut dégrader de Claude Opus → Claude Sonnet → GPT-4o → Llama 3.3 Ollama sans casser.
+- Les budgets sont exprimés en USD global, peu importe le mix de providers utilisés. Un budget de 10$/spec peut être dépensé en Claude, OpenAI, ou mix.
+- Les profils Claude OAuth / Copilot qui n'ont pas de facturation token-based sont trackés en « sessions consommées » ou « ratelimit progress », avec un modèle d'équivalence configurable.
+- Mode Ollama : budget monétaire = 0 par défaut, option d'ajouter un coût énergétique (kWh × tarif local) pour un ROI réaliste sur le matériel local.
+
+**Débloque :** contrôle réel des coûts en temps réel, adoption enterprise (finance accepte enfin de budgétiser), fin des dérapages silencieux, charge-back facile aux équipes, possibilité de laisser tourner Swarm Mode la nuit sans stress.
+
+**Effort :** Élevé | **Impact :** Très haut (critique pour enterprise)
 
 #### 21. Build Analytics — Comparaisons concurrents normalisées
 **Aujourd'hui :** métriques internes.
