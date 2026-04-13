@@ -326,9 +326,45 @@ Dans les sections ci-dessous, chaque amélioration contient désormais un bloc *
 **Effort :** Moyen | **Impact :** Haut
 
 #### 7. AI Code Review Agent — Apprentissage des faux positifs
-**Aujourd'hui :** produit des review comments.
-**Amélioration :** tracker quelles suggestions l'utilisateur rejette et pourquoi (via Learning Loop), puis ajuster. Un reviewer qui devient *vraiment* meilleur sur ton repo au fil du temps — pas juste statique.
-**Débloque :** réduction drastique du "review fatigue".
+
+**Aujourd'hui :** l'agent produit des commentaires de review pertinents mais statiques. Il ne sait pas quelles suggestions l'utilisateur a rejetées par le passé, il n'apprend pas les conventions propres au repo, et il répète les mêmes remarques à chaque PR. Résultat : « review fatigue » — les devs finissent par scroller sans lire.
+
+**Amélioration proposée :**
+- **Feedback capture** : chaque commentaire de review a 3 boutons `Accept / Reject / Not applicable`. Ces signaux alimentent un dataset local `.workpilot/code_review_feedback.jsonl`.
+- **Rejection reasons** : optionnel mais fortement encouragé — dropdown avec raisons prédéfinies (`too pedantic`, `project convention differs`, `false positive on AST`, `legacy code exception`, `custom reason`).
+- **Learning Loop intégration** : après N rejections d'un même pattern, le reviewer apprend à ne plus le signaler ou à pondérer son niveau de confiance. Les règles apprises sont stockées dans Graphiti (mémoire) et rechargées à chaque run.
+- **Project conventions file** : génération assistée d'un `.workpilot/review-conventions.md` qui agrège les règles tacites du repo (« jamais de `any` en TS », « toujours Optional en Python », « classes avant fonctions »).
+- **Confidence scoring** : chaque commentaire a un niveau de confiance affiché (🔴 high, 🟡 medium, 🟢 nitpick), trié par sévérité pour éviter la noyade.
+- **Self-critique pass** : avant de poster, le reviewer relit ses propres commentaires et supprime ceux contradictoires ou redondants.
+
+**Fichiers à toucher :**
+- `apps/backend/qa/review_feedback_store.py` — persistance du dataset.
+- `apps/backend/qa/review_learning.py` — boucle d'apprentissage.
+- `apps/backend/prompts/qa_reviewer.md` — ajouter instructions sur les conventions chargées.
+- `apps/frontend/src/renderer/components/github/ReviewCommentActions.tsx` — boutons feedback.
+- `apps/frontend/src/shared/types/code-review.ts` — types pour le feedback.
+- `integrations/graphiti/review_memory.py` — stockage des règles apprises.
+
+**Edge cases :**
+- Reviewer qui désapprend trop (tout rejeté, finit par ne plus rien remonter) → seuil minimum de règles protégées (sécurité, perf critique).
+- Nouveau contributeur qui rejette sans comprendre → notification du maintainer pour review des rejections avant intégration au dataset.
+- Changement de convention au milieu d'un projet → reset manuel ou dataset versionné par période.
+
+**Métriques :**
+- Taux d'acceptation des commentaires du reviewer (viser >60%).
+- Nombre de commentaires par PR (tendance à la baisse sur les repos matures).
+- Nombre de « règles apprises » capitalisées par repo / mois.
+
+**Multi-provider :**
+- Le reviewer tourne avec tout provider supportant le tool use + long context (pour lire des PRs complètes) : Sonnet, GPT-4o/4.1, Gemini 1.5/2.5 Pro, Grok Code, Qwen 2.5 Coder, Llama 3.3 via Ollama.
+- Le prompt `qa_reviewer.md` est rédigé en style neutre, sans références au vocabulaire Claude (`<thinking>`, `<result>`). Format de sortie imposé via tool use JSON Schema, supporté partout.
+- Le dataset de feedback est indépendant du modèle qui l'a produit — un commentaire rejeté l'est pour tout le monde, pas seulement pour Claude. L'utilisateur peut switcher de provider sans perdre son apprentissage.
+- Les règles apprises stockées dans Graphiti sont des règles en langage naturel, ré-injectables dans n'importe quel prompt provider.
+- Fallback offline : reviewer Ollama local sur les PRs sensibles (code confidentiel), avec la même qualité d'apprentissage.
+
+**Débloque :** réduction drastique de la review fatigue, un reviewer qui devient réellement meilleur sur ton repo au fil du temps, capitalisation des conventions tacites.
+
+**Effort :** Moyen | **Impact :** Haut
 
 #### 8. QA Security Scanner — Contexte runtime
 **Aujourd'hui :** scan statique.
