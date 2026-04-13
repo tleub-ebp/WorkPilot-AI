@@ -88,67 +88,11 @@ class DiffPredictor:
             sand = sandbox_files.get(rel_path)
 
             if orig is None and sand is not None:
-                # New file
-                content = self._read_safe(sand)
-                diff_text = self._unified_diff("", content, rel_path)
-                added = content.count("\n") + (
-                    1 if content and not content.endswith("\n") else 0
-                )
-                fd = FileDiff(
-                    path=rel_path,
-                    change_type=ChangeType.ADDED,
-                    new_content=content,
-                    unified_diff=diff_text,
-                    lines_added=added,
-                )
-                prediction.files.append(fd)
-                prediction.new_files += 1
-                prediction.total_added += added
-
+                self._handle_added_file(prediction, rel_path, sand)
             elif orig is not None and sand is None:
-                # Deleted file
-                content = self._read_safe(orig)
-                diff_text = self._unified_diff(content, "", rel_path)
-                removed = content.count("\n") + (1 if content else 0)
-                fd = FileDiff(
-                    path=rel_path,
-                    change_type=ChangeType.DELETED,
-                    old_content=content,
-                    unified_diff=diff_text,
-                    lines_removed=removed,
-                )
-                prediction.files.append(fd)
-                prediction.deleted_files += 1
-                prediction.total_removed += removed
-
+                self._handle_deleted_file(prediction, rel_path, orig)
             elif orig is not None and sand is not None:
-                old_text = self._read_safe(orig)
-                new_text = self._read_safe(sand)
-                if old_text != new_text:
-                    diff_text = self._unified_diff(old_text, new_text, rel_path)
-                    added = sum(
-                        1
-                        for l in diff_text.splitlines()
-                        if l.startswith("+") and not l.startswith("+++")
-                    )
-                    removed = sum(
-                        1
-                        for l in diff_text.splitlines()
-                        if l.startswith("-") and not l.startswith("---")
-                    )
-                    fd = FileDiff(
-                        path=rel_path,
-                        change_type=ChangeType.MODIFIED,
-                        old_content=old_text,
-                        new_content=new_text,
-                        unified_diff=diff_text,
-                        lines_added=added,
-                        lines_removed=removed,
-                    )
-                    prediction.files.append(fd)
-                    prediction.modified_files += 1
-                    prediction.total_added += added
-                    prediction.total_removed += removed
+                self._handle_modified_file(prediction, rel_path, orig, sand)
 
         return prediction
 
@@ -184,6 +128,76 @@ class DiffPredictor:
 
         except (subprocess.SubprocessError, OSError):
             return DiffPrediction()
+
+    def _handle_added_file(
+        self, prediction: DiffPrediction, rel_path: str, sand: Path
+    ) -> None:
+        """Handle a newly added file."""
+        content = self._read_safe(sand)
+        diff_text = self._unified_diff("", content, rel_path)
+        added = content.count("\n") + (
+            1 if content and not content.endswith("\n") else 0
+        )
+        fd = FileDiff(
+            path=rel_path,
+            change_type=ChangeType.ADDED,
+            new_content=content,
+            unified_diff=diff_text,
+            lines_added=added,
+        )
+        prediction.files.append(fd)
+        prediction.new_files += 1
+        prediction.total_added += added
+
+    def _handle_deleted_file(
+        self, prediction: DiffPrediction, rel_path: str, orig: Path
+    ) -> None:
+        """Handle a deleted file."""
+        content = self._read_safe(orig)
+        diff_text = self._unified_diff(content, "", rel_path)
+        removed = content.count("\n") + (1 if content else 0)
+        fd = FileDiff(
+            path=rel_path,
+            change_type=ChangeType.DELETED,
+            old_content=content,
+            unified_diff=diff_text,
+            lines_removed=removed,
+        )
+        prediction.files.append(fd)
+        prediction.deleted_files += 1
+        prediction.total_removed += removed
+
+    def _handle_modified_file(
+        self, prediction: DiffPrediction, rel_path: str, orig: Path, sand: Path
+    ) -> None:
+        """Handle a modified file."""
+        old_text = self._read_safe(orig)
+        new_text = self._read_safe(sand)
+        if old_text != new_text:
+            diff_text = self._unified_diff(old_text, new_text, rel_path)
+            added = sum(
+                1
+                for line in diff_text.splitlines()
+                if line.startswith("+") and not line.startswith("+++")
+            )
+            removed = sum(
+                1
+                for line in diff_text.splitlines()
+                if line.startswith("-") and not line.startswith("---")
+            )
+            fd = FileDiff(
+                path=rel_path,
+                change_type=ChangeType.MODIFIED,
+                old_content=old_text,
+                new_content=new_text,
+                unified_diff=diff_text,
+                lines_added=added,
+                lines_removed=removed,
+            )
+            prediction.files.append(fd)
+            prediction.modified_files += 1
+            prediction.total_added += added
+            prediction.total_removed += removed
 
     # ------------------------------------------------------------------
     # Internal
