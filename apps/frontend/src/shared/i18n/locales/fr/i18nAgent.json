@@ -1,0 +1,8 @@
+{
+	"title": "Rapport i18n",
+	"noData": "Aucune donnée de rapport i18n disponible",
+	"filesInfo": "{{count}} fichiers · {{locales}}",
+	"coverage": "Couverture",
+	"issues": "Problèmes",
+	"locale": "locale"
+}

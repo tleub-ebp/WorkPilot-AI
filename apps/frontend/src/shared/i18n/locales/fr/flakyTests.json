@@ -1,0 +1,8 @@
+{
+	"title": "Détective de tests instables",
+	"noData": "Aucune donnée de rapport de tests instables disponible",
+	"summary": "{{flaky}} instables sur {{total}} tests au total",
+	"confidence": "confiance {{level}}",
+	"cause": "Cause :",
+	"failures": "échecs"
+}

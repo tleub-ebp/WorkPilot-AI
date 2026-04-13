@@ -1,0 +1,13 @@
+{
+	"title": "Personal Agent Coach",
+	"noData": "No coach report data available",
+	"summary": "{{runs}} runs · {{successRate}}% success · ${{cost}} total cost",
+	"stats": {
+		"runs": "Runs",
+		"successRate": "Success Rate",
+		"avgCost": "Avg Cost",
+		"mostFailing": "Most Failing",
+		"none": "None"
+	},
+	"evidence": "Evidence:"
+}

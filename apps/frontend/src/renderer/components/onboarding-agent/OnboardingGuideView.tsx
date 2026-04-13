@@ -1,4 +1,5 @@
 import type React from "react";
+import { useTranslation } from "react-i18next";
 import type { OnboardingGuide } from "../../../shared/types/onboarding";
 
 interface OnboardingGuideViewProps {
@@ -8,19 +9,21 @@ interface OnboardingGuideViewProps {
 export function OnboardingGuideView({
 	guide,
 }: OnboardingGuideViewProps): React.ReactElement {
+	const { t } = useTranslation("onboardingAgent");
+
 	if (!guide) {
 		return (
 			<div className="flex items-center justify-center h-full text-(--text-secondary)">
-				<p>No onboarding guide data available</p>
+				<p>{t("noData")}</p>
 			</div>
 		);
 	}
 	return (
 		<div className="flex flex-col gap-4 p-6 bg-(--bg-primary) text-(--text-primary)">
 			<div>
-				<h2 className="text-lg font-semibold">Onboarding Guide</h2>
+				<h2 className="text-lg font-semibold">{t("title")}</h2>
 				<p className="text-sm text-(--text-secondary)">
-					{guide.projectName} · ~{guide.totalEstimatedMinutes} min
+					{guide.projectName} · {t("duration", { minutes: guide.totalEstimatedMinutes })}
 				</p>
 				<div className="flex flex-wrap gap-1 mt-1">
 					{guide.techStack.map((tech) => (
@@ -48,7 +51,7 @@ export function OnboardingGuideView({
 								<p className="text-sm font-medium">{step.title}</p>
 							</div>
 							<span className="text-xs text-(--text-secondary)">
-								~{step.estimatedMinutes} min
+								{t("duration", { minutes: step.estimatedMinutes })}
 							</span>
 						</div>
 						<p className="text-sm text-(--text-secondary) mb-2">

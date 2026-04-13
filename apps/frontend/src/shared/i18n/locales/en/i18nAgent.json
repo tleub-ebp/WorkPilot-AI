@@ -1,0 +1,8 @@
+{
+	"title": "i18n Report",
+	"noData": "No i18n report data available",
+	"filesInfo": "{{count}} files · {{locales}}",
+	"coverage": "Coverage",
+	"issues": "Issues",
+	"locale": "locale"
+}

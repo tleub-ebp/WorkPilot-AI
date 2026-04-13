@@ -1,4 +1,5 @@
 import type React from "react";
+import { useTranslation } from "react-i18next";
 import type { A11yReport, A11ySeverity } from "../../../shared/types/accessibility";
 
 const SEVERITY_STYLES: Record<A11ySeverity, string> = {
@@ -15,10 +16,12 @@ interface A11yReportViewProps {
 export function A11yReportView({
 	report,
 }: A11yReportViewProps): React.ReactElement {
+	const { t } = useTranslation("accessibility");
+
 	if (!report) {
 		return (
 			<div className="flex items-center justify-center h-full text-(--text-secondary)">
-				<p>No accessibility report data available</p>
+				<p>{t("noData")}</p>
 			</div>
 		);
 	}
@@ -32,18 +35,20 @@ export function A11yReportView({
 	return (
 		<div className="flex flex-col gap-4 p-6 bg-(--bg-primary) text-(--text-primary)">
 			<div>
-				<h2 className="text-lg font-semibold">Accessibility Report</h2>
+				<h2 className="text-lg font-semibold">{t("title")}</h2>
 				<p className="text-sm text-(--text-secondary)">
-					Target: WCAG {report.targetLevel} · {report.filesScanned} files
-					scanned
+					{t("targetInfo", {
+						targetLevel: report.targetLevel,
+						filesScanned: report.filesScanned,
+					})}
 				</p>
 			</div>
 
 			<div className="grid grid-cols-4 gap-3">
-				<StatCard label="Violations" value={report.violations.length} color="text-red-400" />
-				<StatCard label="Critical" value={criticalCount} color="text-red-400" />
-				<StatCard label="Serious" value={seriousCount} color="text-orange-400" />
-				<StatCard label="Rules Passed" value={report.passedRules.length} color="text-green-400" />
+				<StatCard label={t("stats.violations")} value={report.violations.length} color="text-red-400" />
+				<StatCard label={t("stats.critical")} value={criticalCount} color="text-red-400" />
+				<StatCard label={t("stats.serious")} value={seriousCount} color="text-orange-400" />
+				<StatCard label={t("stats.rulesPassed")} value={report.passedRules.length} color="text-green-400" />
 			</div>
 
 			<div className="space-y-2">

@@ -1,0 +1,11 @@
+{
+	"title": "Rapport d'accessibilité",
+	"noData": "Aucune donnée de rapport d'accessibilité disponible",
+	"targetInfo": "Cible : WCAG {{targetLevel}} · {{filesScanned}} fichiers scannés",
+	"stats": {
+		"violations": "Violations",
+		"critical": "Critique",
+		"serious": "Sérieuse",
+		"rulesPassed": "Règles passées"
+	}
+}

@@ -1,4 +1,5 @@
 import type React from "react";
+import { useTranslation } from "react-i18next";
 import type { CoachReport, TipPriority } from "../../../shared/types/agent-coach";
 
 const PRIORITY_STYLES: Record<TipPriority, string> = {
@@ -14,35 +15,40 @@ interface CoachReportViewProps {
 export function CoachReportView({
 	report,
 }: CoachReportViewProps): React.ReactElement {
+	const { t } = useTranslation("agentCoach");
+
 	if (!report) {
 		return (
-			<div className="flex items-center justify-center h-full">
-				<p>No coach report data available</p>
+			<div className="flex items-center justify-center h-full text-(--text-secondary)">
+				<p>{t("noData")}</p>
 			</div>
 		);
 	}
 	return (
 		<div className="flex flex-col gap-4 p-6 bg-(--bg-primary) text-(--text-primary)">
 			<div>
-				<h2 className="text-lg font-semibold">Personal Agent Coach</h2>
+				<h2 className="text-lg font-semibold">{t("title")}</h2>
 				<p className="text-sm text-(--text-secondary)">
-					{report.totalRuns} runs · {(report.successRate * 100).toFixed(1)}%
-					success · ${report.totalCostUsd.toFixed(2)} total cost
+					{t("summary", {
+						runs: report.totalRuns,
+						successRate: (report.successRate * 100).toFixed(1),
+						cost: report.totalCostUsd.toFixed(2),
+					})}
 				</p>
 			</div>
 
 			{/* Stats */}
 			<div className="grid grid-cols-4 gap-3">
-				<StatCard label="Runs" value={String(report.totalRuns)} color="text-blue-400" />
+				<StatCard label={t("stats.runs")} value={String(report.totalRuns)} color="text-blue-400" />
 				<StatCard
-					label="Success Rate"
+					label={t("stats.successRate")}
 					value={`${(report.successRate * 100).toFixed(0)}%`}
 					color={report.successRate >= 0.8 ? "text-green-400" : "text-yellow-400"}
 				/>
-				<StatCard label="Avg Cost" value={`$${report.avgCostUsd.toFixed(4)}`} color="text-purple-400" />
+				<StatCard label={t("stats.avgCost")} value={`$${report.avgCostUsd.toFixed(4)}`} color="text-purple-400" />
 				<StatCard
-					label="Most Failing"
-					value={report.mostFailingAgent || "None"}
+					label={t("stats.mostFailing")}
+					value={report.mostFailingAgent || t("stats.none")}
 					color="text-red-400"
 				/>
 			</div>
@@ -66,7 +72,7 @@ export function CoachReportView({
 						<p className="text-xs mt-1 opacity-80">{tip.description}</p>
 						{tip.evidence && (
 							<p className="text-xs mt-1 opacity-60 italic">
-								Evidence: {tip.evidence}
+								{t("evidence")} {tip.evidence}
 							</p>
 						)}
 						{tip.action && (

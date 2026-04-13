@@ -67,6 +67,7 @@
 		"apiExplorer": "API Studio",
 		"sandbox": "Bac à sable de simulation d'agent",
 		"regressionGuardian": "Gardien de régression",
+		"injectionGuard": "Garde d'injection",
 		"apiWatcher": "Surveillant de contrat API",
 		"accessibilityAgent": "Agent d'accessibilité",
 		"i18nAgent": "Agent i18n",

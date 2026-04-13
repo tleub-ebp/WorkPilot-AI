@@ -1,4 +1,5 @@
 import type React from "react";
+import { useTranslation } from "react-i18next";
 import type { I18nReport, I18nSeverity } from "../../../shared/types/i18n-agent";
 
 const SEVERITY_STYLES: Record<I18nSeverity, string> = {
@@ -14,19 +15,24 @@ interface I18nReportViewProps {
 export function I18nReportView({
 	report,
 }: I18nReportViewProps): React.ReactElement {
+	const { t } = useTranslation("i18nAgent");
+
 	if (!report) {
 		return (
 			<div className="flex items-center justify-center h-full text-(--text-secondary)">
-				<p>No i18n report data available</p>
+				<p>{t("noData")}</p>
 			</div>
 		);
 	}
 	return (
 		<div className="flex flex-col gap-4 p-6 bg-(--bg-primary) text-(--text-primary)">
 			<div>
-				<h2 className="text-lg font-semibold">i18n Report</h2>
+				<h2 className="text-lg font-semibold">{t("title")}</h2>
 				<p className="text-sm text-(--text-secondary)">
-					{report.filesScanned} files · {report.localesCompared.join(", ")}
+					{t("filesInfo", {
+						count: report.filesScanned,
+						locales: report.localesCompared.join(", "),
+					})}
 				</p>
 			</div>
 
@@ -47,7 +53,7 @@ export function I18nReportView({
 							className="p-3 rounded-lg bg-(--bg-secondary) border border-(--border-color)"
 						>
 							<p className="text-xs text-(--text-secondary)">
-								{locale}
+								{t("locale")}: {locale}
 							</p>
 							<p className={`text-xl font-bold ${coverageColor}`}>
 								{pct}%

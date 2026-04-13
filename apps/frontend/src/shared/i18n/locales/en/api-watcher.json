@@ -1,0 +1,11 @@
+{
+	"title": "API Contract Watcher",
+	"noData": "No contract diff data available",
+	"changesDetected": "{{count}} changes detected",
+	"categories": {
+		"breaking": "Breaking",
+		"potentiallyBreaking": "Potentially Breaking",
+		"nonBreaking": "Non-Breaking"
+	},
+	"migrationGuide": "Migration Guide"
+}

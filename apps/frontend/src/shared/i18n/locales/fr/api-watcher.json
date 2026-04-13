@@ -1,0 +1,11 @@
+{
+	"title": "Surveillant de contrat API",
+	"noData": "Aucune donnée de diff de contrat disponible",
+	"changesDetected": "{{count}} modifications détectées",
+	"categories": {
+		"breaking": "Cassante",
+		"potentiallyBreaking": "Potentiellement cassante",
+		"nonBreaking": "Non cassante"
+	},
+	"migrationGuide": "Guide de migration"
+}

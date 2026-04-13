@@ -1,0 +1,13 @@
+{
+	"title": "Coach personnel d'agent",
+	"noData": "Aucune donnée de rapport de coach disponible",
+	"summary": "{{runs}} exécutions · {{successRate}}% succès · ${{cost}} coût total",
+	"stats": {
+		"runs": "Exécutions",
+		"successRate": "Taux de succès",
+		"avgCost": "Coût moyen",
+		"mostFailing": "Échecs fréquents",
+		"none": "Aucun"
+	},
+	"evidence": "Preuve :"
+}

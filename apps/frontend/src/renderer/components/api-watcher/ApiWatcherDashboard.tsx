@@ -1,4 +1,5 @@
 import type React from "react";
+import { useTranslation } from "react-i18next";
 import type { ContractDiff, ContractChange } from "../../../shared/types/api-watcher";
 
 const CATEGORY_STYLES: Record<string, { color: string; icon: string }> = {
@@ -16,33 +17,35 @@ export function ApiWatcherDashboard({
 	diff,
 	migrationGuideMarkdown,
 }: ApiWatcherDashboardProps): React.ReactElement {
+	const { t } = useTranslation("apiWatcher");
+
 	if (!diff) {
 		return (
 			<div className="flex items-center justify-center h-full text-(--text-secondary)">
-				<p>No contract diff data available</p>
+				<p>{t("noData")}</p>
 			</div>
 		);
 	}
 	return (
 		<div className="flex flex-col gap-4 p-6 bg-(--bg-primary) text-(--text-primary)">
 			<div>
-				<h2 className="text-lg font-semibold">API Contract Watcher</h2>
+				<h2 className="text-lg font-semibold">{t("title")}</h2>
 				<p className="text-sm text-(--text-secondary)">
-					{diff.changes.length} changes detected
+					{t("changesDetected", { count: diff.changes.length })}
 				</p>
 			</div>
 
 			<div className="grid grid-cols-3 gap-3">
 				<div className="p-3 rounded-lg bg-red-500/10 border border-red-500/20">
-					<p className="text-xs text-red-400">Breaking</p>
+					<p className="text-xs text-red-400">{t("categories.breaking")}</p>
 					<p className="text-2xl font-bold text-red-400">{diff.breakingCount}</p>
 				</div>
 				<div className="p-3 rounded-lg bg-yellow-500/10 border border-yellow-500/20">
-					<p className="text-xs text-yellow-400">Potentially Breaking</p>
+					<p className="text-xs text-yellow-400">{t("categories.potentiallyBreaking")}</p>
 					<p className="text-2xl font-bold text-yellow-400">{diff.potentiallyBreakingCount}</p>
 				</div>
 				<div className="p-3 rounded-lg bg-green-500/10 border border-green-500/20">
-					<p className="text-xs text-green-400">Non-Breaking</p>
+					<p className="text-xs text-green-400">{t("categories.nonBreaking")}</p>
 					<p className="text-2xl font-bold text-green-400">{diff.nonBreakingCount}</p>
 				</div>
 			</div>
@@ -55,7 +58,7 @@ export function ApiWatcherDashboard({
 
 			{migrationGuideMarkdown && (
 				<div className="mt-4 p-4 rounded-lg bg-(--bg-secondary) border border-(--border-color)">
-					<h3 className="text-sm font-medium mb-2">Migration Guide</h3>
+					<h3 className="text-sm font-medium mb-2">{t("migrationGuide")}</h3>
 					<pre className="text-xs whitespace-pre-wrap font-mono text-(--text-secondary)">
 						{migrationGuideMarkdown}
 					</pre>

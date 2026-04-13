@@ -1682,6 +1682,11 @@ export function App() {
 												{activeView === "regression-guardian" && (
 													<RegressionGuardianDashboard results={[]} />
 												)}
+												{activeView === "injection-guard" && (
+													<div className="flex items-center justify-center h-full text-(--text-secondary)">
+														<p>Injection Guard - Coming Soon</p>
+													</div>
+												)}
 												{activeView === "api-watcher" && <ApiWatcherDashboard />}
 												{activeView === "accessibility-agent" && <A11yReportView />}
 												{activeView === "i18n-agent" && <I18nReportView />}

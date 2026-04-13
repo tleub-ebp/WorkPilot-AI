@@ -1,0 +1,8 @@
+{
+	"title": "Flaky Test Detective",
+	"noData": "No flaky test report data available",
+	"summary": "{{flaky}} flaky out of {{total}} total tests",
+	"confidence": "{{level}} confidence",
+	"cause": "Cause:",
+	"failures": "failures"
+}
