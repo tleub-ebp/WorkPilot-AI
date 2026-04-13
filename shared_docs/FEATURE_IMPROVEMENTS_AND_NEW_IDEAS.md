@@ -593,10 +593,53 @@ Dans les sections ci-dessous, chaque amélioration contient désormais un bloc *
 
 ### D. Expérience développeur
 
-#### 13. Design-to-Code — Boucle de rendu itérative
-**Aujourd'hui :** one-shot design → code.
-**Amélioration :** l'agent lance le rendu via App Emulator, prend un screenshot, diffe visuellement avec la target (pixel-diff + embeddings), identifie les écarts et itère jusqu'à convergence (budget de N tours).
-**Débloque :** fidélité visuelle réellement élevée au lieu de "ça ressemble à peu près".
+#### 13. Design-to-Code — Boucle de rendu itérative avec auto-correction
+
+**Aujourd'hui :** la pipeline Design-to-Code génère du code React/HTML en one-shot à partir d'un screenshot ou d'un lien Figma. Le résultat est « à peu près bon » mais avec des écarts visibles : mauvais gap, couleur approchée, padding décalé, typo légèrement différente. L'utilisateur doit corriger manuellement, ce qui tue une partie de la valeur.
+
+**Amélioration proposée :**
+- **Boucle render → diff → correct** :
+  1. L'agent génère la première version du code.
+  2. Il lance le rendu via App Emulator (ou headless Chrome via Chrome DevTools MCP).
+  3. Il prend un screenshot aux mêmes dimensions que la target.
+  4. Comparaison visuelle : **pixel diff** (tolerance colorimétrique + structural SSIM) + **semantic diff** via embeddings visuels (CLIP ou équivalent) sur des régions.
+  5. L'agent reçoit un feedback structuré : « header padding-top 12px au lieu de 20px », « le bouton CTA est orange mais devrait être rouge `#e63946` », « la grille est 3 colonnes au lieu de 4 en desktop ».
+  6. Itération jusqu'à convergence (score de diff < seuil) ou budget épuisé.
+- **Breakdown par région** : découpage en zones (header, hero, content, footer) et itération ciblée au lieu de régénérer tout.
+- **Responsive pass** : répéter la boucle sur 3 breakpoints (mobile, tablet, desktop) et détecter les régressions d'un breakpoint à l'autre.
+- **Budget visuel** : max 5 itérations, max $X en tokens. Si non convergé, rapport final avec les écarts résiduels.
+- **Diff UI** : panneau side-by-side target / rendu / diff map coloré + liste des écarts avec statut (résolu, en cours, abandonné).
+
+**Fichiers à toucher :**
+- `apps/backend/design_to_code/render_loop.py` — nouveau (orchestration boucle).
+- `apps/backend/design_to_code/visual_diff.py` — pixel diff + SSIM + régions.
+- `apps/backend/design_to_code/semantic_diff.py` — embeddings visuels.
+- `apps/backend/prompts/design_to_code_iteration.md` — prompt de feedback pour corrections ciblées.
+- `apps/frontend/src/renderer/components/design-to-code/IterationPanel.tsx` — UI progression + diff.
+- Intégration App Emulator : hook pour screenshots automatiques.
+
+**Edge cases :**
+- Contenu dynamique (dates, données random) qui crée du bruit dans le diff → masque des zones dynamiques avant comparaison.
+- Fonts non installées dans l'env de rendu → warning + fallback.
+- Target elle-même basse qualité (artefacts de compression JPEG) → seuil de tolérance adaptatif.
+- Composants utilisant du state (hover, active) non capturés dans le screenshot statique → option de capture multi-state.
+
+**Métriques :**
+- Score de diff moyen après convergence (viser < 5% pixel diff).
+- Nombre d'itérations moyennes pour converger.
+- Taux de specs Design-to-Code acceptés sans retouche humaine.
+
+**Multi-provider :**
+- La boucle visuelle requiert un modèle **vision-capable**. Providers compatibles : Claude (3.5+/4+/4.6), GPT-4o/4.1, Gemini 1.5/2.5 Pro, Llama 3.2 Vision, Qwen 2.5 VL, Pixtral via Ollama.
+- Le registre de capabilities filtre automatiquement les modèles sans vision (`supports_vision: false`) — ex : Haiku 3, GPT-3.5, Llama text-only. Si l'utilisateur tente, message explicite.
+- Le prompt de correction est neutre (« the button padding is 12px but should be 20px »), testé sur ≥3 providers vision. Format de sortie JSON imposé via tool use.
+- Le pixel diff et le SSIM sont algorithmiques (OpenCV, scikit-image), 100% provider-indépendants. Les embeddings visuels utilisent un modèle open source (CLIP) ou un endpoint embedding du provider de l'utilisateur.
+- Mode offline via Ollama + Llama Vision pour les maquettes confidentielles.
+- Un design-to-code peut combiner un modèle vision pour l'analyse (GPT-4o) et un modèle text pour la génération de code (Claude Sonnet 4.6) si cela améliore le ratio qualité/coût — orchestration possible dans Mission Control.
+
+**Débloque :** fidélité visuelle réellement élevée, demo spectaculaire, adoption par les designers, réduction drastique du temps de front.
+
+**Effort :** Élevé | **Impact :** Très haut (wow effect + productivité)
 
 #### 14. App Emulator — Presets device & responsive matrix
 **Aujourd'hui :** preview d'app.
