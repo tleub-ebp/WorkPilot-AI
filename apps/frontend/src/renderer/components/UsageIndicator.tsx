@@ -8,7 +8,9 @@
 
 import { PROVIDER_MODELS_MAP } from "@shared/constants/models";
 import type {
+	ClaudeProfile,
 	ClaudeUsageData,
+	IPCResult,
 	ProfileUsageSummary,
 	UsageSnapshot,
 } from "@shared/types";
@@ -40,7 +42,6 @@ import {
 } from "./ui/tooltip";
 import { CopilotUsageContent } from "./usage/CopilotUsageContent";
 import { DefaultUsageContent } from "./usage/DefaultUsageContent";
-// Import extracted components and utilities
 import { OpenAIUsageContent } from "./usage/OpenAIUsageContent";
 import { ProfileRenderer } from "./usage/ProfileRenderer";
 import { ReauthContent } from "./usage/ReauthContent";
@@ -59,8 +60,7 @@ export function UsageIndicator() {
 		useState(false);
 	const [isOpen, setIsOpen] = useState(false);
 	const [isPinned, setIsPinned] = useState(false);
-	// biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
-	const [providerProfile, setProviderProfile] = useState<any>(null);
+	const [providerProfile, setProviderProfile] = useState<ClaudeProfile | null>(null);
 	const [isRefreshing, setIsRefreshing] = useState(false);
 	const [lastRefreshTime, setLastRefreshTime] = useState<Date | null>(null);
 	const hoverTimeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -106,8 +106,10 @@ export function UsageIndicator() {
 	/**
 	 * Handle successful usage data response
 	 */
-	// biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
-	const handleSuccessResponse = (result: any, provider: string): boolean => {
+	const handleSuccessResponse = (
+		result: IPCResult<UsageSnapshot | null>,
+		provider: string,
+	): boolean => {
 		if (result.success && result.data) {
 			if (
 				provider &&
@@ -174,8 +176,9 @@ export function UsageIndicator() {
 	/**
 	 * Execute the IPC call with timeout
 	 */
-	// biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
-	const executeIPCCall = async (provider: string): Promise<any> => {
+	const executeIPCCall = async (
+		provider: string,
+	): Promise<IPCResult<UsageSnapshot | null>> => {
 		// Race the IPC call against a 20-second timeout so we never hang indefinitely.
 		const ipcPromise = globalThis.electronAPI.requestUsageUpdate(provider);
 		const timeoutPromise = new Promise<never>((_, reject) =>
@@ -848,10 +851,16 @@ export function UsageIndicator() {
 	const isOpenAI = usage.providerName === "openai";
 	const isCopilot = usage.providerName === "copilot";
 
+	// Copilot may have an error field for authentication issues
+	const hasCopilotError =
+		isCopilot &&
+		"error" in usage &&
+		(usage as UsageSnapshot & { error?: string }).error !== undefined &&
+		(usage as UsageSnapshot & { error?: string }).error !== "NONE";
+
 	const hasErrorCondition =
 		usage.needsReauthentication ||
-		// biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
-		(isCopilot && (usage as any).error && (usage as any).error !== "NONE") ||
+		hasCopilotError ||
 		maxUsage >= THRESHOLD_WARNING;
 
 	// biome-ignore lint/suspicious/noImplicitAnyLet: type inferred from assignment

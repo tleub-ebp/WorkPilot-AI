@@ -1,4 +1,10 @@
-import type { UsageSnapshot } from "@shared/types";
+import type {
+	OpenAICompletionItem,
+	OpenAICostItem,
+	OpenAIEmbeddingItem,
+	OpenAIUsageDetails,
+	UsageSnapshot,
+} from "@shared/types";
 import { formatUsageValue } from "@shared/utils/format-usage";
 import { TrendingUp } from "lucide-react";
 import { useTranslation } from "react-i18next";
@@ -47,8 +53,7 @@ export function OpenAIUsageContent({ usage }: OpenAIUsageContentProps) {
 }
 
 interface OpenAIUsageDetailsProps {
-	// biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
-	readonly details: any;
+	readonly details: OpenAIUsageDetails;
 }
 
 function OpenAIUsageDetails({ details }: OpenAIUsageDetailsProps) {
@@ -66,8 +71,7 @@ function OpenAIUsageDetails({ details }: OpenAIUsageDetailsProps) {
 					</div>
 					<ul>
 						{details.completions.data && details.completions.data.length > 0 ? (
-							// biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
-							details.completions.data.map((item: any, idx: number) => (
+							details.completions.data.map((item: OpenAICompletionItem, idx: number) => (
 								<li key={`completions-${item.model || idx}`}>
 									{item.model}: {item.n_input_tokens_total || 0} in,{" "}
 									{item.n_output_tokens_total || 0} out
@@ -86,8 +90,7 @@ function OpenAIUsageDetails({ details }: OpenAIUsageDetailsProps) {
 					</div>
 					<ul>
 						{details.cost.data && details.cost.data.length > 0 ? (
-							// biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
-							details.cost.data.map((item: any, idx: number) => (
+							details.cost.data.map((item: OpenAICostItem, idx: number) => (
 								<li key={`cost-${item.model || idx}`}>
 									{item.model}: $
 									{item.cost_usd
@@ -106,8 +109,7 @@ function OpenAIUsageDetails({ details }: OpenAIUsageDetailsProps) {
 					<div className="font-medium">{t("common:usage.embeddingsLabel")}</div>
 					<ul>
 						{details.embeddings.data && details.embeddings.data.length > 0 ? (
-							// biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
-							details.embeddings.data.map((item: any, idx: number) => (
+							details.embeddings.data.map((item: OpenAIEmbeddingItem, idx: number) => (
 								<li key={`embeddings-${item.model || idx}`}>
 									{item.model}: {item.n_input_tokens_total || 0}
 								</li>

@@ -95,16 +95,7 @@ export interface UsageSnapshot {
 	 * Détails OpenAI Usage (completions, cost, embeddings, moderations)
 	 * Présent uniquement si providerName === 'openai'
 	 */
-	openaiUsageDetails?: {
-		// biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
-		completions?: any;
-		// biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
-		cost?: any;
-		// biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
-		embeddings?: any;
-		// biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
-		moderations?: any;
-	};
+	openaiUsageDetails?: OpenAIUsageDetails;
 
 	/**
 	 * Détails GitHub Copilot Usage (tokens, suggestions, acceptances)
@@ -151,6 +142,56 @@ export interface UsageSnapshot {
 		/** Billing cycle end (ISO 8601) */
 		billingCycleEnd?: string;
 	};
+}
+
+/**
+ * Détails d'utilisation OpenAI
+ */
+export interface OpenAIUsageDetails {
+	completions?: OpenAICompletions;
+	cost?: OpenAICost;
+	embeddings?: OpenAIEmbeddings;
+	moderations?: Record<string, unknown>;
+}
+
+/**
+ * Données de complétions OpenAI
+ */
+export interface OpenAICompletions {
+	data: OpenAICompletionItem[];
+}
+
+/** Élément de données de complétions OpenAI */
+export interface OpenAICompletionItem {
+	model?: string;
+	n_input_tokens_total?: number;
+	n_output_tokens_total?: number;
+}
+
+/**
+ * Données de coût OpenAI
+ */
+export interface OpenAICost {
+	data: OpenAICostItem[];
+}
+
+/** Élément de données de coût OpenAI */
+export interface OpenAICostItem {
+	model?: string;
+	cost_usd?: number;
+}
+
+/**
+ * Données d'embeddings OpenAI
+ */
+export interface OpenAIEmbeddings {
+	data: OpenAIEmbeddingItem[];
+}
+
+/** Élément de données d'embeddings OpenAI */
+export interface OpenAIEmbeddingItem {
+	model?: string;
+	n_input_tokens_total?: number;
 }
 
 /**

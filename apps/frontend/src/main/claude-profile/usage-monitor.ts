@@ -3223,10 +3223,10 @@ export class UsageMonitor extends EventEmitter {
 			},
 			providerName: "openai",
 			openaiUsageDetails: {
-				completions: null,
-				cost: null,
-				embeddings: null,
-				moderations: null,
+				completions: undefined,
+				cost: undefined,
+				embeddings: undefined,
+				moderations: undefined,
 			},
 		};
 	}

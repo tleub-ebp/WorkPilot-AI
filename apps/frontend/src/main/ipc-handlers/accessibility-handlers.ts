@@ -17,6 +17,7 @@
 import { type ChildProcess, spawn } from "node:child_process";
 import path from "node:path";
 import { app, BrowserWindow, ipcMain } from "electron";
+import { pythonEnvManager } from "../python-env-manager.js";
 
 interface RunRequest {
 	projectPath: string;
@@ -54,22 +55,25 @@ export function registerAccessibilityHandlers(): void {
 				throw new Error(message);
 			}
 
-			const backendPath = path.resolve(app.getAppPath(), "apps", "backend");
+			const backendPath = app.isPackaged
+				? path.resolve(process.resourcesPath, "backend")
+				: path.resolve(app.getAppPath(), "..", "backend");
 			const runnerPath = path.resolve(
 				backendPath,
 				"runners",
 				"accessibility_runner.py",
 			);
 
+			// Use PythonEnvManager to get the configured Python path
+			const pythonExe = pythonEnvManager.getPythonPath();
+
+			if (!pythonExe) {
+				throw new Error("Python environment not ready");
+			}
+
 			const child = spawn(
-				"python",
-				[
-					runnerPath,
-					"--project-path",
-					projectPath,
-					"--target-level",
-					targetLevel,
-				],
+				pythonExe,
+				[runnerPath, "--project-path", projectPath, "--target-level", targetLevel],
 				{
 					cwd: backendPath,
 					env: { ...process.env, PYTHONPATH: backendPath },
