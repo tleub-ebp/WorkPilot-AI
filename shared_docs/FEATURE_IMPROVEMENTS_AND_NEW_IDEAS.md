@@ -9,6 +9,40 @@
 
 ---
 
+## 🌐 Contrainte transverse — Multi-provider first
+
+**Règle non négociable : toutes les features (améliorations existantes ET nouvelles) doivent fonctionner avec n'importe quel LLM de n'importe quel provider, pas uniquement Anthropic Claude.**
+
+WorkPilot AI supporte déjà nativement : Anthropic, OpenAI, Google (Gemini), xAI (Grok), GitHub Copilot, Ollama (local), ainsi que tout endpoint compatible OpenAI (z.ai pour GLM, Groq, Together, etc.). Cette contrainte s'applique de bout en bout.
+
+### Principes d'implémentation
+
+1. **Abstraction obligatoire** — Toujours passer par `core.client.create_client()` qui encapsule les différences de provider. Jamais appeler un SDK provider-spécifique (`anthropic.Anthropic()`, `openai.OpenAI()`, etc.) en dehors de cette couche.
+2. **Capability detection, pas name matching** — Tester ce qu'un modèle peut faire (`supports_vision`, `supports_tool_use`, `supports_thinking`, `max_context_window`) via un registre centralisé, pas via `if model.startswith("claude")`.
+3. **Dégradation gracieuse** — Si une feature dépend d'une capability manquante (ex : extended thinking absent sur Haiku ou GPT-4o-mini), fallback documenté et annoncé à l'utilisateur, pas d'erreur silencieuse.
+4. **Prompts portables** — Les prompts d'agents sont rédigés en style neutre (pas de « you are Claude »), testés sur au moins Anthropic + OpenAI + Google + Ollama local avant merge.
+5. **Format structuré via JSON Schema / tool use** — Ne jamais reposer sur un format de sortie provider-spécifique (ex : Claude XML tags uniquement). Utiliser tool use ou JSON Schema contraint, supporté par tous les providers majeurs.
+6. **Coûts normalisés** — La feature Cost Intelligence doit mapper les tarifs de tous les providers vers une unité commune (tokens → USD) à partir d'un catalogue versionné.
+7. **Tests cross-provider** — Chaque feature d'agent doit avoir au moins un test d'intégration qui tourne avec un provider non-Anthropic (OpenAI ou Ollama) en CI.
+
+### Checklist par feature
+
+Lors de l'implémentation d'une amélioration ou d'une nouvelle feature, valider :
+
+- [ ] Le code passe par `create_client()` / la couche provider abstraction.
+- [ ] Les capabilities requises sont détectées, pas devinées.
+- [ ] Le prompt système est neutre, testé sur ≥3 providers.
+- [ ] Un chemin de fallback existe pour les modèles qui ne supportent pas la capability.
+- [ ] La feature est utilisable avec un modèle Ollama local (validation offline).
+- [ ] Le catalogue de coûts couvre le nouveau modèle si applicable.
+- [ ] La doc utilisateur mentionne la liste des providers compatibles.
+
+### Conséquence sur les features existantes
+
+Dans les sections ci-dessous, chaque amélioration contient désormais un bloc **« Multi-provider »** qui précise les points d'attention pour l'implémentation dans un contexte non-Anthropic. Les features d'orchestration (Mission Control, Arena, Cost Intelligence) sont naturellement multi-provider par design ; les features reposant sur extended thinking ou long context (1M tokens Claude) doivent expliciter leur fallback sur les autres providers.
+
+---
+
 ## Table des matières
 
 - [Partie 1 — Améliorations des features existantes](#partie-1--améliorations-des-features-existantes)
@@ -59,7 +93,12 @@
 - Budget absurdement bas → refuser de démarrer avec message explicite.
 - Provider indisponible (rate limit) → rerouter sur profil de secours via Claude Profile System.
 
-**Débloque :** onboarding zéro-friction, maîtrise des coûts, résilience automatique face aux agents bloqués.
+**Multi-provider :**
+- Le session planner (LLM léger qui propose la composition) doit accepter n'importe quel modèle « fast tier » : Haiku, GPT-4o-mini, Gemini Flash, Grok Mini, Llama 3.1 8B via Ollama.
+- Les compositions suggérées mixent les providers : `1 archi GPT-4o + 3 coders Sonnet + 1 reviewer Gemini Pro + 1 tester Llama local` est un cas valide et doit être présenté comme tel dans l'UI.
+- Le calcul de budget normalise les coûts via le catalogue Cost Intelligence (voir F.20), pas via une tarification Anthropic-only.
+- Le registre de capabilities (`supports_tool_use`, `max_context`) est consulté pour filtrer les modèles inappropriés à un rôle donné (ex : refuser un modèle sans tool use comme reviewer).
+- Templates validés en CI avec un run contre Ollama local pour garantir l'offline-friendliness.
 
 **Effort :** Moyen | **Impact :** Haut
 
@@ -105,6 +144,13 @@
 - Taux d'ouverture des liens partagés.
 - % de replays avec bookmarks (engagement).
 
+**Multi-provider :**
+- Le format `.wpreplay` doit capturer les événements de n'importe quel provider (Anthropic, OpenAI, Google, Grok, Ollama, Copilot) via un schéma d'événements commun — pas de champs Claude-only.
+- Le champ `thinking` est optionnel : certains modèles (GPT-4o, Gemini, Ollama) n'exposent pas d'extended thinking ; le viewer affiche « no thinking trace available for this model » sans casser.
+- Le rendu côté viewer (fichier → diff → tool call → thinking) doit rester lisible même sans thinking trace, en remplaçant par un récapitulatif textuel généré par un LLM au moment de l'export si souhaité (avec n'importe quel provider).
+- Redaction des secrets indépendante du provider : regex universelles + option « strip tokens » pour supprimer les token counts qui pourraient révéler le modèle utilisé.
+- Viewer public minimal : zéro dépendance à un SDK provider côté client, juste du JSON rendu.
+
 **Débloque :** revue async en équipe, onboarding visuel, démos marketing, support client premium (« envoyez-nous le replay, on regarde »).
 
 **Effort :** Moyen | **Impact :** Haut
@@ -136,6 +182,13 @@
 - Engagement : temps moyen passé sur l'onglet Pixel Office / semaine / utilisateur.
 - Nombre d'équipes ayant activé le mode kiosque.
 - % d'utilisateurs ayant obtenu au moins un achievement.
+
+**Multi-provider :**
+- Les achievements se basent sur des événements agent normalisés (spec terminé, incident résolu, review passée), pas sur des signaux provider-spécifiques (ex : « Opus streaks »). Ça reste honnête quel que soit le provider utilisé.
+- Les sprites d'agents en pixel art sont parametrables par provider : une palette par famille (Anthropic, OpenAI, Google, Ollama, Copilot, Grok, custom). L'utilisateur peut reconnaître visuellement quels providers tournent.
+- Le leaderboard pondère par coût normalisé, pas par token count brut — sinon un utilisateur Ollama local (gratuit mais verbeux) ou un utilisateur Haiku serait pénalisé vs. un utilisateur Opus. Pondération via le catalogue Cost Intelligence.
+- Les mini-narratifs générés (« Coder vient de rendre sa copie ») sont générés par un LLM léger au choix de l'utilisateur — Haiku, GPT-4o-mini, Gemini Flash ou Ollama local.
+- Mode kiosque testé offline avec Ollama pour démo salons / salles de réunion sans réseau.
 
 **Débloque :** argument marketing démontrable (screenshot viral), engagement quotidien des équipes, culture d'équipe positive autour de l'agent.
 
@@ -174,6 +227,13 @@
 - Nombre de policies violations bloquées / jour.
 - Nombre de circuit breaker triggers / semaine.
 - Temps moyen entre kill switch et arrêt effectif des agents (doit être < 2s).
+
+**Multi-provider :**
+- Les policies s'appliquent uniformément quel que soit le provider qui exécute l'agent — le check est au niveau du tool call avant délégation au SDK. Aucun contournement possible en changeant de provider.
+- Les budgets (tokens/h, cost/day) utilisent le catalogue de coûts normalisé de Cost Intelligence (voir F.20), qui couvre Anthropic, OpenAI, Google, Grok, Copilot, Ollama (coût = 0 + coût énergétique optionnel).
+- Le circuit breaker détecte les « boucles infinies » via hash de tool call + diff de state, indépendamment du provider. Un agent Ollama qui boucle est arrêté aussi vite qu'un agent Claude.
+- L'audit trail capture `provider + model + version` à chaque action, pour traçabilité post-mortem (« cette erreur vient-elle du modèle GPT-4o ou de Sonnet 4.6 ? »).
+- Le kill switch est un signal backend unique propagé à toutes les sessions actives, quel que soit leur provider — routage via `core.client.terminate_all()`.
 
 **Débloque :** adoption enterprise sereine, déploiement en autonomie 24/7 avec confiance, compliance (SOC2 audit trail natif).
 
