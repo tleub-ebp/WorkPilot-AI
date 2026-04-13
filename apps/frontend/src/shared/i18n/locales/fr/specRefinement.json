@@ -1,5 +1,5 @@
 {
-	"noDataAvailable": "Aucune donnée d'historique de raffinement disponible",
+	"noData": "Aucune donnée d'historique de raffinement disponible",
 	"title": "Historique de Raffinement de Spécification",
 	"iterations": "Itérations",
 	"iteration": "Itération {{num}}",

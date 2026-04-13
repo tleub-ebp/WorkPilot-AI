@@ -1,5 +1,5 @@
 {
-	"noDataAvailable": "No refinement history data available",
+	"noData": "No refinement history data available",
 	"title": "Specification Refinement History",
 	"iterations": "Iterations",
 	"iteration": "Iteration {{num}}",

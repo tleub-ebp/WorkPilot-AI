@@ -1,5 +1,5 @@
 {
-	"noDataAvailable": "No consensus data available",
+	"noData": "No consensus data available",
 	"title": "Consensus Arbiter",
 	"consensusScore": "Consensus Score",
 	"disagreements": "Disagreements",

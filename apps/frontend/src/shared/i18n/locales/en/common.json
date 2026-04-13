@@ -805,7 +805,10 @@
 	"refresh": "Refresh",
 	"save": "Save",
 	"loading": "Loading...",
-	"noProjectSelected": "No project selected",
+	"common": {
+		"noProjectSelected": "No project selected",
+		"injectionGuardComingSoon": "Injection Guard - Coming Soon"
+	},
 	"noProject": {
 		"greeting": "Welcome to WorkPilot AI!",
 		"explanation": "No project is open right now. Add a project from your machine to get started — WorkPilot AI will use it as the workspace for your AI agents.",

@@ -19,7 +19,7 @@ export function DocDriftReport({
 	if (!report) {
 		return (
 			<div className="flex items-center justify-center h-full text-(--text-secondary)">
-				<p>{t("noDataAvailable")}</p>
+				<p>{t("noData")}</p>
 			</div>
 		);
 	}

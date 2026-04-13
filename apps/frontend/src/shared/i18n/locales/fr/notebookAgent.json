@@ -1,5 +1,5 @@
 {
-	"noDataAvailable": "Aucune donnée de notebook disponible",
+	"noData": "Aucune donnée de notebook disponible",
 	"title": "Analyse de Notebook",
 	"totalCells": "Cellules Totales",
 	"codeCells": "Cellules de Code",

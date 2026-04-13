@@ -1,5 +1,5 @@
 {
-	"noDataAvailable": "Aucune donnée de rapport de conformité disponible",
+	"noData": "Aucune donnée de rapport de conformité disponible",
 	"title": "Collecteur de Preuves de Conformité",
 	"evidenceItems": "éléments de preuve",
 	"coverage": "couverture",

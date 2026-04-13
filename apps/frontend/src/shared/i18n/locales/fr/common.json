@@ -805,7 +805,10 @@
 	"refresh": "Actualiser",
 	"save": "Enregistrer",
 	"loading": "Chargement...",
-	"noProjectSelected": "Pas de projet sélectionné",
+	"common": {
+		"noProjectSelected": "Aucun projet sélectionné",
+		"injectionGuardComingSoon": "Injection Guard - À venir"
+	},
 	"noProject": {
 		"greeting": "Bienvenue dans WorkPilot AI !",
 		"explanation": "Aucun projet n'est ouvert pour l'instant. Ajoutez un projet depuis votre machine pour commencer — WorkPilot AI l'utilisera comme espace de travail pour vos agents IA.",

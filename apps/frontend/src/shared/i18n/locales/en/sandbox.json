@@ -1,0 +1,22 @@
+{
+	"noData": "No simulation data available",
+	"title": "Sandbox Simulation Report",
+	"dryRun": "Dry-run for spec {{specId}}",
+	"estimatedCost": "Estimated Cost",
+	"realCost": "Real Cost",
+	"savings": "Savings",
+	"steps": "Steps",
+	"approve": "Approve & Apply",
+	"reject": "Reject",
+	"summary": "Summary",
+	"passed": "passed",
+	"warnings": "Warnings",
+	"issues": "issues",
+	"cost": "Cost",
+	"savedVsReal": "% saved vs real",
+	"files": "Files",
+	"modified": "modified",
+	"executionSteps": "Execution Steps",
+	"fileChanges": "File Changes",
+	"durationAndTokens": "{{duration}}ms · {{tokens}} tokens"
+}

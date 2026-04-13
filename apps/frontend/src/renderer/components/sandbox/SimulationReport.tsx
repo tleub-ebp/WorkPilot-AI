@@ -1,4 +1,5 @@
 import type React from "react";
+import { useTranslation } from "react-i18next";
 import type { SimulationResult, StepStatus } from "../../../shared/types/sandbox";
 
 const STATUS_ICON: Record<StepStatus, string> = {
@@ -26,10 +27,11 @@ export function SimulationReport({
 	onApprove,
 	onReject,
 }: SimulationReportProps): React.ReactElement {
+	const { t } = useTranslation("sandbox");
 	if (!result) {
 		return (
 			<div className="flex items-center justify-center h-full text-(--text-secondary)">
-				<p>No simulation data available</p>
+				<p>{t("noData")}</p>
 			</div>
 		);
 	}
@@ -47,10 +49,10 @@ export function SimulationReport({
 			<div className="flex items-center justify-between">
 				<div>
 					<h2 className="text-lg font-semibold">
-						Sandbox Simulation Report
+						{t("title")}
 					</h2>
 					<p className="text-sm text-(--text-secondary)">
-						Dry-run for spec {result.specId}
+						{t("dryRun", { specId: result.specId })}
 					</p>
 				</div>
 				<div className="flex items-center gap-2">
@@ -60,7 +62,7 @@ export function SimulationReport({
 							onClick={onApprove}
 							className="px-4 py-2 rounded-lg bg-green-500/20 text-green-400 hover:bg-green-500/30 transition-colors text-sm font-medium"
 						>
-							Approve & Apply
+							{t("approve")}
 						</button>
 					)}
 					{onReject && (
@@ -69,7 +71,7 @@ export function SimulationReport({
 							onClick={onReject}
 							className="px-4 py-2 rounded-lg bg-red-500/20 text-red-400 hover:bg-red-500/30 transition-colors text-sm font-medium"
 						>
-							Reject
+							{t("reject")}
 						</button>
 					)}
 				</div>
@@ -78,27 +80,27 @@ export function SimulationReport({
 			{/* Summary cards */}
 			<div className="grid grid-cols-4 gap-3">
 				<SummaryCard
-					label="Steps"
+					label={t("steps")}
 					value={`${result.successCount}/${result.steps.length}`}
-					sub="passed"
+					sub={t("passed")}
 					color="text-green-400"
 				/>
 				<SummaryCard
-					label="Warnings"
+					label={t("warnings")}
 					value={String(result.warningCount)}
-					sub="issues"
+					sub={t("issues")}
 					color="text-yellow-400"
 				/>
 				<SummaryCard
-					label="Cost"
+					label={t("cost")}
 					value={`$${result.estimatedCostUsd.toFixed(4)}`}
-					sub={`${costSavingPercent}% saved vs real`}
+					sub={`${costSavingPercent}${t("savedVsReal")}`}
 					color="text-blue-400"
 				/>
 				<SummaryCard
-					label="Files"
+					label={t("files")}
 					value={String(result.diffs.length)}
-					sub="modified"
+					sub={t("modified")}
 					color="text-purple-400"
 				/>
 			</div>
@@ -106,7 +108,7 @@ export function SimulationReport({
 			{/* Steps timeline */}
 			<div>
 				<h3 className="text-sm font-medium text-(--text-secondary) mb-2">
-					Execution Steps
+					{t("executionSteps")}
 				</h3>
 				<div className="space-y-2">
 					{result.steps.map((step) => (
@@ -119,7 +121,7 @@ export function SimulationReport({
 								{step.description}
 							</span>
 							<span className="text-xs opacity-70">
-								{step.durationMs}ms · {step.tokensUsed} tokens
+								{t("durationAndTokens", { duration: step.durationMs, tokens: step.tokensUsed })}
 							</span>
 						</div>
 					))}
@@ -129,7 +131,7 @@ export function SimulationReport({
 			{/* File changes summary */}
 			<div>
 				<h3 className="text-sm font-medium text-(--text-secondary) mb-2">
-					File Changes
+					{t("fileChanges")}
 				</h3>
 				<div className="space-y-1">
 					{result.diffs.map((diff) => (

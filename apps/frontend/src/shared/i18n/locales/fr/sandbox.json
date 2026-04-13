@@ -1,0 +1,22 @@
+{
+	"noData": "Aucune donnée de simulation disponible",
+	"title": "Rapport de Simulation Sandbox",
+	"dryRun": "Test à blanc pour la spec {{specId}}",
+	"estimatedCost": "Coût Estimé",
+	"realCost": "Coût Réel",
+	"savings": "Économies",
+	"steps": "Étapes",
+	"approve": "Approuver & Appliquer",
+	"reject": "Rejeter",
+	"summary": "Résumé",
+	"passed": "réussies",
+	"warnings": "Avertissements",
+	"issues": "problèmes",
+	"cost": "Coût",
+	"savedVsReal": "% économisé vs réel",
+	"files": "Fichiers",
+	"modified": "modifiés",
+	"executionSteps": "Étapes d'exécution",
+	"fileChanges": "Modifications de fichiers",
+	"durationAndTokens": "{{duration}}ms · {{tokens}} tokens"
+}

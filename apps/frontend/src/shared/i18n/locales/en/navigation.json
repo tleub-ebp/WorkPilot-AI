@@ -14,7 +14,10 @@
 	},
 	"subGroups": {
 		"extensions": "Extensions",
-		"assistants": "Assistants",
+		"codeQuality": "Code Quality & Testing",
+		"documentation": "Documentation & Spec",
+		"accessibility": "Accessibility & i18n",
+		"api": "API & Data",
 		"automation": "Automation",
 		"utilities": "Utilities"
 	},

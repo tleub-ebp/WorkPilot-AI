@@ -1,5 +1,5 @@
 {
-	"noDataAvailable": "No compliance report data available",
+	"noData": "No compliance report data available",
 	"title": "Compliance Evidence Collector",
 	"evidenceItems": "evidence items",
 	"coverage": "coverage",

@@ -1,5 +1,5 @@
 {
-	"noDataAvailable": "No git surgeon plan data available",
+	"noData": "No git surgeon plan data available",
 	"title": "Git History Surgeon",
 	"issues": "issues",
 	"potentialSavings": "~{{mb}} MB potential savings",

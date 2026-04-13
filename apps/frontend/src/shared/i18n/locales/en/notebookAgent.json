@@ -1,5 +1,5 @@
 {
-	"noDataAvailable": "No notebook data available",
+	"noData": "No notebook data available",
 	"title": "Notebook Analysis",
 	"totalCells": "Total Cells",
 	"codeCells": "Code Cells",

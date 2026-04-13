@@ -10,6 +10,8 @@ import enGitSurgeon from "./locales/en/gitSurgeon.json";
 import enNotebookAgent from "./locales/en/notebookAgent.json";
 import enReleaseCoordinator from "./locales/en/releaseCoordinator.json";
 import enSpecRefinement from "./locales/en/specRefinement.json";
+import enSandbox from "./locales/en/sandbox.json";
+import enApiWatcher from "./locales/en/api-watcher.json";
 
 // Import English translation resources
 import enAppEmulator from "./locales/en/appEmulator.json";
@@ -73,6 +75,8 @@ import frGitSurgeon from "./locales/fr/gitSurgeon.json";
 import frNotebookAgent from "./locales/fr/notebookAgent.json";
 import frReleaseCoordinator from "./locales/fr/releaseCoordinator.json";
 import frSpecRefinement from "./locales/fr/specRefinement.json";
+import frSandbox from "./locales/fr/sandbox.json";
+import frApiWatcher from "./locales/fr/api-watcher.json";
 
 // Import French translation resources
 import frAppEmulator from "./locales/fr/appEmulator.json";
@@ -142,6 +146,8 @@ export const resources = {
 		notebookAgent: enNotebookAgent,
 		releaseCoordinator: enReleaseCoordinator,
 		specRefinement: enSpecRefinement,
+		sandbox: enSandbox,
+		apiWatcher: enApiWatcher,
 		changelog: enChangelog,
 		codePlayground: enCodePlayground,
 		codeReview: enCodeReview,
@@ -205,6 +211,8 @@ export const resources = {
 		notebookAgent: frNotebookAgent,
 		releaseCoordinator: frReleaseCoordinator,
 		specRefinement: frSpecRefinement,
+		sandbox: frSandbox,
+		apiWatcher: frApiWatcher,
 		changelog: frChangelog,
 		codePlayground: frCodePlayground,
 		codeReview: frCodeReview,
@@ -275,6 +283,8 @@ i18n.use(initReactI18next).init({
 		"notebookAgent",
 		"releaseCoordinator",
 		"specRefinement",
+		"sandbox",
+		"apiWatcher",
 		"changelog",
 		"codePlayground",
 		"codeReview",

@@ -1,5 +1,5 @@
 {
-	"noDataAvailable": "No carbon report data available",
+	"noData": "No carbon report data available",
 	"title": "Carbon / Energy Profiler",
 	"totalEnergy": "Total Energy",
 	"co2Emissions": "CO₂ Emissions",
