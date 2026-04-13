@@ -877,10 +877,56 @@ Dans les sections ci-dessous, chaque amélioration contient désormais un bloc *
 
 **Effort :** Moyen | **Impact :** Moyen-Haut (confiance critique)
 
-#### 19. Team Knowledge Sync — Résolution de conflits
-**Aujourd'hui :** synchro basique.
-**Amélioration :** détection des mémoires contradictoires entre coéquipiers + arbitrage automatique ou manuel ("Alice dit X, Bob dit Y — quel est le canon ?").
-**Débloque :** sain fonctionnement en équipe >3 personnes.
+#### 19. Team Knowledge Sync — Résolution de conflits sémantiques
+
+**Aujourd'hui :** Team Knowledge Sync permet à plusieurs coéquipiers de partager leur mémoire Graphiti via un serveur central ou peer-to-peer. Ça fonctionne tant que tout le monde pense la même chose. Dès que deux devs capturent des mémoires contradictoires (« il faut utiliser l'ORM X » vs. « il faut utiliser l'ORM Y pour ce module »), le système fusionne naïvement et tout le monde se retrouve avec des conseils incohérents.
+
+**Amélioration proposée :**
+- **Détection de contradictions** : lors d'un sync, un agent compare sémantiquement les mémoires nouvellement reçues avec les mémoires existantes et flagge les contradictions (négations, recommandations opposées, valeurs numériques incompatibles).
+- **Arbitrage automatique** quand c'est sûr :
+  - La mémoire la plus récente gagne si elle est corroborée par N commits postérieurs.
+  - La mémoire avec la plus forte confidence (learning loop) gagne.
+  - Les mémoires pinned l'emportent sur les non-pinned.
+- **Arbitrage manuel** quand c'est ambigu : UI de résolution qui présente les deux mémoires côte à côte avec les auteurs, dates, sources, et demande à l'utilisateur (ou à un maintainer désigné) de trancher.
+- **Canonicalisation** : après arbitrage, une mémoire canonique est créée (`source: team-consensus-2026-04-12`) et les variantes individuelles sont archivées avec un lien vers la canonique.
+- **Notification d'équipe** : quand un conflit est détecté, notifier les auteurs concernés (intégration Slack/Teams) pour qu'ils puissent discuter.
+- **Branches de mémoire** : possibilité d'avoir des mémoires scopées par équipe / branche / module (« sur `auth/` on fait comme ça, sur `payments/` on fait autrement »), pour éviter les conflits artificiels dus à des contextes différents.
+- **Historique des consensus** : traçabilité de qui a voté quoi à l'arbitrage manuel, pour post-mortem.
+
+**Fichiers à toucher :**
+- `apps/backend/team_sync/contradiction_detector.py` — nouveau, détection sémantique.
+- `apps/backend/team_sync/arbitration_engine.py` — règles d'arbitrage auto.
+- `apps/backend/team_sync/canonical_memory.py` — création/gestion des mémoires canoniques.
+- `apps/backend/team_sync/notification_service.py` — intégration Slack/Teams/email.
+- `apps/frontend/src/renderer/components/team-sync/ConflictResolver.tsx` — UI de résolution.
+- `apps/frontend/src/renderer/components/team-sync/MemoryScope.tsx` — sélecteur de scope.
+- `integrations/graphiti/memory_store.py` — ajout métadonnées `scope`, `canonical_of`.
+
+**Edge cases :**
+- Contradiction faussement détectée sur des formulations différentes mais équivalentes → utiliser des embeddings sémantiques pour raffiner la détection.
+- Arbitrage infini (deux devs qui flip-flop) → seuil de « cooldown » et escalade au maintainer.
+- Sync depuis un coéquipier malveillant ou avec un dataset corrompu → signature cryptographique des snapshots et liste blanche des sources.
+- Équipe trop grande (> 20 devs) → hiérarchie de scopes + maintainers désignés par module.
+
+**Métriques :**
+- Nombre de contradictions détectées / sync (à surveiller, pas à minimiser).
+- Temps moyen de résolution manuelle.
+- Nombre de mémoires canoniques créées / mois.
+- Taux d'adoption des mémoires canoniques par l'équipe (via analytics du reviewer).
+
+**Multi-provider :**
+- La détection de contradictions peut se faire de deux façons complémentaires :
+  1. **Embeddings locaux** : cosine similarity + règles heuristiques, 100% offline et provider-agnostique (sentence-transformers, multilingual-e5).
+  2. **LLM léger** : un modèle comme Haiku / GPT-4o-mini / Gemini Flash / Llama 3.1 8B via Ollama pour raffiner (« ces deux mémoires se contredisent-elles vraiment ou sont-elles complémentaires ? »).
+- Les deux chemins passent par des abstractions (`EmbeddingProvider`, `LLMProvider`) qui délèguent au backend de l'utilisateur.
+- L'arbitrage automatique est purement algorithmique (règles sur métadonnées) — zéro LLM, zéro ambiguïté cross-provider.
+- L'arbitrage manuel n'implique pas de LLM dans la décision — l'humain tranche. Le LLM peut éventuellement résumer les deux positions pour aider à décider.
+- Le sync entre machines utilise un format de snapshot neutre (JSON + signatures), indépendant du provider qui a créé les mémoires.
+- Mode Ollama fonctionne pour toute la chaîne : détection, arbitrage, notification.
+
+**Débloque :** sain fonctionnement en équipe >3 personnes, fin des conseils contradictoires, création d'un corpus de connaissances cohérent à l'échelle de l'entreprise.
+
+**Effort :** Moyen-Élevé | **Impact :** Très haut pour les équipes
 
 ---
 
