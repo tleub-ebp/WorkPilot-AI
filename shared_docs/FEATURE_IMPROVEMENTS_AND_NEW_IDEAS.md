@@ -544,10 +544,50 @@ Dans les sections ci-dessous, chaque amélioration contient désormais un bloc *
 
 **Effort :** Élevé | **Impact :** Haut
 
-#### 12. Mode CI/CD — Bisect assisté
-**Aujourd'hui :** analyse le diff du dernier commit.
-**Amélioration :** si la régression vient de plus loin, déclenche automatiquement un `git bisect` piloté par l'agent (relance les tests sur commits intermédiaires).
-**Débloque :** regression hunting réellement autonome.
+#### 12. Self-Healing Mode CI/CD — Bisect assisté par agent
+
+**Aujourd'hui :** quand la CI échoue, l'agent analyse le diff du *dernier* commit et tente un fix. Si la régression a été introduite 12 commits plus tôt et n'est révélée que maintenant (test écrit récemment, condition race découverte plus tard, deps mise à jour), l'analyse part dans le mauvais sens et produit des PRs qui manquent la cause réelle.
+
+**Amélioration proposée :**
+- **Bisect triggers intelligents** : si l'agent détecte une des conditions suivantes, il active automatiquement le mode bisect :
+  1. Le diff du dernier commit est trivial (< 10 lignes, docstrings, imports) mais casse un test majeur.
+  2. Le test qui casse est ancien (pas modifié depuis > 30 jours) → la régression vient probablement d'ailleurs.
+  3. Un commit précédent a modifié une dépendance transitive du test.
+  4. Le pattern de l'erreur (stack trace, message) apparaît pour la première fois dans l'historique récent.
+- **Bisect agent-driven** : pas un `git bisect` shell classique — un agent qui, à chaque étape, choisit intelligemment le prochain commit à tester (pas forcément binaire : si les 3 derniers commits touchent la zone, prioriser ces 3 d'abord). L'agent peut aussi vérifier partiellement (skip builds lourds si un flag évident est là).
+- **Cache des résultats bisect** : éviter de re-bisecter deux fois la même régression si elle touche plusieurs tests.
+- **Budget bisect** : max N commits testés, max Y minutes, max Z dollars de coûts. Au-delà → fallback sur fix sur le HEAD avec warning.
+- **Rapport post-bisect** : commit coupable identifié + lien PR/auteur + analyse de la raison + fix ou revert proposé.
+
+**Fichiers à toucher :**
+- `apps/backend/self_healing/cicd/bisect_agent.py` — nouveau, orchestration bisect.
+- `apps/backend/self_healing/cicd/bisect_strategy.py` — stratégies (binaire classique, priorité par zone, hybrid).
+- `apps/backend/self_healing/cicd/cache.py` — cache des résultats de build par commit SHA.
+- `apps/backend/self_healing/cicd/analyzer.py` — ajout de l'heuristique de déclenchement.
+- `apps/frontend/src/renderer/components/self-healing/BisectProgress.tsx` — UI live (commit en cours de test, progression).
+- `apps/frontend/src/shared/types/bisect.ts` — types.
+
+**Edge cases :**
+- Test flaky qui passe un coup sur deux → le bisect se perd. Prérequis : détecter la flakiness (3 runs) avant de lancer le bisect sur un test suspect.
+- Historique rebase/squash qui perd des commits intermédiaires → détecter et fallback.
+- Grosse matrice CI (tests qui prennent 45 min par commit) → autoriser un bisect « shallow » qui ne relance que le test cassé, pas toute la suite.
+- Régression due à une dep mise à jour, pas à un commit interne → détecter via lockfile diff et traiter séparément.
+
+**Métriques :**
+- % de régressions où le bon commit coupable est identifié (vérifiable a posteriori).
+- Temps moyen du bisect (objectif : < 15 min sur 20 commits).
+- Taux de fix mergé issu du bisect.
+
+**Multi-provider :**
+- L'orchestration du bisect est purement logique (git, runner de tests, cache), zéro LLM pour la mécanique de base.
+- Le LLM intervient pour (1) la décision « faut-il bisect ou pas ? », (2) le choix du prochain commit à tester quand il y a ambiguïté, (3) l'analyse du diff coupable et la génération du fix. Les 3 étapes utilisent `create_client()` avec le provider configuré.
+- Les prompts sont courts, orientés décision (JSON Schema via tool use), testés sur Claude / GPT-4o / Gemini / Ollama.
+- Un bisect peut être mené avec un fast model (Haiku, GPT-4o-mini, Llama 8B) pour les décisions simples et escalader vers un flagship uniquement pour la génération du fix final — économie substantielle.
+- Mode Ollama fonctionnel pour les repos dont le code source ne peut pas sortir.
+
+**Débloque :** regression hunting réellement autonome, capacité à traiter les régressions à latence longue (celles qui n'apparaissent qu'au run CI nocturne après 5 PRs dans la journée).
+
+**Effort :** Moyen-Élevé | **Impact :** Haut
 
 ---
 
