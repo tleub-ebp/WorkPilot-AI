@@ -287,10 +287,43 @@ Dans les sections ci-dessous, chaque amélioration contient désormais un bloc *
 
 **Effort :** Moyen | **Impact :** Très haut
 
-#### 6. Conflict Predictor — Planification d'exécution
-**Aujourd'hui :** prédit les conflits.
-**Amélioration :** suggère aussi l'**ordre optimal** d'exécution des specs pour minimiser les conflits cumulés, et regroupe automatiquement les specs compatibles en "waves" exécutables en parallèle sûr.
-**Débloque :** gains réels sur le multi-agent parallèle (évite les merges douloureux en fin de sprint).
+#### 6. Conflict Predictor — Planification d'exécution & waves
+
+**Aujourd'hui :** le Conflict Predictor détecte les conflits potentiels entre deux branches ou deux specs en cours. C'est réactif : on sait qu'il va y avoir un conflit, mais on doit gérer manuellement l'ordre. Sur un sprint avec 15 specs en parallèle, ça reste un casse-tête.
+
+**Amélioration proposée :**
+- **Graphe de dépendances des specs** : pour chaque paire de specs, calculer un score de conflit prédit (fichiers communs, symboles renommés, imports croisés, zones fragiles).
+- **Topological ordering** : proposer un ordre optimal qui minimise les conflits cumulés (algo type « minimum feedback arc set » approché).
+- **Waves auto-groupées** : identifier les clusters de specs indépendants exécutables en parallèle sans risque. Ex : Wave 1 = [spec 1, 4, 7] (aucun fichier commun), Wave 2 = [2, 5], etc. Afficher un Gantt prévisionnel.
+- **Replanification dynamique** : si un spec dérape (touche plus de fichiers que prévu), le planner recalcule les waves à la volée.
+- **Intégration Mission Control** : un bouton « Execute in optimal order » qui lance automatiquement les agents dans les bonnes waves avec le bon niveau de parallélisme.
+
+**Fichiers à toucher :**
+- `apps/backend/conflict_predictor/planner.py` — nouveau (algo de planification).
+- `apps/backend/conflict_predictor/conflict_scorer.py` — extraction du score par paire.
+- `apps/frontend/src/renderer/components/conflict-predictor/WavesView.tsx` — Gantt + waves.
+- `apps/backend/mission_control/orchestrator.py` — API `schedule_waves(spec_ids)`.
+- i18n : `conflictPredictor.json` (labels waves, actions).
+
+**Edge cases :**
+- Cycle de dépendances (spec A dépend de B qui dépend de A) → détecter et afficher un warning, pas de planification possible sans intervention humaine.
+- Sur-estimation des conflits (deux specs touchent le même fichier mais à des endroits disjoints) → tolérance configurable + option « merge préventif pour vérif ».
+- Spec qui grossit en cours d'exécution → seuil de replanification (« le spec 3 a touché 5 fichiers de plus, voulez-vous replanifier ? »).
+
+**Métriques :**
+- Nombre de conflits de merge évités / sprint.
+- Temps de résolution moyen des conflits résiduels.
+- Gain de temps sur la durée totale du sprint grâce au parallélisme.
+
+**Multi-provider :**
+- Le scoring et le graphe sont purement statiques (AST + diff), zéro LLM — donc 100% provider-indépendant et gratuit.
+- Si une couche LLM est ajoutée pour scorer la *sémantique* du conflit (ex : « les deux specs modifient la même classe mais pour des raisons orthogonales »), elle utilise un modèle léger au choix (Haiku, GPT-4o-mini, Gemini Flash, Ollama).
+- L'orchestrateur de waves lance les agents avec leurs providers respectifs : wave 1 peut mixer 3 agents Anthropic + 1 agent OpenAI + 1 agent Ollama sans problème.
+- Le calcul du score de conflit est déterministe et reproductible, quel que soit l'environnement — utile pour la CI cross-provider.
+
+**Débloque :** vrais gains sur le multi-agent parallèle (évite les merges douloureux en fin de sprint), confiance sur le scaling > 5 agents simultanés.
+
+**Effort :** Moyen | **Impact :** Haut
 
 #### 7. AI Code Review Agent — Apprentissage des faux positifs
 **Aujourd'hui :** produit des review comments.
