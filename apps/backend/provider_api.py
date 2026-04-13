@@ -331,7 +331,9 @@ def get_provider_status(provider: str):
 @app.get("/providers")
 def get_providers():
     config_path = os.path.abspath(
-        os.path.join(os.path.dirname(__file__), "../../configured_providers.json")
+        os.path.join(
+            os.path.dirname(__file__), "../../config/configured_providers.json"
+        )
     )
     if not os.path.exists(config_path):
         providers = [
@@ -1254,7 +1256,9 @@ def health_check():
 
     # 4. configured_providers.json file
     config_path = os.path.abspath(
-        os.path.join(os.path.dirname(__file__), "../../configured_providers.json")
+        os.path.join(
+            os.path.dirname(__file__), "../../config/configured_providers.json"
+        )
     )
     subsystems["configured_providers_file"] = {
         "status": "ok" if os.path.exists(config_path) else "missing"

@@ -5,8 +5,10 @@
  */
 
 import { execFile } from "node:child_process";
+import { promises as fs } from "node:fs";
 import { promisify } from "node:util";
-import { ipcMain } from "electron";
+import { app, ipcMain } from "electron";
+import path from "node:path";
 
 const execFileAsync = promisify(execFile);
 
@@ -82,7 +84,7 @@ async function tryWindowsNpmCodexVersion(): Promise<string | undefined> {
 			return undefined;
 		}
 
-		const cmdExe = process.env.ComSpec || "C:\\Windows\\System32\\cmd.exe";
+		const cmdExe = process.env.ComSpec || String.raw`C:\Windows\System32\cmd.exe`;
 		const result = await execFileAsync(
 			cmdExe,
 			["/d", "/s", "/c", `""${codexCmd}" --version"`],
@@ -343,6 +345,50 @@ export function registerCredentialHandlers(): void {
 
 			const version = await getCodexVersion();
 			return { ...authStatus, version };
+		},
+	);
+
+	/**
+	 * Charger les providers configurés depuis config/configured_providers.json
+	 * Ce fichier est maintenant à la racine du projet dans le dossier config/
+	 */
+	ipcMain.handle(
+		"providers:getConfiguredProviders",
+		async (): Promise<{ providers?: unknown } | null> => {
+			try {
+				const appPath = app.getAppPath();
+				const cwd = process.cwd();
+				const candidates = [
+					// Dev mode: process.cwd() is typically apps/frontend
+					path.join(cwd, "..", "..", "config", "configured_providers.json"),
+					path.join(cwd, "..", "config", "configured_providers.json"),
+					path.join(cwd, "config", "configured_providers.json"),
+					// app.getAppPath()-based (works in various electron-vite configurations)
+					path.join(appPath, "..", "..", "..", "config", "configured_providers.json"),
+					path.join(appPath, "..", "..", "config", "configured_providers.json"),
+					path.join(appPath, "..", "config", "configured_providers.json"),
+					path.join(appPath, "config", "configured_providers.json"),
+					// Fallback: src dir
+					path.join(appPath, "src", "config", "configured_providers.json"),
+				];
+
+				for (const p of candidates) {
+					try {
+						await fs.access(p);
+						const raw = await fs.readFile(p, "utf-8");
+						return JSON.parse(raw);
+					} catch {
+						// try next candidate
+					}
+				}
+				return null;
+			} catch (error) {
+				console.error(
+					"[CredentialHandlers] Failed to load configured_providers.json:",
+					error,
+				);
+				return null;
+			}
 		},
 	);
 }

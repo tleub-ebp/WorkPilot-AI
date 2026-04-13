@@ -22,7 +22,7 @@ export function saveConfiguredProviders(
 ) {
 	const configPath = path.resolve(
 		__dirname,
-		"../../../../../../configured_providers.json",
+		"../../../../../../config/configured_providers.json",
 	);
 	fs.writeFileSync(configPath, JSON.stringify({ providers }, null, 2), "utf-8");
 }

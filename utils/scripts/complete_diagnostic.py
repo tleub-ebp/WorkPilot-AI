@@ -69,7 +69,7 @@ def test_complete_chain():
     print("\n4. 🔄 Simulating getUsageForProvider logic...")
     
     # This simulates the logic in getUsageForProvider
-    profiles_file_path = "c:\\Users\\thomas.leberre\\Repositories\\WorkPilot-AI\\configured_providers.json"
+    profiles_file_path = "c:\\Users\\thomas.leberre\\Repositories\\WorkPilot-AI\\config\\configured_providers.json"
     try:
         with open(profiles_file_path, encoding='utf-8') as f:
             providers_config = json.load(f)

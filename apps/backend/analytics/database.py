@@ -11,7 +11,7 @@ from sqlalchemy.pool import StaticPool
 from .database_schema import Base
 
 # Database configuration
-DATABASE_URL = os.getenv("ANALYTICS_DATABASE_URL", "sqlite:///./analytics.db")
+DATABASE_URL = os.getenv("ANALYTICS_DATABASE_URL", "sqlite:///./data/analytics.db")
 
 # Create engine
 if DATABASE_URL.startswith("sqlite"):

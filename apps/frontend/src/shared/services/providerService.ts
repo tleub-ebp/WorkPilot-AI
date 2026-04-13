@@ -73,9 +73,16 @@ class ProviderServiceClass {
 	 */
 	private async loadProvidersFromFile(): Promise<Provider[]> {
 		try {
-			// Import the JSON file directly from src
-			const providersData = await import("../../configured_providers.json");
-			return providersData.providers || [];
+			// Try to load from main process via IPC (file is now in config/ at repo root)
+			if (globalThis.electronAPI?.invoke) {
+				const result = await globalThis.electronAPI.invoke(
+					"providers:getConfiguredProviders",
+				);
+				if (result?.providers) {
+					return result.providers;
+				}
+			}
+			throw new Error("IPC not available");
 		} catch (error) {
 			console.warn(
 				"Failed to load providers from configured_providers.json, using fallback:",

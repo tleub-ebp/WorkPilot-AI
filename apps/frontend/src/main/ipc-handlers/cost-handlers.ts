@@ -25,16 +25,16 @@ function loadConfiguredProviderIds(): string[] {
 	const cwd = process.cwd();
 	const candidates = [
 		// Dev mode: process.cwd() is typically apps/frontend
-		path.join(cwd, "..", "..", "configured_providers.json"),
-		path.join(cwd, "..", "configured_providers.json"),
-		path.join(cwd, "configured_providers.json"),
+		path.join(cwd, "..", "..", "config", "configured_providers.json"),
+		path.join(cwd, "..", "config", "configured_providers.json"),
+		path.join(cwd, "config", "configured_providers.json"),
 		// app.getAppPath()-based (works in various electron-vite configurations)
-		path.join(appPath, "..", "..", "..", "configured_providers.json"),
-		path.join(appPath, "..", "..", "configured_providers.json"),
-		path.join(appPath, "..", "configured_providers.json"),
-		path.join(appPath, "configured_providers.json"),
+		path.join(appPath, "..", "..", "..", "config", "configured_providers.json"),
+		path.join(appPath, "..", "..", "config", "configured_providers.json"),
+		path.join(appPath, "..", "config", "configured_providers.json"),
+		path.join(appPath, "config", "configured_providers.json"),
 		// Fallback: src dir
-		path.join(appPath, "src", "configured_providers.json"),
+		path.join(appPath, "src", "config", "configured_providers.json"),
 	];
 	for (const p of candidates) {
 		try {

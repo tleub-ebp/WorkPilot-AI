@@ -112,7 +112,7 @@ def activate_windsurf_account():
     print("-" * 40)
     
     # Vérifier la configuration dans configured_providers.json
-    config_file = os.path.join(os.path.dirname(__file__), '..', '..', '..', 'utils', 'config', 'configured_providers.json')
+    config_file = os.path.join(os.path.dirname(__file__), '..', '..', '..', '..', 'config', 'configured_providers.json')
     
     if os.path.exists(config_file):
         with open(config_file) as f:
