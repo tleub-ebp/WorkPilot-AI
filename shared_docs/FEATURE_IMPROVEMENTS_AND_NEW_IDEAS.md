@@ -734,10 +734,52 @@ Dans les sections ci-dessous, chaque amélioration contient désormais un bloc *
 
 **Effort :** Élevé | **Impact :** Moyen (fort pour les niches accessibilité + démo)
 
-#### 16. Browser Agent — Recording & rejeu human-to-test
-**Aujourd'hui :** automatisation browser par agent.
-**Amélioration :** capture les actions manuelles de l'utilisateur dans une session et génère un test E2E Playwright depuis l'interaction. Human-in-the-loop → test automatisé en 1 clic.
-**Débloque :** adoption test E2E sans rédaction manuelle.
+#### 16. Browser Agent — Recording & conversion human-to-test
+
+**Aujourd'hui :** le Browser Agent automatise la navigation web via Chrome DevTools MCP (click, fill, navigate, take_screenshot). Cela fonctionne bien pour un agent qui agit seul, mais il manque un chemin pour *capturer* une session utilisateur manuelle et la convertir en test reproductible. Écrire un test Playwright à la main reste un frein majeur à l'adoption du E2E.
+
+**Amélioration proposée :**
+- **Mode recording** : un bouton « Record session » qui active un listener sur le browser (via Chrome DevTools Protocol). Toutes les interactions sont capturées : clicks (avec sélecteurs), saisies, navigations, scrolls, hovers, appuis clavier, ouvertures de dialogs.
+- **Sélecteurs robustes** : au lieu de capturer `#btn-a1b2c3`, l'agent utilise des heuristiques pour privilégier `getByRole("button", { name: "Save" })`, `data-testid`, `aria-label`, text content — l'ordre suit les best practices Playwright / Testing Library.
+- **Waits intelligents** : l'agent déduit les `waitFor` nécessaires en observant les transitions (disparition de spinners, apparition d'éléments, requêtes réseau).
+- **Assertions auto-suggérées** : après chaque action significative, l'agent propose des assertions pertinentes (« après le clic, ce texte apparaît — l'ajouter en assertion ? »).
+- **Export multi-frameworks** : Playwright (défaut), Cypress, Selenium, WebdriverIO — l'utilisateur choisit.
+- **Reshoot en cas d'échec** : si le test généré échoue à la première exécution, l'agent relance la session d'enregistrement comme référence et propose un diff des sélecteurs qui ont changé.
+- **Test data abstraction** : l'agent détecte les valeurs paramétrables (email, mot de passe, dates) et les extrait en fixtures au lieu de les hardcoder.
+- **Intégration QA** : un test généré peut être ajouté directement à la suite E2E du projet via un bouton « Add to test suite » qui fait un commit sur une branche dédiée.
+
+**Fichiers à toucher :**
+- `apps/backend/browser_agent/recorder.py` — nouveau, orchestration du recording via CDP.
+- `apps/backend/browser_agent/selector_builder.py` — génération de sélecteurs robustes.
+- `apps/backend/browser_agent/test_generator.py` — export multi-frameworks.
+- `apps/backend/browser_agent/assertion_suggester.py` — suggestions d'assertions via LLM.
+- `apps/frontend/src/renderer/components/browser-agent/RecordingPanel.tsx` — UI enregistrement + review.
+- `apps/backend/prompts/browser_agent_assertions.md` — prompt pour suggestions.
+
+**Edge cases :**
+- Shadow DOM → fallback sur une stratégie composée (`>>>` syntax Playwright).
+- SPA avec state interne qui ne se reflète pas dans l'URL → capture d'état via eval script.
+- Iframes tierces (auth provider, 3DS) → gestion explicite du contexte de frame.
+- Random data à chaque visite (produits, prix) → détection et substitution par placeholders.
+- Captcha / MFA → l'agent signale et demande un workaround manuel (fixture, bypass test-only).
+
+**Métriques :**
+- Taux de tests générés qui passent au premier run (objectif : > 70%).
+- Ratio temps d'enregistrement / temps d'écriture manuelle équivalente.
+- Nombre de tests E2E ajoutés au repo / semaine / équipe.
+- Taux de flakiness des tests générés vs. tests écrits à la main.
+
+**Multi-provider :**
+- Le recording et la génération de sélecteurs sont purement basés sur Chrome DevTools Protocol + heuristiques statiques, zéro LLM — 100% provider-indépendants et très rapides.
+- Le LLM intervient uniquement pour (1) suggérer des assertions pertinentes après chaque action significative, (2) proposer un nom de test et de description à partir du flow, (3) extraire les fixtures. Les 3 cas utilisent un modèle léger via `create_client()` — Haiku, GPT-4o-mini, Gemini Flash, Llama 3.1 8B via Ollama suffisent.
+- Le prompt est court (< 1000 tokens typiquement) et structuré via tool use JSON Schema, testé cross-provider.
+- Le reshoot en cas d'échec (diff de sélecteurs) peut utiliser un modèle vision (screenshots avant/après) — capability detection comme pour D.13.
+- Mode Ollama totalement fonctionnel pour les tests sur des apps internes confidentielles.
+- L'export multi-frameworks est déterministe et provider-indépendant.
+
+**Débloque :** adoption test E2E dans les équipes qui ne l'ont jamais fait, création de suites de régression en continu (chaque session de dev = tests gratuits), réduction du « test debt ».
+
+**Effort :** Élevé | **Impact :** Haut
 
 ---
 
