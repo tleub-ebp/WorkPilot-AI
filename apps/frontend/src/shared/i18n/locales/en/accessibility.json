@@ -2,6 +2,9 @@
 	"title": "Accessibility Report",
 	"noData": "No scan run yet. Click \"Run scan\" to start.",
 	"targetInfo": "Target: WCAG {{targetLevel}} · {{filesScanned}} files scanned",
+	"search": {
+		"placeholder": "Search..."
+	},
 	"stats": {
 		"violations": "Violations",
 		"critical": "Critical",

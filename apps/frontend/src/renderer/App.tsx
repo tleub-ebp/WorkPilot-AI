@@ -1689,7 +1689,9 @@ export function App() {
 												)}
 												{activeView === "api-watcher" && <ApiWatcherDashboard />}
 												{activeView === "accessibility-agent" && (
-													<A11yReportView projectPath={selectedProject?.path} />
+													<div className="overflow-auto" style={{ height: 'calc(100vh - 100px)' }}>
+														<A11yReportView projectPath={selectedProject?.path} />
+													</div>
 												)}
 												{activeView === "i18n-agent" && <I18nReportView />}
 												{activeView === "onboarding-agent" && <OnboardingGuideView />}

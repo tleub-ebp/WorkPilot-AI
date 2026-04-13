@@ -1,5 +1,5 @@
 import type React from "react";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
 	setupAccessibilityListeners,
@@ -24,6 +24,8 @@ const SEVERITY_STYLES: Record<A11ySeverity, string> = {
 	moderate: "text-yellow-400 bg-yellow-500/10 border-yellow-500/20",
 	minor: "text-blue-400 bg-blue-500/10 border-blue-500/20",
 };
+
+type FilterType = "all" | "critical" | "serious" | "passed";
 
 interface A11yReportViewProps {
 	readonly projectPath?: string;
@@ -86,7 +88,9 @@ export function A11yReportView({
 			)}
 
 			{report ? (
-				<ReportBody report={report} t={t} />
+				<div className="flex-1 min-h-0">
+					<ReportBody report={report} t={t} />
+				</div>
 			) : (
 				phase === "idle" && (
 					<div className="flex items-center justify-center h-40 text-(--text-secondary)">
@@ -180,6 +184,9 @@ function ReportBody({
 	readonly report: A11yReport;
 	readonly t: (key: string, opts?: Record<string, unknown>) => string;
 }): React.ReactElement {
+	const [filter, setFilter] = useState<FilterType>("all");
+	const [searchQuery, setSearchQuery] = useState("");
+
 	const criticalCount = report.violations.filter(
 		(v) => v.severity === "critical",
 	).length;
@@ -187,8 +194,27 @@ function ReportBody({
 		(v) => v.severity === "serious",
 	).length;
 
+	const filteredViolations = report.violations.filter((v) => {
+		const matchesFilter =
+			filter === "all" ||
+			(filter === "critical" && v.severity === "critical") ||
+			(filter === "serious" && v.severity === "serious");
+
+		const matchesSearch =
+			searchQuery === "" ||
+			v.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
+			v.ruleId.toLowerCase().includes(searchQuery.toLowerCase()) ||
+			v.file.toLowerCase().includes(searchQuery.toLowerCase());
+
+		return matchesFilter && matchesSearch;
+	});
+
+	const filteredPassedRules = report.passedRules.filter((rule) =>
+		searchQuery === "" || rule.toLowerCase().includes(searchQuery.toLowerCase()),
+	);
+
 	return (
-		<>
+		<div className="flex flex-col flex-1 gap-4">
 			<div>
 				<h2 className="text-lg font-semibold">{t("title")}</h2>
 				<p className="text-sm text-(--text-secondary)">
@@ -199,50 +225,81 @@ function ReportBody({
 				</p>
 			</div>
 
+			<div>
+				<input
+					type="text"
+					placeholder={t("search.placeholder")}
+					value={searchQuery}
+					onChange={(e) => setSearchQuery(e.target.value)}
+					className="w-full px-3 py-2 rounded-lg bg-(--bg-secondary) border border-(--border-color) text-(--text-primary) placeholder:text-(--text-secondary) focus:outline-none focus:ring-2 focus:ring-(--accent-color)"
+				/>
+			</div>
+
 			<div className="grid grid-cols-4 gap-3">
 				<StatCard
 					label={t("stats.violations")}
 					value={report.violations.length}
 					color="text-red-400"
+					isActive={filter === "all"}
+					onClick={() => setFilter("all")}
 				/>
 				<StatCard
 					label={t("stats.critical")}
 					value={criticalCount}
 					color="text-red-400"
+					isActive={filter === "critical"}
+					onClick={() => setFilter("critical")}
 				/>
 				<StatCard
 					label={t("stats.serious")}
 					value={seriousCount}
 					color="text-orange-400"
+					isActive={filter === "serious"}
+					onClick={() => setFilter("serious")}
 				/>
 				<StatCard
 					label={t("stats.rulesPassed")}
 					value={report.passedRules.length}
 					color="text-green-400"
+					isActive={filter === "passed"}
+					onClick={() => setFilter("passed")}
 				/>
 			</div>
 
 			<div className="space-y-2">
-				{report.violations.map((v, idx) => (
-					<div
-						key={`${v.ruleId}-${v.file}-${v.line}-${idx}`}
-						className={`px-4 py-3 rounded-lg border ${SEVERITY_STYLES[v.severity]}`}
-					>
-						<div className="flex items-center gap-2 mb-1">
-							<span className="text-xs font-medium uppercase">{v.severity}</span>
-							<span className="text-xs opacity-70">
-								{v.ruleId} · {v.wcagCriteria}
-							</span>
-						</div>
-						<p className="text-sm">{v.description}</p>
-						<p className="text-xs mt-1 opacity-70 font-mono">
-							{v.file}:{v.line}
-						</p>
-						{v.suggestion && (
-							<p className="text-xs mt-1 text-green-400">{v.suggestion}</p>
-						)}
+				{filter === "passed" ? (
+					<div className="space-y-2">
+						{filteredPassedRules.map((rule, idx) => (
+							<div
+								key={`passed-${rule}-${idx}`}
+								className="px-4 py-3 rounded-lg border border-green-500/20 bg-green-500/10 text-green-400"
+							>
+								<p className="text-sm">{rule}</p>
+							</div>
+						))}
 					</div>
-				))}
+				) : (
+					filteredViolations.map((v, idx) => (
+						<div
+							key={`${v.ruleId}-${v.file}-${v.line}-${idx}`}
+							className={`px-4 py-3 rounded-lg border ${SEVERITY_STYLES[v.severity]}`}
+						>
+							<div className="flex items-center gap-2 mb-1">
+								<span className="text-xs font-medium uppercase">{v.severity}</span>
+								<span className="text-xs opacity-70">
+									{v.ruleId} · {v.wcagCriteria}
+								</span>
+							</div>
+							<p className="text-sm">{v.description}</p>
+							<p className="text-xs mt-1 opacity-70 font-mono">
+								{v.file}:{v.line}
+							</p>
+							{v.suggestion && (
+								<p className="text-xs mt-1 text-green-400">{v.suggestion}</p>
+							)}
+						</div>
+					))
+				)}
 			</div>
 
 			{report.summary && (
@@ -250,7 +307,7 @@ function ReportBody({
 					{report.summary}
 				</p>
 			)}
-		</>
+		</div>
 	);
 }
 
@@ -258,15 +315,25 @@ function StatCard({
 	label,
 	value,
 	color,
+	isActive = false,
+	onClick,
 }: {
 	readonly label: string;
 	readonly value: number;
 	readonly color: string;
+	readonly isActive?: boolean;
+	readonly onClick?: () => void;
 }): React.ReactElement {
 	return (
-		<div className="p-3 rounded-lg bg-(--bg-secondary) border border-(--border-color)">
+		<button
+			type="button"
+			className={`p-3 rounded-lg bg-(--bg-secondary) border border-(--border-color) cursor-pointer transition-colors hover:bg-(--bg-tertiary) text-left ${
+				isActive ? "ring-2 ring-(--accent-color)" : ""
+			}`}
+			onClick={onClick}
+		>
 			<p className="text-xs text-(--text-secondary)">{label}</p>
 			<p className={`text-2xl font-bold ${color}`}>{value}</p>
-		</div>
+		</button>
 	);
 }

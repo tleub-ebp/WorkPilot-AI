@@ -2,6 +2,9 @@
 	"title": "Rapport d'accessibilité",
 	"noData": "Aucun scan effectué. Cliquez sur « Lancer le scan » pour démarrer.",
 	"targetInfo": "Cible : WCAG {{targetLevel}} · {{filesScanned}} fichiers scannés",
+	"search": {
+		"placeholder": "Rechercher..."
+	},
 	"stats": {
 		"violations": "Violations",
 		"critical": "Critique",
