@@ -13,7 +13,6 @@ print()
 env_files = [
     Path(".workpilot/.env"),
     Path("apps/backend/.env"),
-    Path("auto-code-ebp/.workpilot/.env"),
 ]
 
 all_correct = True
