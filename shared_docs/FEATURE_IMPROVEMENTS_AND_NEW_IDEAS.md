@@ -110,9 +110,36 @@
 **Effort :** Moyen | **Impact :** Haut
 
 #### 3. Pixel Office — Gamification & métriques d'équipe
-**Aujourd'hui :** visualisation esthétique.
-**Amélioration :** achievements, leaderboard d'équipe (spec terminés, incidents résolus), saisons. Utiliser le moteur Pixel Office comme **vitrine live** sur un écran bureau ou TV (mode kiosque).
-**Débloque :** argument marketing fort + engagement équipes.
+
+**Aujourd'hui :** Pixel Office est une visualisation esthétique des agents en pixel art. Aucune couche de gamification, pas d'agrégation équipe, pas de contenu long terme qui donne envie de revenir le regarder. Le moteur est là, la matière narrative ne l'est pas.
+
+**Amélioration proposée :**
+- **Achievements individuels et équipe** : « First incident fixed autonomously », « 10 specs shipped this week », « Zero flaky tests for 30 days ». Badges affichables dans le profil utilisateur et dans Pixel Office.
+- **Saisons** : cycles de 3 mois avec objectifs d'équipe (« réduire la dette technique de X% », « 100 PRs shippées »), récompenses cosmétiques (skins d'agents, décors d'office).
+- **Leaderboard** : classement d'équipe par spec terminé, incident résolu, score Self-Healing proactif. Anti-pattern à éviter : ne pas transformer en course individualiste, pondérer pour valoriser l'entraide (reviews, pair programming).
+- **Mode kiosque (TV mode)** : URL dédiée optimisée pour affichage sur un grand écran (fullscreen, polices grosses, refresh auto, overlay stats temps réel). Utile pour les équipes en open space / remote daily.
+- **Mini-narratifs** : quand un agent finit une tâche, Pixel Office génère une mini-scène narrative (« Coder Claude vient de rendre sa copie à Reviewer Sonnet pour le spec #042 »). Ton léger, immersif.
+
+**Fichiers à toucher :**
+- `apps/backend/pixel_office/achievements.py` — nouveau module (règles, évaluation).
+- `apps/frontend/src/renderer/stores/pixel-office-store.ts` — ajout state achievements, season.
+- `apps/frontend/src/renderer/components/pixel-office/KioskMode.tsx` — nouveau composant fullscreen.
+- `apps/frontend/src/renderer/components/pixel-office/AchievementToast.tsx` — notif visuelle.
+- i18n : `pixelOffice.json` (achievements names, season labels).
+
+**Risques à surveiller :**
+- **Gamification toxique** : si le leaderboard devient le but, les devs gameront (plus de petits specs pour monter, moins de gros chantiers). Pondérer par complexité estimée.
+- **Bruit visuel en kiosque** : trop d'animations = fatigue. Prévoir un toggle « calm mode » pour le fond sonore / animations.
+- **Vie privée** : opt-out individuel du leaderboard (pas d'affichage public du nom si l'utilisateur refuse).
+
+**Métriques :**
+- Engagement : temps moyen passé sur l'onglet Pixel Office / semaine / utilisateur.
+- Nombre d'équipes ayant activé le mode kiosque.
+- % d'utilisateurs ayant obtenu au moins un achievement.
+
+**Débloque :** argument marketing démontrable (screenshot viral), engagement quotidien des équipes, culture d'équipe positive autour de l'agent.
+
+**Effort :** Moyen | **Impact :** Moyen (fort sur perception produit)
 
 #### 4. Swarm Mode & Continuous AI — Gouvernance
 **Aujourd'hui :** exécution libre.
