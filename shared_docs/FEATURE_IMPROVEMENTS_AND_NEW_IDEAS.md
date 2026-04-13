@@ -6,6 +6,8 @@
 > 2. Les **nouvelles features** qui combleraient les angles morts actuels du produit.
 >
 > Principe d'écriture : privilégier l'impact utilisateur réel à la nouveauté gadget. Chaque proposition indique *pourquoi maintenant* et *ce qu'elle débloque*.
+>
+> **Important : Chaque feature doit être documentée en français et en anglais.** / **Important: Each feature must be documented in both French and English.**
 
 ---
 
