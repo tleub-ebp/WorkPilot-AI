@@ -828,10 +828,54 @@ Dans les sections ci-dessous, chaque amélioration contient désormais un bloc *
 
 **Effort :** Moyen | **Impact :** Haut
 
-#### 18. Memory Lifecycle Manager — Explication des décisions
-**Aujourd'hui :** gère TTL et éviction.
-**Amélioration :** journal human-readable : "cette mémoire a été supprimée car elle était contredite par X commits récents". Bouton "restaurer" et "épingler".
-**Débloque :** confiance dans le système de mémoire (pas une boîte noire qui oublie).
+#### 18. Memory Lifecycle Manager — Explicabilité des décisions
+
+**Aujourd'hui :** le Memory Lifecycle Manager gère automatiquement le TTL, l'éviction LRU, la compression des mémoires dans Graphiti. Il fait son travail mais c'est une boîte noire : l'utilisateur voit une mémoire disparaître sans savoir pourquoi, ne peut pas la restaurer, ne peut pas l'épingler, et perd confiance dans la persistance des insights critiques.
+
+**Amélioration proposée :**
+- **Journal d'audit human-readable** : chaque action du lifecycle (création, mise à jour, suppression, fusion, compression) est journalée avec :
+  - Horodatage précis.
+  - Acteur (qui : utilisateur, agent coder, lifecycle auto, learning loop).
+  - Raison explicite (« contredit par 3 commits récents », « TTL expiré », « remplacé par mémoire plus spécifique », « évincé par LRU car inactif 90 jours »).
+  - Aperçu de la mémoire concernée (titre + premier paragraphe).
+- **Timeline par mémoire** : pour chaque mémoire, accès à son historique complet (créations, mises à jour, éditions manuelles, fusions).
+- **Bouton « Restore »** : réactive une mémoire supprimée (dans la limite d'une rétention de 30 jours par défaut). La restauration est tracée comme un événement.
+- **Bouton « Pin »** : marque une mémoire comme permanente, elle échappe à toute éviction automatique. Limite : 50 pinned par projet pour éviter l'abus.
+- **Raison avant suppression** : le lifecycle annonce à l'utilisateur les suppressions prévues dans les 7 prochains jours (« 12 mémoires vont être évincées — voulez-vous en épingler ? »).
+- **Merge explicable** : quand deux mémoires sont fusionnées, le log explique les deux sources et le résultat, avec option de dé-fusion manuelle.
+- **Undo global** : bouton « Undo last lifecycle action » (dans les 1h) pour annuler une décision automatique récente.
+
+**Fichiers à toucher :**
+- `apps/backend/memory_lifecycle/audit_log.py` — nouveau, persistance du journal.
+- `apps/backend/memory_lifecycle/decision_explainer.py` — formatage lisible des raisons.
+- `apps/backend/memory_lifecycle/restore.py` — API de restauration.
+- `integrations/graphiti/memory_store.py` — ajout métadonnées `pinned`, `restore_available_until`.
+- `apps/frontend/src/renderer/components/memory/MemoryTimeline.tsx` — UI timeline.
+- `apps/frontend/src/renderer/components/memory/LifecycleAuditLog.tsx` — UI journal.
+- `apps/frontend/src/shared/types/memory.ts` — types AuditEntry, LifecycleAction.
+
+**Edge cases :**
+- Suppression accidentelle d'une mémoire critique → rétention prolongée pour les mémoires pinned récemment.
+- Conflit entre utilisateur (pin) et lifecycle (pense à évincer) → pin gagne toujours, log le conflit pour transparence.
+- Dataset qui explose (trop de logs) → rotation du journal par mois + compression.
+- Restauration d'une mémoire devenue factuellement fausse → warning utilisateur (« cette mémoire contredit l'état actuel du code »).
+
+**Métriques :**
+- Nombre de restaurations / semaine (indicateur : trop → lifecycle trop agressif).
+- Taux de mémoires pinned / projet.
+- Nombre de « why was this deleted? » vues par l'utilisateur (engagement dans la transparence).
+
+**Multi-provider :**
+- Le lifecycle lui-même est purement algorithmique (TTL, LRU, scoring, dedup) — zéro LLM, 100% provider-indépendant.
+- Le LLM intervient uniquement pour (1) formuler la raison en langage naturel (« cette mémoire a été supprimée parce qu'elle est contredite par... »), (2) détecter les contradictions sémantiques entre une nouvelle mémoire et les existantes, (3) suggérer des fusions. Les 3 cas utilisent un modèle léger via `create_client()` — Haiku, GPT-4o-mini, Gemini Flash, Llama 8B via Ollama.
+- Le stockage est dans Graphiti (backend indépendant), utilisable avec n'importe quel provider comme source des mémoires.
+- Les prompts sont courts, neutres, en JSON Schema via tool use. Testés sur ≥3 providers.
+- Le mode offline via Ollama couvre toute la chaîne (détection contradiction, formulation raison, merge suggestion).
+- L'audit log est indépendant du provider — une mémoire créée avec Claude et modifiée avec GPT-4o garde un historique cohérent.
+
+**Débloque :** confiance totale dans le système de mémoire, capacité pour les équipes enterprise d'auditer les décisions du lifecycle (compliance), meilleure adoption car les utilisateurs ne subissent plus des oublis inexplicables.
+
+**Effort :** Moyen | **Impact :** Moyen-Haut (confiance critique)
 
 #### 19. Team Knowledge Sync — Résolution de conflits
 **Aujourd'hui :** synchro basique.
