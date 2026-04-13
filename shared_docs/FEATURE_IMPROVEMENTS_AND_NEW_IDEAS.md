@@ -412,9 +412,45 @@ Dans les sections ci-dessous, chaque amélioration contient désormais un bloc *
 **Effort :** Élevé | **Impact :** Très haut pour l'enterprise
 
 #### 9. Smart Estimation — Boucle de calibration
-**Aujourd'hui :** estimation one-shot.
-**Amélioration :** capture `estimé vs réel` sur chaque spec terminé, réinjecté dans le modèle d'estimation (via Learning Loop) avec un score de confiance affiché.
-**Débloque :** estimations qui deviennent prédictives pour *votre* équipe, pas génériques.
+
+**Aujourd'hui :** Smart Estimation produit un score de complexité et un effort estimé one-shot à partir du spec et du repo. Mais il n'apprend pas. Sur un repo avec ses particularités (architecture legacy, conventions non standard, tests lents, CI capricieuse), l'estimation initiale est souvent à côté. Et l'utilisateur n'a aucun moyen de dire au système « sur ce repo, multiplie par 1.5 ».
+
+**Amélioration proposée :**
+- **Capture actual vs estimated** : à la fin de chaque spec, enregistrer automatiquement `estimated_complexity, estimated_tokens, estimated_files_touched` et comparer aux valeurs réelles (`actual_tokens`, `actual_files`, `actual_duration_wall_clock`, `qa_iterations`).
+- **Modèle de calibration par repo** : régression simple (Ridge ou modèle bayésien léger) qui apprend un facteur de correction par repo + par catégorie de spec (frontend, backend, infra, bug fix, feature).
+- **Confidence interval** : au lieu d'un chiffre unique, afficher une fourchette `5-8 hours (confidence 72%)`. La confiance augmente au fur et à mesure que le dataset grossit.
+- **Breakdown par dimension** : afficher séparément `complexité algorithmique` / `complexité intégration` / `risque de conflit` / `effort tests`. L'utilisateur voit où l'estimation est incertaine.
+- **Recalibration manuelle** : bouton « Adjust estimate » où l'utilisateur peut saisir son propre chiffre ; le différentiel est stocké et pris en compte.
+- **Red flags explicites** : « cette spec touche des zones fragiles du repo (score Self-Healing 82) — multiplicateur ×1.4 appliqué ».
+
+**Fichiers à toucher :**
+- `apps/backend/spec/estimator.py` — refactor pour accepter un modèle de calibration.
+- `apps/backend/spec/calibration.py` — nouveau (persistence + fit du modèle).
+- `apps/backend/spec/estimate_capture.py` — hook en fin de spec pour enregistrer actuals.
+- `apps/frontend/src/renderer/components/spec/EstimationBreakdown.tsx` — UI fourchette + breakdown.
+- `apps/frontend/src/shared/types/estimation.ts` — types.
+
+**Edge cases :**
+- Dataset trop petit (repo neuf) → fallback sur l'estimation générique + warning « pas assez d'historique pour calibrer ».
+- Spec annulé en cours → ne pas alimenter le dataset (biais).
+- Changement majeur de contexte (refonte archi) → option « reset calibration » manuel.
+- Outliers (un spec qui a explosé à cause d'un incident externe) → détection IQR et exclusion automatique.
+
+**Métriques :**
+- MAPE (Mean Absolute Percentage Error) de l'estimation par repo, dans le temps.
+- Taux d'acceptation de l'estimation par l'utilisateur (ajustements manuels rares = bon signe).
+- Intervalle de confiance moyen (rétrécit avec le temps = bon signe).
+
+**Multi-provider :**
+- Le modèle de calibration est un simple régresseur ML local (scikit-learn ou statsmodels), aucun LLM impliqué — 100% provider-agnostique.
+- L'analyse initiale du spec (qui alimente l'estimation base) utilise un LLM, au choix du provider. Haiku / GPT-4o-mini / Gemini Flash / Llama 8B suffisent — pas besoin d'un flagship.
+- Les features extraites du spec (nombre de fichiers, mots-clés, domaines) sont produites par un prompt court et portable, testé sur ≥3 providers.
+- Les actuals capturés sont indépendants du provider qui a exécuté le spec — un spec exécuté en Sonnet et un autre en GPT-4o alimentent le même dataset de calibration.
+- L'intervalle de confiance tient compte du provider utilisé (« sur ce repo, Claude Sonnet est 15% plus rapide que GPT-4o en moyenne ») — statistique utile pour choisir le provider des specs futurs.
+
+**Débloque :** estimations qui deviennent réellement prédictives pour *votre* équipe, pas des chiffres génériques. Confiance dans la planification de sprints.
+
+**Effort :** Moyen | **Impact :** Moyen-Haut
 
 ---
 
