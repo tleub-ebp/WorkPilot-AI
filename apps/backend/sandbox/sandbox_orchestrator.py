@@ -17,12 +17,13 @@ from __future__ import annotations
 import logging
 import time
 import uuid
+from collections.abc import Callable
 from dataclasses import dataclass, field
 from enum import Enum
 from pathlib import Path
-from typing import Any, Callable
+from typing import Any
 
-from .approval_gate import ApprovalDecision, ApprovalGate, ApprovalRequest
+from .approval_gate import ApprovalGate, ApprovalRequest
 from .diff_predictor import DiffPrediction, DiffPredictor
 from .mock_api_server import MockApiServer
 from .worktree_manager import WorktreeInfo, WorktreeManager
@@ -144,9 +145,7 @@ class SandboxOrchestrator:
         if run.prediction is None:
             raise RuntimeError(f"Run {run.id} has no prediction yet")
 
-        run.approval = self._approval_gate.create_request(
-            run.id, run.prediction
-        )
+        run.approval = self._approval_gate.create_request(run.id, run.prediction)
         return run.approval
 
     def apply_approved(self, run: SandboxRun) -> list[str]:

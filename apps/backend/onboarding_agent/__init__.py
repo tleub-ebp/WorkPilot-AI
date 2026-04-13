@@ -13,4 +13,10 @@ from .onboarding_engine import (
     OnboardingSection,
 )
 
-__all__ = ["OnboardingEngine", "OnboardingGuide", "OnboardingSection", "KeyFile", "Convention"]
+__all__ = [
+    "OnboardingEngine",
+    "OnboardingGuide",
+    "OnboardingSection",
+    "KeyFile",
+    "Convention",
+]

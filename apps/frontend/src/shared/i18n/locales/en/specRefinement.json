@@ -1,0 +1,10 @@
+{
+	"noDataAvailable": "No refinement history data available",
+	"title": "Specification Refinement History",
+	"iterations": "Iterations",
+	"iteration": "Iteration {{num}}",
+	"qualityScore": "Quality Score",
+	"signals": "Signals",
+	"changes": "Changes",
+	"summary": "Summary"
+}

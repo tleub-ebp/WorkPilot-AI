@@ -74,9 +74,7 @@ class DiffPredictor:
         prediction = predictor.predict(original_root, sandbox_root)
     """
 
-    def predict(
-        self, original_root: Path, sandbox_root: Path
-    ) -> DiffPrediction:
+    def predict(self, original_root: Path, sandbox_root: Path) -> DiffPrediction:
         """Produce a ``DiffPrediction`` comparing two directory trees."""
         prediction = DiffPrediction()
 
@@ -93,7 +91,9 @@ class DiffPredictor:
                 # New file
                 content = self._read_safe(sand)
                 diff_text = self._unified_diff("", content, rel_path)
-                added = content.count("\n") + (1 if content and not content.endswith("\n") else 0)
+                added = content.count("\n") + (
+                    1 if content and not content.endswith("\n") else 0
+                )
                 fd = FileDiff(
                     path=rel_path,
                     change_type=ChangeType.ADDED,
@@ -126,8 +126,16 @@ class DiffPredictor:
                 new_text = self._read_safe(sand)
                 if old_text != new_text:
                     diff_text = self._unified_diff(old_text, new_text, rel_path)
-                    added = sum(1 for l in diff_text.splitlines() if l.startswith("+") and not l.startswith("+++"))
-                    removed = sum(1 for l in diff_text.splitlines() if l.startswith("-") and not l.startswith("---"))
+                    added = sum(
+                        1
+                        for l in diff_text.splitlines()
+                        if l.startswith("+") and not l.startswith("+++")
+                    )
+                    removed = sum(
+                        1
+                        for l in diff_text.splitlines()
+                        if l.startswith("-") and not l.startswith("---")
+                    )
                     fd = FileDiff(
                         path=rel_path,
                         change_type=ChangeType.MODIFIED,
@@ -206,7 +214,8 @@ class DiffPredictor:
         old_lines = old.splitlines(keepends=True)
         new_lines = new.splitlines(keepends=True)
         diff = difflib.unified_diff(
-            old_lines, new_lines,
+            old_lines,
+            new_lines,
             fromfile=f"a/{filename}",
             tofile=f"b/{filename}",
         )

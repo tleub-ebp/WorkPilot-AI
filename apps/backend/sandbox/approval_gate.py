@@ -16,7 +16,7 @@ from enum import Enum
 from pathlib import Path
 from typing import Any
 
-from .diff_predictor import DiffPrediction, FileDiff
+from .diff_predictor import DiffPrediction
 
 logger = logging.getLogger(__name__)
 
@@ -75,9 +75,7 @@ class ApprovalGate:
         req = ApprovalRequest(
             id=request_id,
             prediction=prediction,
-            file_approvals=[
-                FileApproval(path=f.path) for f in prediction.files
-            ],
+            file_approvals=[FileApproval(path=f.path) for f in prediction.files],
         )
         self._requests[request_id] = req
         return req
@@ -165,7 +163,5 @@ class ApprovalGate:
     @property
     def pending_requests(self) -> list[ApprovalRequest]:
         return [
-            r
-            for r in self._requests.values()
-            if r.decision == ApprovalDecision.PENDING
+            r for r in self._requests.values() if r.decision == ApprovalDecision.PENDING
         ]

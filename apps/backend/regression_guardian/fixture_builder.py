@@ -7,7 +7,6 @@ from incident data and produces sanitised fixture files.
 
 from __future__ import annotations
 
-import hashlib
 import json
 import logging
 import re
@@ -19,10 +18,18 @@ from .incident_parser import Incident
 logger = logging.getLogger(__name__)
 
 _PII_PATTERNS = [
-    (re.compile(r"\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b"), "redacted@example.com"),
+    (
+        re.compile(r"\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b"),
+        "redacted@example.com",
+    ),
     (re.compile(r"\b\d{3}[-.]?\d{3}[-.]?\d{4}\b"), "000-000-0000"),
     (re.compile(r"\b\d{3}-\d{2}-\d{4}\b"), "000-00-0000"),
-    (re.compile(r"(?i)(password|secret|token|api_key|apikey|auth)[\"']?\s*[:=]\s*[\"']?[^\s,;\"']+"), "REDACTED"),
+    (
+        re.compile(
+            r"(?i)(password|secret|token|api_key|apikey|auth)[\"']?\s*[:=]\s*[\"']?[^\s,;\"']+"
+        ),
+        "REDACTED",
+    ),
 ]
 
 
@@ -101,7 +108,9 @@ class FixtureBuilder:
                 "environment": incident.environment,
                 "version": incident.version,
                 "exception_type": incident.exception_type,
-                "exception_message": _redact_string(incident.exception_message) if self._redact_pii else incident.exception_message,
+                "exception_message": _redact_string(incident.exception_message)
+                if self._redact_pii
+                else incident.exception_message,
                 "faulting_file": incident.faulting_file,
                 "faulting_function": incident.faulting_function,
                 "tags": incident.tags,
@@ -119,6 +128,7 @@ class FixtureBuilder:
 # PII redaction helpers
 # ------------------------------------------------------------------
 
+
 def _redact_string(value: str) -> str:
     result = value
     for pattern, replacement in _PII_PATTERNS:
@@ -127,8 +137,17 @@ def _redact_string(value: str) -> str:
 
 
 def _redact_dict(data: dict[str, Any]) -> dict[str, Any]:
-    sensitive_keys = {"password", "secret", "token", "api_key", "apikey",
-                      "authorization", "cookie", "ssn", "credit_card"}
+    sensitive_keys = {
+        "password",
+        "secret",
+        "token",
+        "api_key",
+        "apikey",
+        "authorization",
+        "cookie",
+        "ssn",
+        "credit_card",
+    }
     result: dict[str, Any] = {}
     for k, v in data.items():
         if k.lower() in sensitive_keys:

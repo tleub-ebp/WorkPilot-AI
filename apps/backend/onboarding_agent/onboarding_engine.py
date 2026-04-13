@@ -72,7 +72,9 @@ class OnboardingEngine:
         guide.tech_stack = self._detect_tech_stack(repo_root)
         guide.key_files = self._identify_key_files(repo_root)
         guide.conventions = self._detect_conventions(repo_root)
-        guide.sections[OnboardingSection.GETTING_STARTED.value] = self._getting_started(repo_root)
+        guide.sections[OnboardingSection.GETTING_STARTED.value] = self._getting_started(
+            repo_root
+        )
         guide.estimated_reading_time_min = max(5, len(guide.key_files) * 2)
 
         return guide
@@ -113,10 +115,16 @@ class OnboardingEngine:
             path = root / filename
             if path.exists():
                 try:
-                    lines = len(path.read_text(encoding="utf-8", errors="replace").splitlines())
+                    lines = len(
+                        path.read_text(encoding="utf-8", errors="replace").splitlines()
+                    )
                 except OSError:
                     lines = 0
-                key_files.append(KeyFile(path=filename, reason=reason, category=category, lines=lines))
+                key_files.append(
+                    KeyFile(
+                        path=filename, reason=reason, category=category, lines=lines
+                    )
+                )
 
         return key_files
 
@@ -134,7 +142,9 @@ class OnboardingEngine:
         }
         for f, desc in linter_files.items():
             if (root / f).exists():
-                conventions.append(Convention(name=desc, description=f"Configured via {f}"))
+                conventions.append(
+                    Convention(name=desc, description=f"Configured via {f}")
+                )
 
         return conventions
 

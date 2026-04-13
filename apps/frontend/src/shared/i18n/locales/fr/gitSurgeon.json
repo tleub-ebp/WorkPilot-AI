@@ -1,0 +1,12 @@
+{
+	"noDataAvailable": "Aucune donnée de plan chirurgien git disponible",
+	"title": "Chirurgien de l'Historique Git",
+	"issues": "problèmes",
+	"potentialSavings": "~{{mb}} MB d'économies potentielles",
+	"executeSurgery": "Exécuter la Chirurgie",
+	"forcePushWarning": "⚠️ Ce plan nécessite un force push. Coordonnez-vous avec votre équipe d'abord.",
+	"severity": "Sévérité",
+	"issueType": "Type de Problème",
+	"plannedActions": "Actions Planifiées",
+	"summary": "Résumé"
+}

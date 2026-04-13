@@ -2,6 +2,15 @@ import i18n from "i18next";
 import { initReactI18next } from "react-i18next";
 import enAnalytics from "./locales/en/analytics.json";
 import enApiExplorer from "./locales/en/apiExplorer.json";
+import enCarbonProfiler from "./locales/en/carbonProfiler.json";
+import enCompliance from "./locales/en/compliance.json";
+import enConsensusArbiter from "./locales/en/consensusArbiter.json";
+import enDocDrift from "./locales/en/docDrift.json";
+import enGitSurgeon from "./locales/en/gitSurgeon.json";
+import enNotebookAgent from "./locales/en/notebookAgent.json";
+import enReleaseCoordinator from "./locales/en/releaseCoordinator.json";
+import enSpecRefinement from "./locales/en/specRefinement.json";
+
 // Import English translation resources
 import enAppEmulator from "./locales/en/appEmulator.json";
 import enArena from "./locales/en/arena.json";
@@ -56,6 +65,15 @@ import enVoiceControl from "./locales/en/voiceContol.json";
 import enWelcome from "./locales/en/welcome.json";
 import frAnalytics from "./locales/fr/analytics.json";
 import frApiExplorer from "./locales/fr/apiExplorer.json";
+import frCarbonProfiler from "./locales/fr/carbonProfiler.json";
+import frCompliance from "./locales/fr/compliance.json";
+import frConsensusArbiter from "./locales/fr/consensusArbiter.json";
+import frDocDrift from "./locales/fr/docDrift.json";
+import frGitSurgeon from "./locales/fr/gitSurgeon.json";
+import frNotebookAgent from "./locales/fr/notebookAgent.json";
+import frReleaseCoordinator from "./locales/fr/releaseCoordinator.json";
+import frSpecRefinement from "./locales/fr/specRefinement.json";
+
 // Import French translation resources
 import frAppEmulator from "./locales/fr/appEmulator.json";
 import frArena from "./locales/fr/arena.json";
@@ -116,6 +134,14 @@ export const resources = {
 		appEmulator: enAppEmulator,
 		analytics: enAnalytics,
 		browserAgent: enBrowserAgent,
+		carbonProfiler: enCarbonProfiler,
+		compliance: enCompliance,
+		consensusArbiter: enConsensusArbiter,
+		docDrift: enDocDrift,
+		gitSurgeon: enGitSurgeon,
+		notebookAgent: enNotebookAgent,
+		releaseCoordinator: enReleaseCoordinator,
+		specRefinement: enSpecRefinement,
 		changelog: enChangelog,
 		codePlayground: enCodePlayground,
 		codeReview: enCodeReview,
@@ -171,6 +197,14 @@ export const resources = {
 		appEmulator: frAppEmulator,
 		analytics: frAnalytics,
 		browserAgent: frBrowserAgent,
+		carbonProfiler: frCarbonProfiler,
+		compliance: frCompliance,
+		consensusArbiter: frConsensusArbiter,
+		docDrift: frDocDrift,
+		gitSurgeon: frGitSurgeon,
+		notebookAgent: frNotebookAgent,
+		releaseCoordinator: frReleaseCoordinator,
+		specRefinement: frSpecRefinement,
 		changelog: frChangelog,
 		codePlayground: frCodePlayground,
 		codeReview: frCodeReview,
@@ -233,6 +267,14 @@ i18n.use(initReactI18next).init({
 		"appEmulator",
 		"analytics",
 		"browserAgent",
+		"carbonProfiler",
+		"compliance",
+		"consensusArbiter",
+		"docDrift",
+		"gitSurgeon",
+		"notebookAgent",
+		"releaseCoordinator",
+		"specRefinement",
 		"changelog",
 		"codePlayground",
 		"codeReview",

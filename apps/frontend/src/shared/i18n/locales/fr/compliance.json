@@ -1,0 +1,11 @@
+{
+	"noDataAvailable": "Aucune donnée de rapport de conformité disponible",
+	"title": "Collecteur de Preuves de Conformité",
+	"evidenceItems": "éléments de preuve",
+	"coverage": "couverture",
+	"missingControls": "Contrôles Manquants",
+	"evidence": "Preuves",
+	"summary": "Résumé",
+	"controlId": "ID de Contrôle",
+	"evidenceType": "Type de Preuve"
+}

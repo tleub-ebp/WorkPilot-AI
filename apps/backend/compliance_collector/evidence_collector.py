@@ -75,7 +75,11 @@ class ComplianceReport:
 
     @property
     def collected_count(self) -> int:
-        return sum(1 for e in self.evidence if e.status in (EvidenceStatus.COLLECTED, EvidenceStatus.VERIFIED))
+        return sum(
+            1
+            for e in self.evidence
+            if e.status in (EvidenceStatus.COLLECTED, EvidenceStatus.VERIFIED)
+        )
 
     @property
     def summary(self) -> str:
@@ -129,27 +133,31 @@ class EvidenceCollector:
             source_data = sources.get(evidence_type, [])
             if source_data:
                 for i, item in enumerate(source_data):
-                    evidence.append(EvidenceItem(
-                        id=f"{control_id}-{i}",
+                    evidence.append(
+                        EvidenceItem(
+                            id=f"{control_id}-{i}",
+                            evidence_type=evidence_type,
+                            framework=framework,
+                            control_id=control_id,
+                            title=title,
+                            description=item.get("description", ""),
+                            status=EvidenceStatus.COLLECTED,
+                            source=item.get("source", ""),
+                            data=item,
+                        )
+                    )
+            else:
+                missing.append(control_id)
+                evidence.append(
+                    EvidenceItem(
+                        id=f"{control_id}-missing",
                         evidence_type=evidence_type,
                         framework=framework,
                         control_id=control_id,
                         title=title,
-                        description=item.get("description", ""),
-                        status=EvidenceStatus.COLLECTED,
-                        source=item.get("source", ""),
-                        data=item,
-                    ))
-            else:
-                missing.append(control_id)
-                evidence.append(EvidenceItem(
-                    id=f"{control_id}-missing",
-                    evidence_type=evidence_type,
-                    framework=framework,
-                    control_id=control_id,
-                    title=title,
-                    status=EvidenceStatus.MISSING,
-                ))
+                        status=EvidenceStatus.MISSING,
+                    )
+                )
 
         total = len(controls)
         covered = total - len(missing)
@@ -183,8 +191,15 @@ class EvidenceCollector:
             "|---------|-------|--------|------|",
         ]
         for e in report.evidence:
-            status_icon = {"collected": "✅", "verified": "🔒", "missing": "❌", "expired": "⏰"}.get(e.status.value, "?")
-            lines.append(f"| {e.control_id} | {e.title} | {status_icon} {e.status.value} | {e.evidence_type.value} |")
+            status_icon = {
+                "collected": "✅",
+                "verified": "🔒",
+                "missing": "❌",
+                "expired": "⏰",
+            }.get(e.status.value, "?")
+            lines.append(
+                f"| {e.control_id} | {e.title} | {status_icon} {e.status.value} | {e.evidence_type.value} |"
+            )
 
         if report.missing_controls:
             lines.append(f"\n## Missing Controls ({len(report.missing_controls)})\n")

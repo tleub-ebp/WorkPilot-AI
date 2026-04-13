@@ -182,6 +182,89 @@ const PluginMarketplace = lazy(() =>
 const ApiExplorer = lazy(() =>
 	import("./components/api-explorer").then((m) => ({ default: m.ApiExplorer })),
 );
+const SimulationReport = lazy(() =>
+	import("./components/sandbox/SimulationReport").then((m) => ({
+		default: m.SimulationReport,
+	})),
+);
+const DiffPreview = lazy(() =>
+	import("./components/sandbox/DiffPreview").then((m) => ({ default: m.DiffPreview })),
+);
+const RegressionGuardianDashboard = lazy(() =>
+	import("./components/regression-guardian/RegressionGuardianDashboard").then((m) => ({
+		default: m.RegressionGuardianDashboard,
+	})),
+);
+const ApiWatcherDashboard = lazy(() =>
+	import("./components/api-watcher/ApiWatcherDashboard").then((m) => ({
+		default: m.ApiWatcherDashboard,
+	})),
+);
+const A11yReportView = lazy(() =>
+	import("./components/accessibility-agent/A11yReportView").then((m) => ({
+		default: m.A11yReportView,
+	})),
+);
+const I18nReportView = lazy(() =>
+	import("./components/i18n-agent/I18nReportView").then((m) => ({
+		default: m.I18nReportView,
+	})),
+);
+const OnboardingGuideView = lazy(() =>
+	import("./components/onboarding-agent/OnboardingGuideView").then((m) => ({
+		default: m.OnboardingGuideView,
+	})),
+);
+const FlakyTestReport = lazy(() =>
+	import("./components/flaky-tests/FlakyTestReport").then((m) => ({
+		default: m.FlakyTestReport,
+	})),
+);
+const DocDriftReport = lazy(() =>
+	import("./components/doc-drift/DocDriftReport").then((m) => ({
+		default: m.DocDriftReport,
+	})),
+);
+const ComplianceReportView = lazy(() =>
+	import("./components/compliance/ComplianceReportView").then((m) => ({
+		default: m.ComplianceReportView,
+	})),
+);
+const GitSurgeonDashboard = lazy(() =>
+	import("./components/git-surgeon/GitSurgeonDashboard").then((m) => ({
+		default: m.GitSurgeonDashboard,
+	})),
+);
+const ReleasePlanView = lazy(() =>
+	import("./components/release-coordinator/ReleasePlanView").then((m) => ({
+		default: m.ReleasePlanView,
+	})),
+);
+const CarbonReportView = lazy(() =>
+	import("./components/carbon-profiler/CarbonReportView").then((m) => ({
+		default: m.CarbonReportView,
+	})),
+);
+const ConsensusView = lazy(() =>
+	import("./components/consensus-arbiter/ConsensusView").then((m) => ({
+		default: m.ConsensusView,
+	})),
+);
+const NotebookView = lazy(() =>
+	import("./components/notebook-agent/NotebookView").then((m) => ({
+		default: m.NotebookView,
+	})),
+);
+const RefinementHistoryView = lazy(() =>
+	import("./components/spec-refinement/RefinementHistoryView").then((m) => ({
+		default: m.RefinementHistoryView,
+	})),
+);
+const CoachReportView = lazy(() =>
+	import("./components/agent-coach/CoachReportView").then((m) => ({
+		default: m.CoachReportView,
+	})),
+);
 
 import {
 	COLOR_THEMES,
@@ -1595,6 +1678,24 @@ export function App() {
 													(activeProjectId || selectedProjectId) && (
 														<PipelineGeneratorView />
 													)}
+												{activeView === "sandbox" && <SimulationReport />}
+												{activeView === "regression-guardian" && (
+													<RegressionGuardianDashboard results={[]} />
+												)}
+												{activeView === "api-watcher" && <ApiWatcherDashboard />}
+												{activeView === "accessibility-agent" && <A11yReportView />}
+												{activeView === "i18n-agent" && <I18nReportView />}
+												{activeView === "onboarding-agent" && <OnboardingGuideView />}
+												{activeView === "flaky-tests" && <FlakyTestReport />}
+												{activeView === "doc-drift" && <DocDriftReport />}
+												{activeView === "compliance" && <ComplianceReportView />}
+												{activeView === "git-surgeon" && <GitSurgeonDashboard />}
+												{activeView === "release-coordinator" && <ReleasePlanView />}
+												{activeView === "carbon-profiler" && <CarbonReportView />}
+												{activeView === "consensus-arbiter" && <ConsensusView />}
+												{activeView === "notebook-agent" && <NotebookView />}
+												{activeView === "spec-refinement" && <RefinementHistoryView />}
+												{activeView === "agent-coach" && <CoachReportView />}
 											</>
 										) : (
 											<div className="flex items-center justify-center h-full text-muted">

@@ -1,0 +1,12 @@
+{
+	"noDataAvailable": "No notebook data available",
+	"title": "Notebook Analysis",
+	"totalCells": "Total Cells",
+	"codeCells": "Code Cells",
+	"markdown": "Markdown",
+	"issues": "Issues",
+	"severity": "Severity",
+	"cellIndex": "Cell #{{index}}",
+	"issueType": "Issue Type",
+	"suggestion": "Suggestion"
+}

@@ -11,7 +11,6 @@ import logging
 import re
 from dataclasses import dataclass, field
 from enum import Enum
-from pathlib import Path
 
 logger = logging.getLogger(__name__)
 
@@ -112,15 +111,17 @@ class DriftScanner:
             for match in _CODE_REF_PATTERN.finditer(line):
                 ref = match.group(1)
                 if ref not in symbols and not _is_common_builtin(ref):
-                    issues.append(DriftIssue(
-                        drift_type=DriftType.MISSING_FUNCTION,
-                        severity=DriftSeverity.HIGH,
-                        doc_file=doc_path,
-                        doc_line=i,
-                        referenced_symbol=ref,
-                        message=f"Function '{ref}' referenced in docs not found in codebase",
-                        suggestion=f"Update or remove reference to '{ref}'",
-                    ))
+                    issues.append(
+                        DriftIssue(
+                            drift_type=DriftType.MISSING_FUNCTION,
+                            severity=DriftSeverity.HIGH,
+                            doc_file=doc_path,
+                            doc_line=i,
+                            referenced_symbol=ref,
+                            message=f"Function '{ref}' referenced in docs not found in codebase",
+                            suggestion=f"Update or remove reference to '{ref}'",
+                        )
+                    )
 
         return issues
 
@@ -136,23 +137,45 @@ class DriftScanner:
                 # Normalise path separators
                 normalised = ref.replace("\\", "/")
                 if normalised not in files and not _is_url_or_extension(ref):
-                    issues.append(DriftIssue(
-                        drift_type=DriftType.STALE_REFERENCE,
-                        severity=DriftSeverity.MEDIUM,
-                        doc_file=doc_path,
-                        doc_line=i,
-                        referenced_symbol=ref,
-                        message=f"File '{ref}' referenced in docs not found in codebase",
-                        suggestion=f"Update the file reference '{ref}' or remove it",
-                    ))
+                    issues.append(
+                        DriftIssue(
+                            drift_type=DriftType.STALE_REFERENCE,
+                            severity=DriftSeverity.MEDIUM,
+                            doc_file=doc_path,
+                            doc_line=i,
+                            referenced_symbol=ref,
+                            message=f"File '{ref}' referenced in docs not found in codebase",
+                            suggestion=f"Update the file reference '{ref}' or remove it",
+                        )
+                    )
 
         return issues
 
 
 def _is_common_builtin(name: str) -> bool:
-    builtins = {"print", "len", "str", "int", "float", "list", "dict", "set",
-                "True", "False", "None", "self", "cls", "console", "log",
-                "require", "import", "export", "return", "async", "await"}
+    builtins = {
+        "print",
+        "len",
+        "str",
+        "int",
+        "float",
+        "list",
+        "dict",
+        "set",
+        "True",
+        "False",
+        "None",
+        "self",
+        "cls",
+        "console",
+        "log",
+        "require",
+        "import",
+        "export",
+        "return",
+        "async",
+        "await",
+    }
     return name in builtins
 
 

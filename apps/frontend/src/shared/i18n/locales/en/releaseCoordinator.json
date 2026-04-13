@@ -1,0 +1,12 @@
+{
+	"noDataAvailable": "No release plan data available",
+	"title": "Release Train",
+	"services": "services",
+	"status": "Status",
+	"shipIt": "Ship It 🚀",
+	"gates": "Gates",
+	"plannedActions": "Planned Actions",
+	"summary": "Summary",
+	"bumpType": "Bump Type",
+	"changelogEntries": "changelog entries"
+}

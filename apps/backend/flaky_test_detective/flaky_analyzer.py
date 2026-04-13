@@ -77,17 +77,36 @@ class FlakyReport:
             return "No flaky tests detected"
         by_cause = {}
         for ft in self.flaky_tests:
-            by_cause[ft.probable_cause.value] = by_cause.get(ft.probable_cause.value, 0) + 1
+            by_cause[ft.probable_cause.value] = (
+                by_cause.get(ft.probable_cause.value, 0) + 1
+            )
         parts = [f"{count} {cause}" for cause, count in by_cause.items()]
         return f"{self.flaky_count} flaky tests: {', '.join(parts)}"
 
 
 _CAUSE_PATTERNS: dict[FlakyCause, list[str]] = {
     FlakyCause.TIMING: ["timeout", "timed out", "sleep", "delay", "slow", "deadline"],
-    FlakyCause.NETWORK: ["connection refused", "ECONNREFUSED", "socket", "dns", "fetch failed"],
-    FlakyCause.SHARED_STATE: ["already exists", "duplicate key", "state", "setUp", "tearDown"],
+    FlakyCause.NETWORK: [
+        "connection refused",
+        "ECONNREFUSED",
+        "socket",
+        "dns",
+        "fetch failed",
+    ],
+    FlakyCause.SHARED_STATE: [
+        "already exists",
+        "duplicate key",
+        "state",
+        "setUp",
+        "tearDown",
+    ],
     FlakyCause.CONCURRENCY: ["race", "deadlock", "lock", "concurrent", "thread"],
-    FlakyCause.RESOURCE_LEAK: ["too many open files", "memory", "ENOMEM", "file descriptor"],
+    FlakyCause.RESOURCE_LEAK: [
+        "too many open files",
+        "memory",
+        "ENOMEM",
+        "file descriptor",
+    ],
     FlakyCause.RANDOMNESS: ["random", "seed", "uuid", "nonce", "Math.random"],
 }
 
@@ -146,16 +165,18 @@ class FlakyAnalyzer:
             errors = [r.error_message for r in test_runs if r.error_message]
             cause = self._classify_cause(errors)
 
-            report.flaky_tests.append(FlakyTest(
-                test_name=test_name,
-                total_runs=len(test_runs),
-                failures=failures,
-                flakiness_rate=rate,
-                probable_cause=cause,
-                confidence=self._assess_confidence(cause, errors),
-                error_patterns=list(set(errors))[:5],
-                suggested_fix=_CAUSE_FIXES.get(cause, ""),
-            ))
+            report.flaky_tests.append(
+                FlakyTest(
+                    test_name=test_name,
+                    total_runs=len(test_runs),
+                    failures=failures,
+                    flakiness_rate=rate,
+                    probable_cause=cause,
+                    confidence=self._assess_confidence(cause, errors),
+                    error_patterns=list(set(errors))[:5],
+                    suggested_fix=_CAUSE_FIXES.get(cause, ""),
+                )
+            )
 
         report.flaky_tests.sort(key=lambda ft: ft.flakiness_rate, reverse=True)
         return report
@@ -180,7 +201,9 @@ class FlakyAnalyzer:
         if cause == FlakyCause.UNKNOWN:
             return FlakyConfidence.LOW
         all_errors = " ".join(errors).lower()
-        matches = sum(1 for p in _CAUSE_PATTERNS.get(cause, []) if p.lower() in all_errors)
+        matches = sum(
+            1 for p in _CAUSE_PATTERNS.get(cause, []) if p.lower() in all_errors
+        )
         if matches >= 3:
             return FlakyConfidence.HIGH
         if matches >= 1:

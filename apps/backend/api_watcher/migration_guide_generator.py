@@ -52,13 +52,17 @@ class MigrationGuideGenerator:
         breaking = [c for c in diff.changes if c.category == ChangeCategory.BREAKING]
         if breaking:
             sections.append("## 🔴 Breaking Changes\n")
-            sections.append("These changes **require action** from all API consumers.\n")
+            sections.append(
+                "These changes **require action** from all API consumers.\n"
+            )
             for change in breaking:
                 sections.append(self._format_change(change))
                 sections.append(self._suggest_action(change))
 
         # Potentially breaking
-        potential = [c for c in diff.changes if c.category == ChangeCategory.POTENTIALLY_BREAKING]
+        potential = [
+            c for c in diff.changes if c.category == ChangeCategory.POTENTIALLY_BREAKING
+        ]
         if potential:
             sections.append("\n## 🟡 Potentially Breaking Changes\n")
             sections.append("Review these changes — they may affect some consumers.\n")
@@ -66,7 +70,9 @@ class MigrationGuideGenerator:
                 sections.append(self._format_change(change))
 
         # Non-breaking
-        non_breaking = [c for c in diff.changes if c.category == ChangeCategory.NON_BREAKING]
+        non_breaking = [
+            c for c in diff.changes if c.category == ChangeCategory.NON_BREAKING
+        ]
         if non_breaking:
             sections.append("\n## 🟢 Non-Breaking Changes\n")
             sections.append("These changes are backward-compatible.\n")
@@ -101,4 +107,7 @@ class MigrationGuideGenerator:
             "field_required_added": "  - 🔧 **Action:** Ensure this field is always provided in your requests.",
             "response_status_removed": "  - 🔧 **Action:** Update error handling to no longer expect this status code.",
         }
-        return suggestions.get(change.change_type.value, "  - 🔧 **Action:** Review and update client code.")
+        return suggestions.get(
+            change.change_type.value,
+            "  - 🔧 **Action:** Review and update client code.",
+        )

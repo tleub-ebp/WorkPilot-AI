@@ -100,7 +100,9 @@ class RefinementEngine:
         engine.apply_refinement(history, updated_spec, changes)
     """
 
-    def __init__(self, max_iterations: int = 10, convergence_threshold: float = 0.85) -> None:
+    def __init__(
+        self, max_iterations: int = 10, convergence_threshold: float = 0.85
+    ) -> None:
         self._max_iterations = max_iterations
         self._convergence_threshold = convergence_threshold
         self._histories: dict[str, RefinementHistory] = {}
@@ -108,11 +110,13 @@ class RefinementEngine:
     def create_history(self, spec_id: str, initial_spec: str) -> RefinementHistory:
         """Create a new refinement history for a spec."""
         history = RefinementHistory(spec_id=spec_id)
-        history.iterations.append(RefinementIteration(
-            iteration=0,
-            spec_snapshot=initial_spec,
-            quality_score=0.0,
-        ))
+        history.iterations.append(
+            RefinementIteration(
+                iteration=0,
+                spec_snapshot=initial_spec,
+                quality_score=0.0,
+            )
+        )
         self._histories[spec_id] = history
         return history
 
@@ -134,7 +138,9 @@ class RefinementEngine:
 
         signal_groups: dict[SignalType, int] = {}
         for signal in current.signals:
-            signal_groups[signal.signal_type] = signal_groups.get(signal.signal_type, 0) + 1
+            signal_groups[signal.signal_type] = (
+                signal_groups.get(signal.signal_type, 0) + 1
+            )
 
         for signal_type, count in signal_groups.items():
             suggestion = _SIGNAL_SUGGESTIONS.get(signal_type)

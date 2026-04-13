@@ -83,7 +83,7 @@ _GRID_INTENSITY: dict[str, float] = {
     "us-east": 380,
     "us-west": 230,
     "eu-west": 270,
-    "eu-north": 50,   # Nordics — very clean
+    "eu-north": 50,  # Nordics — very clean
     "eu-central": 340,
     "ap-southeast": 500,
     "ap-northeast": 450,
@@ -104,7 +104,9 @@ class EnergyTracker:
 
     def __init__(self, region: str = "global_avg") -> None:
         self._region = region
-        self._grid_intensity = _GRID_INTENSITY.get(region, _GRID_INTENSITY["global_avg"])
+        self._grid_intensity = _GRID_INTENSITY.get(
+            region, _GRID_INTENSITY["global_avg"]
+        )
         self._records: list[EnergyRecord] = []
 
     def record_llm_call(
@@ -140,7 +142,9 @@ class EnergyTracker:
         self._records.append(record)
         return record
 
-    def record_ci_run(self, duration_s: float, runner_type: str = "standard") -> EnergyRecord:
+    def record_ci_run(
+        self, duration_s: float, runner_type: str = "standard"
+    ) -> EnergyRecord:
         """Record a CI/CD pipeline run."""
         # Approximate: standard runner ~0.05 kW, GPU runner ~0.3 kW
         power_kw = 0.3 if "gpu" in runner_type.lower() else 0.05
@@ -178,7 +182,9 @@ class EnergyTracker:
         )
 
         for r in filtered:
-            report.by_provider[r.provider] = report.by_provider.get(r.provider, 0) + r.co2_g
+            report.by_provider[r.provider] = (
+                report.by_provider.get(r.provider, 0) + r.co2_g
+            )
             if r.model:
                 report.by_model[r.model] = report.by_model.get(r.model, 0) + r.co2_g
 

@@ -66,7 +66,9 @@ class SurgeryPlan:
 
 
 _SENSITIVE_PATTERNS = [
-    re.compile(r"(?i)(password|secret|api_key|apikey|token)\s*[:=]\s*['\"][^'\"]{8,}['\"]"),
+    re.compile(
+        r"(?i)(password|secret|api_key|apikey|token)\s*[:=]\s*['\"][^'\"]{8,}['\"]"
+    ),
     re.compile(r"(?i)AKIA[0-9A-Z]{16}"),  # AWS access key
     re.compile(r"ghp_[a-zA-Z0-9]{36}"),  # GitHub PAT
     re.compile(r"sk-[a-zA-Z0-9]{32,}"),  # OpenAI key pattern
@@ -98,11 +100,14 @@ class HistoryAnalyzer:
             plan.actions.append((issue.suggested_action, issue.description))
 
         plan.estimated_size_savings_mb = sum(
-            i.size_bytes for i in plan.issues if i.issue_type == HistoryIssueType.LARGE_BLOB
+            i.size_bytes
+            for i in plan.issues
+            if i.issue_type == HistoryIssueType.LARGE_BLOB
         ) / (1024 * 1024)
 
         plan.requires_force_push = any(
-            i.suggested_action in (SurgeryAction.BFG_REMOVE, SurgeryAction.FILTER_BRANCH)
+            i.suggested_action
+            in (SurgeryAction.BFG_REMOVE, SurgeryAction.FILTER_BRANCH)
             for i in plan.issues
         )
 
@@ -115,7 +120,9 @@ class HistoryAnalyzer:
             result = subprocess.run(
                 ["git", "rev-list", "--objects", "--all"],
                 cwd=str(self._repo_root),
-                capture_output=True, text=True, timeout=60,
+                capture_output=True,
+                text=True,
+                timeout=60,
             )
             if result.returncode != 0:
                 return issues
@@ -131,22 +138,30 @@ class HistoryAnalyzer:
                     size_result = subprocess.run(
                         ["git", "cat-file", "-s", sha],
                         cwd=str(self._repo_root),
-                        capture_output=True, text=True, timeout=5,
+                        capture_output=True,
+                        text=True,
+                        timeout=5,
                     )
-                    size = int(size_result.stdout.strip()) if size_result.returncode == 0 else 0
+                    size = (
+                        int(size_result.stdout.strip())
+                        if size_result.returncode == 0
+                        else 0
+                    )
                 except (ValueError, subprocess.SubprocessError):
                     size = 0
 
                 if size > threshold_mb * 1024 * 1024:
-                    issues.append(HistoryIssue(
-                        issue_type=HistoryIssueType.LARGE_BLOB,
-                        severity="high",
-                        description=f"Large file: {path} ({size / 1024 / 1024:.1f} MB)",
-                        commit_sha=sha,
-                        file_path=path,
-                        size_bytes=size,
-                        suggested_action=SurgeryAction.BFG_REMOVE,
-                    ))
+                    issues.append(
+                        HistoryIssue(
+                            issue_type=HistoryIssueType.LARGE_BLOB,
+                            severity="high",
+                            description=f"Large file: {path} ({size / 1024 / 1024:.1f} MB)",
+                            commit_sha=sha,
+                            file_path=path,
+                            size_bytes=size,
+                            suggested_action=SurgeryAction.BFG_REMOVE,
+                        )
+                    )
         except (subprocess.SubprocessError, OSError):
             pass
         return issues
@@ -156,9 +171,18 @@ class HistoryAnalyzer:
         issues: list[HistoryIssue] = []
         try:
             result = subprocess.run(
-                ["git", "log", f"-{max_commits}", "--pretty=format:%H", "--diff-filter=A", "-p"],
+                [
+                    "git",
+                    "log",
+                    f"-{max_commits}",
+                    "--pretty=format:%H",
+                    "--diff-filter=A",
+                    "-p",
+                ],
                 cwd=str(self._repo_root),
-                capture_output=True, text=True, timeout=120,
+                capture_output=True,
+                text=True,
+                timeout=120,
             )
             if result.returncode != 0:
                 return issues
@@ -170,13 +194,15 @@ class HistoryAnalyzer:
                     continue
                 for pattern in _SENSITIVE_PATTERNS:
                     if pattern.search(line):
-                        issues.append(HistoryIssue(
-                            issue_type=HistoryIssueType.SENSITIVE_DATA,
-                            severity="critical",
-                            description=f"Potential secret in commit {current_sha[:8]}",
-                            commit_sha=current_sha,
-                            suggested_action=SurgeryAction.BFG_REMOVE,
-                        ))
+                        issues.append(
+                            HistoryIssue(
+                                issue_type=HistoryIssueType.SENSITIVE_DATA,
+                                severity="critical",
+                                description=f"Potential secret in commit {current_sha[:8]}",
+                                commit_sha=current_sha,
+                                suggested_action=SurgeryAction.BFG_REMOVE,
+                            )
+                        )
                         break
         except (subprocess.SubprocessError, OSError):
             pass
@@ -185,13 +211,17 @@ class HistoryAnalyzer:
     def _find_messy_commits(self, max_commits: int) -> list[HistoryIssue]:
         """Find commits with poor messages (WIP, fixup, etc.)."""
         issues: list[HistoryIssue] = []
-        messy_patterns = re.compile(r"^(wip|fixup|tmp|test|asdf|xxx|todo|hack)", re.IGNORECASE)
+        messy_patterns = re.compile(
+            r"^(wip|fixup|tmp|test|asdf|xxx|todo|hack)", re.IGNORECASE
+        )
 
         try:
             result = subprocess.run(
                 ["git", "log", f"-{max_commits}", "--pretty=format:%H %s"],
                 cwd=str(self._repo_root),
-                capture_output=True, text=True, timeout=30,
+                capture_output=True,
+                text=True,
+                timeout=30,
             )
             if result.returncode != 0:
                 return issues
@@ -202,13 +232,15 @@ class HistoryAnalyzer:
                     continue
                 sha, message = parts
                 if messy_patterns.match(message):
-                    issues.append(HistoryIssue(
-                        issue_type=HistoryIssueType.MESSY_COMMITS,
-                        severity="low",
-                        description=f"Messy commit message: '{message[:60]}'",
-                        commit_sha=sha,
-                        suggested_action=SurgeryAction.SQUASH,
-                    ))
+                    issues.append(
+                        HistoryIssue(
+                            issue_type=HistoryIssueType.MESSY_COMMITS,
+                            severity="low",
+                            description=f"Messy commit message: '{message[:60]}'",
+                            commit_sha=sha,
+                            suggested_action=SurgeryAction.SQUASH,
+                        )
+                    )
         except (subprocess.SubprocessError, OSError):
             pass
         return issues

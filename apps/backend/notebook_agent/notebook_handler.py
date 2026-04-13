@@ -98,21 +98,26 @@ class NotebookHandler:
         nb = ParsedNotebook(
             path=str(path),
             kernel=kernel_spec.get("name", ""),
-            language=kernel_spec.get("language", data.get("metadata", {}).get("language_info", {}).get("name", "")),
+            language=kernel_spec.get(
+                "language",
+                data.get("metadata", {}).get("language_info", {}).get("name", ""),
+            ),
             nbformat=data.get("nbformat", 4),
             metadata=data.get("metadata", {}),
         )
 
         for i, cell_data in enumerate(data.get("cells", [])):
             source = "".join(cell_data.get("source", []))
-            nb.cells.append(NotebookCell(
-                index=i,
-                cell_type=CellType(cell_data.get("cell_type", "code")),
-                source=source,
-                execution_count=cell_data.get("execution_count"),
-                outputs=cell_data.get("outputs", []),
-                metadata=cell_data.get("metadata", {}),
-            ))
+            nb.cells.append(
+                NotebookCell(
+                    index=i,
+                    cell_type=CellType(cell_data.get("cell_type", "code")),
+                    source=source,
+                    execution_count=cell_data.get("execution_count"),
+                    outputs=cell_data.get("outputs", []),
+                    metadata=cell_data.get("metadata", {}),
+                )
+            )
 
         return nb
 
@@ -165,12 +170,14 @@ class NotebookHandler:
         for cell in code_cells:
             if cell.execution_count is not None:
                 if cell.execution_count < prev_count:
-                    issues.append(NotebookIssue(
-                        issue_type=NotebookIssueType.OUT_OF_ORDER,
-                        cell_index=cell.index,
-                        message=f"Cell {cell.index} executed out of order (count={cell.execution_count}, previous={prev_count})",
-                        suggestion="Re-run all cells in order with 'Restart & Run All'",
-                    ))
+                    issues.append(
+                        NotebookIssue(
+                            issue_type=NotebookIssueType.OUT_OF_ORDER,
+                            cell_index=cell.index,
+                            message=f"Cell {cell.index} executed out of order (count={cell.execution_count}, previous={prev_count})",
+                            suggestion="Re-run all cells in order with 'Restart & Run All'",
+                        )
+                    )
                 prev_count = cell.execution_count
 
         return issues
@@ -190,7 +197,9 @@ class NotebookHandler:
         ]
 
     @staticmethod
-    def _check_long_cells(nb: ParsedNotebook, max_lines: int = 50) -> list[NotebookIssue]:
+    def _check_long_cells(
+        nb: ParsedNotebook, max_lines: int = 50
+    ) -> list[NotebookIssue]:
         return [
             NotebookIssue(
                 issue_type=NotebookIssueType.LONG_CELL,
@@ -205,11 +214,13 @@ class NotebookHandler:
     @staticmethod
     def _check_documentation(nb: ParsedNotebook) -> list[NotebookIssue]:
         if not nb.markdown_cells and len(nb.code_cells) > 3:
-            return [NotebookIssue(
-                issue_type=NotebookIssueType.NO_MARKDOWN,
-                cell_index=0,
-                message="Notebook has no markdown cells — consider adding documentation",
-                severity="info",
-                suggestion="Add markdown cells to explain the notebook's purpose and key steps",
-            )]
+            return [
+                NotebookIssue(
+                    issue_type=NotebookIssueType.NO_MARKDOWN,
+                    cell_index=0,
+                    message="Notebook has no markdown cells — consider adding documentation",
+                    severity="info",
+                    suggestion="Add markdown cells to explain the notebook's purpose and key steps",
+                )
+            ]
         return []

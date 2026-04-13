@@ -1,0 +1,12 @@
+{
+	"noDataAvailable": "Aucune donnée de plan de release disponible",
+	"title": "Train de Release",
+	"services": "services",
+	"status": "Statut",
+	"shipIt": "Lancer 🚀",
+	"gates": "Portes",
+	"plannedActions": "Actions Planifiées",
+	"summary": "Résumé",
+	"bumpType": "Type de Bump",
+	"changelogEntries": "entrées de changelog"
+}

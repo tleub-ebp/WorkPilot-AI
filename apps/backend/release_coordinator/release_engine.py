@@ -114,7 +114,11 @@ class ReleaseTrainPlan:
 
     @property
     def summary(self) -> str:
-        service_parts = [f"{s.name}: {s.current_version} → {s.next_version}" for s in self.services if s.bump_type != BumpType.NONE]
+        service_parts = [
+            f"{s.name}: {s.current_version} → {s.next_version}"
+            for s in self.services
+            if s.bump_type != BumpType.NONE
+        ]
         return ", ".join(service_parts) or "No version changes"
 
 
@@ -137,7 +141,9 @@ class ReleaseEngine:
 
     def determine_bump(self, commits: list[str]) -> BumpType:
         """Determine version bump from conventional commit messages."""
-        has_breaking = any("!" in c.split(":")[0] or "BREAKING CHANGE" in c for c in commits)
+        has_breaking = any(
+            "!" in c.split(":")[0] or "BREAKING CHANGE" in c for c in commits
+        )
         has_feat = any(c.startswith("feat") for c in commits)
         has_fix = any(c.startswith("fix") for c in commits)
 
@@ -173,14 +179,21 @@ class ReleaseEngine:
             services=services,
         )
 
-        gate_names = default_gates or ["ci_pass", "qa_review", "security_scan", "staging_deploy"]
+        gate_names = default_gates or [
+            "ci_pass",
+            "qa_review",
+            "security_scan",
+            "staging_deploy",
+        ]
         plan.gates = [GateCheck(name=g) for g in gate_names]
 
         # Topological order by dependencies
         plan.services = self._order_by_deps(services)
         return plan
 
-    def run_gate(self, plan: ReleaseTrainPlan, gate_name: str, passed: bool, message: str = "") -> None:
+    def run_gate(
+        self, plan: ReleaseTrainPlan, gate_name: str, passed: bool, message: str = ""
+    ) -> None:
         """Update a gate check result."""
         for gate in plan.gates:
             if gate.name == gate_name:

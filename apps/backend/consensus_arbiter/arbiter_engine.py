@@ -128,11 +128,13 @@ class ArbiterEngine:
             # Simple conflict detection: different recommendations on the same file
             recs = {op.recommendation for op in ops}
             if len(recs) > 1:
-                conflicts.append(Conflict(
-                    topic=f"Conflicting recommendations for {file_path}",
-                    opinions=ops,
-                    severity=self._assess_severity(ops),
-                ))
+                conflicts.append(
+                    Conflict(
+                        topic=f"Conflicting recommendations for {file_path}",
+                        opinions=ops,
+                        severity=self._assess_severity(ops),
+                    )
+                )
 
         return conflicts
 

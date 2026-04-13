@@ -1,0 +1,11 @@
+{
+	"noDataAvailable": "Aucune donnée de rapport carbone disponible",
+	"title": "Profilage Carbone / Énergie",
+	"totalEnergy": "Énergie Totale",
+	"co2Emissions": "Émissions CO₂",
+	"records": "Enregistrements",
+	"co2ByProvider": "CO₂ par Fournisseur (g)",
+	"co2ByModel": "CO₂ par Modèle (g)",
+	"recentRecords": "Enregistrements Récents",
+	"summary": "Résumé"
+}

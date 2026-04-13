@@ -1,0 +1,13 @@
+{
+	"noDataAvailable": "Aucune donnée de consensus disponible",
+	"title": "Arbitre de Consensus",
+	"consensusScore": "Score de Consensus",
+	"disagreements": "Désaccords",
+	"agreements": "Accords",
+	"escalated": "escaladé",
+	"allConflictsResolved": "Tous les conflits résolus",
+	"conflictsRequireHumanDecision": "conflit(s) nécessitent une décision humaine",
+	"resolved": "Résolu",
+	"pending": "En attente",
+	"summary": "Résumé"
+}

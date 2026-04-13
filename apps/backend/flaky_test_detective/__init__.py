@@ -14,4 +14,11 @@ from .flaky_analyzer import (
     TestRun,
 )
 
-__all__ = ["FlakyAnalyzer", "FlakyReport", "FlakyTest", "FlakyCause", "FlakyConfidence", "TestRun"]
+__all__ = [
+    "FlakyAnalyzer",
+    "FlakyReport",
+    "FlakyTest",
+    "FlakyCause",
+    "FlakyConfidence",
+    "TestRun",
+]

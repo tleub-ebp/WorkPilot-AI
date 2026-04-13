@@ -19,8 +19,8 @@ from dataclasses import dataclass, field
 from enum import Enum
 from typing import Any
 
-from .injection_classifier import ClassificationResult, InjectionClassifier
-from .injection_patterns import max_severity, scan_text
+from .injection_classifier import InjectionClassifier
+from .injection_patterns import scan_text
 
 logger = logging.getLogger(__name__)
 
@@ -111,23 +111,27 @@ class InjectionScanner:
         for text in texts_to_scan:
             regex_hits = scan_text(text)
             for hit in regex_hits:
-                all_findings.append(ScanFinding(
-                    layer="regex",
-                    description=hit["description"],
-                    severity=hit["severity"],
-                ))
+                all_findings.append(
+                    ScanFinding(
+                        layer="regex",
+                        description=hit["description"],
+                        severity=hit["severity"],
+                    )
+                )
 
         # Layer 2: ML classifier
         for text in texts_to_scan:
             clf_result = self._classifier.classify(text)
             if clf_result.is_injection:
                 severity = "high" if clf_result.confidence > 0.7 else "medium"
-                all_findings.append(ScanFinding(
-                    layer="classifier",
-                    description=f"ML classifier: {clf_result.label} (confidence={clf_result.confidence:.2f})",
-                    severity=severity,
-                    confidence=clf_result.confidence,
-                ))
+                all_findings.append(
+                    ScanFinding(
+                        layer="classifier",
+                        description=f"ML classifier: {clf_result.label} (confidence={clf_result.confidence:.2f})",
+                        severity=severity,
+                        confidence=clf_result.confidence,
+                    )
+                )
 
         # Determine threat level
         threat_level = self._determine_threat_level(all_findings)
@@ -140,9 +144,7 @@ class InjectionScanner:
             decoded_content=decoded,
         )
 
-    def scan_tool_result(
-        self, tool_name: str, result: Any
-    ) -> ScanResult:
+    def scan_tool_result(self, tool_name: str, result: Any) -> ScanResult:
         """Scan a tool call result for injection attempts."""
         text = str(result) if not isinstance(result, str) else result
         return self.scan(text, source=tool_name)
@@ -155,9 +157,7 @@ class InjectionScanner:
         block_level = severity_order.get(self._block_threshold, 3)
         suspect_level = severity_order.get(self._suspect_threshold, 2)
 
-        highest = max(
-            severity_order.get(f.severity, 0) for f in findings
-        )
+        highest = max(severity_order.get(f.severity, 0) for f in findings)
 
         if highest >= block_level:
             return ThreatLevel.BLOCKED
@@ -170,12 +170,14 @@ class InjectionScanner:
 # Decoding helpers
 # ------------------------------------------------------------------
 
+
 def _decode_obfuscated(text: str) -> str:
     """Attempt to decode base64, URL-encoded, and HTML-encoded content."""
     decoded_parts: list[str] = [text]
 
     # Try base64 segments
     import re
+
     b64_pattern = re.compile(r"[A-Za-z0-9+/]{20,}={0,2}")
     for match in b64_pattern.finditer(text):
         try:

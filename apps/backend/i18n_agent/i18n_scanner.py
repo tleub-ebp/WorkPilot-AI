@@ -7,12 +7,10 @@ locale files, and format/pluralisation problems.
 
 from __future__ import annotations
 
-import json
 import logging
 import re
 from dataclasses import dataclass, field
 from enum import Enum
-from pathlib import Path
 from typing import Any
 
 logger = logging.getLogger(__name__)
@@ -74,7 +72,9 @@ _HARDCODED_PATTERNS = [
     # JSX/TSX: <Tag>Hardcoded text</Tag>
     re.compile(r">\s*([A-Z][a-z][^<>{}\n]{3,50})\s*<", re.MULTILINE),
     # Python: displayed strings in common functions
-    re.compile(r'(?:flash|message|title|label|placeholder|error)\s*[=(]\s*["\']([A-Z][^"\']{3,60})["\']'),
+    re.compile(
+        r'(?:flash|message|title|label|placeholder|error)\s*[=(]\s*["\']([A-Z][^"\']{3,60})["\']'
+    ),
 ]
 
 
@@ -100,14 +100,16 @@ class I18nScanner:
                 for match in pattern.finditer(line):
                     text = match.group(1).strip()
                     if len(text) > 3 and not _is_likely_code(text):
-                        issues.append(I18nIssue(
-                            issue_type=I18nIssueType.HARDCODED_STRING,
-                            severity=I18nSeverity.WARNING,
-                            file=file_path,
-                            line=i,
-                            message=f"Hardcoded string: \"{text[:50]}\"",
-                            suggestion="Extract to translation key",
-                        ))
+                        issues.append(
+                            I18nIssue(
+                                issue_type=I18nIssueType.HARDCODED_STRING,
+                                severity=I18nSeverity.WARNING,
+                                file=file_path,
+                                line=i,
+                                message=f'Hardcoded string: "{text[:50]}"',
+                                suggestion="Extract to translation key",
+                            )
+                        )
         return issues
 
     def compare_locale_files(
@@ -120,26 +122,30 @@ class I18nScanner:
 
         for key in ref_keys:
             if key not in target_keys:
-                issues.append(I18nIssue(
-                    issue_type=I18nIssueType.MISSING_KEY,
-                    severity=I18nSeverity.ERROR,
-                    file=f"locale/{target_locale}.json",
-                    key=key,
-                    locale=target_locale,
-                    message=f"Key '{key}' missing in {target_locale}",
-                    suggestion=f"Add translation for '{key}' in {target_locale}",
-                ))
+                issues.append(
+                    I18nIssue(
+                        issue_type=I18nIssueType.MISSING_KEY,
+                        severity=I18nSeverity.ERROR,
+                        file=f"locale/{target_locale}.json",
+                        key=key,
+                        locale=target_locale,
+                        message=f"Key '{key}' missing in {target_locale}",
+                        suggestion=f"Add translation for '{key}' in {target_locale}",
+                    )
+                )
 
         for key in target_keys:
             if key not in ref_keys:
-                issues.append(I18nIssue(
-                    issue_type=I18nIssueType.UNUSED_KEY,
-                    severity=I18nSeverity.INFO,
-                    file=f"locale/{target_locale}.json",
-                    key=key,
-                    locale=target_locale,
-                    message=f"Key '{key}' in {target_locale} not in reference locale",
-                ))
+                issues.append(
+                    I18nIssue(
+                        issue_type=I18nIssueType.UNUSED_KEY,
+                        severity=I18nSeverity.INFO,
+                        file=f"locale/{target_locale}.json",
+                        key=key,
+                        locale=target_locale,
+                        message=f"Key '{key}' in {target_locale} not in reference locale",
+                    )
+                )
 
         return issues
 
@@ -173,5 +179,17 @@ def _flatten_keys(data: dict[str, Any], prefix: str = "") -> set[str]:
 
 def _is_likely_code(text: str) -> bool:
     """Heuristic: is this string likely code rather than user-facing text?"""
-    code_indicators = ["()", "=>", "->", "==", "!=", "{}", "[]", "//", "/*", "import ", "from "]
+    code_indicators = [
+        "()",
+        "=>",
+        "->",
+        "==",
+        "!=",
+        "{}",
+        "[]",
+        "//",
+        "/*",
+        "import ",
+        "from ",
+    ]
     return any(ind in text for ind in code_indicators)

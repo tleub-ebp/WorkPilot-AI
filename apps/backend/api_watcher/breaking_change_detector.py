@@ -97,7 +97,9 @@ class BreakingChangeDetector:
             1 for c in result.changes if c.category == ChangeCategory.BREAKING
         )
         result.potentially_breaking_count = sum(
-            1 for c in result.changes if c.category == ChangeCategory.POTENTIALLY_BREAKING
+            1
+            for c in result.changes
+            if c.category == ChangeCategory.POTENTIALLY_BREAKING
         )
         result.non_breaking_count = sum(
             1 for c in result.changes if c.category == ChangeCategory.NON_BREAKING
@@ -114,22 +116,26 @@ class BreakingChangeDetector:
         # Removed endpoints
         for key in old_eps:
             if key not in new_eps:
-                result.changes.append(ContractChange(
-                    change_type=ChangeType.ENDPOINT_REMOVED,
-                    category=ChangeCategory.BREAKING,
-                    path=key,
-                    description=f"Endpoint {key} was removed",
-                ))
+                result.changes.append(
+                    ContractChange(
+                        change_type=ChangeType.ENDPOINT_REMOVED,
+                        category=ChangeCategory.BREAKING,
+                        path=key,
+                        description=f"Endpoint {key} was removed",
+                    )
+                )
 
         # Added endpoints
         for key in new_eps:
             if key not in old_eps:
-                result.changes.append(ContractChange(
-                    change_type=ChangeType.ENDPOINT_ADDED,
-                    category=ChangeCategory.NON_BREAKING,
-                    path=key,
-                    description=f"Endpoint {key} was added",
-                ))
+                result.changes.append(
+                    ContractChange(
+                        change_type=ChangeType.ENDPOINT_ADDED,
+                        category=ChangeCategory.NON_BREAKING,
+                        path=key,
+                        description=f"Endpoint {key} was added",
+                    )
+                )
 
         # Modified endpoints
         for key in old_eps:
@@ -144,45 +150,53 @@ class BreakingChangeDetector:
         result: ContractDiff,
     ) -> None:
         if not old_ep.deprecated and new_ep.deprecated:
-            result.changes.append(ContractChange(
-                change_type=ChangeType.ENDPOINT_DEPRECATED,
-                category=ChangeCategory.POTENTIALLY_BREAKING,
-                path=path,
-                description=f"Endpoint {path} was deprecated",
-            ))
+            result.changes.append(
+                ContractChange(
+                    change_type=ChangeType.ENDPOINT_DEPRECATED,
+                    category=ChangeCategory.POTENTIALLY_BREAKING,
+                    path=path,
+                    description=f"Endpoint {path} was deprecated",
+                )
+            )
 
         old_params = {p.name: p for p in old_ep.parameters}
         new_params = {p.name: p for p in new_ep.parameters}
 
         for name in new_params:
             if name not in old_params and new_params[name].required:
-                result.changes.append(ContractChange(
-                    change_type=ChangeType.PARAMETER_ADDED_REQUIRED,
-                    category=ChangeCategory.BREAKING,
-                    path=f"{path}.params.{name}",
-                    description=f"Required parameter '{name}' was added to {path}",
-                ))
+                result.changes.append(
+                    ContractChange(
+                        change_type=ChangeType.PARAMETER_ADDED_REQUIRED,
+                        category=ChangeCategory.BREAKING,
+                        path=f"{path}.params.{name}",
+                        description=f"Required parameter '{name}' was added to {path}",
+                    )
+                )
 
         for name in old_params:
             if name not in new_params:
-                result.changes.append(ContractChange(
-                    change_type=ChangeType.PARAMETER_REMOVED,
-                    category=ChangeCategory.BREAKING,
-                    path=f"{path}.params.{name}",
-                    description=f"Parameter '{name}' was removed from {path}",
-                ))
+                result.changes.append(
+                    ContractChange(
+                        change_type=ChangeType.PARAMETER_REMOVED,
+                        category=ChangeCategory.BREAKING,
+                        path=f"{path}.params.{name}",
+                        description=f"Parameter '{name}' was removed from {path}",
+                    )
+                )
 
     def _diff_types(
         self, old: ApiContract, new: ApiContract, result: ContractDiff
     ) -> None:
         for type_name in old.types:
             if type_name not in new.types:
-                result.changes.append(ContractChange(
-                    change_type=ChangeType.TYPE_REMOVED,
-                    category=ChangeCategory.BREAKING,
-                    path=type_name,
-                    description=f"Type '{type_name}' was removed",
-                ))
+                result.changes.append(
+                    ContractChange(
+                        change_type=ChangeType.TYPE_REMOVED,
+                        category=ChangeCategory.BREAKING,
+                        path=type_name,
+                        description=f"Type '{type_name}' was removed",
+                    )
+                )
             else:
                 self._diff_fields(
                     old.types[type_name],
@@ -193,12 +207,14 @@ class BreakingChangeDetector:
 
         for type_name in new.types:
             if type_name not in old.types:
-                result.changes.append(ContractChange(
-                    change_type=ChangeType.TYPE_ADDED,
-                    category=ChangeCategory.NON_BREAKING,
-                    path=type_name,
-                    description=f"Type '{type_name}' was added",
-                ))
+                result.changes.append(
+                    ContractChange(
+                        change_type=ChangeType.TYPE_ADDED,
+                        category=ChangeCategory.NON_BREAKING,
+                        path=type_name,
+                        description=f"Type '{type_name}' was added",
+                    )
+                )
 
     def _diff_fields(
         self,
@@ -212,36 +228,44 @@ class BreakingChangeDetector:
 
         for name in old_map:
             if name not in new_map:
-                result.changes.append(ContractChange(
-                    change_type=ChangeType.FIELD_REMOVED,
-                    category=ChangeCategory.BREAKING,
-                    path=f"{parent}.{name}",
-                    description=f"Field '{name}' was removed from {parent}",
-                ))
+                result.changes.append(
+                    ContractChange(
+                        change_type=ChangeType.FIELD_REMOVED,
+                        category=ChangeCategory.BREAKING,
+                        path=f"{parent}.{name}",
+                        description=f"Field '{name}' was removed from {parent}",
+                    )
+                )
             else:
                 old_f, new_f = old_map[name], new_map[name]
                 if old_f.type != new_f.type:
-                    result.changes.append(ContractChange(
-                        change_type=ChangeType.FIELD_TYPE_CHANGED,
-                        category=ChangeCategory.BREAKING,
-                        path=f"{parent}.{name}",
-                        description=f"Field '{name}' type changed from '{old_f.type}' to '{new_f.type}'",
-                        old_value=old_f.type,
-                        new_value=new_f.type,
-                    ))
+                    result.changes.append(
+                        ContractChange(
+                            change_type=ChangeType.FIELD_TYPE_CHANGED,
+                            category=ChangeCategory.BREAKING,
+                            path=f"{parent}.{name}",
+                            description=f"Field '{name}' type changed from '{old_f.type}' to '{new_f.type}'",
+                            old_value=old_f.type,
+                            new_value=new_f.type,
+                        )
+                    )
                 if not old_f.required and new_f.required:
-                    result.changes.append(ContractChange(
-                        change_type=ChangeType.FIELD_REQUIRED_ADDED,
-                        category=ChangeCategory.BREAKING,
-                        path=f"{parent}.{name}",
-                        description=f"Field '{name}' in {parent} became required",
-                    ))
+                    result.changes.append(
+                        ContractChange(
+                            change_type=ChangeType.FIELD_REQUIRED_ADDED,
+                            category=ChangeCategory.BREAKING,
+                            path=f"{parent}.{name}",
+                            description=f"Field '{name}' in {parent} became required",
+                        )
+                    )
 
         for name in new_map:
             if name not in old_map:
-                result.changes.append(ContractChange(
-                    change_type=ChangeType.FIELD_ADDED,
-                    category=ChangeCategory.NON_BREAKING,
-                    path=f"{parent}.{name}",
-                    description=f"Field '{name}' was added to {parent}",
-                ))
+                result.changes.append(
+                    ContractChange(
+                        change_type=ChangeType.FIELD_ADDED,
+                        category=ChangeCategory.NON_BREAKING,
+                        path=f"{parent}.{name}",
+                        description=f"Field '{name}' was added to {parent}",
+                    )
+                )

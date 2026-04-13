@@ -53,7 +53,9 @@ class DedupChecker:
         exc_type = incident.exception_type or ""
 
         if not target_func and not exc_type:
-            return DedupResult(is_duplicate=False, recommendation="No target to deduplicate against")
+            return DedupResult(
+                is_duplicate=False, recommendation="No target to deduplicate against"
+            )
 
         best_score = 0.0
         best_path = ""

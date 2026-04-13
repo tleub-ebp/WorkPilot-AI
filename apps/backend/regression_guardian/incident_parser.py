@@ -131,13 +131,15 @@ class IncidentParser:
         frames = []
         stacktrace = first_exc.get("stacktrace", {})
         for f in stacktrace.get("frames", []):
-            frames.append(StackFrame(
-                file=f.get("filename", ""),
-                function=f.get("function", ""),
-                line=f.get("lineno", 0),
-                column=f.get("colno", 0),
-                context=f.get("context_line", ""),
-            ))
+            frames.append(
+                StackFrame(
+                    file=f.get("filename", ""),
+                    function=f.get("function", ""),
+                    line=f.get("lineno", 0),
+                    column=f.get("colno", 0),
+                    context=f.get("context_line", ""),
+                )
+            )
         frames.reverse()
 
         return Incident(
@@ -193,7 +195,9 @@ class IncidentParser:
             title=payload.get("condition_name", "New Relic alert"),
             severity=IncidentSeverity.ERROR,
             exception_message=payload.get("details", ""),
-            service=payload.get("targets", [{}])[0].get("name", "") if payload.get("targets") else "",
+            service=payload.get("targets", [{}])[0].get("name", "")
+            if payload.get("targets")
+            else "",
             raw_payload=payload,
         )
 
@@ -201,8 +205,12 @@ class IncidentParser:
         return Incident(
             id=payload.get("AlarmName", "unknown"),
             source=IncidentSource.CLOUDWATCH,
-            title=payload.get("AlarmDescription", payload.get("AlarmName", "CloudWatch alarm")),
-            severity=IncidentSeverity.ERROR if payload.get("NewStateValue") == "ALARM" else IncidentSeverity.WARNING,
+            title=payload.get(
+                "AlarmDescription", payload.get("AlarmName", "CloudWatch alarm")
+            ),
+            severity=IncidentSeverity.ERROR
+            if payload.get("NewStateValue") == "ALARM"
+            else IncidentSeverity.WARNING,
             exception_message=payload.get("NewStateReason", ""),
             raw_payload=payload,
         )
@@ -213,7 +221,9 @@ class IncidentParser:
         return Incident(
             id=str(first.get("fingerprint", "unknown")),
             source=IncidentSource.GRAFANA,
-            title=payload.get("title", first.get("labels", {}).get("alertname", "Grafana alert")),
+            title=payload.get(
+                "title", first.get("labels", {}).get("alertname", "Grafana alert")
+            ),
             severity=IncidentSeverity.ERROR,
             exception_message=str(first.get("annotations", {}).get("description", "")),
             tags=first.get("labels", {}),
@@ -228,7 +238,9 @@ class IncidentParser:
             title=alert.get("message", "OpsGenie alert"),
             severity=self._map_opsgenie_priority(alert.get("priority", "P3")),
             exception_message=alert.get("description", ""),
-            tags=dict(alert.get("tags", [])) if isinstance(alert.get("tags"), list) else {},
+            tags=dict(alert.get("tags", []))
+            if isinstance(alert.get("tags"), list)
+            else {},
             raw_payload=payload,
         )
 
@@ -247,26 +259,49 @@ class IncidentParser:
 
     @staticmethod
     def _map_sentry_level(level: str) -> IncidentSeverity:
-        return {"fatal": IncidentSeverity.CRITICAL, "error": IncidentSeverity.ERROR,
-                "warning": IncidentSeverity.WARNING, "info": IncidentSeverity.INFO}.get(level, IncidentSeverity.ERROR)
+        return {
+            "fatal": IncidentSeverity.CRITICAL,
+            "error": IncidentSeverity.ERROR,
+            "warning": IncidentSeverity.WARNING,
+            "info": IncidentSeverity.INFO,
+        }.get(level, IncidentSeverity.ERROR)
 
     @staticmethod
     def _map_datadog_priority(pri: str) -> IncidentSeverity:
-        return {"low": IncidentSeverity.INFO, "normal": IncidentSeverity.WARNING,
-                "high": IncidentSeverity.ERROR, "critical": IncidentSeverity.CRITICAL}.get(pri, IncidentSeverity.ERROR)
+        return {
+            "low": IncidentSeverity.INFO,
+            "normal": IncidentSeverity.WARNING,
+            "high": IncidentSeverity.ERROR,
+            "critical": IncidentSeverity.CRITICAL,
+        }.get(pri, IncidentSeverity.ERROR)
 
     @staticmethod
     def _map_pd_urgency(urgency: str) -> IncidentSeverity:
-        return {"low": IncidentSeverity.WARNING, "high": IncidentSeverity.CRITICAL}.get(urgency, IncidentSeverity.ERROR)
+        return {"low": IncidentSeverity.WARNING, "high": IncidentSeverity.CRITICAL}.get(
+            urgency, IncidentSeverity.ERROR
+        )
 
     @staticmethod
     def _map_opsgenie_priority(pri: str) -> IncidentSeverity:
-        return {"P1": IncidentSeverity.CRITICAL, "P2": IncidentSeverity.ERROR,
-                "P3": IncidentSeverity.WARNING, "P4": IncidentSeverity.INFO, "P5": IncidentSeverity.INFO}.get(pri, IncidentSeverity.WARNING)
+        return {
+            "P1": IncidentSeverity.CRITICAL,
+            "P2": IncidentSeverity.ERROR,
+            "P3": IncidentSeverity.WARNING,
+            "P4": IncidentSeverity.INFO,
+            "P5": IncidentSeverity.INFO,
+        }.get(pri, IncidentSeverity.WARNING)
 
 
 def _is_library_frame(filepath: str) -> bool:
-    lib_markers = ["node_modules", "site-packages", "vendor", ".venv", "venv", "/lib/", "/dist/"]
+    lib_markers = [
+        "node_modules",
+        "site-packages",
+        "vendor",
+        ".venv",
+        "venv",
+        "/lib/",
+        "/dist/",
+    ]
     return any(m in filepath for m in lib_markers)
 
 
@@ -275,10 +310,12 @@ def _parse_stack_trace_text(text: str) -> list[StackFrame]:
     frames: list[StackFrame] = []
     pattern = re.compile(r'File "([^"]+)", line (\d+)(?:, in (\w+))?')
     for match in pattern.finditer(text):
-        frames.append(StackFrame(
-            file=match.group(1),
-            line=int(match.group(2)),
-            function=match.group(3) or "",
-        ))
+        frames.append(
+            StackFrame(
+                file=match.group(1),
+                line=int(match.group(2)),
+                function=match.group(3) or "",
+            )
+        )
     frames.reverse()
     return frames

@@ -70,7 +70,9 @@ class A11yReport:
 
 
 # Rule definitions: (regex, rule_id, description, severity, wcag_level, wcag_criteria, suggestion)
-_HTML_RULES: list[tuple[re.Pattern[str], str, str, A11ySeverity, WcagLevel, str, str]] = [
+_HTML_RULES: list[
+    tuple[re.Pattern[str], str, str, A11ySeverity, WcagLevel, str, str]
+] = [
     (
         re.compile(r"<img\b(?![^>]*\balt\s*=)", re.IGNORECASE),
         "img-alt",
@@ -78,10 +80,13 @@ _HTML_RULES: list[tuple[re.Pattern[str], str, str, A11ySeverity, WcagLevel, str,
         A11ySeverity.CRITICAL,
         WcagLevel.A,
         "1.1.1",
-        "Add alt attribute: alt=\"descriptive text\" or alt=\"\" for decorative images",
+        'Add alt attribute: alt="descriptive text" or alt="" for decorative images',
     ),
     (
-        re.compile(r"<input\b(?![^>]*\b(?:aria-label|aria-labelledby|id\s*=\s*[\"'][^\"']+[\"'])\b)(?![^>]*\btype\s*=\s*[\"']hidden[\"'])", re.IGNORECASE),
+        re.compile(
+            r"<input\b(?![^>]*\b(?:aria-label|aria-labelledby|id\s*=\s*[\"'][^\"']+[\"'])\b)(?![^>]*\btype\s*=\s*[\"']hidden[\"'])",
+            re.IGNORECASE,
+        ),
         "input-label",
         "Form input missing accessible label",
         A11ySeverity.SERIOUS,
@@ -96,7 +101,7 @@ _HTML_RULES: list[tuple[re.Pattern[str], str, str, A11ySeverity, WcagLevel, str,
         A11ySeverity.SERIOUS,
         WcagLevel.A,
         "2.1.1",
-        "Use <button> or <a> instead, or add onKeyDown/onKeyPress handler and role=\"button\"",
+        'Use <button> or <a> instead, or add onKeyDown/onKeyPress handler and role="button"',
     ),
     (
         re.compile(r"<html\b(?![^>]*\blang\s*=)", re.IGNORECASE),
@@ -105,7 +110,7 @@ _HTML_RULES: list[tuple[re.Pattern[str], str, str, A11ySeverity, WcagLevel, str,
         A11ySeverity.SERIOUS,
         WcagLevel.A,
         "3.1.1",
-        "Add lang attribute: <html lang=\"en\">",
+        'Add lang attribute: <html lang="en">',
     ),
     (
         re.compile(r"tabindex\s*=\s*[\"']([2-9]|\d{2,})[\"']", re.IGNORECASE),
@@ -114,21 +119,23 @@ _HTML_RULES: list[tuple[re.Pattern[str], str, str, A11ySeverity, WcagLevel, str,
         A11ySeverity.MODERATE,
         WcagLevel.A,
         "2.4.3",
-        "Use tabindex=\"0\" or tabindex=\"-1\" instead of positive values",
+        'Use tabindex="0" or tabindex="-1" instead of positive values',
     ),
     (
         re.compile(r"<a\b[^>]*href\s*=\s*[\"']#[\"'][^>]*>", re.IGNORECASE),
         "anchor-is-valid",
-        "Anchor with href=\"#\" — not a valid link",
+        'Anchor with href="#" — not a valid link',
         A11ySeverity.MODERATE,
         WcagLevel.A,
         "2.1.1",
         "Use <button> for interactive elements or provide a valid href",
     ),
     (
-        re.compile(r"aria-hidden\s*=\s*[\"']true[\"'][^>]*\bfocusable\b", re.IGNORECASE),
+        re.compile(
+            r"aria-hidden\s*=\s*[\"']true[\"'][^>]*\bfocusable\b", re.IGNORECASE
+        ),
         "aria-hidden-focusable",
-        "Element with aria-hidden=\"true\" is also focusable",
+        'Element with aria-hidden="true" is also focusable',
         A11ySeverity.SERIOUS,
         WcagLevel.A,
         "4.1.2",
@@ -141,7 +148,7 @@ _HTML_RULES: list[tuple[re.Pattern[str], str, str, A11ySeverity, WcagLevel, str,
         A11ySeverity.CRITICAL,
         WcagLevel.A,
         "1.2.2",
-        "Add <track kind=\"captions\" src=\"...\" srclang=\"en\">",
+        'Add <track kind="captions" src="..." srclang="en">',
     ),
 ]
 
@@ -163,20 +170,30 @@ class AccessibilityScanner:
         report = A11yReport(files_scanned=1, target_level=self._target_level)
         lines = content.splitlines()
 
-        for rule_pattern, rule_id, desc, sev, level, criteria, suggestion in _HTML_RULES:
+        for (
+            rule_pattern,
+            rule_id,
+            desc,
+            sev,
+            level,
+            criteria,
+            suggestion,
+        ) in _HTML_RULES:
             for i, line in enumerate(lines, 1):
                 if rule_pattern.search(line):
-                    report.violations.append(A11yViolation(
-                        rule_id=rule_id,
-                        description=desc,
-                        severity=sev,
-                        wcag_level=level,
-                        wcag_criteria=criteria,
-                        file=file_path,
-                        line=i,
-                        element=line.strip()[:120],
-                        suggestion=suggestion,
-                    ))
+                    report.violations.append(
+                        A11yViolation(
+                            rule_id=rule_id,
+                            description=desc,
+                            severity=sev,
+                            wcag_level=level,
+                            wcag_criteria=criteria,
+                            file=file_path,
+                            line=i,
+                            element=line.strip()[:120],
+                            suggestion=suggestion,
+                        )
+                    )
 
         return report
 

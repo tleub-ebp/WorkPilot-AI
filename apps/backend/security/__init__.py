@@ -204,6 +204,16 @@ __all__ = [
 ]
 
 # Prompt Injection Guard imports
-from .injection_scanner import InjectionScanner, ScanResult as InjectionScanResult, ThreatLevel, ScanFinding  # noqa: E402
-from .injection_classifier import InjectionClassifier, ClassificationResult  # noqa: E402
 from . import injection_patterns  # noqa: E402
+from .injection_classifier import (  # noqa: E402
+    ClassificationResult,
+    InjectionClassifier,
+)
+from .injection_scanner import (
+    InjectionScanner,
+    ScanFinding,
+    ThreatLevel,
+)  # noqa: E402
+from .injection_scanner import (
+    ScanResult as InjectionScanResult,
+)

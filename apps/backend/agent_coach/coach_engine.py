@@ -129,7 +129,9 @@ class CoachEngine:
             if not r.success:
                 agent_failures[r.agent_name] = agent_failures.get(r.agent_name, 0) + 1
         if agent_failures:
-            report.most_failing_agent = max(agent_failures, key=lambda k: agent_failures[k])
+            report.most_failing_agent = max(
+                agent_failures, key=lambda k: agent_failures[k]
+            )
 
         # Generate tips
         report.tips = self._generate_tips(report)
@@ -140,58 +142,68 @@ class CoachEngine:
 
         # High failure rate
         if report.success_rate < 0.8:
-            tips.append(CoachTip(
-                category=TipCategory.ERROR_PREVENTION,
-                priority=TipPriority.HIGH,
-                title="High failure rate detected",
-                description=f"Success rate is {report.success_rate:.0%} — below the 80% threshold.",
-                evidence=f"Most failing agent: {report.most_failing_agent}",
-                action="Review error logs for the failing agent. Consider adding retry logic or simplifying the task.",
-            ))
+            tips.append(
+                CoachTip(
+                    category=TipCategory.ERROR_PREVENTION,
+                    priority=TipPriority.HIGH,
+                    title="High failure rate detected",
+                    description=f"Success rate is {report.success_rate:.0%} — below the 80% threshold.",
+                    evidence=f"Most failing agent: {report.most_failing_agent}",
+                    action="Review error logs for the failing agent. Consider adding retry logic or simplifying the task.",
+                )
+            )
 
         # Cost analysis
         expensive_runs = [r for r in self._runs if r.cost_usd > report.avg_cost_usd * 3]
         if expensive_runs:
-            tips.append(CoachTip(
-                category=TipCategory.COST_OPTIMISATION,
-                priority=TipPriority.MEDIUM,
-                title="Cost outliers detected",
-                description=f"{len(expensive_runs)} runs cost 3x+ the average (${report.avg_cost_usd:.4f}).",
-                evidence=f"Most expensive: {max(expensive_runs, key=lambda r: r.cost_usd).agent_name}",
-                action="Consider using a smaller model for simpler tasks. Use Haiku/GPT-4o-mini for routine work.",
-            ))
+            tips.append(
+                CoachTip(
+                    category=TipCategory.COST_OPTIMISATION,
+                    priority=TipPriority.MEDIUM,
+                    title="Cost outliers detected",
+                    description=f"{len(expensive_runs)} runs cost 3x+ the average (${report.avg_cost_usd:.4f}).",
+                    evidence=f"Most expensive: {max(expensive_runs, key=lambda r: r.cost_usd).agent_name}",
+                    action="Consider using a smaller model for simpler tasks. Use Haiku/GPT-4o-mini for routine work.",
+                )
+            )
 
         # Retry storms
         high_retry_runs = [r for r in self._runs if r.retries >= 3]
         if high_retry_runs:
-            tips.append(CoachTip(
-                category=TipCategory.PROMPT_ENGINEERING,
-                priority=TipPriority.HIGH,
-                title="Excessive retries detected",
-                description=f"{len(high_retry_runs)} runs required 3+ retries.",
-                action="Improve prompt clarity. Add examples and constraints. Consider using structured output (JSON mode).",
-            ))
+            tips.append(
+                CoachTip(
+                    category=TipCategory.PROMPT_ENGINEERING,
+                    priority=TipPriority.HIGH,
+                    title="Excessive retries detected",
+                    description=f"{len(high_retry_runs)} runs required 3+ retries.",
+                    action="Improve prompt clarity. Add examples and constraints. Consider using structured output (JSON mode).",
+                )
+            )
 
         # Model diversity
         unique_models = {r.model for r in self._runs if r.model}
         if len(unique_models) == 1:
-            tips.append(CoachTip(
-                category=TipCategory.COST_OPTIMISATION,
-                priority=TipPriority.LOW,
-                title="Single model usage",
-                description=f"All runs use '{report.most_used_model}'. Consider model routing.",
-                action="Use cheaper models (Haiku, Flash) for simple tasks and reserve powerful models for complex ones.",
-            ))
+            tips.append(
+                CoachTip(
+                    category=TipCategory.COST_OPTIMISATION,
+                    priority=TipPriority.LOW,
+                    title="Single model usage",
+                    description=f"All runs use '{report.most_used_model}'. Consider model routing.",
+                    action="Use cheaper models (Haiku, Flash) for simple tasks and reserve powerful models for complex ones.",
+                )
+            )
 
         # Slow runs
         slow_runs = [r for r in self._runs if r.duration_s > 60]
         if len(slow_runs) > len(self._runs) * 0.2:
-            tips.append(CoachTip(
-                category=TipCategory.PERFORMANCE,
-                priority=TipPriority.MEDIUM,
-                title="Many slow agent runs",
-                description=f"{len(slow_runs)} runs took over 60 seconds.",
-                action="Break complex tasks into smaller sub-tasks. Use streaming for long-running operations.",
-            ))
+            tips.append(
+                CoachTip(
+                    category=TipCategory.PERFORMANCE,
+                    priority=TipPriority.MEDIUM,
+                    title="Many slow agent runs",
+                    description=f"{len(slow_runs)} runs took over 60 seconds.",
+                    action="Break complex tasks into smaller sub-tasks. Use streaming for long-running operations.",
+                )
+            )
 
         return tips

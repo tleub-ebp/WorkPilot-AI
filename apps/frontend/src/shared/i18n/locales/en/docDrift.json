@@ -1,0 +1,16 @@
+{
+	"noDataAvailable": "No doc drift report data available",
+	"title": "Documentation Drift Report",
+	"driftDetected": "Drift Detected",
+	"driftCount": "{{count}} drifts detected",
+	"drifts": "Drifts",
+	"file": "File",
+	"section": "Section",
+	"expected": "Expected",
+	"actual": "Actual",
+	"severity": "Severity",
+	"high": "High",
+	"medium": "Medium",
+	"low": "Low",
+	"summary": "Summary"
+}

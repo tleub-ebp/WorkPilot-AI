@@ -1,0 +1,16 @@
+{
+	"noDataAvailable": "Aucune donnée de rapport de drift de documentation disponible",
+	"title": "Rapport de Drift de Documentation",
+	"driftDetected": "Drift Détecté",
+	"driftCount": "{{count}} drifts détectés",
+	"drifts": "Drifts",
+	"file": "Fichier",
+	"section": "Section",
+	"expected": "Attendu",
+	"actual": "Actuel",
+	"severity": "Sévérité",
+	"high": "Élevée",
+	"medium": "Moyenne",
+	"low": "Faible",
+	"summary": "Résumé"
+}

@@ -1,0 +1,12 @@
+{
+	"noDataAvailable": "No git surgeon plan data available",
+	"title": "Git History Surgeon",
+	"issues": "issues",
+	"potentialSavings": "~{{mb}} MB potential savings",
+	"executeSurgery": "Execute Surgery",
+	"forcePushWarning": "⚠️ This plan requires a force push. Coordinate with your team first.",
+	"severity": "Severity",
+	"issueType": "Issue Type",
+	"plannedActions": "Planned Actions",
+	"summary": "Summary"
+}

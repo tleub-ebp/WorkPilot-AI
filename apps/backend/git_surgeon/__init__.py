@@ -13,4 +13,10 @@ from .history_analyzer import (
     SurgeryPlan,
 )
 
-__all__ = ["HistoryAnalyzer", "SurgeryPlan", "HistoryIssue", "HistoryIssueType", "SurgeryAction"]
+__all__ = [
+    "HistoryAnalyzer",
+    "SurgeryPlan",
+    "HistoryIssue",
+    "HistoryIssueType",
+    "SurgeryAction",
+]

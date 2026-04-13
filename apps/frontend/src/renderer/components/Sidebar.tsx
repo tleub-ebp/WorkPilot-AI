@@ -4,17 +4,24 @@
 import type { GitStatus, Project } from "@shared/types";
 // Icons
 import {
+	Accessibility,
+	AlertTriangle,
 	BarChart3,
 	BookOpen,
 	BookOpenCheck,
+	Box,
 	Brain,
 	Building2,
+	Calendar,
+	CheckCircle,
 	ChevronRight,
 	Code,
 	Coins,
 	Database,
 	Download,
 	FileCode2,
+	FileEdit,
+	FileJson,
 	FileText,
 	GitBranch,
 	GitFork,
@@ -26,6 +33,7 @@ import {
 	History,
 	Layers,
 	LayoutGrid,
+	Leaf,
 	Lightbulb,
 	// biome-ignore lint/suspicious/noShadowRestrictedNames: shadow name is intentional
 	Map,
@@ -40,12 +48,15 @@ import {
 	Search,
 	Settings,
 	Shield,
+	ShieldAlert,
+	ShieldCheck,
 	Sparkles,
 	Store,
 	Swords,
 	Target,
 	Terminal,
 	TestTube,
+	UserCheck,
 	Users,
 	Wand2,
 	WandSparkles,
@@ -153,7 +164,24 @@ export type SidebarView =
 	| "pipeline-generator"
 	| "plugin-marketplace"
 	| "arena-mode"
-	| "api-explorer";
+	| "api-explorer"
+	| "sandbox"
+	| "regression-guardian"
+	| "injection-guard"
+	| "api-watcher"
+	| "accessibility-agent"
+	| "i18n-agent"
+	| "onboarding-agent"
+	| "flaky-tests"
+	| "doc-drift"
+	| "compliance"
+	| "git-surgeon"
+	| "release-coordinator"
+	| "carbon-profiler"
+	| "consensus-arbiter"
+	| "notebook-agent"
+	| "spec-refinement"
+	| "agent-coach";
 
 interface SidebarProps {
 	readonly onSettingsClick: () => void;
@@ -247,6 +275,18 @@ const navGroups: NavGroup[] = [
 				icon: Swords,
 				shortcut: "W",
 			},
+			{
+				id: "consensus-arbiter",
+				labelKey: "navigation:items.consensusArbiter",
+				icon: Users,
+				shortcut: "C",
+			},
+			{
+				id: "agent-coach",
+				labelKey: "navigation:items.agentCoach",
+				icon: UserCheck,
+				shortcut: "O",
+			},
 		],
 		defaultExpanded: false,
 	},
@@ -296,6 +336,12 @@ const navGroups: NavGroup[] = [
 				labelKey: "navigation:items.documentation",
 				icon: BookOpenCheck,
 				shortcut: "O",
+			},
+			{
+				id: "flaky-tests",
+				labelKey: "navigation:items.flakyTests",
+				icon: AlertTriangle,
+				shortcut: "F",
 			},
 		],
 		defaultExpanded: false,
@@ -355,6 +401,12 @@ const navGroups: NavGroup[] = [
 				icon: GitMerge,
 				shortcut: "C",
 			},
+			{
+				id: "git-surgeon",
+				labelKey: "navigation:items.gitSurgeon",
+				icon: GitBranch,
+				shortcut: "S",
+			},
 		],
 		defaultExpanded: false,
 	},
@@ -386,6 +438,18 @@ const navGroups: NavGroup[] = [
 				labelKey: "navigation:items.changelog",
 				icon: FileText,
 				shortcut: "L",
+			},
+			{
+				id: "release-coordinator",
+				labelKey: "navigation:items.releaseCoordinator",
+				icon: Calendar,
+				shortcut: "R",
+			},
+			{
+				id: "carbon-profiler",
+				labelKey: "navigation:items.carbonProfiler",
+				icon: Leaf,
+				shortcut: "C",
 			},
 		],
 		defaultExpanded: false,
@@ -444,6 +508,83 @@ const navGroups: NavGroup[] = [
 				labelKey: "navigation:items.dependencySentinel",
 				icon: Shield,
 				shortcut: "D",
+				subGroup: "navigation:subGroups.assistants",
+			},
+			{
+				id: "sandbox",
+				labelKey: "navigation:items.sandbox",
+				icon: Box,
+				shortcut: "B",
+				subGroup: "navigation:subGroups.assistants",
+			},
+			{
+				id: "regression-guardian",
+				labelKey: "navigation:items.regressionGuardian",
+				icon: ShieldAlert,
+				shortcut: "R",
+				subGroup: "navigation:subGroups.assistants",
+			},
+			{
+				id: "injection-guard",
+				labelKey: "navigation:items.injectionGuard",
+				icon: ShieldCheck,
+				shortcut: "I",
+				subGroup: "navigation:subGroups.assistants",
+			},
+			{
+				id: "api-watcher",
+				labelKey: "navigation:items.apiWatcher",
+				icon: FileJson,
+				shortcut: "A",
+				subGroup: "navigation:subGroups.assistants",
+			},
+			{
+				id: "accessibility-agent",
+				labelKey: "navigation:items.accessibilityAgent",
+				icon: Accessibility,
+				shortcut: "A",
+				subGroup: "navigation:subGroups.assistants",
+			},
+			{
+				id: "i18n-agent",
+				labelKey: "navigation:items.i18nAgent",
+				icon: Globe,
+				shortcut: "I",
+				subGroup: "navigation:subGroups.assistants",
+			},
+			{
+				id: "onboarding-agent",
+				labelKey: "navigation:items.onboardingAgent",
+				icon: BookOpen,
+				shortcut: "O",
+				subGroup: "navigation:subGroups.assistants",
+			},
+			{
+				id: "doc-drift",
+				labelKey: "navigation:items.docDrift",
+				icon: FileText,
+				shortcut: "D",
+				subGroup: "navigation:subGroups.assistants",
+			},
+			{
+				id: "compliance",
+				labelKey: "navigation:items.compliance",
+				icon: CheckCircle,
+				shortcut: "C",
+				subGroup: "navigation:subGroups.assistants",
+			},
+			{
+				id: "notebook-agent",
+				labelKey: "navigation:items.notebookAgent",
+				icon: FileCode2,
+				shortcut: "N",
+				subGroup: "navigation:subGroups.assistants",
+			},
+			{
+				id: "spec-refinement",
+				labelKey: "navigation:items.specRefinement",
+				icon: FileEdit,
+				shortcut: "S",
 				subGroup: "navigation:subGroups.assistants",
 			},
 			// Automation

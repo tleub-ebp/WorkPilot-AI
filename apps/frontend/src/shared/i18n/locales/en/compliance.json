@@ -1,0 +1,11 @@
+{
+	"noDataAvailable": "No compliance report data available",
+	"title": "Compliance Evidence Collector",
+	"evidenceItems": "evidence items",
+	"coverage": "coverage",
+	"missingControls": "Missing Controls",
+	"evidence": "Evidence",
+	"summary": "Summary",
+	"controlId": "Control ID",
+	"evidenceType": "Evidence Type"
+}

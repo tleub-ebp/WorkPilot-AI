@@ -112,6 +112,7 @@ class ContractParser:
         """Parse an OpenAPI/Swagger spec."""
         try:
             import yaml
+
             data = yaml.safe_load(content)
         except Exception:
             try:
@@ -144,11 +145,15 @@ class ContractParser:
                 )
                 for param in op.get("parameters", []):
                     if isinstance(param, dict):
-                        endpoint.parameters.append(ApiField(
-                            name=param.get("name", ""),
-                            type=param.get("schema", {}).get("type", "string") if isinstance(param.get("schema"), dict) else "string",
-                            required=param.get("required", False),
-                        ))
+                        endpoint.parameters.append(
+                            ApiField(
+                                name=param.get("name", ""),
+                                type=param.get("schema", {}).get("type", "string")
+                                if isinstance(param.get("schema"), dict)
+                                else "string",
+                                required=param.get("required", False),
+                            )
+                        )
                 contract.endpoints.append(endpoint)
 
         # Extract schemas/components
@@ -159,12 +164,14 @@ class ContractParser:
                 required_fields = set(schema.get("required", []))
                 for prop_name, prop in schema.get("properties", {}).items():
                     if isinstance(prop, dict):
-                        fields.append(ApiField(
-                            name=prop_name,
-                            type=prop.get("type", "object"),
-                            required=prop_name in required_fields,
-                            deprecated=prop.get("deprecated", False),
-                        ))
+                        fields.append(
+                            ApiField(
+                                name=prop_name,
+                                type=prop.get("type", "object"),
+                                required=prop_name in required_fields,
+                                deprecated=prop.get("deprecated", False),
+                            )
+                        )
                 contract.types[name] = fields
 
         return contract
@@ -172,10 +179,11 @@ class ContractParser:
     def _parse_graphql(self, content: str) -> ApiContract:
         """Parse a GraphQL schema (simplified parser)."""
         import re
+
         contract = ApiContract(format=ContractFormat.GRAPHQL)
 
-        type_pattern = re.compile(r'type\s+(\w+)\s*\{([^}]+)\}', re.MULTILINE)
-        field_pattern = re.compile(r'(\w+)(?:\([^)]*\))?\s*:\s*([^\n!]+!?)')
+        type_pattern = re.compile(r"type\s+(\w+)\s*\{([^}]+)\}", re.MULTILINE)
+        field_pattern = re.compile(r"(\w+)(?:\([^)]*\))?\s*:\s*([^\n!]+!?)")
 
         for tmatch in type_pattern.finditer(content):
             type_name = tmatch.group(1)
@@ -183,52 +191,63 @@ class ContractParser:
             fields: list[ApiField] = []
             for fmatch in field_pattern.finditer(body):
                 ftype = fmatch.group(2).strip()
-                fields.append(ApiField(
-                    name=fmatch.group(1),
-                    type=ftype,
-                    required=ftype.endswith("!"),
-                ))
+                fields.append(
+                    ApiField(
+                        name=fmatch.group(1),
+                        type=ftype,
+                        required=ftype.endswith("!"),
+                    )
+                )
             contract.types[type_name] = fields
 
             if type_name in ("Query", "Mutation", "Subscription"):
                 for f in fields:
-                    contract.endpoints.append(ApiEndpoint(
-                        path=f.name,
-                        method=type_name.upper(),
-                        parameters=[],
-                    ))
+                    contract.endpoints.append(
+                        ApiEndpoint(
+                            path=f.name,
+                            method=type_name.upper(),
+                            parameters=[],
+                        )
+                    )
 
         return contract
 
     def _parse_protobuf(self, content: str) -> ApiContract:
         """Parse a protobuf schema (simplified parser)."""
         import re
+
         contract = ApiContract(format=ContractFormat.PROTOBUF)
 
-        msg_pattern = re.compile(r'message\s+(\w+)\s*\{([^}]+)\}', re.MULTILINE)
-        field_pattern = re.compile(r'(repeated|optional|required)?\s*(\w+)\s+(\w+)\s*=\s*(\d+)')
+        msg_pattern = re.compile(r"message\s+(\w+)\s*\{([^}]+)\}", re.MULTILINE)
+        field_pattern = re.compile(
+            r"(repeated|optional|required)?\s*(\w+)\s+(\w+)\s*=\s*(\d+)"
+        )
 
         for mmatch in msg_pattern.finditer(content):
             msg_name = mmatch.group(1)
             body = mmatch.group(2)
             fields: list[ApiField] = []
             for fmatch in field_pattern.finditer(body):
-                fields.append(ApiField(
-                    name=fmatch.group(3),
-                    type=fmatch.group(2),
-                    required=fmatch.group(1) == "required",
-                ))
+                fields.append(
+                    ApiField(
+                        name=fmatch.group(3),
+                        type=fmatch.group(2),
+                        required=fmatch.group(1) == "required",
+                    )
+                )
             contract.types[msg_name] = fields
 
-        svc_pattern = re.compile(r'service\s+(\w+)\s*\{([^}]+)\}', re.MULTILINE)
-        rpc_pattern = re.compile(r'rpc\s+(\w+)\s*\((\w+)\)\s*returns\s*\((\w+)\)')
+        svc_pattern = re.compile(r"service\s+(\w+)\s*\{([^}]+)\}", re.MULTILINE)
+        rpc_pattern = re.compile(r"rpc\s+(\w+)\s*\((\w+)\)\s*returns\s*\((\w+)\)")
         for smatch in svc_pattern.finditer(content):
             body = smatch.group(2)
             for rmatch in rpc_pattern.finditer(body):
-                contract.endpoints.append(ApiEndpoint(
-                    path=f"{smatch.group(1)}/{rmatch.group(1)}",
-                    method="RPC",
-                    operation_id=rmatch.group(1),
-                ))
+                contract.endpoints.append(
+                    ApiEndpoint(
+                        path=f"{smatch.group(1)}/{rmatch.group(1)}",
+                        method="RPC",
+                        operation_id=rmatch.group(1),
+                    )
+                )
 
         return contract
