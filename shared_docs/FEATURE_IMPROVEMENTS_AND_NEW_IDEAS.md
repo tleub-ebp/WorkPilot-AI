@@ -501,10 +501,48 @@ Dans les sections ci-dessous, chaque amélioration contient désormais un bloc *
 
 **Effort :** Moyen | **Impact :** Haut
 
-#### 11. Mode Production — Groupement d'incidents
-**Aujourd'hui :** traite les erreurs individuellement.
-**Amélioration :** fingerprinting automatique + déduplication cross-source (Sentry + Datadog peuvent remonter la même erreur). Un seul fix pour N alertes corrélées.
-**Débloque :** moins de PR de correction redondantes, moins de bruit.
+#### 11. Self-Healing Mode Production — Groupement d'incidents & dédup
+
+**Aujourd'hui :** chaque erreur détectée en prod déclenche un traitement individuel. Problème : un même bug remonte souvent via Sentry (stack trace) + Datadog (logs) + PagerDuty (alerte) + New Relic (APM). L'agent ouvre parfois plusieurs PRs pour la même cause racine, ou passe du temps sur des erreurs qui sont en réalité des symptômes d'une seule régression.
+
+**Amélioration proposée :**
+- **Fingerprinting unifié** : pour chaque incident reçu, calculer une empreinte stable à partir de `(type d'erreur, fichier, numéro de ligne, signature de fonction, version du service)`. Les erreurs partageant la même empreinte sont regroupées.
+- **Dédup cross-source** : table de correspondance `(source_externe → fingerprint interne)`. Quand Sentry remonte un `TypeError at line 42` et Datadog un log similaire, ils sont fusionnés en un seul incident WorkPilot.
+- **Incident root cause clustering** : pour un même service, détecter les incidents co-occurrents qui partagent un commit parent suspect. Un seul fix couvre tous les incidents du cluster.
+- **Priority inheritance** : un incident qui est un symptôme hérite de la sévérité de sa cause racine. Corrélativement, si un cluster touche 50 incidents, le fix est top priority même si individuellement chaque incident est moyen.
+- **Occurrence counter** : chaque incident conserve le nombre d'occurrences et de users impactés (tiré des APM) pour le tri par impact réel.
+- **Auto-correlation avec les commits** : l'incident est automatiquement corrélé avec les commits récents qui touchent la zone d'erreur, triés par probabilité de cause.
+
+**Fichiers à toucher :**
+- `apps/backend/self_healing/production/fingerprint.py` — nouveau.
+- `apps/backend/self_healing/production/incident_deduper.py` — nouveau, consomme Sentry/DD/CW/NR/PD.
+- `apps/backend/self_healing/production/cluster_analyzer.py` — root cause clustering.
+- `apps/backend/self_healing/production/responder.py` — refactor pour fix par cluster.
+- `apps/frontend/src/renderer/components/self-healing/IncidentCluster.tsx` — vue cluster avec liste d'incidents fusionnés.
+- `apps/frontend/src/shared/types/incident.ts` — ajout `fingerprint`, `clusterId`, `sources`.
+
+**Edge cases :**
+- Deux incidents qui *ont l'air* identiques mais sont sur deux versions différentes → fingerprint inclut la version du service.
+- Erreur polymorphe (même endroit, messages différents selon l'input) → seuil de similarité + option de fusion manuelle.
+- Incidents d'une même famille mais traités par des équipes différentes → tagging par owner pour ne pas écraser les responsabilités.
+- Source externe qui change de format → couche d'adaptation versionnée.
+
+**Métriques :**
+- Ratio incidents bruts / incidents dédupliqués (objectif : réduire de 50%+).
+- Nombre de PRs de correction par incident-source (objectif : 1 PR pour N alertes).
+- Taux de fix groupés qui résolvent effectivement tous les incidents du cluster.
+
+**Multi-provider :**
+- Le fingerprinting, la dédup et le clustering sont 100% algorithmiques (hashing, graph analysis), zéro LLM — provider-indépendant par construction.
+- Les intégrations APM (Sentry, Datadog, CloudWatch, New Relic, PagerDuty) passent par leurs APIs officielles, pas par des SDKs provider-spécifiques.
+- Le LLM intervient uniquement pour (1) la root cause analysis textuelle de l'incident (résumé de la stack trace) et (2) la génération du fix — dans les deux cas via `create_client()` avec le provider configuré par l'utilisateur.
+- Le prompt de root cause analysis est court et rédigé en style neutre, testé sur Claude / GPT-4o / Gemini / Ollama local.
+- Un incident critique peut être traité par un modèle flagship (Opus, GPT-4.1, Gemini 2.5 Pro) et un mineur par un fast model — mix configurable par criticité.
+- Mode Ollama disponible pour les équipes ayant des logs avec PII qui ne doivent pas quitter le réseau privé.
+
+**Débloque :** moins de PRs redondantes, focus sur les incidents qui comptent vraiment, confiance dans le système qui ne « s'affole » plus sur chaque alerte, adoption par les équipes SRE.
+
+**Effort :** Élevé | **Impact :** Haut
 
 #### 12. Mode CI/CD — Bisect assisté
 **Aujourd'hui :** analyse le diff du dernier commit.
