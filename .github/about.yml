@@ -1,0 +1,9 @@
+name: WorkPilot AI
+description: Autonomous multi-agent coding framework that plans, builds, and validates software for you
+url: https://github.com/tleub-ebp/WorkPilot-AI
+logo: .github/assets/logo.png
+links:
+  - name: Website
+    url: https://github.com/tleub-ebp/WorkPilot-AI
+  - name: Documentation
+    url: https://github.com/tleub-ebp/WorkPilot-AI#readme
