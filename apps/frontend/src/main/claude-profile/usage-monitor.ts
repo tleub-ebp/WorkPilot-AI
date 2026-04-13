@@ -3732,7 +3732,7 @@ export class UsageMonitor extends EventEmitter {
 				const resp = await fetch(
 					"http://localhost:9000/providers/usage/copilot",
 					{
-						signal: AbortSignal.timeout(10000),
+						signal: AbortSignal.timeout(5000),
 					},
 				);
 				if (!resp.ok) {
