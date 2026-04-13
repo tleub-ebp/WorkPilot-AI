@@ -688,10 +688,51 @@ Dans les sections ci-dessous, chaque amélioration contient désormais un bloc *
 
 **Effort :** Moyen | **Impact :** Haut
 
-#### 15. Voice Control — Streaming & interruption
-**Aujourd'hui :** commande vocale basique.
-**Amélioration :** mode conversation continue avec détection d'interruption (utilisateur peut stopper l'agent à la voix : "non, arrête, essaie plutôt X").
-**Débloque :** vrai pair programming vocal, utile en accessibilité et mobilité.
+#### 15. Voice Control — Streaming, interruption & conversation continue
+
+**Aujourd'hui :** Voice Control fonctionne en mode commande : appui sur un raccourci, enregistrement, transcription, envoi. C'est utile mais statique — impossible de corriger l'agent en vol, pas de conversation fluide, pas d'accessibilité vraie pour les devs qui ne peuvent pas utiliser le clavier longtemps.
+
+**Amélioration proposée :**
+- **Mode conversation continue** : le micro reste actif (opt-in), détection de l'activité vocale (VAD) pour distinguer parole vs. silence vs. bruit ambiant.
+- **Interruption en vol** : pendant qu'un agent parle/agit, l'utilisateur peut dire « non, stop » ou « attends, change ça » et l'agent s'arrête proprement (transactionnellement : le tool call en cours finit, mais le suivant n'est pas lancé).
+- **Wake word optionnel** : « Hey WorkPilot » ou custom (« Hey Otto »). Activable uniquement quand le mode continu est désactivé pour ne pas être invasif.
+- **Retour vocal (TTS)** : l'agent répond à voix haute ses décisions courtes (« je lance les tests », « j'ai trouvé 3 erreurs », « fait »). Configurable : muet / court / verbeux.
+- **Multi-langue** : détection automatique de la langue parlée (FR/EN/ES/DE/...), prompt system adapté. Pas besoin de changer de paramètre.
+- **Transcription live overlay** : afficher en temps réel ce qui est transcrit pour feedback immédiat à l'utilisateur (« t'as dit *rerun the tests* — c'est bien ça ? »).
+- **Mode pair programming** : session vocale dédiée où l'agent explique ce qu'il fait à voix haute pendant qu'il code, l'utilisateur le guide, c'est une vraie conversation.
+- **Accessibilité** : raccourci d'activation au pied (via pédale MIDI / HID) pour les devs avec troubles moteurs.
+
+**Fichiers à toucher :**
+- `apps/frontend/src/main/voice/voice-stream.ts` — nouveau, streaming audio + VAD.
+- `apps/frontend/src/main/voice/interruption-handler.ts` — détection mot d'arrêt + propagation.
+- `apps/frontend/src/main/voice/tts-service.ts` — TTS service.
+- `apps/frontend/src/renderer/components/voice/VoiceOverlay.tsx` — UI transcription live.
+- `apps/backend/voice/transcription.py` — abstraction STT (Whisper local / Deepgram / provider cloud).
+- `apps/backend/voice/speech.py` — abstraction TTS.
+- `apps/frontend/src/shared/i18n/locales/{en,fr,es,de}/voiceControl.json`.
+
+**Edge cases :**
+- Bruit ambiant fort → calibrage VAD automatique au démarrage, seuil configurable.
+- Utilisateur change de langue en cours → transcription rebascule sans perdre le contexte.
+- Faux positifs d'interruption (quelqu'un parle à côté) → confirmation rapide avant d'arrêter un tool call coûteux.
+- Confidentialité : micro toujours actif = inquiétude vie privée → indicateur visuel rouge pulsant + bouton physique mute très visible.
+
+**Métriques :**
+- Temps moyen de session vocale / utilisateur actif.
+- Taux d'interruptions qui aboutissent à une correction vs. arrêt complet.
+- Satisfaction utilisateur sur l'accessibilité (survey).
+
+**Multi-provider :**
+- **STT (speech-to-text)** : abstraction qui supporte plusieurs backends — Whisper local (faster-whisper ou whisper.cpp pour offline), OpenAI Whisper API, Deepgram, Google Speech-to-Text, Azure Speech, Groq Whisper. L'utilisateur choisit dans les settings.
+- **TTS (text-to-speech)** : abstraction similaire — Piper local (offline), OpenAI TTS, ElevenLabs, Google TTS, Azure. Mode 100% local via Piper + Whisper pour confidentialité max.
+- **LLM de conversation** : utilise `create_client()` avec le provider configuré par l'utilisateur — Claude Sonnet, GPT-4o, Gemini 2.5, Grok, Llama 3.3. Capability requise : streaming + tool use.
+- Les prompts de conversation sont courts, en style neutre, testés sur ≥3 providers. Format de sortie JSON contraint pour les commandes d'agent.
+- Mode 100% offline fonctionnel : Whisper local + Llama 3.3 8B via Ollama + Piper TTS. Démontrable en démo sans réseau.
+- Détection de la langue parlée côté STT (Whisper supporte 99 langues), puis le prompt system est traduit automatiquement si le provider LLM est multilingue (la plupart le sont).
+
+**Débloque :** vrai pair programming vocal, accessibilité réelle pour les devs avec contraintes ergonomiques, usage en mobilité (tablette + casque), wow effect en démo.
+
+**Effort :** Élevé | **Impact :** Moyen (fort pour les niches accessibilité + démo)
 
 #### 16. Browser Agent — Recording & rejeu human-to-test
 **Aujourd'hui :** automatisation browser par agent.
