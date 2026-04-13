@@ -4,7 +4,7 @@
 >
 > 📊 **Analyse concurrentielle Mars 2026** : Cursor (IDE premium, 8 agents parallèles), Windsurf (best value, Arena Mode chat), Claude Code (meilleur cerveau, 1M contexte, hooks event-driven), Codex (cloud agents parallèles), Antigravity (multi-agent orchestration, built-in browser), Kiro (spec-driven, hooks event-driven), Devin (full autonome, $500/mois), Zencoder (spec-driven enterprise).
 >
-> 🎯 **Stratégie WorkPilot** : Là où les concurrents offrent un ou deux axes de différenciation, WorkPilot couvre **l'intégralité du cycle de vie logiciel** avec transparence totale — de l'idée au déploiement en production. **45/45 features implémentées** — 14 features totalement uniques sur le marché. Pas juste un IDE avec IA, mais **un OS pour le développement logiciel autonome**.
+> 🎯 **Stratégie WorkPilot** : Là où les concurrents offrent un ou deux axes de différenciation, WorkPilot couvre **l'intégralité du cycle de vie logiciel** avec transparence totale — de l'idée au déploiement en production. **50/50 features implémentées** — 19 features totalement uniques sur le marché. Pas juste un IDE avec IA, mais **un OS pour le développement logiciel autonome**.
 
 ---
 
@@ -927,123 +927,181 @@ L'Autonomous Agent Learning Loop est maintenant intégré dans WorkPilot AI ! Le
 - **Expansion** : Voyez les détails de chaque pattern
 - **Confiance** : Évaluez la fiabilité de chaque pattern
 
-**Analyse manuelle**
-- **Lancer une analyse** : Déclenchez une analyse complète sur tous les builds
-- **Streaming en direct** : Suivez l'analyse en temps réel
-- **Rapports détaillés** : Obtenez des rapports complets sur les patterns trouvés
+</details>
 
-##### 🎯 Catégories de patterns
+<details>
+<summary>### 9. Swarm Mode — Exécution Multi-Agent Parallèle ✅ Implémenté</summary>
 
-**🔧 Outils & Séquences (tool_sequence)**
-- Combinaisons d'outils efficaces
-- Ordres d'opérations optimaux
-- Workflow patterns
+Passer d'un pipeline séquentiel (spec → plan → code → QA) à une **équipe IA parallèle** où 2-8 agents travaillent simultanément sur des sous-tâches indépendantes, chacun dans son propre worktree, avec un Coordinator agent qui orchestre et un semantic merge qui fusionne les résultats.
 
-**📝 Stratégies de Prompts (prompt_strategy)**
-- Formulations réussies
-- Contextes efficaces
-- Patterns d'instructions
+**Impact attendu :** Une feature qui prend 45 min en séquentiel pourrait être livrée en 10-15 min.
 
-**🚨 Résolution d'Erreurs (error_resolution)**
-- Solutions éprouvées
-- Patterns de débogage
-- Approches de correction
+#### 🌊 Concept de "Waves"
 
-**✅ Patterns QA (qa_pattern)**
-- Stratégies de test
-- Approches de validation
-- Patterns de couverture
+Les sous-tâches du plan d'implémentation sont organisées en **waves** (vagues) basées sur leurs dépendances :
+- **Wave 1** : Toutes les sous-tâches sans dépendances (fondations, types, interfaces)
+- **Wave 2** : Sous-tâches qui dépendent de Wave 1 (implémentations core)
+- **Wave 3** : Sous-tâches qui dépendent de Wave 2 (intégrations, tests)
+- Chaque wave exécute ses sous-tâches en parallèle. Entre chaque wave, un **semantic merge** fusionne les résultats.
 
-**🏗️ Structure de Code (code_structure)**
-- Patterns architecturaux
-- Conventions réussies
-- Organisation efficace
+#### 🏗️ Architecture
 
-##### ⚙️ Configuration avancée
+**Backend** (`apps/backend/agents/swarm/`) :
+- `orchestrator.py` — Orchestrateur principal
+- `dependency_analyzer.py` — Analyse des dépendances et construction du DAG
+- `wave_executor.py` — Exécution parallèle d'une wave
+- `types.py` — Modèles de données (SwarmConfig, Wave, SubtaskNode, SwarmStatus)
 
-Le modèle IA et le niveau de réflexion utilisés par le Learning Loop sont configurables :
-1. Allez dans **Paramètres** (⚙️)
-2. Section **"Feature Model Configuration"**
-3. Modifiez les réglages pour **"Learning Loop"** :
-   - **Modèle** : Choisissez le modèle LLM (Sonnet, Opus, Haiku, etc.)
-   - **Niveau de réflexion** : None, Low, Medium, High, ou Ultrathink
+**Runner** (`apps/backend/runners/swarm_runner.py`) — Point d'entrée CLI
 
-##### 🔄 Intégration avec les agents
+**Frontend** (`apps/frontend/src/renderer/stores/swarm-store.ts`) — Store Zustand
 
-**Injection automatique de contexte**
-- Les agents de planning reçoivent le contexte des patterns réussis
-- Les agents de coding bénéficient des leçons apprises
-- Les agents QA utilisent les patterns de test efficaces
-
-**Cycle d'amélioration continue**
-1. **Build** → Agent exécute la tâche
-2. **Analyse** → Post-build analyse les résultats
-3. **Extraction** → Patterns sont identifiés et stockés
-4. **Injection** → Contexte enrichi pour le prochain build
-5. **Amélioration** → Agents performent mieux
-
-##### 📊 Métriques et suivi
-
-**Pour chaque pattern**
-- **Confiance** : Score de 0 à 1 basé sur les succès
-- **Occurrences** : Nombre de fois que le pattern a été identifié
-- **Applications** : Nombre de fois que le pattern a été utilisé
-- **Efficacité** : Taux de succès when appliqué
-- **Source** : Build d'origine du pattern
-
-**Pour le projet**
-- **Évolution** : Performance au fil du temps
-- **Tendances** : Patterns émergents
-- **Optimisation** : Suggestions d'amélioration
-
-##### 🛠️ Architecture technique
-
-**Backend Service**
-- **LearningLoopService** : Orchestrateur principal
-- **PatternExtractor** : Extraction utilisant Claude Agent SDK
-- **PatternStorage** : Persistance des patterns
-- **PatternApplicator** : Application sélective des patterns
-
-**Frontend Interface**
-- **LearningLoopDialog** : Dashboard principal
-- **Pattern Cards** : Visualisation individuelle des patterns
-- **Real-time Streaming** : Suivi des analyses en direct
-
-**Integration Points**
-- **Post-build Hook** : Analyse automatique après chaque build
-- **Prompt Injection** : Enrichissement des prompts existants
-- **Agent SDK** : Utilisation de Claude pour l'analyse
-
-##### 🧪 Tests
-
-Pour exécuter les tests du Learning Loop :
+#### 🎯 Utilisation
 
 ```bash
-# Tests backend (Python)
 cd apps/backend
-.venv/bin/pytest tests/learning_loop/ -v
-
-# Tests frontend (Vitest)
-cd apps/frontend
-npm test -- --run src/renderer/stores/__tests__/learning-loop-store.test.ts
+python runners/swarm_runner.py --task "description" --spec 001
 ```
 
-##### 💡 Tips d'utilisation
+</details>
 
-**Pour les développeurs**
-- Consultez régulièrement le dashboard pour voir les apprentissages
-- Désactivez les patterns non pertinents pour votre contexte
-- Lancez une analyse complète après des changements importants
+<details>
+<summary>### 10. Continuous AI — Agent Autonome Always-On ✅ Implémenté</summary>
 
-**Pour optimiser l'apprentissage**
-- Assurez-vous d'avoir suffisamment de builds historiques
-- Utilisez des modèles de haute qualité pour l'analyse
-- Revoyez périodiquement les patterns actifs
+Un **daemon IA** qui tourne en arrière-plan et agit proactivement sur le projet — pas un outil à la demande, mais un coéquipier toujours actif qui surveille, détecte et corrige automatiquement.
 
-**Pour le debugging**
-- Vérifiez les logs du Learning Loop en cas d'échec
-- Consultez les builds sources des patterns problématiques
-- Ajustez les seuils de confiance si nécessaire
+**Impact attendu :** Les bugs CI, les dépendances vulnérables et les issues triviales sont traités avant même que le développeur ne les voie.
+
+#### 🤖 Modules
+
+**CI/CD Watcher** — Écoute les webhooks GitHub Actions / GitLab CI / Azure Pipelines, lance auto-fix sur échec
+
+**Dependency Sentinel** — Scan quotidien des dépendances (npm audit, pip-audit, cargo audit), PR automatique pour upgrades sûrs
+
+**Issue Auto-Responder** — Surveille les nouvelles issues GitHub/GitLab, auto-triage et estimation de complexité
+
+**PR Auto-Reviewer** — Review automatique de toute PR externe avant review humain
+
+**Performance Watchdog** — Monitore les métriques de performance (Grafana/Datadog webhooks)
+
+#### 🏗️ Architecture
+
+**Backend** (`apps/backend/continuous_ai/`) :
+- `daemon.py` — Daemon principal
+- `cicd_watcher.py` — Surveillance CI/CD
+- `dependency_sentinel.py` — Scan dépendances
+- `issue_responder.py` — Auto-réponse issues
+- `types.py` — Modèles de données
+
+**Runner** (`apps/backend/runners/continuous_ai_runner.py`) — Point d'entrée CLI
+
+#### 🎯 Utilisation
+
+```bash
+cd apps/backend
+python runners/continuous_ai_runner.py --module cicd_watcher --enable
+```
+
+</details>
+
+<details>
+<summary>### 11. Context Mesh — Intelligence Cross-Projets ✅ Implémenté</summary>
+
+Exploiter le système Graphiti (3000+ lignes) pour créer une **intelligence cross-projets** — un réseau de connaissances qui s'enrichit à chaque interaction et transfère les patterns entre tous les projets de l'utilisateur.
+
+**Impact attendu :** Plus l'utilisateur utilise WorkPilot AI, plus il devient intelligent. Un moat compétitif massif basé sur l'effet réseau personnel.
+
+#### 🧠 Fonctionnalités
+
+**Pattern Recognition Cross-Projet** — Détection automatique de patterns architecturaux récurrents
+
+**Engineering Handbook Auto-Généré** — Document vivant capturant les décisions d'architecture de tous les projets
+
+**Skill Transfer** — Quand un agent apprend à utiliser une API/framework dans un projet, ce savoir est disponible pour tous les projets
+
+**Contextual Recommendations** — Suggestions basées sur les patterns des projets précédents
+
+#### 🏗️ Architecture
+
+**Backend** (`apps/backend/context_mesh/`) :
+- `mesh_service.py` — Service principal Context Mesh
+- `storage.py` — Stockage cross-projet
+- `types.py` — Modèles de données
+
+**Runner** (`apps/backend/runners/context_mesh_runner.py`) — Point d'entrée CLI
+
+#### 🎯 Utilisation
+
+```bash
+cd apps/backend
+python runners/context_mesh_runner.py --analyze --project-id 123
+```
+
+</details>
+
+<details>
+<summary>### 12. Live Development Companion — Pair Programming Temps Réel ✅ Implémenté</summary>
+
+Transformer le pair programming actuel en un véritable **compagnon de développement temps réel** qui observe, comprend et intervient pendant que le développeur code — pas après.
+
+**Impact attendu :** La vraie promesse du "pair programming IA" que personne n'a encore livrée. Un assistant qui connaît ton contexte et intervient au bon moment.
+
+#### 👁️ Fonctionnalités
+
+**File Watcher Intelligent** — Observe les modifications de fichiers en temps réel via `fs.watch` / chokidar
+
+**Bug Detection en Temps Réel** — Analyse statique incrémentale à chaque sauvegarde
+
+**Suggestions Proactives Contextuelles** — "Tu es en train de ré-implémenter un utilitaire qui existe déjà"
+
+**Takeover Intelligent** — Détection de blocage, proposition de prise en main
+
+**Context Awareness LSP** — Intégration avec le Language Server Protocol
+
+#### 🏗️ Architecture
+
+**Backend** (`apps/backend/live_companion/`) :
+- `analyzer.py` — Analyseur incrémental
+- `takeover_detector.py` — Détection de blocage
+- `types.py` — Modèles de données
+
+**Runner** (`apps/backend/runners/live_companion_runner.py`) — Point d'entrée CLI
+
+#### 🎯 Utilisation
+
+```bash
+cd apps/backend
+python runners/live_companion_runner.py --watch --project-path /path/to/project
+```
+
+</details>
+
+<details>
+<summary>### 13. Agent Time Travel — Replay avec Rembobinage ✅ Implémenté</summary>
+
+*(Déjà documenté sous "Agent Replay & Debug Mode" — voir feature #2)*
+
+Transformer le système Agent Replay existant en un véritable **debugger temporel** pour les agents IA. L'utilisateur peut rembobiner à n'importe quel point de décision d'un agent, modifier le contexte, et relancer l'exécution à partir de ce point.
+
+**Impact attendu :** Résout le problème fondamental de confiance envers l'IA autonome — "pourquoi a-t-il fait ça ?" devient "je vais changer sa décision et voir le résultat".
+
+#### 🎯 Fonctionnalités
+
+**Timeline Interactive** — Visualisation chronologique de chaque décision de l'agent
+
+**Checkpoint System** — Snapshots automatiques à chaque décision clé
+
+**Fork & Re-execute** — Sélectionner un checkpoint → modifier le contexte → relancer
+
+**Decision Heatmap** — Carte thermique des fichiers les plus modifiés par l'agent
+
+#### 🏗️ Architecture
+
+**Backend** (`apps/backend/replay/`) :
+- `recorder.py` — ReplayRecorder avec checkpoints
+- `models.py` — Modèles de données étendus
+
+**Frontend** (`apps/frontend/src/renderer/components/agent-replay/`) — Interface timeline interactive
 
 </details>
 
@@ -1052,7 +1110,7 @@ npm test -- --run src/renderer/stores/__tests__/learning-loop-store.test.ts
 ## 🚀 Tier S — Game Changers (Avantage concurrentiel fort)
 
 <details>
-<summary>### 9. Arena Mode — Comparaison A/B de Modèles à l'aveugle ✅ Implémenté</summary>
+<summary>### 14. Arena Mode — Comparaison A/B de Modèles à l'aveugle ✅ Implémenté</summary>
 
 **L'Arena Mode de Windsurf mais appliqué à tout le pipeline.** Comparer les modèles IA en aveugle sur des tâches réelles pour trouver le meilleur rapport qualité/prix.
 
@@ -1134,7 +1192,7 @@ L'Arena Mode est maintenant intégré dans WorkPilot AI ! Comparez vos modèles 
 </details>
 
 <details>
-<summary>### 10. AI Pair Programming Mode — Vrai travail parallèle coordonné ✅ Implémenté</summary>
+<summary>### 15. AI Pair Programming Mode — Vrai travail parallèle coordonné ✅ Implémenté</summary>
 
 Mode collaboratif temps réel où l'IA code en parallèle du développeur sur le même worktree.
 
@@ -1197,7 +1255,7 @@ Le Pair Programming IA est maintenant intégré dans WorkPilot AI ! Travaillez e
 </details>
 
 <details>
-<summary>### 11. MCP Marketplace — L'écosystème d'intégrations universel ✅ Implémenté</summary>
+<summary>### 16. MCP Marketplace — L'écosystème d'intégrations universel ✅ Implémenté</summary>
 
 **Le "App Store" des intégrations MCP pour WorkPilot.** Connexion plug-and-play avec tous les outils de l'écosystème dev.
 
@@ -1398,7 +1456,7 @@ npm test -- --run src/renderer/stores/__tests__/mcp-marketplace-store.test.ts
 </details>
 
 <details>
-<summary>### 12. Cost Intelligence Engine ✅ Implémenté</summary>
+<summary>### 17. Cost Intelligence Engine ✅ Implémenté</summary>
 
 Routage intelligent entre modèles selon la complexité + tracking granulaire des coûts par agent/phase/spec.
 
@@ -1459,7 +1517,7 @@ python run.py --cost-budget  # Voir le budget actuel
 ## 💪 Tier A — Strong Impact (Features attendues par les power users)
 
 <details>
-<summary>### 13. Build Analytics Dashboard ✅ Implémenté</summary>
+<summary>### 18. Build Analytics Dashboard ✅ Implémenté</summary>
 
 Métriques complètes sur les agents : taux de succès QA, coût tokens par phase, patterns d'échec, évolution dans le temps.
 
@@ -1553,7 +1611,7 @@ Les données sont stockées dans une base SQLite locale (`analytics.db`) et acce
 </details>
 
 <details>
-<summary>### 14. Test Generation Agent ✅ Implémenté</summary>
+<summary>### 19. Test Generation Agent ✅ Implémenté</summary>
 
 Agent IA spécialisé dans la génération automatique de tests et l'analyse de couverture de code.
 
@@ -1656,7 +1714,7 @@ npm test -- --run src/renderer/stores/__tests__/test-generation-store.test.ts
 </details>
 
 <details>
-<summary>### 15. Dependency Sentinel ✅ Implémenté</summary>
+<summary>### 20. Dependency Sentinel ✅ Implémenté</summary>
 
 Surveillance proactive 24/7 des dépendances : CVE, mises à jour breaking, licences incompatibles, avec PR automatique.
 
@@ -1668,7 +1726,7 @@ Surveillance proactive 24/7 des dépendances : CVE, mises à jour breaking, lice
 </details>
 
 <details>
-<summary>### 16. AI Prompt Optimizer ✅ Implémenté</summary>
+<summary>### 21. AI Prompt Optimizer ✅ Implémenté</summary>
 
 Amélioration automatique des prompts utilisateurs pour garantir les meilleurs résultats possibles des agents IA.
 
@@ -1764,7 +1822,7 @@ npm test -- --run src/renderer/stores/__tests__/prompt-optimizer-store.test.ts
 </details>
 
 <details>
-<summary>### 17. Conflict Predictor ✅ Implémenté</summary>
+<summary>### 22. Conflict Predictor ✅ Implémenté</summary>
 
 Détection proactive des conflits potentiels entre branches/worktrees actifs avant qu'ils ne surviennent.
 
@@ -1891,7 +1949,7 @@ Le Conflict Predictor utilise :
 </details>
 
 <details>
-<summary>### 18. AI Code Review Agent ✅ Implémenté</summary>
+<summary>### 23. AI Code Review Agent ✅ Implémenté</summary>
 
 Review de PR/MR intelligente avec contexte profond du codebase — comme un senior dev qui connaît tout le projet.
 
@@ -2050,7 +2108,7 @@ npm test -- --run src/renderer/stores/__tests__/code-review-store.test.ts
 </details>
 
 <details>
-<summary>### 19. Architecture Enforcement Agent ✅ Implémenté</summary>
+<summary>### 24. Architecture Enforcement Agent ✅ Implémenté</summary>
 
 Gardien automatique de l'architecture — détecte et bloque les violations architecturales avant qu'elles n'atteignent le codebase.
 
@@ -2066,7 +2124,7 @@ Gardien automatique de l'architecture — détecte et bloque les violations arch
 ## 🔧 Tier B — Solid Value (Améliorations significatives du quotidien)
 
 <details>
-<summary>### 20. Built-in Browser Agent — Test visuel sans quitter WorkPilot ✅ Implémenté</summary>
+<summary>### 25. Built-in Browser Agent — Test visuel sans quitter WorkPilot ✅ Implémenté</summary>
 
 **L'arme secrète d'Antigravity, mais intégrée dans WorkPilot.** Un navigateur intégré que les agents peuvent utiliser pour tester, scraper et valider visuellement.
 
@@ -2164,7 +2222,7 @@ python runners/browser_agent_runner.py --project /path dashboard
 </details>
 
 <details>
-<summary>### 21. App Emulator ✅ Implémenté</summary>
+<summary>### 26. App Emulator ✅ Implémenté</summary>
 
 Lancement et émulation de l'application directement depuis l'interface Kanban pour visualiser le rendu des tâches complétées.
 
@@ -2310,7 +2368,7 @@ Pour tester l'App Emulator :
 </details>
 
 <details>
-<summary>### 22. Auto-Refactor Agent ✅ Implémenté</summary>
+<summary>### 27. Auto-Refactor Agent ✅ Implémenté</summary>
 
 Détection continue de code smells, dette technique et patterns obsolètes avec refactoring autonome.
 
@@ -2487,7 +2545,7 @@ L'agent fournit des métriques détaillées :
 </details>
 
 <details>
-<summary>### 23. Pipeline Generator ✅ Implémenté</summary>
+<summary>### 28. Pipeline Generator ✅ Implémenté</summary>
 
 Génération automatique de CI/CD complète adaptée au projet.
 
@@ -2542,7 +2600,7 @@ Le Pipeline Generator est maintenant disponible dans WorkPilot AI ! Voici commen
 </details>
 
 <details>
-<summary>### 24. Smart Estimation ✅ Implémenté</summary>
+<summary>### 29. Smart Estimation ✅ Implémenté</summary>
 
 Scores de complexité basés sur l'historique réel des builds passés.
 
@@ -2681,7 +2739,7 @@ La Smart Estimation suit le flux suivant :
 </details>
 
 <details>
-<summary>### 25. Natural Language Git ✅ Implémenté</summary>
+<summary>### 30. Natural Language Git ✅ Implémenté</summary>
 
 Manipuler git en langage naturel directement depuis l'interface.
 
@@ -2700,7 +2758,7 @@ Manipuler git en langage naturel directement depuis l'interface.
 </details>
 
 <details>
-<summary>### 26. Context-Aware Snippets ✅ Implémenté</summary>
+<summary>### 31. Context-Aware Snippets ✅ Implémenté</summary>
 
 Snippets intelligents qui s'adaptent au style et aux conventions du projet.
 
@@ -2843,7 +2901,7 @@ npm test -- --run src/renderer/components/context-aware-snippets/__tests__/Conte
 </details>
 
 <details>
-<summary>### 27. Spec Templates Library ✅ Implémenté</summary>
+<summary>### 32. Spec Templates Library ✅ Implémenté</summary>
 
 Templates de spec réutilisables par domaine pour accélérer la création de tâches récurrentes.
 
@@ -2892,7 +2950,7 @@ library.save_custom_template(SpecTemplate(id="my-template", ...))
 </details>
 
 <details>
-<summary>### 28. Dependency Graph Intelligence ✅ Implémenté</summary>
+<summary>### 33. Dependency Graph Intelligence ✅ Implémenté</summary>
 
 Analyse des dépendances inter-fichiers et inter-modules pour un contexte agent drastiquement amélioré.
 
@@ -2934,7 +2992,7 @@ related = analyzer.get_related_files(["src/api/users.py"], depth=2)
 </details>
 
 <details>
-<summary>### 29. QA Security Scanner ✅ Implémenté</summary>
+<summary>### 34. QA Security Scanner ✅ Implémenté</summary>
 
 Intégration de scans de sécurité SAST/DAST dans le pipeline QA pour chaque build.
 
@@ -3023,7 +3081,7 @@ logger.log_decision("Use PostgreSQL", alternatives=["SQLite", "MySQL"], selected
 ## 💡 Tier C — Nice to Have (Vision long terme)
 
 <details>
-<summary>### 31. Team Knowledge Sync — Mémoire Graphiti partagée entre tous les membres ✅ Implémenté</summary>
+<summary>### 35. Team Knowledge Sync — Mémoire Graphiti partagée entre tous les membres ✅ Implémenté</summary>
 
 Memory System partagé entre tous les membres de l'équipe.
 
@@ -3122,7 +3180,7 @@ Les épisodes importés sont stockés dans `.workpilot/team_sync/peers/{member_i
 </details>
 
 <details>
-<summary>### 32. Environment Cloner ✅ Implémenté</summary>
+<summary>### 36. Environment Cloner ✅ Implémenté</summary>
 
 Reproduction d'environnements prod/staging en local pour debug.
 
@@ -3182,7 +3240,7 @@ Les fichiers sont créés dans `.workpilot/environment/` :
 </details>
 
 <details>
-<summary>### 33. Architecture Visualizer ✅ Implémenté</summary>
+<summary>### 37. Architecture Visualizer ✅ Implémenté</summary>
 
 Génération automatique de diagrammes d'architecture depuis le code.
 
@@ -3202,7 +3260,7 @@ Génération automatique de diagrammes d'architecture depuis le code.
 </details>
 
 <details>
-<summary>### 34. Code Migration Agent ✅ Implémenté</summary>
+<summary>### 38. Code Migration Agent ✅ Implémenté</summary>
 
 Migration automatique entre frameworks, versions majeures ou langages.
 
@@ -3222,7 +3280,7 @@ Migration automatique entre frameworks, versions majeures ou langages.
 </details>
 
 <details>
-<summary>### 35. Performance Profiler Agent ✅ Implémenté</summary>
+<summary>### 39. Performance Profiler Agent ✅ Implémenté</summary>
 
 Agent qui profile le code, identifie les bottlenecks et propose des optimisations.
 
@@ -3243,7 +3301,7 @@ Agent qui profile le code, identifie les bottlenecks et propose des optimisation
 </details>
 
 <details>
-<summary>### 36. Documentation Agent ✅ Implémenté</summary>
+<summary>### 40. Documentation Agent ✅ Implémenté</summary>
 
 Génération et maintenance automatique de la documentation technique.
 
@@ -3264,7 +3322,7 @@ Génération et maintenance automatique de la documentation technique.
 </details>
 
 <details>
-<summary>### 37. Plugin Marketplace ✅ Implémenté</summary>
+<summary>### 41. Plugin Marketplace ✅ Implémenté</summary>
 
 Écosystème de plugins communautaires pour étendre WorkPilot.
 
@@ -3289,7 +3347,7 @@ Génération et maintenance automatique de la documentation technique.
 </details>
 
 <details>
-<summary>### 38. Local LLM avec Ollama ✅ Implémenté</summary>
+<summary>### 42. Local LLM avec Ollama ✅ Implémenté</summary>
 
 Utiliser des modèles IA open-source en local via Ollama — zéro coût, zéro cloud, zéro API key.
 
@@ -3358,7 +3416,7 @@ OLLAMA_EMBEDDING_MODEL=nomic-embed-text
 </details>
 
 <details>
-<summary>### 39. Voice Control ✅ Implémenté</summary>
+<summary>### 43. Voice Control ✅ Implémenté</summary>
 
 Contrôler WorkPilot à la voix : décrire des tâches, naviguer dans l'UI, commander des builds.
 
@@ -3515,7 +3573,7 @@ Le Voice Control supporte plusieurs langues :
 </details>
 
 <details>
-<summary>### 40. AI Code Playground ✅ Implémenté</summary>
+<summary>### 44. AI Code Playground ✅ Implémenté</summary>
 
 Sandbox interactive pour prototyper rapidement des idées avec l'IA avant de les intégrer au projet.
 
@@ -3692,7 +3750,7 @@ Le Code Playground supporte :
 </details>
 
 <details>
-<summary>### 41. Cross-Language Translation ✅ Implémenté</summary>
+<summary>### 45. Cross-Language Translation ✅ Implémenté</summary>
 
 Traduire du code entre langages tout en préservant la logique et les patterns idiomatiques.
 
@@ -3737,7 +3795,7 @@ Python, Go, TypeScript, JavaScript, Rust, Java, C#, Ruby, Swift, Kotlin
 </details>
 
 <details>
-<summary>### 42. Spec Approval Workflow ✅ Implémenté</summary>
+<summary>### 46. Spec Approval Workflow ✅ Implémenté</summary>
 
 Circuit de validation collaborative des specs avant implémentation — peer review pour les specs.
 
@@ -3780,7 +3838,7 @@ Circuit de validation collaborative des specs avant implémentation — peer rev
 </details>
 
 <details>
-<summary>### 43. Memory Lifecycle Manager ✅ Implémenté</summary>
+<summary>### 47. Memory Lifecycle Manager ✅ Implémenté</summary>
 
 Gestion intelligente du cycle de vie de la mémoire Graphiti — pruning automatique, politiques de rétention, contrôle de la fraîcheur.
 
@@ -3829,7 +3887,7 @@ Gestion intelligente du cycle de vie de la mémoire Graphiti — pruning automat
 </details>
 
 <details>
-<summary>### 44. CI/CD Deployment Triggers ✅ Implémenté</summary>
+<summary>### 48. CI/CD Deployment Triggers ✅ Implémenté</summary>
 
 Déclenchement automatique de pipelines CI/CD après la création d'une PR par un agent.
 
@@ -3877,7 +3935,7 @@ Déclenchement automatique de pipelines CI/CD après la création d'une PR par u
 </details>
 
 <details>
-<summary>### 45. Intelligent Context Caching ✅ Implémenté</summary>
+<summary>### 49. Intelligent Context Caching ✅ Implémenté</summary>
 
 Cache sémantique du contexte agent pour accélérer les builds répétitifs et similaires.
 
