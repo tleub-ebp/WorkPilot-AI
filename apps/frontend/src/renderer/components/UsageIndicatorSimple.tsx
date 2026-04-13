@@ -80,8 +80,6 @@ export function UsageIndicatorSimple() {
 		isLoading,
 		isAvailable,
 		error,
-		// biome-ignore lint/correctness/noUnusedVariables: variable kept for clarity
-		setActiveProvider,
 		clearError,
 	} = useCredentialService(selectedProvider);
 
