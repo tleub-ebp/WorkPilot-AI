@@ -651,7 +651,7 @@ export class CredentialManager extends EventEmitter {
 
 			// Strategy 2: Bearer header (works for personal sk-ws- keys and SSO/JWT tokens)
 			// Also retry on 400 (bad request) — GetTeamCreditBalance returns 400 for personal sk-ws- keys
-			if (!resp || !resp.ok) {
+			if (!resp?.ok) {
 				resp = await fetch(
 					"https://server.codeium.com/api/v1/GetTeamCreditBalance",
 					{
@@ -1077,8 +1077,9 @@ export class CredentialManager extends EventEmitter {
 							profileName,
 						};
 					}
-				} catch (_error) {
+				} catch (error) {
 					// This path doesn't exist, try next
+					console.debug(`Failed to read ${configPath}:`, error);
 				}
 			}
 
@@ -2092,10 +2093,14 @@ function decodeVarint(buf: Buffer, pos: number): [number, number] {
  * Extract the current billing cycle timestamps from the userStatusProtoBinaryBase64
  * field in windsurfAuthStatus. The protobuf structure is:
  *   - root field 13 (plan info sub-message):
- *     - sub-field 2 (billing start): nested varint at field 1
+ *     - sub-field 2 (billing start): nested varint at field 1 — may be plan activation date, NOT current cycle start
  *     - sub-field 3 (billing end): nested varint at field 1
+ *     - sub-field 6: used messages (current cycle)
+ *     - sub-field 7: used flow actions (current cycle)
  *     - sub-field 8: total messages
  *     - sub-field 9: total flow actions
+ *     - sub-field 17: current billing cycle start (plain varint, epoch seconds)
+ *     - sub-field 18: current billing cycle end (plain varint, epoch seconds)
  */
 function extractBillingCycleFromProtobuf(protoB64: string): {
 	startSeconds: number;
@@ -2134,6 +2139,11 @@ function extractBillingCycleFromProtobuf(protoB64: string): {
 					let totalFlowActions = 0;
 					let usedMessages = 0;
 					let usedFlowActions = 0;
+					// Fields 17/18 are plain varint timestamps for the current billing cycle.
+					// They are more reliable than field 2/3 which may represent the plan
+					// activation date rather than the current cycle boundaries.
+					let cycleStartSeconds = 0;
+					let cycleEndSeconds = 0;
 
 					while (sp < sub.length) {
 						const [stag, sp2] = decodeVarint(sub, sp);
@@ -2148,6 +2158,8 @@ function extractBillingCycleFromProtobuf(protoB64: string): {
 							if (sfn === 7) usedFlowActions = sv;
 							if (sfn === 8) totalMessages = sv;
 							if (sfn === 9) totalFlowActions = sv;
+							if (sfn === 17) cycleStartSeconds = sv;
+							if (sfn === 18) cycleEndSeconds = sv;
 						} else if (swt === 2) {
 							const [sl, sp3] = decodeVarint(sub, sp);
 							sp = sp3;
@@ -2176,6 +2188,17 @@ function extractBillingCycleFromProtobuf(protoB64: string): {
 						} else {
 							break;
 						}
+					}
+
+					// Prefer field 17/18 (current billing cycle) over field 2/3 (plan activation)
+					// when they represent a more recent cycle. Field 2 can be a plan activation
+					// date that doesn't advance with each billing period, causing stale detection
+					// to fail.
+					if (cycleStartSeconds > 0 && cycleStartSeconds >= startSeconds) {
+						startSeconds = cycleStartSeconds;
+					}
+					if (cycleEndSeconds > 0 && cycleEndSeconds >= endSeconds) {
+						endSeconds = cycleEndSeconds;
 					}
 
 					if (startSeconds > 0 && endSeconds > 0) {
@@ -2442,20 +2465,3 @@ export async function readWindsurfCachedPlanInfo(): Promise<{
 		};
 	}
 }
-
-// NOTE: For personal Windsurf Pro accounts, there is NO public REST API to
-// get real-time usage. The GetTeamCreditBalance API is Teams/Enterprise only
-// (requires a service key with "Billing Read" permissions). The gRPC
-// GetUserStatus endpoint requires unknown request fields and returns
-// INVALID_ARGUMENT with the sk-ws-* IDE key.
-//
-// The ONLY reliable data source is the Windsurf IDE's local SQLite cache.
-// readWindsurfCachedPlanInfo reads THREE sources and takes the MAX of
-// usedMessages/usedFlowActions (since usage only increases within a cycle):
-//   1. windsurf.settings.cachedPlanInfo (JSON, may be from previous cycle)
-//   2. windsurfAuthStatus → userStatusProtoBinaryBase64 (protobuf)
-//   3. codeium.windsurf → windsurf.state.cachedUserStatus (protobuf)
-//
-// These caches are refreshed when the Windsurf IDE starts/refreshes a session.
-// If the user hasn't restarted Windsurf IDE recently, the data may lag behind
-// the real-time usage shown on https://codeium.com/plan.
