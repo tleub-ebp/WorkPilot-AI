@@ -26,7 +26,7 @@ import {
 	execFile,
 	execFileSync,
 } from "node:child_process";
-import { existsSync, promises as fsPromises } from "node:fs";
+import { existsSync, readdirSync, promises as fsPromises } from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { promisify } from "node:util";
@@ -184,10 +184,19 @@ export function getClaudeDetectionPaths(homeDir: string): ClaudeDetectionPaths {
 		"/usr/local/bin/claude", // Intel Mac (standard Homebrew path)
 	];
 
-	const platformPaths = [
+	const platformPaths: string[] = [
 		// Standard npm installation path (same for Windows, Linux, and macOS)
 		joinPaths(homeDir, ".local", "bin", isWindows() ? "claude.exe" : "claude"),
 	];
+
+	// Add Windows-specific paths
+	if (isWindows()) {
+		platformPaths.push(
+			joinPaths(homeDir, "AppData", "Roaming", "npm", "claude.cmd"),
+			joinPaths("C:\\", "Program Files", "claude", "claude.exe"),
+			joinPaths("C:\\", "Program Files (x86)", "claude", "claude.exe"),
+		);
+	}
 
 	const nvmVersionsDir = joinPaths(homeDir, ".nvm", "versions", "node");
 
@@ -1749,7 +1758,41 @@ class CLIToolManager {
 			}
 		}
 
-		// 2. Platform-specific standard paths (recommended by Claude Anthropic)
+		// 2. NVM paths (Unix/Linux/macOS only - checks Node.js version managers)
+		if (!isWindows() && existsSync(paths.nvmVersionsDir)) {
+			try {
+				const versionDirs = readdirSync(paths.nvmVersionsDir, {
+					withFileTypes: true,
+				});
+				const sortedVersions = sortNvmVersionDirs(versionDirs);
+
+				for (const version of sortedVersions) {
+					const claudePath = joinPaths(
+						paths.nvmVersionsDir,
+						version,
+						"bin",
+						"claude",
+					);
+					if (existsSync(claudePath)) {
+						const validation = this.validateClaude(claudePath);
+						const result = buildClaudeDetectionResult(
+							claudePath,
+							validation,
+							"nvm",
+							"Using NVM Claude CLI",
+						);
+						if (result) return result;
+					}
+				}
+			} catch (error) {
+				// NVM directory exists but can't be read - continue to next detection method
+				console.warn(
+					`[Claude CLI] Failed to read NVM versions directory: ${error instanceof Error ? error.message : String(error)}`,
+				);
+			}
+		}
+
+		// 3. Platform-specific standard paths (recommended by Claude Anthropic)
 		// Now includes ~/.local/bin/claude for Windows
 		for (const claudePath of paths.platformPaths) {
 			if (existsSync(claudePath)) {
@@ -1764,7 +1807,7 @@ class CLIToolManager {
 			}
 		}
 
-		// 3. Homebrew (macOS only - recommended installation method)
+		// 4. Homebrew (macOS only - recommended installation method)
 		if (isMacOS()) {
 			for (const claudePath of paths.homebrewPaths) {
 				if (existsSync(claudePath)) {
@@ -1780,7 +1823,41 @@ class CLIToolManager {
 			}
 		}
 
-		// 4. Windows where.exe detection (generic - finds WinGet installation)
+		// 4. NVM paths (Unix/Linux/macOS only - checks Node.js version managers)
+		if (!isWindows() && existsSync(paths.nvmVersionsDir)) {
+			try {
+				const versionDirs = readdirSync(paths.nvmVersionsDir, {
+					withFileTypes: true,
+				});
+				const sortedVersions = sortNvmVersionDirs(versionDirs);
+
+				for (const version of sortedVersions) {
+					const claudePath = joinPaths(
+						paths.nvmVersionsDir,
+						version,
+						"bin",
+						"claude",
+					);
+					if (existsSync(claudePath)) {
+						const validation = this.validateClaude(claudePath);
+						const result = buildClaudeDetectionResult(
+							claudePath,
+							validation,
+							"nvm",
+							"Using NVM Claude CLI",
+						);
+						if (result) return result;
+					}
+				}
+			} catch (error) {
+				// NVM directory exists but can't be read - continue to next detection method
+				console.warn(
+					`[Claude CLI] Failed to read NVM versions directory: ${error instanceof Error ? error.message : String(error)}`,
+				);
+			}
+		}
+
+		// 5. Windows where.exe detection (generic - finds WinGet installation)
 		// Only checked if ~/.local/bin/claude was not found
 		if (isWindows()) {
 			const whereClaudePath = findWindowsExecutableViaWhere(
@@ -1839,7 +1916,41 @@ class CLIToolManager {
 			}
 		}
 
-		// 2. Platform-specific standard paths (recommended by Claude Anthropic)
+		// 2. NVM paths (Unix/Linux/macOS only - checks Node.js version managers)
+		if (!isWindows() && await existsAsync(paths.nvmVersionsDir)) {
+			try {
+				const versionDirs = await fsPromises.readdir(paths.nvmVersionsDir, {
+					withFileTypes: true,
+				});
+				const sortedVersions = sortNvmVersionDirs(versionDirs);
+
+				for (const version of sortedVersions) {
+					const claudePath = joinPaths(
+						paths.nvmVersionsDir,
+						version,
+						"bin",
+						"claude",
+					);
+					if (await existsAsync(claudePath)) {
+						const validation = await this.validateClaudeAsync(claudePath);
+						const result = buildClaudeDetectionResult(
+							claudePath,
+							validation,
+							"nvm",
+							"Using NVM Claude CLI",
+						);
+						if (result) return result;
+					}
+				}
+			} catch (error) {
+				// NVM directory exists but can't be read - continue to next detection method
+				console.warn(
+					`[Claude CLI] Failed to read NVM versions directory: ${error instanceof Error ? error.message : String(error)}`,
+				);
+			}
+		}
+
+		// 3. Platform-specific standard paths (recommended by Claude Anthropic)
 		for (const claudePath of paths.platformPaths) {
 			if (await existsAsync(claudePath)) {
 				const validation = await this.validateClaudeAsync(claudePath);
@@ -1853,7 +1964,7 @@ class CLIToolManager {
 			}
 		}
 
-		// 3. Homebrew (macOS only - recommended installation method)
+		// 4. Homebrew (macOS only - recommended installation method)
 		if (isMacOS()) {
 			for (const claudePath of paths.homebrewPaths) {
 				if (await existsAsync(claudePath)) {
@@ -1869,7 +1980,41 @@ class CLIToolManager {
 			}
 		}
 
-		// 4. Windows where.exe detection (generic - finds WinGet installation)
+		// 4. NVM paths (Unix/Linux/macOS only - checks Node.js version managers)
+		if (!isWindows() && await existsAsync(paths.nvmVersionsDir)) {
+			try {
+				const versionDirs = await fsPromises.readdir(paths.nvmVersionsDir, {
+					withFileTypes: true,
+				});
+				const sortedVersions = sortNvmVersionDirs(versionDirs);
+
+				for (const version of sortedVersions) {
+					const claudePath = joinPaths(
+						paths.nvmVersionsDir,
+						version,
+						"bin",
+						"claude",
+					);
+					if (await existsAsync(claudePath)) {
+						const validation = await this.validateClaudeAsync(claudePath);
+						const result = buildClaudeDetectionResult(
+							claudePath,
+							validation,
+							"nvm",
+							"Using NVM Claude CLI",
+						);
+						if (result) return result;
+					}
+				}
+			} catch (error) {
+				// NVM directory exists but can't be read - continue to next detection method
+				console.warn(
+					`[Claude CLI] Failed to read NVM versions directory: ${error instanceof Error ? error.message : String(error)}`,
+				);
+			}
+		}
+
+		// 5. Windows where.exe detection (generic - finds WinGet installation)
 		if (isWindows()) {
 			const whereClaudePath = await findWindowsExecutableViaWhereAsync(
 				"claude",
