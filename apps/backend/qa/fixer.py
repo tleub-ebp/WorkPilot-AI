@@ -230,8 +230,17 @@ async def run_qa_fixer_session(
     # ── Provider-agnostic path (OpenAI, Windsurf, Copilot, Google, etc.) ──
     if AgentClient is not None and isinstance(client, AgentClient):
         return await _run_qa_fixer_agent_client_session(
-            client, spec_dir, fix_session, prompt, project_dir,
-            task_logger, verbose, message_count, tool_count, _rr, _rs_id,
+            client,
+            spec_dir,
+            fix_session,
+            prompt,
+            project_dir,
+            task_logger,
+            verbose,
+            message_count,
+            tool_count,
+            _rr,
+            _rs_id,
         )
 
     # ── Claude SDK path (backward compatible) ──
@@ -426,8 +435,12 @@ async def run_qa_fixer_session(
 
         # Shared post-processing: check fix status, save memory
         _fix_result = await _process_fixer_result(
-            spec_dir, project_dir, fix_session, response_text,
-            message_count, tool_count,
+            spec_dir,
+            project_dir,
+            fix_session,
+            response_text,
+            message_count,
+            tool_count,
         )
 
         if _rr and _rs_id:
@@ -579,9 +592,7 @@ async def _run_qa_fixer_agent_client_session(
                             ):
                                 _op = "update" if tool_name == "Edit" else "create"
                                 _after = str(
-                                    inp.get("new_string")
-                                    or inp.get("content")
-                                    or ""
+                                    inp.get("new_string") or inp.get("content") or ""
                                 )
                                 _rr.record_file_change(
                                     _rs_id,
@@ -672,8 +683,12 @@ async def _run_qa_fixer_agent_client_session(
 
         # Shared post-processing: check fix status, save memory
         _fix_result = await _process_fixer_result(
-            spec_dir, project_dir, fix_session, response_text,
-            message_count, tool_count,
+            spec_dir,
+            project_dir,
+            fix_session,
+            response_text,
+            message_count,
+            tool_count,
         )
 
         if _rr and _rs_id:

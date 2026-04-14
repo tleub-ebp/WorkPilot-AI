@@ -77,6 +77,24 @@ const providerCategories: Record<string, string> = {
 	"azure-openai": "microsoft",
 };
 
+// Determine the auth method for a provider using providerRegistry as source of truth
+// Extracted outside the component to keep a stable reference and avoid infinite re-renders.
+const getProviderAuthMethod = (providerId: string): AuthMethod => {
+	const registryProvider = getRegistryProvider(providerId);
+	if (registryProvider) {
+		if (registryProvider.requiresCLI) return "cli";
+		if (registryProvider.requiresOAuth && !registryProvider.requiresApiKey)
+			return "oauth";
+		if (
+			!registryProvider.requiresApiKey &&
+			!registryProvider.requiresOAuth &&
+			!registryProvider.requiresCLI
+		)
+			return "local";
+	}
+	return "api-key";
+};
+
 export function CleanProviderSection({
 	settings: _propsSettings,
 	onSettingsChange: propsOnSettingsChange,
@@ -380,23 +398,6 @@ export function CleanProviderSection({
 		}
 	};
 
-	// Determine the auth method for a provider using providerRegistry as source of truth
-	const getProviderAuthMethod = (providerId: string): AuthMethod => {
-		const registryProvider = getRegistryProvider(providerId);
-		if (registryProvider) {
-			if (registryProvider.requiresCLI) return "cli";
-			if (registryProvider.requiresOAuth && !registryProvider.requiresApiKey)
-				return "oauth";
-			if (
-				!registryProvider.requiresApiKey &&
-				!registryProvider.requiresOAuth &&
-				!registryProvider.requiresCLI
-			)
-				return "local";
-		}
-		return "api-key";
-	};
-
 	// Helper function to detect provider from URL
 	const detectProviderFromUrl = (url: string): string => {
 		const urlLower = url.toLowerCase();
@@ -440,7 +441,7 @@ export function CleanProviderSection({
 	);
 
 	// Get API key info for a provider
-	// biome-ignore lint/correctness/useExhaustiveDependencies: detectProviderFromUrl and getProviderApiKeyField are pure helpers; getProviderAuthMethod is stable
+	// biome-ignore lint/correctness/useExhaustiveDependencies: detectProviderFromUrl and getProviderApiKeyField are pure helpers
 	const getApiKeyInfo = useCallback(
 		(
 			providerId: string,
@@ -558,8 +559,8 @@ export function CleanProviderSection({
 
 			return { hasKey: false, authMethod };
 		},
-		// biome-ignore lint/correctness/useExhaustiveDependencies: detectProviderFromUrl and getProviderApiKeyField are pure helpers defined in component scope; getProviderAuthMethod is a stable registry lookup
-		[profiles, settings, providerStatus, getProviderAuthMethod],
+		// biome-ignore lint/correctness/useExhaustiveDependencies: detectProviderFromUrl and getProviderApiKeyField are pure helpers defined in component scope
+		[profiles, settings, providerStatus],
 	);
 
 	// Charger les providers de manière asynchrone

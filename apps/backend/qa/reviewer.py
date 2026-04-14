@@ -339,9 +339,17 @@ This is attempt {previous_error.get("consecutive_errors", 1) + 1}. If you fail t
     # ── Provider-agnostic path (OpenAI, Windsurf, Copilot, Google, etc.) ──
     if isinstance(client, AgentClient):
         return await _run_qa_agent_client_session(
-            client, project_dir, spec_dir, qa_session,
-            prompt, task_logger, verbose, message_count, tool_count,
-            _rr, _rs_id,
+            client,
+            project_dir,
+            spec_dir,
+            qa_session,
+            prompt,
+            task_logger,
+            verbose,
+            message_count,
+            tool_count,
+            _rr,
+            _rs_id,
         )
 
     # ── Claude SDK path (backward compatible) ──
@@ -556,8 +564,13 @@ This is attempt {previous_error.get("consecutive_errors", 1) + 1}. If you fail t
 
         # Shared post-processing: check QA result, save memory, extract verdict
         _qa_result = await _process_qa_result(
-            spec_dir, project_dir, qa_session, response_text,
-            message_count, tool_count, result_error=result_error,
+            spec_dir,
+            project_dir,
+            qa_session,
+            response_text,
+            message_count,
+            tool_count,
+            result_error=result_error,
         )
 
         if _rr and _rs_id:
@@ -709,9 +722,7 @@ async def _run_qa_agent_client_session(
                             ):
                                 _op = "update" if tool_name == "Edit" else "create"
                                 _after = str(
-                                    inp.get("new_string")
-                                    or inp.get("content")
-                                    or ""
+                                    inp.get("new_string") or inp.get("content") or ""
                                 )
                                 _rr.record_file_change(
                                     _rs_id,
@@ -802,8 +813,13 @@ async def _run_qa_agent_client_session(
 
         # Shared post-processing: check QA result, save memory, extract verdict
         _qa_result = await _process_qa_result(
-            spec_dir, project_dir, qa_session, response_text,
-            message_count, tool_count, result_error=None,
+            spec_dir,
+            project_dir,
+            qa_session,
+            response_text,
+            message_count,
+            tool_count,
+            result_error=None,
         )
 
         if _rr and _rs_id:
