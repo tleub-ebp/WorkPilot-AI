@@ -1047,6 +1047,7 @@ def _get_active_provider(spec_dir: Path | None = None) -> str:
         "grok": "grok",
         "aws": "aws",
         "windsurf": "windsurf",
+        "cursor": "cursor",
         "custom": "custom",
     }
 
@@ -1119,6 +1120,7 @@ def _get_active_provider(spec_dir: Path | None = None) -> str:
         "grok",
         "aws",
         "windsurf",
+        "cursor",
         "custom",
     ):
         return env_provider
@@ -1153,6 +1155,7 @@ def _get_active_provider(spec_dir: Path | None = None) -> str:
                                 "grok",
                                 "aws",
                                 "windsurf",
+                                "cursor",
                                 "custom",
                             ):
                                 return value

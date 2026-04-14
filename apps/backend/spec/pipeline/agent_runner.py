@@ -140,9 +140,11 @@ class AgentRunner:
         active_provider = _get_active_provider(self.spec_dir)
         debug("agent_runner", f"Active provider resolved: {active_provider}")
 
-        if active_provider in ("windsurf", "copilot"):
-            # Non-Claude providers: use create_agent_client which routes to
-            # WindsurfAgentClient/CopilotAgentClient with tool execution loop
+        if active_provider not in ("claude", "anthropic"):
+            # Non-Claude providers (openai, windsurf, copilot, google, mistral,
+            # deepseek, grok, meta, aws, ollama, etc.): use create_agent_client
+            # which routes to the appropriate provider-specific AgentClient
+            # (OpenAIAgentClient, WindsurfAgentClient, CopilotAgentClient, etc.)
             from core.client import create_agent_client
 
             debug(
@@ -158,7 +160,7 @@ class AgentRunner:
             )
             return await self._run_with_agent_client(client, prompt)
 
-        # Claude provider: use raw SDK client (create_client) for full
+        # Claude/Anthropic provider: use raw SDK client (create_client) for full
         # SDK message type compatibility (AssistantMessage, ToolUseBlock, etc.)
         from core.client import create_client
 

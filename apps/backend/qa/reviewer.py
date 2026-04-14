@@ -11,11 +11,22 @@ Memory Integration:
 """
 
 from pathlib import Path
+from typing import Any, Union
 
 # Memory integration for cross-session learning
 from agents.memory_manager import get_graphiti_context, save_session_memory
-from claude_agent_sdk import ClaudeSDKClient
-from claude_agent_sdk.types import ResultMessage
+from core.agent_client import AgentClient, ContentBlockType
+
+try:
+    from claude_agent_sdk import ClaudeSDKClient
+except ImportError:
+    ClaudeSDKClient = None  # type: ignore[assignment,misc]
+
+try:
+    from claude_agent_sdk.types import ResultMessage
+except ImportError:
+    ResultMessage = None  # type: ignore[assignment,misc]
+
 from debug import (
     debug,
     debug_detailed,
@@ -145,7 +156,7 @@ def _programmatic_qa_signoff(
 
 
 async def run_qa_agent_session(
-    client: ClaudeSDKClient,
+    client: Union["ClaudeSDKClient", AgentClient, Any],
     project_dir: Path,
     spec_dir: Path,
     qa_session: int,
@@ -156,8 +167,13 @@ async def run_qa_agent_session(
     """
     Run a QA reviewer agent session.
 
+    Accepts both raw ClaudeSDKClient instances (backward compatible) and
+    wrapped AgentClient instances (provider-agnostic). If an AgentClient is
+    passed, normalized AgentMessage stream is used; otherwise the raw SDK
+    message stream is consumed directly.
+
     Args:
-        client: Claude SDK client
+        client: Claude SDK client or AgentClient instance
         project_dir: Project root directory (for capability detection)
         spec_dir: Spec directory
         qa_session: QA iteration number
@@ -320,6 +336,15 @@ This is attempt {previous_error.get("consecutive_errors", 1) + 1}. If you fail t
             f"\n⚠️  Retry with self-correction context (attempt {previous_error.get('consecutive_errors', 1) + 1})"
         )
 
+    # ── Provider-agnostic path (OpenAI, Windsurf, Copilot, Google, etc.) ──
+    if isinstance(client, AgentClient):
+        return await _run_qa_agent_client_session(
+            client, project_dir, spec_dir, qa_session,
+            prompt, task_logger, verbose, message_count, tool_count,
+            _rr, _rs_id,
+        )
+
+    # ── Claude SDK path (backward compatible) ──
     try:
         debug("qa_reviewer", "Sending query to Claude SDK...")
         await client.query(prompt)
@@ -338,7 +363,7 @@ This is attempt {previous_error.get("consecutive_errors", 1) + 1}. If you fail t
             )
 
             # Capture ResultMessage errors (e.g. rate limit, auth failure, crash)
-            if isinstance(msg, ResultMessage):
+            if ResultMessage is not None and isinstance(msg, ResultMessage):
                 if msg.is_error:
                     result_error = msg.result or f"SDK error (subtype={msg.subtype})"
                     debug_error(
@@ -529,140 +554,11 @@ This is attempt {previous_error.get("consecutive_errors", 1) + 1}. If you fail t
 
         print("\n" + "-" * 70 + "\n")
 
-        # Check the QA result from implementation_plan.json
-        status = get_qa_signoff_status(spec_dir)
-        debug(
-            "qa_reviewer",
-            "QA session completed",
-            message_count=message_count,
-            tool_count=tool_count,
-            response_length=len(response_text),
-            qa_status=status.get("status") if status else "unknown",
+        # Shared post-processing: check QA result, save memory, extract verdict
+        _qa_result = await _process_qa_result(
+            spec_dir, project_dir, qa_session, response_text,
+            message_count, tool_count, result_error=result_error,
         )
-
-        # Save QA session insights to memory
-        qa_discoveries = {
-            "files_understood": {},
-            "patterns_found": [],
-            "gotchas_encountered": [],
-        }
-
-        if status and status.get("status") == "approved":
-            debug_success("qa_reviewer", "QA APPROVED")
-            if _ut_record_qa is not None:
-                try:
-                    _ut_record_qa(project_dir, spec_dir.name, passed=True, score=100.0)
-                except Exception:
-                    pass
-            qa_discoveries["patterns_found"].append(
-                f"QA session {qa_session}: All acceptance criteria validated successfully"
-            )
-            # Save successful QA session to memory
-            await save_session_memory(
-                spec_dir=spec_dir,
-                project_dir=project_dir,
-                subtask_id=f"qa_reviewer_{qa_session}",
-                session_num=qa_session,
-                success=True,
-                subtasks_completed=[f"qa_reviewer_{qa_session}"],
-                discoveries=qa_discoveries,
-            )
-            _qa_result = ("approved", response_text)
-        elif status and status.get("status") == "rejected":
-            debug_error("qa_reviewer", "QA REJECTED")
-            if _ut_record_qa is not None:
-                try:
-                    _ut_record_qa(project_dir, spec_dir.name, passed=False, score=0.0)
-                except Exception:
-                    pass
-            # Extract issues found for memory
-            issues = status.get("issues_found", [])
-            for issue in issues:
-                qa_discoveries["gotchas_encountered"].append(
-                    f"QA Issue ({issue.get('type', 'unknown')}): {issue.get('title', 'No title')} at {issue.get('location', 'unknown')}"
-                )
-            # Save rejected QA session to memory (learning from failures)
-            await save_session_memory(
-                spec_dir=spec_dir,
-                project_dir=project_dir,
-                subtask_id=f"qa_reviewer_{qa_session}",
-                session_num=qa_session,
-                success=False,
-                subtasks_completed=[],
-                discoveries=qa_discoveries,
-            )
-            _qa_result = ("rejected", response_text)
-        elif status and status.get("status") not in ("approved", "rejected"):
-            # Non-standard status (e.g. "awaiting_manual_verification") — treat as human escalation
-            non_standard = status.get("status", "unknown")
-            debug_warning(
-                "qa_reviewer",
-                f"QA agent wrote non-standard status: {non_standard} — treating as human escalation",
-            )
-            print(f"\n⚠️  QA agent set non-standard status: {non_standard}")
-            print("Treating as human escalation (manual verification required).")
-            _qa_result = ("human_escalation", response_text)
-        else:
-            # Agent didn't update the file - try to extract verdict from response
-            extracted_verdict = _extract_verdict_from_response(response_text)
-
-            if extracted_verdict:
-                debug(
-                    "qa_reviewer",
-                    f"Extracted verdict from response: {extracted_verdict}",
-                    message_count=message_count,
-                    tool_count=tool_count,
-                )
-                print(
-                    f"\n⚠️  Agent didn't update implementation_plan.json, "
-                    f"but verdict detected: {extracted_verdict.upper()}"
-                )
-
-                # Programmatically write the qa_signoff
-                if _programmatic_qa_signoff(spec_dir, extracted_verdict, qa_session):
-                    debug_success(
-                        "qa_reviewer",
-                        f"Programmatically wrote qa_signoff: {extracted_verdict}",
-                    )
-                    print(
-                        f"✅ Programmatically updated implementation_plan.json "
-                        f"with status: {extracted_verdict}"
-                    )
-                    _qa_result = (extracted_verdict, response_text)
-                else:
-                    debug_error(
-                        "qa_reviewer",
-                        "Failed to programmatically write qa_signoff",
-                    )
-                    _qa_result = ("error", "Failed to write qa_signoff")
-            else:
-                # Agent didn't update the status and no clear verdict in response
-                debug_error(
-                    "qa_reviewer",
-                    "QA agent did not update implementation_plan.json",
-                    message_count=message_count,
-                    tool_count=tool_count,
-                    response_preview=response_text[:500] if response_text else "empty",
-                )
-
-                # Build informative error message for feedback loop
-                error_details = []
-                if result_error:
-                    # SDK-level error (rate limit, auth failure, subprocess crash)
-                    _qa_result = ("error", f"Claude session error: {result_error}")
-                else:
-                    if message_count == 0:
-                        error_details.append("No messages received from agent")
-                    if tool_count == 0:
-                        error_details.append("No tools were used by agent")
-                    if not response_text:
-                        error_details.append("Agent produced no output")
-
-                    error_msg = "QA agent did not update implementation_plan.json"
-                    if error_details:
-                        error_msg += f" ({'; '.join(error_details)})"
-
-                    _qa_result = ("error", error_msg)
 
         if _rr and _rs_id:
             try:
@@ -686,3 +582,400 @@ This is attempt {previous_error.get("consecutive_errors", 1) + 1}. If you fail t
             except Exception:
                 pass
         return "error", str(e)
+
+
+# =============================================================================
+# PROVIDER-AGNOSTIC QA REVIEWER SESSION (AgentClient path)
+# =============================================================================
+
+
+async def _run_qa_agent_client_session(
+    client: AgentClient,
+    project_dir: Path,
+    spec_dir: Path,
+    qa_session: int,
+    prompt: str,
+    task_logger: Any,
+    verbose: bool,
+    message_count: int,
+    tool_count: int,
+    _rr: Any,
+    _rs_id: Any,
+) -> tuple[str, str]:
+    """
+    Provider-agnostic QA reviewer session using normalized AgentMessage stream.
+
+    This is the equivalent of the Claude SDK path in run_qa_agent_session()
+    but processes ContentBlockType-based blocks from any AgentClient provider
+    (OpenAI, Windsurf, Copilot, Google, Mistral, etc.).
+    """
+    provider = client.provider_name()
+    debug_section("qa_reviewer", f"QA Reviewer Session [{provider}]")
+    debug(
+        "qa_reviewer",
+        f"Starting {provider} QA reviewer session",
+        spec_dir=str(spec_dir),
+        qa_session=qa_session,
+    )
+    print(f"Sending QA prompt to {provider} agent...\n")
+
+    current_tool = None
+
+    try:
+        debug("qa_reviewer", f"Sending query to {provider}...")
+        await client.query(prompt)
+        debug_success("qa_reviewer", "Query sent successfully")
+
+        response_text = ""
+        debug("qa_reviewer", "Starting to receive response stream...")
+
+        async for agent_msg in client.receive_response():
+            message_count += 1
+            debug_detailed(
+                "qa_reviewer",
+                f"Received message #{message_count}",
+                msg_type=agent_msg.type_name,
+            )
+
+            for block in agent_msg.content:
+                if block.type == ContentBlockType.TEXT and block.text:
+                    response_text += block.text
+                    print(block.text, end="", flush=True)
+                    if task_logger and block.text.strip():
+                        task_logger.log(
+                            block.text,
+                            LogEntryType.TEXT,
+                            LogPhase.VALIDATION,
+                            print_to_console=False,
+                        )
+                    # Record agent response in replay
+                    if _rr and _rs_id and block.text.strip():
+                        try:
+                            _rr.record_response(_rs_id, block.text)
+                        except Exception:
+                            pass
+
+                elif block.type == ContentBlockType.TOOL_USE:
+                    tool_name = block.tool_name or ""
+                    tool_count += 1
+                    tool_input_display = None
+                    inp = block.tool_input or {}
+
+                    if inp:
+                        if "file_path" in inp:
+                            fp = inp["file_path"]
+                            if len(fp) > 50:
+                                fp = "..." + fp[-47:]
+                            tool_input_display = fp
+                        elif "pattern" in inp:
+                            tool_input_display = f"pattern: {inp['pattern']}"
+                        elif "command" in inp:
+                            cmd = inp["command"]
+                            if len(cmd) > 50:
+                                cmd = cmd[:47] + "..."
+                            tool_input_display = cmd
+
+                    debug(
+                        "qa_reviewer",
+                        f"Tool call #{tool_count}: {tool_name}",
+                        tool_input=tool_input_display,
+                    )
+
+                    if task_logger:
+                        task_logger.tool_start(
+                            tool_name,
+                            tool_input_display,
+                            LogPhase.VALIDATION,
+                            print_to_console=True,
+                        )
+                    else:
+                        print(f"\n[QA Tool: {tool_name}]", flush=True)
+
+                    if verbose and inp:
+                        input_str = str(inp)
+                        if len(input_str) > 300:
+                            print(f"   Input: {input_str[:300]}...", flush=True)
+                        else:
+                            print(f"   Input: {input_str}", flush=True)
+                    current_tool = tool_name
+
+                    # Record tool use in replay
+                    if _rr and _rs_id:
+                        try:
+                            if (
+                                tool_name in ("Edit", "Write")
+                                and inp
+                                and inp.get("file_path")
+                            ):
+                                _op = "update" if tool_name == "Edit" else "create"
+                                _after = str(
+                                    inp.get("new_string")
+                                    or inp.get("content")
+                                    or ""
+                                )
+                                _rr.record_file_change(
+                                    _rs_id,
+                                    inp["file_path"],
+                                    operation=_op,
+                                    after_content=_after,
+                                )
+                            elif tool_name == "Bash" and inp and inp.get("command"):
+                                _rr.record_command(_rs_id, inp["command"])
+                            else:
+                                _rr.record_tool_call(
+                                    _rs_id, tool_name, tool_input_dict=inp or {}
+                                )
+                        except Exception:
+                            pass
+
+                elif block.type == ContentBlockType.TOOL_RESULT:
+                    is_error = block.is_error
+                    result_content = block.result_content or ""
+
+                    if is_error:
+                        debug_error(
+                            "qa_reviewer",
+                            f"Tool error: {current_tool}",
+                            error=str(result_content)[:200],
+                        )
+                        error_str = str(result_content)[:500]
+                        print(f"   [Error] {error_str}", flush=True)
+                        if task_logger and current_tool:
+                            task_logger.tool_end(
+                                current_tool,
+                                success=False,
+                                result=error_str[:100],
+                                detail=str(result_content),
+                                phase=LogPhase.VALIDATION,
+                            )
+                    else:
+                        debug_detailed(
+                            "qa_reviewer",
+                            f"Tool success: {current_tool}",
+                            result_length=len(str(result_content)),
+                        )
+                        if verbose:
+                            result_str = str(result_content)[:200]
+                            print(f"   [Done] {result_str}", flush=True)
+                        else:
+                            print("   [Done]", flush=True)
+                        if task_logger and current_tool:
+                            detail_content = None
+                            if current_tool in (
+                                "Read",
+                                "Grep",
+                                "Bash",
+                                "Edit",
+                                "Write",
+                            ):
+                                result_str = str(result_content)
+                                if len(result_str) < 50000:
+                                    detail_content = result_str
+                            task_logger.tool_end(
+                                current_tool,
+                                success=True,
+                                detail=detail_content,
+                                phase=LogPhase.VALIDATION,
+                            )
+
+                    # Record tool result in replay
+                    if _rr and _rs_id and current_tool:
+                        try:
+                            _result_str = str(result_content)[:2000]
+                            if current_tool == "Bash":
+                                _rr.record_command_output(
+                                    _rs_id, _result_str, is_error=is_error
+                                )
+                            elif current_tool not in ("Edit", "Write"):
+                                _rr.record_tool_result(
+                                    _rs_id,
+                                    current_tool,
+                                    output=_result_str,
+                                    success=not is_error,
+                                )
+                        except Exception:
+                            pass
+
+                    current_tool = None
+
+        print("\n" + "-" * 70 + "\n")
+
+        # Shared post-processing: check QA result, save memory, extract verdict
+        _qa_result = await _process_qa_result(
+            spec_dir, project_dir, qa_session, response_text,
+            message_count, tool_count, result_error=None,
+        )
+
+        if _rr and _rs_id:
+            try:
+                _rr.end_session(_rs_id)
+            except Exception:
+                pass
+        return _qa_result
+
+    except Exception as e:
+        debug_error(
+            "qa_reviewer",
+            f"QA session exception [{provider}]: {e}",
+            exception_type=type(e).__name__,
+        )
+        print(f"Error during QA session: {e}")
+        if task_logger:
+            task_logger.log_error(f"QA session error: {e}", LogPhase.VALIDATION)
+        if _rr and _rs_id:
+            try:
+                _rr.end_session(_rs_id)
+            except Exception:
+                pass
+        return "error", str(e)
+
+
+# =============================================================================
+# SHARED QA RESULT POST-PROCESSING
+# =============================================================================
+
+
+async def _process_qa_result(
+    spec_dir: Path,
+    project_dir: Path,
+    qa_session: int,
+    response_text: str,
+    message_count: int,
+    tool_count: int,
+    result_error: str | None = None,
+) -> tuple[str, str]:
+    """
+    Shared post-processing logic for QA reviewer sessions.
+
+    Checks implementation_plan.json for QA signoff, saves memory insights,
+    extracts verdicts from response text as fallback.
+
+    Used by both the Claude SDK path and the AgentClient path.
+    """
+    status = get_qa_signoff_status(spec_dir)
+    debug(
+        "qa_reviewer",
+        "QA session completed",
+        message_count=message_count,
+        tool_count=tool_count,
+        response_length=len(response_text),
+        qa_status=status.get("status") if status else "unknown",
+    )
+
+    qa_discoveries = {
+        "files_understood": {},
+        "patterns_found": [],
+        "gotchas_encountered": [],
+    }
+
+    if status and status.get("status") == "approved":
+        debug_success("qa_reviewer", "QA APPROVED")
+        if _ut_record_qa is not None:
+            try:
+                _ut_record_qa(project_dir, spec_dir.name, passed=True, score=100.0)
+            except Exception:
+                pass
+        qa_discoveries["patterns_found"].append(
+            f"QA session {qa_session}: All acceptance criteria validated successfully"
+        )
+        await save_session_memory(
+            spec_dir=spec_dir,
+            project_dir=project_dir,
+            subtask_id=f"qa_reviewer_{qa_session}",
+            session_num=qa_session,
+            success=True,
+            subtasks_completed=[f"qa_reviewer_{qa_session}"],
+            discoveries=qa_discoveries,
+        )
+        return ("approved", response_text)
+
+    if status and status.get("status") == "rejected":
+        debug_error("qa_reviewer", "QA REJECTED")
+        if _ut_record_qa is not None:
+            try:
+                _ut_record_qa(project_dir, spec_dir.name, passed=False, score=0.0)
+            except Exception:
+                pass
+        issues = status.get("issues_found", [])
+        for issue in issues:
+            qa_discoveries["gotchas_encountered"].append(
+                f"QA Issue ({issue.get('type', 'unknown')}): {issue.get('title', 'No title')} at {issue.get('location', 'unknown')}"
+            )
+        await save_session_memory(
+            spec_dir=spec_dir,
+            project_dir=project_dir,
+            subtask_id=f"qa_reviewer_{qa_session}",
+            session_num=qa_session,
+            success=False,
+            subtasks_completed=[],
+            discoveries=qa_discoveries,
+        )
+        return ("rejected", response_text)
+
+    if status and status.get("status") not in ("approved", "rejected"):
+        non_standard = status.get("status", "unknown")
+        debug_warning(
+            "qa_reviewer",
+            f"QA agent wrote non-standard status: {non_standard} — treating as human escalation",
+        )
+        print(f"\n⚠️  QA agent set non-standard status: {non_standard}")
+        print("Treating as human escalation (manual verification required).")
+        return ("human_escalation", response_text)
+
+    # Agent didn't update the file — try to extract verdict from response
+    extracted_verdict = _extract_verdict_from_response(response_text)
+
+    if extracted_verdict:
+        debug(
+            "qa_reviewer",
+            f"Extracted verdict from response: {extracted_verdict}",
+            message_count=message_count,
+            tool_count=tool_count,
+        )
+        print(
+            f"\n⚠️  Agent didn't update implementation_plan.json, "
+            f"but verdict detected: {extracted_verdict.upper()}"
+        )
+
+        if _programmatic_qa_signoff(spec_dir, extracted_verdict, qa_session):
+            debug_success(
+                "qa_reviewer",
+                f"Programmatically wrote qa_signoff: {extracted_verdict}",
+            )
+            print(
+                f"✅ Programmatically updated implementation_plan.json "
+                f"with status: {extracted_verdict}"
+            )
+            return (extracted_verdict, response_text)
+
+        debug_error(
+            "qa_reviewer",
+            "Failed to programmatically write qa_signoff",
+        )
+        return ("error", "Failed to write qa_signoff")
+
+    # Agent didn't update the status and no clear verdict in response
+    debug_error(
+        "qa_reviewer",
+        "QA agent did not update implementation_plan.json",
+        message_count=message_count,
+        tool_count=tool_count,
+        response_preview=response_text[:500] if response_text else "empty",
+    )
+
+    if result_error:
+        return ("error", f"Agent session error: {result_error}")
+
+    error_details = []
+    if message_count == 0:
+        error_details.append("No messages received from agent")
+    if tool_count == 0:
+        error_details.append("No tools were used by agent")
+    if not response_text:
+        error_details.append("Agent produced no output")
+
+    error_msg = "QA agent did not update implementation_plan.json"
+    if error_details:
+        error_msg += f" ({'; '.join(error_details)})"
+
+    return ("error", error_msg)

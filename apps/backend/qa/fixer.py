@@ -10,6 +10,7 @@ Memory Integration:
 """
 
 from pathlib import Path
+from typing import Any, Union
 
 # Memory integration for cross-session learning
 try:
@@ -28,7 +29,13 @@ except ImportError:
 try:
     from claude_agent_sdk import ClaudeSDKClient
 except ImportError:
-    ClaudeSDKClient = None
+    ClaudeSDKClient = None  # type: ignore[assignment,misc]
+
+try:
+    from core.agent_client import AgentClient, ContentBlockType
+except ImportError:
+    AgentClient = None  # type: ignore[assignment,misc]
+    ContentBlockType = None  # type: ignore[assignment,misc]
 
 try:
     from debug import debug, debug_detailed, debug_error, debug_section, debug_success
@@ -115,7 +122,7 @@ def load_qa_fixer_prompt() -> str:
 
 
 async def run_qa_fixer_session(
-    client: ClaudeSDKClient,
+    client: Union["ClaudeSDKClient", "AgentClient", Any],
     spec_dir: Path,
     fix_session: int,
     verbose: bool = False,
@@ -124,8 +131,13 @@ async def run_qa_fixer_session(
     """
     Run a QA fixer agent session.
 
+    Accepts both raw ClaudeSDKClient instances (backward compatible) and
+    wrapped AgentClient instances (provider-agnostic). If an AgentClient is
+    passed, normalized AgentMessage stream is used; otherwise the raw SDK
+    message stream is consumed directly.
+
     Args:
-        client: Claude SDK client
+        client: Claude SDK client or AgentClient instance
         spec_dir: Spec directory
         fix_session: Fix iteration number
         verbose: Whether to show detailed output
@@ -215,6 +227,14 @@ async def run_qa_fixer_session(
     prompt += f"\n**IMPORTANT**: All spec files are located in: `{spec_dir}/`\n"
     prompt += f"The fix request file is at: `{spec_dir}/QA_FIX_REQUEST.md`\n"
 
+    # ── Provider-agnostic path (OpenAI, Windsurf, Copilot, Google, etc.) ──
+    if AgentClient is not None and isinstance(client, AgentClient):
+        return await _run_qa_fixer_agent_client_session(
+            client, spec_dir, fix_session, prompt, project_dir,
+            task_logger, verbose, message_count, tool_count, _rr, _rs_id,
+        )
+
+    # ── Claude SDK path (backward compatible) ──
     try:
         debug("qa_fixer", "Sending query to Claude SDK...")
         await client.query(prompt)
@@ -404,59 +424,18 @@ async def run_qa_fixer_session(
 
         print("\n" + "-" * 70 + "\n")
 
-        # Check if fixes were applied
-        status = get_qa_signoff_status(spec_dir)
-        debug(
-            "qa_fixer",
-            "Fixer session completed",
-            message_count=message_count,
-            tool_count=tool_count,
-            response_length=len(response_text),
-            ready_for_revalidation=status.get("ready_for_qa_revalidation")
-            if status
-            else False,
+        # Shared post-processing: check fix status, save memory
+        _fix_result = await _process_fixer_result(
+            spec_dir, project_dir, fix_session, response_text,
+            message_count, tool_count,
         )
 
-        # Save fixer session insights to memory
-        fixer_discoveries = {
-            "files_understood": {},
-            "patterns_found": [
-                f"QA fixer session {fix_session}: Applied fixes from QA_FIX_REQUEST.md"
-            ],
-            "gotchas_encountered": [],
-        }
-
-        if status and status.get("ready_for_qa_revalidation"):
-            debug_success("qa_fixer", "Fixes applied, ready for QA revalidation")
-            # Save successful fix session to memory
-            await save_session_memory(
-                spec_dir=spec_dir,
-                project_dir=project_dir,
-                subtask_id=f"qa_fixer_{fix_session}",
-                session_num=fix_session,
-                success=True,
-                subtasks_completed=[f"qa_fixer_{fix_session}"],
-                discoveries=fixer_discoveries,
-            )
-        else:
-            # Fixer didn't update the status properly, but we'll trust it worked
-            debug_success("qa_fixer", "Fixes assumed applied (status not updated)")
-            # Still save to memory as successful (fixes were attempted)
-            await save_session_memory(
-                spec_dir=spec_dir,
-                project_dir=project_dir,
-                subtask_id=f"qa_fixer_{fix_session}",
-                session_num=fix_session,
-                success=True,
-                subtasks_completed=[f"qa_fixer_{fix_session}"],
-                discoveries=fixer_discoveries,
-            )
         if _rr and _rs_id:
             try:
                 _rr.end_session(_rs_id)
             except Exception:
                 pass
-        return "fixed", response_text
+        return _fix_result
 
     except Exception as e:
         debug_error(
@@ -473,3 +452,314 @@ async def run_qa_fixer_session(
             except Exception:
                 pass
         return "error", str(e)
+
+
+# =============================================================================
+# PROVIDER-AGNOSTIC QA FIXER SESSION (AgentClient path)
+# =============================================================================
+
+
+async def _run_qa_fixer_agent_client_session(
+    client: "AgentClient",
+    spec_dir: Path,
+    fix_session: int,
+    prompt: str,
+    project_dir: Path | None,
+    task_logger: Any,
+    verbose: bool,
+    message_count: int,
+    tool_count: int,
+    _rr: Any,
+    _rs_id: Any,
+) -> tuple[str, str]:
+    """
+    Provider-agnostic QA fixer session using normalized AgentMessage stream.
+
+    This is the equivalent of the Claude SDK path in run_qa_fixer_session()
+    but processes ContentBlockType-based blocks from any AgentClient provider
+    (OpenAI, Windsurf, Copilot, Google, Mistral, etc.).
+    """
+    provider = client.provider_name()
+    debug_section("qa_fixer", f"QA Fixer Session [{provider}]")
+    debug(
+        "qa_fixer",
+        f"Starting {provider} QA fixer session",
+        spec_dir=str(spec_dir),
+        fix_session=fix_session,
+    )
+    print(f"Sending QA fixer prompt to {provider} agent...\n")
+
+    current_tool = None
+
+    try:
+        debug("qa_fixer", f"Sending query to {provider}...")
+        await client.query(prompt)
+        debug_success("qa_fixer", "Query sent successfully")
+
+        response_text = ""
+        debug("qa_fixer", "Starting to receive response stream...")
+
+        async for agent_msg in client.receive_response():
+            message_count += 1
+            debug_detailed(
+                "qa_fixer",
+                f"Received message #{message_count}",
+                msg_type=agent_msg.type_name,
+            )
+
+            for block in agent_msg.content:
+                if block.type == ContentBlockType.TEXT and block.text:
+                    response_text += block.text
+                    print(block.text, end="", flush=True)
+                    if task_logger and block.text.strip():
+                        task_logger.log(
+                            block.text,
+                            LogEntryType.TEXT,
+                            LogPhase.VALIDATION,
+                            print_to_console=False,
+                        )
+                    # Record agent response in replay
+                    if _rr and _rs_id and block.text.strip():
+                        try:
+                            _rr.record_response(_rs_id, block.text)
+                        except Exception:
+                            pass
+
+                elif block.type == ContentBlockType.TOOL_USE:
+                    tool_name = block.tool_name or ""
+                    tool_count += 1
+                    tool_input_display = None
+                    inp = block.tool_input or {}
+
+                    if inp:
+                        if "file_path" in inp:
+                            fp = inp["file_path"]
+                            if len(fp) > 50:
+                                fp = "..." + fp[-47:]
+                            tool_input_display = fp
+                        elif "command" in inp:
+                            cmd = inp["command"]
+                            if len(cmd) > 50:
+                                cmd = cmd[:47] + "..."
+                            tool_input_display = cmd
+                        elif "pattern" in inp:
+                            tool_input_display = f"pattern: {inp['pattern']}"
+
+                    debug(
+                        "qa_fixer",
+                        f"Tool call #{tool_count}: {tool_name}",
+                        tool_input=tool_input_display,
+                    )
+
+                    if task_logger:
+                        task_logger.tool_start(
+                            tool_name,
+                            tool_input_display,
+                            LogPhase.VALIDATION,
+                            print_to_console=True,
+                        )
+                    else:
+                        print(f"\n[Fixer Tool: {tool_name}]", flush=True)
+
+                    if verbose and inp:
+                        input_str = str(inp)
+                        if len(input_str) > 300:
+                            print(f"   Input: {input_str[:300]}...", flush=True)
+                        else:
+                            print(f"   Input: {input_str}", flush=True)
+                    current_tool = tool_name
+
+                    # Record tool use in replay
+                    if _rr and _rs_id:
+                        try:
+                            if (
+                                tool_name in ("Edit", "Write")
+                                and inp
+                                and inp.get("file_path")
+                            ):
+                                _op = "update" if tool_name == "Edit" else "create"
+                                _after = str(
+                                    inp.get("new_string")
+                                    or inp.get("content")
+                                    or ""
+                                )
+                                _rr.record_file_change(
+                                    _rs_id,
+                                    inp["file_path"],
+                                    operation=_op,
+                                    after_content=_after,
+                                )
+                            elif tool_name == "Bash" and inp and inp.get("command"):
+                                _rr.record_command(_rs_id, inp["command"])
+                            else:
+                                _rr.record_tool_call(
+                                    _rs_id, tool_name, tool_input_dict=inp or {}
+                                )
+                        except Exception:
+                            pass
+
+                elif block.type == ContentBlockType.TOOL_RESULT:
+                    is_error = block.is_error
+                    result_content = block.result_content or ""
+
+                    if is_error:
+                        debug_error(
+                            "qa_fixer",
+                            f"Tool error: {current_tool}",
+                            error=str(result_content)[:200],
+                        )
+                        error_str = str(result_content)[:500]
+                        print(f"   [Error] {error_str}", flush=True)
+                        if task_logger and current_tool:
+                            task_logger.tool_end(
+                                current_tool,
+                                success=False,
+                                result=error_str[:100],
+                                detail=str(result_content),
+                                phase=LogPhase.VALIDATION,
+                            )
+                    else:
+                        debug_detailed(
+                            "qa_fixer",
+                            f"Tool success: {current_tool}",
+                            result_length=len(str(result_content)),
+                        )
+                        if verbose:
+                            result_str = str(result_content)[:200]
+                            print(f"   [Done] {result_str}", flush=True)
+                        else:
+                            print("   [Done]", flush=True)
+                        if task_logger and current_tool:
+                            detail_content = None
+                            if current_tool in (
+                                "Read",
+                                "Grep",
+                                "Bash",
+                                "Edit",
+                                "Write",
+                            ):
+                                result_str = str(result_content)
+                                if len(result_str) < 50000:
+                                    detail_content = result_str
+                            task_logger.tool_end(
+                                current_tool,
+                                success=True,
+                                detail=detail_content,
+                                phase=LogPhase.VALIDATION,
+                            )
+
+                    # Record tool result in replay
+                    if _rr and _rs_id and current_tool:
+                        try:
+                            _result_str = str(result_content)[:2000]
+                            if current_tool == "Bash":
+                                _rr.record_command_output(
+                                    _rs_id, _result_str, is_error=is_error
+                                )
+                            elif current_tool not in ("Edit", "Write"):
+                                _rr.record_tool_result(
+                                    _rs_id,
+                                    current_tool,
+                                    output=_result_str,
+                                    success=not is_error,
+                                )
+                        except Exception:
+                            pass
+
+                    current_tool = None
+
+        print("\n" + "-" * 70 + "\n")
+
+        # Shared post-processing: check fix status, save memory
+        _fix_result = await _process_fixer_result(
+            spec_dir, project_dir, fix_session, response_text,
+            message_count, tool_count,
+        )
+
+        if _rr and _rs_id:
+            try:
+                _rr.end_session(_rs_id)
+            except Exception:
+                pass
+        return _fix_result
+
+    except Exception as e:
+        debug_error(
+            "qa_fixer",
+            f"QA fixer session exception [{provider}]: {e}",
+            exception_type=type(e).__name__,
+        )
+        print(f"Error during fixer session: {e}")
+        if task_logger:
+            task_logger.log_error(f"QA fixer error: {e}", LogPhase.VALIDATION)
+        if _rr and _rs_id:
+            try:
+                _rr.end_session(_rs_id)
+            except Exception:
+                pass
+        return "error", str(e)
+
+
+# =============================================================================
+# SHARED FIXER RESULT POST-PROCESSING
+# =============================================================================
+
+
+async def _process_fixer_result(
+    spec_dir: Path,
+    project_dir: Path | None,
+    fix_session: int,
+    response_text: str,
+    message_count: int,
+    tool_count: int,
+) -> tuple[str, str]:
+    """
+    Shared post-processing logic for QA fixer sessions.
+
+    Checks implementation_plan.json for fix status, saves memory insights.
+    Used by both the Claude SDK path and the AgentClient path.
+    """
+    status = get_qa_signoff_status(spec_dir)
+    debug(
+        "qa_fixer",
+        "Fixer session completed",
+        message_count=message_count,
+        tool_count=tool_count,
+        response_length=len(response_text),
+        ready_for_revalidation=status.get("ready_for_qa_revalidation")
+        if status
+        else False,
+    )
+
+    fixer_discoveries = {
+        "files_understood": {},
+        "patterns_found": [
+            f"QA fixer session {fix_session}: Applied fixes from QA_FIX_REQUEST.md"
+        ],
+        "gotchas_encountered": [],
+    }
+
+    if status and status.get("ready_for_qa_revalidation"):
+        debug_success("qa_fixer", "Fixes applied, ready for QA revalidation")
+        await save_session_memory(
+            spec_dir=spec_dir,
+            project_dir=project_dir,
+            subtask_id=f"qa_fixer_{fix_session}",
+            session_num=fix_session,
+            success=True,
+            subtasks_completed=[f"qa_fixer_{fix_session}"],
+            discoveries=fixer_discoveries,
+        )
+    else:
+        debug_success("qa_fixer", "Fixes assumed applied (status not updated)")
+        await save_session_memory(
+            spec_dir=spec_dir,
+            project_dir=project_dir,
+            subtask_id=f"qa_fixer_{fix_session}",
+            session_num=fix_session,
+            success=True,
+            subtasks_completed=[f"qa_fixer_{fix_session}"],
+            discoveries=fixer_discoveries,
+        )
+
+    return "fixed", response_text
