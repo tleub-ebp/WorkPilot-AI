@@ -638,7 +638,7 @@ jobs:
 
       - name: Create Release
         if: ${{ github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && inputs.dry_run != true) }}
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@v3
         with:
           tag_name: v${{ steps.changelog.outputs.version }}
           body: |
