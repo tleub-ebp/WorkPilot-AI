@@ -2786,7 +2786,9 @@ export class UsageMonitor extends EventEmitter {
 			seatCreditsTotal + addOnCreditsAvailable + addOnCreditsUsed;
 		const usedCredits = addOnCreditsUsed;
 
-		// Usage percentage: how much of the total credits have been consumed
+		// Usage percentage: use credits as the primary metric for API-based data
+		// Note: The API returns credits, while the cache local returns messages.
+		// Both represent the same underlying quota (1 credit ≈ 1 message/token)
 		let sessionPercent = 0;
 		if (totalCredits > 0) {
 			sessionPercent = Math.round((usedCredits / totalCredits) * 100);
@@ -2822,9 +2824,12 @@ export class UsageMonitor extends EventEmitter {
 				: undefined,
 			fetchedAt: new Date(),
 			limitType: weeklyPercent > sessionPercent ? "weekly" : "session",
+			// Show "used / total" credits below the session progress bar
+			sessionUsageValue: usedCredits,
+			sessionUsageLimit: totalCredits,
 			usageWindows: {
-				sessionWindowLabel: "common:usage.windowCredits", // "Crédits utilisés"
-				weeklyWindowLabel: "common:usage.windowBillingCycle", // "Cycle de facturation"
+				sessionWindowLabel: "common:usage.windowDailyQuota", // "Daily quota"
+				weeklyWindowLabel: "common:usage.windowWeeklyQuota", // "Weekly quota"
 			},
 			windsurfCredits: {
 				totalCredits,
@@ -2857,10 +2862,14 @@ export class UsageMonitor extends EventEmitter {
 	): UsageSnapshot {
 		const { usage, startTimestamp, endTimestamp } = planInfo;
 
-		// Messages (prompts) usage percentage
+		// Credits usage percentage (matching API calculation)
+		// Use flexCredits (credits) instead of messages to align with API
 		let sessionPercent = 0;
-		if (usage.messages > 0) {
-			sessionPercent = Math.round((usage.usedMessages / usage.messages) * 100);
+		const creditsTotal = usage.flexCredits + usage.flowActions;
+		if (creditsTotal > 0) {
+			sessionPercent = Math.round(
+				((usage.usedFlexCredits + usage.usedFlowActions) / creditsTotal) * 100,
+			);
 		}
 
 		// Billing cycle progress as "weekly" percentage
@@ -2873,13 +2882,15 @@ export class UsageMonitor extends EventEmitter {
 		}
 
 		// Windsurf/Codeium stores credit counts in hundredths (fixed-point × 100).
-		// E.g. a 500-credit plan stores messages=50000, usedMessages=33600 → 336 credits used.
-		// Detect this by checking if the total is a clean multiple of 100 (e.g. 50000, 100000).
-		// If so, scale down for human-readable display values.
+		// Use credits (flexCredits + flowActions) instead of messages to align with API
+		const totalCredits = usage.flexCredits + usage.flowActions;
+		const usedCredits = usage.usedFlexCredits + usage.usedFlowActions;
+
+		// Detect if values are stored in hundredths (×100) and scale down for display
 		const scale =
-			usage.messages >= 1000 && usage.messages % 100 === 0 ? 100 : 1;
-		const displayTotal = Math.round(usage.messages / scale);
-		const displayUsed = Math.round(usage.usedMessages / scale);
+			totalCredits >= 1000 && totalCredits % 100 === 0 ? 100 : 1;
+		const displayTotal = Math.round(totalCredits / scale);
+		const displayUsed = Math.round(usedCredits / scale);
 		const displayRemaining = Math.max(0, displayTotal - displayUsed);
 
 		return {
@@ -2899,8 +2910,8 @@ export class UsageMonitor extends EventEmitter {
 			sessionUsageValue: displayUsed,
 			sessionUsageLimit: displayTotal,
 			usageWindows: {
-				sessionWindowLabel: "common:usage.windowCredits",
-				weeklyWindowLabel: "common:usage.windowBillingCycle",
+				sessionWindowLabel: "common:usage.windowDailyQuota", // "Daily quota"
+				weeklyWindowLabel: "common:usage.windowWeeklyQuota", // "Weekly quota"
 			},
 			windsurfCredits: {
 				totalCredits: displayTotal,

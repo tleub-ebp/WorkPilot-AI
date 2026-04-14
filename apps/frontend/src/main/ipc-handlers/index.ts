@@ -77,6 +77,7 @@ import {
 } from "./memory-lifecycle-handlers";
 import { registerMultiRepoHandlers } from "./multi-repo-handlers";
 import { setupNaturalLanguageGitHandlers } from "./natural-language-git-handlers";
+import { registerNotebookAgentHandlers } from "./notebook-agent-handlers";
 import { registerPairProgrammingHandlers } from "./pair-programming-handlers";
 import {
 	registerPerformanceProfilerHandlers,
@@ -99,7 +100,9 @@ import { registerScreenshotHandlers } from "./screenshot-handlers";
 import { registerSelfHealingHandlers } from "./self-healing-handlers";
 import { registerSettingsHandlers } from "./settings-handlers";
 import { setupSmartEstimationHandlers } from "./smart-estimation-handlers";
+import { registerAgentCoachHandlers } from "./agent-coach-handlers";
 import { registerSpecApprovalHandlers } from "./spec-approval-handlers";
+import { registerSpecRefinementHandlers } from "./spec-refinement-handlers";
 import { registerTaskHandlers } from "./task-handlers";
 import { registerTeamSyncHandlers } from "./team-sync-handlers";
 import { registerTerminalWorktreeIpcHandlers } from "./terminal";
@@ -182,6 +185,7 @@ export {
 } from "./memory-lifecycle-handlers";
 export { registerMultiRepoHandlers } from "./multi-repo-handlers";
 export { setupNaturalLanguageGitHandlers } from "./natural-language-git-handlers";
+export { registerNotebookAgentHandlers } from "./notebook-agent-handlers";
 export { registerPairProgrammingHandlers } from "./pair-programming-handlers";
 export {
 	registerPerformanceProfilerHandlers,
@@ -204,7 +208,9 @@ export { registerScreenshotHandlers } from "./screenshot-handlers";
 export { registerSelfHealingHandlers } from "./self-healing-handlers";
 export { registerSettingsHandlers } from "./settings-handlers";
 export { setupSmartEstimationHandlers } from "./smart-estimation-handlers";
+export { registerAgentCoachHandlers } from "./agent-coach-handlers";
 export { registerSpecApprovalHandlers } from "./spec-approval-handlers";
+export { registerSpecRefinementHandlers } from "./spec-refinement-handlers";
 export { registerTaskHandlers } from "./task-handlers";
 export { registerTeamSyncHandlers } from "./team-sync-handlers";
 export { registerTerminalWorktreeIpcHandlers } from "./terminal";
@@ -462,6 +468,15 @@ export function setupIpcHandlers(
 
 	// Release Coordinator handlers (multi-service semver plan)
 	registerReleaseCoordinatorHandlers();
+
+	// Notebook Agent handlers (.ipynb discovery, parse, lint)
+	registerNotebookAgentHandlers();
+
+	// Spec Refinement handlers (load persisted refinement histories)
+	registerSpecRefinementHandlers();
+
+	// Agent Coach handlers (analyse persisted agent run records)
+	registerAgentCoachHandlers();
 
 	console.warn("[IPC] All handler modules registered successfully");
 }

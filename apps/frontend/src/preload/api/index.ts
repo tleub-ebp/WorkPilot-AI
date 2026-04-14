@@ -46,6 +46,18 @@ import {
 	createReleaseCoordinatorAPI,
 } from "./modules/release-coordinator-api";
 import {
+	type NotebookAgentAPI,
+	createNotebookAgentAPI,
+} from "./modules/notebook-agent-api";
+import {
+	type SpecRefinementAPI,
+	createSpecRefinementAPI,
+} from "./modules/spec-refinement-api";
+import {
+	type AgentCoachAPI,
+	createAgentCoachAPI,
+} from "./modules/agent-coach-api";
+import {
 	type I18nAgentAPI,
 	createI18nAgentAPI,
 } from "./modules/i18n-agent-api";
@@ -175,6 +187,8 @@ export interface ElectronAPI
 		ApiWatcherAPI,
 		GitSurgeonAPI,
 		ReleaseCoordinatorAPI,
+		NotebookAgentAPI,
+		SpecRefinementAPI,
 		VisualProgrammingAPI {
 	github: GitHubAPI;
 	/** Queue routing API for rate limit recovery */
@@ -274,6 +288,8 @@ export const createElectronAPI = (): ElectronAPI => {
 		...createApiWatcherAPI(),
 		...createGitSurgeonAPI(),
 		...createReleaseCoordinatorAPI(),
+		...createNotebookAgentAPI(),
+		...createSpecRefinementAPI(),
 		...createVisualProgrammingAPI(),
 		github: createGitHubAPI(),
 		queue: createQueueAPI(), // Queue routing for rate limit recovery

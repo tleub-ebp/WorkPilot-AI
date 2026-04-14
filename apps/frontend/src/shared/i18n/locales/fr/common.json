@@ -527,6 +527,8 @@
 		"windowMonthlyToolsQuota": "Quota mensuel d'outils",
 		"windowCredits": "Crédits utilisés",
 		"windowBillingCycle": "Cycle de facturation",
+		"windowDailyQuota": "Quota quotidien",
+		"windowWeeklyQuota": "Quota hebdomadaire",
 		"otherAccounts": "Autres comptes",
 		"setActive": "Définir comme actif",
 		"next": "Suivant",

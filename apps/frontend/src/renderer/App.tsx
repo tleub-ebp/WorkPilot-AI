@@ -1734,8 +1734,16 @@ export function App() {
 													</div>
 												)}
 												{activeView === "consensus-arbiter" && <ConsensusView />}
-												{activeView === "notebook-agent" && <NotebookView />}
-												{activeView === "spec-refinement" && <RefinementHistoryView />}
+												{activeView === "notebook-agent" && (
+													<div className="overflow-auto" style={{ height: 'calc(100vh - 100px)' }}>
+														<NotebookView projectPath={selectedProject?.path} />
+													</div>
+												)}
+												{activeView === "spec-refinement" && (
+													<div className="overflow-auto" style={{ height: 'calc(100vh - 100px)' }}>
+														<RefinementHistoryView projectPath={selectedProject?.path} />
+													</div>
+												)}
 												{activeView === "agent-coach" && <CoachReportView />}
 											</>
 										) : (

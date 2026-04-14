@@ -527,6 +527,8 @@
 		"windowMonthlyToolsQuota": "Monthly Tools Quota",
 		"windowCredits": "Credits used",
 		"windowBillingCycle": "Billing cycle",
+		"windowDailyQuota": "Daily quota",
+		"windowWeeklyQuota": "Weekly quota",
 		"otherAccounts": "Other Accounts",
 		"setActive": "Set as active",
 		"next": "Next",

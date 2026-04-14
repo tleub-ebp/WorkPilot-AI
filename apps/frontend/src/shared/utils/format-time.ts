@@ -35,6 +35,8 @@ const USAGE_WINDOW_LABEL_MAP: Readonly<Record<string, string>> = {
 	"7-day window": "window7Day",
 	"5 Hours Quota": "window5HoursQuota",
 	"Monthly Tools Quota": "windowMonthlyToolsQuota",
+	"Daily quota": "windowDailyQuota",
+	"Weekly quota": "windowWeeklyQuota",
 } as const;
 
 /**
@@ -130,34 +132,30 @@ export function formatTimeRemaining(
 		daysKey = "common:usage.resetsInDays",
 	} = options;
 
-	try {
-		const date = new Date(timestamp);
+	const date = new Date(timestamp);
 
-		// Handle invalid dates (isNaN check before using getTime())
-		if (Number.isNaN(date.getTime())) return undefined;
+	// Handle invalid dates (isNaN check before using getTime())
+	if (Number.isNaN(date.getTime())) return undefined;
 
-		const now = new Date();
-		const diffMs = date.getTime() - now.getTime();
+	const now = new Date();
+	const diffMs = date.getTime() - now.getTime();
 
-		// Handle past dates
-		if (diffMs < 0) {
-			// Return undefined for past dates - caller can provide fallback
-			return undefined;
-		}
-
-		const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
-		const diffMins = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
-
-		if (diffHours < 24) {
-			return t(hoursKey, { hours: diffHours, minutes: diffMins });
-		}
-
-		const diffDays = Math.floor(diffHours / 24);
-		const remainingHours = diffHours % 24;
-		return t(daysKey, { days: diffDays, hours: remainingHours });
-	} catch (_error) {
+	// Handle past dates
+	if (diffMs < 0) {
+		// Return undefined for past dates - caller can provide fallback
 		return undefined;
 	}
+
+	const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+	const diffMins = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
+
+	if (diffHours < 24) {
+		return t(hoursKey, { hours: diffHours, minutes: diffMins });
+	}
+
+	const diffDays = Math.floor(diffHours / 24);
+	const remainingHours = diffHours % 24;
+	return t(daysKey, { days: diffDays, hours: remainingHours });
 }
 
 /**
@@ -182,29 +180,25 @@ export function formatTimeRemainingSimple(
 ): string {
 	if (!timestamp) return "Unknown";
 
-	try {
-		const date = new Date(timestamp);
+	const date = new Date(timestamp);
 
-		// Handle invalid dates
-		if (Number.isNaN(date.getTime())) return "Unknown";
+	// Handle invalid dates
+	if (Number.isNaN(date.getTime())) return "Unknown";
 
-		const now = new Date();
-		const diffMs = date.getTime() - now.getTime();
+	const now = new Date();
+	const diffMs = date.getTime() - now.getTime();
 
-		// Handle past dates
-		if (diffMs < 0) return "Expired";
+	// Handle past dates
+	if (diffMs < 0) return "Expired";
 
-		const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
-		const diffMins = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
+	const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+	const diffMins = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
 
-		if (diffHours < 24) {
-			return `${diffHours}h ${diffMins}m`;
-		}
-
-		const diffDays = Math.floor(diffHours / 24);
-		const remainingHours = diffHours % 24;
-		return `${diffDays}d ${remainingHours}h`;
-	} catch (_error) {
-		return "Unknown";
+	if (diffHours < 24) {
+		return `${diffHours}h ${diffMins}m`;
 	}
+
+	const diffDays = Math.floor(diffHours / 24);
+	const remainingHours = diffHours % 24;
+	return `${diffDays}d ${remainingHours}h`;
 }
