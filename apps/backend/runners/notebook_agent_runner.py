@@ -106,7 +106,7 @@ def run_scan(project_path: Path) -> dict[str, Any]:
             nb = handler.parse(path)
             handler.analyze(nb)
             notebooks.append(_notebook_to_dict(nb, project_path))
-        except (OSError, json.JSONDecodeError, ValueError) as exc:
+        except (OSError, ValueError) as exc:
             _emit_event("progress", {"status": f"Failed to parse {path.name}: {exc}"})
 
     total_issues = sum(len(nb["issues"]) for nb in notebooks)
