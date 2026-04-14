@@ -75,6 +75,7 @@ import {
 import { preWarmToolCache } from "./cli-tool-manager";
 import { initializeUsageMonitorForwarding } from "./ipc-handlers/terminal-handlers";
 import { setupIpcHandlers } from "./ipc-setup";
+import { initializeCredentialIntegration } from "./services/credential-integration";
 import { ensureOAuthServerRunning } from "./oauth-server";
 import { isMacOS, isWindows } from "./platform";
 import { pythonEnvManager } from "./python-env-manager";
@@ -941,6 +942,11 @@ async function main() {
 		() => mainWindow,
 		pythonEnvManager,
 	);
+
+	// Initialize credential integration to load Windsurf usage data from local cache
+	initializeCredentialIntegration().catch((error) => {
+		console.warn("[main] Failed to initialize credential integration:", error);
+	});
 
 	// Create window
 	createWindow();

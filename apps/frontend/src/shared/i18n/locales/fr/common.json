@@ -529,6 +529,8 @@
 		"windowBillingCycle": "Cycle de facturation",
 		"windowDailyQuota": "Quota quotidien",
 		"windowWeeklyQuota": "Quota hebdomadaire",
+		"windowMonthlyQuota": "Quota mensuel",
+		"windowMonthlyProgress": "Progression mensuelle",
 		"otherAccounts": "Autres comptes",
 		"setActive": "Définir comme actif",
 		"next": "Suivant",

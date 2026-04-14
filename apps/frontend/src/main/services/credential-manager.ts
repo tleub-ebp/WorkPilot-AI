@@ -2312,10 +2312,12 @@ export async function readWindsurfCachedPlanInfo(): Promise<{
 
 			const planInfo = JSON.parse(planInfoRaw) as WindsurfCachedPlanInfo;
 
-			// Check if the cached plan info is stale (from a previous billing cycle)
-			// by comparing with the current billing cycle in the protobuf data.
-			// The userStatusProtoBinaryBase64 is refreshed on each IDE session and
-			// contains the authoritative billing cycle dates.
+			// DO NOT use protobuf for usage counters - they contain incorrect data
+			// The cache local (windsurf.settings.cachedPlanInfo) contains the correct usage data
+			// that is updated by Windsurf IDE on each usage.
+			// Only use protobuf for billing cycle timestamps if needed for stale detection.
+			// DO NOT reset usage counters to 0 - this would erase correct usage data.
+			// The cache local should only be used for metadata, not for usage counters.
 			const authStatusRaw = readWindsurfKey(db, "windsurfAuthStatus");
 			if (authStatusRaw) {
 				try {
@@ -2336,6 +2338,7 @@ export async function readWindsurfCachedPlanInfo(): Promise<{
 							// The cachedPlanInfo is stale if its endTimestamp <= the weekly window start
 							// (meaning it's from the previous billing cycle)
 							if (planInfo.endTimestamp <= weeklyWindowStartMs) {
+								console.log("[readWindsurfCachedPlanInfo] Cached plan info is stale, updating billing cycle");
 								// Calculate the new monthly billing cycle duration from the previous cycle
 								const previousCycleDuration = planInfo.endTimestamp - planInfo.startTimestamp;
 								// The new monthly cycle starts when the previous one ended (Apr 11), not the weekly window (Apr 14)
@@ -2352,46 +2355,13 @@ export async function readWindsurfCachedPlanInfo(): Promise<{
 									planInfo.usage.flowActions = billing.totalFlowActions;
 								}
 
-								// Use current usage counters from protobuf (field 6 = used messages, field 7 = used flow actions)
-								// The protobuf userStatus is refreshed on each IDE session and contains
-								// the authoritative current-cycle usage data.
-								planInfo.usage.usedMessages = billing.usedMessages;
-								planInfo.usage.remainingMessages = Math.max(
-									0,
-									planInfo.usage.messages - billing.usedMessages,
-								);
-								planInfo.usage.usedFlowActions = billing.usedFlowActions;
-								planInfo.usage.remainingFlowActions = Math.max(
-									0,
-									planInfo.usage.flowActions - billing.usedFlowActions,
-								);
-								planInfo.usage.usedFlexCredits = 0;
-								planInfo.usage.remainingFlexCredits =
-									planInfo.usage.flexCredits;
-							}
-							// Cache is current billing cycle — both sources may have been updated at
-							// different times. Since usage can only increase within a billing cycle,
-							// take the HIGHER value to avoid showing stale (lower) numbers.
-							if (billing.usedMessages > 0) {
-								if (billing.usedMessages > planInfo.usage.usedMessages) {
-									planInfo.usage.usedMessages = billing.usedMessages;
-									planInfo.usage.remainingMessages = Math.max(
-										0,
-										planInfo.usage.messages - billing.usedMessages,
-									);
-								} else if (billing.usedMessages < planInfo.usage.usedMessages) {
-									// noop
-								}
-							}
-							if (
-								billing.usedFlowActions > 0 &&
-								billing.usedFlowActions > planInfo.usage.usedFlowActions
-							) {
-								planInfo.usage.usedFlowActions = billing.usedFlowActions;
-								planInfo.usage.remainingFlowActions = Math.max(
-									0,
-									planInfo.usage.flowActions - billing.usedFlowActions,
-								);
+								// DO NOT reset usage counters to 0 - this would erase correct usage data
+								// The cache local usage counters should be preserved as they contain the actual usage
+								// Only reset if the cache local itself is completely missing or corrupted
+								console.log("[readWindsurfCachedPlanInfo] Preserving usage counters from cache:", {
+									usedMessages: planInfo.usage.usedMessages,
+									usedFlowActions: planInfo.usage.usedFlowActions,
+								});
 							}
 						}
 					}

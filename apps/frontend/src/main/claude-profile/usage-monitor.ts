@@ -2775,23 +2775,36 @@ export class UsageMonitor extends EventEmitter {
 		profileName: string,
 		profileEmail?: string,
 	): UsageSnapshot {
+		// Try to use messages if available (matching cache local calculation)
+		const totalMessages = data.totalMessages ?? 0;
+		const usedMessages = data.usedMessages ?? 0;
+
 		const promptCreditsPerSeat = data.promptCreditsPerSeat ?? 0;
 		const numSeats = data.numSeats ?? 1;
 		const addOnCreditsAvailable = data.addOnCreditsAvailable ?? 0;
 		const addOnCreditsUsed = data.addOnCreditsUsed ?? 0;
 
-		// Calculate total and used credits
 		const seatCreditsTotal = promptCreditsPerSeat * numSeats;
 		const totalCredits =
 			seatCreditsTotal + addOnCreditsAvailable + addOnCreditsUsed;
 		const usedCredits = addOnCreditsUsed;
 
-		// Usage percentage: use credits as the primary metric for API-based data
-		// Note: The API returns credits, while the cache local returns messages.
-		// Both represent the same underlying quota (1 credit ≈ 1 message/token)
 		let sessionPercent = 0;
-		if (totalCredits > 0) {
-			sessionPercent = Math.round((usedCredits / totalCredits) * 100);
+		let displayTotal = 0;
+		let displayUsed = 0;
+
+		if (totalMessages > 0) {
+			// Use messages (primary metric - matches Windsurf IDE display)
+			sessionPercent = Math.round((usedMessages / totalMessages) * 100);
+			displayTotal = totalMessages;
+			displayUsed = usedMessages;
+		} else {
+			// Fallback to credits if messages not available
+			if (totalCredits > 0) {
+				sessionPercent = Math.round((usedCredits / totalCredits) * 100);
+			}
+			displayTotal = totalCredits;
+			displayUsed = usedCredits;
 		}
 
 		// Billing cycle progress as "weekly" percentage
@@ -2824,17 +2837,17 @@ export class UsageMonitor extends EventEmitter {
 				: undefined,
 			fetchedAt: new Date(),
 			limitType: weeklyPercent > sessionPercent ? "weekly" : "session",
-			// Show "used / total" credits below the session progress bar
-			sessionUsageValue: usedCredits,
-			sessionUsageLimit: totalCredits,
+			// Show "used / total" messages/credits below the session progress bar
+			sessionUsageValue: displayUsed,
+			sessionUsageLimit: displayTotal,
 			usageWindows: {
 				sessionWindowLabel: "common:usage.windowDailyQuota", // "Daily quota"
 				weeklyWindowLabel: "common:usage.windowWeeklyQuota", // "Weekly quota"
 			},
 			windsurfCredits: {
-				totalCredits,
-				usedCredits,
-				remainingCredits: totalCredits - usedCredits,
+				totalCredits: displayTotal,
+				usedCredits: displayUsed,
+				remainingCredits: displayTotal - displayUsed,
 				seatCreditsTotal,
 				addOnCreditsAvailable,
 				addOnCreditsUsed,
@@ -2862,36 +2875,33 @@ export class UsageMonitor extends EventEmitter {
 	): UsageSnapshot {
 		const { usage, startTimestamp, endTimestamp } = planInfo;
 
-		// Credits usage percentage (matching API calculation)
-		// Use flexCredits (credits) instead of messages to align with API
-		let sessionPercent = 0;
-		const creditsTotal = usage.flexCredits + usage.flowActions;
-		if (creditsTotal > 0) {
-			sessionPercent = Math.round(
-				((usage.usedFlexCredits + usage.usedFlowActions) / creditsTotal) * 100,
-			);
-		}
-
-		// Billing cycle progress as "weekly" percentage
-		let weeklyPercent = 0;
-		const now = Date.now();
-		if (endTimestamp > startTimestamp && now >= startTimestamp) {
-			const cycleDuration = endTimestamp - startTimestamp;
-			const elapsed = Math.min(now - startTimestamp, cycleDuration);
-			weeklyPercent = Math.round((elapsed / cycleDuration) * 100);
-		}
-
-		// Windsurf/Codeium stores credit counts in hundredths (fixed-point × 100).
-		// Use credits (flexCredits + flowActions) instead of messages to align with API
-		const totalCredits = usage.flexCredits + usage.flowActions;
-		const usedCredits = usage.usedFlexCredits + usage.usedFlowActions;
-
-		// Detect if values are stored in hundredths (×100) and scale down for display
-		const scale =
-			totalCredits >= 1000 && totalCredits % 100 === 0 ? 100 : 1;
-		const displayTotal = Math.round(totalCredits / scale);
-		const displayUsed = Math.round(usedCredits / scale);
+		// Windsurf/Codeium stores message counts in hundredths (fixed-point × 100).
+		// E.g. a 500-message plan stores messages=50000, usedMessages=33600 → 336 messages used.
+		// Detect this by checking if the total is a clean multiple of 100 (e.g. 50000, 100000).
+		// If so, scale down for human-readable display values.
+		const scale = usage.messages >= 1000 && usage.messages % 100 === 0 ? 100 : 1;
+		const displayTotal = Math.round(usage.messages / scale);
+		const displayUsed = Math.round(usage.usedMessages / scale);
 		const displayRemaining = Math.max(0, displayTotal - displayUsed);
+
+		// Since March 2026, Windsurf uses a quota-based system with daily and weekly allowances
+		// instead of the old monthly credit-based system.
+		// The cached data still uses the old monthly format, so we need to adapt.
+		// For now, we'll show the monthly usage as the session percentage and calculate weekly based on time elapsed.
+
+		// Messages (prompts) usage percentage (session = monthly in old system)
+		let sessionPercent = 0;
+		if (usage.messages > 0) {
+			sessionPercent = Math.round((usage.usedMessages / usage.messages) * 100);
+		}
+
+		// Weekly usage percentage (estimated as monthly usage / 4)
+		// Since the cached data is monthly but Windsurf now uses daily/weekly quotas,
+		// we estimate weekly usage by dividing monthly usage by 4 weeks
+		let weeklyPercent = 0;
+		if (sessionPercent > 0) {
+			weeklyPercent = Math.round(sessionPercent / 4);
+		}
 
 		return {
 			sessionPercent,
@@ -2906,12 +2916,12 @@ export class UsageMonitor extends EventEmitter {
 			providerName: "windsurf",
 			fetchedAt: new Date(),
 			limitType: "session",
-			// Show "used / total" credits below the session progress bar
+			// Show "used / total" messages below the session progress bar
 			sessionUsageValue: displayUsed,
 			sessionUsageLimit: displayTotal,
 			usageWindows: {
-				sessionWindowLabel: "common:usage.windowDailyQuota", // "Daily quota"
-				weeklyWindowLabel: "common:usage.windowWeeklyQuota", // "Weekly quota"
+				sessionWindowLabel: "common:usage.windowWeeklyQuota", // "Weekly quota (estimated from monthly)"
+				weeklyWindowLabel: "common:usage.windowMonthlyQuota", // "Monthly quota" (old system)
 			},
 			windsurfCredits: {
 				totalCredits: displayTotal,
