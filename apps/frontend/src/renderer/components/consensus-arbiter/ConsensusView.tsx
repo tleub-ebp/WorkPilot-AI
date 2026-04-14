@@ -1,8 +1,13 @@
 import type React from "react";
+import { useEffect } from "react";
 import { useTranslation } from "react-i18next";
+import {
+	setupConsensusArbiterListeners,
+	useConsensusArbiterStore,
+} from "../../stores/consensus-arbiter-store";
 import type {
-	ConsensusResult,
 	ConflictSeverity,
+	ConsensusResult,
 } from "../../../shared/types/consensus-arbiter";
 
 const SEVERITY_STYLES: Record<ConflictSeverity, string> = {
@@ -13,29 +18,23 @@ const SEVERITY_STYLES: Record<ConflictSeverity, string> = {
 };
 
 interface ConsensusViewProps {
-	readonly result?: ConsensusResult;
+	readonly projectPath?: string;
 }
 
-export function ConsensusView({
+function ResultBody({
 	result,
-}: ConsensusViewProps): React.ReactElement {
-	const { t } = useTranslation("consensusArbiter");
-	if (!result) {
-		return (
-			<div className="flex items-center justify-center h-full text-(--text-secondary)">
-				<p>{t("noData")}</p>
-			</div>
-		);
-	}
+	t,
+}: {
+	readonly result: ConsensusResult;
+	readonly t: (key: string, opts?: Record<string, unknown>) => string;
+}): React.ReactElement {
 	return (
-		<div className="flex flex-col gap-4 p-6 bg-(--bg-primary) text-(--text-primary)">
-			<div>
-				<h2 className="text-lg font-semibold">{t("title")}</h2>
-				<p className="text-sm text-(--text-secondary)">
-					{result.conflicts.length} {t("disagreements")} · {result.resolvedCount}{" "}
-					{t("agreements")} · {result.escalatedCount} {t("escalated")}
-				</p>
-			</div>
+		<>
+			<p className="text-sm text-(--text-secondary)">
+				{result.conflicts.length} {t("disagreements")} ·{" "}
+				{result.resolvedCount} {t("agreements")} · {result.escalatedCount}{" "}
+				{t("escalated")}
+			</p>
 
 			{result.allResolved ? (
 				<div className="p-3 rounded-lg bg-green-500/10 border border-green-500/20 text-green-400 text-sm">
@@ -73,7 +72,6 @@ export function ConsensusView({
 							</div>
 						</div>
 
-						{/* Agent opinions */}
 						<div className="space-y-1 mb-2">
 							{conflict.opinions.map((op) => (
 								<div
@@ -83,12 +81,8 @@ export function ConsensusView({
 									<span className="font-medium w-24 shrink-0">
 										{op.agentName}
 									</span>
-									<span className="opacity-70 w-16 shrink-0">
-										{op.domain}
-									</span>
-									<span className="flex-1 truncate">
-										{op.recommendation}
-									</span>
+									<span className="opacity-70 w-16 shrink-0">{op.domain}</span>
+									<span className="flex-1 truncate">{op.recommendation}</span>
 									<span className="opacity-70">
 										{(op.confidence * 100).toFixed(0)}%
 									</span>
@@ -109,6 +103,94 @@ export function ConsensusView({
 				<p className="text-sm text-(--text-secondary) italic mt-2">
 					{result.consensusSummary}
 				</p>
+			)}
+		</>
+	);
+}
+
+export function ConsensusView({
+	projectPath,
+}: ConsensusViewProps): React.ReactElement {
+	const { t } = useTranslation("consensusArbiter");
+
+	useEffect(() => {
+		const cleanup = setupConsensusArbiterListeners();
+		return cleanup;
+	}, []);
+
+	const phase = useConsensusArbiterStore((s) => s.phase);
+	const status = useConsensusArbiterStore((s) => s.status);
+	const result = useConsensusArbiterStore((s) => s.result);
+	const error = useConsensusArbiterStore((s) => s.error);
+	const startScan = useConsensusArbiterStore((s) => s.startScan);
+	const cancelScan = useConsensusArbiterStore((s) => s.cancelScan);
+	const reset = useConsensusArbiterStore((s) => s.reset);
+
+	const handleRun = (): void => {
+		if (!projectPath) return;
+		void startScan(projectPath);
+	};
+
+	const isScanning = phase === "scanning";
+
+	return (
+		<div className="flex flex-col gap-4 p-6 bg-(--bg-primary) text-(--text-primary)">
+			<div className="flex items-center justify-between">
+				<h2 className="text-lg font-semibold">{t("title")}</h2>
+				<div className="flex gap-2">
+					{!isScanning && (
+						<button
+							type="button"
+							onClick={handleRun}
+							disabled={!projectPath}
+							className="px-3 py-1.5 rounded-md bg-blue-500 hover:bg-blue-600 disabled:bg-gray-500 disabled:cursor-not-allowed text-white text-sm font-medium transition-colors"
+						>
+							{t("actions.runScan")}
+						</button>
+					)}
+					{isScanning && (
+						<button
+							type="button"
+							onClick={() => void cancelScan()}
+							className="px-3 py-1.5 rounded-md bg-red-500 hover:bg-red-600 text-white text-sm font-medium transition-colors"
+						>
+							{t("actions.cancel")}
+						</button>
+					)}
+					{phase === "complete" && (
+						<button
+							type="button"
+							onClick={reset}
+							className="px-3 py-1.5 rounded-md border border-(--border-color) hover:bg-(--bg-secondary) text-sm font-medium transition-colors"
+						>
+							{t("actions.reset")}
+						</button>
+					)}
+				</div>
+			</div>
+
+			{!projectPath && (
+				<p className="text-sm text-(--text-secondary)">
+					{t("errors.noProject")}
+				</p>
+			)}
+
+			{isScanning && (
+				<p className="text-sm text-(--text-secondary)">
+					{status || t("actions.scanning")}
+				</p>
+			)}
+
+			{phase === "error" && error && (
+				<p className="text-sm text-red-400">{error}</p>
+			)}
+
+			{phase === "complete" && result && result.conflicts.length === 0 && (
+				<p className="text-sm text-(--text-secondary)">{t("noData")}</p>
+			)}
+
+			{phase === "complete" && result && result.conflicts.length > 0 && (
+				<ResultBody result={result} t={t} />
 			)}
 		</div>
 	);

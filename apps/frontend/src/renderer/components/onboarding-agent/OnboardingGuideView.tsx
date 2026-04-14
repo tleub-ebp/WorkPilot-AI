@@ -1,29 +1,29 @@
 import type React from "react";
+import { useEffect } from "react";
 import { useTranslation } from "react-i18next";
+import {
+	setupOnboardingAgentListeners,
+	useOnboardingAgentStore,
+} from "../../stores/onboarding-agent-store";
 import type { OnboardingGuide } from "../../../shared/types/onboarding";
 
 interface OnboardingGuideViewProps {
-	readonly guide?: OnboardingGuide;
+	readonly projectPath?: string;
 }
 
-export function OnboardingGuideView({
+function GuideBody({
 	guide,
-}: OnboardingGuideViewProps): React.ReactElement {
-	const { t } = useTranslation("onboardingAgent");
-
-	if (!guide) {
-		return (
-			<div className="flex items-center justify-center h-full text-(--text-secondary)">
-				<p>{t("noData")}</p>
-			</div>
-		);
-	}
+	t,
+}: {
+	guide: OnboardingGuide;
+	t: (key: string, options?: Record<string, unknown>) => string;
+}): React.ReactElement {
 	return (
-		<div className="flex flex-col gap-4 p-6 bg-(--bg-primary) text-(--text-primary)">
+		<div className="flex flex-col gap-4">
 			<div>
-				<h2 className="text-lg font-semibold">{t("title")}</h2>
 				<p className="text-sm text-(--text-secondary)">
-					{guide.projectName} · {t("duration", { minutes: guide.totalEstimatedMinutes })}
+					{guide.projectName} ·{" "}
+					{t("duration", { minutes: guide.totalEstimatedMinutes })}
 				</p>
 				<div className="flex flex-wrap gap-1 mt-1">
 					{guide.techStack.map((tech) => (
@@ -54,14 +54,14 @@ export function OnboardingGuideView({
 								{t("duration", { minutes: step.estimatedMinutes })}
 							</span>
 						</div>
-						<p className="text-sm text-(--text-secondary) mb-2">
+						<p className="text-sm text-(--text-secondary) mb-2 whitespace-pre-wrap">
 							{step.content}
 						</p>
 						{step.commands.length > 0 && (
 							<div className="space-y-1">
-								{step.commands.map((cmd) => (
+								{step.commands.map((cmd, cidx) => (
 									<pre
-										key={cmd}
+										key={`${idx}-${cidx}`}
 										className="px-3 py-1.5 rounded bg-(--bg-secondary) text-xs font-mono text-green-400"
 									>
 										$ {cmd}
@@ -78,6 +78,92 @@ export function OnboardingGuideView({
 					{guide.summary}
 				</p>
 			)}
+		</div>
+	);
+}
+
+export function OnboardingGuideView({
+	projectPath,
+}: OnboardingGuideViewProps): React.ReactElement {
+	const { t } = useTranslation("onboardingAgent");
+
+	useEffect(() => {
+		const cleanup = setupOnboardingAgentListeners();
+		return cleanup;
+	}, []);
+
+	const phase = useOnboardingAgentStore((s) => s.phase);
+	const status = useOnboardingAgentStore((s) => s.status);
+	const guide = useOnboardingAgentStore((s) => s.guide);
+	const error = useOnboardingAgentStore((s) => s.error);
+	const startScan = useOnboardingAgentStore((s) => s.startScan);
+	const cancelScan = useOnboardingAgentStore((s) => s.cancelScan);
+	const reset = useOnboardingAgentStore((s) => s.reset);
+
+	const handleRun = (): void => {
+		if (!projectPath) return;
+		void startScan(projectPath);
+	};
+
+	const isScanning = phase === "scanning";
+
+	return (
+		<div className="flex flex-col gap-4 p-6 bg-(--bg-primary) text-(--text-primary)">
+			<div className="flex items-center justify-between">
+				<h2 className="text-lg font-semibold">{t("title")}</h2>
+				<div className="flex gap-2">
+					{!isScanning && (
+						<button
+							type="button"
+							onClick={handleRun}
+							disabled={!projectPath}
+							className="px-3 py-1.5 rounded-md bg-blue-500 hover:bg-blue-600 disabled:bg-gray-500 disabled:cursor-not-allowed text-white text-sm font-medium transition-colors"
+						>
+							{t("actions.runScan")}
+						</button>
+					)}
+					{isScanning && (
+						<button
+							type="button"
+							onClick={() => void cancelScan()}
+							className="px-3 py-1.5 rounded-md bg-red-500 hover:bg-red-600 text-white text-sm font-medium transition-colors"
+						>
+							{t("actions.cancel")}
+						</button>
+					)}
+					{phase === "complete" && (
+						<button
+							type="button"
+							onClick={reset}
+							className="px-3 py-1.5 rounded-md border border-(--border-color) hover:bg-(--bg-secondary) text-sm font-medium transition-colors"
+						>
+							{t("actions.reset")}
+						</button>
+					)}
+				</div>
+			</div>
+
+			{!projectPath && (
+				<p className="text-sm text-(--text-secondary)">
+					{t("errors.noProject")}
+				</p>
+			)}
+
+			{isScanning && (
+				<p className="text-sm text-(--text-secondary)">
+					{status || t("actions.scanning")}
+				</p>
+			)}
+
+			{phase === "error" && error && (
+				<p className="text-sm text-red-400">{t("errors.failed", { error })}</p>
+			)}
+
+			{phase === "complete" && !guide && (
+				<p className="text-sm text-(--text-secondary)">{t("noData")}</p>
+			)}
+
+			{phase === "complete" && guide && <GuideBody guide={guide} t={t} />}
 		</div>
 	);
 }

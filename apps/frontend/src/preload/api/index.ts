@@ -58,6 +58,19 @@ import {
 	createAgentCoachAPI,
 } from "./modules/agent-coach-api";
 import {
+	type OnboardingAgentAPI,
+	createOnboardingAgentAPI,
+} from "./modules/onboarding-agent-api";
+import { type SandboxAPI, createSandboxAPI } from "./modules/sandbox-api";
+import {
+	type RegressionGuardianAPI,
+	createRegressionGuardianAPI,
+} from "./modules/regression-guardian-api";
+import {
+	type ConsensusArbiterAPI,
+	createConsensusArbiterAPI,
+} from "./modules/consensus-arbiter-api";
+import {
 	type I18nAgentAPI,
 	createI18nAgentAPI,
 } from "./modules/i18n-agent-api";
@@ -189,6 +202,11 @@ export interface ElectronAPI
 		ReleaseCoordinatorAPI,
 		NotebookAgentAPI,
 		SpecRefinementAPI,
+		AgentCoachAPI,
+		OnboardingAgentAPI,
+		SandboxAPI,
+		RegressionGuardianAPI,
+		ConsensusArbiterAPI,
 		VisualProgrammingAPI {
 	github: GitHubAPI;
 	/** Queue routing API for rate limit recovery */
@@ -290,6 +308,11 @@ export const createElectronAPI = (): ElectronAPI => {
 		...createReleaseCoordinatorAPI(),
 		...createNotebookAgentAPI(),
 		...createSpecRefinementAPI(),
+		...createAgentCoachAPI(),
+		...createOnboardingAgentAPI(),
+		...createSandboxAPI(),
+		...createRegressionGuardianAPI(),
+		...createConsensusArbiterAPI(),
 		...createVisualProgrammingAPI(),
 		github: createGitHubAPI(),
 		queue: createQueueAPI(), // Queue routing for rate limit recovery

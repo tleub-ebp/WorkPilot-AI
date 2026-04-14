@@ -101,6 +101,10 @@ import { registerSelfHealingHandlers } from "./self-healing-handlers";
 import { registerSettingsHandlers } from "./settings-handlers";
 import { setupSmartEstimationHandlers } from "./smart-estimation-handlers";
 import { registerAgentCoachHandlers } from "./agent-coach-handlers";
+import { registerOnboardingAgentHandlers } from "./onboarding-agent-handlers";
+import { registerSandboxHandlers } from "./sandbox-handlers";
+import { registerRegressionGuardianHandlers } from "./regression-guardian-handlers";
+import { registerConsensusArbiterHandlers } from "./consensus-arbiter-handlers";
 import { registerSpecApprovalHandlers } from "./spec-approval-handlers";
 import { registerSpecRefinementHandlers } from "./spec-refinement-handlers";
 import { registerTaskHandlers } from "./task-handlers";
@@ -209,6 +213,10 @@ export { registerSelfHealingHandlers } from "./self-healing-handlers";
 export { registerSettingsHandlers } from "./settings-handlers";
 export { setupSmartEstimationHandlers } from "./smart-estimation-handlers";
 export { registerAgentCoachHandlers } from "./agent-coach-handlers";
+export { registerOnboardingAgentHandlers } from "./onboarding-agent-handlers";
+export { registerSandboxHandlers } from "./sandbox-handlers";
+export { registerRegressionGuardianHandlers } from "./regression-guardian-handlers";
+export { registerConsensusArbiterHandlers } from "./consensus-arbiter-handlers";
 export { registerSpecApprovalHandlers } from "./spec-approval-handlers";
 export { registerSpecRefinementHandlers } from "./spec-refinement-handlers";
 export { registerTaskHandlers } from "./task-handlers";
@@ -477,6 +485,18 @@ export function setupIpcHandlers(
 
 	// Agent Coach handlers (analyse persisted agent run records)
 	registerAgentCoachHandlers();
+
+	// Onboarding Agent handlers (project onboarding guide generation)
+	registerOnboardingAgentHandlers();
+
+	// Sandbox handlers (dry-run diff preview of uncommitted changes)
+	registerSandboxHandlers();
+
+	// Regression Guardian handlers (APM incident → regression test candidates)
+	registerRegressionGuardianHandlers();
+
+	// Consensus Arbiter handlers (detect & resolve inter-agent conflicts)
+	registerConsensusArbiterHandlers();
 
 	console.warn("[IPC] All handler modules registered successfully");
 }

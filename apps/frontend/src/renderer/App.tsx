@@ -1678,9 +1678,15 @@ export function App() {
 													(activeProjectId || selectedProjectId) && (
 														<PipelineGeneratorView />
 													)}
-												{activeView === "sandbox" && <SimulationReport />}
+												{activeView === "sandbox" && (
+													<div className="overflow-auto" style={{ height: 'calc(100vh - 100px)' }}>
+														<SimulationReport projectPath={selectedProject?.path} />
+													</div>
+												)}
 												{activeView === "regression-guardian" && (
-													<RegressionGuardianDashboard results={[]} />
+													<div className="overflow-auto" style={{ height: 'calc(100vh - 100px)' }}>
+														<RegressionGuardianDashboard projectPath={selectedProject?.path} />
+													</div>
 												)}
 												{activeView === "injection-guard" && (
 													<div className="flex items-center justify-center h-full text-(--text-secondary)">
@@ -1702,7 +1708,11 @@ export function App() {
 														<I18nReportView projectPath={selectedProject?.path} />
 													</div>
 												)}
-												{activeView === "onboarding-agent" && <OnboardingGuideView />}
+												{activeView === "onboarding-agent" && (
+													<div className="overflow-auto" style={{ height: 'calc(100vh - 100px)' }}>
+														<OnboardingGuideView projectPath={selectedProject?.path} />
+													</div>
+												)}
 												{activeView === "flaky-tests" && (
 													<div className="overflow-auto" style={{ height: 'calc(100vh - 100px)' }}>
 														<FlakyTestReport projectPath={selectedProject?.path} />
@@ -1733,7 +1743,11 @@ export function App() {
 														<CarbonReportView projectPath={selectedProject?.path} />
 													</div>
 												)}
-												{activeView === "consensus-arbiter" && <ConsensusView />}
+												{activeView === "consensus-arbiter" && (
+													<div className="overflow-auto" style={{ height: 'calc(100vh - 100px)' }}>
+														<ConsensusView projectPath={selectedProject?.path} />
+													</div>
+												)}
 												{activeView === "notebook-agent" && (
 													<div className="overflow-auto" style={{ height: 'calc(100vh - 100px)' }}>
 														<NotebookView projectPath={selectedProject?.path} />
@@ -1744,7 +1758,11 @@ export function App() {
 														<RefinementHistoryView projectPath={selectedProject?.path} />
 													</div>
 												)}
-												{activeView === "agent-coach" && <CoachReportView />}
+												{activeView === "agent-coach" && (
+													<div className="overflow-auto" style={{ height: 'calc(100vh - 100px)' }}>
+														<CoachReportView projectPath={selectedProject?.path} />
+													</div>
+												)}
 											</>
 										) : (
 											<div className="flex items-center justify-center h-full text-muted">
