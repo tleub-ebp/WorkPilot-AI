@@ -27,7 +27,14 @@ from notebook_agent.notebook_handler import (  # noqa: E402
     ParsedNotebook,
 )
 
-EXCLUDED_DIRS = {".git", "node_modules", ".venv", "venv", "__pycache__", ".ipynb_checkpoints"}
+EXCLUDED_DIRS = {
+    ".git",
+    "node_modules",
+    ".venv",
+    "venv",
+    "__pycache__",
+    ".ipynb_checkpoints",
+}
 
 
 def _emit(prefix: str, payload: Any) -> None:
@@ -100,9 +107,7 @@ def run_scan(project_path: Path) -> dict[str, Any]:
             handler.analyze(nb)
             notebooks.append(_notebook_to_dict(nb, project_path))
         except (OSError, json.JSONDecodeError, ValueError) as exc:
-            _emit_event(
-                "progress", {"status": f"Failed to parse {path.name}: {exc}"}
-            )
+            _emit_event("progress", {"status": f"Failed to parse {path.name}: {exc}"})
 
     total_issues = sum(len(nb["issues"]) for nb in notebooks)
     _emit_event(

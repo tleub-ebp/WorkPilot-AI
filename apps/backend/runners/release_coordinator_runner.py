@@ -25,7 +25,6 @@ backend_path = Path(__file__).parent.parent
 sys.path.insert(0, str(backend_path))
 
 from release_coordinator.release_engine import (  # noqa: E402
-    BumpType,
     ReleaseEngine,
     ReleaseTrainPlan,
     SemVer,
@@ -80,8 +79,7 @@ def _discover_services(project_path: Path) -> list[tuple[Path, dict[str, Any]]]:
 
     for pkg_json in project_path.glob("**/package.json"):
         if any(
-            part in {"node_modules", ".git", "dist", "build"}
-            for part in pkg_json.parts
+            part in {"node_modules", ".git", "dist", "build"} for part in pkg_json.parts
         ):
             continue
         info = _read_package_json(pkg_json)
@@ -91,8 +89,7 @@ def _discover_services(project_path: Path) -> list[tuple[Path, dict[str, Any]]]:
 
     for pyproj in project_path.glob("**/pyproject.toml"):
         if any(
-            part in {".venv", "venv", ".git", "__pycache__"}
-            for part in pyproj.parts
+            part in {".venv", "venv", ".git", "__pycache__"} for part in pyproj.parts
         ):
             continue
         info = _read_pyproject(pyproj)
