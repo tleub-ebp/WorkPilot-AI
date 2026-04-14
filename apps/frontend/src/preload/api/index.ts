@@ -18,6 +18,10 @@ import {
 	createApiExplorerAPI,
 } from "./modules/api-explorer-api";
 import {
+	type ApiWatcherAPI,
+	createApiWatcherAPI,
+} from "./modules/api-watcher-api";
+import {
 	type DocDriftAPI,
 	createDocDriftAPI,
 } from "./modules/doc-drift-api";
@@ -26,9 +30,21 @@ import {
 	createCarbonProfilerAPI,
 } from "./modules/carbon-profiler-api";
 import {
+	type ComplianceAPI,
+	createComplianceAPI,
+} from "./modules/compliance-api";
+import {
 	type FlakyTestsAPI,
 	createFlakyTestsAPI,
 } from "./modules/flaky-tests-api";
+import {
+	type GitSurgeonAPI,
+	createGitSurgeonAPI,
+} from "./modules/git-surgeon-api";
+import {
+	type ReleaseCoordinatorAPI,
+	createReleaseCoordinatorAPI,
+} from "./modules/release-coordinator-api";
 import {
 	type I18nAgentAPI,
 	createI18nAgentAPI,
@@ -154,6 +170,11 @@ export interface ElectronAPI
 		I18nAgentAPI,
 		DocDriftAPI,
 		FlakyTestsAPI,
+		CarbonProfilerAPI,
+		ComplianceAPI,
+		ApiWatcherAPI,
+		GitSurgeonAPI,
+		ReleaseCoordinatorAPI,
 		VisualProgrammingAPI {
 	github: GitHubAPI;
 	/** Queue routing API for rate limit recovery */
@@ -248,6 +269,11 @@ export const createElectronAPI = (): ElectronAPI => {
 		...createI18nAgentAPI(),
 		...createDocDriftAPI(),
 		...createFlakyTestsAPI(),
+		...createCarbonProfilerAPI(),
+		...createComplianceAPI(),
+		...createApiWatcherAPI(),
+		...createGitSurgeonAPI(),
+		...createReleaseCoordinatorAPI(),
 		...createVisualProgrammingAPI(),
 		github: createGitHubAPI(),
 		queue: createQueueAPI(), // Queue routing for rate limit recovery

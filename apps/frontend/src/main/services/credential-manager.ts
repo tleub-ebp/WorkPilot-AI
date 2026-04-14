@@ -1079,7 +1079,14 @@ export class CredentialManager extends EventEmitter {
 					}
 				} catch (error) {
 					// This path doesn't exist, try next
-					console.debug(`Failed to read ${configPath}:`, error);
+					// Silently ignore ENOENT errors - missing config files are expected
+					if (
+						error instanceof Error &&
+						"code" in error &&
+						error.code !== "ENOENT"
+					) {
+						console.debug(`Failed to read ${configPath}:`, error);
+					}
 				}
 			}
 

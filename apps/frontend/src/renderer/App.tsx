@@ -1687,7 +1687,11 @@ export function App() {
 														<p>{t("common:injectionGuardComingSoon")}</p>
 													</div>
 												)}
-												{activeView === "api-watcher" && <ApiWatcherDashboard />}
+												{activeView === "api-watcher" && (
+													<div className="overflow-auto" style={{ height: 'calc(100vh - 100px)' }}>
+														<ApiWatcherDashboard projectPath={selectedProject?.path} />
+													</div>
+												)}
 												{activeView === "accessibility-agent" && (
 													<div className="overflow-auto" style={{ height: 'calc(100vh - 100px)' }}>
 														<A11yReportView projectPath={selectedProject?.path} />
@@ -1709,10 +1713,26 @@ export function App() {
 														<DocDriftReport projectPath={selectedProject?.path} />
 													</div>
 												)}
-												{activeView === "compliance" && <ComplianceReportView />}
-												{activeView === "git-surgeon" && <GitSurgeonDashboard />}
-												{activeView === "release-coordinator" && <ReleasePlanView />}
-												{activeView === "carbon-profiler" && <CarbonReportView />}
+												{activeView === "compliance" && (
+													<div className="overflow-auto" style={{ height: 'calc(100vh - 100px)' }}>
+														<ComplianceReportView projectPath={selectedProject?.path} />
+													</div>
+												)}
+												{activeView === "git-surgeon" && (
+													<div className="overflow-auto" style={{ height: 'calc(100vh - 100px)' }}>
+														<GitSurgeonDashboard projectPath={selectedProject?.path} />
+													</div>
+												)}
+												{activeView === "release-coordinator" && (
+													<div className="overflow-auto" style={{ height: 'calc(100vh - 100px)' }}>
+														<ReleasePlanView projectPath={selectedProject?.path} />
+													</div>
+												)}
+												{activeView === "carbon-profiler" && (
+													<div className="overflow-auto" style={{ height: 'calc(100vh - 100px)' }}>
+														<CarbonReportView projectPath={selectedProject?.path} />
+													</div>
+												)}
 												{activeView === "consensus-arbiter" && <ConsensusView />}
 												{activeView === "notebook-agent" && <NotebookView />}
 												{activeView === "spec-refinement" && <RefinementHistoryView />}

@@ -13,6 +13,7 @@ import type { TerminalManager } from "../terminal-manager";
 import { registerAccessibilityHandlers } from "./accessibility-handlers";
 import { registerAgenteventsHandlers } from "./agent-events-handlers";
 import { registerApiExplorerHandlers } from "./api-explorer-handlers";
+import { registerApiWatcherHandlers } from "./api-watcher-handlers";
 import { registerAppEmulatorHandlers } from "./app-emulator-handlers";
 import { registerAppUpdateHandlers } from "./app-update-handlers";
 import {
@@ -29,6 +30,7 @@ import {
 	setupCICDTriggersEventForwarding,
 } from "./cicd-triggers-handlers";
 import { registerClaudeCodeHandlers } from "./claude-code-handlers";
+import { registerComplianceHandlers } from "./compliance-handlers";
 import {
 	registerCodeMigrationHandlers,
 	setupCodeMigrationEventForwarding,
@@ -56,6 +58,7 @@ import { registerEnvHandlers } from "./env-handlers";
 import { registerFileHandlers } from "./file-handlers";
 import { registerFlakyTestsHandlers } from "./flaky-tests-handlers";
 import { registerGitHubCopilotHandlers } from "./github-copilot-handlers";
+import { registerGitSurgeonHandlers } from "./git-surgeon-handlers";
 import { registerGithubHandlers } from "./github-handlers";
 import { registerGitlabHandlers } from "./gitlab-handlers";
 import { registerI18nAgentHandlers } from "./i18n-agent-handlers";
@@ -89,6 +92,7 @@ import { registerProfileHandlers } from "./profile-handlers";
 // Import all handler registration functions for internal use
 import { registerProjectHandlers } from "./project-handlers";
 import { registerPromptOptimizerHandlers } from "./prompt-optimizer-handlers";
+import { registerReleaseCoordinatorHandlers } from "./release-coordinator-handlers";
 import { setupQualityHandlers } from "./quality-handlers";
 import { registerRoadmapHandlers } from "./roadmap-handlers";
 import { registerScreenshotHandlers } from "./screenshot-handlers";
@@ -114,6 +118,7 @@ import {
 export { registerAccessibilityHandlers } from "./accessibility-handlers";
 export { registerAgenteventsHandlers } from "./agent-events-handlers";
 export { registerApiExplorerHandlers } from "./api-explorer-handlers";
+export { registerApiWatcherHandlers } from "./api-watcher-handlers";
 export { registerAppEmulatorHandlers } from "./app-emulator-handlers";
 export { registerAppUpdateHandlers } from "./app-update-handlers";
 export {
@@ -130,6 +135,7 @@ export {
 	setupCICDTriggersEventForwarding,
 } from "./cicd-triggers-handlers";
 export { registerClaudeCodeHandlers } from "./claude-code-handlers";
+export { registerComplianceHandlers } from "./compliance-handlers";
 export {
 	registerCodeMigrationHandlers,
 	setupCodeMigrationEventForwarding,
@@ -157,6 +163,7 @@ export { registerEnvHandlers } from "./env-handlers";
 export { registerFileHandlers } from "./file-handlers";
 export { registerFlakyTestsHandlers } from "./flaky-tests-handlers";
 export { registerGitHubCopilotHandlers } from "./github-copilot-handlers";
+export { registerGitSurgeonHandlers } from "./git-surgeon-handlers";
 export { registerGithubHandlers } from "./github-handlers";
 export { registerGitlabHandlers } from "./gitlab-handlers";
 export { registerI18nAgentHandlers } from "./i18n-agent-handlers";
@@ -190,6 +197,7 @@ export { registerProfileHandlers } from "./profile-handlers";
 // Re-export all handler registration functions using export...from syntax
 export { registerProjectHandlers } from "./project-handlers";
 export { registerPromptOptimizerHandlers } from "./prompt-optimizer-handlers";
+export { registerReleaseCoordinatorHandlers } from "./release-coordinator-handlers";
 export { setupQualityHandlers } from "./quality-handlers";
 export { registerRoadmapHandlers } from "./roadmap-handlers";
 export { registerScreenshotHandlers } from "./screenshot-handlers";
@@ -442,6 +450,18 @@ export function setupIpcHandlers(
 
 	// Carbon Profiler handlers (energy and CO2 footprint)
 	registerCarbonProfilerHandlers();
+
+	// Compliance Evidence Collector handlers (SOC2, ISO 27001)
+	registerComplianceHandlers();
+
+	// API Watcher handlers (OpenAPI/GraphQL/Protobuf breaking change detection)
+	registerApiWatcherHandlers();
+
+	// Git Surgeon handlers (history analysis: blobs, secrets, messy commits)
+	registerGitSurgeonHandlers();
+
+	// Release Coordinator handlers (multi-service semver plan)
+	registerReleaseCoordinatorHandlers();
 
 	console.warn("[IPC] All handler modules registered successfully");
 }

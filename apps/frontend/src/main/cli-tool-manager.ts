@@ -26,7 +26,7 @@ import {
 	execFile,
 	execFileSync,
 } from "node:child_process";
-import { existsSync, promises as fsPromises, readdirSync } from "node:fs";
+import { existsSync, promises as fsPromises } from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { promisify } from "node:util";
@@ -41,9 +41,7 @@ import {
 	shouldUseShell,
 } from "./env-utils";
 import {
-	getExecutableExtension,
 	isMacOS,
-	isUnix,
 	isWindows,
 	joinPaths,
 } from "./platform";
@@ -182,34 +180,14 @@ interface ClaudeDetectionPaths {
  */
 export function getClaudeDetectionPaths(homeDir: string): ClaudeDetectionPaths {
 	const homebrewPaths = [
-		"/opt/homebrew/bin/claude", // Apple Silicon
-		"/usr/local/bin/claude", // Intel Mac
+		"/opt/homebrew/bin/claude", // Apple Silicon (standard Homebrew path)
+		"/usr/local/bin/claude", // Intel Mac (standard Homebrew path)
 	];
 
-	const platformPaths = isWindows()
-		? [
-				joinPaths(
-					homeDir,
-					"AppData",
-					"Local",
-					"Programs",
-					"claude",
-					`claude${getExecutableExtension()}`,
-				),
-				joinPaths(homeDir, "AppData", "Roaming", "npm", "claude.cmd"),
-				joinPaths(
-					homeDir,
-					".local",
-					"bin",
-					`claude${getExecutableExtension()}`,
-				),
-				"C:\\Program Files\\Claude\\claude.exe",
-				"C:\\Program Files (x86)\\Claude\\claude.exe",
-			]
-		: [
-				joinPaths(homeDir, ".local", "bin", "claude"),
-				joinPaths(homeDir, "bin", "claude"),
-			];
+	const platformPaths = [
+		// Standard npm installation path (same for Windows, Linux, and macOS)
+		joinPaths(homeDir, ".local", "bin", isWindows() ? "claude.exe" : "claude"),
+	];
 
 	const nvmVersionsDir = joinPaths(homeDir, ".nvm", "versions", "node");
 
@@ -312,7 +290,7 @@ export function buildClaudeDetectionResult(
  *   const gitPath = getToolPath('git');
  */
 class CLIToolManager {
-	private cache: Map<CLITool, CacheEntry> = new Map();
+	private readonly cache: Map<CLITool, CacheEntry> = new Map();
 	private userConfig: ToolConfig = {};
 
 	/**
@@ -339,6 +317,13 @@ class CLIToolManager {
 	 * @returns The resolved path to the tool executable
 	 */
 	getToolPath(tool: CLITool): string {
+		// Special handling for claude: always re-detect to ensure ~/.local/bin/claude is preferred over WinGet
+		if (tool === "claude") {
+			// Clear cache for claude to force re-detection
+			this.cache.delete(tool);
+			console.warn("[CLI Tools] Clearing claude cache to force re-detection");
+		}
+
 		// Check cache first
 		const cached = this.cache.get(tool);
 		if (cached) {
@@ -880,163 +865,6 @@ class CLIToolManager {
 	 * 6. Platform-specific standard locations
 	 *
 	 * @returns Detection result for Claude CLI
-	 */
-	private detectClaude(): ToolDetectionResult {
-		const homeDir = os.homedir();
-		const paths = getClaudeDetectionPaths(homeDir);
-
-		// 1. User configuration
-		if (this.userConfig.claudePath) {
-			if (isWrongPlatformPath(this.userConfig.claudePath)) {
-				console.warn(
-					`[Claude CLI] User-configured path is from different platform, ignoring: ${this.userConfig.claudePath}`,
-				);
-			} else if (isWindows() && !isSecurePath(this.userConfig.claudePath)) {
-				console.warn(
-					`[Claude CLI] User-configured path failed security validation, ignoring: ${this.userConfig.claudePath}`,
-				);
-			} else {
-				const validation = this.validateClaude(this.userConfig.claudePath);
-				const result = buildClaudeDetectionResult(
-					this.userConfig.claudePath,
-					validation,
-					"user-config",
-					"Using user-configured Claude CLI",
-				);
-				if (result) return result;
-				console.warn(
-					`[Claude CLI] User-configured path invalid: ${validation.message}`,
-				);
-			}
-		}
-
-		// 2. Homebrew (macOS)
-		if (isMacOS()) {
-			for (const claudePath of paths.homebrewPaths) {
-				if (existsSync(claudePath)) {
-					const validation = this.validateClaude(claudePath);
-					const result = buildClaudeDetectionResult(
-						claudePath,
-						validation,
-						"homebrew",
-						"Using Homebrew Claude CLI",
-					);
-					if (result) return result;
-				}
-			}
-		}
-
-		// 3a. On Windows, prefer ~/.local/bin/claude.exe (npm native install) before checking PATH
-		// because PATH may contain an older WinGet install that fails version detection.
-		if (isWindows()) {
-			const localBinPath = joinPaths(
-				homeDir,
-				".local",
-				"bin",
-				`claude${getExecutableExtension()}`,
-			);
-			if (existsSync(localBinPath)) {
-				const validation = this.validateClaude(localBinPath);
-				if (
-					validation.valid &&
-					validation.version &&
-					validation.version !== "unknown"
-				) {
-					const result = buildClaudeDetectionResult(
-						localBinPath,
-						validation,
-						"system-path",
-						"Using npm Claude CLI (~/.local/bin)",
-					);
-					if (result) return result;
-				}
-			}
-		}
-
-		// 3b. System PATH (augmented)
-		const systemClaudePath = findExecutable("claude");
-		if (systemClaudePath) {
-			const validation = this.validateClaude(systemClaudePath);
-			const result = buildClaudeDetectionResult(
-				systemClaudePath,
-				validation,
-				"system-path",
-				"Using system Claude CLI",
-			);
-			if (result) return result;
-		}
-
-		// 4. Windows where.exe detection (Windows only - most reliable for custom installs)
-		if (isWindows()) {
-			const whereClaudePath = findWindowsExecutableViaWhere(
-				"claude",
-				"[Claude CLI]",
-			);
-			if (whereClaudePath) {
-				const validation = this.validateClaude(whereClaudePath);
-				const result = buildClaudeDetectionResult(
-					whereClaudePath,
-					validation,
-					"system-path",
-					"Using Windows Claude CLI",
-				);
-				if (result) return result;
-			}
-		}
-
-		// 5. NVM paths (Unix only) - check before platform paths for better Node.js integration
-		if (isUnix()) {
-			try {
-				if (existsSync(paths.nvmVersionsDir)) {
-					const nodeVersions = readdirSync(paths.nvmVersionsDir, {
-						withFileTypes: true,
-					});
-					const versionNames = sortNvmVersionDirs(nodeVersions);
-
-					for (const versionName of versionNames) {
-						const nvmClaudePath = path.join(
-							paths.nvmVersionsDir,
-							versionName,
-							"bin",
-							"claude",
-						);
-						if (existsSync(nvmClaudePath)) {
-							const validation = this.validateClaude(nvmClaudePath);
-							const result = buildClaudeDetectionResult(
-								nvmClaudePath,
-								validation,
-								"nvm",
-								"Using NVM Claude CLI",
-							);
-							if (result) return result;
-						}
-					}
-				}
-			} catch (error) {
-				console.warn(`[Claude CLI] Unable to read NVM directory: ${error}`);
-			}
-		}
-
-		// 6. Platform-specific standard locations
-		for (const claudePath of paths.platformPaths) {
-			if (existsSync(claudePath)) {
-				const validation = this.validateClaude(claudePath);
-				const result = buildClaudeDetectionResult(
-					claudePath,
-					validation,
-					"system-path",
-					"Using Claude CLI",
-				);
-				if (result) return result;
-			}
-		}
-
-		// 7. Not found
-		return {
-			found: false,
-			source: "fallback",
-			message: "Claude CLI not found. Install from https://claude.ai/download",
-		};
 	}
 
 	/**
@@ -1127,7 +955,7 @@ class CLIToolManager {
 				env: getAugmentedEnv(),
 			}).trim();
 
-			const match = version.match(/Python (\d+\.\d+\.\d+)/);
+			const match = /Python (\d+\.\d+\.\d+)/.exec(version);
 			if (!match) {
 				return {
 					valid: false,
@@ -1178,7 +1006,7 @@ class CLIToolManager {
 				env: getAugmentedEnv(),
 			}).trim();
 
-			const match = version.match(/git version (\d+\.\d+\.\d+)/);
+			const match = /git version (\d+\.\d+\.\d+)/.exec(version);
 			const versionStr = match ? match[1] : version;
 
 			return {
@@ -1209,7 +1037,7 @@ class CLIToolManager {
 				env: getAugmentedEnv(),
 			}).trim();
 
-			const match = version.match(/gh version (\d+\.\d+\.\d+)/);
+			const match = /gh version (\d+\.\d+\.\d+)/.exec(version);
 			const versionStr = match ? match[1] : version.split("\n")[0];
 
 			return {
@@ -1241,7 +1069,7 @@ class CLIToolManager {
 			}).trim();
 
 			// glab version output format: "glab X.Y.Z (hash)" - note: no "version" word
-			const match = version.match(/glab\s+(\d+\.\d+\.\d+)/);
+			const match = /glab\s+(\d+\.\d+\.\d+)/.exec(version);
 			const versionStr = match ? match[1] : version.split("\n")[0];
 
 			return {
@@ -1389,7 +1217,7 @@ class CLIToolManager {
 			}
 
 			// Claude CLI version output format: "claude-code version X.Y.Z" or similar
-			const match = version.match(/(\d+\.\d+\.\d+)/);
+			const match = /(\d+\.\d+\.\d+)/.exec(version);
 			const versionStr = match ? match[1] : version.split("\n")[0];
 
 			console.warn(
@@ -1459,7 +1287,7 @@ class CLIToolManager {
 			).trim();
 
 			// gh copilot version output varies: "gh copilot version X.Y.Z" or similar
-			const match = output.match(/(\d+\.\d+\.\d+)/);
+			const match = /(\d+\.\d+\.\d+)/.exec(output);
 			const versionStr = match ? match[1] : output.split("\n")[0];
 
 			return {
@@ -1669,7 +1497,7 @@ class CLIToolManager {
 			}
 
 			const version = normalizeExecOutput(stdout).trim();
-			const match = version.match(/(\d+\.\d+\.\d+)/);
+			const match = /(\d+\.\d+\.\d+)/.exec(version);
 			const versionStr = match ? match[1] : version.split("\n")[0];
 
 			console.warn(
@@ -1744,7 +1572,7 @@ class CLIToolManager {
 			});
 
 			const version = stdout.trim();
-			const match = version.match(/Python (\d+\.\d+\.\d+)/);
+			const match = /Python (\d+\.\d+\.\d+)/.exec(version);
 			if (!match) {
 				return {
 					valid: false,
@@ -1796,7 +1624,7 @@ class CLIToolManager {
 			});
 
 			const version = stdout.trim();
-			const match = version.match(/git version (\d+\.\d+\.\d+)/);
+			const match = /git version (\d+\.\d+\.\d+)/.exec(version);
 			const versionStr = match ? match[1] : version;
 
 			return {
@@ -1828,7 +1656,7 @@ class CLIToolManager {
 			});
 
 			const version = stdout.trim();
-			const match = version.match(/gh version (\d+\.\d+\.\d+)/);
+			const match = /gh version (\d+\.\d+\.\d+)/.exec(version);
 			const versionStr = match ? match[1] : version.split("\n")[0];
 
 			return {
@@ -1863,7 +1691,7 @@ class CLIToolManager {
 
 			const version = stdout.trim();
 			// glab version output format: "glab X.Y.Z (hash)" - note: no "version" word
-			const match = version.match(/glab\s+(\d+\.\d+\.\d+)/);
+			const match = /glab\s+(\d+\.\d+\.\d+)/.exec(version);
 			const versionStr = match ? match[1] : version.split("\n")[0];
 
 			return {
@@ -1892,11 +1720,99 @@ class CLIToolManager {
 	 *
 	 * @returns Promise resolving to detection result
 	 */
-	private async detectClaudeAsync(): Promise<ToolDetectionResult> {
+	private detectClaude(): ToolDetectionResult {
 		const homeDir = os.homedir();
 		const paths = getClaudeDetectionPaths(homeDir);
 
-		// 1. User configuration
+		// 1. User configuration (highest priority)
+		if (this.userConfig.claudePath) {
+			if (isWrongPlatformPath(this.userConfig.claudePath)) {
+				console.warn(
+					`[Claude CLI] User-configured path is from different platform, ignoring: ${this.userConfig.claudePath}`,
+				);
+			} else if (isWindows() && !isSecurePath(this.userConfig.claudePath)) {
+				console.warn(
+					`[Claude CLI] User-configured path failed security validation, ignoring: ${this.userConfig.claudePath}`,
+				);
+			} else {
+				const validation = this.validateClaude(this.userConfig.claudePath);
+				const result = buildClaudeDetectionResult(
+					this.userConfig.claudePath,
+					validation,
+					"user-config",
+					"Using user-configured Claude CLI",
+				);
+				if (result) return result;
+				console.warn(
+					`[Claude CLI] User-configured path invalid: ${validation.message}`,
+				);
+			}
+		}
+
+		// 2. Platform-specific standard paths (recommended by Claude Anthropic)
+		// Now includes ~/.local/bin/claude for Windows
+		for (const claudePath of paths.platformPaths) {
+			if (existsSync(claudePath)) {
+				const validation = this.validateClaude(claudePath);
+				const result = buildClaudeDetectionResult(
+					claudePath,
+					validation,
+					"system-path",
+					"Using Claude CLI",
+				);
+				if (result) return result;
+			}
+		}
+
+		// 3. Homebrew (macOS only - recommended installation method)
+		if (isMacOS()) {
+			for (const claudePath of paths.homebrewPaths) {
+				if (existsSync(claudePath)) {
+					const validation = this.validateClaude(claudePath);
+					const result = buildClaudeDetectionResult(
+						claudePath,
+						validation,
+						"homebrew",
+						"Using Homebrew Claude CLI",
+					);
+					if (result) return result;
+				}
+			}
+		}
+
+		// 4. Windows where.exe detection (generic - finds WinGet installation)
+		// Only checked if ~/.local/bin/claude was not found
+		if (isWindows()) {
+			const whereClaudePath = findWindowsExecutableViaWhere(
+				"claude",
+				"[Claude CLI]",
+			);
+			if (whereClaudePath) {
+				const validation = this.validateClaude(whereClaudePath);
+				const result = buildClaudeDetectionResult(
+					whereClaudePath,
+					validation,
+					"system-path",
+					"Using Windows Claude CLI",
+				);
+				if (result) return result;
+			}
+		}
+
+		// 5. Not found
+		return {
+			found: false,
+			source: "fallback",
+			message: "Claude CLI not found. Install from https://claude.ai/download",
+		};
+	}
+
+	private async detectClaudeAsync(): Promise<ToolDetectionResult> {
+		console.warn("[Claude CLI] Starting detection...");
+		const homeDir = os.homedir();
+		const paths = getClaudeDetectionPaths(homeDir);
+
+		// 1. User configuration (highest priority)
 		if (this.userConfig.claudePath) {
 			if (isWrongPlatformPath(this.userConfig.claudePath)) {
 				console.warn(
@@ -1923,7 +1839,21 @@ class CLIToolManager {
 			}
 		}
 
-		// 2. Homebrew (macOS)
+		// 2. Platform-specific standard paths (recommended by Claude Anthropic)
+		for (const claudePath of paths.platformPaths) {
+			if (await existsAsync(claudePath)) {
+				const validation = await this.validateClaudeAsync(claudePath);
+				const result = buildClaudeDetectionResult(
+					claudePath,
+					validation,
+					"system-path",
+					"Using Claude CLI",
+				);
+				if (result) return result;
+			}
+		}
+
+		// 3. Homebrew (macOS only - recommended installation method)
 		if (isMacOS()) {
 			for (const claudePath of paths.homebrewPaths) {
 				if (await existsAsync(claudePath)) {
@@ -1939,20 +1869,7 @@ class CLIToolManager {
 			}
 		}
 
-		// 3. System PATH (augmented) - using async findExecutable
-		const systemClaudePath = await findExecutableAsync("claude");
-		if (systemClaudePath) {
-			const validation = await this.validateClaudeAsync(systemClaudePath);
-			const result = buildClaudeDetectionResult(
-				systemClaudePath,
-				validation,
-				"system-path",
-				"Using system Claude CLI",
-			);
-			if (result) return result;
-		}
-
-		// 4. Windows where.exe detection (async, non-blocking)
+		// 4. Windows where.exe detection (generic - finds WinGet installation)
 		if (isWindows()) {
 			const whereClaudePath = await findWindowsExecutableViaWhereAsync(
 				"claude",
@@ -1970,54 +1887,7 @@ class CLIToolManager {
 			}
 		}
 
-		// 5. NVM paths (Unix only) - check before platform paths for better Node.js integration
-		if (isUnix()) {
-			try {
-				if (await existsAsync(paths.nvmVersionsDir)) {
-					const nodeVersions = await fsPromises.readdir(paths.nvmVersionsDir, {
-						withFileTypes: true,
-					});
-					const versionNames = sortNvmVersionDirs(nodeVersions);
-
-					for (const versionName of versionNames) {
-						const nvmClaudePath = path.join(
-							paths.nvmVersionsDir,
-							versionName,
-							"bin",
-							"claude",
-						);
-						if (await existsAsync(nvmClaudePath)) {
-							const validation = await this.validateClaudeAsync(nvmClaudePath);
-							const result = buildClaudeDetectionResult(
-								nvmClaudePath,
-								validation,
-								"nvm",
-								"Using NVM Claude CLI",
-							);
-							if (result) return result;
-						}
-					}
-				}
-			} catch (error) {
-				console.warn(`[Claude CLI] Unable to read NVM directory: ${error}`);
-			}
-		}
-
-		// 6. Platform-specific standard locations
-		for (const claudePath of paths.platformPaths) {
-			if (await existsAsync(claudePath)) {
-				const validation = await this.validateClaudeAsync(claudePath);
-				const result = buildClaudeDetectionResult(
-					claudePath,
-					validation,
-					"system-path",
-					"Using Claude CLI",
-				);
-				if (result) return result;
-			}
-		}
-
-		// 7. Not found
+		// 5. Not found
 		return {
 			found: false,
 			source: "fallback",
@@ -2042,7 +1912,7 @@ class CLIToolManager {
 			});
 
 			const output = normalizeExecOutput(stdout).trim();
-			const match = output.match(/(\d+\.\d+\.\d+)/);
+			const match = /(\d+\.\d+\.\d+)/.exec(output);
 			const versionStr = match ? match[1] : output.split("\n")[0];
 
 			return {
@@ -2608,6 +2478,9 @@ class CLIToolManager {
 
 // Singleton instance
 const cliToolManager = new CLIToolManager();
+
+// Clear cache on initialization to ensure fresh detection with updated paths
+cliToolManager.clearCache();
 
 /**
  * Get the path for a CLI tool
