@@ -1,8 +1,35 @@
 {
 	"title": "Rapport i18n",
-	"noData": "Aucune donnée de rapport i18n disponible",
-	"filesInfo": "{{count}} fichiers · {{locales}}",
+	"noData": "Aucun scan effectué. Cliquez sur « Lancer le scan » pour démarrer.",
+	"filesInfo": "{{count}} fichiers scannés · locales : {{locales}}",
 	"coverage": "Couverture",
 	"issues": "Problèmes",
-	"locale": "locale"
+	"locale": "locale",
+	"localeLabel": "locale",
+	"severity": {
+		"error": "Erreur",
+		"warning": "Avertissement",
+		"info": "Info"
+	},
+	"issueType": {
+		"hardcoded_string": "Chaîne codée en dur",
+		"missing_key": "Clé manquante",
+		"unused_key": "Clé inutilisée",
+		"inconsistent_interpolation": "Interpolation inconsistante",
+		"missing_plural": "Pluriel manquant"
+	},
+	"search": {
+		"placeholder": "Rechercher dans les problèmes...",
+		"noResults": "Aucun problème ne correspond à votre recherche"
+	},
+	"actions": {
+		"runScan": "Lancer le scan",
+		"cancel": "Annuler",
+		"scanning": "Scan en cours...",
+		"reset": "Réinitialiser"
+	},
+	"errors": {
+		"noProject": "Sélectionnez un projet avant de lancer un scan.",
+		"failed": "Échec du scan : {{error}}"
+	}
 }

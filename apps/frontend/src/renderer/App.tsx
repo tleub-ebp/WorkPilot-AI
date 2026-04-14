@@ -1693,10 +1693,22 @@ export function App() {
 														<A11yReportView projectPath={selectedProject?.path} />
 													</div>
 												)}
-												{activeView === "i18n-agent" && <I18nReportView />}
+												{activeView === "i18n-agent" && (
+													<div className="overflow-auto" style={{ height: 'calc(100vh - 100px)' }}>
+														<I18nReportView projectPath={selectedProject?.path} />
+													</div>
+												)}
 												{activeView === "onboarding-agent" && <OnboardingGuideView />}
-												{activeView === "flaky-tests" && <FlakyTestReport />}
-												{activeView === "doc-drift" && <DocDriftReport />}
+												{activeView === "flaky-tests" && (
+													<div className="overflow-auto" style={{ height: 'calc(100vh - 100px)' }}>
+														<FlakyTestReport projectPath={selectedProject?.path} />
+													</div>
+												)}
+												{activeView === "doc-drift" && (
+													<div className="overflow-auto" style={{ height: 'calc(100vh - 100px)' }}>
+														<DocDriftReport projectPath={selectedProject?.path} />
+													</div>
+												)}
 												{activeView === "compliance" && <ComplianceReportView />}
 												{activeView === "git-surgeon" && <GitSurgeonDashboard />}
 												{activeView === "release-coordinator" && <ReleasePlanView />}

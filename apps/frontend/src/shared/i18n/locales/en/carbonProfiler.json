@@ -1,5 +1,5 @@
 {
-	"noData": "No carbon report data available",
+	"noData": "No scan run yet. Click \"Run scan\" to start.",
 	"title": "Carbon / Energy Profiler",
 	"totalEnergy": "Total Energy",
 	"co2Emissions": "CO₂ Emissions",
@@ -7,5 +7,15 @@
 	"co2ByProvider": "CO₂ by Provider (g)",
 	"co2ByModel": "CO₂ by Model (g)",
 	"recentRecords": "Recent Records",
-	"summary": "Summary"
+	"summary": "Summary",
+	"actions": {
+		"runScan": "Run scan",
+		"cancel": "Cancel",
+		"scanning": "Scanning...",
+		"reset": "Reset"
+	},
+	"errors": {
+		"noProject": "Select a project before running a scan.",
+		"failed": "Scan failed: {{error}}"
+	}
 }

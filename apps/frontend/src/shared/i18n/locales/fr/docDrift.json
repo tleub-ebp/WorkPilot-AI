@@ -1,8 +1,10 @@
 {
-	"noData": "Aucune donnée de rapport de drift de documentation disponible",
-	"title": "Rapport de Drift de Documentation",
-	"driftDetected": "Drift Détecté",
+	"noData": "Aucun scan effectué. Cliquez sur « Lancer le scan » pour démarrer.",
+	"title": "Rapport de drift de documentation",
+	"info": "{{docs}} docs scannés · {{files}} fichiers de code indexés",
+	"driftDetected": "Drift détecté",
 	"driftCount": "{{count}} drifts détectés",
+	"noDriftDetected": "Aucun drift détecté",
 	"drifts": "Drifts",
 	"file": "Fichier",
 	"section": "Section",
@@ -12,5 +14,15 @@
 	"high": "Élevée",
 	"medium": "Moyenne",
 	"low": "Faible",
-	"summary": "Résumé"
+	"summary": "Résumé",
+	"actions": {
+		"runScan": "Lancer le scan",
+		"cancel": "Annuler",
+		"scanning": "Scan en cours...",
+		"reset": "Réinitialiser"
+	},
+	"errors": {
+		"noProject": "Sélectionnez un projet avant de lancer un scan.",
+		"failed": "Échec du scan : {{error}}"
+	}
 }

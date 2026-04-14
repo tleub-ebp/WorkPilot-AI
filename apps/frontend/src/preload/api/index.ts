@@ -17,6 +17,22 @@ import {
 	type ApiExplorerAPI,
 	createApiExplorerAPI,
 } from "./modules/api-explorer-api";
+import {
+	type DocDriftAPI,
+	createDocDriftAPI,
+} from "./modules/doc-drift-api";
+import {
+	type CarbonProfilerAPI,
+	createCarbonProfilerAPI,
+} from "./modules/carbon-profiler-api";
+import {
+	type FlakyTestsAPI,
+	createFlakyTestsAPI,
+} from "./modules/flaky-tests-api";
+import {
+	type I18nAgentAPI,
+	createI18nAgentAPI,
+} from "./modules/i18n-agent-api";
 import type { AppEmulatorAPI } from "./modules/app-emulator-api";
 import { createAppEmulatorAPI } from "./modules/app-emulator-api";
 import type { ArchitectureVisualizerAPI } from "./modules/architecture-visualizer-api";
@@ -135,6 +151,9 @@ export interface ElectronAPI
 		TestGenerationAPI,
 		CostAPI,
 		AccessibilityAPI,
+		I18nAgentAPI,
+		DocDriftAPI,
+		FlakyTestsAPI,
 		VisualProgrammingAPI {
 	github: GitHubAPI;
 	/** Queue routing API for rate limit recovery */
@@ -226,6 +245,9 @@ export const createElectronAPI = (): ElectronAPI => {
 		...createTestGenerationAPI(),
 		...createCostAPI(),
 		...createAccessibilityAPI(),
+		...createI18nAgentAPI(),
+		...createDocDriftAPI(),
+		...createFlakyTestsAPI(),
 		...createVisualProgrammingAPI(),
 		github: createGitHubAPI(),
 		queue: createQueueAPI(), // Queue routing for rate limit recovery

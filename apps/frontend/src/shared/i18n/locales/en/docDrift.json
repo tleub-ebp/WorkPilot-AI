@@ -1,8 +1,10 @@
 {
-	"noData": "No doc drift report data available",
+	"noData": "No scan run yet. Click \"Run scan\" to start.",
 	"title": "Documentation Drift Report",
+	"info": "{{docs}} docs scanned · {{files}} code files indexed",
 	"driftDetected": "Drift Detected",
 	"driftCount": "{{count}} drifts detected",
+	"noDriftDetected": "No drift detected",
 	"drifts": "Drifts",
 	"file": "File",
 	"section": "Section",
@@ -12,5 +14,15 @@
 	"high": "High",
 	"medium": "Medium",
 	"low": "Low",
-	"summary": "Summary"
+	"summary": "Summary",
+	"actions": {
+		"runScan": "Run scan",
+		"cancel": "Cancel",
+		"scanning": "Scanning...",
+		"reset": "Reset"
+	},
+	"errors": {
+		"noProject": "Select a project before running a scan.",
+		"failed": "Scan failed: {{error}}"
+	}
 }

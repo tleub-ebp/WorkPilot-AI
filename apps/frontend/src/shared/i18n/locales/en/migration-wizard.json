@@ -55,6 +55,23 @@
 	"actions": {
 		"start": "Start migration",
 		"next": "Next",
-		"back": "Back"
-	}
+		"back": "Back",
+		"viewReport": "View Report",
+		"startNewMigration": "Start New Migration"
+	},
+	"statuses": {
+		"analyzing": "Analyzing",
+		"analyzingDescription": "Analyzing project structure and identifying dependencies...",
+		"transforming": "Transforming",
+		"validating": "Validating",
+		"validatingDescription": "Running tests and validating transformations..."
+	},
+	"common": {
+		"complete": "complete"
+	},
+	"migrationComplete": "Migration Complete",
+	"migrationSuccess": "Successfully migrated from {{source}} to {{target}}",
+	"filesTransformed": "Files Transformed",
+	"llmEnhanced": "AI Enhanced",
+	"changes": "changes"
 }

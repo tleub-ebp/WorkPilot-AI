@@ -1,8 +1,35 @@
 {
 	"title": "i18n Report",
-	"noData": "No i18n report data available",
-	"filesInfo": "{{count}} files · {{locales}}",
+	"noData": "No scan run yet. Click \"Run scan\" to start.",
+	"filesInfo": "{{count}} files scanned · locales: {{locales}}",
 	"coverage": "Coverage",
 	"issues": "Issues",
-	"locale": "locale"
+	"locale": "locale",
+	"localeLabel": "locale",
+	"severity": {
+		"error": "Error",
+		"warning": "Warning",
+		"info": "Info"
+	},
+	"issueType": {
+		"hardcoded_string": "Hardcoded string",
+		"missing_key": "Missing key",
+		"unused_key": "Unused key",
+		"inconsistent_interpolation": "Inconsistent interpolation",
+		"missing_plural": "Missing plural"
+	},
+	"search": {
+		"placeholder": "Search issues...",
+		"noResults": "No issues match your search"
+	},
+	"actions": {
+		"runScan": "Run scan",
+		"cancel": "Cancel",
+		"scanning": "Scanning...",
+		"reset": "Reset"
+	},
+	"errors": {
+		"noProject": "Select a project before running a scan.",
+		"failed": "Scan failed: {{error}}"
+	}
 }

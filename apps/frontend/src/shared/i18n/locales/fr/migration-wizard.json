@@ -55,6 +55,23 @@
 	"actions": {
 		"start": "Démarrer la migration",
 		"next": "Suivant",
-		"back": "Retour"
-	}
+		"back": "Retour",
+		"viewReport": "Voir le rapport",
+		"startNewMigration": "Nouvelle migration"
+	},
+	"statuses": {
+		"analyzing": "Analyse en cours",
+		"analyzingDescription": "Analyse de la structure du projet et identification des dépendances...",
+		"transforming": "Transformation en cours",
+		"validating": "Validation en cours",
+		"validatingDescription": "Exécution des tests et validation des transformations..."
+	},
+	"common": {
+		"complete": "complété"
+	},
+	"migrationComplete": "Migration terminée",
+	"migrationSuccess": "Migration de {{source}} vers {{target}} réussie",
+	"filesTransformed": "Fichiers transformés",
+	"llmEnhanced": "Améliorés par IA",
+	"changes": "modifications"
 }

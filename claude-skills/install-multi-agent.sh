@@ -65,6 +65,7 @@ skills:
 agents:
   - net-architect
   - bmad-net-architect
+  - dotnet-framework-48-expert
   - performance-analyst
 
 auto_invoke: true
@@ -101,6 +102,7 @@ agents:
   personalities:
     - net-architect
     - bmad-net-architect
+    - dotnet-framework-48-expert
     - performance-analyst
     - net-developer
     - akka-net-specialist

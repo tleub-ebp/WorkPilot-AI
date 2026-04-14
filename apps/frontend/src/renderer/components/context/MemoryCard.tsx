@@ -78,9 +78,9 @@ function SectionHeader({
 	title,
 	count,
 }: {
-	icon: React.ComponentType<{ className?: string }>;
-	title: string;
-	count?: number;
+	readonly icon: React.ComponentType<{ className?: string }>;
+	readonly title: string;
+	readonly count?: number;
 }) {
 	return (
 		<div className="flex items-center gap-2 mb-2">
@@ -99,15 +99,17 @@ function ListItem({
 	children,
 	variant = "default",
 }: {
-	children: React.ReactNode;
-	variant?: "success" | "error" | "default";
+	readonly children: React.ReactNode;
+	readonly variant?: "success" | "error" | "default";
 }) {
-	const colorClass =
-		variant === "success"
-			? "text-success"
-			: variant === "error"
-				? "text-destructive"
-				: "text-muted-foreground";
+	let colorClass: string;
+	if (variant === "success") {
+		colorClass = "text-success";
+	} else if (variant === "error") {
+		colorClass = "text-destructive";
+	} else {
+		colorClass = "text-muted-foreground";
+	}
 
 	return (
 		<li
@@ -170,13 +172,16 @@ export function MemoryCard({ memory }: MemoryCardProps) {
 	const Icon = memoryTypeIcons[memory.type] || memoryTypeIcons.session_insight;
 	const typeColor = memoryTypeColors[memory.type] || "";
 	const typeLabel =
-		memoryTypeLabels[memory.type] || memory.type.replace(/_/g, " ");
+		memoryTypeLabels[memory.type] || memory.type.replaceAll("_", " ");
 
-	const sessionLabel = memory.session_number
-		? `Session #${memory.session_number}`
-		: parsed?.session_number
-			? `Session #${parsed.session_number}`
-			: null;
+	let sessionLabel: string | null;
+	if (memory.session_number) {
+		sessionLabel = `Session #${memory.session_number}`;
+	} else if (parsed?.session_number) {
+		sessionLabel = `Session #${parsed.session_number}`;
+	} else {
+		sessionLabel = null;
+	}
 
 	const specId = parsed?.spec_id;
 

@@ -99,6 +99,7 @@ cp -r claude-skills/* ~/.cursor/skills/
 ### Agents .NET (hybrides BMAD + Autonomous)
 - **net-architect** : Architecte .NET senior avec expertise Clean Architecture et microservices
 - **bmad-net-architect** : Architecte .NET hybride combinant exécution autonome et workflows BMAD structurés
+- **dotnet-framework-48-expert** : Expert .NET Framework 4.8 spécialisé dans WCF, ASP.NET MVC 5, et maintenance d'applications legacy enterprise
 
 ### Agents Business
 - **performance-analyst** : Analyste performance pour optimisation et benchmarking

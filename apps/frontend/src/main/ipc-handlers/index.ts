@@ -22,6 +22,7 @@ import {
 import { registerArenaHandlers } from "./arena-handlers";
 import { registerAzureDevOpsHandlers } from "./azure-devops-handlers";
 import { registerBrowserAgentHandlers } from "./browser-agent-handlers";
+import { registerCarbonProfilerHandlers } from "./carbon-profiler-handlers";
 import { registerChangelogHandlers } from "./changelog-handlers";
 import {
 	registerCICDTriggersHandlers,
@@ -46,15 +47,18 @@ import { registerCredentialHandlers } from "./credential-handlers";
 import { registerCrossLanguageTranslationHandlers } from "./cross-language-translation-handlers";
 import { registerDebugHandlers } from "./debug-handlers";
 import { registerDecisionLoggerHandlers } from "./decision-logger-handlers";
+import { registerDocDriftHandlers } from "./doc-drift-handlers";
 import {
 	registerDocumentationAgentHandlers,
 	setupDocumentationAgentEventForwarding,
 } from "./documentation-agent-handlers";
 import { registerEnvHandlers } from "./env-handlers";
 import { registerFileHandlers } from "./file-handlers";
+import { registerFlakyTestsHandlers } from "./flaky-tests-handlers";
 import { registerGitHubCopilotHandlers } from "./github-copilot-handlers";
 import { registerGithubHandlers } from "./github-handlers";
 import { registerGitlabHandlers } from "./gitlab-handlers";
+import { registerI18nAgentHandlers } from "./i18n-agent-handlers";
 import { registerIdeationHandlers } from "./ideation-handlers";
 import { registerInsightsHandlers } from "./insights-handlers";
 import { registerJiraHandlers } from "./jira-handlers";
@@ -119,6 +123,7 @@ export {
 export { registerArenaHandlers } from "./arena-handlers";
 export { registerAzureDevOpsHandlers } from "./azure-devops-handlers";
 export { registerBrowserAgentHandlers } from "./browser-agent-handlers";
+export { registerCarbonProfilerHandlers } from "./carbon-profiler-handlers";
 export { registerChangelogHandlers } from "./changelog-handlers";
 export {
 	registerCICDTriggersHandlers,
@@ -143,15 +148,18 @@ export { registerCredentialHandlers } from "./credential-handlers";
 export { registerCrossLanguageTranslationHandlers } from "./cross-language-translation-handlers";
 export { registerDebugHandlers } from "./debug-handlers";
 export { registerDecisionLoggerHandlers } from "./decision-logger-handlers";
+export { registerDocDriftHandlers } from "./doc-drift-handlers";
 export {
 	registerDocumentationAgentHandlers,
 	setupDocumentationAgentEventForwarding,
 } from "./documentation-agent-handlers";
 export { registerEnvHandlers } from "./env-handlers";
 export { registerFileHandlers } from "./file-handlers";
+export { registerFlakyTestsHandlers } from "./flaky-tests-handlers";
 export { registerGitHubCopilotHandlers } from "./github-copilot-handlers";
 export { registerGithubHandlers } from "./github-handlers";
 export { registerGitlabHandlers } from "./gitlab-handlers";
+export { registerI18nAgentHandlers } from "./i18n-agent-handlers";
 export { registerIdeationHandlers } from "./ideation-handlers";
 export { registerInsightsHandlers } from "./insights-handlers";
 export { registerJiraHandlers } from "./jira-handlers";
@@ -422,6 +430,18 @@ export function setupIpcHandlers(
 
 	// Accessibility Agent handlers (WCAG scanner)
 	registerAccessibilityHandlers();
+
+	// i18n Agent handlers (hardcoded strings, locale coverage)
+	registerI18nAgentHandlers();
+
+	// Doc Drift handlers (documentation vs code drift detection)
+	registerDocDriftHandlers();
+
+	// Flaky Tests handlers (JUnit report analysis)
+	registerFlakyTestsHandlers();
+
+	// Carbon Profiler handlers (energy and CO2 footprint)
+	registerCarbonProfilerHandlers();
 
 	console.warn("[IPC] All handler modules registered successfully");
 }

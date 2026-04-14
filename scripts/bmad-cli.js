@@ -293,9 +293,10 @@ EXAMPLES:
   bmad-status
 
 HYBRID AGENTS:
-  /bmad-net-architect        Hybrid .NET architect
-  /bmad-performance-analyst  Hybrid performance analyst
-  /bmad-scrum-master         Agile project management
+  /bmad-net-architect            Hybrid .NET architect
+  /bmad-dotnet-framework-48-expert .NET Framework 4.8 expert (legacy)
+  /bmad-performance-analyst      Hybrid performance analyst
+  /bmad-scrum-master             Agile project management
 
 PARTY MODE:
   Mobilizes multiple hybrid agents for complex tasks
@@ -336,6 +337,7 @@ For more information, see the documentation.
 			task: task,
 			agents: [
 				"bmad-net-architect",
+				"bmad-dotnet-framework-48-expert",
 				"bmad-performance-analyst",
 				"bmad-scrum-master",
 				"net-architect",

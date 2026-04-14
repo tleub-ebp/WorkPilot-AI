@@ -136,8 +136,41 @@ export function ConflictPredictorDialog() {
 		return "text-green-600";
 	};
 
-	// biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
-	const generateReportText = (result: any) => {
+	interface ConflictSummary {
+		risk_assessment: string;
+		total_conflicts: number;
+		critical_conflicts: number;
+		high_conflicts: number;
+		medium_conflicts: number;
+	}
+
+	interface Conflict {
+		risk_level: string;
+		file_path: string;
+		worktree1: string;
+		worktree2: string;
+		description: string;
+		resolution_strategy: string;
+	}
+
+	interface ConflictPredictionResult {
+		summary: ConflictSummary;
+		total_worktrees: number;
+		active_worktrees: string[];
+		conflicts_detected: Conflict[];
+		recommendations: string[];
+		safe_merge_order: string[];
+		high_risk_areas: string[];
+		modified_files: Array<{
+			worktree_name: string;
+			file_path: string;
+			modification_type: string;
+			lines_added: number;
+			lines_removed: number;
+		}>;
+	}
+
+	const generateReportText = (result: ConflictPredictionResult) => {
 		let report = "# Conflict Prediction Analysis Report\n\n";
 		report += `**Risk Assessment:** ${result.summary.risk_assessment}\n\n`;
 		report += `**Total Worktrees:** ${result.total_worktrees}\n`;
@@ -148,18 +181,16 @@ export function ConflictPredictorDialog() {
 			report += `- Critical: ${result.summary.critical_conflicts}\n`;
 			report += `- High: ${result.summary.high_conflicts}\n`;
 			report += `- Medium: ${result.summary.medium_conflicts}\n\n`;
-
 			report += "## Conflicts\n\n";
-			// biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
-			result.conflicts_detected.forEach((conflict: any, index: number) => {
+
+			result.conflicts_detected.forEach((conflict: Conflict, index: number) => {
 				report += `### ${index + 1}. ${conflict.risk_level.toUpperCase()} - ${conflict.file_path}\n`;
 				report += `**Worktrees:** ${conflict.worktree1} vs ${conflict.worktree2}\n`;
 				report += `**Description:** ${conflict.description}\n`;
 				report += `**Resolution:** ${conflict.resolution_strategy}\n\n`;
 			});
 		} else {
-			report +=
-				"**✅ No conflicts detected - Safe for parallel development**\n\n";
+			report += "**✅ No conflicts detected - Safe for parallel development**\n\n";
 		}
 
 		if (result.recommendations.length > 0) {

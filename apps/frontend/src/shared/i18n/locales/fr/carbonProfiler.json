@@ -1,11 +1,21 @@
 {
-	"noData": "Aucune donnée de rapport carbone disponible",
-	"title": "Profilage Carbone / Énergie",
-	"totalEnergy": "Énergie Totale",
+	"noData": "Aucun scan effectué. Cliquez sur « Lancer le scan » pour démarrer.",
+	"title": "Profilage carbone / énergie",
+	"totalEnergy": "Énergie totale",
 	"co2Emissions": "Émissions CO₂",
 	"records": "Enregistrements",
-	"co2ByProvider": "CO₂ par Fournisseur (g)",
-	"co2ByModel": "CO₂ par Modèle (g)",
-	"recentRecords": "Enregistrements Récents",
-	"summary": "Résumé"
+	"co2ByProvider": "CO₂ par fournisseur (g)",
+	"co2ByModel": "CO₂ par modèle (g)",
+	"recentRecords": "Enregistrements récents",
+	"summary": "Résumé",
+	"actions": {
+		"runScan": "Lancer le scan",
+		"cancel": "Annuler",
+		"scanning": "Scan en cours...",
+		"reset": "Réinitialiser"
+	},
+	"errors": {
+		"noProject": "Sélectionnez un projet avant de lancer un scan.",
+		"failed": "Échec du scan : {{error}}"
+	}
 }

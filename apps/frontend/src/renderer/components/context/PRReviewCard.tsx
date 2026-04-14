@@ -57,7 +57,7 @@ function parsePRReviewContent(content: string): ParsedPRReview | null {
 	}
 }
 
-function VerdictBadge({ verdict }: { verdict: string }) {
+function VerdictBadge({ verdict }: { readonly verdict: string }) {
 	switch (verdict) {
 		case "approve":
 			return (
@@ -93,8 +93,8 @@ function SeverityBadge({
 	severity,
 	count,
 }: {
-	severity: string;
-	count: number;
+	readonly severity: string;
+	readonly count: number;
 }) {
 	if (count === 0) return null;
 
@@ -185,7 +185,7 @@ export function PRReviewCard({ memory }: PRReviewCardProps) {
 								<VerdictBadge verdict={parsed.verdict} />
 								{totalFindings > 0 && (
 									<span className="text-xs text-muted-foreground">
-										{totalFindings} finding{totalFindings !== 1 ? "s" : ""}
+										{totalFindings} finding{totalFindings === 1 ? "" : "s"}
 									</span>
 								)}
 							</div>
@@ -265,19 +265,23 @@ export function PRReviewCard({ memory }: PRReviewCardProps) {
 											className="text-sm"
 										>
 											<div className="flex items-center gap-2">
-												<Badge
-													className={`text-xs ${
-														finding.severity === "critical"
-															? "bg-red-600/20 text-red-400"
-															: finding.severity === "high"
-																? "bg-orange-500/20 text-orange-400"
-																: finding.severity === "medium"
-																	? "bg-amber-500/20 text-amber-400"
-																	: "bg-blue-500/20 text-blue-400"
-													}`}
-												>
-													{finding.severity}
-												</Badge>
+												{(() => {
+													let severityClass: string;
+													if (finding.severity === "critical") {
+														severityClass = "bg-red-600/20 text-red-400";
+													} else if (finding.severity === "high") {
+														severityClass = "bg-orange-500/20 text-orange-400";
+													} else if (finding.severity === "medium") {
+														severityClass = "bg-amber-500/20 text-amber-400";
+													} else {
+														severityClass = "bg-blue-500/20 text-blue-400";
+													}
+													return (
+														<Badge className={`text-xs ${severityClass}`}>
+															{finding.severity}
+														</Badge>
+													);
+												})()}
 												{finding.file && (
 													<span className="text-xs text-muted-foreground font-mono truncate max-w-[200px]">
 														{finding.file}
@@ -351,7 +355,7 @@ export function PRReviewCard({ memory }: PRReviewCardProps) {
 						)}
 
 						{/* Link to PR */}
-						{parsed.repo && parsed.prNumber && (
+						{!!parsed.repo && !!parsed.prNumber && (
 							<div className="pt-2">
 								<Button
 									variant="ghost"

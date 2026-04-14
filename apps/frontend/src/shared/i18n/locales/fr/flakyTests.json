@@ -1,8 +1,18 @@
 {
 	"title": "Détective de tests instables",
-	"noData": "Aucune donnée de rapport de tests instables disponible",
+	"noData": "Aucun scan effectué. Cliquez sur « Lancer le scan » pour démarrer.",
 	"summary": "{{flaky}} instables sur {{total}} tests au total",
 	"confidence": "confiance {{level}}",
 	"cause": "Cause :",
-	"failures": "échecs"
+	"failures": "échecs",
+	"actions": {
+		"runScan": "Lancer le scan",
+		"cancel": "Annuler",
+		"scanning": "Scan en cours...",
+		"reset": "Réinitialiser"
+	},
+	"errors": {
+		"noProject": "Sélectionnez un projet avant de lancer un scan.",
+		"failed": "Échec du scan : {{error}}"
+	}
 }

@@ -1,8 +1,18 @@
 {
 	"title": "Flaky Test Detective",
-	"noData": "No flaky test report data available",
+	"noData": "No scan run yet. Click \"Run scan\" to start.",
 	"summary": "{{flaky}} flaky out of {{total}} total tests",
 	"confidence": "{{level}} confidence",
 	"cause": "Cause:",
-	"failures": "failures"
+	"failures": "failures",
+	"actions": {
+		"runScan": "Run scan",
+		"cancel": "Cancel",
+		"scanning": "Scanning...",
+		"reset": "Reset"
+	},
+	"errors": {
+		"noProject": "Select a project before running a scan.",
+		"failed": "Scan failed: {{error}}"
+	}
 }
