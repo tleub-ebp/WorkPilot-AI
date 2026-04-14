@@ -2093,14 +2093,14 @@ function decodeVarint(buf: Buffer, pos: number): [number, number] {
  * Extract the current billing cycle timestamps from the userStatusProtoBinaryBase64
  * field in windsurfAuthStatus. The protobuf structure is:
  *   - root field 13 (plan info sub-message):
- *     - sub-field 2 (billing start): nested varint at field 1 — may be plan activation date, NOT current cycle start
+ *     - sub-field 2 (billing start): nested varint at field 1 — plan activation date, used for monthly cycle calculation
  *     - sub-field 3 (billing end): nested varint at field 1
  *     - sub-field 6: used messages (current cycle)
  *     - sub-field 7: used flow actions (current cycle)
  *     - sub-field 8: total messages
  *     - sub-field 9: total flow actions
- *     - sub-field 17: current billing cycle start (plain varint, epoch seconds)
- *     - sub-field 18: current billing cycle end (plain varint, epoch seconds)
+ *     - sub-field 17: weekly usage window start (plain varint, epoch seconds) — used for stale detection only
+ *     - sub-field 18: weekly usage window end (plain varint, epoch seconds)
  */
 function extractBillingCycleFromProtobuf(protoB64: string): {
 	startSeconds: number;
@@ -2109,6 +2109,7 @@ function extractBillingCycleFromProtobuf(protoB64: string): {
 	totalFlowActions: number;
 	usedMessages: number;
 	usedFlowActions: number;
+	weeklyWindowStartSeconds: number; // Field 17 - used for stale detection only
 } | null {
 	try {
 		const data = Buffer.from(protoB64, "base64");
@@ -2139,11 +2140,10 @@ function extractBillingCycleFromProtobuf(protoB64: string): {
 					let totalFlowActions = 0;
 					let usedMessages = 0;
 					let usedFlowActions = 0;
-					// Fields 17/18 are plain varint timestamps for the current billing cycle.
-					// They are more reliable than field 2/3 which may represent the plan
-					// activation date rather than the current cycle boundaries.
+					// Fields 17/18 are plain varint timestamps. Field 17 is the current billing cycle start.
+					// Field 18 is a weekly usage window end, NOT the billing cycle end.
+					// We prefer field 17 over field 2 for startSeconds, but keep field 3 for endSeconds.
 					let cycleStartSeconds = 0;
-					let cycleEndSeconds = 0;
 
 					while (sp < sub.length) {
 						const [stag, sp2] = decodeVarint(sub, sp);
@@ -2159,7 +2159,6 @@ function extractBillingCycleFromProtobuf(protoB64: string): {
 							if (sfn === 8) totalMessages = sv;
 							if (sfn === 9) totalFlowActions = sv;
 							if (sfn === 17) cycleStartSeconds = sv;
-							if (sfn === 18) cycleEndSeconds = sv;
 						} else if (swt === 2) {
 							const [sl, sp3] = decodeVarint(sub, sp);
 							sp = sp3;
@@ -2190,15 +2189,11 @@ function extractBillingCycleFromProtobuf(protoB64: string): {
 						}
 					}
 
-					// Prefer field 17/18 (current billing cycle) over field 2/3 (plan activation)
-					// when they represent a more recent cycle. Field 2 can be a plan activation
-					// date that doesn't advance with each billing period, causing stale detection
-					// to fail.
+					// Prefer field 17 (current billing cycle start) over field 2 (plan activation).
+					// Field 2 can be a plan activation date that doesn't advance with each billing
+					// period, causing stale detection to fail. Keep field 3 for endSeconds.
 					if (cycleStartSeconds > 0 && cycleStartSeconds >= startSeconds) {
 						startSeconds = cycleStartSeconds;
-					}
-					if (cycleEndSeconds > 0 && cycleEndSeconds >= endSeconds) {
-						endSeconds = cycleEndSeconds;
 					}
 
 					if (startSeconds > 0 && endSeconds > 0) {
@@ -2209,6 +2204,7 @@ function extractBillingCycleFromProtobuf(protoB64: string): {
 							totalFlowActions,
 							usedMessages,
 							usedFlowActions,
+							weeklyWindowStartSeconds: cycleStartSeconds,
 						};
 					}
 					return null;
@@ -2324,12 +2320,21 @@ export async function readWindsurfCachedPlanInfo(): Promise<{
 						if (billing) {
 							const protoStartMs = billing.startSeconds * 1000;
 							const protoEndMs = billing.endSeconds * 1000;
+							// Use field 17 (weekly window start) for stale detection - it advances more frequently
+							// than the monthly billing cycle, making it a reliable indicator of cycle boundaries
+							const weeklyWindowStartMs = billing.weeklyWindowStartSeconds > 0
+								? billing.weeklyWindowStartSeconds * 1000
+								: protoStartMs;
 
-							// The cachedPlanInfo is stale if its endTimestamp <= the protobuf's startTimestamp
+							// The cachedPlanInfo is stale if its endTimestamp <= the weekly window start
 							// (meaning it's from the previous billing cycle)
-							if (planInfo.endTimestamp <= protoStartMs) {
-								planInfo.startTimestamp = protoStartMs;
-								planInfo.endTimestamp = protoEndMs;
+							if (planInfo.endTimestamp <= weeklyWindowStartMs) {
+								// Calculate the new monthly billing cycle duration from the previous cycle
+								const previousCycleDuration = planInfo.endTimestamp - planInfo.startTimestamp;
+								// The new monthly cycle starts when the previous one ended (Apr 11), not the weekly window (Apr 14)
+								planInfo.startTimestamp = planInfo.endTimestamp;
+								// Use the calculated monthly duration, not the protobuf's weekly window
+								planInfo.endTimestamp = planInfo.endTimestamp + previousCycleDuration;
 								planInfo.isStale = true;
 
 								// Update totals from protobuf if available
