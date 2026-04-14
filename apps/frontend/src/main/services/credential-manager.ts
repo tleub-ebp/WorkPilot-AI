@@ -2328,7 +2328,6 @@ export async function readWindsurfCachedPlanInfo(): Promise<{
 						);
 						if (billing) {
 							const protoStartMs = billing.startSeconds * 1000;
-							const protoEndMs = billing.endSeconds * 1000;
 							// Use field 17 (weekly window start) for stale detection - it advances more frequently
 							// than the monthly billing cycle, making it a reliable indicator of cycle boundaries
 							const weeklyWindowStartMs = billing.weeklyWindowStartSeconds > 0
@@ -2338,7 +2337,6 @@ export async function readWindsurfCachedPlanInfo(): Promise<{
 							// The cachedPlanInfo is stale if its endTimestamp <= the weekly window start
 							// (meaning it's from the previous billing cycle)
 							if (planInfo.endTimestamp <= weeklyWindowStartMs) {
-								console.log("[readWindsurfCachedPlanInfo] Cached plan info is stale, updating billing cycle");
 								// Calculate the new monthly billing cycle duration from the previous cycle
 								const previousCycleDuration = planInfo.endTimestamp - planInfo.startTimestamp;
 								// The new monthly cycle starts when the previous one ended (Apr 11), not the weekly window (Apr 14)
@@ -2358,10 +2356,6 @@ export async function readWindsurfCachedPlanInfo(): Promise<{
 								// DO NOT reset usage counters to 0 - this would erase correct usage data
 								// The cache local usage counters should be preserved as they contain the actual usage
 								// Only reset if the cache local itself is completely missing or corrupted
-								console.log("[readWindsurfCachedPlanInfo] Preserving usage counters from cache:", {
-									usedMessages: planInfo.usage.usedMessages,
-									usedFlowActions: planInfo.usage.usedFlowActions,
-								});
 							}
 						}
 					}
