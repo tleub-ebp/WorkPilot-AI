@@ -2686,17 +2686,24 @@ export class UsageMonitor extends EventEmitter {
 	/**
 	 * Normalize Anthropic API response to UsageSnapshot
 	 *
-	 * Actual Anthropic OAuth usage API response format:
+	 * Anthropic OAuth usage API response formats:
+	 *
+	 * Max plan — single global seven_day bucket:
 	 * {
-	 *   "five_hour": {
-	 *     "utilization": 19,  // integer 0-100
-	 *     "resets_at": "2025-01-17T15:00:00Z"
-	 *   },
-	 *   "seven_day": {
-	 *     "utilization": 45,  // integer 0-100
-	 *     "resets_at": "2025-01-20T12:00:00Z"
-	 *   }
+	 *   "five_hour": { "utilization": 19, "resets_at": "..." },
+	 *   "seven_day": { "utilization": 45, "resets_at": "..." }
 	 * }
+	 *
+	 * Pro plan — seven_day is null, quota split per model/feature:
+	 * {
+	 *   "five_hour": { "utilization": 59, "resets_at": "..." },
+	 *   "seven_day": null,
+	 *   "seven_day_opus": null,
+	 *   "seven_day_sonnet": null,
+	 *   "seven_day_omelette": { "utilization": 0, "resets_at": null },
+	 *   ...
+	 * }
+	 * For Pro, we use the max utilization across all seven_day* buckets.
 	 */
 	private normalizeAnthropicResponse(
 		// biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
@@ -2719,9 +2726,30 @@ export class UsageMonitor extends EventEmitter {
 		if (data.five_hour !== undefined || data.seven_day !== undefined) {
 			// New nested format - utilization is already 0-100 integer
 			fiveHourUtil = data.five_hour?.utilization ?? 0;
-			sevenDayUtil = data.seven_day?.utilization ?? 0;
 			sessionResetTimestamp = data.five_hour?.resets_at;
-			weeklyResetTimestamp = data.seven_day?.resets_at;
+
+			// seven_day is null for Pro accounts; quota is split across per-model
+			// buckets (seven_day_opus, seven_day_sonnet, ...). Pick the highest
+			// utilization across all seven_day* buckets — that's the one that will
+			// hit the limit first.
+			if (data.seven_day?.utilization != null) {
+				sevenDayUtil = data.seven_day.utilization;
+				weeklyResetTimestamp = data.seven_day.resets_at;
+			} else {
+				let maxUtil = 0;
+				let maxResetAt: string | undefined;
+				for (const key of Object.keys(data)) {
+					if (key === "seven_day" || !key.startsWith("seven_day")) continue;
+					const bucket = data[key];
+					const util = bucket?.utilization;
+					if (typeof util === "number" && util >= maxUtil) {
+						maxUtil = util;
+						maxResetAt = bucket.resets_at ?? maxResetAt;
+					}
+				}
+				sevenDayUtil = maxUtil;
+				weeklyResetTimestamp = maxResetAt;
+			}
 		} else {
 			// Legacy flat format - utilization is 0-1 float, needs *100
 			const rawFiveHour = data.five_hour_utilization ?? 0;
