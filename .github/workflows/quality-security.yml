@@ -92,7 +92,7 @@ jobs:
         uses: actions/github-script@v9
         with:
           script: |
-            const fs = require('fs');
+            import fs from 'fs';
 
             if (!fs.existsSync('bandit-report.json')) {
               core.setFailed('Bandit report not found - scan may have failed');
