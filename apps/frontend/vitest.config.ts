@@ -42,8 +42,6 @@ export default defineConfig({
 				__dirname,
 				"src/__mocks__/sentry-electron-renderer.ts",
 			),
-			// Mock i18n to prevent SSR transformation issues
-			"@shared/i18n": resolve(__dirname, "src/__mocks__/i18n.ts"),
 		},
 		// Setup files for test environment - use setupFiles to avoid vitest import issues
 		setupFiles: ["./src/__tests__/testSetup.ts"],

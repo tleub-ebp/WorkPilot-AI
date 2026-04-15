@@ -53,47 +53,28 @@ describe("terminal-store callback registration functions", () => {
 	let mockDebugError: ReturnType<typeof vi.fn>;
 
 	beforeEach(async () => {
-		vi.clearAllMocks();
 		vi.resetModules();
 
-		// Re-mock after reset to ensure fresh state
-		mockDebugLog = vi.fn();
-		mockDebugError = vi.fn();
+		// Grab the hoisted mock instances so assertions target the same spies
+		// that the re-imported module closes over.
+		const debugLoggerModule = await import(
+			"../../../shared/utils/debug-logger"
+		);
+		mockDebugLog = debugLoggerModule.debugLog as ReturnType<typeof vi.fn>;
+		mockDebugError = debugLoggerModule.debugError as ReturnType<typeof vi.fn>;
 
-		vi.doMock("../../../shared/utils/debug-logger", () => ({
-			debugLog: mockDebugLog,
-			debugError: mockDebugError,
-		}));
-
-		mockTerminalBufferManager = {
-			append: vi.fn(),
-			getSize: vi.fn(() => 100),
+		const bufferModule = await import("../../lib/terminal-buffer-manager");
+		mockTerminalBufferManager = bufferModule.terminalBufferManager as unknown as {
+			append: ReturnType<typeof vi.fn>;
+			getSize: ReturnType<typeof vi.fn>;
 		};
 
-		vi.doMock("../../lib/terminal-buffer-manager", () => ({
-			terminalBufferManager: {
-				...mockTerminalBufferManager,
-				get: vi.fn(() => ""),
-				set: vi.fn(),
-				clear: vi.fn(),
-				dispose: vi.fn(),
-			},
-		}));
+		mockDebugLog.mockClear();
+		mockDebugError.mockClear();
+		mockTerminalBufferManager.append.mockClear();
+		mockTerminalBufferManager.getSize.mockClear();
 
-		vi.doMock("uuid", () => ({
-			v4: vi.fn(() => "mock-uuid-1234"),
-		}));
-
-		vi.doMock("@dnd-kit/sortable", () => ({
-			arrayMove: vi.fn((arr: unknown[], from: number, to: number) => {
-				const result = [...arr];
-				const [item] = result.splice(from, 1);
-				result.splice(to, 0, item);
-				return result;
-			}),
-		}));
-
-		// Import fresh module
+		// Import fresh module (will pick up hoisted vi.mock factories)
 		const storeModule = await import("../terminal-store");
 		registerOutputCallback = storeModule.registerOutputCallback;
 		unregisterOutputCallback = storeModule.unregisterOutputCallback;

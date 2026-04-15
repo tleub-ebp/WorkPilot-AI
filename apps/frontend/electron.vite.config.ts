@@ -1,7 +1,7 @@
 import { resolve } from "node:path";
 import react from "@vitejs/plugin-react";
 import { config as dotenvConfig } from "dotenv";
-import { defineConfig, externalizeDepsPlugin } from "electron-vite";
+import { defineConfig } from "electron-vite";
 
 // Load root .env first, then frontend .env with override priority
 // This ensures SENTRY_DSN and other vars are found in either location
@@ -30,8 +30,8 @@ const sentryDefines = {
 export default defineConfig({
 	main: {
 		define: sentryDefines,
-		plugins: [
-			externalizeDepsPlugin({
+		build: {
+			externalizeDeps: {
 				// Bundle these packages into the main process (they won't be in node_modules in packaged app)
 				exclude: [
 					"uuid",
@@ -58,25 +58,35 @@ export default defineConfig({
 					// XState for task state machine
 					"xstate",
 				],
-			}),
-		],
-		build: {
+			},
 			rollupOptions: {
 				input: {
 					index: resolve(__dirname, "src/main/index.ts"),
 				},
 				// Native modules that must be external (rebuilt by electron-builder)
-				external: ["@lydell/node-pty", "better-sqlite3"],
+				// electron itself must be external so its path.txt lookup resolves
+				// against node_modules/electron rather than out/main/chunks.
+				external: ["electron", "@lydell/node-pty", "better-sqlite3"],
 			},
 		},
 	},
 	preload: {
-		plugins: [externalizeDepsPlugin()],
 		build: {
+			externalizeDeps: {
+				// Don't bundle electron - it will be provided by Electron runtime
+				include: ["electron"],
+			},
 			rollupOptions: {
 				input: {
 					index: resolve(__dirname, "src/preload/index.ts"),
 				},
+				output: {
+					format: "cjs",
+					entryFileNames: "[name].cjs",
+					chunkFileNames: "chunks/[name]-[hash].cjs",
+				},
+				// Externalize electron so it's not bundled
+				external: ["electron"],
 			},
 		},
 	},

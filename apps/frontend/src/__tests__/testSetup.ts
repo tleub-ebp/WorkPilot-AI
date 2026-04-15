@@ -4,6 +4,7 @@
  */
 
 import "@testing-library/jest-dom/vitest";
+import "@shared/i18n";
 
 // Mock localStorage for tests that need it
 const createLocalStorageMock = () => {
@@ -53,6 +54,19 @@ if (typeof globalThis !== "undefined") {
 			},
 			writable: true,
 		});
+	}
+
+	// Mock requestAnimationFrame/cancelAnimationFrame for jsdom
+	if (globalThis.requestAnimationFrame === undefined) {
+		globalThis.requestAnimationFrame = (callback: FrameRequestCallback) => {
+			return globalThis.setTimeout(
+				() => callback(Date.now()),
+				0,
+			) as unknown as number;
+		};
+		globalThis.cancelAnimationFrame = (id: number) => {
+			globalThis.clearTimeout(id);
+		};
 	}
 
 	// Mock window.electronAPI for renderer tests

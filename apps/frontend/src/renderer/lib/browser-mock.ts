@@ -629,6 +629,92 @@ const browserMockAPI: ElectronAPI = {
 	}),
 	checkClaudeOAuth: async () => ({ isAuthenticated: false }),
 	checkOpenAICodexOAuth: async () => ({ isAuthenticated: false }),
+
+	// Generic invoke method for IPC calls
+	invoke: async (channel: string, ...args: unknown[]) => {
+		console.warn(`[Browser Mock] invoke called for channel: ${channel}`, args);
+		return { success: false, error: "Not available in browser mode" };
+	},
+
+	// Prompt Optimizer API
+	onPromptOptimizerStreamChunk: () => () => {
+		/* noop */
+	},
+	onPromptOptimizerStatus: () => () => {
+		/* noop */
+	},
+	onPromptOptimizerError: () => () => {
+		/* noop */
+	},
+	onPromptOptimizerComplete: () => () => {
+		/* noop */
+	},
+
+	// Context-Aware Snippets API
+	onSnippetStreamChunk: () => {
+		/* noop */
+	},
+	onSnippetStatus: () => {
+		/* noop */
+	},
+	onSnippetError: () => {
+		/* noop */
+	},
+	onSnippetComplete: () => {
+		/* noop */
+	},
+	removeSnippetStreamChunkListener: () => {
+		/* noop */
+	},
+	removeSnippetStatusListener: () => {
+		/* noop */
+	},
+	removeSnippetErrorListener: () => {
+		/* noop */
+	},
+	removeSnippetCompleteListener: () => {
+		/* noop */
+	},
+
+	// Voice Control API
+	onVoiceControlStatus: () => () => {
+		/* noop */
+	},
+	onVoiceControlStreamChunk: () => () => {
+		/* noop */
+	},
+	onVoiceControlError: () => () => {
+		/* noop */
+	},
+	onVoiceControlComplete: () => () => {
+		/* noop */
+	},
+	onVoiceControlAudioLevel: () => () => {
+		/* noop */
+	},
+	onVoiceControlDuration: () => () => {
+		/* noop */
+	},
+
+	// App Emulator API
+	onAppEmulatorStatus: () => () => {
+		/* noop */
+	},
+	onAppEmulatorReady: () => () => {
+		/* noop */
+	},
+	onAppEmulatorOutput: () => () => {
+		/* noop */
+	},
+	onAppEmulatorError: () => () => {
+		/* noop */
+	},
+	onAppEmulatorStopped: () => () => {
+		/* noop */
+	},
+	onAppEmulatorConfig: () => () => {
+		/* noop */
+	},
 };
 
 /**
