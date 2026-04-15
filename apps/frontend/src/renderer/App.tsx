@@ -187,7 +187,7 @@ const SimulationReport = lazy(() =>
 		default: m.SimulationReport,
 	})),
 );
-const DiffPreview = lazy(() =>
+const _DiffPreview = lazy(() =>
 	import("./components/sandbox/DiffPreview").then((m) => ({ default: m.DiffPreview })),
 );
 const RegressionGuardianDashboard = lazy(() =>

@@ -15,32 +15,42 @@ const stepStatusColors: Record<string, string> = {
 export function HealingTimeline({ operation }: HealingTimelineProps) {
 	const { t } = useTranslation(["selfHealing"]);
 
+	let statusColor: string;
+	let statusText: string;
+
+	if (operation.success) {
+		statusColor = "bg-green-500/20 text-green-400";
+		statusText = t("selfHealing:resolved");
+	} else if (operation.completed_at) {
+		statusColor = "bg-red-500/20 text-red-400";
+		statusText = t("selfHealing:failed");
+	} else {
+		statusColor = "bg-blue-500/20 text-blue-400";
+		statusText = t("selfHealing:inProgress");
+	}
+
 	return (
-		<div className="rounded-lg border border-[var(--border-primary)] bg-[var(--bg-secondary)] p-4">
+		<div className="rounded-lg border border-(--border-primary) bg-(--bg-secondary) p-4">
 			<div className="flex items-center justify-between mb-3">
-				<h4 className="text-sm font-medium text-[var(--text-primary)]">
+				<h4 className="text-sm font-medium text-(--text-primary)">
 					{operation.incident?.title || t("selfHealing:healingOperation")}
 				</h4>
 				<span
-					className={`text-xs px-2 py-0.5 rounded-full ${operation.success ? "bg-green-500/20 text-green-400" : operation.completed_at ? "bg-red-500/20 text-red-400" : "bg-blue-500/20 text-blue-400"}`}
+					className={`text-xs px-2 py-0.5 rounded-full ${statusColor}`}
 				>
-					{operation.success
-						? t("selfHealing:resolved")
-						: operation.completed_at
-							? t("selfHealing:failed")
-							: t("selfHealing:inProgress")}
+					{statusText}
 				</span>
 			</div>
 
 			<div className="relative pl-4">
 				{operation.steps.map((step, index) => (
 					<div
-						key={`${step.name}-${index}`}
+						key={`${step.name}-${step.status}`}
 						className="relative pb-4 last:pb-0"
 					>
 						{/* Vertical line */}
 						{index < operation.steps.length - 1 && (
-							<div className="absolute left-0 top-3 w-px h-full bg-[var(--border-primary)]" />
+							<div className="absolute left-0 top-3 w-px h-full bg-(--border-primary)" />
 						)}
 						{/* Dot */}
 						<div
@@ -49,12 +59,12 @@ export function HealingTimeline({ operation }: HealingTimelineProps) {
 						{/* Content */}
 						<div className="ml-3">
 							<div className="flex items-center gap-2">
-								<span className="text-sm text-[var(--text-primary)]">
+								<span className="text-sm text-(--text-primary)">
 									{step.name}
 								</span>
 							</div>
 							{step.detail && (
-								<p className="text-xs text-[var(--text-tertiary)] mt-0.5">
+								<p className="text-xs text-(--text-tertiary) mt-0.5">
 									{step.detail}
 								</p>
 							)}
@@ -64,7 +74,7 @@ export function HealingTimeline({ operation }: HealingTimelineProps) {
 			</div>
 
 			{operation.duration_seconds != null && (
-				<div className="mt-3 text-xs text-[var(--text-tertiary)]">
+				<div className="mt-3 text-xs text-(--text-tertiary)">
 					{t("selfHealing:duration")}: {operation.duration_seconds.toFixed(1)}s
 				</div>
 			)}

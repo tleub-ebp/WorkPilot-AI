@@ -524,7 +524,7 @@ export function PRDetail({
 
 	// Check if PR is ready to merge based on review
 	const isReadyToMerge = useMemo(() => {
-		if (!reviewResult || !reviewResult.success) return false;
+		if (!reviewResult?.success) return false;
 		// Check if the summary contains "READY TO MERGE"
 		return (
 			reviewResult.summary?.includes("READY TO MERGE") ||
@@ -535,7 +535,7 @@ export function PRDetail({
 	// Check if review is "clean" - only LOW severity findings (no MEDIUM, HIGH, or CRITICAL)
 	// Requires at least having a successful review to be considered clean
 	const isCleanReview = useMemo(() => {
-		if (!reviewResult || !reviewResult.success) return false;
+		if (!reviewResult?.success) return false;
 		// Only LOW findings allowed - no medium, high, or critical
 		// A review with zero findings is also considered clean
 		return !reviewResult.findings.some(
@@ -587,7 +587,7 @@ export function PRDetail({
 			};
 		}
 
-		if (!reviewResult || !reviewResult.success) {
+		if (!reviewResult?.success) {
 			return {
 				status: "not_reviewed",
 				label: t("prReview.notReviewed"),

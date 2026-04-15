@@ -505,7 +505,7 @@ export function registerMemoryHandlers(): void {
 				}
 
 				// For other providers, do basic validation
-				if (!apiKey || !apiKey.trim()) {
+				if (!apiKey?.trim()) {
 					return {
 						success: true,
 						data: {

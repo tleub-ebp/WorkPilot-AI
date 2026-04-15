@@ -144,7 +144,7 @@ export function DependencySentinelDialog() {
 		} finally {
 			setIsLoading(false);
 		}
-	}, [selectedProject]);
+	}, [selectedProject, mockVulnerabilities, mockDependencies]);
 
 	useEffect(() => {
 		if (isOpen && selectedProject) {

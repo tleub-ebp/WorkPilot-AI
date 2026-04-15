@@ -158,7 +158,7 @@ export function findClaudeSessionAfter(
 			}))
 			.filter((f) => f.mtime > afterTimestamp)
 			// Exclude already-claimed session IDs to prevent race conditions
-			.filter((f) => !excludeSessionIds || !excludeSessionIds.has(f.sessionId))
+			.filter((f) => !excludeSessionIds?.has(f.sessionId))
 			.sort((a, b) => b.mtime - a.mtime);
 
 		if (files.length === 0) {
@@ -354,7 +354,7 @@ export function captureClaudeSessionId(
 		attempts++;
 
 		const terminal = terminals.get(terminalId);
-		if (!terminal || !terminal.isClaudeMode) {
+		if (!terminal?.isClaudeMode) {
 			debugLog(
 				"[SessionHandler] Terminal no longer in Claude mode, stopping session capture:",
 				terminalId,

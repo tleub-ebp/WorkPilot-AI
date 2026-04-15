@@ -539,7 +539,7 @@ except Exception as e:
 			options?: { requireReviewBeforeCoding?: boolean },
 		): Promise<IPCResult<AzureDevOpsImportResult>> => {
 			const project = projectStore.getProject(projectId);
-			if (!project || !project.autoBuildPath) {
+			if (!project?.autoBuildPath) {
 				return {
 					success: false,
 					error: "Project not found or not initialized",

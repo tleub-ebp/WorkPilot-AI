@@ -171,7 +171,7 @@ export function MRDetail({
 
 	// Check if MR is ready to merge based on review
 	const isReadyToMerge = useMemo(() => {
-		if (!reviewResult || !reviewResult.success) return false;
+		if (!reviewResult?.success) return false;
 		// Check if the summary contains "READY TO MERGE"
 		return (
 			reviewResult.summary?.includes("READY TO MERGE") ||
@@ -195,7 +195,7 @@ export function MRDetail({
 		icon: React.ReactNode;
 		color: string;
 	} = useMemo(() => {
-		if (!reviewResult || !reviewResult.success) {
+		if (!reviewResult?.success) {
 			return {
 				status: "not_reviewed",
 				label: "Not Reviewed",

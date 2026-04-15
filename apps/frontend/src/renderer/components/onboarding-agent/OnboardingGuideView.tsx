@@ -15,8 +15,8 @@ function GuideBody({
 	guide,
 	t,
 }: {
-	guide: OnboardingGuide;
-	t: (key: string, options?: Record<string, unknown>) => string;
+	readonly guide: OnboardingGuide;
+	readonly t: (key: string, options?: Record<string, unknown>) => string;
 }): React.ReactElement {
 	return (
 		<div className="flex flex-col gap-4">
@@ -40,7 +40,7 @@ function GuideBody({
 			<div className="space-y-3">
 				{guide.steps.map((step, idx) => (
 					<div
-						key={`${step.section}-${idx}`}
+						key={`${step.section}-${step.title}`}
 						className="px-4 py-3 rounded-lg border border-(--border-color)"
 					>
 						<div className="flex items-center justify-between mb-2">
@@ -59,9 +59,9 @@ function GuideBody({
 						</p>
 						{step.commands.length > 0 && (
 							<div className="space-y-1">
-								{step.commands.map((cmd, cidx) => (
+								{step.commands.map((cmd) => (
 									<pre
-										key={`${idx}-${cidx}`}
+										key={`${cmd.slice(0, 20)}`}
 										className="px-3 py-1.5 rounded bg-(--bg-secondary) text-xs font-mono text-green-400"
 									>
 										$ {cmd}

@@ -15,7 +15,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import "@testing-library/jest-dom/vitest";
 import type { NewCommitsCheck } from "@preload/api/modules/github-api";
-import i18n from "@shared/i18n";
 import { render, screen } from "@testing-library/react";
 // @ts-expect-error - vitest resolves this correctly
 import type { PRReviewResult } from "../../../hooks/useGitHubPRs";
@@ -144,12 +143,12 @@ describe("ReviewStatusTree - Reviewing Status (ACS-200)", () => {
 
 			// Should show "Not Reviewed" label
 			expect(
-				screen.getByText(i18n.t("prReview.notReviewed")),
+				screen.getByText("prReview.notReviewed"),
 			).toBeInTheDocument();
 
 			// Should show "Run AI Review" button
 			expect(
-				screen.getByText(i18n.t("prReview.runAIReview")),
+				screen.getByText("prReview.runAIReview"),
 			).toBeInTheDocument();
 		});
 
@@ -169,7 +168,7 @@ describe("ReviewStatusTree - Reviewing Status (ACS-200)", () => {
 				/>,
 			);
 
-			const runReviewButton = screen.getByText(i18n.t("prReview.runAIReview"));
+			const runReviewButton = screen.getByText("prReview.runAIReview");
 			runReviewButton.click();
 			expect(mockOnRunReview).toHaveBeenCalledTimes(1);
 		});
@@ -194,11 +193,11 @@ describe("ReviewStatusTree - Reviewing Status (ACS-200)", () => {
 
 			// Should show the full tree (collapsible card) when reviewing
 			expect(
-				screen.getByText(i18n.t("prReview.aiReviewInProgress")),
+				screen.getByText("prReview.aiReviewInProgress"),
 			).toBeInTheDocument();
 
 			// Should show cancel button
-			expect(screen.getByText(i18n.t("prReview.cancel"))).toBeInTheDocument();
+			expect(screen.getByText("prReview.cancel")).toBeInTheDocument();
 		});
 
 		it('should show "AI Review in Progress" status label when isReviewing', () => {
@@ -218,7 +217,7 @@ describe("ReviewStatusTree - Reviewing Status (ACS-200)", () => {
 			);
 
 			expect(
-				screen.getByText(i18n.t("prReview.aiReviewInProgress")),
+				screen.getByText("prReview.aiReviewInProgress"),
 			).toBeInTheDocument();
 		});
 
@@ -238,7 +237,7 @@ describe("ReviewStatusTree - Reviewing Status (ACS-200)", () => {
 				/>,
 			);
 
-			const cancelButton = screen.getByText(i18n.t("prReview.cancel"));
+			const cancelButton = screen.getByText("prReview.cancel");
 			cancelButton.click();
 			expect(mockOnCancelReview).toHaveBeenCalledTimes(1);
 		});
@@ -261,12 +260,12 @@ describe("ReviewStatusTree - Reviewing Status (ACS-200)", () => {
 
 			// Should show "Review Started" step (completed)
 			expect(
-				screen.getByText(i18n.t("prReview.reviewStarted")),
+				screen.getByText("prReview.reviewStarted"),
 			).toBeInTheDocument();
 
 			// Should show "AI Analysis in Progress..." step (current)
 			expect(
-				screen.getByText(i18n.t("prReview.analysisInProgress")),
+				screen.getByText("prReview.analysisInProgress"),
 			).toBeInTheDocument();
 		});
 	});
@@ -316,7 +315,7 @@ describe("ReviewStatusTree - Reviewing Status (ACS-200)", () => {
 
 			// Should show follow-up analysis step
 			expect(
-				screen.getByText(i18n.t("prReview.followupInProgress")),
+				screen.getByText("prReview.followupInProgress"),
 			).toBeInTheDocument();
 		});
 
@@ -340,7 +339,7 @@ describe("ReviewStatusTree - Reviewing Status (ACS-200)", () => {
 			expect(screen.getByText("AI Review in Progress")).toBeInTheDocument();
 
 			// Should show cancel button when reviewing
-			expect(screen.getByText(i18n.t("prReview.cancel"))).toBeInTheDocument();
+			expect(screen.getByText("prReview.cancel")).toBeInTheDocument();
 		});
 	});
 
@@ -366,7 +365,7 @@ describe("ReviewStatusTree - Reviewing Status (ACS-200)", () => {
 
 			// The status dot should have animated blue styling
 			const statusDot = screen
-				.getByText(i18n.t("prReview.aiReviewInProgress"))
+				.getByText("prReview.aiReviewInProgress")
 				.parentElement?.querySelector("div");
 			expect(statusDot).toBeInTheDocument();
 		});
@@ -389,12 +388,12 @@ describe("ReviewStatusTree - Reviewing Status (ACS-200)", () => {
 
 			// Should show "Ready to Merge" label
 			expect(
-				screen.getByText(i18n.t("prReview.readyToMerge")),
+				screen.getByText("prReview.readyToMerge"),
 			).toBeInTheDocument();
 
 			// Should NOT show cancel button when not reviewing
 			expect(
-				screen.queryByText(i18n.t("prReview.cancel")),
+				screen.queryByText("prReview.cancel"),
 			).not.toBeInTheDocument();
 		});
 	});
@@ -420,18 +419,18 @@ describe("ReviewStatusTree - Reviewing Status (ACS-200)", () => {
 			);
 
 			expect(
-				screen.getByText(i18n.t("prReview.aiReviewInProgress")),
+				screen.getByText("prReview.aiReviewInProgress"),
 			).toBeInTheDocument();
 		});
 
 		it("should return appropriate label for other statuses when not reviewing", () => {
 			const statusLabels: Record<string, string> = {
-				ready_to_merge: i18n.t("prReview.readyToMerge"),
-				waiting_for_changes: i18n.t("prReview.waitingForChanges"),
-				reviewed_pending_post: i18n.t("prReview.reviewComplete"),
-				ready_for_followup: i18n.t("prReview.readyForFollowup"),
-				needs_attention: i18n.t("prReview.needsAttention"),
-				followup_issues_remain: i18n.t("prReview.blockingIssues"),
+				ready_to_merge: "prReview.readyToMerge",
+				waiting_for_changes: "prReview.waitingForChanges",
+				reviewed_pending_post: "prReview.reviewComplete",
+				ready_for_followup: "prReview.readyForFollowup",
+				needs_attention: "prReview.needsAttention",
+				followup_issues_remain: "prReview.blockingIssues",
 			};
 
 			for (const [status, expectedLabel] of Object.entries(statusLabels)) {
@@ -476,7 +475,7 @@ describe("ReviewStatusTree - Reviewing Status (ACS-200)", () => {
 			);
 
 			expect(
-				screen.getByText(i18n.t("prReview.readyToMerge")),
+				screen.getByText("prReview.readyToMerge"),
 			).toBeInTheDocument();
 		});
 
@@ -535,9 +534,9 @@ describe("ReviewStatusTree - Reviewing Status (ACS-200)", () => {
 				);
 
 				expect(
-					screen.getByText(i18n.t("prReview.aiReviewInProgress")),
+					screen.getByText("prReview.aiReviewInProgress"),
 				).toBeInTheDocument();
-				expect(screen.getByText(i18n.t("prReview.cancel"))).toBeInTheDocument();
+				expect(screen.getByText("prReview.cancel")).toBeInTheDocument();
 			});
 		});
 
@@ -560,7 +559,7 @@ describe("ReviewStatusTree - Reviewing Status (ACS-200)", () => {
 				);
 
 				expect(
-					screen.getByText(i18n.t("prReview.aiReviewInProgress")),
+					screen.getByText("prReview.aiReviewInProgress"),
 				).toBeInTheDocument();
 
 				// Review completes
@@ -593,10 +592,10 @@ describe("ReviewStatusTree - Reviewing Status (ACS-200)", () => {
 				);
 
 				expect(
-					screen.getByText(i18n.t("prReview.reviewComplete")),
+					screen.getByText("prReview.reviewComplete"),
 				).toBeInTheDocument();
 				expect(
-					screen.queryByText(i18n.t("prReview.cancel")),
+					screen.queryByText("prReview.cancel"),
 				).not.toBeInTheDocument();
 			});
 		});
@@ -621,7 +620,7 @@ describe("ReviewStatusTree - Reviewing Status (ACS-200)", () => {
 
 			// Should still show reviewing state
 			expect(
-				screen.getByText(i18n.t("prReview.aiReviewInProgress")),
+				screen.getByText("prReview.aiReviewInProgress"),
 			).toBeInTheDocument();
 		});
 
@@ -659,7 +658,7 @@ describe("ReviewStatusTree - Reviewing Status (ACS-200)", () => {
 			);
 
 			expect(
-				screen.getByText(i18n.t("prReview.aiReviewInProgress")),
+				screen.getByText("prReview.aiReviewInProgress"),
 			).toBeInTheDocument();
 		});
 	});

@@ -89,7 +89,7 @@ function getLatestRelease() {
  * Find prebuild asset in release
  */
 function findPrebuildAsset(release, arch, electronAbi) {
-	if (!release || !release.assets) return null;
+	if (!release?.assets) return null;
 
 	const assetName = `node-pty-win32-${arch}-electron-${electronAbi}.zip`;
 	return release.assets.find((asset) => asset.name === assetName);

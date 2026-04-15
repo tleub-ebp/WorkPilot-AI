@@ -2257,7 +2257,7 @@ export function registerPRHandlers(
 				projectId,
 				async (project) => {
 					const result = getReviewResult(project, prNumber);
-					if (!result || !result.reviewId) {
+					if (!result?.reviewId) {
 						debugLog("No review ID found for deletion", { prNumber });
 						return false;
 					}

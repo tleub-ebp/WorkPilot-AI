@@ -123,7 +123,7 @@ function computePRStatus(params: {
 		};
 	}
 
-	if (!reviewResult || !reviewResult.success) {
+	if (!reviewResult?.success) {
 		return {
 			status: "not_reviewed" as const,
 			label: t("prReview.notReviewed"),

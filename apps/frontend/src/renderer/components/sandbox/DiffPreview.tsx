@@ -95,7 +95,7 @@ export function DiffPreview({
 							</span>
 						</div>
 						<div className="space-y-2">
-							{activeDiff.hunks.map((hunk, idx) => (
+							{activeDiff.hunks.map((hunk, _idx) => (
 								<div
 									key={`${activeDiff.filePath}-hunk-${hunk.oldStart}-${hunk.oldCount}-${hunk.newStart}-${hunk.newCount}`}
 									className="rounded-lg border border-(--border-color) overflow-hidden"

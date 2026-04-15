@@ -97,12 +97,12 @@ export function TeamSyncPanel({ projectDir }: Readonly<Props>) {
 		} finally {
 			setLoadingStatus(false);
 		}
-	}, [projectDir, api]);
+	}, [projectDir]);
 
 	const loadPeers = useCallback(async () => {
 		const res = await api.teamSyncListPeers(projectDir);
 		if (res.success && res.data) setPeers(res.data as TeamSyncPeer[]);
-	}, [projectDir, api]);
+	}, [projectDir]);
 
 	useEffect(() => {
 		loadStatus();
@@ -118,7 +118,7 @@ export function TeamSyncPanel({ projectDir }: Readonly<Props>) {
 			},
 		);
 		return unsub;
-	}, [loadStatus, loadPeers, api]);
+	}, [loadStatus, loadPeers]);
 
 	const handlePush = async () => {
 		setPushing(true);

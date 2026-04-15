@@ -14,7 +14,11 @@ interface ClaudeVersionInfo {
 	latest?: string;
 	isOutdated?: boolean;
 	path?: string;
-	detectionResult?: any;
+	detectionResult?: {
+		source?: string;
+		method?: string;
+		error?: string;
+	};
 }
 
 interface CodexVersionInfo {
@@ -168,16 +172,22 @@ export function CliStatusProvider({
 			const status: CliStatusData["codex"]["status"] = result.isAuthenticated
 				? "installed"
 				: "not-found";
+
+			let versionInfo: CodexVersionInfo | null;
+			if (result.version) {
+				versionInfo = { installed: result.version };
+			} else if (result.isAuthenticated) {
+				versionInfo = { installed: result.profileName ?? "OpenAI Codex CLI" };
+			} else {
+				versionInfo = null;
+			}
+
 			setData((prev) => ({
 				...prev,
 				codex: {
 					...prev.codex,
 					status,
-					versionInfo: result.version
-						? { installed: result.version }
-						: result.isAuthenticated
-							? { installed: result.profileName ?? "OpenAI Codex CLI" }
-							: null,
+					versionInfo,
 					lastChecked: new Date(),
 				},
 			}));

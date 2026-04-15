@@ -84,10 +84,6 @@ export async function initializeCredentialIntegration(): Promise<void> {
 					},
 					timestamp: Date.now(),
 				});
-				console.log("[CredentialIntegration] Windsurf usage data loaded from local cache:", {
-					sessionPercent: windsurfUsage.sessionPercent,
-					weeklyPercent: windsurfUsage.weeklyPercent,
-				});
 			}
 
 			// Poller régulièrement le cache local Windsurf pour avoir des données en temps réel
@@ -118,10 +114,6 @@ export async function initializeCredentialIntegration(): Promise<void> {
 									needsReauthentication: false,
 								},
 								timestamp: Date.now(),
-							});
-							console.log("[CredentialIntegration] Windsurf usage data updated via polling:", {
-								sessionPercent: updatedWindsurfUsage.sessionPercent,
-								weeklyPercent: updatedWindsurfUsage.weeklyPercent,
 							});
 						}
 					}

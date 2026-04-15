@@ -29,7 +29,7 @@ export function AutoFixButton({
 
 	// Check if the issue has an auto-fix label
 	const hasAutoFixLabel = useCallback(() => {
-		if (!config || !config.enabled || !config.labels.length) return false;
+		if (!config?.enabled || !config.labels.length) return false;
 		const issueLabels = issue.labels.map((l) => l.name.toLowerCase());
 		return config.labels.some((label) =>
 			issueLabels.includes(label.toLowerCase()),

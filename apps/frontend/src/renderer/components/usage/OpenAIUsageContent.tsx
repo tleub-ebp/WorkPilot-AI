@@ -46,7 +46,7 @@ export function OpenAIUsageContent({ usage }: OpenAIUsageContentProps) {
 			</div>
 			{/* Section détaillée OpenAI Usage */}
 			{usage.openaiUsageDetails && (
-				<OpenAIUsageDetails details={usage.openaiUsageDetails} />
+				<OpenAIUsageDetailsComponent details={usage.openaiUsageDetails} />
 			)}
 		</div>
 	);
@@ -56,7 +56,7 @@ interface OpenAIUsageDetailsProps {
 	readonly details: OpenAIUsageDetails;
 }
 
-function OpenAIUsageDetails({ details }: OpenAIUsageDetailsProps) {
+function OpenAIUsageDetailsComponent({ details }: OpenAIUsageDetailsProps) {
 	const { t } = useTranslation(["common"]);
 
 	return (

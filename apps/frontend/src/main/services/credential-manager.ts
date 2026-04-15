@@ -1085,7 +1085,6 @@ export class CredentialManager extends EventEmitter {
 						"code" in error &&
 						error.code !== "ENOENT"
 					) {
-						console.debug(`Failed to read ${configPath}:`, error);
 					}
 				}
 			}

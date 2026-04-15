@@ -625,9 +625,9 @@ export function DesignImportPanel() {
 											{result.design_spec.components.length})
 										</h3>
 										<div className="space-y-2">
-											{result.design_spec.components.map((comp, i) => (
+											{result.design_spec.components.map((comp) => (
 												<div
-													key={`${comp.type}-${comp.name}-${i}`}
+													key={`${comp.type}-${comp.name}`}
 													className="p-3 rounded-lg border bg-card"
 												>
 													<div className="flex items-center gap-2">
@@ -645,9 +645,9 @@ export function DesignImportPanel() {
 													)}
 													{comp.children.length > 0 && (
 														<div className="mt-2 pl-4 border-l-2 border-border space-y-1">
-															{comp.children.map((child, j) => (
+															{comp.children.map((child) => (
 																<div
-																	key={`${child.type}-${child.name}-${j}`}
+																	key={`${child.type}-${child.name}`}
 																	className="flex items-center gap-1.5 text-xs"
 																>
 																	<ChevronRight className="h-3 w-3 text-muted-foreground" />

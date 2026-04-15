@@ -84,7 +84,7 @@ export function registerTaskCRUDHandlers(agentManager: AgentManager): void {
 
 			// Auto-generate title if empty using Claude AI
 			let finalTitle = title;
-			if (!title || !title.trim()) {
+			if (!title?.trim()) {
 				console.warn(
 					"[TASK_CREATE] Title is empty, generating with Claude AI...",
 				);

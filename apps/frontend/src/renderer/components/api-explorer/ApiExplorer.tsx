@@ -861,7 +861,7 @@ function ExportDialog({ spec, onClose }: ExportDialogProps) {
 			}
 		}
 		return endpoints;
-	}, [spec]);
+	}, [spec, httpMethods.includes]);
 
 	const [selectedEndpoints, setSelectedEndpoints] = useState<Set<string>>(
 		() => new Set(allEndpoints.map((e) => e.key)),
@@ -1262,7 +1262,7 @@ function RequestPanel({
 		}
 		return null;
 		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [responseBody, responseStatus]);
+	}, [responseBody, responseStatus, TOKEN_FIELDS]);
 
 	// Auto-select the best format and language when a new response arrives
 	useEffect(() => {

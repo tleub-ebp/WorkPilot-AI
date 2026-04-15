@@ -2,8 +2,6 @@
  * Mock for i18n module to prevent SSR transformation issues in tests
  */
 
-import { vi } from "vitest";
-
 export const defaultNS = "common";
 
 export const resources = {
@@ -12,10 +10,10 @@ export const resources = {
 };
 
 const mockI18n = {
-	use: vi.fn(() => mockI18n),
-	init: vi.fn(),
-	t: vi.fn((key: string) => key),
-	changeLanguage: vi.fn(),
+	use: (() => mockI18n) as any,
+	init: (() => {}) as any,
+	t: ((key: string) => key) as any,
+	changeLanguage: (() => {}) as any,
 	language: "en",
 };
 

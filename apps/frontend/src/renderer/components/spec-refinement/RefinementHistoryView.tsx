@@ -15,8 +15,8 @@ function HistoryCard({
 	history,
 	t,
 }: {
-	history: RefinementHistory;
-	t: (key: string, options?: Record<string, unknown>) => string;
+	readonly history: RefinementHistory;
+	readonly t: (key: string, options?: Record<string, unknown>) => string;
 }): React.ReactElement {
 	return (
 		<div className="flex flex-col gap-3 p-4 rounded-lg border border-(--border-color) bg-(--bg-secondary)">
@@ -69,9 +69,9 @@ function HistoryCard({
 
 						{iteration.signals.length > 0 && (
 							<div className="flex flex-wrap gap-1 mb-1">
-								{iteration.signals.map((signal, idx) => (
+								{iteration.signals.map((signal) => (
 									<span
-										key={`${iteration.iteration}-${signal.signalType}-${idx}`}
+										key={`${iteration.iteration}-${signal.signalType}`}
 										className="px-1.5 py-0.5 rounded text-xs bg-blue-500/10 text-blue-400"
 									>
 										{signal.signalType.replaceAll("_", " ")}
@@ -82,8 +82,8 @@ function HistoryCard({
 
 						{iteration.changesMade.length > 0 && (
 							<ul className="text-xs text-(--text-secondary) space-y-0.5">
-								{iteration.changesMade.map((change, idx) => (
-									<li key={`${iteration.iteration}-${idx}`}>• {change}</li>
+								{iteration.changesMade.map((change) => (
+									<li key={`${iteration.iteration}-${change}`}>• {change}</li>
 								))}
 							</ul>
 						)}

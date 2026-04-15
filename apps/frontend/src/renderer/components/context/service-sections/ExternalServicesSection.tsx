@@ -54,9 +54,9 @@ export function ExternalServicesSection({
 					<div>
 						<span className="text-xs text-muted-foreground">Databases</span>
 						<div className="flex flex-wrap gap-1 mt-1">
-							{services.databases.map((db, idx) => (
+							{services.databases.map((db) => (
 								<Badge
-									key={`db-${db.type || db.client}-${idx}`}
+									key={`db-${db.type || db.client}`}
 									variant="secondary"
 									className="text-xs"
 								>
@@ -71,9 +71,9 @@ export function ExternalServicesSection({
 					<div>
 						<span className="text-xs text-muted-foreground">Email</span>
 						<div className="flex flex-wrap gap-1 mt-1">
-							{services.email.map((email, idx) => (
+							{services.email.map((email) => (
 								<Badge
-									key={`email-${email.provider || email.client}-${idx}`}
+									key={`email-${email.provider || email.client}`}
 									variant="secondary"
 									className="text-xs"
 								>
@@ -88,9 +88,9 @@ export function ExternalServicesSection({
 					<div>
 						<span className="text-xs text-muted-foreground">Payments</span>
 						<div className="flex flex-wrap gap-1 mt-1">
-							{services.payments.map((payment, idx) => (
+							{services.payments.map((payment) => (
 								<Badge
-									key={`payment-${payment.provider || payment.client}-${idx}`}
+									key={`payment-${payment.provider || payment.client}`}
 									variant="secondary"
 									className="text-xs"
 								>
@@ -105,9 +105,9 @@ export function ExternalServicesSection({
 					<div>
 						<span className="text-xs text-muted-foreground">Cache</span>
 						<div className="flex flex-wrap gap-1 mt-1">
-							{services.cache.map((cache, idx) => (
+							{services.cache.map((cache) => (
 								<Badge
-									key={`cache-${cache.type || cache.client}-${idx}`}
+									key={`cache-${cache.type || cache.client}`}
 									variant="secondary"
 									className="text-xs"
 								>
