@@ -1,10 +1,23 @@
 {
 	"noData": "Aucune donnée d'historique de raffinement disponible",
 	"title": "Historique de Raffinement de Spécification",
-	"iterations": "Itérations",
-	"iteration": "Itération {{num}}",
+	"iterations": "{{num}} itération(s)",
+	"iteration": "Itération",
 	"qualityScore": "Score de Qualité",
 	"signals": "Signaux",
 	"changes": "Modifications",
-	"summary": "Résumé"
+	"summary": "Résumé",
+	"score": "Score",
+	"converging": "Convergent",
+	"diverging": "Divergent",
+	"actions": {
+		"runScan": "Charger les historiques",
+		"cancel": "Annuler",
+		"scanning": "Chargement des historiques...",
+		"reset": "Réinitialiser"
+	},
+	"errors": {
+		"noProject": "Sélectionnez un projet pour charger ses historiques de raffinement.",
+		"failed": "Échec du chargement : {{error}}"
+	}
 }

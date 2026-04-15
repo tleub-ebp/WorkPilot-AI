@@ -1,13 +1,23 @@
 {
-	"noData": "Aucune donnée de consensus disponible",
+	"noData": "Aucun conflit détecté",
 	"title": "Arbitre de Consensus",
-	"consensusScore": "Score de Consensus",
+	"consensusScore": "Score de consensus",
 	"disagreements": "Désaccords",
 	"agreements": "Accords",
-	"escalated": "escaladé",
-	"allConflictsResolved": "Tous les conflits résolus",
+	"escalated": "escaladés",
+	"allConflictsResolved": "Tous les conflits sont résolus",
 	"conflictsRequireHumanDecision": "conflit(s) nécessitent une décision humaine",
 	"resolved": "Résolu",
 	"pending": "En attente",
-	"summary": "Résumé"
+	"summary": "Résumé",
+	"actions": {
+		"runScan": "Lancer l'arbitrage",
+		"cancel": "Annuler",
+		"scanning": "Arbitrage en cours...",
+		"reset": "Réinitialiser"
+	},
+	"errors": {
+		"noProject": "Sélectionnez un projet pour lancer l'Arbitre de Consensus.",
+		"failed": "Échec de l'arbitrage : {{error}}"
+	}
 }

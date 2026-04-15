@@ -195,6 +195,11 @@ const RegressionGuardianDashboard = lazy(() =>
 		default: m.RegressionGuardianDashboard,
 	})),
 );
+const InjectionGuardView = lazy(() =>
+	import("./components/injection-guard/InjectionGuardView").then((m) => ({
+		default: m.InjectionGuardView,
+	})),
+);
 const ApiWatcherDashboard = lazy(() =>
 	import("./components/api-watcher/ApiWatcherDashboard").then((m) => ({
 		default: m.ApiWatcherDashboard,
@@ -1678,16 +1683,26 @@ export function App() {
 													(activeProjectId || selectedProjectId) && (
 														<PipelineGeneratorView />
 													)}
-												{activeView === "sandbox" && <SimulationReport />}
-												{activeView === "regression-guardian" && (
-													<RegressionGuardianDashboard results={[]} />
-												)}
-												{activeView === "injection-guard" && (
-													<div className="flex items-center justify-center h-full text-(--text-secondary)">
-														<p>{t("common:injectionGuardComingSoon")}</p>
+												{activeView === "sandbox" && (
+													<div className="overflow-auto" style={{ height: 'calc(100vh - 100px)' }}>
+														<SimulationReport projectPath={selectedProject?.path} />
 													</div>
 												)}
-												{activeView === "api-watcher" && <ApiWatcherDashboard />}
+												{activeView === "regression-guardian" && (
+													<div className="overflow-auto" style={{ height: 'calc(100vh - 100px)' }}>
+														<RegressionGuardianDashboard projectPath={selectedProject?.path} />
+													</div>
+												)}
+												{activeView === "injection-guard" && (
+													<div className="overflow-auto" style={{ height: 'calc(100vh - 100px)' }}>
+														<InjectionGuardView projectPath={selectedProject?.path} />
+													</div>
+												)}
+												{activeView === "api-watcher" && (
+													<div className="overflow-auto" style={{ height: 'calc(100vh - 100px)' }}>
+														<ApiWatcherDashboard projectPath={selectedProject?.path} />
+													</div>
+												)}
 												{activeView === "accessibility-agent" && (
 													<div className="overflow-auto" style={{ height: 'calc(100vh - 100px)' }}>
 														<A11yReportView projectPath={selectedProject?.path} />
@@ -1698,7 +1713,11 @@ export function App() {
 														<I18nReportView projectPath={selectedProject?.path} />
 													</div>
 												)}
-												{activeView === "onboarding-agent" && <OnboardingGuideView />}
+												{activeView === "onboarding-agent" && (
+													<div className="overflow-auto" style={{ height: 'calc(100vh - 100px)' }}>
+														<OnboardingGuideView projectPath={selectedProject?.path} />
+													</div>
+												)}
 												{activeView === "flaky-tests" && (
 													<div className="overflow-auto" style={{ height: 'calc(100vh - 100px)' }}>
 														<FlakyTestReport projectPath={selectedProject?.path} />
@@ -1709,14 +1728,46 @@ export function App() {
 														<DocDriftReport projectPath={selectedProject?.path} />
 													</div>
 												)}
-												{activeView === "compliance" && <ComplianceReportView />}
-												{activeView === "git-surgeon" && <GitSurgeonDashboard />}
-												{activeView === "release-coordinator" && <ReleasePlanView />}
-												{activeView === "carbon-profiler" && <CarbonReportView />}
-												{activeView === "consensus-arbiter" && <ConsensusView />}
-												{activeView === "notebook-agent" && <NotebookView />}
-												{activeView === "spec-refinement" && <RefinementHistoryView />}
-												{activeView === "agent-coach" && <CoachReportView />}
+												{activeView === "compliance" && (
+													<div className="overflow-auto" style={{ height: 'calc(100vh - 100px)' }}>
+														<ComplianceReportView projectPath={selectedProject?.path} />
+													</div>
+												)}
+												{activeView === "git-surgeon" && (
+													<div className="overflow-auto" style={{ height: 'calc(100vh - 100px)' }}>
+														<GitSurgeonDashboard projectPath={selectedProject?.path} />
+													</div>
+												)}
+												{activeView === "release-coordinator" && (
+													<div className="overflow-auto" style={{ height: 'calc(100vh - 100px)' }}>
+														<ReleasePlanView projectPath={selectedProject?.path} />
+													</div>
+												)}
+												{activeView === "carbon-profiler" && (
+													<div className="overflow-auto" style={{ height: 'calc(100vh - 100px)' }}>
+														<CarbonReportView projectPath={selectedProject?.path} />
+													</div>
+												)}
+												{activeView === "consensus-arbiter" && (
+													<div className="overflow-auto" style={{ height: 'calc(100vh - 100px)' }}>
+														<ConsensusView projectPath={selectedProject?.path} />
+													</div>
+												)}
+												{activeView === "notebook-agent" && (
+													<div className="overflow-auto" style={{ height: 'calc(100vh - 100px)' }}>
+														<NotebookView projectPath={selectedProject?.path} />
+													</div>
+												)}
+												{activeView === "spec-refinement" && (
+													<div className="overflow-auto" style={{ height: 'calc(100vh - 100px)' }}>
+														<RefinementHistoryView projectPath={selectedProject?.path} />
+													</div>
+												)}
+												{activeView === "agent-coach" && (
+													<div className="overflow-auto" style={{ height: 'calc(100vh - 100px)' }}>
+														<CoachReportView projectPath={selectedProject?.path} />
+													</div>
+												)}
 											</>
 										) : (
 											<div className="flex items-center justify-center h-full text-muted">

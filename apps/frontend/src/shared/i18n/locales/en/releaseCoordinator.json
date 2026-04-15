@@ -8,5 +8,15 @@
 	"plannedActions": "Planned Actions",
 	"summary": "Summary",
 	"bumpType": "Bump Type",
-	"changelogEntries": "changelog entries"
+	"changelogEntries": "changelog entries",
+	"actions": {
+		"runPlan": "Plan Release",
+		"cancel": "Cancel",
+		"planning": "Building release plan...",
+		"reset": "Reset"
+	},
+	"errors": {
+		"noProject": "Select a project to plan a release.",
+		"failed": "Plan failed: {{error}}"
+	}
 }
