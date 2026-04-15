@@ -59,10 +59,10 @@ if (typeof globalThis !== "undefined") {
 	// Mock requestAnimationFrame/cancelAnimationFrame for jsdom
 	if (globalThis.requestAnimationFrame === undefined) {
 		globalThis.requestAnimationFrame = (callback: FrameRequestCallback) => {
-			return setTimeout(() => callback(Date.now()), 0) as unknown as number;
+			return globalThis.setTimeout(() => callback(Date.now()), 0) as unknown as number;
 		};
 		globalThis.cancelAnimationFrame = (id: number) => {
-			clearTimeout(id);
+			globalThis.clearTimeout(id);
 		};
 	}
 

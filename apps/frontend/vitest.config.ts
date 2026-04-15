@@ -45,9 +45,7 @@ export default defineConfig({
 		},
 		// Setup files for test environment - use setupFiles to avoid vitest import issues
 		setupFiles: ["./src/__tests__/testSetup.ts"],
-		// Suppress internal worker state errors from vitest 4.x when environment-switching workers
-		// complete async cleanup after state has been cleared. All tests pass; this only affects
-		// the process exit code.
+		// Suppress internal worker state errors from vitest 2.x
 		dangerouslyIgnoreUnhandledErrors: true,
 		// Prevent vitest import issues
 		testTimeout: 30000,
