@@ -1,6 +1,6 @@
 {
 	"title": "Coach personnel d'agent",
-	"noData": "Aucune donnée de rapport de coach disponible",
+	"noData": "Aucun enregistrement d'exécution d'agent trouvé",
 	"summary": "{{runs}} exécutions · {{successRate}}% succès · ${{cost}} coût total",
 	"stats": {
 		"runs": "Exécutions",
@@ -9,5 +9,15 @@
 		"mostFailing": "Échecs fréquents",
 		"none": "Aucun"
 	},
-	"evidence": "Preuve :"
+	"evidence": "Preuve :",
+	"actions": {
+		"runScan": "Générer le rapport",
+		"cancel": "Annuler",
+		"scanning": "Analyse des exécutions d'agents...",
+		"reset": "Réinitialiser"
+	},
+	"errors": {
+		"noProject": "Sélectionnez un projet pour analyser son historique d'exécution d'agents.",
+		"failed": "Échec de l'analyse : {{error}}"
+	}
 }

@@ -7,5 +7,16 @@
 	"evidence": "Preuves",
 	"summary": "Résumé",
 	"controlId": "ID de Contrôle",
-	"evidenceType": "Type de Preuve"
+	"evidenceType": "Type de Preuve",
+	"framework": "Référentiel",
+	"actions": {
+		"runScan": "Lancer l'analyse",
+		"cancel": "Annuler",
+		"scanning": "Analyse du projet...",
+		"reset": "Réinitialiser"
+	},
+	"errors": {
+		"noProject": "Sélectionnez un projet pour lancer une analyse de conformité.",
+		"failed": "Échec de l'analyse : {{error}}"
+	}
 }

@@ -13,6 +13,7 @@ import type { TerminalManager } from "../terminal-manager";
 import { registerAccessibilityHandlers } from "./accessibility-handlers";
 import { registerAgenteventsHandlers } from "./agent-events-handlers";
 import { registerApiExplorerHandlers } from "./api-explorer-handlers";
+import { registerApiWatcherHandlers } from "./api-watcher-handlers";
 import { registerAppEmulatorHandlers } from "./app-emulator-handlers";
 import { registerAppUpdateHandlers } from "./app-update-handlers";
 import {
@@ -29,6 +30,7 @@ import {
 	setupCICDTriggersEventForwarding,
 } from "./cicd-triggers-handlers";
 import { registerClaudeCodeHandlers } from "./claude-code-handlers";
+import { registerComplianceHandlers } from "./compliance-handlers";
 import {
 	registerCodeMigrationHandlers,
 	setupCodeMigrationEventForwarding,
@@ -56,6 +58,7 @@ import { registerEnvHandlers } from "./env-handlers";
 import { registerFileHandlers } from "./file-handlers";
 import { registerFlakyTestsHandlers } from "./flaky-tests-handlers";
 import { registerGitHubCopilotHandlers } from "./github-copilot-handlers";
+import { registerGitSurgeonHandlers } from "./git-surgeon-handlers";
 import { registerGithubHandlers } from "./github-handlers";
 import { registerGitlabHandlers } from "./gitlab-handlers";
 import { registerI18nAgentHandlers } from "./i18n-agent-handlers";
@@ -74,6 +77,7 @@ import {
 } from "./memory-lifecycle-handlers";
 import { registerMultiRepoHandlers } from "./multi-repo-handlers";
 import { setupNaturalLanguageGitHandlers } from "./natural-language-git-handlers";
+import { registerNotebookAgentHandlers } from "./notebook-agent-handlers";
 import { registerPairProgrammingHandlers } from "./pair-programming-handlers";
 import {
 	registerPerformanceProfilerHandlers,
@@ -89,13 +93,21 @@ import { registerProfileHandlers } from "./profile-handlers";
 // Import all handler registration functions for internal use
 import { registerProjectHandlers } from "./project-handlers";
 import { registerPromptOptimizerHandlers } from "./prompt-optimizer-handlers";
+import { registerReleaseCoordinatorHandlers } from "./release-coordinator-handlers";
 import { setupQualityHandlers } from "./quality-handlers";
 import { registerRoadmapHandlers } from "./roadmap-handlers";
 import { registerScreenshotHandlers } from "./screenshot-handlers";
 import { registerSelfHealingHandlers } from "./self-healing-handlers";
 import { registerSettingsHandlers } from "./settings-handlers";
 import { setupSmartEstimationHandlers } from "./smart-estimation-handlers";
+import { registerAgentCoachHandlers } from "./agent-coach-handlers";
+import { registerOnboardingAgentHandlers } from "./onboarding-agent-handlers";
+import { registerSandboxHandlers } from "./sandbox-handlers";
+import { registerRegressionGuardianHandlers } from "./regression-guardian-handlers";
+import { registerConsensusArbiterHandlers } from "./consensus-arbiter-handlers";
+import { registerInjectionGuardHandlers } from "./injection-guard-handlers";
 import { registerSpecApprovalHandlers } from "./spec-approval-handlers";
+import { registerSpecRefinementHandlers } from "./spec-refinement-handlers";
 import { registerTaskHandlers } from "./task-handlers";
 import { registerTeamSyncHandlers } from "./team-sync-handlers";
 import { registerTerminalWorktreeIpcHandlers } from "./terminal";
@@ -114,6 +126,7 @@ import {
 export { registerAccessibilityHandlers } from "./accessibility-handlers";
 export { registerAgenteventsHandlers } from "./agent-events-handlers";
 export { registerApiExplorerHandlers } from "./api-explorer-handlers";
+export { registerApiWatcherHandlers } from "./api-watcher-handlers";
 export { registerAppEmulatorHandlers } from "./app-emulator-handlers";
 export { registerAppUpdateHandlers } from "./app-update-handlers";
 export {
@@ -130,6 +143,7 @@ export {
 	setupCICDTriggersEventForwarding,
 } from "./cicd-triggers-handlers";
 export { registerClaudeCodeHandlers } from "./claude-code-handlers";
+export { registerComplianceHandlers } from "./compliance-handlers";
 export {
 	registerCodeMigrationHandlers,
 	setupCodeMigrationEventForwarding,
@@ -157,6 +171,7 @@ export { registerEnvHandlers } from "./env-handlers";
 export { registerFileHandlers } from "./file-handlers";
 export { registerFlakyTestsHandlers } from "./flaky-tests-handlers";
 export { registerGitHubCopilotHandlers } from "./github-copilot-handlers";
+export { registerGitSurgeonHandlers } from "./git-surgeon-handlers";
 export { registerGithubHandlers } from "./github-handlers";
 export { registerGitlabHandlers } from "./gitlab-handlers";
 export { registerI18nAgentHandlers } from "./i18n-agent-handlers";
@@ -175,6 +190,7 @@ export {
 } from "./memory-lifecycle-handlers";
 export { registerMultiRepoHandlers } from "./multi-repo-handlers";
 export { setupNaturalLanguageGitHandlers } from "./natural-language-git-handlers";
+export { registerNotebookAgentHandlers } from "./notebook-agent-handlers";
 export { registerPairProgrammingHandlers } from "./pair-programming-handlers";
 export {
 	registerPerformanceProfilerHandlers,
@@ -190,13 +206,21 @@ export { registerProfileHandlers } from "./profile-handlers";
 // Re-export all handler registration functions using export...from syntax
 export { registerProjectHandlers } from "./project-handlers";
 export { registerPromptOptimizerHandlers } from "./prompt-optimizer-handlers";
+export { registerReleaseCoordinatorHandlers } from "./release-coordinator-handlers";
 export { setupQualityHandlers } from "./quality-handlers";
 export { registerRoadmapHandlers } from "./roadmap-handlers";
 export { registerScreenshotHandlers } from "./screenshot-handlers";
 export { registerSelfHealingHandlers } from "./self-healing-handlers";
 export { registerSettingsHandlers } from "./settings-handlers";
 export { setupSmartEstimationHandlers } from "./smart-estimation-handlers";
+export { registerAgentCoachHandlers } from "./agent-coach-handlers";
+export { registerOnboardingAgentHandlers } from "./onboarding-agent-handlers";
+export { registerSandboxHandlers } from "./sandbox-handlers";
+export { registerRegressionGuardianHandlers } from "./regression-guardian-handlers";
+export { registerConsensusArbiterHandlers } from "./consensus-arbiter-handlers";
+export { registerInjectionGuardHandlers } from "./injection-guard-handlers";
 export { registerSpecApprovalHandlers } from "./spec-approval-handlers";
+export { registerSpecRefinementHandlers } from "./spec-refinement-handlers";
 export { registerTaskHandlers } from "./task-handlers";
 export { registerTeamSyncHandlers } from "./team-sync-handlers";
 export { registerTerminalWorktreeIpcHandlers } from "./terminal";
@@ -442,6 +466,42 @@ export function setupIpcHandlers(
 
 	// Carbon Profiler handlers (energy and CO2 footprint)
 	registerCarbonProfilerHandlers();
+
+	// Compliance Evidence Collector handlers (SOC2, ISO 27001)
+	registerComplianceHandlers();
+
+	// API Watcher handlers (OpenAPI/GraphQL/Protobuf breaking change detection)
+	registerApiWatcherHandlers();
+
+	// Git Surgeon handlers (history analysis: blobs, secrets, messy commits)
+	registerGitSurgeonHandlers();
+
+	// Release Coordinator handlers (multi-service semver plan)
+	registerReleaseCoordinatorHandlers();
+
+	// Notebook Agent handlers (.ipynb discovery, parse, lint)
+	registerNotebookAgentHandlers();
+
+	// Spec Refinement handlers (load persisted refinement histories)
+	registerSpecRefinementHandlers();
+
+	// Agent Coach handlers (analyse persisted agent run records)
+	registerAgentCoachHandlers();
+
+	// Onboarding Agent handlers (project onboarding guide generation)
+	registerOnboardingAgentHandlers();
+
+	// Sandbox handlers (dry-run diff preview of uncommitted changes)
+	registerSandboxHandlers();
+
+	// Regression Guardian handlers (APM incident → regression test candidates)
+	registerRegressionGuardianHandlers();
+
+	// Consensus Arbiter handlers (detect & resolve inter-agent conflicts)
+	registerConsensusArbiterHandlers();
+
+	// Injection Guard handlers (prompt injection scanner)
+	registerInjectionGuardHandlers();
 
 	console.warn("[IPC] All handler modules registered successfully");
 }

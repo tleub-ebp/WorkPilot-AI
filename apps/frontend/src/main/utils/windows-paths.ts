@@ -183,14 +183,30 @@ export function findWindowsExecutableViaWhere(
 		}).trim();
 
 		// 'where' returns multiple paths separated by newlines if found in multiple locations
-		// Prefer paths with .cmd or .exe extensions (executable files)
+		// Prefer paths with .cmd, .bat, or .exe extensions (executable files)
 		const paths = result.split(/\r?\n/).filter((p) => p.trim());
 
 		if (paths.length > 0) {
-			// Prefer .cmd, .bat, or .exe extensions, otherwise take first path
-			const foundPath = (
-				paths.find((p) => /\.(cmd|bat|exe)$/i.test(p)) || paths[0]
-			).trim();
+			// For Claude CLI, prioritize WinGet paths (contains "WinGet" or "Microsoft")
+			let foundPath: string;
+			if (executable === "claude") {
+				const winGetPath = paths.find((p) =>
+					p.includes("WinGet") || p.includes("Microsoft"),
+				);
+				if (winGetPath) {
+					foundPath = winGetPath;
+				} else {
+					// Fallback to first valid path
+					foundPath =
+						paths.find((p) => /\.(cmd|bat|exe)$/i.test(p)) || paths[0];
+				}
+			} else {
+				// For other executables, prefer .cmd, .bat, or .exe extensions
+				foundPath =
+					paths.find((p) => /\.(cmd|bat|exe)$/i.test(p)) || paths[0];
+			}
+
+			foundPath = foundPath.trim();
 
 			// Validate the path exists and is secure
 			if (existsSync(foundPath) && isSecurePath(foundPath)) {
@@ -295,10 +311,26 @@ export async function findWindowsExecutableViaWhereAsync(
 			.filter((p) => p.trim());
 
 		if (paths.length > 0) {
-			// Prefer .cmd, .bat, or .exe extensions, otherwise take first path
-			const foundPath = (
-				paths.find((p) => /\.(cmd|bat|exe)$/i.test(p)) || paths[0]
-			).trim();
+			// For Claude CLI, prioritize WinGet paths (contains "WinGet" or "Microsoft")
+			let foundPath: string;
+			if (executable === "claude") {
+				const winGetPath = paths.find((p) =>
+					p.includes("WinGet") || p.includes("Microsoft"),
+				);
+				if (winGetPath) {
+					foundPath = winGetPath;
+				} else {
+					// Fallback to first valid path
+					foundPath =
+						paths.find((p) => /\.(cmd|bat|exe)$/i.test(p)) || paths[0];
+				}
+			} else {
+				// For other executables, prefer .cmd, .bat, or .exe extensions
+				foundPath =
+					paths.find((p) => /\.(cmd|bat|exe)$/i.test(p)) || paths[0];
+			}
+
+			foundPath = foundPath.trim();
 
 			// Validate the path exists and is secure
 			try {
@@ -307,7 +339,7 @@ export async function findWindowsExecutableViaWhereAsync(
 					return foundPath;
 				}
 			} catch {
-				// Path doesn't exist
+				// File doesn't exist, skip
 			}
 		}
 
