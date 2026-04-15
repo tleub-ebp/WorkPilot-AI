@@ -62,6 +62,76 @@ export async function initializeCredentialIntegration(): Promise<void> {
 
 		// Initialiser le CredentialManager avec les données existantes
 		await credentialManager.initialize?.();
+
+		// Charger explicitement les données Windsurf du cache local au démarrage
+		try {
+			const usageMonitor = getUsageMonitor();
+			const windsurfUsage = await usageMonitor.getUsageForProvider("windsurf");
+			if (windsurfUsage) {
+				// Stocker les données normalisées dans le CredentialManager
+				credentialManager.updateUsageData("windsurf", {
+					provider: "windsurf",
+					profileId: windsurfUsage.profileId || "windsurf-local",
+					profileName: windsurfUsage.profileName || "Windsurf (Codeium)",
+					usage: {
+						sessionPercent: windsurfUsage.sessionPercent,
+						weeklyPercent: windsurfUsage.weeklyPercent,
+						sessionUsageValue: windsurfUsage.sessionUsageValue,
+						weeklyUsageValue: windsurfUsage.weeklyUsageValue,
+						sessionResetTimestamp: windsurfUsage.sessionResetTimestamp ? new Date(windsurfUsage.sessionResetTimestamp).getTime() : undefined,
+						weeklyResetTimestamp: windsurfUsage.weeklyResetTimestamp ? new Date(windsurfUsage.weeklyResetTimestamp).getTime() : undefined,
+						needsReauthentication: false,
+					},
+					timestamp: Date.now(),
+				});
+				console.log("[CredentialIntegration] Windsurf usage data loaded from local cache:", {
+					sessionPercent: windsurfUsage.sessionPercent,
+					weeklyPercent: windsurfUsage.weeklyPercent,
+				});
+			}
+
+			// Poller régulièrement le cache local Windsurf pour avoir des données en temps réel
+			// Le cache local est mis à jour par Windsurf IDE à chaque utilisation
+			const POLLING_INTERVAL_MS = 30000; // 30 secondes
+			setInterval(async () => {
+				try {
+					const updatedWindsurfUsage = await usageMonitor.getUsageForProvider("windsurf");
+					if (updatedWindsurfUsage) {
+						// Vérifier si les données ont changé avant de mettre à jour
+						const currentData = credentialManager.getUsageData("windsurf");
+						const hasChanged = !currentData ||
+							currentData.usage?.sessionPercent !== updatedWindsurfUsage.sessionPercent ||
+							currentData.usage?.weeklyPercent !== updatedWindsurfUsage.weeklyPercent;
+
+						if (hasChanged) {
+							credentialManager.updateUsageData("windsurf", {
+								provider: "windsurf",
+								profileId: updatedWindsurfUsage.profileId || "windsurf-local",
+								profileName: updatedWindsurfUsage.profileName || "Windsurf (Codeium)",
+								usage: {
+									sessionPercent: updatedWindsurfUsage.sessionPercent,
+									weeklyPercent: updatedWindsurfUsage.weeklyPercent,
+									sessionUsageValue: updatedWindsurfUsage.sessionUsageValue,
+									weeklyUsageValue: updatedWindsurfUsage.weeklyUsageValue,
+									sessionResetTimestamp: updatedWindsurfUsage.sessionResetTimestamp ? new Date(updatedWindsurfUsage.sessionResetTimestamp).getTime() : undefined,
+									weeklyResetTimestamp: updatedWindsurfUsage.weeklyResetTimestamp ? new Date(updatedWindsurfUsage.weeklyResetTimestamp).getTime() : undefined,
+									needsReauthentication: false,
+								},
+								timestamp: Date.now(),
+							});
+							console.log("[CredentialIntegration] Windsurf usage data updated via polling:", {
+								sessionPercent: updatedWindsurfUsage.sessionPercent,
+								weeklyPercent: updatedWindsurfUsage.weeklyPercent,
+							});
+						}
+					}
+				} catch (error) {
+					console.warn("[CredentialIntegration] Failed to poll Windsurf usage:", error);
+				}
+			}, POLLING_INTERVAL_MS);
+		} catch (error) {
+			console.warn("[CredentialIntegration] Failed to load Windsurf usage from cache:", error);
+		}
 	} catch (error) {
 		console.error(
 			"[CredentialIntegration] Failed to initialize credential integration:",

@@ -1,6 +1,17 @@
 {
 	"noData": "No simulation data available",
+	"noChanges": "No uncommitted changes to preview",
 	"title": "Sandbox Simulation Report",
+	"actions": {
+		"runScan": "Run Dry-Run",
+		"cancel": "Cancel",
+		"scanning": "Running dry-run...",
+		"reset": "Reset"
+	},
+	"errors": {
+		"noProject": "Select a project to run a sandbox dry-run.",
+		"failed": "Dry-run failed: {{error}}"
+	},
 	"dryRun": "Dry-run for spec {{specId}}",
 	"estimatedCost": "Estimated Cost",
 	"realCost": "Real Cost",

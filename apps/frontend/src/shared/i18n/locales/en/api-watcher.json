@@ -1,11 +1,23 @@
 {
 	"title": "API Contract Watcher",
 	"noData": "No contract diff data available",
+	"noChanges": "No contract changes detected",
 	"changesDetected": "{{count}} changes detected",
 	"categories": {
 		"breaking": "Breaking",
 		"potentiallyBreaking": "Potentially Breaking",
 		"nonBreaking": "Non-Breaking"
 	},
-	"migrationGuide": "Migration Guide"
+	"migrationGuide": "Migration Guide",
+	"actions": {
+		"runScan": "Run Scan",
+		"saveBaseline": "Save as Baseline",
+		"cancel": "Cancel",
+		"scanning": "Scanning contracts...",
+		"reset": "Reset"
+	},
+	"errors": {
+		"noProject": "Select a project to run an API contract scan.",
+		"failed": "Scan failed: {{error}}"
+	}
 }

@@ -14,6 +14,7 @@ interface ClaudeVersionInfo {
 	latest?: string;
 	isOutdated?: boolean;
 	path?: string;
+	detectionResult?: any;
 }
 
 interface CodexVersionInfo {

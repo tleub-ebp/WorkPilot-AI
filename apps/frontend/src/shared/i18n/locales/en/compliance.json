@@ -7,5 +7,16 @@
 	"evidence": "Evidence",
 	"summary": "Summary",
 	"controlId": "Control ID",
-	"evidenceType": "Evidence Type"
+	"evidenceType": "Evidence Type",
+	"framework": "Framework",
+	"actions": {
+		"runScan": "Run Scan",
+		"cancel": "Cancel",
+		"scanning": "Scanning project...",
+		"reset": "Reset"
+	},
+	"errors": {
+		"noProject": "Select a project to run a compliance scan.",
+		"failed": "Scan failed: {{error}}"
+	}
 }
