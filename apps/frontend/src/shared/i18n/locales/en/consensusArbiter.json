@@ -1,5 +1,5 @@
 {
-	"noData": "No consensus data available",
+	"noData": "No conflicts detected",
 	"title": "Consensus Arbiter",
 	"consensusScore": "Consensus Score",
 	"disagreements": "Disagreements",
@@ -9,5 +9,15 @@
 	"conflictsRequireHumanDecision": "conflict(s) require human decision",
 	"resolved": "Resolved",
 	"pending": "Pending",
-	"summary": "Summary"
+	"summary": "Summary",
+	"actions": {
+		"runScan": "Run Arbitration",
+		"cancel": "Cancel",
+		"scanning": "Running arbitration...",
+		"reset": "Reset"
+	},
+	"errors": {
+		"noProject": "Select a project to run the Consensus Arbiter.",
+		"failed": "Arbitration failed: {{error}}"
+	}
 }

@@ -92,7 +92,7 @@ vi.mock("node:fs", () => {
 	const mod = {
 		existsSync: vi.fn((inputPath: string) => {
 			// Normalize path separators for cross-platform compatibility
-			const normalizedPath = inputPath.replace(/\\/g, "/");
+			const normalizedPath = inputPath.replaceAll(/\\/g, "/");
 			// Return true for the fake auto-build path and its expected files
 			if (
 				normalizedPath === "/fake/auto-build" ||
@@ -261,7 +261,7 @@ vi.mock("../env-utils", () => ({
 	getAugmentedEnv: vi.fn(() => ({ ...process.env })),
 }));
 
-import { getClaudeCliPathForSdk, getToolInfo } from "../cli-tool-manager";
+import { getToolInfo } from "../cli-tool-manager";
 import { pythonEnvManager } from "../python-env-manager";
 import * as rateLimitDetector from "../rate-limit-detector";
 import * as profileService from "../services/profile";
@@ -1063,13 +1063,16 @@ describe("AgentProcessManager - API Profile Env Injection (Story 2.3)", () => {
 		});
 
 		it("should set GITHUB_CLI_PATH with same precedence as CLAUDE_CLI_PATH", async () => {
-			// Mock Claude CLI via getClaudeCliPathForSdk (returns path directly, not .cmd file)
-			vi.mocked(getClaudeCliPathForSdk).mockReturnValue(
-				"/opt/homebrew/bin/claude",
-			);
-
-			// Mock gh CLI via getToolInfo (gh still uses standard detection)
+			// Mock both Claude CLI and gh CLI via getToolInfo (both use standard detection)
 			vi.mocked(getToolInfo).mockImplementation((tool: string) => {
+				if (tool === "claude") {
+					return {
+						found: true,
+						path: "/opt/homebrew/bin/claude",
+						source: "homebrew",
+						message: "Claude CLI found via Homebrew",
+					};
+				}
 				if (tool === "gh") {
 					return {
 						found: true,

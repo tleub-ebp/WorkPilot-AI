@@ -2,5 +2,15 @@
 	"title": "Guide d'intégration",
 	"noData": "Aucune donnée de guide d'intégration disponible",
 	"duration": "~{{minutes}} min",
-	"step": "Étape"
+	"step": "Étape",
+	"actions": {
+		"runScan": "Générer le guide",
+		"cancel": "Annuler",
+		"scanning": "Génération du guide d'intégration...",
+		"reset": "Réinitialiser"
+	},
+	"errors": {
+		"noProject": "Sélectionnez un projet pour générer son guide d'intégration.",
+		"failed": "Échec de la génération : {{error}}"
+	}
 }
