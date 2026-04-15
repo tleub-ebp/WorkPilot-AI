@@ -1,5 +1,10 @@
 import type React from "react";
+import { useEffect } from "react";
 import { useTranslation } from "react-i18next";
+import {
+	setupAgentCoachListeners,
+	useAgentCoachStore,
+} from "../../stores/agent-coach-store";
 import type { CoachReport, TipPriority } from "../../../shared/types/agent-coach";
 
 const PRIORITY_STYLES: Record<TipPriority, string> = {
@@ -9,25 +14,36 @@ const PRIORITY_STYLES: Record<TipPriority, string> = {
 };
 
 interface CoachReportViewProps {
-	readonly report?: CoachReport;
+	readonly projectPath?: string;
 }
 
-export function CoachReportView({
-	report,
-}: CoachReportViewProps): React.ReactElement {
-	const { t } = useTranslation("agentCoach");
-
-	if (!report) {
-		return (
-			<div className="flex items-center justify-center h-full text-(--text-secondary)">
-				<p>{t("noData")}</p>
-			</div>
-		);
-	}
+function StatCard({
+	label,
+	value,
+	color,
+}: {
+	readonly label: string;
+	readonly value: string;
+	readonly color: string;
+}): React.ReactElement {
 	return (
-		<div className="flex flex-col gap-4 p-6 bg-(--bg-primary) text-(--text-primary)">
+		<div className="p-3 rounded-lg bg-(--bg-secondary) border border-(--border-color)">
+			<p className="text-xs text-(--text-secondary)">{label}</p>
+			<p className={`text-lg font-bold truncate ${color}`}>{value}</p>
+		</div>
+	);
+}
+
+function ReportBody({
+	report,
+	t,
+}: {
+	report: CoachReport;
+	t: (key: string, options?: Record<string, unknown>) => string;
+}): React.ReactElement {
+	return (
+		<div className="flex flex-col gap-4">
 			<div>
-				<h2 className="text-lg font-semibold">{t("title")}</h2>
 				<p className="text-sm text-(--text-secondary)">
 					{t("summary", {
 						runs: report.totalRuns,
@@ -37,15 +53,24 @@ export function CoachReportView({
 				</p>
 			</div>
 
-			{/* Stats */}
 			<div className="grid grid-cols-4 gap-3">
-				<StatCard label={t("stats.runs")} value={String(report.totalRuns)} color="text-blue-400" />
+				<StatCard
+					label={t("stats.runs")}
+					value={String(report.totalRuns)}
+					color="text-blue-400"
+				/>
 				<StatCard
 					label={t("stats.successRate")}
 					value={`${(report.successRate * 100).toFixed(0)}%`}
-					color={report.successRate >= 0.8 ? "text-green-400" : "text-yellow-400"}
+					color={
+						report.successRate >= 0.8 ? "text-green-400" : "text-yellow-400"
+					}
 				/>
-				<StatCard label={t("stats.avgCost")} value={`$${report.avgCostUsd.toFixed(4)}`} color="text-purple-400" />
+				<StatCard
+					label={t("stats.avgCost")}
+					value={`$${report.avgCostUsd.toFixed(4)}`}
+					color="text-purple-400"
+				/>
 				<StatCard
 					label={t("stats.mostFailing")}
 					value={report.mostFailingAgent || t("stats.none")}
@@ -53,7 +78,6 @@ export function CoachReportView({
 				/>
 			</div>
 
-			{/* Tips */}
 			<div className="space-y-2">
 				{report.tips.map((tip, idx) => (
 					<div
@@ -76,9 +100,7 @@ export function CoachReportView({
 							</p>
 						)}
 						{tip.action && (
-							<p className="text-xs mt-1 text-green-400">
-								→ {tip.action}
-							</p>
+							<p className="text-xs mt-1 text-green-400">→ {tip.action}</p>
 						)}
 					</div>
 				))}
@@ -93,19 +115,90 @@ export function CoachReportView({
 	);
 }
 
-function StatCard({
-	label,
-	value,
-	color,
-}: {
-	readonly label: string;
-	readonly value: string;
-	readonly color: string;
-}): React.ReactElement {
+export function CoachReportView({
+	projectPath,
+}: CoachReportViewProps): React.ReactElement {
+	const { t } = useTranslation("agentCoach");
+
+	useEffect(() => {
+		const cleanup = setupAgentCoachListeners();
+		return cleanup;
+	}, []);
+
+	const phase = useAgentCoachStore((s) => s.phase);
+	const status = useAgentCoachStore((s) => s.status);
+	const report = useAgentCoachStore((s) => s.report);
+	const error = useAgentCoachStore((s) => s.error);
+	const startScan = useAgentCoachStore((s) => s.startScan);
+	const cancelScan = useAgentCoachStore((s) => s.cancelScan);
+	const reset = useAgentCoachStore((s) => s.reset);
+
+	const handleRun = (): void => {
+		if (!projectPath) return;
+		void startScan(projectPath);
+	};
+
+	const isScanning = phase === "scanning";
+
 	return (
-		<div className="p-3 rounded-lg bg-(--bg-secondary) border border-(--border-color)">
-			<p className="text-xs text-(--text-secondary)">{label}</p>
-			<p className={`text-lg font-bold truncate ${color}`}>{value}</p>
+		<div className="flex flex-col gap-4 p-6 bg-(--bg-primary) text-(--text-primary)">
+			<div className="flex items-center justify-between">
+				<h2 className="text-lg font-semibold">{t("title")}</h2>
+				<div className="flex gap-2">
+					{!isScanning && (
+						<button
+							type="button"
+							onClick={handleRun}
+							disabled={!projectPath}
+							className="px-3 py-1.5 rounded-md bg-blue-500 hover:bg-blue-600 disabled:bg-gray-500 disabled:cursor-not-allowed text-white text-sm font-medium transition-colors"
+						>
+							{t("actions.runScan")}
+						</button>
+					)}
+					{isScanning && (
+						<button
+							type="button"
+							onClick={() => void cancelScan()}
+							className="px-3 py-1.5 rounded-md bg-red-500 hover:bg-red-600 text-white text-sm font-medium transition-colors"
+						>
+							{t("actions.cancel")}
+						</button>
+					)}
+					{phase === "complete" && (
+						<button
+							type="button"
+							onClick={reset}
+							className="px-3 py-1.5 rounded-md border border-(--border-color) hover:bg-(--bg-secondary) text-sm font-medium transition-colors"
+						>
+							{t("actions.reset")}
+						</button>
+					)}
+				</div>
+			</div>
+
+			{!projectPath && (
+				<p className="text-sm text-(--text-secondary)">
+					{t("errors.noProject")}
+				</p>
+			)}
+
+			{isScanning && (
+				<p className="text-sm text-(--text-secondary)">
+					{status || t("actions.scanning")}
+				</p>
+			)}
+
+			{phase === "error" && error && (
+				<p className="text-sm text-red-400">{t("errors.failed", { error })}</p>
+			)}
+
+			{phase === "complete" && report && report.totalRuns === 0 && (
+				<p className="text-sm text-(--text-secondary)">{t("noData")}</p>
+			)}
+
+			{phase === "complete" && report && report.totalRuns > 0 && (
+				<ReportBody report={report} t={t} />
+			)}
 		</div>
 	);
 }

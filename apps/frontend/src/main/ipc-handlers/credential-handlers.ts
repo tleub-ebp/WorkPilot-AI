@@ -144,21 +144,28 @@ export function registerCredentialHandlers(): void {
 
 	/**
 	 * Obtenir les données d'usage pour un provider
-	 * For windsurf: fetches on-demand from Codeium API if no cached data or stale (>5 min)
+	 * For windsurf: use API as primary source (contains real-time usage data)
+	 * Local cache is only used as fallback if API is unavailable
 	 */
 	ipcMain.handle(
 		"usage:getData",
 		async (_event, provider: string): Promise<UsageData | null> => {
 			const cached = credentialManager.getUsageData(provider);
 
-			// For windsurf: fetch on-demand if no data or stale (>5 minutes)
+			// For windsurf: prefer API (real-time usage data) over local cache (may contain stale/incorrect data)
+			// The local cache contains data from the old monthly system which may not reflect actual usage
 			if (provider === "windsurf") {
-				const WINDSURF_TTL_MS = 5 * 60 * 1000; // 5 minutes
-				const isStale =
-					cached && Date.now() - cached.timestamp > WINDSURF_TTL_MS;
-				if (!cached || isStale) {
-					return await credentialManager.fetchWindsurfUsage();
+				// Try API first for real-time usage data
+				try {
+					const apiData = await credentialManager.fetchWindsurfUsage();
+					if (apiData) {
+						return apiData;
+					}
+				} catch (error) {
+					console.warn("[credential-handlers] Windsurf API fetch failed, using cached data:", error);
 				}
+				// Fallback to cached data only if API fails
+				return cached ?? null;
 			}
 
 			return cached ?? null;
