@@ -49,7 +49,7 @@
 	"dependencies": {
 		"@lydell/node-pty": "^1.1.0",
 		"@lydell/node-pty-darwin-arm64": "1.2.0-beta.10",
-		"lucide-react": "^0.562.0",
+		"lucide-react": "^1.8.0",
 		"unzipper": "^0.10.11"
 	},
 	"overrides": {
