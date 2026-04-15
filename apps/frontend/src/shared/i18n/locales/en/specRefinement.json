@@ -1,10 +1,23 @@
 {
 	"noData": "No refinement history data available",
 	"title": "Specification Refinement History",
-	"iterations": "Iterations",
-	"iteration": "Iteration {{num}}",
+	"iterations": "{{num}} iteration(s)",
+	"iteration": "Iteration",
 	"qualityScore": "Quality Score",
 	"signals": "Signals",
 	"changes": "Changes",
-	"summary": "Summary"
+	"summary": "Summary",
+	"score": "Score",
+	"converging": "Converging",
+	"diverging": "Diverging",
+	"actions": {
+		"runScan": "Load Histories",
+		"cancel": "Cancel",
+		"scanning": "Loading histories...",
+		"reset": "Reset"
+	},
+	"errors": {
+		"noProject": "Select a project to load its refinement histories.",
+		"failed": "Loading failed: {{error}}"
+	}
 }

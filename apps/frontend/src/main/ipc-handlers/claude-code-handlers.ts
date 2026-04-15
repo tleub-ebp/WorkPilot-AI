@@ -1,17 +1,9 @@
 /**
-
  * Claude Code CLI Handlers
-
- *
-
  * IPC handlers for Claude Code CLI version checking and installation.
-
  * Provides functionality to:
-
  * - Check installed vs latest version
-
  * - Open terminal with installation command
-
  */
 
 import { execFile, execFileSync, spawn } from "node:child_process";
@@ -649,19 +641,18 @@ function getInstallVersionCommand(version: string): string {
 }
 
 /**
-
  * Get the platform-specific install command for Claude Code
-
  * @param isUpdate - If true, Claude is already installed and we just need to update
-
+ * @param claudePath - The path to the Claude executable (default: "claude")
  */
 
-function getInstallCommand(isUpdate: boolean): string {
+function getInstallCommand(isUpdate: boolean, claudePath: string = "claude"): string {
 	if (isWindows()) {
 		if (isUpdate) {
 			// Update: kill running Claude processes first, then update with --force
+			// Use the detected Claude path to ensure we use the correct executable
 
-			return "taskkill /IM claude.exe /F 2>nul; claude install --force latest";
+			return `taskkill /IM claude.exe /F 2>nul; ${claudePath} install --force latest`;
 		}
 
 		return "irm https://claude.ai/install.ps1 | iex";
@@ -671,7 +662,7 @@ function getInstallCommand(isUpdate: boolean): string {
 
 			// pkill sends SIGTERM to gracefully stop Claude processes
 
-			return "pkill -x claude 2>/dev/null; sleep 1; claude install --force latest";
+			return `pkill -x claude 2>/dev/null; sleep 1; ${claudePath} install --force latest`;
 		}
 
 		// Fresh install: use the full install script
@@ -807,7 +798,6 @@ export function escapeBashCommand(str: string): string {
 
 export async function openTerminalWithCommand(command: string): Promise<void> {
 	const settings = readSettingsFile();
-
 	const preferredTerminal = settings?.preferredTerminal as string | undefined;
 
 	let platform: string;
@@ -1778,7 +1768,6 @@ function checkProfileAuthentication(configDir: string): AuthCheckResult {
  */
 
 export function registerClaudeCodeHandlers(): void {
-	// Check Claude Code version
 
 	ipcMain.handle(
 		IPC_CHANNELS.CLAUDE_CODE_CHECK_VERSION,
@@ -1817,106 +1806,111 @@ export function registerClaudeCodeHandlers(): void {
 
 				// If version is unknown or null, try multiple fallback strategies
 				if (!installed || installed === "unknown") {
-					// Strategy 1: Try ~/.local/bin/claude.exe directly (npm native install)
-					if (isWindows()) {
-						const localBinClaude = path.join(
-							os.homedir(),
-							".local",
-							"bin",
-							"claude.exe",
-						);
-						if (existsSync(localBinClaude)) {
-							try {
-								const directOut = (
-									await execFileAsync(localBinClaude, ["--version"], {
-										encoding: "utf-8",
-										timeout: 5000,
-										windowsHide: true,
-									})
-								).stdout;
-								const directMatch = directOut.match(/(\d+\.\d+\.\d+)/);
-								if (directMatch) {
-									installed = directMatch[1];
-									detectionResult = {
-										...detectionResult,
-										found: true,
-										path: localBinClaude,
-									};
-									console.warn(
-										"[Claude Code] Version from ~/.local/bin (direct):",
-										installed,
-									);
-								}
-							} catch {
-								// Direct exec failed, try PowerShell EncodedCommand
+					// Preserve WinGet path if detected
+					if (detectionResult.path?.includes("WinGet") || detectionResult.path?.includes("Microsoft")) {
+						// Skip fallbacks to preserve WinGet path
+					} else {
+						// Strategy 1: Try ~/.local/bin/claude.exe directly (npm native install)
+						if (isWindows()) {
+							const localBinClaude = path.join(
+								os.homedir(),
+								".local",
+								"bin",
+								"claude.exe",
+							);
+							if (existsSync(localBinClaude)) {
 								try {
-									const psExe = path.join(
-										process.env.SystemRoot || "C:\\Windows",
-										"System32",
-										"WindowsPowerShell",
-										"v1.0",
-										"powershell.exe",
-									);
-									const psScript = `$r = & '${localBinClaude.replace(/'/g, "''")}' --version 2>&1; Write-Output $r`;
-									const encodedCmd = Buffer.from(psScript, "utf16le").toString(
-										"base64",
-									);
-									const psOut = (
-										await execFileAsync(
-											psExe,
-											[
-												"-NoProfile",
-												"-NonInteractive",
-												"-EncodedCommand",
-												encodedCmd,
-											],
-											{ encoding: "utf-8", timeout: 8000, windowsHide: true },
-										)
+									const directOut = (
+										await execFileAsync(localBinClaude, ["--version"], {
+											encoding: "utf-8",
+											timeout: 5000,
+											windowsHide: true,
+										})
 									).stdout;
-									const psMatch = psOut.match(/(\d+\.\d+\.\d+)/);
-									if (psMatch) {
-										installed = psMatch[1];
+									const directMatch = /(\d+\.\d+\.\d+)/.exec(directOut);
+									if (directMatch) {
+										installed = directMatch[1];
 										detectionResult = {
 											...detectionResult,
 											found: true,
 											path: localBinClaude,
 										};
 										console.warn(
-											"[Claude Code] Version from ~/.local/bin (PS):",
+											"[Claude Code] Version from ~/.local/bin (direct):",
 											installed,
 										);
 									}
-								} catch (e) {
-									console.warn(
-										"[Claude Code] PS fallback for ~/.local/bin failed:",
-										e,
-									);
+								} catch {
+									// Direct exec failed, try PowerShell EncodedCommand
+									try {
+										const psExe = path.join(
+											process.env.SystemRoot || "C:\\Windows",
+											"System32",
+											"WindowsPowerShell",
+											"v1.0",
+											"powershell.exe",
+										);
+										const psScript = `$r = & '${localBinClaude.replace(/'/g, "''")}' --version 2>&1; Write-Output $r`;
+										const encodedCmd = Buffer.from(psScript, "utf16le").toString(
+											"base64",
+										);
+										const psOut = (
+											await execFileAsync(
+												psExe,
+												[
+													"-NoProfile",
+													"-NonInteractive",
+													"-EncodedCommand",
+													encodedCmd,
+												],
+												{ encoding: "utf-8", timeout: 8000, windowsHide: true },
+											)
+										).stdout;
+										const psMatch = psOut.match(/(\d+\.\d+\.\d+)/);
+										if (psMatch) {
+											installed = psMatch[1];
+											detectionResult = {
+												...detectionResult,
+												found: true,
+												path: localBinClaude,
+											};
+											console.warn(
+												"[Claude Code] Version from ~/.local/bin (PS):",
+												installed,
+											);
+										}
+									} catch (e) {
+										console.warn(
+											"[Claude Code] PS fallback for ~/.local/bin failed:",
+											e,
+										);
+									}
 								}
 							}
 						}
-					}
 
-					// Strategy 2: Try `claude --version` with shell:true (uses system PATH)
-					if (!installed || installed === "unknown") {
-						try {
-							const shellOut = (
-								await execFileAsync("claude", ["--version"], {
-									encoding: "utf-8",
-									timeout: 5000,
-									windowsHide: true,
-									shell: true,
-								})
-							).stdout;
-							const shellMatch = shellOut.match(/(\d+\.\d+\.\d+)/);
-							if (shellMatch) {
-								installed = shellMatch[1];
-								if (!detectionResult.found) {
-									detectionResult = { ...detectionResult, found: true };
+						// Strategy 2: Try `claude --version` with shell:true (uses system PATH)
+						if (!installed || installed === "unknown") {
+							try {
+								const shellOut = (
+									await execFileAsync("claude", ["--version"], {
+										encoding: "utf-8",
+										timeout: 5000,
+										windowsHide: true,
+										shell: true,
+									})
+								).stdout;
+								const shellMatch = shellOut.match(/(\d+\.\d+\.\d+)/);
+								if (shellMatch) {
+									installed = shellMatch[1];
+									if (!detectionResult.found) {
+										detectionResult = { ...detectionResult, found: true };
+									}
+									console.warn("[Claude Code] Version from shell:", installed);
 								}
-								console.warn("[Claude Code] Version from shell:", installed);
+							} catch (e) {
+								console.warn("[Claude Code] shell fallback failed:", e);
 							}
-						} catch (e) {
-							console.warn("[Claude Code] shell fallback failed:", e);
 						}
 					}
 				}
@@ -1924,7 +1918,6 @@ export function registerClaudeCodeHandlers(): void {
 				console.warn("[Claude Code] Installed version:", installed);
 
 				// Fetch latest version from npm
-
 				// Pass installed version to invalidate cache if installed > cached (handles CLI update while app running)
 
 				let latest: string;
@@ -2022,21 +2015,40 @@ export function registerClaudeCodeHandlers(): void {
 		IPC_CHANNELS.CLAUDE_CODE_INSTALL,
 
 		async (): Promise<IPCResult<{ command: string }>> => {
+			console.warn("[Claude Code] INSTALL HANDLER CALLED");
 			try {
 				// Check if Claude is already installed to determine if this is an update
 
 				let isUpdate = false;
+				let claudePath = "claude"; // Default to using PATH
 
 				try {
 					const detectionResult = getToolInfo("claude");
 
+					console.warn(
+						"[Claude Code] Detection result for install:",
+						JSON.stringify(detectionResult, null, 2),
+					);
+
 					isUpdate = detectionResult.found && !!detectionResult.version;
+
+
+					console.warn(
+						"[Claude Code] WinGet path NOT detected, using claude install",
+					);
+
+					// Use the detected path if available
+					if (detectionResult.path) {
+						claudePath = `"${detectionResult.path}"`;
+					}
 
 					console.warn(
 						"[Claude Code] Is update:",
 						isUpdate,
 						"detected version:",
 						detectionResult.version,
+						"detected path:",
+						detectionResult.path,
 					);
 				} catch {
 					// Detection failed, assume fresh install
@@ -2044,7 +2056,7 @@ export function registerClaudeCodeHandlers(): void {
 					isUpdate = false;
 				}
 
-				const command = getInstallCommand(isUpdate);
+				const command = getInstallCommand(isUpdate, claudePath);
 
 				console.warn("[Claude Code] Install command:", command);
 

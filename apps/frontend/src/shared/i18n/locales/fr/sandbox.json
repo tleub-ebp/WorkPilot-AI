@@ -1,6 +1,17 @@
 {
 	"noData": "Aucune donnée de simulation disponible",
+	"noChanges": "Aucune modification non commitée à prévisualiser",
 	"title": "Rapport de Simulation Sandbox",
+	"actions": {
+		"runScan": "Lancer le test à blanc",
+		"cancel": "Annuler",
+		"scanning": "Exécution du test à blanc...",
+		"reset": "Réinitialiser"
+	},
+	"errors": {
+		"noProject": "Sélectionnez un projet pour lancer un test à blanc.",
+		"failed": "Échec du test à blanc : {{error}}"
+	},
 	"dryRun": "Test à blanc pour la spec {{specId}}",
 	"estimatedCost": "Coût Estimé",
 	"realCost": "Coût Réel",
