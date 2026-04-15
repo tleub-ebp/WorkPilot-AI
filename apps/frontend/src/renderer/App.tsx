@@ -195,6 +195,11 @@ const RegressionGuardianDashboard = lazy(() =>
 		default: m.RegressionGuardianDashboard,
 	})),
 );
+const InjectionGuardView = lazy(() =>
+	import("./components/injection-guard/InjectionGuardView").then((m) => ({
+		default: m.InjectionGuardView,
+	})),
+);
 const ApiWatcherDashboard = lazy(() =>
 	import("./components/api-watcher/ApiWatcherDashboard").then((m) => ({
 		default: m.ApiWatcherDashboard,
@@ -1689,8 +1694,8 @@ export function App() {
 													</div>
 												)}
 												{activeView === "injection-guard" && (
-													<div className="flex items-center justify-center h-full text-(--text-secondary)">
-														<p>{t("common:injectionGuardComingSoon")}</p>
+													<div className="overflow-auto" style={{ height: 'calc(100vh - 100px)' }}>
+														<InjectionGuardView projectPath={selectedProject?.path} />
 													</div>
 												)}
 												{activeView === "api-watcher" && (

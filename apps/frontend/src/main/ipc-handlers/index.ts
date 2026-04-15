@@ -105,6 +105,7 @@ import { registerOnboardingAgentHandlers } from "./onboarding-agent-handlers";
 import { registerSandboxHandlers } from "./sandbox-handlers";
 import { registerRegressionGuardianHandlers } from "./regression-guardian-handlers";
 import { registerConsensusArbiterHandlers } from "./consensus-arbiter-handlers";
+import { registerInjectionGuardHandlers } from "./injection-guard-handlers";
 import { registerSpecApprovalHandlers } from "./spec-approval-handlers";
 import { registerSpecRefinementHandlers } from "./spec-refinement-handlers";
 import { registerTaskHandlers } from "./task-handlers";
@@ -217,6 +218,7 @@ export { registerOnboardingAgentHandlers } from "./onboarding-agent-handlers";
 export { registerSandboxHandlers } from "./sandbox-handlers";
 export { registerRegressionGuardianHandlers } from "./regression-guardian-handlers";
 export { registerConsensusArbiterHandlers } from "./consensus-arbiter-handlers";
+export { registerInjectionGuardHandlers } from "./injection-guard-handlers";
 export { registerSpecApprovalHandlers } from "./spec-approval-handlers";
 export { registerSpecRefinementHandlers } from "./spec-refinement-handlers";
 export { registerTaskHandlers } from "./task-handlers";
@@ -497,6 +499,9 @@ export function setupIpcHandlers(
 
 	// Consensus Arbiter handlers (detect & resolve inter-agent conflicts)
 	registerConsensusArbiterHandlers();
+
+	// Injection Guard handlers (prompt injection scanner)
+	registerInjectionGuardHandlers();
 
 	console.warn("[IPC] All handler modules registered successfully");
 }

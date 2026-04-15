@@ -71,6 +71,10 @@ import {
 	createConsensusArbiterAPI,
 } from "./modules/consensus-arbiter-api";
 import {
+	type InjectionGuardAPI,
+	createInjectionGuardAPI,
+} from "./modules/injection-guard-api";
+import {
 	type I18nAgentAPI,
 	createI18nAgentAPI,
 } from "./modules/i18n-agent-api";
@@ -207,6 +211,7 @@ export interface ElectronAPI
 		SandboxAPI,
 		RegressionGuardianAPI,
 		ConsensusArbiterAPI,
+		InjectionGuardAPI,
 		VisualProgrammingAPI {
 	github: GitHubAPI;
 	/** Queue routing API for rate limit recovery */
@@ -313,6 +318,7 @@ export const createElectronAPI = (): ElectronAPI => {
 		...createSandboxAPI(),
 		...createRegressionGuardianAPI(),
 		...createConsensusArbiterAPI(),
+		...createInjectionGuardAPI(),
 		...createVisualProgrammingAPI(),
 		github: createGitHubAPI(),
 		queue: createQueueAPI(), // Queue routing for rate limit recovery

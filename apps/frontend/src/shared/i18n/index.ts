@@ -17,6 +17,7 @@ import enReleaseCoordinator from "./locales/en/releaseCoordinator.json";
 import enSpecRefinement from "./locales/en/specRefinement.json";
 import enSandbox from "./locales/en/sandbox.json";
 import enRegressionGuardian from "./locales/en/regressionGuardian.json";
+import enInjectionGuard from "./locales/en/injectionGuard.json";
 import enApiWatcher from "./locales/en/api-watcher.json";
 
 // Import English translation resources
@@ -88,6 +89,7 @@ import frReleaseCoordinator from "./locales/fr/releaseCoordinator.json";
 import frSpecRefinement from "./locales/fr/specRefinement.json";
 import frSandbox from "./locales/fr/sandbox.json";
 import frRegressionGuardian from "./locales/fr/regressionGuardian.json";
+import frInjectionGuard from "./locales/fr/injectionGuard.json";
 import frApiWatcher from "./locales/fr/api-watcher.json";
 
 // Import French translation resources
@@ -165,6 +167,7 @@ export const resources = {
 		specRefinement: enSpecRefinement,
 		sandbox: enSandbox,
 		regressionGuardian: enRegressionGuardian,
+		injectionGuard: enInjectionGuard,
 		apiWatcher: enApiWatcher,
 		changelog: enChangelog,
 		codePlayground: enCodePlayground,
@@ -236,6 +239,7 @@ export const resources = {
 		specRefinement: frSpecRefinement,
 		sandbox: frSandbox,
 		regressionGuardian: frRegressionGuardian,
+		injectionGuard: frInjectionGuard,
 		apiWatcher: frApiWatcher,
 		changelog: frChangelog,
 		codePlayground: frCodePlayground,
@@ -314,6 +318,7 @@ i18n.use(initReactI18next).init({
 		"specRefinement",
 		"sandbox",
 		"regressionGuardian",
+		"injectionGuard",
 		"apiWatcher",
 		"changelog",
 		"codePlayground",
