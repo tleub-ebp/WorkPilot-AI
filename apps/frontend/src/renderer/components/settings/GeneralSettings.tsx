@@ -155,7 +155,7 @@ export function GeneralSettings({
 					setIsLoadingTools(false);
 				});
 		}
-	}, [section, settings, onSettingsChange]);
+	}, [section, onSettingsChange]);
 
 	// Lit le provider actif depuis le contexte pour filtrer les modèles disponibles
 	const { selectedProvider } = useProviderContext();

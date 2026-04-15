@@ -1,6 +1,7 @@
 import {
 	AlertTriangle,
 	Check,
+	Download,
 	ExternalLink,
 	Loader2,
 	RefreshCw,
@@ -10,6 +11,8 @@ import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useCliStatus } from "@/contexts/CliStatusContext";
 import { cn } from "@/lib/utils";
+import { useProjectStore } from "@/stores/project-store";
+import { useTerminalStore } from "@/stores/terminal-store";
 import { Button } from "./ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "./ui/popover";
 import { Tooltip, TooltipContent, TooltipTrigger } from "./ui/tooltip";
@@ -18,6 +21,8 @@ interface CodexCliStatusBadgeProps {
 	readonly className?: string;
 	readonly onNavigateToTerminals?: () => void;
 }
+
+const VERSION_RECHECK_DELAY_MS = 5000;
 
 interface CodexIconProps {
 	readonly className?: string;
@@ -58,13 +63,23 @@ function CodexIcon({ className }: CodexIconProps) {
  */
 export function CodexCliStatusBadge({
 	className,
-	onNavigateToTerminals: _onNavigateToTerminals,
+	onNavigateToTerminals,
 }: CodexCliStatusBadgeProps) {
 	const { t } = useTranslation(["common", "navigation"]);
 	const { data, refreshCodex } = useCliStatus();
 	const { codex } = data;
 
+	const projects = useProjectStore((state) => state.projects);
+	const selectedProjectId = useProjectStore((state) => state.selectedProjectId);
+	const currentProject = projects.find((p) => p.id === selectedProjectId);
+	const projectPath = currentProject?.path || ".";
+	const addExternalTerminal = useTerminalStore(
+		(state) => state.addExternalTerminal,
+	);
+
 	const [isOpen, setIsOpen] = useState(false);
+	const [isUpdating, setIsUpdating] = useState(false);
+	const [updateError, setUpdateError] = useState<string | null>(null);
 
 	// Use data from context
 	const status = codex.status;
@@ -73,6 +88,53 @@ export function CodexCliStatusBadge({
 
 	const handleRefresh = () => {
 		refreshCodex();
+	};
+
+	const performUpdate = async () => {
+		setIsUpdating(true);
+		setUpdateError(null);
+		try {
+			if (!globalThis.electronAPI?.createTerminal) {
+				setUpdateError("Terminal not available");
+				return;
+			}
+
+			const terminalId = `codex-cli-update-${Date.now()}`;
+			const terminalResult = await globalThis.electronAPI.createTerminal({
+				id: terminalId,
+				cwd: projectPath,
+				cols: 80,
+				rows: 25,
+				projectPath: projectPath,
+			});
+
+			if (!terminalResult.success) {
+				setUpdateError(terminalResult.error || "Failed to open terminal");
+				return;
+			}
+
+			addExternalTerminal(terminalId, "Codex Update", projectPath, projectPath);
+
+			setIsOpen(false);
+			if (onNavigateToTerminals) {
+				onNavigateToTerminals();
+			}
+
+			await new Promise((resolve) => setTimeout(resolve, 300));
+			globalThis.electronAPI.sendTerminalInput(
+				terminalId,
+				"pnpm install -g @openai/codex@latest\n",
+			);
+
+			setTimeout(() => refreshCodex(), VERSION_RECHECK_DELAY_MS);
+			setTimeout(() => refreshCodex(), VERSION_RECHECK_DELAY_MS * 3);
+			setTimeout(() => refreshCodex(), VERSION_RECHECK_DELAY_MS * 6);
+		} catch (err) {
+			console.error("Failed to update Codex CLI:", err);
+			setUpdateError(err instanceof Error ? err.message : "Update failed");
+		} finally {
+			setIsUpdating(false);
+		}
 	};
 
 	const getStatusColor = () => {
@@ -217,10 +279,28 @@ export function CodexCliStatusBadge({
 
 					{/* Actions */}
 					<div className="flex gap-2">
+						{status === "installed" && (
+							<Button
+								size="sm"
+								className="flex-1 gap-1"
+								onClick={performUpdate}
+								disabled={isUpdating}
+							>
+								{isUpdating ? (
+									<Loader2 className="h-3 w-3 animate-spin" />
+								) : (
+									<Download className="h-3 w-3" />
+								)}
+								{t("common:update", "Mettre à jour")}
+							</Button>
+						)}
 						<Button
 							variant="outline"
 							size="sm"
-							className="flex-1 gap-1"
+							className={cn(
+								"gap-1",
+								status !== "installed" && "flex-1",
+							)}
 							onClick={() => {
 								handleRefresh();
 							}}
@@ -235,6 +315,13 @@ export function CodexCliStatusBadge({
 							{t("common:refresh", "Rafraîchir")}
 						</Button>
 					</div>
+
+					{updateError && (
+						<div className="text-xs p-2 bg-destructive/10 text-destructive rounded-md flex items-center gap-2">
+							<AlertTriangle className="h-3 w-3 shrink-0" />
+							<span>{updateError}</span>
+						</div>
+					)}
 
 					{/* Docs link */}
 					<Button

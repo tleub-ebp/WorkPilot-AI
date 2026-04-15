@@ -235,7 +235,7 @@ const createSettingsThemes = (t: {
 				label: "Outils de développement",
 				type: "app",
 			},
-			{ id: "paths", icon: FolderOpen, label: "Chemins", type: "app" },
+			{ id: "paths", icon: FolderOpen, label: t("sections.paths.title"), type: "app" },
 			{ id: "agent", icon: Bot, label: "Agent", type: "app" },
 			{
 				id: "swarm-mode",
