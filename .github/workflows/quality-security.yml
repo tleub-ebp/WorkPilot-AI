@@ -89,10 +89,10 @@ jobs:
           echo "::endgroup::"
 
       - name: Analyze Bandit results
-        uses: actions/github-script@v8
+        uses: actions/github-script@v9
         with:
           script: |
-            const fs = require('fs');
+            import fs from 'fs';
 
             if (!fs.existsSync('bandit-report.json')) {
               core.setFailed('Bandit report not found - scan may have failed');
@@ -149,7 +149,7 @@ jobs:
     timeout-minutes: 5
     steps:
       - name: Check security results
-        uses: actions/github-script@v8
+        uses: actions/github-script@v9
         with:
           script: |
             const codeql = '${{ needs.codeql.result }}';
