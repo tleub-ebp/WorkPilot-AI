@@ -1,0 +1,25 @@
+{
+	"title": "Garde Anti-Injection",
+	"noData": "Aucun prompt trouvé dans .workpilot/prompts/",
+	"noFindings": "Aucun résultat",
+	"threat": {
+		"safe": "Sûr",
+		"suspect": "Suspect",
+		"blocked": "Bloqué"
+	},
+	"stats": {
+		"blocked": "Bloqués",
+		"suspect": "Suspects",
+		"safe": "Sûrs"
+	},
+	"actions": {
+		"runScan": "Lancer l'analyse",
+		"cancel": "Annuler",
+		"scanning": "Analyse des prompts...",
+		"reset": "Réinitialiser"
+	},
+	"errors": {
+		"noProject": "Sélectionnez un projet pour lancer la Garde Anti-Injection.",
+		"failed": "Échec de l'analyse : {{error}}"
+	}
+}

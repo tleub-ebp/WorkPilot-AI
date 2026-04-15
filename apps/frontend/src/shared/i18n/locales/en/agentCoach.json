@@ -1,6 +1,6 @@
 {
 	"title": "Personal Agent Coach",
-	"noData": "No coach report data available",
+	"noData": "No agent run records found",
 	"summary": "{{runs}} runs · {{successRate}}% success · ${{cost}} total cost",
 	"stats": {
 		"runs": "Runs",
@@ -9,5 +9,15 @@
 		"mostFailing": "Most Failing",
 		"none": "None"
 	},
-	"evidence": "Evidence:"
+	"evidence": "Evidence:",
+	"actions": {
+		"runScan": "Generate Report",
+		"cancel": "Cancel",
+		"scanning": "Analyzing agent runs...",
+		"reset": "Reset"
+	},
+	"errors": {
+		"noProject": "Select a project to analyze its agent run history.",
+		"failed": "Analysis failed: {{error}}"
+	}
 }

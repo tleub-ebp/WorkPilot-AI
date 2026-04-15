@@ -11,6 +11,16 @@ import { Label } from "../ui/label";
 import { Separator } from "../ui/separator";
 import { SettingsSection } from "./SettingsSection";
 
+function getTierClasses(tier: ProviderModel["tier"]): string {
+	const tierClassMap: Record<ProviderModel["tier"], string> = {
+		flagship: "bg-primary/10 text-primary",
+		standard: "bg-blue-500/10 text-blue-600 dark:text-blue-400",
+		fast: "bg-green-500/10 text-green-600 dark:text-green-400",
+		local: "bg-orange-500/10 text-orange-600 dark:text-orange-400",
+	};
+	return tierClassMap[tier];
+}
+
 /**
  * Configuration component for custom/enterprise providers
  * Allows users to configure API endpoints and discover available models
@@ -364,12 +374,7 @@ export function CustomProviderConfig() {
 							</h4>
 							<div className="space-y-1">
 								{customModels.map((model) => {
-									const tierClasses =
-										model.tier === "flagship"
-											? "bg-primary/10 text-primary"
-											: model.tier === "standard"
-												? "bg-blue-500/10 text-blue-600 dark:text-blue-400"
-												: "bg-green-500/10 text-green-600 dark:text-green-400";
+									const tierClasses = getTierClasses(model.tier);
 
 									return (
 										<div

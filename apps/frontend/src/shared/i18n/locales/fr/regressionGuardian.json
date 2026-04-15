@@ -1,0 +1,23 @@
+{
+	"title": "Gardien des Régressions",
+	"duplicate": "Doublon",
+	"viewTest": "Voir le test",
+	"noTest": "Aucun test généré",
+	"noData": "Aucun incident trouvé dans .workpilot/incidents/",
+	"incidentsDetected": "{{count}} incident(s) détecté(s)",
+	"stats": {
+		"incidents": "Incidents",
+		"testsGenerated": "Tests générés",
+		"duplicatesSkipped": "Doublons ignorés"
+	},
+	"actions": {
+		"runScan": "Lancer l'analyse",
+		"cancel": "Annuler",
+		"scanning": "Analyse des incidents...",
+		"reset": "Réinitialiser"
+	},
+	"errors": {
+		"noProject": "Sélectionnez un projet pour lancer le Gardien des Régressions.",
+		"failed": "Échec de l'analyse : {{error}}"
+	}
+}

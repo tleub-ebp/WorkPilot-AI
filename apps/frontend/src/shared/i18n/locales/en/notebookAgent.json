@@ -8,5 +8,15 @@
 	"severity": "Severity",
 	"cellIndex": "Cell #{{index}}",
 	"issueType": "Issue Type",
-	"suggestion": "Suggestion"
+	"suggestion": "Suggestion",
+	"actions": {
+		"runScan": "Analyze Notebooks",
+		"cancel": "Cancel",
+		"scanning": "Analyzing notebooks...",
+		"reset": "Reset"
+	},
+	"errors": {
+		"noProject": "Select a project to analyse its notebooks.",
+		"failed": "Analysis failed: {{error}}"
+	}
 }

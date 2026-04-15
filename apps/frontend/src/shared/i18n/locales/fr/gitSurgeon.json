@@ -8,5 +8,15 @@
 	"severity": "Sévérité",
 	"issueType": "Type de Problème",
 	"plannedActions": "Actions Planifiées",
-	"summary": "Résumé"
+	"summary": "Résumé",
+	"actions": {
+		"runScan": "Analyser l'historique",
+		"cancel": "Annuler",
+		"scanning": "Analyse de l'historique git...",
+		"reset": "Réinitialiser"
+	},
+	"errors": {
+		"noProject": "Sélectionnez un projet pour analyser son historique git.",
+		"failed": "Échec de l'analyse : {{error}}"
+	}
 }

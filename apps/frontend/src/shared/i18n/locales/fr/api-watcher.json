@@ -1,11 +1,23 @@
 {
 	"title": "Surveillant de contrat API",
 	"noData": "Aucune donnée de diff de contrat disponible",
+	"noChanges": "Aucun changement de contrat détecté",
 	"changesDetected": "{{count}} modifications détectées",
 	"categories": {
 		"breaking": "Cassante",
 		"potentiallyBreaking": "Potentiellement cassante",
 		"nonBreaking": "Non cassante"
 	},
-	"migrationGuide": "Guide de migration"
+	"migrationGuide": "Guide de migration",
+	"actions": {
+		"runScan": "Lancer l'analyse",
+		"saveBaseline": "Définir comme référence",
+		"cancel": "Annuler",
+		"scanning": "Analyse des contrats...",
+		"reset": "Réinitialiser"
+	},
+	"errors": {
+		"noProject": "Sélectionnez un projet pour lancer une analyse de contrats API.",
+		"failed": "Échec de l'analyse : {{error}}"
+	}
 }
