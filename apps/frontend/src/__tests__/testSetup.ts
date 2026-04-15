@@ -4,7 +4,7 @@
  */
 
 import "@testing-library/jest-dom/vitest";
-import "../shared/i18n";
+import "@shared/i18n";
 
 // Mock localStorage for tests that need it
 const createLocalStorageMock = () => {
