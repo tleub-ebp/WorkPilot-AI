@@ -20,7 +20,7 @@ import {
 	markAgentStopped,
 } from "../claude-profile/token-refresh";
 import { getClaudeProfileManager } from "../claude-profile-manager";
-import { getClaudeCliPathForSdk, getToolInfo } from "../cli-tool-manager";
+import { getToolInfo } from "../cli-tool-manager";
 import { getAugmentedEnv } from "../env-utils";
 import { buildMemoryEnvVars } from "../memory-env-builder";
 import { isWindows, killProcessGracefully } from "../platform";
@@ -163,8 +163,8 @@ export class AgentProcessManager {
 	 * Common issue: CLI tools installed via Homebrew or other non-standard locations
 	 * are not in subprocess PATH when app launches from Finder/Dock.
 	 *
-	 * For 'claude' tool specifically, uses getClaudeCliPathForSdk() which returns null
-	 * for Windows .cmd files, allowing the SDK to use its bundled claude.exe instead.
+	 * For 'claude' tool, uses getToolPath() to get the detected path.
+	 * The path is prioritized to use ~/.local/bin/claude.exe (native install with latest version).
 	 *
 	 * @param toolName - Name of the CLI tool (e.g., 'claude', 'gh')
 	 * @returns Record with env var set if tool was detected
@@ -174,33 +174,15 @@ export class AgentProcessManager {
 		const envVarName = CLI_TOOL_ENV_MAP[toolName];
 		if (!process.env[envVarName]) {
 			try {
-				// For 'claude' tool, use getClaudeCliPathForSdk() which returns null for Windows .cmd files
-				// This allows the Claude Agent SDK to use its bundled claude.exe instead
-				if (toolName === "claude") {
-					const cliPath = getClaudeCliPathForSdk();
-					if (cliPath) {
-						env[envVarName] = cliPath;
-						appLog.info(
-							`[AgentProcess] Setting ${envVarName}:`,
-							cliPath,
-							"(source: cli-tool-manager)",
-						);
-					} else {
-						appLog.info(
-							`[AgentProcess] Claude CLI is .cmd file on Windows, not setting ${envVarName} - SDK will use bundled CLI`,
-						);
-					}
-				} else {
-					// For other tools, use standard detection
-					const toolInfo = getToolInfo(toolName);
-					if (toolInfo.found && toolInfo.path) {
-						env[envVarName] = toolInfo.path;
-						appLog.info(
-							`[AgentProcess] Setting ${envVarName}:`,
-							toolInfo.path,
-							`(source: ${toolInfo.source})`,
-						);
-					}
+				// Use standard detection for all tools including claude
+				const toolInfo = getToolInfo(toolName);
+				if (toolInfo.found && toolInfo.path) {
+					env[envVarName] = toolInfo.path;
+					appLog.info(
+						`[AgentProcess] Setting ${envVarName}:`,
+						toolInfo.path,
+						`(source: ${toolInfo.source})`,
+					);
 				}
 			} catch (error) {
 				appLog.warn(
@@ -1128,6 +1110,24 @@ export class AgentProcessManager {
 			}
 		};
 
+		const processLine = (line: string): void => {
+			// Detect the start of a hook_0 Stream-closed error block and suppress it.
+			// Pattern: "Error in hook callback hook_0:" kicks off a multi-line Bun
+			// error dump (source snippet + "error: Stream closed" + stack frames).
+			if (line.includes("Error in hook callback hook_0:")) {
+				hookErrorSuppressionLines = 8; // suppress this line + up to 7 follow-up Bun error lines
+			}
+			if (hookErrorSuppressionLines > 0) {
+				hookErrorSuppressionLines--;
+				return;
+			}
+			this.emitter.emit("log", taskId, `${line}\n`, projectId);
+			processLog(line);
+			if (isDebug) {
+				appLog.debug(`[Agent:${taskId}] ${line}`);
+			}
+		};
+
 		const processBufferedOutput = (buffer: string, newData: string): string => {
 			if (isDebug && newData.includes("__EXEC_PHASE__")) {
 				appLog.debug(
@@ -1150,21 +1150,7 @@ export class AgentProcessManager {
 
 			for (const line of lines) {
 				if (line.trim()) {
-					// Detect the start of a hook_0 Stream-closed error block and suppress it.
-					// Pattern: "Error in hook callback hook_0:" kicks off a multi-line Bun
-					// error dump (source snippet + "error: Stream closed" + stack frames).
-					if (line.includes("Error in hook callback hook_0:")) {
-						hookErrorSuppressionLines = 8; // suppress this line + up to 7 follow-up Bun error lines
-					}
-					if (hookErrorSuppressionLines > 0) {
-						hookErrorSuppressionLines--;
-						continue;
-					}
-					this.emitter.emit("log", taskId, `${line}\n`, projectId);
-					processLog(line);
-					if (isDebug) {
-						appLog.debug(`[Agent:${taskId}] ${line}`);
-					}
+					processLine(line);
 				}
 			}
 

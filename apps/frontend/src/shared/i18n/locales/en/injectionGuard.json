@@ -1,0 +1,25 @@
+{
+	"title": "Prompt Injection Guard",
+	"noData": "No prompts found in .workpilot/prompts/",
+	"noFindings": "No findings",
+	"threat": {
+		"safe": "Safe",
+		"suspect": "Suspect",
+		"blocked": "Blocked"
+	},
+	"stats": {
+		"blocked": "Blocked",
+		"suspect": "Suspect",
+		"safe": "Safe"
+	},
+	"actions": {
+		"runScan": "Run Scan",
+		"cancel": "Cancel",
+		"scanning": "Scanning prompts...",
+		"reset": "Reset"
+	},
+	"errors": {
+		"noProject": "Select a project to run the Injection Guard scan.",
+		"failed": "Scan failed: {{error}}"
+	}
+}

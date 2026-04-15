@@ -2,5 +2,15 @@
 	"title": "Onboarding Guide",
 	"noData": "No onboarding guide data available",
 	"duration": "~{{minutes}} min",
-	"step": "Step"
+	"step": "Step",
+	"actions": {
+		"runScan": "Generate Guide",
+		"cancel": "Cancel",
+		"scanning": "Generating onboarding guide...",
+		"reset": "Reset"
+	},
+	"errors": {
+		"noProject": "Select a project to generate its onboarding guide.",
+		"failed": "Generation failed: {{error}}"
+	}
 }

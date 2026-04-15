@@ -20,6 +20,13 @@ from enum import Enum
 from pathlib import Path
 
 # ============================================================================
+# Constants
+# ============================================================================
+
+HOMEBREW_INTEL_PATH = "/usr/local/bin"
+LOCAL_DIR = ".local"
+
+# ============================================================================
 # Type Definitions
 # ============================================================================
 
@@ -130,7 +137,7 @@ def get_binary_directories() -> dict[str, list[str]]:
             "user": [
                 str(home_dir / "AppData" / "Local" / "Programs"),
                 str(home_dir / "AppData" / "Roaming" / "npm"),
-                str(home_dir / ".local" / "bin"),
+                str(home_dir / LOCAL_DIR / "bin"),
             ],
             "system": [
                 os.environ.get("ProgramFiles", "C:\\Program Files"),
@@ -142,12 +149,12 @@ def get_binary_directories() -> dict[str, list[str]]:
     if is_macos():
         return {
             "user": [
-                str(home_dir / ".local" / "bin"),
+                str(home_dir / LOCAL_DIR / "bin"),
                 str(home_dir / "bin"),
             ],
             "system": [
                 "/opt/homebrew/bin",
-                "/usr/local/bin",
+                HOMEBREW_INTEL_PATH,
                 "/usr/bin",
             ],
         }
@@ -155,12 +162,12 @@ def get_binary_directories() -> dict[str, list[str]]:
     # Linux
     return {
         "user": [
-            str(home_dir / ".local" / "bin"),
+            str(home_dir / LOCAL_DIR / "bin"),
             str(home_dir / "bin"),
         ],
         "system": [
             "/usr/bin",
-            "/usr/local/bin",
+            HOMEBREW_INTEL_PATH,
             "/snap/bin",
         ],
     }
@@ -178,7 +185,7 @@ def get_homebrew_path() -> str | None:
 
     homebrew_paths = [
         "/opt/homebrew/bin",  # Apple Silicon
-        "/usr/local/bin",  # Intel
+        HOMEBREW_INTEL_PATH,  # Intel
     ]
 
     for brew_path in homebrew_paths:
@@ -257,27 +264,41 @@ def get_claude_detection_paths() -> list[str]:
     home_dir = Path.home()
     paths = []
 
+    CLAUDE_EXECUTABLE = "claude.exe"
+
     if is_windows():
         paths.extend(
             [
+                # Prioritize npm native install (~/.local/bin) for latest version
+                str(home_dir / LOCAL_DIR / "bin" / CLAUDE_EXECUTABLE),
+                # WinGet installation path (used for updates)
+                str(
+                    home_dir
+                    / "AppData"
+                    / "Local"
+                    / "Microsoft"
+                    / "WinGet"
+                    / "Packages"
+                    / "Anthropic.ClaudeCode_Microsoft.Winget.Source_8wekyb3d8bbwe"
+                    / CLAUDE_EXECUTABLE
+                ),
                 str(
                     home_dir
                     / "AppData"
                     / "Local"
                     / "Programs"
                     / "claude"
-                    / "claude.exe"
+                    / CLAUDE_EXECUTABLE
                 ),
                 str(home_dir / "AppData" / "Roaming" / "npm" / "claude.cmd"),
-                str(home_dir / ".local" / "bin" / "claude.exe"),
-                r"C:\Program Files\Claude\claude.exe",
-                r"C:\Program Files (x86)\Claude\claude.exe",
+                rf"C:\Program Files\Claude\{CLAUDE_EXECUTABLE}",
+                rf"C:\Program Files (x86)\Claude\{CLAUDE_EXECUTABLE}",
             ]
         )
     else:
         paths.extend(
             [
-                str(home_dir / ".local" / "bin" / "claude"),
+                str(home_dir / LOCAL_DIR / "bin" / "claude"),
                 str(home_dir / "bin" / "claude"),
             ]
         )
@@ -315,15 +336,21 @@ def get_claude_detection_paths_structured() -> dict[str, list[str] | str]:
 
     if is_windows():
         platform_paths = [
+            # Prioritize npm native install (~/.local/bin) for latest version
+            str(home_dir / LOCAL_DIR / "bin" / "claude.exe"),
+            # WinGet installation path (used for updates)
+            str(
+                home_dir
+                / "AppData/Local/Microsoft/WinGet/Packages/Anthropic.ClaudeCode_Microsoft.Winget.Source_8wekyb3d8bbwe/claude.exe"
+            ),
             str(home_dir / "AppData/Local/Programs/claude/claude.exe"),
             str(home_dir / "AppData/Roaming/npm/claude.cmd"),
-            str(home_dir / ".local/bin/claude.exe"),
             r"C:\Program Files\Claude\claude.exe",
             r"C:\Program Files (x86)\Claude\claude.exe",
         ]
     else:
         platform_paths = [
-            str(home_dir / ".local" / "bin" / "claude"),
+            str(home_dir / LOCAL_DIR / "bin" / "claude"),
             str(home_dir / "bin" / "claude"),
         ]
 
