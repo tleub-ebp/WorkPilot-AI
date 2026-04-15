@@ -1,0 +1,23 @@
+{
+	"title": "Regression Guardian",
+	"duplicate": "Duplicate",
+	"viewTest": "View Test",
+	"noTest": "No test generated",
+	"noData": "No incidents found in .workpilot/incidents/",
+	"incidentsDetected": "{{count}} incident(s) detected",
+	"stats": {
+		"incidents": "Incidents",
+		"testsGenerated": "Tests Generated",
+		"duplicatesSkipped": "Duplicates Skipped"
+	},
+	"actions": {
+		"runScan": "Run Scan",
+		"cancel": "Cancel",
+		"scanning": "Scanning incidents...",
+		"reset": "Reset"
+	},
+	"errors": {
+		"noProject": "Select a project to run the Regression Guardian scan.",
+		"failed": "Scan failed: {{error}}"
+	}
+}

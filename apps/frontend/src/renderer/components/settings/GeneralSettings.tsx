@@ -31,19 +31,19 @@ import { CustomProviderConfig } from "./CustomProviderConfig";
 import { SettingsSection } from "./SettingsSection";
 
 interface GeneralSettingsProps {
-	settings: AppSettings;
-	onSettingsChange: (settings: AppSettings) => void;
-	section: "agent" | "paths";
-	onOpenAccountsSettings?: () => void;
+	readonly settings: AppSettings;
+	readonly onSettingsChange: (settings: AppSettings) => void;
+	readonly section: "agent" | "paths";
+	readonly onOpenAccountsSettings?: () => void;
 }
 
 /**
  * Helper component to display auto-detected CLI tool information
  */
 interface ToolDetectionDisplayProps {
-	info: ToolDetectionResult | null;
-	isLoading: boolean;
-	t: (key: string) => string;
+	readonly info: ToolDetectionResult | null;
+	readonly isLoading: boolean;
+	readonly t: (key: string) => string;
 }
 
 function ToolDetectionDisplay({
@@ -57,7 +57,7 @@ function ToolDetectionDisplay({
 		);
 	}
 
-	if (!info || !info.found) {
+	if (!info?.found) {
 		return (
 			<div className="text-xs text-muted-foreground mt-1">
 				{t("general.notDetected")}
@@ -121,7 +121,7 @@ export function GeneralSettings({
 	useEffect(() => {
 		if (section === "paths") {
 			setIsLoadingTools(true);
-			window.electronAPI
+			globalThis.electronAPI
 				.getCliToolsInfo()
 				.then(
 					(result: {
@@ -136,6 +136,15 @@ export function GeneralSettings({
 					}) => {
 						if (result.success && result.data) {
 							setToolsInfo(result.data);
+							// Always update claudePath with detected WinGet path
+							if (result.data.claude?.found && result.data.claude.path) {
+								const detectedPath = result.data.claude.path;
+								// Force update regardless of current value
+								onSettingsChange({
+									...settings,
+									claudePath: detectedPath,
+								});
+							}
 						}
 					},
 				)
@@ -146,7 +155,7 @@ export function GeneralSettings({
 					setIsLoadingTools(false);
 				});
 		}
-	}, [section]);
+	}, [section, settings, onSettingsChange]);
 
 	// Lit le provider actif depuis le contexte pour filtrer les modèles disponibles
 	const { selectedProvider } = useProviderContext();

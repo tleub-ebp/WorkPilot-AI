@@ -18,6 +18,10 @@ import {
 	createApiExplorerAPI,
 } from "./modules/api-explorer-api";
 import {
+	type ApiWatcherAPI,
+	createApiWatcherAPI,
+} from "./modules/api-watcher-api";
+import {
 	type DocDriftAPI,
 	createDocDriftAPI,
 } from "./modules/doc-drift-api";
@@ -26,9 +30,50 @@ import {
 	createCarbonProfilerAPI,
 } from "./modules/carbon-profiler-api";
 import {
+	type ComplianceAPI,
+	createComplianceAPI,
+} from "./modules/compliance-api";
+import {
 	type FlakyTestsAPI,
 	createFlakyTestsAPI,
 } from "./modules/flaky-tests-api";
+import {
+	type GitSurgeonAPI,
+	createGitSurgeonAPI,
+} from "./modules/git-surgeon-api";
+import {
+	type ReleaseCoordinatorAPI,
+	createReleaseCoordinatorAPI,
+} from "./modules/release-coordinator-api";
+import {
+	type NotebookAgentAPI,
+	createNotebookAgentAPI,
+} from "./modules/notebook-agent-api";
+import {
+	type SpecRefinementAPI,
+	createSpecRefinementAPI,
+} from "./modules/spec-refinement-api";
+import {
+	type AgentCoachAPI,
+	createAgentCoachAPI,
+} from "./modules/agent-coach-api";
+import {
+	type OnboardingAgentAPI,
+	createOnboardingAgentAPI,
+} from "./modules/onboarding-agent-api";
+import { type SandboxAPI, createSandboxAPI } from "./modules/sandbox-api";
+import {
+	type RegressionGuardianAPI,
+	createRegressionGuardianAPI,
+} from "./modules/regression-guardian-api";
+import {
+	type ConsensusArbiterAPI,
+	createConsensusArbiterAPI,
+} from "./modules/consensus-arbiter-api";
+import {
+	type InjectionGuardAPI,
+	createInjectionGuardAPI,
+} from "./modules/injection-guard-api";
 import {
 	type I18nAgentAPI,
 	createI18nAgentAPI,
@@ -154,6 +199,19 @@ export interface ElectronAPI
 		I18nAgentAPI,
 		DocDriftAPI,
 		FlakyTestsAPI,
+		CarbonProfilerAPI,
+		ComplianceAPI,
+		ApiWatcherAPI,
+		GitSurgeonAPI,
+		ReleaseCoordinatorAPI,
+		NotebookAgentAPI,
+		SpecRefinementAPI,
+		AgentCoachAPI,
+		OnboardingAgentAPI,
+		SandboxAPI,
+		RegressionGuardianAPI,
+		ConsensusArbiterAPI,
+		InjectionGuardAPI,
 		VisualProgrammingAPI {
 	github: GitHubAPI;
 	/** Queue routing API for rate limit recovery */
@@ -248,6 +306,19 @@ export const createElectronAPI = (): ElectronAPI => {
 		...createI18nAgentAPI(),
 		...createDocDriftAPI(),
 		...createFlakyTestsAPI(),
+		...createCarbonProfilerAPI(),
+		...createComplianceAPI(),
+		...createApiWatcherAPI(),
+		...createGitSurgeonAPI(),
+		...createReleaseCoordinatorAPI(),
+		...createNotebookAgentAPI(),
+		...createSpecRefinementAPI(),
+		...createAgentCoachAPI(),
+		...createOnboardingAgentAPI(),
+		...createSandboxAPI(),
+		...createRegressionGuardianAPI(),
+		...createConsensusArbiterAPI(),
+		...createInjectionGuardAPI(),
 		...createVisualProgrammingAPI(),
 		github: createGitHubAPI(),
 		queue: createQueueAPI(), // Queue routing for rate limit recovery
