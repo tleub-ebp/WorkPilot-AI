@@ -30,7 +30,7 @@
 			"description": "Default model and framework"
 		},
 		"paths": {
-			"title": "Paths",
+			"title": "CLI Tools",
 			"description": "CLI tools and framework paths"
 		},
 		"accounts": {

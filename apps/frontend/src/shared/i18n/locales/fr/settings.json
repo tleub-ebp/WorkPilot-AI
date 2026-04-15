@@ -238,7 +238,7 @@
 		},
 		"paths": {
 			"description": "Chemins des outils CLI et frameworks",
-			"title": "Chemins"
+			"title": "Outils CLI"
 		},
 		"sandbox": {
 			"description": "Isolation de l'exécution des agents et rollback",
