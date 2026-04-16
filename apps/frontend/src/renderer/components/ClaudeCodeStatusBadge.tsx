@@ -64,7 +64,8 @@ export function ClaudeCodeStatusBadge({
 
 	const projects = useProjectStore((state) => state.projects);
 	const selectedProjectId = useProjectStore((state) => state.selectedProjectId);
-	const currentProject = projects.find((p) => p.id === selectedProjectId);
+	const activeProjectId = useProjectStore((state) => state.activeProjectId);
+	const currentProject = projects.find((p) => p.id === (activeProjectId || selectedProjectId));
 	const projectPath = currentProject?.path || ".";
 	const addExternalTerminal = useTerminalStore(
 		(state) => state.addExternalTerminal,
@@ -194,12 +195,14 @@ export function ClaudeCodeStatusBadge({
 
 	// Helper: open an internal terminal with a command and navigate to the terminals page
 	const openInternalTerminal = async (
-		terminalId: string,
 		label: string,
 		command: string,
 	) => {
 		if (!globalThis.electronAPI?.createTerminal) return false;
 
+		const terminalId = `cli-action-${Date.now()}`;
+
+		// 1. Create PTY in main process first
 		const terminalResult = await globalThis.electronAPI.createTerminal({
 			id: terminalId,
 			cwd: projectPath,
@@ -213,15 +216,15 @@ export function ClaudeCodeStatusBadge({
 			return false;
 		}
 
+		// 2. Add to terminal store so it appears in the grid
 		addExternalTerminal(terminalId, label, projectPath, projectPath);
 
+		// 3. Close popover and navigate to the terminals page (force bypasses nav guard)
 		setIsOpen(false);
-		if (onNavigateToTerminals) {
-			onNavigateToTerminals();
-		}
+		onNavigateToTerminals?.();
 
-		// Small delay to let the terminal initialize before sending the command
-		await new Promise((resolve) => setTimeout(resolve, 300));
+		// 4. Send the command to the PTY (the PTY is already running in main process)
+		await new Promise((resolve) => setTimeout(resolve, 500));
 		globalThis.electronAPI.sendTerminalInput(terminalId, command);
 		return true;
 	};
@@ -232,12 +235,10 @@ export function ClaudeCodeStatusBadge({
 		setShowUpdateWarning(false);
 		setInstallError(null);
 		try {
-			const terminalId = `claude-code-update-${Date.now()}`;
-			const label =
-				status === "outdated" ? "Claude Code Update" : "Claude Code Install";
-			const command = `claude install --force latest\n`;
+			const label = status === "outdated" ? "Claude Code Update" : "Claude Code Install";
+			const command = "claude install --force latest\n";
 
-			const opened = await openInternalTerminal(terminalId, label, command);
+			const opened = await openInternalTerminal(label, command);
 			if (!opened) {
 				setInstallError("Failed to open terminal");
 				return;
@@ -266,11 +267,10 @@ export function ClaudeCodeStatusBadge({
 		setInstallError(null);
 
 		try {
-			const terminalId = `claude-code-switch-${Date.now()}`;
 			const label = `Claude Code ${selectedVersion}`;
 			const command = `claude install --force ${selectedVersion}\n`;
 
-			const opened = await openInternalTerminal(terminalId, label, command);
+			const opened = await openInternalTerminal(label, command);
 			if (!opened) {
 				setInstallError("Failed to open terminal");
 				return;
@@ -493,7 +493,7 @@ export function ClaudeCodeStatusBadge({
 									{t("common:update", "Update")}
 								</span>
 							)}
-							{status === "not-found" && (
+							{(status === "not-found" || status === "error") && (
 								<span className="ml-auto text-[10px] bg-destructive/20 text-destructive px-1.5 py-0.5 rounded">
 									{t("common:install", "Install")}
 								</span>
@@ -577,7 +577,9 @@ export function ClaudeCodeStatusBadge({
 
 					{/* Actions */}
 					<div className="flex gap-2">
-						{(status === "not-found" || status === "outdated") && (
+						{(status === "not-found" ||
+							status === "outdated" ||
+							status === "error") && (
 							<Button
 								size="sm"
 								className="flex-1 gap-1"

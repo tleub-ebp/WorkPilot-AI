@@ -87,7 +87,13 @@ export function CliStatusProvider({
 
 	const checkCopilotVersion = useCallback(async () => {
 		try {
-			if (!globalThis.electronAPI?.checkCopilotCliVersion) return;
+			if (!globalThis.electronAPI?.checkCopilotCliVersion) {
+				setData((prev) => ({
+					...prev,
+					copilot: { ...prev.copilot, status: "not-found" },
+				}));
+				return;
+			}
 
 			const result = await globalThis.electronAPI.checkCopilotCliVersion();
 
@@ -127,7 +133,13 @@ export function CliStatusProvider({
 
 	const checkClaudeVersion = useCallback(async () => {
 		try {
-			if (!globalThis.electronAPI?.checkClaudeCodeVersion) return;
+			if (!globalThis.electronAPI?.checkClaudeCodeVersion) {
+				setData((prev) => ({
+					...prev,
+					claude: { ...prev.claude, status: "not-found" },
+				}));
+				return;
+			}
 
 			const result = await globalThis.electronAPI.checkClaudeCodeVersion();
 
@@ -165,7 +177,13 @@ export function CliStatusProvider({
 
 	const checkCodexVersion = useCallback(async () => {
 		try {
-			if (!globalThis.electronAPI?.checkOpenAICodexOAuth) return;
+			if (!globalThis.electronAPI?.checkOpenAICodexOAuth) {
+				setData((prev) => ({
+					...prev,
+					codex: { ...prev.codex, status: "not-found" },
+				}));
+				return;
+			}
 
 			const result = await globalThis.electronAPI.checkOpenAICodexOAuth();
 

@@ -233,7 +233,9 @@ export function UsageIndicatorSimple() {
 
 	// Calculer les valeurs d'affichage
 	const sessionPercent = usageData.usage.sessionPercent || 0;
-	const weeklyPercent = usageData.usage.weeklyPercent || 0;
+	const rawWeeklyPercent = usageData.usage.weeklyPercent;
+	const weeklyUnavailable = rawWeeklyPercent != null && rawWeeklyPercent < 0;
+	const weeklyPercent = weeklyUnavailable ? 0 : (rawWeeklyPercent || 0);
 	const limitingPercent = Math.max(sessionPercent, weeklyPercent);
 	const needsReauth = usageData.usage.needsReauthentication || false;
 
@@ -291,10 +293,10 @@ export function UsageIndicatorSimple() {
 							</span>
 							<span className="text-muted-foreground/50">│</span>
 							<span
-								className={weeklyColorClass}
+								className={weeklyUnavailable ? "text-muted-foreground/50" : weeklyColorClass}
 								title={t("common:usage.weeklyShort")}
 							>
-								{Math.round(weeklyPercent)}
+								{weeklyUnavailable ? "–" : Math.round(weeklyPercent)}
 							</span>
 						</div>
 					)}
@@ -389,31 +391,33 @@ export function UsageIndicatorSimple() {
 									<span className="text-[10px] text-muted-foreground">
 										{t("common:usage.weekly")}
 									</span>
-									<span className={`text-xs font-semibold ${weeklyColorClass}`}>
-										{Math.round(weeklyPercent)}%
+									<span className={`text-xs font-semibold ${weeklyUnavailable ? "text-muted-foreground" : weeklyColorClass}`}>
+										{weeklyUnavailable ? "N/A" : `${Math.round(weeklyPercent)}%`}
 									</span>
 								</div>
-								<div className="w-full bg-muted rounded-full h-1.5">
-									{(() => {
-										let progressColorClass: string;
-										if (weeklyPercent >= THRESHOLD_CRITICAL) {
-											progressColorClass = "bg-red-500";
-										} else if (weeklyPercent >= THRESHOLD_WARNING) {
-											progressColorClass = "bg-orange-500";
-										} else if (weeklyPercent >= THRESHOLD_ELEVATED) {
-											progressColorClass = "bg-yellow-500";
-										} else {
-											progressColorClass = "bg-green-500";
-										}
-										return (
-											<div
-												className={`h-1.5 rounded-full transition-all ${progressColorClass}`}
-												style={{ width: `${Math.min(weeklyPercent, 100)}%` }}
-											/>
-										);
-									})()}
-								</div>
-								{weeklyResetTime && (
+								{!weeklyUnavailable && (
+									<div className="w-full bg-muted rounded-full h-1.5">
+										{(() => {
+											let progressColorClass: string;
+											if (weeklyPercent >= THRESHOLD_CRITICAL) {
+												progressColorClass = "bg-red-500";
+											} else if (weeklyPercent >= THRESHOLD_WARNING) {
+												progressColorClass = "bg-orange-500";
+											} else if (weeklyPercent >= THRESHOLD_ELEVATED) {
+												progressColorClass = "bg-yellow-500";
+											} else {
+												progressColorClass = "bg-green-500";
+											}
+											return (
+												<div
+													className={`h-1.5 rounded-full transition-all ${progressColorClass}`}
+													style={{ width: `${Math.min(weeklyPercent, 100)}%` }}
+												/>
+											);
+										})()}
+									</div>
+								)}
+								{weeklyResetTime && !weeklyUnavailable && (
 									<p className="text-[9px] text-muted-foreground">
 										{t("common:usage.resetsIn", { time: weeklyResetTime })}
 									</p>

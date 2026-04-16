@@ -187,7 +187,7 @@ interface SidebarProps {
 	readonly onSettingsClick: () => void;
 	readonly onNewTaskClick: () => void;
 	readonly activeView?: SidebarView;
-	readonly onViewChange?: (view: SidebarView) => void;
+	readonly onViewChange?: (view: SidebarView, force?: boolean) => void;
 }
 
 interface NavItem {
@@ -1565,13 +1565,13 @@ export function Sidebar({
 							{/* CLI Tools â€” compact grouped badges */}
 							<div className="rounded-lg bg-white/4 border border-white/8 p-2 space-y-0.5">
 								<ClaudeCodeStatusBadge
-									onNavigateToTerminals={() => onViewChange?.("terminals")}
+									onNavigateToTerminals={() => onViewChange?.("terminals", true)}
 								/>
 								<CopilotCliStatusBadge
-									onNavigateToTerminals={() => onViewChange?.("terminals")}
+									onNavigateToTerminals={() => onViewChange?.("terminals", true)}
 								/>
 								<CodexCliStatusBadge
-									onNavigateToTerminals={() => onViewChange?.("terminals")}
+									onNavigateToTerminals={() => onViewChange?.("terminals", true)}
 								/>
 							</div>
 

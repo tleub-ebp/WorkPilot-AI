@@ -260,13 +260,13 @@ export function UsageIndicator() {
 				profileName: usage?.profileName || "",
 				profileEmail: usage?.profileEmail,
 				sessionPercent: usage?.sessionPercent || 0,
-				weeklyPercent: usage?.weeklyPercent || 0,
+				weeklyPercent: Math.max(usage?.weeklyPercent || 0, 0),
 				sessionResetTimestamp: usage?.sessionResetTimestamp,
 				weeklyResetTimestamp: usage?.weeklyResetTimestamp,
 				isAuthenticated: true,
 				isRateLimited: false,
 				availabilityScore:
-					100 - Math.max(usage?.sessionPercent || 0, usage?.weeklyPercent || 0),
+					100 - Math.max(usage?.sessionPercent || 0, Math.max(usage?.weeklyPercent || 0, 0)),
 				isActive: false, // It's no longer active
 				needsReauthentication: usage?.needsReauthentication,
 			};
@@ -821,7 +821,8 @@ export function UsageIndicator() {
 
 	// Determine colors and labels based on the LIMITING factor (higher of session/weekly)
 	const sessionPercent = usage.sessionPercent;
-	const weeklyPercent = usage.weeklyPercent;
+	const weeklyUnavailable = usage.weeklyPercent < 0;
+	const weeklyPercent = weeklyUnavailable ? 0 : usage.weeklyPercent;
 	const limitingPercent = Math.max(sessionPercent, weeklyPercent);
 
 	// Badge color based on the limiting (higher) percentage
@@ -845,7 +846,7 @@ export function UsageIndicator() {
 		"common:usage.weeklyDefault",
 	);
 
-	const maxUsage = Math.max(usage.sessionPercent, usage.weeklyPercent);
+	const maxUsage = Math.max(usage.sessionPercent, weeklyPercent);
 
 	// Provider detection
 	const isOpenAI = usage.providerName === "openai";
@@ -967,8 +968,8 @@ export function UsageIndicator() {
 					{Math.round(sessionPercent)}
 				</span>
 				<span className="text-muted-foreground/50">│</span>
-				<span className={weeklyColorClass} title="Weekly usage">
-					{Math.round(weeklyPercent)}
+				<span className={weeklyUnavailable ? "text-muted-foreground/50" : weeklyColorClass} title="Weekly usage">
+					{weeklyUnavailable ? "–" : Math.round(weeklyPercent)}
 				</span>
 			</div>
 		);

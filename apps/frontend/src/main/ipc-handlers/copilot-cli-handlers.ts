@@ -6,9 +6,10 @@
  *
  * Key differences from Claude Code:
  * - Copilot CLI is a GitHub CLI extension (`gh copilot`), not a standalone binary
- * - Installation: `gh extension install github/gh-copilot`
+ * - Installation: `gh copilot install`
+ * - Update: `gh copilot update`
  * - Auth: `gh auth login` (OAuth via GitHub CLI)
- * - Version registry: GitHub releases (github/gh-copilot), not npm
+ * - Version registry: GitHub releases (github/copilot-cli), not npm
  */
 
 import { execFile, spawn } from "node:child_process";
@@ -37,6 +38,17 @@ let cachedLatestCopilotVersion: { version: string; timestamp: number } | null =
 const COPILOT_CACHE_DURATION_MS = 24 * 60 * 60 * 1000; // 24 hours
 
 /**
+ * GitHub API release object structure
+ */
+interface GitHubRelease {
+	tag_name: string;
+	prerelease: boolean;
+	name?: string;
+	html_url?: string;
+	published_at?: string;
+}
+
+/**
  * Validate a Copilot CLI (gh) path and get copilot extension version
  * @param ghPath - Path to the gh CLI executable
  * @returns Tuple of [isValid, copilotVersion or null, ghVersion or null]
@@ -60,7 +72,8 @@ async function validateCopilotCliAsync(
 				windowsHide: true,
 				env,
 			});
-			const ghMatch = ghResult.stdout.match(/gh version (\d+\.\d+\.\d+)/);
+			const ghVersionRegex = /gh version (\d+\.\d+\.\d+)/;
+			const ghMatch = ghVersionRegex.exec(ghResult.stdout);
 			ghVersion = ghMatch ? ghMatch[1] : null;
 		} catch {
 			// gh version check failed
@@ -79,7 +92,8 @@ async function validateCopilotCliAsync(
 		);
 
 		const output = copilotResult.stdout.trim();
-		const match = output.match(/(\d+\.\d+\.\d+)/);
+		const versionRegex = /(\d+\.\d+\.\d+)/;
+		const match = versionRegex.exec(output);
 		const copilotVersion = match ? match[1] : null;
 
 		return [!!copilotVersion, copilotVersion, ghVersion];
@@ -253,8 +267,9 @@ async function fetchLatestCopilotVersion(): Promise<string> {
 
 		const releases = JSON.parse(data);
 		// Find the first non-prerelease release
-		// biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
-		const stableRelease = releases.find((release: any) => !release.prerelease);
+		const stableRelease = releases.find(
+			(release: GitHubRelease) => !release.prerelease,
+		);
 		const version = stableRelease
 			? (stableRelease.tag_name || "").replace(/^v/, "")
 			: "";
@@ -278,9 +293,9 @@ async function fetchLatestCopilotVersion(): Promise<string> {
  */
 function getCopilotInstallCommand(isUpdate: boolean): string {
 	if (isUpdate) {
-		return "gh extension upgrade gh-copilot";
+		return "gh copilot update";
 	}
-	return "gh extension install github/gh-copilot";
+	return "gh copilot install";
 }
 
 /**
@@ -320,15 +335,62 @@ async function openTerminalWithCommand(command: string): Promise<void> {
 }
 
 /**
+ * Parse username from GitHub CLI auth output
+ */
+function parseUsernameFromAuthOutput(output: string): string | undefined {
+	const usernameRegex = /account\s+(\S+)/;
+	const usernameMatch = usernameRegex.exec(output);
+	return usernameMatch ? usernameMatch[1] : undefined;
+}
+
+/**
+ * Check if GitHub CLI is authenticated based on output
+ */
+function isGitHubAuthenticated(output: string): boolean {
+	return output.includes("Logged in") || output.includes("✓");
+}
+
+/**
+ * Check if Copilot CLI is accessible and working
+ */
+async function checkCopilotAccessible(
+	ghPath: string,
+): Promise<boolean> {
+	try {
+		const env = getAugmentedEnv();
+		const { stdout: copilotVersionOutput } = await execFileAsync(
+			ghPath,
+			["copilot", "--version"],
+			{
+				encoding: "utf-8",
+				timeout: 15000,
+				windowsHide: true,
+				env,
+			},
+		);
+
+		const copilotOutput = copilotVersionOutput.trim();
+		return copilotOutput.includes("GitHub Copilot CLI");
+	} catch (copilotError) {
+		console.warn(
+			"[Copilot CLI] Copilot command failed:",
+			copilotError instanceof Error ? copilotError.message : copilotError,
+		);
+		return false;
+	}
+}
+
+/**
  * Check if the gh CLI is authenticated with Copilot
  */
 async function checkCopilotAuth(
 	ghPath: string,
 ): Promise<{ authenticated: boolean; username?: string; scopes?: string[] }> {
-	try {
-		const env = getAugmentedEnv();
+	const env = getAugmentedEnv();
 
-		// First check GitHub CLI auth status
+	// Try to get GitHub CLI auth status
+	let fullOutput: string;
+	try {
 		const { stdout: authStatusOutput, stderr: authStatusStderr } =
 			await execFileAsync(ghPath, ["auth", "status"], {
 				encoding: "utf-8",
@@ -339,106 +401,13 @@ async function checkCopilotAuth(
 
 		const authOutput = authStatusOutput.trim();
 		const authError = authStatusStderr.trim();
-
-		// Combine stdout and stderr for parsing (gh auth status outputs to both)
-		const fullOutput = `${authOutput}\n${authError}`;
-
-		// gh auth status shows "Logged in to github.com account USERNAME" on success
-		const usernameMatch = fullOutput.match(/account\s+(\S+)/);
-		const username = usernameMatch ? usernameMatch[1] : undefined;
-
-		// Check if GitHub CLI is authenticated (look for ✓ or "Logged in" in the output)
-		const isGitHubAuthed =
-			fullOutput.includes("Logged in") || fullOutput.includes("✓");
-
-		if (!isGitHubAuthed || !username) {
-			return { authenticated: false };
-		}
-
-		// Now check if Copilot CLI is accessible and authenticated
-		// Try to run a simple copilot command to verify authentication
-		try {
-			const { stdout: copilotVersionOutput } = await execFileAsync(
-				ghPath,
-				["copilot", "--version"],
-				{
-					encoding: "utf-8",
-					timeout: 15000,
-					windowsHide: true,
-					env,
-				},
-			);
-
-			// If we can get the version, Copilot CLI is working
-			// Check if the version output indicates proper authentication
-			const copilotOutput = copilotVersionOutput.trim();
-			const hasVersion = copilotOutput.includes("GitHub Copilot CLI");
-
-			if (hasVersion) {
-				return {
-					authenticated: true,
-					username,
-				};
-			}
-		} catch (copilotError) {
-			// Copilot CLI command failed - likely not authenticated
-			console.warn(
-				"[Copilot CLI] Copilot command failed:",
-				copilotError instanceof Error ? copilotError.message : copilotError,
-			);
-			return { authenticated: false, username };
-		}
-
-		return { authenticated: false, username };
+		fullOutput = `${authOutput}\n${authError}`;
 	} catch (error) {
 		// gh auth status exits with non-zero if not authenticated
 		// but stderr may still contain useful info
 		const stderr = (error as { stderr?: string }).stderr || "";
 		const stdout = (error as { stdout?: string }).stdout || "";
-
-		// Combine both outputs for parsing
-		const fullOutput = `${stdout}\n${stderr}`;
-
-		// Check if we can still find authentication info despite the error
-		const usernameMatch = fullOutput.match(/account\s+(\S+)/);
-		const username = usernameMatch ? usernameMatch[1] : undefined;
-
-		const isGitHubAuthed =
-			fullOutput.includes("Logged in") || fullOutput.includes("✓");
-
-		if (isGitHubAuthed && username) {
-			// GitHub CLI is authenticated despite the error (multiple accounts issue)
-			// Now check Copilot CLI
-			try {
-				const env = getAugmentedEnv();
-				const { stdout: copilotVersionOutput } = await execFileAsync(
-					ghPath,
-					["copilot", "--version"],
-					{
-						encoding: "utf-8",
-						timeout: 15000,
-						windowsHide: true,
-						env,
-					},
-				);
-
-				const copilotOutput = copilotVersionOutput.trim();
-				const hasVersion = copilotOutput.includes("GitHub Copilot CLI");
-
-				if (hasVersion) {
-					return {
-						authenticated: true,
-						username,
-					};
-				}
-			} catch (copilotError) {
-				console.warn(
-					"[Copilot CLI] Copilot command failed:",
-					copilotError instanceof Error ? copilotError.message : copilotError,
-				);
-				return { authenticated: false, username };
-			}
-		}
+		fullOutput = `${stdout}\n${stderr}`;
 
 		if (stderr.includes("not logged") || stderr.includes("no oauth token")) {
 			return { authenticated: false };
@@ -447,8 +416,27 @@ async function checkCopilotAuth(
 			"[Copilot CLI] Auth check error:",
 			error instanceof Error ? error.message : error,
 		);
+	}
+
+	// Parse username and check GitHub CLI authentication
+	const username = parseUsernameFromAuthOutput(fullOutput);
+	const isGitHubAuthed = isGitHubAuthenticated(fullOutput);
+
+	if (!isGitHubAuthed || !username) {
 		return { authenticated: false };
 	}
+
+	// Check if Copilot CLI is accessible
+	const isCopilotAccessible = await checkCopilotAccessible(ghPath);
+
+	if (isCopilotAccessible) {
+		return {
+			authenticated: true,
+			username,
+		};
+	}
+
+	return { authenticated: false, username };
 }
 
 /**
