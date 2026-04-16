@@ -11,8 +11,6 @@ import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useCliStatus } from "@/contexts/CliStatusContext";
 import { cn } from "@/lib/utils";
-import { useProjectStore } from "@/stores/project-store";
-import { useTerminalStore } from "@/stores/terminal-store";
 import { Button } from "./ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "./ui/popover";
 import { Tooltip, TooltipContent, TooltipTrigger } from "./ui/tooltip";
@@ -21,8 +19,6 @@ interface CodexCliStatusBadgeProps {
 	readonly className?: string;
 	readonly onNavigateToTerminals?: () => void;
 }
-
-const VERSION_RECHECK_DELAY_MS = 5000;
 
 interface CodexIconProps {
 	readonly className?: string;
@@ -63,19 +59,11 @@ function CodexIcon({ className }: CodexIconProps) {
  */
 export function CodexCliStatusBadge({
 	className,
-	onNavigateToTerminals,
+	onNavigateToTerminals: _onNavigateToTerminals,
 }: CodexCliStatusBadgeProps) {
 	const { t } = useTranslation(["common", "navigation"]);
 	const { data, refreshCodex } = useCliStatus();
 	const { codex } = data;
-
-	const projects = useProjectStore((state) => state.projects);
-	const selectedProjectId = useProjectStore((state) => state.selectedProjectId);
-	const currentProject = projects.find((p) => p.id === selectedProjectId);
-	const projectPath = currentProject?.path || ".";
-	const addExternalTerminal = useTerminalStore(
-		(state) => state.addExternalTerminal,
-	);
 
 	const [isOpen, setIsOpen] = useState(false);
 	const [isUpdating, setIsUpdating] = useState(false);
@@ -90,45 +78,24 @@ export function CodexCliStatusBadge({
 		refreshCodex();
 	};
 
+	// Run `npm install -g @openai/codex@latest` silently in the main process.
+	// No terminal opened, no navigation — just a spinner on the button until npm returns.
 	const performUpdate = async () => {
 		setIsUpdating(true);
 		setUpdateError(null);
 		try {
-			if (!globalThis.electronAPI?.createTerminal) {
-				setUpdateError("Terminal not available");
+			if (!globalThis.electronAPI?.updateCodexCli) {
+				setUpdateError("Update not available");
 				return;
 			}
 
-			const terminalId = `codex-cli-update-${Date.now()}`;
-			const terminalResult = await globalThis.electronAPI.createTerminal({
-				id: terminalId,
-				cwd: projectPath,
-				cols: 80,
-				rows: 25,
-				projectPath: projectPath,
-			});
-
-			if (!terminalResult.success) {
-				setUpdateError(terminalResult.error || "Failed to open terminal");
+			const result = await globalThis.electronAPI.updateCodexCli();
+			if (!result.success) {
+				setUpdateError(result.error || "Update failed");
 				return;
 			}
 
-			addExternalTerminal(terminalId, "Codex Update", projectPath, projectPath);
-
-			setIsOpen(false);
-			if (onNavigateToTerminals) {
-				onNavigateToTerminals();
-			}
-
-			await new Promise((resolve) => setTimeout(resolve, 300));
-			globalThis.electronAPI.sendTerminalInput(
-				terminalId,
-				"pnpm install -g @openai/codex@latest\n",
-			);
-
-			setTimeout(() => refreshCodex(), VERSION_RECHECK_DELAY_MS);
-			setTimeout(() => refreshCodex(), VERSION_RECHECK_DELAY_MS * 3);
-			setTimeout(() => refreshCodex(), VERSION_RECHECK_DELAY_MS * 6);
+			await refreshCodex();
 		} catch (err) {
 			console.error("Failed to update Codex CLI:", err);
 			setUpdateError(err instanceof Error ? err.message : "Update failed");
@@ -144,7 +111,6 @@ export function CodexCliStatusBadge({
 			case "outdated":
 				return "bg-yellow-500";
 			case "not-found":
-				return "bg-muted-foreground";
 			case "error":
 				return "bg-destructive";
 			default:
@@ -197,7 +163,10 @@ export function CodexCliStatusBadge({
 							className={cn(
 								"w-full justify-start gap-2 text-xs",
 								status === "not-found" || status === "error"
-									? "text-muted-foreground"
+									? "text-destructive"
+									: "",
+								status === "outdated"
+									? "text-yellow-600 dark:text-yellow-500"
 									: "",
 								className,
 							)}
@@ -215,9 +184,14 @@ export function CodexCliStatusBadge({
 								Codex
 								{versionInfo?.installed ? ` (${versionInfo.installed})` : ""}
 							</span>
+							{status === "outdated" && (
+								<span className="ml-auto text-[10px] bg-yellow-500/20 text-yellow-600 dark:text-yellow-400 px-1.5 py-0.5 rounded">
+									{t("common:update", "Update")}
+								</span>
+							)}
 							{status === "not-found" && (
-								<span className="ml-auto text-[10px] bg-muted text-muted-foreground px-1.5 py-0.5 rounded">
-									N/A
+								<span className="ml-auto text-[10px] bg-destructive/20 text-destructive px-1.5 py-0.5 rounded">
+									{t("common:install", "Install")}
 								</span>
 							)}
 						</Button>
@@ -237,49 +211,65 @@ export function CodexCliStatusBadge({
 							<h4 className="text-sm font-medium">OpenAI Codex CLI</h4>
 							<p className="text-xs text-muted-foreground flex items-center gap-1">
 								{getStatusIcon()}
-								{status === "installed" && "Connecté"}
-								{status === "not-found" && "Non configuré"}
+								{status === "installed" && "Installé"}
+								{status === "outdated" && "Mise à jour disponible"}
+								{status === "not-found" && "Non installé"}
 								{status === "loading" && "Vérification..."}
 								{status === "error" && "Erreur"}
 							</p>
 						</div>
 					</div>
 
-					{/* Auth info */}
-					{status === "installed" && versionInfo?.installed && (
-						<div className="text-xs space-y-1 p-2 bg-muted rounded-md">
-							<div className="flex justify-between">
-								<span className="text-muted-foreground">Compte :</span>
-								<span className="font-medium truncate ml-2">
-									{versionInfo?.installed}
-								</span>
+					{/* Version info */}
+					{versionInfo &&
+						(status === "installed" || status === "outdated") && (
+							<div className="text-xs space-y-1 p-2 bg-muted rounded-md">
+								{versionInfo.installed && (
+									<div className="flex justify-between">
+										<span className="text-muted-foreground">Actuelle :</span>
+										<span className="font-mono">{versionInfo.installed}</span>
+									</div>
+								)}
+								{versionInfo.latest && (
+									<div className="flex justify-between">
+										<span className="text-muted-foreground">Dernière :</span>
+										<span className="font-mono">{versionInfo.latest}</span>
+									</div>
+								)}
+								{lastChecked && (
+									<div className="flex justify-between text-muted-foreground">
+										<span>Vérifié :</span>
+										<span>{lastChecked.toLocaleTimeString()}</span>
+									</div>
+								)}
 							</div>
-							{lastChecked && (
-								<div className="flex justify-between text-muted-foreground">
-									<span>Vérifié :</span>
-									<span>{lastChecked.toLocaleTimeString()}</span>
-								</div>
-							)}
-						</div>
-					)}
+						)}
 
-					{/* Not configured notice */}
+					{/* Not installed notice */}
 					{status === "not-found" && (
 						<div className="text-xs p-2 bg-muted/50 rounded-md text-muted-foreground">
 							<p>
-								Lancez{" "}
-								<code className="font-mono bg-muted px-1 rounded">codex</code>{" "}
-								dans un terminal pour vous authentifier via OAuth.
+								Codex CLI n'est pas installé. Cliquez sur « Installer » pour
+								l'installer via npm en arrière-plan :
 							</p>
-							<p className="mt-1">
-								Configurez dans Paramètres → OpenAI → OAuth / Codex.
+							<p className="mt-1 font-mono bg-muted px-1 rounded break-all">
+								npm install -g @openai/codex@latest
 							</p>
+						</div>
+					)}
+
+					{isUpdating && (
+						<div className="text-xs p-2 bg-muted/50 rounded-md text-muted-foreground flex items-center gap-2">
+							<Loader2 className="h-3 w-3 animate-spin shrink-0" />
+							<span>Installation en cours, merci de patienter…</span>
 						</div>
 					)}
 
 					{/* Actions */}
 					<div className="flex gap-2">
-						{status === "installed" && (
+						{(status === "installed" ||
+							status === "outdated" ||
+							status === "not-found") && (
 							<Button
 								size="sm"
 								className="flex-1 gap-1"
@@ -291,20 +281,19 @@ export function CodexCliStatusBadge({
 								) : (
 									<Download className="h-3 w-3" />
 								)}
-								{t("common:update", "Mettre à jour")}
+								{status === "not-found"
+									? t("common:install", "Installer")
+									: t("common:update", "Mettre à jour")}
 							</Button>
 						)}
 						<Button
 							variant="outline"
 							size="sm"
-							className={cn(
-								"gap-1",
-								status !== "installed" && "flex-1",
-							)}
+							className="gap-1"
 							onClick={() => {
 								handleRefresh();
 							}}
-							disabled={status === "loading"}
+							disabled={status === "loading" || isUpdating}
 						>
 							<RefreshCw
 								className={cn(

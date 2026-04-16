@@ -117,6 +117,75 @@ async function getCodexVersion(): Promise<string | undefined> {
 }
 
 /**
+ * Cache for the latest @openai/codex version from the npm registry (1 hour TTL).
+ */
+let cachedCodexLatest: { version: string; timestamp: number } | null = null;
+const CODEX_LATEST_CACHE_MS = 60 * 60 * 1000;
+
+async function fetchLatestCodexVersion(): Promise<string | undefined> {
+	if (
+		cachedCodexLatest &&
+		Date.now() - cachedCodexLatest.timestamp < CODEX_LATEST_CACHE_MS
+	) {
+		return cachedCodexLatest.version;
+	}
+
+	try {
+		const response = await fetch(
+			"https://registry.npmjs.org/@openai/codex/latest",
+			{
+				headers: {
+					Accept: "application/json",
+					"User-Agent": "WorkPilot-AI/1.0",
+				},
+				signal: AbortSignal.timeout(15000),
+			},
+		);
+		if (!response.ok) {
+			throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+		}
+		const data = (await response.json()) as { version?: unknown };
+		if (typeof data.version !== "string") {
+			throw new TypeError("Invalid version format from npm registry");
+		}
+		cachedCodexLatest = { version: data.version, timestamp: Date.now() };
+		return data.version;
+	} catch (error) {
+		console.warn("[Codex CLI] Failed to fetch latest version from npm:", error);
+		return cachedCodexLatest?.version;
+	}
+}
+
+/**
+ * Compare two semver-like version strings. Returns true if `installed` < `latest`.
+ */
+function isCodexOutdated(installed: string, latest: string): boolean {
+	const parse = (v: string): number[] =>
+		v
+			.replace(/^v/, "")
+			.split(/[.-]/)
+			.slice(0, 3)
+			.map((n) => {
+				const parsed = Number.parseInt(n, 10);
+				return Number.isNaN(parsed) ? 0 : parsed;
+			});
+
+	try {
+		const i = parse(installed);
+		const l = parse(latest);
+		for (let idx = 0; idx < 3; idx++) {
+			const a = i[idx] ?? 0;
+			const b = l[idx] ?? 0;
+			if (a < b) return true;
+			if (a > b) return false;
+		}
+		return false;
+	} catch {
+		return false;
+	}
+}
+
+/**
  * Enregistrer tous les handlers IPC pour les credentials
  */
 export function registerCredentialHandlers(): void {
@@ -346,12 +415,83 @@ export function registerCredentialHandlers(): void {
 			isAuthenticated: boolean;
 			profileName?: string;
 			version?: string;
+			latest?: string;
+			isOutdated?: boolean;
 		}> => {
 			const authStatus =
 				await credentialManager.checkOpenAICodexOAuthStatusPublic();
 
 			const version = await getCodexVersion();
-			return { ...authStatus, version };
+			const latest = version ? await fetchLatestCodexVersion() : undefined;
+			const isOutdated =
+				version && latest ? isCodexOutdated(version, latest) : false;
+
+			return { ...authStatus, version, latest, isOutdated };
+		},
+	);
+
+	/**
+	 * Installer ou mettre à jour Codex CLI via npm global, en arrière-plan.
+	 * Pas de terminal visible : on exécute directement `npm install -g @openai/codex@latest`.
+	 */
+	ipcMain.handle(
+		"credential:updateCodexCli",
+		async (): Promise<{
+			success: boolean;
+			version?: string;
+			latest?: string;
+			isOutdated?: boolean;
+			error?: string;
+		}> => {
+			const runNpm = async (): Promise<{ stdout: string; stderr: string }> => {
+				// Try plain `npm` first, then shell:true fallback (handles npm.cmd on Windows).
+				try {
+					return await execFileAsync(
+						"npm",
+						["install", "-g", "@openai/codex@latest"],
+						{
+							encoding: "utf-8",
+							timeout: 5 * 60 * 1000,
+							windowsHide: true,
+							maxBuffer: 10 * 1024 * 1024,
+						},
+					);
+				} catch (firstErr) {
+					try {
+						return await execFileAsync(
+							"npm",
+							["install", "-g", "@openai/codex@latest"],
+							{
+								encoding: "utf-8",
+								timeout: 5 * 60 * 1000,
+								windowsHide: true,
+								shell: true,
+								maxBuffer: 10 * 1024 * 1024,
+							},
+						);
+					} catch {
+						throw firstErr;
+					}
+				}
+			};
+
+			try {
+				await runNpm();
+
+				// Invalidate caches so the next check sees the fresh version.
+				cachedCodexLatest = null;
+				const version = await getCodexVersion();
+				const latest = await fetchLatestCodexVersion();
+				const isOutdated =
+					version && latest ? isCodexOutdated(version, latest) : false;
+
+				return { success: true, version, latest, isOutdated };
+			} catch (error) {
+				const message =
+					error instanceof Error ? error.message : String(error);
+				console.error("[Codex CLI] Update failed:", message);
+				return { success: false, error: message };
+			}
 		},
 	);
 

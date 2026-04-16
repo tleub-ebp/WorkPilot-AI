@@ -169,18 +169,22 @@ export function CliStatusProvider({
 
 			const result = await globalThis.electronAPI.checkOpenAICodexOAuth();
 
-			const status: CliStatusData["codex"]["status"] = result.isAuthenticated
-				? "installed"
-				: "not-found";
-
-			let versionInfo: CodexVersionInfo | null;
-			if (result.version) {
-				versionInfo = { installed: result.version };
-			} else if (result.isAuthenticated) {
-				versionInfo = { installed: result.profileName ?? "OpenAI Codex CLI" };
+			let status: CliStatusData["codex"]["status"];
+			if (!result.version) {
+				status = "not-found";
+			} else if (result.isOutdated) {
+				status = "outdated";
 			} else {
-				versionInfo = null;
+				status = "installed";
 			}
+
+			const versionInfo: CodexVersionInfo | null = result.version
+				? {
+						installed: result.version,
+						latest: result.latest,
+						isOutdated: result.isOutdated,
+					}
+				: null;
 
 			setData((prev) => ({
 				...prev,

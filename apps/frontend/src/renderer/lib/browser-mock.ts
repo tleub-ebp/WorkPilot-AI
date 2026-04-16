@@ -629,6 +629,10 @@ const browserMockAPI: ElectronAPI = {
 	}),
 	checkClaudeOAuth: async () => ({ isAuthenticated: false }),
 	checkOpenAICodexOAuth: async () => ({ isAuthenticated: false }),
+	updateCodexCli: async () => ({
+		success: false,
+		error: "Not available in browser mode",
+	}),
 
 	// Generic invoke method for IPC calls
 	invoke: async (channel: string, ...args: unknown[]) => {

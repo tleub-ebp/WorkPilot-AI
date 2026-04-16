@@ -261,6 +261,17 @@ export interface ElectronAPI
 	checkOpenAICodexOAuth: () => Promise<{
 		isAuthenticated: boolean;
 		profileName?: string;
+		version?: string;
+		latest?: string;
+		isOutdated?: boolean;
+	}>;
+	/** Install or update Codex CLI via `npm install -g @openai/codex@latest` in background */
+	updateCodexCli: () => Promise<{
+		success: boolean;
+		version?: string;
+		latest?: string;
+		isOutdated?: boolean;
+		error?: string;
 	}>;
 }
 
@@ -359,9 +370,21 @@ export const createElectronAPI = (): ElectronAPI => {
 				"credential:checkClaudeOAuth",
 			),
 		checkOpenAICodexOAuth: () =>
-			invokeIpc<{ isAuthenticated: boolean; profileName?: string }>(
-				"credential:checkOpenAICodexOAuth",
-			),
+			invokeIpc<{
+				isAuthenticated: boolean;
+				profileName?: string;
+				version?: string;
+				latest?: string;
+				isOutdated?: boolean;
+			}>("credential:checkOpenAICodexOAuth"),
+		updateCodexCli: () =>
+			invokeIpc<{
+				success: boolean;
+				version?: string;
+				latest?: string;
+				isOutdated?: boolean;
+				error?: string;
+			}>("credential:updateCodexCli"),
 	};
 };
 
