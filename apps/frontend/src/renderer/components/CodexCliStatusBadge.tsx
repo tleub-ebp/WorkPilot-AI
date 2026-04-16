@@ -96,6 +96,10 @@ export function CodexCliStatusBadge({
 			}
 
 			await refreshCodex();
+			// Belt-and-suspenders: on Windows, the freshly-written `codex.cmd` can take
+			// a moment to be visible to `execFile`. Refresh a second time after a short
+			// delay so the sidebar picks up the new version reliably.
+			setTimeout(() => refreshCodex(), 2000);
 		} catch (err) {
 			console.error("Failed to update Codex CLI:", err);
 			setUpdateError(err instanceof Error ? err.message : "Update failed");
@@ -189,7 +193,7 @@ export function CodexCliStatusBadge({
 									{t("common:update", "Update")}
 								</span>
 							)}
-							{status === "not-found" && (
+							{(status === "not-found" || status === "error") && (
 								<span className="ml-auto text-[10px] bg-destructive/20 text-destructive px-1.5 py-0.5 rounded">
 									{t("common:install", "Install")}
 								</span>
@@ -246,7 +250,7 @@ export function CodexCliStatusBadge({
 						)}
 
 					{/* Not installed notice */}
-					{status === "not-found" && (
+					{(status === "not-found" || status === "error") && (
 						<div className="text-xs p-2 bg-muted/50 rounded-md text-muted-foreground">
 							<p>
 								Codex CLI n'est pas installé. Cliquez sur « Installer » pour
@@ -269,7 +273,8 @@ export function CodexCliStatusBadge({
 					<div className="flex gap-2">
 						{(status === "installed" ||
 							status === "outdated" ||
-							status === "not-found") && (
+							status === "not-found" ||
+							status === "error") && (
 							<Button
 								size="sm"
 								className="flex-1 gap-1"

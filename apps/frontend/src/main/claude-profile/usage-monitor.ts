@@ -2639,6 +2639,11 @@ export class UsageMonitor extends EventEmitter {
 				return null;
 			}
 
+			// For Anthropic Pro accounts on tier "default_claude_ai",
+			// the /api/oauth/usage endpoint returns seven_day: null and
+			// the Messages API headers don't include 7d utilization.
+			// Mark weeklyPercent as -1 so the UI can show "N/A" instead of "0%".
+
 			// Populate providerName so the renderer can filter snapshots by provider
 			normalizedUsage.providerName = provider;
 
@@ -2728,23 +2733,27 @@ export class UsageMonitor extends EventEmitter {
 			fiveHourUtil = data.five_hour?.utilization ?? 0;
 			sessionResetTimestamp = data.five_hour?.resets_at;
 
-			// seven_day is null for Pro accounts; quota is split across per-model
-			// buckets (seven_day_opus, seven_day_sonnet, ...). Pick the highest
-			// utilization across all seven_day* buckets — that's the one that will
-			// hit the limit first.
+			// seven_day is null for Pro accounts on "default_claude_ai" tier.
+			// Try the global bucket first, then scan per-model buckets
+			// (seven_day_opus, seven_day_sonnet, …). A bucket counts as
+			// "active" only if it has a resets_at timestamp — a bucket with
+			// utilization: 0 and resets_at: null means no quota is tracked.
+			// Use -1 to signal "unavailable" so the UI shows N/A.
 			if (data.seven_day?.utilization != null) {
 				sevenDayUtil = data.seven_day.utilization;
 				weeklyResetTimestamp = data.seven_day.resets_at;
 			} else {
-				let maxUtil = 0;
+				let maxUtil = -1;
 				let maxResetAt: string | undefined;
 				for (const key of Object.keys(data)) {
 					if (key === "seven_day" || !key.startsWith("seven_day")) continue;
 					const bucket = data[key];
-					const util = bucket?.utilization;
-					if (typeof util === "number" && util >= maxUtil) {
-						maxUtil = util;
-						maxResetAt = bucket.resets_at ?? maxResetAt;
+					if (!bucket || typeof bucket.utilization !== "number") continue;
+					// Only consider buckets with a reset timestamp (actively tracked)
+					if (!bucket.resets_at) continue;
+					if (bucket.utilization > maxUtil) {
+						maxUtil = bucket.utilization;
+						maxResetAt = bucket.resets_at;
 					}
 				}
 				sevenDayUtil = maxUtil;

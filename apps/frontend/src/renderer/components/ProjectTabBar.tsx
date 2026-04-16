@@ -291,7 +291,7 @@ export function ProjectTabBar({
 				{/* Usage Warning Badge (shown when usage >= 90%) */}
 				{usage &&
 					!isLoadingUsage &&
-					(usage.sessionPercent >= 90 || usage.weeklyPercent >= 90) && (
+					(usage.sessionPercent >= 90 || (usage.weeklyPercent >= 0 && usage.weeklyPercent >= 90)) && (
 						<Tooltip>
 							<TooltipTrigger asChild>
 								<div className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-md border bg-red-500/10 text-red-500 border-red-500/20">
@@ -306,7 +306,7 @@ export function ProjectTabBar({
 										</span>
 										<span className="font-semibold text-red-500">
 											{Math.round(
-												Math.max(usage.sessionPercent, usage.weeklyPercent),
+												Math.max(usage.sessionPercent, Math.max(usage.weeklyPercent, 0)),
 											)}
 											%
 										</span>

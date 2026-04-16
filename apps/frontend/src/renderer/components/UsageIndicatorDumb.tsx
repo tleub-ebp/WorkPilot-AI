@@ -317,7 +317,9 @@ export function UsageIndicatorDumb({
 
 	// Calculer les couleurs et labels
 	const sessionPercent = usageData.usage.sessionPercent || 0;
-	const weeklyPercent = usageData.usage.weeklyPercent || 0;
+	const rawWeeklyPercent = usageData.usage.weeklyPercent;
+	const weeklyUnavailable = rawWeeklyPercent != null && rawWeeklyPercent < 0;
+	const weeklyPercent = weeklyUnavailable ? 0 : (rawWeeklyPercent || 0);
 	const limitingPercent = Math.max(sessionPercent, weeklyPercent);
 
 	const badgeColorClasses = usageData.usage.needsReauthentication
@@ -385,10 +387,10 @@ export function UsageIndicatorDumb({
 							</span>
 							<span className="text-muted-foreground/50">│</span>
 							<span
-								className={weeklyColorClass}
+								className={weeklyUnavailable ? "text-muted-foreground/50" : weeklyColorClass}
 								title={t("common:usage.weeklyShort")}
 							>
-								{Math.round(weeklyPercent)}
+								{weeklyUnavailable ? "–" : Math.round(weeklyPercent)}
 							</span>
 						</div>
 					)}
@@ -469,17 +471,19 @@ export function UsageIndicatorDumb({
 									<span className="text-[10px] text-muted-foreground">
 										{t("common:usage.weekly")}
 									</span>
-									<span className={`text-xs font-semibold ${weeklyColorClass}`}>
-										{Math.round(weeklyPercent)}%
+									<span className={`text-xs font-semibold ${weeklyUnavailable ? "text-muted-foreground" : weeklyColorClass}`}>
+										{weeklyUnavailable ? "N/A" : `${Math.round(weeklyPercent)}%`}
 									</span>
 								</div>
-								<div className="w-full bg-muted rounded-full h-1.5">
-									<div
-										className={`h-1.5 rounded-full transition-all ${getBarColorClass(weeklyPercent)}`}
-										style={{ width: `${Math.min(weeklyPercent, 100)}%` }}
-									/>
-								</div>
-								{weeklyResetTime && (
+								{!weeklyUnavailable && (
+									<div className="w-full bg-muted rounded-full h-1.5">
+										<div
+											className={`h-1.5 rounded-full transition-all ${getBarColorClass(weeklyPercent)}`}
+											style={{ width: `${Math.min(weeklyPercent, 100)}%` }}
+										/>
+									</div>
+								)}
+								{weeklyResetTime && !weeklyUnavailable && (
 									<p className="text-[9px] text-muted-foreground">
 										{t("common:usage.resetsIn", { time: weeklyResetTime })}
 									</p>

@@ -4,7 +4,7 @@
  * Fournit une interface IPC entre le frontend et le CredentialManager
  */
 
-import { execFile } from "node:child_process";
+import { execFile, spawn } from "node:child_process";
 import { promises as fs } from "node:fs";
 import { promisify } from "node:util";
 import { app, ipcMain } from "electron";
@@ -65,26 +65,17 @@ async function tryShellCodexVersion(): Promise<string | undefined> {
 }
 
 /**
- * Try to get codex version using Windows npm global path
+ * Try to get codex version from a specific .cmd file on Windows.
  */
-async function tryWindowsNpmCodexVersion(): Promise<string | undefined> {
+async function tryWindowsCmdCodexVersion(
+	codexCmd: string,
+): Promise<string | undefined> {
 	try {
-		const os = await import("node:os");
-		const path = await import("node:path");
-		const codexCmd = path.join(
-			os.homedir(),
-			"AppData",
-			"Roaming",
-			"npm",
-			"codex.cmd",
-		);
 		const { existsSync } = await import("node:fs");
+		if (!existsSync(codexCmd)) return undefined;
 
-		if (!existsSync(codexCmd)) {
-			return undefined;
-		}
-
-		const cmdExe = process.env.ComSpec || String.raw`C:\Windows\System32\cmd.exe`;
+		const cmdExe =
+			process.env.ComSpec || String.raw`C:\Windows\System32\cmd.exe`;
 		const result = await execFileAsync(
 			cmdExe,
 			["/d", "/s", "/c", `""${codexCmd}" --version"`],
@@ -101,19 +92,41 @@ async function tryWindowsNpmCodexVersion(): Promise<string | undefined> {
 }
 
 /**
- * Get codex CLI version using multiple fallback strategies
+ * Get codex CLI version using multiple fallback strategies.
+ * Checks both npm and pnpm global paths on Windows and picks the highest
+ * version found, so we always show the most up-to-date installation.
  */
 async function getCodexVersion(): Promise<string | undefined> {
-	// Strategy 1: direct exec
-	let version = await tryDirectCodexVersion();
+	const os = await import("node:os");
+	const home = os.homedir();
+
+	// Windows: check known global install paths (npm + pnpm)
+	if (process.platform === "win32") {
+		const candidates = [
+			path.join(home, "AppData", "Roaming", "npm", "codex.cmd"),
+			path.join(home, "AppData", "Local", "pnpm", "codex.CMD"),
+		];
+
+		const versions = await Promise.all(
+			candidates.map((p) => tryWindowsCmdCodexVersion(p)),
+		);
+
+		// Pick the highest version found
+		let best: string | undefined;
+		for (const v of versions) {
+			if (v && (!best || isCodexOutdated(best, v))) {
+				best = v;
+			}
+		}
+		if (best) return best;
+	}
+
+	// Fallback: shell execution (resolves via PATH + shell)
+	let version = await tryShellCodexVersion();
 	if (version) return version;
 
-	// Strategy 2: shell execution
-	version = await tryShellCodexVersion();
-	if (version) return version;
-
-	// Strategy 3: Windows npm global path
-	return await tryWindowsNpmCodexVersion();
+	// Fallback: direct exec
+	return await tryDirectCodexVersion();
 }
 
 /**
@@ -154,6 +167,105 @@ async function fetchLatestCodexVersion(): Promise<string | undefined> {
 		console.warn("[Codex CLI] Failed to fetch latest version from npm:", error);
 		return cachedCodexLatest?.version;
 	}
+}
+
+/**
+ * Spawn a command, drain its streams, and resolve on exit. 5-minute timeout.
+ */
+function runShellCommand(
+	cmd: string,
+	args: string[],
+): Promise<{ code: number; stdout: string; stderr: string }> {
+	return new Promise((resolve, reject) => {
+		const isWindows = process.platform === "win32";
+		const child = spawn(cmd, args, {
+			shell: isWindows,
+			windowsHide: true,
+			env: { ...process.env, CI: "1" },
+		});
+
+		let stdout = "";
+		let stderr = "";
+		child.stdout?.on("data", (chunk: Buffer) => {
+			stdout += chunk.toString("utf-8");
+		});
+		child.stderr?.on("data", (chunk: Buffer) => {
+			stderr += chunk.toString("utf-8");
+		});
+
+		const timeout = setTimeout(
+			() => {
+				child.kill("SIGKILL");
+				reject(new Error(`${cmd} timed out after 5 minutes`));
+			},
+			5 * 60 * 1000,
+		);
+
+		child.on("error", (err) => {
+			clearTimeout(timeout);
+			reject(err);
+		});
+
+		child.on("close", (code) => {
+			clearTimeout(timeout);
+			if (code === 0) {
+				resolve({ code, stdout, stderr });
+			} else {
+				reject(
+					new Error(
+						`${cmd} exited with code ${code}: ${stderr || stdout}`,
+					),
+				);
+			}
+		});
+	});
+}
+
+/**
+ * Update @openai/codex via both npm and pnpm global installs.
+ * On Windows, pnpm and npm can each have their own global codex shim;
+ * we update both so whichever is first on PATH gets the new version.
+ */
+async function runCodexUpdate(): Promise<{
+	code: number;
+	stdout: string;
+	stderr: string;
+}> {
+	const results: string[] = [];
+
+	// Always run npm install -g
+	const npmResult = await runShellCommand("npm", [
+		"install",
+		"-g",
+		"@openai/codex@latest",
+	]);
+	results.push(`[npm] ${npmResult.stdout.trim()}`);
+
+	// Also update via pnpm if it has a global codex
+	try {
+		const os = await import("node:os");
+		const { existsSync } = await import("node:fs");
+		const pnpmCodex = path.join(
+			os.homedir(),
+			"AppData",
+			"Local",
+			"pnpm",
+			"codex.CMD",
+		);
+		if (process.platform === "win32" && existsSync(pnpmCodex)) {
+			console.warn("[Codex CLI] pnpm global codex detected, updating via pnpm too");
+			const pnpmResult = await runShellCommand("pnpm", [
+				"add",
+				"-g",
+				"@openai/codex@latest",
+			]);
+			results.push(`[pnpm] ${pnpmResult.stdout.trim()}`);
+		}
+	} catch (err) {
+		console.warn("[Codex CLI] pnpm update skipped:", err);
+	}
+
+	return { code: 0, stdout: results.join("\n"), stderr: "" };
 }
 
 /**
@@ -443,40 +555,17 @@ export function registerCredentialHandlers(): void {
 			isOutdated?: boolean;
 			error?: string;
 		}> => {
-			const runNpm = async (): Promise<{ stdout: string; stderr: string }> => {
-				// Try plain `npm` first, then shell:true fallback (handles npm.cmd on Windows).
-				try {
-					return await execFileAsync(
-						"npm",
-						["install", "-g", "@openai/codex@latest"],
-						{
-							encoding: "utf-8",
-							timeout: 5 * 60 * 1000,
-							windowsHide: true,
-							maxBuffer: 10 * 1024 * 1024,
-						},
-					);
-				} catch (firstErr) {
-					try {
-						return await execFileAsync(
-							"npm",
-							["install", "-g", "@openai/codex@latest"],
-							{
-								encoding: "utf-8",
-								timeout: 5 * 60 * 1000,
-								windowsHide: true,
-								shell: true,
-								maxBuffer: 10 * 1024 * 1024,
-							},
-						);
-					} catch {
-						throw firstErr;
-					}
-				}
-			};
-
 			try {
-				await runNpm();
+				console.warn(
+					"[Codex CLI] Starting npm install -g @openai/codex@latest",
+				);
+				console.warn("[Codex CLI] PATH:", process.env.PATH);
+				const result = await runCodexUpdate();
+				console.warn("[Codex CLI] npm install completed:", {
+					code: result.code,
+					stdout: result.stdout.slice(-500),
+					stderr: result.stderr.slice(-500),
+				});
 
 				// Invalidate caches so the next check sees the fresh version.
 				cachedCodexLatest = null;
@@ -484,6 +573,12 @@ export function registerCredentialHandlers(): void {
 				const latest = await fetchLatestCodexVersion();
 				const isOutdated =
 					version && latest ? isCodexOutdated(version, latest) : false;
+
+				console.warn("[Codex CLI] Post-install version check:", {
+					version,
+					latest,
+					isOutdated,
+				});
 
 				return { success: true, version, latest, isOutdated };
 			} catch (error) {

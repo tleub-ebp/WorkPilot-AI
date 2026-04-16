@@ -72,17 +72,18 @@ export function DefaultUsageContent({
 						{weeklyLabel}
 					</span>
 					<span
-						className={`font-semibold tabular-nums text-xs ${getColorClass(usage.weeklyPercent).replace("500", "600")}`}
+						className={`font-semibold tabular-nums text-xs ${usage.weeklyPercent < 0 ? "text-muted-foreground" : getColorClass(usage.weeklyPercent).replace("500", "600")}`}
 					>
-						{Math.round(usage.weeklyPercent)}%
+						{usage.weeklyPercent < 0 ? "N/A" : `${Math.round(usage.weeklyPercent)}%`}
 					</span>
 				</div>
-				{weeklyResetTime && (
+				{weeklyResetTime && usage.weeklyPercent >= 0 && (
 					<div className="text-[10px] text-muted-foreground pl-4 flex items-center gap-1">
 						<Info className="h-2.5 w-2.5" />
 						{weeklyResetTime}
 					</div>
 				)}
+				{usage.weeklyPercent >= 0 && (
 				<div className="h-2 bg-muted rounded-full overflow-hidden shadow-inner">
 					<div
 						className={`h-full rounded-full transition-all duration-500 ease-out relative overflow-hidden ${getGradientClass(usage.weeklyPercent)}`}
@@ -91,6 +92,7 @@ export function DefaultUsageContent({
 						<div className="absolute inset-0 bg-linear-to-r from-transparent via-white/20 to-transparent motion-safe:animate-pulse" />
 					</div>
 				</div>
+				)}
 				{usage.weeklyUsageValue != null && usage.weeklyUsageLimit != null && (
 					<div className="flex items-center justify-between text-[10px]">
 						<span className="text-muted-foreground">

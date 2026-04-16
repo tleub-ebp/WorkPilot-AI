@@ -453,7 +453,9 @@ export function CopilotCliStatusBadge({
 									{t("common:update", "Update")}
 								</span>
 							)}
-							{(status === "not-found" || status === "gh-missing") && (
+							{(status === "not-found" ||
+								status === "gh-missing" ||
+								status === "error") && (
 								<span className="ml-auto text-[10px] bg-destructive/20 text-destructive px-1.5 py-0.5 rounded">
 									{status === "gh-missing"
 										? "gh missing"
@@ -573,7 +575,9 @@ export function CopilotCliStatusBadge({
 
 					{/* Actions */}
 					<div className="flex gap-2">
-						{(status === "not-found" || status === "outdated") && (
+						{(status === "not-found" ||
+							status === "outdated" ||
+							status === "error") && (
 							<Button
 								size="sm"
 								className="flex-1 gap-1"

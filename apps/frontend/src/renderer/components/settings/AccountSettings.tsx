@@ -524,7 +524,7 @@ export function AccountSettings({
 				hasUnlimitedUsage: false,
 				// Use real usage data from the usage monitor
 				sessionPercent: usageData?.sessionPercent,
-				weeklyPercent: usageData?.weeklyPercent,
+				weeklyPercent: usageData?.weeklyPercent != null && usageData.weeklyPercent < 0 ? undefined : usageData?.weeklyPercent,
 				isRateLimited: usageData?.isRateLimited,
 				rateLimitType: usageData?.rateLimitType,
 				isAuthenticated: profile.isAuthenticated,
