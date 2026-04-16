@@ -138,6 +138,21 @@ export function usePtyProcess({
 
 		// Normal skip (not during recreation) - just return
 		if (skipCreation) {
+			// If the terminal is already running (e.g., created externally via IPC before
+			// being added to the store), mark as created immediately so the Terminal
+			// component can attach to the existing PTY without waiting for dimensions.
+			if (!isCreatedRef.current && !isCreatingRef.current) {
+				const store = getStore();
+				const terminalState = store.terminals.find((t) => t.id === terminalId);
+				if (terminalState?.status === "running" || terminalState?.status === "claude-active") {
+					debugLog(
+						`[usePtyProcess] Terminal ${terminalId} is already running (external PTY), marking as created despite skipCreation`,
+					);
+					isCreatedRef.current = true;
+					onCreated?.();
+					return;
+				}
+			}
 			debugLog(
 				`[usePtyProcess] Skipping PTY creation for terminal: ${terminalId} - dimensions not ready (skipCreation=true)`,
 			);

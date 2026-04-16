@@ -93,13 +93,14 @@ export function CopilotCliStatusBadge({
 	className,
 	onNavigateToTerminals,
 }: CopilotCliStatusBadgeProps) {
-	const { t } = useTranslation(["common", "navigation"]);
+	const { t } = useTranslation(["common", "navigation", "settings"]);
 	const { data, refreshCopilot } = useCliStatus();
 	const { copilot } = data;
 
 	const projects = useProjectStore((state) => state.projects);
 	const selectedProjectId = useProjectStore((state) => state.selectedProjectId);
-	const currentProject = projects.find((p) => p.id === selectedProjectId);
+	const activeProjectId = useProjectStore((state) => state.activeProjectId);
+	const currentProject = projects.find((p) => p.id === (activeProjectId || selectedProjectId));
 	const projectPath = currentProject?.path || ".";
 	const addExternalTerminal = useTerminalStore(
 		(state) => state.addExternalTerminal,
@@ -171,24 +172,37 @@ export function CopilotCliStatusBadge({
 		new Promise((resolve) => setTimeout(resolve, ms));
 
 	// Update command for GitHub Copilot CLI extension
-	const COPILOT_UPDATE_COMMAND = "copilot update";
-	const COPILOT_INSTALL_COMMAND = "gh extension install github/gh-copilot";
+	const COPILOT_UPDATE_COMMAND = "gh extension upgrade gh-copilot\n";
+	const COPILOT_INSTALL_COMMAND = "gh extension install github/gh-copilot\n";
 
-	// Helper function to execute terminal installation
-	const executeTerminalInstallation = async (
-		terminalId: string,
-		isUpdate: boolean,
-	) => {
-		// Send the command without \n so the user must press Enter to confirm
-		const command = isUpdate ? COPILOT_UPDATE_COMMAND : COPILOT_INSTALL_COMMAND;
-		await delay(200);
+	// Helper: open an internal terminal with a command and navigate to the terminals page
+	const openTerminalWithCommand = async (label: string, command: string): Promise<boolean> => {
+		if (!globalThis.electronAPI?.createTerminal) return false;
+
+		const terminalId = `cli-action-${Date.now()}`;
+
+		// 1. Create PTY in main process first
+		const terminalResult = await globalThis.electronAPI.createTerminal({
+			id: terminalId,
+			cwd: projectPath,
+			cols: 80,
+			rows: 25,
+			projectPath: projectPath,
+		});
+
+		if (!terminalResult.success) return false;
+
+		// 2. Add to terminal store so it appears in the grid
+		addExternalTerminal(terminalId, label, projectPath, projectPath);
+
+		// 3. Close popover and navigate to the terminals page (force bypasses nav guard)
+		setIsOpen(false);
+		onNavigateToTerminals?.();
+
+		// 4. Send the command to the PTY (the PTY is already running in main process)
+		await delay(500);
 		globalThis.electronAPI.sendTerminalInput(terminalId, command);
-	};
-
-	// Helper function to execute terminal auth
-	const executeTerminalAuth = async (terminalId: string) => {
-		await delay(200);
-		globalThis.electronAPI.sendTerminalInput(terminalId, "gh auth login");
+		return true;
 	};
 
 	// Perform install/update
@@ -197,45 +211,19 @@ export function CopilotCliStatusBadge({
 		setShowInstallWarning(false);
 		setInstallError(null);
 		try {
-			if (!globalThis.electronAPI?.installCopilotCli) {
-				setInstallError("Installation not available");
-				setIsInstalling(false);
+			const isUpdate = status === "outdated";
+			const label = isUpdate ? "Copilot Update" : "Copilot Install";
+			const command = isUpdate ? COPILOT_UPDATE_COMMAND : COPILOT_INSTALL_COMMAND;
+
+			const opened = await openTerminalWithCommand(label, command);
+			if (!opened) {
+				setInstallError("Failed to open terminal");
 				return;
 			}
 
-			// Create a terminal visible in the agent terminals view
-			if (globalThis.electronAPI?.createTerminal) {
-				const terminalId = `copilot-cli-install-${Date.now()}`;
-				const terminalResult = await globalThis.electronAPI.createTerminal({
-					id: terminalId,
-					cwd: projectPath,
-					cols: 80,
-					rows: 25,
-					projectPath: projectPath,
-				});
-
-				if (terminalResult.success) {
-					// Add to terminal store so it appears in the Terminaux agents view
-					addExternalTerminal(
-						terminalId,
-						"Copilot Update",
-						projectPath,
-						projectPath,
-					);
-
-					setIsOpen(false);
-					if (onNavigateToTerminals) {
-						onNavigateToTerminals();
-					}
-
-					const isUpdate = status === "outdated";
-					await executeTerminalInstallation(terminalId, isUpdate);
-
-					// Re-check version after installation to update badge color automatically
-					setTimeout(() => refreshCopilot(), VERSION_RECHECK_DELAY_MS);
-					setTimeout(() => refreshCopilot(), VERSION_RECHECK_DELAY_MS * 3);
-				}
-			}
+			// Re-check version after installation to update badge color automatically
+			setTimeout(() => refreshCopilot(), VERSION_RECHECK_DELAY_MS);
+			setTimeout(() => refreshCopilot(), VERSION_RECHECK_DELAY_MS * 3);
 		} catch (err) {
 			console.error("Failed to install Copilot CLI:", err);
 			setInstallError(
@@ -249,32 +237,7 @@ export function CopilotCliStatusBadge({
 	// Start gh auth login
 	const startAuth = async () => {
 		try {
-			if (globalThis.electronAPI?.createTerminal) {
-				const terminalId = `copilot-auth-${Date.now()}`;
-				const terminalResult = await globalThis.electronAPI.createTerminal({
-					id: terminalId,
-					cwd: projectPath,
-					cols: 80,
-					rows: 25,
-					projectPath: projectPath,
-				});
-
-				if (terminalResult.success) {
-					addExternalTerminal(
-						terminalId,
-						"Copilot Auth",
-						projectPath,
-						projectPath,
-					);
-
-					setIsOpen(false);
-					if (onNavigateToTerminals) {
-						onNavigateToTerminals();
-					}
-
-					await executeTerminalAuth(terminalId);
-				}
-			}
+			await openTerminalWithCommand("Copilot Auth", "gh auth login\n");
 		} catch (err) {
 			console.error("Failed to start Copilot auth:", err);
 		}
@@ -374,9 +337,9 @@ export function CopilotCliStatusBadge({
 	const getTooltipText = () => {
 		switch (status) {
 			case "loading":
-				return t("copilot:checkingCopilotCli", "Checking Copilot CLI...");
+				return t("settings:copilot.checkingCopilotCli", "Checking Copilot CLI...");
 			case "installed":
-				return t("copilot:copilotCliUpToDate", "Copilot CLI is up to date");
+				return t("settings:copilot.copilotCliUpToDate", "Copilot CLI is up to date");
 			case "outdated":
 				return t(
 					"copilot:copilotCliUpdateAvailable",
@@ -403,7 +366,7 @@ export function CopilotCliStatusBadge({
 	// Get select placeholder text
 	const getSelectPlaceholder = () => {
 		if (isLoadingInstallations) {
-			return t("copilot:loadingInstallations", "Loading installations...");
+			return t("settings:copilot.loadingInstallations", "Loading installations...");
 		}
 		if (installationsError) {
 			return t(
@@ -411,7 +374,7 @@ export function CopilotCliStatusBadge({
 				"Failed to load installations",
 			);
 		}
-		return t("copilot:selectInstallation", "Select installation");
+		return t("settings:copilot.selectInstallation", "Select installation");
 	};
 
 	return (
@@ -481,18 +444,18 @@ export function CopilotCliStatusBadge({
 								<p className="text-xs text-muted-foreground flex items-center gap-1">
 									{getStatusIcon()}
 									{status === "installed" &&
-										t("copilot:installed", "Installed")}
+										t("settings:copilot.installed", "Installed")}
 									{status === "outdated" &&
-										t("copilot:updateAvailable", "Update available")}
+										t("settings:copilot.updateAvailable", "Update available")}
 									{status === "not-found" &&
 										t(
 											"copilot:extensionNotInstalled",
 											"Extension not installed",
 										)}
 									{status === "gh-missing" &&
-										t("copilot:gitHubCliNotFoundShort", "GitHub CLI not found")}
-									{status === "loading" && t("copilot:checking", "Checking...")}
-									{status === "error" && t("copilot:error", "Error")}
+										t("settings:copilot.gitHubCliNotFoundShort", "GitHub CLI not found")}
+									{status === "loading" && t("settings:copilot.checking", "Checking...")}
+									{status === "error" && t("settings:copilot.error", "Error")}
 								</p>
 							</div>
 						</div>
@@ -638,7 +601,7 @@ export function CopilotCliStatusBadge({
 					{installations.length > 1 && (
 						<div className="space-y-1.5">
 							<div className="text-xs text-muted-foreground">
-								{t("copilot:switchInstallation", "Switch Installation")}
+								{t("settings:copilot.switchInstallation", "Switch Installation")}
 							</div>
 							<Select
 								value={selectedInstallation || ""}
@@ -669,13 +632,13 @@ export function CopilotCliStatusBadge({
 												<span className="text-muted-foreground text-[9px]">
 													{installation.version
 														? `copilot v${installation.version}`
-														: t("copilot:versionUnknown", "version unknown")}
+														: t("settings:copilot.versionUnknown", "version unknown")}
 													{installation.ghVersion
 														? ` (gh ${installation.ghVersion})`
 														: ""}{" "}
 													({installation.source})
 													{installation.isActive &&
-														` - ${t("copilot:active", "Active")}`}
+														` - ${t("settings:copilot.active", "Active")}`}
 												</span>
 											</div>
 										</SelectItem>
@@ -696,7 +659,7 @@ export function CopilotCliStatusBadge({
 							)
 						}
 					>
-						{t("copilot:viewCopilotCliDocs", "View Copilot CLI Docs")}
+						{t("settings:copilot.viewCopilotCliDocs", "View Copilot CLI Docs")}
 						<ExternalLink className="h-3 w-3" />
 					</Button>
 				</div>
@@ -745,7 +708,7 @@ export function CopilotCliStatusBadge({
 				<AlertDialogContent>
 					<AlertDialogHeader>
 						<AlertDialogTitle>
-							{t("copilot:switchGhCliInstallation")}
+							{t("settings:copilot.switchGhCliInstallation")}
 						</AlertDialogTitle>
 						<AlertDialogDescription>
 							{t("settings:copilot.switchDescription")}{" "}
@@ -759,7 +722,7 @@ export function CopilotCliStatusBadge({
 							{t("common:cancel", "Cancel")}
 						</AlertDialogCancel>
 						<AlertDialogAction onClick={performPathSwitch}>
-							{t("copilot:switch", "Switch")}
+							{t("settings:copilot.switch", "Switch")}
 						</AlertDialogAction>
 					</AlertDialogFooter>
 				</AlertDialogContent>

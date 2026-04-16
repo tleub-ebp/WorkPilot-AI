@@ -809,6 +809,8 @@
 	"refresh": "Refresh",
 	"save": "Save",
 	"loading": "Loading...",
+	"update": "Update",
+	"install": "Install",
 	"common": {
 		"noProjectSelected": "No project selected",
 		"injectionGuardComingSoon": "Injection Guard - Coming Soon"

@@ -454,8 +454,9 @@ export function App() {
 	const [isShortcutsOverlayOpen, setIsShortcutsOverlayOpen] = useState(false);
 
 	// Navigation guard: intercept view changes when a task is in progress
-	const handleViewChange = (view: SidebarView) => {
-		if (view === "kanban") {
+	// force=true bypasses the guard (used by CLI badges that create a terminal and navigate)
+	const handleViewChange = (view: SidebarView, force?: boolean) => {
+		if (view === "kanban" || force) {
 			setActiveView(view);
 			return;
 		}
