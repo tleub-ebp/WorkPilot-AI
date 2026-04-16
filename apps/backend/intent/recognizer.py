@@ -221,7 +221,7 @@ class IntentRecognizer:
         import hashlib
 
         combined = f"{task_description}:{additional_context}"
-        return hashlib.md5(combined.encode()).hexdigest()
+        return hashlib.md5(combined.encode(), usedforsecurity=False).hexdigest()
 
     def clear_cache(self) -> None:
         """Clear the intent analysis cache."""

@@ -182,7 +182,7 @@ class DocumentationAnalyzer:
         """Compute MD5 hash of file content."""
         try:
             content = path.read_bytes()
-            return hashlib.md5(content).hexdigest()
+            return hashlib.md5(content, usedforsecurity=False).hexdigest()
         except Exception:
             return ""
 

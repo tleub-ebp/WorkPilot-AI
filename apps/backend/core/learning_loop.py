@@ -582,12 +582,13 @@ class LearningLoop:
     def _generate_pattern_id(self, pattern_type: str, pattern_value: str) -> str:
         """Generate unique pattern ID."""
         content = f"{pattern_type}:{pattern_value}"
-        return hashlib.md5(content.encode()).hexdigest()[:12]
+        return hashlib.md5(content.encode(), usedforsecurity=False).hexdigest()[:12]
 
     def _generate_id(self) -> str:
         """Generate unique ID."""
         return hashlib.md5(
-            f"{datetime.now().isoformat()}{os.urandom(8)}".encode()
+            f"{datetime.now().isoformat()}{os.urandom(8)}".encode(),
+            usedforsecurity=False,
         ).hexdigest()[:12]
 
     def get_pending_evolutions(self) -> list[ConventionEvolution]:
