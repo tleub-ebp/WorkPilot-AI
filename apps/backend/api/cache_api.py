@@ -85,7 +85,12 @@ def _validate_project_path(project_path: str) -> Path:
         raise HTTPException(status_code=404, detail=PROJECT_PATH_NOT_FOUND)
 
     # Ensure the resolved path is an existing directory
-    if not os.path.isdir(resolved):
+    try:
+        is_dir = os.path.isdir(resolved)
+    except (OSError, RuntimeError):
+        raise HTTPException(status_code=404, detail=PROJECT_PATH_NOT_FOUND)
+
+    if not is_dir:
         raise HTTPException(status_code=404, detail=PROJECT_PATH_NOT_FOUND)
 
     # Return as Path object for downstream use
