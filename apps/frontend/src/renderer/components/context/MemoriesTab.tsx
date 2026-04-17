@@ -282,9 +282,9 @@ export function MemoriesTab({
 								{searchResults.length === 1 ? "" : "s"}{" "}
 								{t("context:memories.found")}
 							</p>
-							{searchResults.map((result, idx) => (
+							{searchResults.map((result) => (
 								<Card
-									key={`${result.type}-${result.score}-${idx}`}
+									key={`${result.type}-${result.score}-${result.content.slice(0, 50)}`}
 									className="bg-muted/50"
 								>
 									<CardContent className="pt-4">

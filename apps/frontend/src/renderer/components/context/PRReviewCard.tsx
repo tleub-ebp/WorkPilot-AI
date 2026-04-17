@@ -259,9 +259,9 @@ export function PRReviewCard({ memory }: PRReviewCardProps) {
 									</Badge>
 								</div>
 								<div className="space-y-2 pl-6">
-									{parsed.keyFindings.slice(0, 5).map((finding, idx) => (
+									{parsed.keyFindings.slice(0, 5).map((finding) => (
 										<div
-											key={`finding-${idx}-${finding.severity}-${finding.message.slice(0, 20)}`}
+											key={`${finding.severity}-${finding.message.slice(0, 20)}`}
 											className="text-sm"
 										>
 											<div className="flex items-center gap-2">
@@ -316,9 +316,9 @@ export function PRReviewCard({ memory }: PRReviewCardProps) {
 									</Badge>
 								</div>
 								<ul className="space-y-1 pl-6">
-									{parsed.gotchas.map((gotcha, idx) => (
+									{parsed.gotchas.map((gotcha) => (
 										<li
-											key={`gotcha-${idx}-${gotcha.slice(0, 20)}`}
+											key={gotcha.slice(0, 50)}
 											className="text-sm text-red-400/80 py-1 pl-4 relative before:content-['•'] before:absolute before:left-0 before:text-red-500/50"
 										>
 											{gotcha}
@@ -341,9 +341,9 @@ export function PRReviewCard({ memory }: PRReviewCardProps) {
 									</Badge>
 								</div>
 								<div className="flex flex-wrap gap-2 pl-6">
-									{parsed.patterns.map((pattern, idx) => (
+									{parsed.patterns.map((pattern) => (
 										<Badge
-											key={`pattern-${idx}-${typeof pattern === "string" ? pattern.slice(0, 20) : JSON.stringify(pattern).slice(0, 20)}`}
+											key={typeof pattern === "string" ? pattern.slice(0, 50) : JSON.stringify(pattern).slice(0, 50)}
 											variant="secondary"
 											className="text-xs bg-purple-500/10 text-purple-400"
 										>

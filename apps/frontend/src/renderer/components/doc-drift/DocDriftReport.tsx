@@ -121,9 +121,9 @@ function ReportBody({
 			</div>
 
 			<div className="space-y-2">
-				{report.issues.map((issue, idx) => (
+				{report.issues.map((issue) => (
 					<div
-						key={`${issue.docFile}-${issue.docLine}-${idx}`}
+						key={`${issue.docFile}-${issue.docLine}-${issue.severity}`}
 						className={`px-4 py-3 rounded-lg border ${SEVERITY_STYLES[issue.severity]}`}
 					>
 						<div className="flex items-center gap-2 mb-1">

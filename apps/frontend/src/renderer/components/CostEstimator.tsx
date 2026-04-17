@@ -217,8 +217,9 @@ function ProviderBreakdown({
 
 	return (
 		<div className="space-y-3">
-			{used.map(([name, cost], idx) => {
+			{used.map(([name, cost]) => {
 				const pct = total > 0 ? (cost / total) * 100 : 0;
+				const colorIdx = used.findIndex((item) => item[0] === name);
 				return (
 					<div key={name} className="space-y-1">
 						<div className="flex items-center justify-between text-xs">
@@ -233,7 +234,7 @@ function ProviderBreakdown({
 							<div
 								className={cn(
 									"h-full rounded-full transition-all",
-									colors[idx % colors.length],
+									colors[colorIdx % colors.length],
 								)}
 								style={{ width: `${pct}%` }}
 							/>

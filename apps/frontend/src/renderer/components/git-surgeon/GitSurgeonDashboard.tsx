@@ -119,9 +119,9 @@ function ReportBody({
 			)}
 
 			<div className="space-y-2">
-				{plan.issues.map((issue, idx) => (
+				{plan.issues.map((issue) => (
 					<div
-						key={`${issue.commitSha}-${idx}`}
+						key={issue.commitSha}
 						className="px-4 py-3 rounded-lg border border-(--border-color) hover:bg-(--bg-secondary) transition-colors"
 					>
 						<div className="flex items-center gap-2 mb-1">
@@ -152,9 +152,9 @@ function ReportBody({
 						{t("plannedActions")}
 					</h3>
 					<div className="space-y-1">
-						{plan.actions.map((action, idx) => (
+						{plan.actions.map((action) => (
 							<div
-								key={`${action.action}-${idx}`}
+								key={action.action}
 								className="flex items-center gap-2 px-3 py-2 rounded text-sm bg-(--bg-secondary)"
 							>
 								<span className="text-purple-400 font-mono text-xs">

@@ -29,10 +29,10 @@ import {
 } from "../../ui/collapsible";
 
 interface PRLogsProps {
-	prNumber: number;
-	logs: PRLogs | null;
-	isLoading: boolean;
-	isStreaming?: boolean;
+	readonly prNumber: number;
+	readonly logs: PRLogs | null;
+	readonly isLoading: boolean;
+	readonly isStreaming?: boolean;
 }
 
 const PHASE_LABELS: Record<PRLogPhase, string> = {
@@ -185,83 +185,98 @@ export function PRLogs({
 		});
 	};
 
+	const { t } = useTranslation(["common"]);
+
+	const content = (() => {
+		if (isLoading && !logs) {
+			return (
+				<div className="flex items-center justify-center py-8">
+					<Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+				</div>
+			);
+		}
+
+		if (logs) {
+			return (
+				<>
+					{/* Logs header */}
+					<div className="flex items-center justify-between mb-4">
+						<div className="text-sm text-muted-foreground flex items-center gap-2">
+							PR #{prNumber}
+							{logs.is_followup && (
+								<Badge variant="outline" className="text-xs">
+									Follow-up
+								</Badge>
+							)}
+							{isStreaming && (
+								<Badge
+									variant="outline"
+									className="text-xs bg-blue-500/10 text-blue-500 border-blue-500/30 flex items-center gap-1"
+								>
+									<Loader2 className="h-2.5 w-2.5 animate-spin" />
+									Live
+								</Badge>
+							)}
+						</div>
+						<div className="text-xs text-muted-foreground flex items-center gap-1">
+							<Clock className="h-3 w-3" />
+							{new Date(logs.updated_at).toLocaleString()}
+						</div>
+					</div>
+
+					{/* Phase-based collapsible logs */}
+					{(["context", "analysis", "synthesis"] as PRLogPhase[]).map(
+						(phase) => (
+							<PhaseLogSection
+								key={phase}
+								phase={phase}
+								phaseLog={logs.phases[phase]}
+								isExpanded={expandedPhases.has(phase)}
+								onToggle={() => togglePhase(phase)}
+								isStreaming={isStreaming}
+								expandedAgents={expandedAgents}
+								onToggleAgent={toggleAgent}
+							/>
+						),
+					)}
+				</>
+			);
+		}
+
+		if (isStreaming) {
+			return (
+				<div className="text-center text-sm text-muted-foreground py-8">
+					<Loader2 className="mx-auto mb-2 h-8 w-8 animate-spin text-blue-500" />
+					<p>{t("taskReview:pr.logs.waitingForLogs")}</p>
+					<p className="text-xs mt-1">{t("taskReview:pr.logs.reviewStarting")}</p>
+				</div>
+			);
+		}
+
+		return (
+			<div className="text-center text-sm text-muted-foreground py-8">
+				<Terminal className="mx-auto mb-2 h-8 w-8 opacity-50" />
+				<p>{t("taskReview:pr.logs.noLogsAvailable")}</p>
+			</div>
+		);
+	})();
+
 	return (
 		<div className="h-full overflow-y-auto scrollbar-thin scrollbar-thumb-border scrollbar-track-transparent">
-			<div className="p-4 space-y-2">
-				{isLoading && !logs ? (
-					<div className="flex items-center justify-center py-8">
-						<Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-					</div>
-				) : logs ? (
-					<>
-						{/* Logs header */}
-						<div className="flex items-center justify-between mb-4">
-							<div className="text-sm text-muted-foreground flex items-center gap-2">
-								PR #{prNumber}
-								{logs.is_followup && (
-									<Badge variant="outline" className="text-xs">
-										Follow-up
-									</Badge>
-								)}
-								{isStreaming && (
-									<Badge
-										variant="outline"
-										className="text-xs bg-blue-500/10 text-blue-500 border-blue-500/30 flex items-center gap-1"
-									>
-										<Loader2 className="h-2.5 w-2.5 animate-spin" />
-										Live
-									</Badge>
-								)}
-							</div>
-							<div className="text-xs text-muted-foreground flex items-center gap-1">
-								<Clock className="h-3 w-3" />
-								{new Date(logs.updated_at).toLocaleString()}
-							</div>
-						</div>
-
-						{/* Phase-based collapsible logs */}
-						{(["context", "analysis", "synthesis"] as PRLogPhase[]).map(
-							(phase) => (
-								<PhaseLogSection
-									key={phase}
-									phase={phase}
-									phaseLog={logs.phases[phase]}
-									isExpanded={expandedPhases.has(phase)}
-									onToggle={() => togglePhase(phase)}
-									isStreaming={isStreaming}
-									expandedAgents={expandedAgents}
-									onToggleAgent={toggleAgent}
-								/>
-							),
-						)}
-					</>
-				) : isStreaming ? (
-					<div className="text-center text-sm text-muted-foreground py-8">
-						<Loader2 className="mx-auto mb-2 h-8 w-8 animate-spin text-blue-500" />
-						<p>Waiting for logs...</p>
-						<p className="text-xs mt-1">Review is starting</p>
-					</div>
-				) : (
-					<div className="text-center text-sm text-muted-foreground py-8">
-						<Terminal className="mx-auto mb-2 h-8 w-8 opacity-50" />
-						<p>No logs available</p>
-						<p className="text-xs mt-1">Run a review to generate logs</p>
-					</div>
-				)}
-			</div>
+			<div className="p-4 space-y-2">{content}</div>
 		</div>
 	);
 }
 
 // Phase Log Section Component
 interface PhaseLogSectionProps {
-	phase: PRLogPhase;
-	phaseLog: PRPhaseLog | null;
-	isExpanded: boolean;
-	onToggle: () => void;
-	isStreaming?: boolean;
-	expandedAgents: Set<string>;
-	onToggleAgent: (agentKey: string) => void;
+	readonly phase: PRLogPhase;
+	readonly phaseLog: PRPhaseLog | null;
+	readonly isExpanded: boolean;
+	readonly onToggle: () => void;
+	readonly isStreaming?: boolean;
+	readonly expandedAgents: Set<string>;
+	readonly onToggleAgent: (agentKey: string) => void;
 }
 
 function PhaseLogSection({
@@ -371,15 +386,15 @@ function PhaseLogSection({
 			</CollapsibleTrigger>
 			<CollapsibleContent>
 				<div className="mt-1 ml-6 border-l-2 border-border pl-4 py-2 space-y-2">
-					{!hasEntries ? (
-						<p className="text-xs text-muted-foreground italic">No logs yet</p>
-					) : (
+					{hasEntries ? (
 						<GroupedLogEntries
 							entries={phaseLog?.entries || []}
 							phase={phase}
 							expandedAgents={expandedAgents}
 							onToggleAgent={onToggleAgent}
 						/>
+					) : (
+						<p className="text-xs text-muted-foreground italic">No logs yet</p>
 					)}
 				</div>
 			</CollapsibleContent>
@@ -389,10 +404,10 @@ function PhaseLogSection({
 
 // Grouped Log Entries Component - renders agents grouped with collapsible sections
 interface GroupedLogEntriesProps {
-	entries: PRLogEntry[];
-	phase: PRLogPhase;
-	expandedAgents: Set<string>;
-	onToggleAgent: (agentKey: string) => void;
+	readonly entries: PRLogEntry[];
+	readonly phase: PRLogPhase;
+	readonly expandedAgents: Set<string>;
+	readonly onToggleAgent: (agentKey: string) => void;
 }
 
 function GroupedLogEntries({
@@ -409,8 +424,8 @@ function GroupedLogEntries({
 			{/* Render important messages first (AI response, Invoking agent, etc.) */}
 			{otherEntries.length > 0 && (
 				<div className="space-y-1">
-					{otherEntries.map((entry, idx) => (
-						<LogEntry key={`other-${entry.timestamp}-${idx}`} entry={entry} />
+					{otherEntries.map((entry) => (
+						<LogEntry key={`other-${entry.timestamp}`} entry={entry} />
 					))}
 				</div>
 			)}
@@ -419,7 +434,6 @@ function GroupedLogEntries({
 			{orchestratorActivity.length > 0 && (
 				<OrchestratorActivitySection
 					entries={orchestratorActivity}
-					phase={phase}
 					isExpanded={expandedAgents.has(`${phase}-orchestrator-activity`)}
 					onToggle={() => onToggleAgent(`${phase}-orchestrator-activity`)}
 				/>
@@ -430,7 +444,6 @@ function GroupedLogEntries({
 				<AgentLogGroup
 					key={`${phase}-${group.agentName}`}
 					group={group}
-					phase={phase}
 					isExpanded={expandedAgents.has(`${phase}-${group.agentName}`)}
 					onToggle={() => onToggleAgent(`${phase}-${group.agentName}`)}
 				/>
@@ -441,10 +454,9 @@ function GroupedLogEntries({
 
 // Orchestrator Activity Section - collapsible section for tool activity logs
 interface OrchestratorActivitySectionProps {
-	entries: PRLogEntry[];
-	phase: PRLogPhase;
-	isExpanded: boolean;
-	onToggle: () => void;
+	readonly entries: PRLogEntry[];
+	readonly isExpanded: boolean;
+	readonly onToggle: () => void;
 }
 
 function OrchestratorActivitySection({
@@ -504,9 +516,9 @@ function OrchestratorActivitySection({
 
 			{isExpanded && (
 				<div className="border-t border-border/30 p-2 space-y-0.5 max-h-[300px] overflow-y-auto">
-					{entries.map((entry, idx) => (
+					{entries.map((entry) => (
 						<div
-							key={`activity-${entry.timestamp}-${idx}`}
+							key={`activity-${entry.timestamp}`}
 							className="flex items-start gap-2 text-[10px] text-muted-foreground/80 py-0.5"
 						>
 							<span className="text-muted-foreground/50 tabular-nums shrink-0">
@@ -516,7 +528,7 @@ function OrchestratorActivitySection({
 									second: "2-digit",
 								})}
 							</span>
-							<span className="break-words">{entry.content}</span>
+							<span className="wrap-break-word">{entry.content}</span>
 						</div>
 					))}
 				</div>
@@ -527,10 +539,9 @@ function OrchestratorActivitySection({
 
 // Agent Log Group Component - shows first message + expandable section for more
 interface AgentLogGroupProps {
-	group: AgentGroup;
-	phase: PRLogPhase;
-	isExpanded: boolean;
-	onToggle: () => void;
+	readonly group: AgentGroup;
+	readonly isExpanded: boolean;
+	readonly onToggle: () => void;
 }
 
 // Patterns that are uninteresting as summary entries
@@ -663,9 +674,9 @@ function AgentLogGroup({ group, isExpanded, onToggle }: AgentLogGroupProps) {
 			{/* Collapsible section for other entries */}
 			{hasMoreEntries && isExpanded && (
 				<div className="border-t border-border/30 bg-secondary/10 p-2 space-y-1">
-					{otherEntries.map((entry, idx) => (
+					{otherEntries.map((entry) => (
 						<LogEntry
-							key={`${entry.timestamp}-${idx}`}
+							key={`other-${entry.timestamp}`}
 							entry={{ ...entry, source: undefined }}
 						/>
 					))}
@@ -677,7 +688,7 @@ function AgentLogGroup({ group, isExpanded, onToggle }: AgentLogGroupProps) {
 
 // Log Entry Component
 interface LogEntryProps {
-	entry: PRLogEntry;
+	readonly entry: PRLogEntry;
 }
 
 function LogEntry({ entry }: LogEntryProps) {
@@ -707,7 +718,7 @@ function LogEntry({ entry }: LogEntryProps) {
 			<div className="flex flex-col">
 				<div className="flex items-start gap-2 text-xs text-destructive bg-destructive/10 rounded-md px-2 py-1">
 					<XCircle className="h-3 w-3 mt-0.5 shrink-0" />
-					<span className="break-words flex-1">{entry.content}</span>
+					<span className="wrap-break-word flex-1">{entry.content}</span>
 					{hasDetail && (
 						<button
 							type="button"
@@ -728,7 +739,7 @@ function LogEntry({ entry }: LogEntryProps) {
 				</div>
 				{hasDetail && isExpanded && (
 					<div className="mt-1.5 ml-4 p-2 bg-destructive/5 rounded-md border border-destructive/20 overflow-x-auto">
-						<pre className="text-[10px] text-destructive/80 whitespace-pre-wrap break-words font-mono max-h-[300px] overflow-y-auto">
+						<pre className="text-[10px] text-destructive/80 whitespace-pre-wrap wrap-break-word font-mono max-h-[300px] overflow-y-auto">
 							{entry.detail}
 						</pre>
 					</div>
@@ -741,7 +752,7 @@ function LogEntry({ entry }: LogEntryProps) {
 		return (
 			<div className="flex items-start gap-2 text-xs text-success bg-success/10 rounded-md px-2 py-1">
 				<CheckCircle2 className="h-3 w-3 mt-0.5 shrink-0" />
-				<span className="break-words flex-1">{entry.content}</span>
+				<span className="wrap-break-word flex-1">{entry.content}</span>
 			</div>
 		);
 	}
@@ -750,7 +761,7 @@ function LogEntry({ entry }: LogEntryProps) {
 		return (
 			<div className="flex items-start gap-2 text-xs text-info bg-info/10 rounded-md px-2 py-1">
 				<Info className="h-3 w-3 mt-0.5 shrink-0" />
-				<span className="break-words flex-1">{entry.content}</span>
+				<span className="wrap-break-word flex-1">{entry.content}</span>
 			</div>
 		);
 	}
@@ -773,7 +784,7 @@ function LogEntry({ entry }: LogEntryProps) {
 						{entry.source}
 					</Badge>
 				)}
-				<span className="break-words whitespace-pre-wrap flex-1">
+				<span className="wrap-break-word whitespace-pre-wrap flex-1">
 					{entry.content}
 				</span>
 				{hasDetail && (
@@ -802,7 +813,7 @@ function LogEntry({ entry }: LogEntryProps) {
 			</div>
 			{hasDetail && isExpanded && (
 				<div className="mt-1.5 ml-12 p-2 bg-secondary/30 rounded-md border border-border/50 overflow-x-auto">
-					<pre className="text-[10px] text-muted-foreground whitespace-pre-wrap break-words font-mono max-h-[300px] overflow-y-auto">
+					<pre className="text-[10px] text-muted-foreground whitespace-pre-wrap wrap-break-word font-mono max-h-[300px] overflow-y-auto">
 						{entry.detail}
 					</pre>
 				</div>

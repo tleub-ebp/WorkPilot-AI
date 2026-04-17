@@ -245,9 +245,9 @@ export function DocumentationAgentDashboard(): React.ReactElement {
 										Files Created
 									</h4>
 									<div className="flex flex-col gap-0.5">
-										{result.generated_files.map((f, i) => (
+										{result.generated_files.map((f) => (
 											<div
-												key={`file-${i}-${f.slice(0, 30)}`}
+												key={`file-${f.slice(0, 50)}`}
 												className="text-xs font-mono text-[var(--text-secondary)] truncate"
 											>
 												{f}
