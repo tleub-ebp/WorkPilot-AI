@@ -53,10 +53,21 @@ logger = logging.getLogger(__name__)
 
 def _safe_error_message(e: Exception) -> str:
     """Return a safe error message without exposing internal stack traces."""
-    error_type = type(e).__name__
-    # Only expose the first line of the error message, not the full traceback
-    msg = str(e).split("\n")[0][:200]
-    return f"{error_type}: {msg}"
+    logger.error("Operation failed: %s: %s", type(e).__name__, e)
+    # Map known exception types to safe user-facing messages
+    _SAFE_MESSAGES: dict[type, str] = {
+        TimeoutError: "Request timed out",
+        ConnectionError: "Connection failed",
+        PermissionError: "Permission denied",
+        FileNotFoundError: "Resource not found",
+        ValueError: "Invalid input",
+        KeyError: "Missing required field",
+        OSError: "System error",
+    }
+    for exc_type, msg in _SAFE_MESSAGES.items():
+        if isinstance(e, exc_type):
+            return msg
+    return "An unexpected error occurred"
 
 
 # SSRF Protection - Authorized URLs list
@@ -740,7 +751,7 @@ async def test_provider_api_key(request: Request, provider: str, payload: dict):
         try:
             safe_base_url = _validate_openai_base_url(base_url)
         except ValueError as e:
-            raise HTTPException(status_code=400, detail=str(e))
+            raise HTTPException(status_code=400, detail=_safe_error_message(e))
         url = safe_base_url + API_MODELS_ENDPOINT
         return await _test_bearer(url, api_key, provider)
 
@@ -1264,7 +1275,7 @@ def health_check():
             subsystems["graphiti_memory"] = {
                 "status": "error",
                 "enabled": True,
-                "error": str(e),
+                "error": _safe_error_message(e),
             }
     else:
         subsystems["graphiti_memory"] = {"status": "disabled", "enabled": False}
@@ -1343,7 +1354,7 @@ async def get_provider_usage(provider: str):
         except Exception as e:
             return {
                 "provider": "openai",
-                "error": f"Impossible de récupérer l'usage OpenAI: {str(e)}",
+                "error": f"Impossible de récupérer l'usage OpenAI: {_safe_error_message(e)}",
                 "note": "L'endpoint /v1/usage d'OpenAI nécessite des permissions spéciales depuis 2025",
                 "alternative": "Consultez https://platform.openai.com/settings/organization/billing/overview",
             }
@@ -1483,7 +1494,7 @@ async def get_provider_usage(provider: str):
         except Exception as e:
             return {
                 "provider": "windsurf",
-                "error": f"Impossible de récupérer l'usage Windsurf: {str(e)}",
+                "error": f"Impossible de récupérer l'usage Windsurf: {_safe_error_message(e)}",
             }
     else:
         return {"error": f"Usage non supporté pour le provider '{provider}'"}

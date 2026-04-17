@@ -1,12 +1,11 @@
 import hashlib
-import hmac
 import sqlite3
 from datetime import datetime
 
 DB_PATH = "validated_keys.sqlite3"
 
-# HMAC key for hashing API keys (not a secret - used to satisfy secure hashing requirements)
-_HMAC_KEY = b"workpilot-validated-keys-v1"
+_PBKDF2_SALT = b"workpilot-validated-keys-v1"
+_PBKDF2_ITERATIONS = 100_000
 
 
 def get_db():
@@ -22,7 +21,9 @@ def get_db():
 
 
 def hash_key(api_key: str) -> str:
-    return hmac.new(_HMAC_KEY, api_key.encode("utf-8"), hashlib.sha256).hexdigest()
+    return hashlib.pbkdf2_hmac(
+        "sha256", api_key.encode("utf-8"), _PBKDF2_SALT, _PBKDF2_ITERATIONS
+    ).hex()
 
 
 def set_validated(provider: str, api_key: str, validated: bool):

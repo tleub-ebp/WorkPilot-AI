@@ -8,7 +8,7 @@
 
 import { providerRegistry } from "../services/providerRegistry";
 import type { APIProfile } from "../types/profile";
-import { detectProvider, urlMatchesDomain } from "./provider-detection";
+import { detectProvider } from "./provider-detection";
 
 export interface CanonicalProvider {
 	name: string;

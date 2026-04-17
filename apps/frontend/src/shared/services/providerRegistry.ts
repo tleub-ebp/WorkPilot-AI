@@ -5,7 +5,7 @@
 
 import { PROVIDER_MODELS_MAP } from "../constants/models";
 import type { APIProfile } from "../types/profile";
-import { detectProvider, urlMatchesDomain } from "../utils/provider-detection";
+import { detectProvider } from "../utils/provider-detection";
 
 export interface Provider {
 	name: string;

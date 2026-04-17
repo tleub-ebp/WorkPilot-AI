@@ -7,7 +7,7 @@
  */
 
 import type { APIProfile } from "@shared/types/profile";
-import { detectProvider, urlMatchesDomain } from "@shared/utils/provider-detection";
+import { detectProvider } from "@shared/utils/provider-detection";
 import { providerRegistry } from "./providerRegistry";
 
 export interface Provider {
