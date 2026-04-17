@@ -38,7 +38,7 @@ function GuideBody({
 			</div>
 
 			<div className="space-y-3">
-				{guide.steps.map((step, idx) => (
+				{guide.steps.map((step) => (
 					<div
 						key={`${step.section}-${step.title}`}
 						className="px-4 py-3 rounded-lg border border-(--border-color)"
@@ -46,7 +46,7 @@ function GuideBody({
 						<div className="flex items-center justify-between mb-2">
 							<div className="flex items-center gap-2">
 								<span className="w-6 h-6 rounded-full bg-blue-500/20 text-blue-400 flex items-center justify-center text-xs font-bold">
-									{idx + 1}
+									{guide.steps.indexOf(step) + 1}
 								</span>
 								<p className="text-sm font-medium">{step.title}</p>
 							</div>

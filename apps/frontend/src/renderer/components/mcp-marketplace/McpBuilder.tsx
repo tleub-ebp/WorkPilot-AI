@@ -666,16 +666,16 @@ export function McpBuilder() {
 											</p>
 										) : (
 											<div className="space-y-2">
-												{editingTool.parameters.map((param, idx) => (
+												{editingTool.parameters.map((param) => (
 													<div
-														key={`${editingTool.id}-param-${idx}`}
+														key={`${editingTool.id}-param-${param.name}`}
 														className="flex items-start gap-2 p-2 rounded-lg border border-border bg-background"
 													>
 														<div className="grid grid-cols-3 gap-2 flex-1">
 															<Input
 																value={param.name}
 																onChange={(e) =>
-																	handleUpdateParam(editingTool.id, idx, {
+																	handleUpdateParam(editingTool.id, editingTool.parameters.indexOf(param), {
 																		name: e.target.value,
 																	})
 																}
@@ -685,7 +685,7 @@ export function McpBuilder() {
 															<Select
 																value={param.type}
 																onValueChange={(val) =>
-																	handleUpdateParam(editingTool.id, idx, {
+																	handleUpdateParam(editingTool.id, editingTool.parameters.indexOf(param), {
 																		type: val as McpBuilderParam["type"],
 																	})
 																}
@@ -710,7 +710,7 @@ export function McpBuilder() {
 															<Input
 																value={param.description}
 																onChange={(e) =>
-																	handleUpdateParam(editingTool.id, idx, {
+																	handleUpdateParam(editingTool.id, editingTool.parameters.indexOf(param), {
 																		description: e.target.value,
 																	})
 																}
@@ -723,7 +723,7 @@ export function McpBuilder() {
 															size="icon"
 															className="h-7 w-7 shrink-0 text-muted-foreground hover:text-destructive"
 															onClick={() =>
-																handleRemoveParam(editingTool.id, idx)
+																handleRemoveParam(editingTool.id, editingTool.parameters.indexOf(param))
 															}
 														>
 															<Trash2 className="h-3 w-3" />

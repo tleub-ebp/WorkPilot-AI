@@ -172,8 +172,8 @@ function ReportBody({
 			</div>
 
 			<div className="space-y-2">
-				{diff.changes.map((change, idx) => (
-					<ChangeRow key={`${change.path}-${idx}`} change={change} />
+				{diff.changes.map((change) => (
+					<ChangeRow key={change.path} change={change} />
 				))}
 			</div>
 

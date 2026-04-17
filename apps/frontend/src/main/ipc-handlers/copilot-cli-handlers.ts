@@ -253,7 +253,6 @@ async function fetchLatestCopilotVersion(): Promise<string> {
 				},
 				(res) => {
 					let body = "";
-					// biome-ignore lint/suspicious/noAssignInExpressions: intentional assignment
 					res.on("data", (chunk: Buffer | string) => (body += chunk));
 					res.on("end", () => resolve(body));
 				},
