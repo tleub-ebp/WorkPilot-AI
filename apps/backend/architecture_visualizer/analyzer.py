@@ -402,7 +402,7 @@ class ArchitectureAnalyzer:
 
     def _path_to_id(self, rel_path: str) -> str:
         """Convert a relative path to a stable node ID."""
-        return hashlib.md5(rel_path.encode()).hexdigest()[:12]
+        return hashlib.md5(rel_path.encode(), usedforsecurity=False).hexdigest()[:12]
 
     def _import_to_id(self, import_str: str, from_file: Path) -> str:
         """Attempt to resolve an import string to a node ID."""

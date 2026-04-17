@@ -161,7 +161,7 @@ class CICDMode:
                 capture_output=True,
                 text=True,
                 timeout=300,
-                shell=True,
+                shell=True,  # nosec B602 - command uses shell features (2>&1 redirection) from _detect_test_command
             )
             output = result.stdout + "\n" + result.stderr
             passed = result.returncode == 0
