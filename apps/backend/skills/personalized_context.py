@@ -16,7 +16,6 @@ Features:
 - Learning and adaptation
 """
 
-import hashlib
 import json
 import logging
 import secrets
