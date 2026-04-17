@@ -1208,6 +1208,19 @@ function RequestPanel({
 	const setIsSendingRequest = useApiExplorerStore((s) => s.setIsSendingRequest);
 	const updateEnvironment = useApiExplorerStore((s) => s.updateEnvironment);
 
+	// Extract a token from a JSON response body (common field names)
+	const TOKEN_FIELDS = [
+		"access_token",
+		"token",
+		"jwt",
+		"auth_token",
+		"id_token",
+		"bearer_token",
+		"accessToken",
+		"authToken",
+		"idToken",
+	] as const;
+
 	const [showAuthToken, setShowAuthToken] = useState(false);
 	const [showAuthPassword, setShowAuthPassword] = useState(false);
 	const [showOAuth2Secret, setShowOAuth2Secret] = useState(false);
@@ -1230,18 +1243,6 @@ function RequestPanel({
 	const [copiedResponse, setCopiedResponse] = useState(false);
 	const [savedToken, setSavedToken] = useState(false);
 
-	// Extract a token from a JSON response body (common field names)
-	const TOKEN_FIELDS = [
-		"access_token",
-		"token",
-		"jwt",
-		"auth_token",
-		"id_token",
-		"bearer_token",
-		"accessToken",
-		"authToken",
-		"idToken",
-	];
 	const extractedToken = useMemo<string | null>(() => {
 		if (
 			!responseBody ||
@@ -1261,7 +1262,6 @@ function RequestPanel({
 			/* not JSON */
 		}
 		return null;
-		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [responseBody, responseStatus, TOKEN_FIELDS]);
 
 	// Auto-select the best format and language when a new response arrives

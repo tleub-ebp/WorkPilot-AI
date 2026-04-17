@@ -7,7 +7,7 @@ import {
 	Search,
 	Shield,
 } from "lucide-react";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useDependencySentinelStore } from "../../stores/dependency-sentinel-store";
 import { useProjectStore } from "../../stores/project-store";
@@ -87,14 +87,28 @@ export function DependencySentinelDialog() {
 	const [activeTab, setActiveTab] = useState("dependencies");
 
 	// Mock data for demonstration
-	const mockDependencies: Dependency[] = [
+	const mockVulnerabilities = useMemo<Vulnerability[]>(() => [
+		{
+			id: "VULN-001",
+			title: "Prototype Pollution in Axios",
+			severity: "medium",
+			package: "axios",
+			version: "1.4.0",
+			description:
+				"Axios versions before 1.6.0 are vulnerable to prototype pollution.",
+			recommendation: "Update to axios 1.6.0 or later",
+			cve: "CVE-2023-45678",
+		},
+	], []);
+
+	const mockDependencies = useMemo<Dependency[]>(() => [
 		{
 			name: "react",
 			version: "18.2.0",
 			type: "production",
 			status: "secure",
-			description:
-				"React is a JavaScript library for building user interfaces.",
+			description: "React is a JavaScript library for building user interfaces.",
+			recommendation: undefined,
 		},
 		{
 			name: "axios",
@@ -113,21 +127,7 @@ export function DependencySentinelDialog() {
 			description: "TypeScript is a language for application-scale JavaScript.",
 			recommendation: "Update to version 5.2.0 or later",
 		},
-	];
-
-	const mockVulnerabilities: Vulnerability[] = [
-		{
-			id: "VULN-001",
-			title: "Prototype Pollution in Axios",
-			severity: "medium",
-			package: "axios",
-			version: "1.4.0",
-			description:
-				"Axios versions before 1.6.0 are vulnerable to prototype pollution.",
-			recommendation: "Update to axios 1.6.0 or later",
-			cve: "CVE-2023-45678",
-		},
-	];
+	], []);
 
 	const loadDependencies = useCallback(async () => {
 		if (!selectedProject) return;

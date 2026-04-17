@@ -95,6 +95,7 @@ export function I18nReportView({
 							stroke="currentColor"
 							className="w-16 h-16 mb-4 opacity-50"
 						>
+							<title>Global network icon</title>
 							<path
 								strokeLinecap="round"
 								strokeLinejoin="round"

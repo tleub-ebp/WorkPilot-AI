@@ -10,9 +10,15 @@ export const resources = {
 };
 
 const mockI18n = {
+	// biome-ignore lint/suspicious/noExplicitAny: Mock file - type flexibility needed for testing
 	use: (() => mockI18n) as any,
+	// biome-ignore lint/suspicious/noExplicitAny: Mock file - type flexibility needed for testing
+	// biome-ignore lint/suspicious/noEmptyBlockStatements: Mock file - empty function is intentional
 	init: (() => {}) as any,
+	// biome-ignore lint/suspicious/noExplicitAny: Mock file - type flexibility needed for testing
 	t: ((key: string) => key) as any,
+	// biome-ignore lint/suspicious/noExplicitAny: Mock file - type flexibility needed for testing
+	// biome-ignore lint/suspicious/noEmptyBlockStatements: Mock file - empty function is intentional
 	changeLanguage: (() => {}) as any,
 	language: "en",
 };

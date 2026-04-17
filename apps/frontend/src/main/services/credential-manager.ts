@@ -1075,9 +1075,11 @@ export class CredentialManager extends EventEmitter {
 						"code" in error &&
 						error.code !== "ENOENT"
 					) {
+						// Non-ENOENT errors are intentionally ignored here
+						// as we fall back to other credential sources
 					}
 				}
-			}
+			} // Added missing closing brace here
 
 			// Source 2: Check app's own profiles.json for OpenAI API profile
 			try {
