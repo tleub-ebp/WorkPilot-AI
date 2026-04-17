@@ -17,6 +17,26 @@ from pydantic import BaseModel, Field
 
 logger = logging.getLogger(__name__)
 
+
+def _safe_error_message(e: Exception) -> str:
+    """Return a safe error message without exposing internal stack traces."""
+    logger.error("Operation failed: %s: %s", type(e).__name__, e)
+    # Map known exception types to safe user-facing messages
+    _SAFE_MESSAGES: dict[type, str] = {
+        TimeoutError: "Request timed out",
+        ConnectionError: "Connection failed",
+        PermissionError: "Permission denied",
+        FileNotFoundError: "Resource not found",
+        ValueError: "Invalid input",
+        KeyError: "Missing required field",
+        OSError: "System error",
+    }
+    for exc_type, msg in _SAFE_MESSAGES.items():
+        if isinstance(e, exc_type):
+            return msg
+    return "An unexpected error occurred"
+
+
 # Constants for error messages
 PROJECT_PATH_NOT_FOUND = "Project path not found"
 FAILED_TO_GET_CACHE_STATS = "Failed to get cache stats"
@@ -192,7 +212,7 @@ async def get_cache_stats(
         raise
     except Exception as e:
         logger.error(f"Error getting cache stats: {e}")
-        raise HTTPException(status_code=500, detail=FAILED_TO_GET_CACHE_STATS)
+        raise HTTPException(status_code=500, detail=_safe_error_message(e))
 
 
 @router.post(
@@ -235,7 +255,7 @@ async def update_cache_config(
         raise
     except Exception as e:
         logger.error(f"Error updating cache config: {e}")
-        raise HTTPException(status_code=500, detail=FAILED_TO_UPDATE_CACHE_CONFIG)
+        raise HTTPException(status_code=500, detail=_safe_error_message(e))
 
 
 @router.post(
@@ -279,7 +299,7 @@ async def invalidate_cache(
         raise
     except Exception as e:
         logger.error(f"Error invalidating cache: {e}")
-        raise HTTPException(status_code=500, detail=FAILED_TO_INVALIDATE_CACHE)
+        raise HTTPException(status_code=500, detail=_safe_error_message(e))
 
 
 @router.post(
@@ -321,7 +341,7 @@ async def optimize_cache(
         raise
     except Exception as e:
         logger.error(f"Error optimizing cache: {e}")
-        raise HTTPException(status_code=500, detail=FAILED_TO_OPTIMIZE_CACHE)
+        raise HTTPException(status_code=500, detail=_safe_error_message(e))
 
 
 @router.get(
@@ -373,7 +393,7 @@ async def get_cache_entries(
         raise
     except Exception as e:
         logger.error(f"Error getting cache entries: {e}")
-        raise HTTPException(status_code=500, detail=FAILED_TO_GET_CACHE_ENTRIES)
+        raise HTTPException(status_code=500, detail=_safe_error_message(e))
 
 
 @router.get(
@@ -433,7 +453,7 @@ async def get_freshness_metrics(
         raise
     except Exception as e:
         logger.error(f"Error getting freshness metrics: {e}")
-        raise HTTPException(status_code=500, detail=FAILED_TO_GET_FRESHNESS_METRICS)
+        raise HTTPException(status_code=500, detail=_safe_error_message(e))
 
 
 @router.get(
@@ -473,7 +493,7 @@ async def get_invalidation_rules(
         raise
     except Exception as e:
         logger.error(f"Error getting invalidation rules: {e}")
-        raise HTTPException(status_code=500, detail=FAILED_TO_GET_INVALIDATION_RULES)
+        raise HTTPException(status_code=500, detail=_safe_error_message(e))
 
 
 @router.post(
@@ -522,7 +542,7 @@ async def create_invalidation_rule(
         raise
     except Exception as e:
         logger.error(f"Error creating invalidation rule: {e}")
-        raise HTTPException(status_code=500, detail=FAILED_TO_CREATE_INVALIDATION_RULE)
+        raise HTTPException(status_code=500, detail=_safe_error_message(e))
 
 
 @router.delete(
@@ -551,7 +571,7 @@ async def delete_invalidation_rule(
         raise
     except Exception as e:
         logger.error(f"Error deleting invalidation rule: {e}")
-        raise HTTPException(status_code=500, detail=FAILED_TO_DELETE_INVALIDATION_RULE)
+        raise HTTPException(status_code=500, detail=_safe_error_message(e))
 
 
 @router.get(
@@ -579,7 +599,7 @@ async def get_git_invalidation_stats(
         raise
     except Exception as e:
         logger.error(f"Error getting git invalidation stats: {e}")
-        raise HTTPException(status_code=500, detail=FAILED_TO_GET_GIT_STATS)
+        raise HTTPException(status_code=500, detail=_safe_error_message(e))
 
 
 @router.post(
@@ -608,7 +628,7 @@ async def start_git_monitoring(
         raise
     except Exception as e:
         logger.error(f"Error starting git monitoring: {e}")
-        raise HTTPException(status_code=500, detail=FAILED_TO_START_GIT_MONITORING)
+        raise HTTPException(status_code=500, detail=_safe_error_message(e))
 
 
 @router.post(
@@ -636,7 +656,7 @@ async def stop_git_monitoring(
         raise
     except Exception as e:
         logger.error(f"Error stopping git monitoring: {e}")
-        raise HTTPException(status_code=500, detail=FAILED_TO_STOP_GIT_MONITORING)
+        raise HTTPException(status_code=500, detail=_safe_error_message(e))
 
 
 @router.get(
@@ -664,7 +684,7 @@ async def check_git_invalidation(
         raise
     except Exception as e:
         logger.error(f"Error checking git invalidation: {e}")
-        raise HTTPException(status_code=500, detail=FAILED_TO_CHECK_GIT_INVALIDATION)
+        raise HTTPException(status_code=500, detail=_safe_error_message(e))
 
 
 @router.post(
@@ -732,7 +752,7 @@ async def export_cache_data(
         raise
     except Exception as e:
         logger.error(f"Error starting cache export: {e}")
-        raise HTTPException(status_code=500, detail=FAILED_TO_START_CACHE_EXPORT)
+        raise HTTPException(status_code=500, detail=_safe_error_message(e))
 
 
 @router.get(
@@ -800,7 +820,7 @@ async def cache_health_check(
         raise
     except Exception as e:
         logger.error(f"Error performing health check: {e}")
-        raise HTTPException(status_code=500, detail=FAILED_TO_PERFORM_HEALTH_CHECK)
+        raise HTTPException(status_code=500, detail=_safe_error_message(e))
 
 
 # Utility function to include router in FastAPI app
