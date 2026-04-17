@@ -171,10 +171,16 @@ export function AddProjectModal({
 					for (const match of urlMatches) {
 						const url = match.split("=")[1].trim();
 
+						// Extract hostname from URL (supports both https:// and git@ formats)
+						const hostMatch = url.match(/(?:\/\/|@)([^/:]+)/);
+						const host = hostMatch?.[1]?.toLowerCase() ?? "";
+
 						// Check for Azure DevOps patterns
 						if (
-							url.includes("dev.azure.com") ||
-							url.includes("visualstudio.com")
+							host === "dev.azure.com" ||
+							host.endsWith(".dev.azure.com") ||
+							host === "visualstudio.com" ||
+							host.endsWith(".visualstudio.com")
 						) {
 							setDetectedProvider("azure_devops");
 							setRemoteType("azure");
@@ -182,7 +188,10 @@ export function AddProjectModal({
 						}
 
 						// Check for GitHub patterns
-						if (url.includes("github.com")) {
+						if (
+							host === "github.com" ||
+							host.endsWith(".github.com")
+						) {
 							setDetectedProvider("github");
 							setRemoteType("github");
 							return "github";

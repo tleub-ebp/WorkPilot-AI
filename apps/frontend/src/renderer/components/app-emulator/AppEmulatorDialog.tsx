@@ -125,8 +125,8 @@ function cleanAnsiCodes(text: string): string {
 	// Remove ANSI escape codes (both actual escape codes and text representations like [32m)
 	return text
 		.replace(/\\x1b\\[[0-9;]*m/g, "") // Actual ANSI escape codes
-		.replace(/\[(?:[0-9]+;?)*m/g, "") // Text representations like [32m, [1m, etc.
-		.replace(/\[(?:[0-9]+;?)*[A-Za-z]/g, ""); // Other ANSI sequences
+		.replace(/\[[0-9;]{0,20}m/g, "") // Text representations like [32m, [1m, etc.
+		.replace(/\[[0-9;]{0,20}[A-Za-z]/g, ""); // Other ANSI sequences
 }
 
 /** Render log text with per-line color highlighting based on log level. */

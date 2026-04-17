@@ -52,9 +52,9 @@ export function StreamingTest({ tasks, onTaskStart }: StreamingTestProps) {
 		}
 	};
 
-	// Generate a unique session ID
+	// Generate a unique session ID using cryptographically secure randomness
 	const generateSessionId = () => {
-		const id = `session-${Date.now()}-${Math.random().toString(36).substring(2, 11)}`;
+		const id = `session-${Date.now()}-${crypto.randomUUID().slice(0, 9)}`;
 		setSessionId(id);
 		return id;
 	};

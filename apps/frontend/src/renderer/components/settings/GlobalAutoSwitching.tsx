@@ -1,4 +1,5 @@
 import { getProvider as getRegistryProvider } from "@shared/services/providerRegistry";
+import { detectProvider } from "@shared/utils/provider-detection";
 import { getStaticProviders } from "@shared/utils/providers";
 import {
 	Activity,
@@ -252,22 +253,19 @@ export function GlobalAutoSwitching({
 		// Matching API profile for URL-based identifier
 		const findApiProfile = (providerName: string) =>
 			apiProfiles.find((p) => {
-				const url = p.baseUrl?.toLowerCase() || "";
+				if (p.baseUrl) {
+					const detected = detectProvider(p.baseUrl);
+					if (detected === providerName) return true;
+					if (providerName === "ollama" && detected === "ollama_local") return true;
+				}
 				const n = p.name?.toLowerCase() || "";
-				if (providerName === "openai")
-					return url.includes("openai.com") || n.includes("openai");
-				if (providerName === "google")
-					return url.includes("google.com") || n.includes("gemini");
-				if (providerName === "mistral")
-					return url.includes("mistral.ai") || n.includes("mistral");
-				if (providerName === "deepseek")
-					return url.includes("deepseek.com") || n.includes("deepseek");
-				if (providerName === "grok")
-					return url.includes("x.ai") || n.includes("grok");
-				if (providerName === "windsurf")
-					return url.includes("windsurf") || n.includes("windsurf");
-				if (providerName === "ollama")
-					return url.includes("ollama") || url.includes("localhost");
+				if (providerName === "openai") return n.includes("openai");
+				if (providerName === "google") return n.includes("gemini");
+				if (providerName === "mistral") return n.includes("mistral");
+				if (providerName === "deepseek") return n.includes("deepseek");
+				if (providerName === "grok") return n.includes("grok");
+				if (providerName === "windsurf") return n.includes("windsurf");
+				if (providerName === "ollama") return n.includes("ollama");
 				return false;
 			});
 

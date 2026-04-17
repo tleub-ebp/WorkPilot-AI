@@ -703,19 +703,27 @@ except Exception as e:
 						descriptionParts.push("## Description");
 						descriptionParts.push("");
 						if (safeDescription) {
-							// Strip basic HTML tags from Azure DevOps rich text descriptions
-							const cleanDescription = safeDescription
+							// Strip HTML tags from Azure DevOps rich text descriptions
+							// Use a loop to handle nested/reconstructed tags (e.g., <<script>script>)
+							let cleanDescription = safeDescription
 								.replace(/<br\s*\/?>/gi, "\n")
 								.replace(
 									/<\/?(p|div|li|ul|ol|h[1-6]|span|strong|em|b|i|a|table|tr|td|th|thead|tbody)[^>]*>/gi,
 									"\n",
-								)
-								.replace(/<[^>]+>/g, "")
+								);
+							// Repeatedly strip remaining tags until stable
+							let prev = "";
+							while (prev !== cleanDescription) {
+								prev = cleanDescription;
+								cleanDescription = cleanDescription.replace(/<[^>]+>/g, "");
+							}
+							// Decode HTML entities (order matters: decode &amp; last to avoid double-decode)
+							cleanDescription = cleanDescription
 								.replace(/&nbsp;/g, " ")
-								.replace(/&amp;/g, "&")
 								.replace(/&lt;/g, "<")
 								.replace(/&gt;/g, ">")
 								.replace(/&quot;/g, '"')
+								.replace(/&amp;/g, "&")
 								.replace(/\n{3,}/g, "\n\n")
 								.trim();
 							descriptionParts.push(cleanDescription || safeTitle);
@@ -1006,7 +1014,7 @@ from src.connectors.azure_devops.repos import AzureReposClient
 settings = Settings(
     pat=os.environ['AZURE_DEVOPS_PAT'],
     organization_url=os.environ['AZURE_DEVOPS_ORG_URL'],
-    project='${projectName.replace(/'/g, "\\'")}',
+    project='${projectName.replace(/\\/g, "\\\\").replace(/'/g, "\\'")}',
 )
 client = AzureDevOpsClient.from_settings(settings)
 git_client = client.get_git_client()
@@ -1020,9 +1028,9 @@ thread = GitPullRequestCommentThread(
 
 git_client.create_thread(
     comment_thread=thread,
-    repository_id='${repoId.replace(/'/g, "\\'")}',
+    repository_id='${repoId.replace(/\\/g, "\\\\").replace(/'/g, "\\'")}',
     pull_request_id=${prId},
-    project='${projectName.replace(/'/g, "\\'")}',
+    project='${projectName.replace(/\\/g, "\\\\").replace(/'/g, "\\'")}',
 )
 print(json.dumps({'success': True}))
 `;
