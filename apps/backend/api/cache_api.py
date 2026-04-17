@@ -681,8 +681,13 @@ async def export_cache_data(
         if not export_path:
             export_file = path / "cache_export.json"
         else:
-            export_file = Path(export_path).resolve()
-            if not str(export_file).startswith(str(path)):
+            requested_export_path = Path(export_path)
+            if not requested_export_path.is_absolute():
+                requested_export_path = path / requested_export_path
+            export_file = requested_export_path.resolve()
+            try:
+                export_file.relative_to(path.resolve())
+            except ValueError:
                 raise HTTPException(
                     status_code=400,
                     detail="Export path must be inside the project directory",
