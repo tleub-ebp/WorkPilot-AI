@@ -155,5 +155,23 @@
 		"pathChangeWarningDescription": "Le changement d'installation CLI utilisera un binaire CLI IA différent. Les sessions en cours continueront à utiliser l'installation précédente jusqu'à leur redémarrage.",
 		"switchInstallationConfirm": "Changer",
 		"versionUnknown": "version inconnue"
+	},
+	"codex": {
+		"checking": "Vérification Codex CLI...",
+		"installed": "Codex CLI installé",
+		"installedWithVersion": "Codex CLI ({{version}})",
+		"updateAvailableWithVersion": "Codex CLI ({{version}}) - mise à jour disponible",
+		"notFound": "Codex CLI non trouvé",
+		"error": "Erreur Codex CLI",
+		"installedShort": "Installé",
+		"updateAvailableShort": "Mise à jour disponible",
+		"notInstalledShort": "Non installé",
+		"checkingShort": "Vérification...",
+		"current": "Actuelle",
+		"latest": "Dernière",
+		"lastChecked": "Dernière vérification",
+		"notInstalledDescription": "Codex CLI n'est pas installé. Cliquez sur « Installer » pour l'installer via pnpm en arrière-plan :",
+		"installing": "Installation en cours, merci de patienter...",
+		"viewDocs": "Voir la documentation Codex CLI"
 	}
 }
