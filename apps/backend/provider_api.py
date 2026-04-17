@@ -1512,7 +1512,13 @@ def _load_dashboard_snapshot(project_id: str) -> dict:
     import json as _json
     from pathlib import Path as _Path
 
-    project_path = _Path(project_id).resolve()
+    base_dir = _Path.cwd().resolve()
+    try:
+        project_path = (base_dir / project_id).resolve()
+        project_path.relative_to(base_dir)
+    except Exception:
+        return {}
+
     if not project_path.is_dir():
         return {}
     snap_path = project_path / ".workpilot" / "dashboard_snapshot.json"
