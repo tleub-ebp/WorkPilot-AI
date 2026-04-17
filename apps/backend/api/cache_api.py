@@ -660,6 +660,7 @@ async def check_git_invalidation(
 @router.post(
     "/export",
     responses={
+        400: {"description": "Export path must be inside the project directory"},
         404: {"description": PROJECT_PATH_NOT_FOUND},
         500: {"description": FAILED_TO_START_CACHE_EXPORT},
     },
