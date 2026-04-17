@@ -171,9 +171,7 @@ async def get_cache_stats(
         raise
     except Exception as e:
         logger.error(f"Error getting cache stats: {e}")
-        raise HTTPException(
-            status_code=500, detail=FAILED_TO_GET_CACHE_STATS
-        )
+        raise HTTPException(status_code=500, detail=FAILED_TO_GET_CACHE_STATS)
 
 
 @router.post(
@@ -216,9 +214,7 @@ async def update_cache_config(
         raise
     except Exception as e:
         logger.error(f"Error updating cache config: {e}")
-        raise HTTPException(
-            status_code=500, detail=FAILED_TO_UPDATE_CACHE_CONFIG
-        )
+        raise HTTPException(status_code=500, detail=FAILED_TO_UPDATE_CACHE_CONFIG)
 
 
 @router.post(
@@ -262,9 +258,7 @@ async def invalidate_cache(
         raise
     except Exception as e:
         logger.error(f"Error invalidating cache: {e}")
-        raise HTTPException(
-            status_code=500, detail=FAILED_TO_INVALIDATE_CACHE
-        )
+        raise HTTPException(status_code=500, detail=FAILED_TO_INVALIDATE_CACHE)
 
 
 @router.post(
@@ -306,9 +300,7 @@ async def optimize_cache(
         raise
     except Exception as e:
         logger.error(f"Error optimizing cache: {e}")
-        raise HTTPException(
-            status_code=500, detail=FAILED_TO_OPTIMIZE_CACHE
-        )
+        raise HTTPException(status_code=500, detail=FAILED_TO_OPTIMIZE_CACHE)
 
 
 @router.get(
@@ -360,9 +352,7 @@ async def get_cache_entries(
         raise
     except Exception as e:
         logger.error(f"Error getting cache entries: {e}")
-        raise HTTPException(
-            status_code=500, detail=FAILED_TO_GET_CACHE_ENTRIES
-        )
+        raise HTTPException(status_code=500, detail=FAILED_TO_GET_CACHE_ENTRIES)
 
 
 @router.get(
@@ -422,9 +412,7 @@ async def get_freshness_metrics(
         raise
     except Exception as e:
         logger.error(f"Error getting freshness metrics: {e}")
-        raise HTTPException(
-            status_code=500, detail=FAILED_TO_GET_FRESHNESS_METRICS
-        )
+        raise HTTPException(status_code=500, detail=FAILED_TO_GET_FRESHNESS_METRICS)
 
 
 @router.get(
@@ -464,9 +452,7 @@ async def get_invalidation_rules(
         raise
     except Exception as e:
         logger.error(f"Error getting invalidation rules: {e}")
-        raise HTTPException(
-            status_code=500, detail=FAILED_TO_GET_INVALIDATION_RULES
-        )
+        raise HTTPException(status_code=500, detail=FAILED_TO_GET_INVALIDATION_RULES)
 
 
 @router.post(
@@ -515,9 +501,7 @@ async def create_invalidation_rule(
         raise
     except Exception as e:
         logger.error(f"Error creating invalidation rule: {e}")
-        raise HTTPException(
-            status_code=500, detail=FAILED_TO_CREATE_INVALIDATION_RULE
-        )
+        raise HTTPException(status_code=500, detail=FAILED_TO_CREATE_INVALIDATION_RULE)
 
 
 @router.delete(
@@ -546,9 +530,7 @@ async def delete_invalidation_rule(
         raise
     except Exception as e:
         logger.error(f"Error deleting invalidation rule: {e}")
-        raise HTTPException(
-            status_code=500, detail=FAILED_TO_DELETE_INVALIDATION_RULE
-        )
+        raise HTTPException(status_code=500, detail=FAILED_TO_DELETE_INVALIDATION_RULE)
 
 
 @router.get(
@@ -576,9 +558,7 @@ async def get_git_invalidation_stats(
         raise
     except Exception as e:
         logger.error(f"Error getting git invalidation stats: {e}")
-        raise HTTPException(
-            status_code=500, detail=FAILED_TO_GET_GIT_STATS
-        )
+        raise HTTPException(status_code=500, detail=FAILED_TO_GET_GIT_STATS)
 
 
 @router.post(
@@ -607,9 +587,7 @@ async def start_git_monitoring(
         raise
     except Exception as e:
         logger.error(f"Error starting git monitoring: {e}")
-        raise HTTPException(
-            status_code=500, detail=FAILED_TO_START_GIT_MONITORING
-        )
+        raise HTTPException(status_code=500, detail=FAILED_TO_START_GIT_MONITORING)
 
 
 @router.post(
@@ -637,9 +615,7 @@ async def stop_git_monitoring(
         raise
     except Exception as e:
         logger.error(f"Error stopping git monitoring: {e}")
-        raise HTTPException(
-            status_code=500, detail=FAILED_TO_STOP_GIT_MONITORING
-        )
+        raise HTTPException(status_code=500, detail=FAILED_TO_STOP_GIT_MONITORING)
 
 
 @router.get(
@@ -667,9 +643,7 @@ async def check_git_invalidation(
         raise
     except Exception as e:
         logger.error(f"Error checking git invalidation: {e}")
-        raise HTTPException(
-            status_code=500, detail=FAILED_TO_CHECK_GIT_INVALIDATION
-        )
+        raise HTTPException(status_code=500, detail=FAILED_TO_CHECK_GIT_INVALIDATION)
 
 
 @router.post(
@@ -727,9 +701,7 @@ async def export_cache_data(
         raise
     except Exception as e:
         logger.error(f"Error starting cache export: {e}")
-        raise HTTPException(
-            status_code=500, detail=FAILED_TO_START_CACHE_EXPORT
-        )
+        raise HTTPException(status_code=500, detail=FAILED_TO_START_CACHE_EXPORT)
 
 
 @router.get(
@@ -797,9 +769,7 @@ async def cache_health_check(
         raise
     except Exception as e:
         logger.error(f"Error performing health check: {e}")
-        raise HTTPException(
-            status_code=500, detail=FAILED_TO_PERFORM_HEALTH_CHECK
-        )
+        raise HTTPException(status_code=500, detail=FAILED_TO_PERFORM_HEALTH_CHECK)
 
 
 # Utility function to include router in FastAPI app

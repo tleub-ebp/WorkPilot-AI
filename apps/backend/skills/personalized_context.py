@@ -355,9 +355,9 @@ class PersonalizedSkillManager:
 
     def start_session(self, user_id: str, project_id: str | None = None) -> str:
         """Start a personalized session."""
-        session_id = hashlib.sha256(f"{user_id}:{project_id}:{time.time()}".encode()).hexdigest()[
-            :16
-        ]
+        session_id = hashlib.sha256(
+            f"{user_id}:{project_id}:{time.time()}".encode()
+        ).hexdigest()[:16]
 
         self.active_sessions.add(session_id)
 

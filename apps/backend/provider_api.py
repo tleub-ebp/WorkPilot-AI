@@ -336,7 +336,11 @@ def get_provider_status(provider: str):
 
         return {"available": True, "authenticated": True}
     except Exception as e:
-        return {"available": False, "authenticated": False, "error": _safe_error_message(e)}
+        return {
+            "available": False,
+            "authenticated": False,
+            "error": _safe_error_message(e),
+        }
 
 
 @app.get("/providers")
@@ -1931,7 +1935,10 @@ def analyze_test_coverage(
             ],
         }  # added closing brace here
     except Exception as e:
-        return {"success": False, "error": _safe_error_message(e)}  # added except block here
+        return {
+            "success": False,
+            "error": _safe_error_message(e),
+        }  # added except block here
 
 
 @app.post("/api/test-generation/generate-unit-tests")
