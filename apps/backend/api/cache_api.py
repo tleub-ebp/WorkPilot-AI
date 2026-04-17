@@ -7,6 +7,7 @@ Provides endpoints for cache monitoring, management, and configuration.
 """
 
 import logging
+import os
 import time
 from pathlib import Path
 from typing import Annotated, Any
@@ -47,6 +48,15 @@ from .intelligent_context_cache import CacheConfig, get_context_cache
 def _validate_project_path(project_path: str) -> Path:
     """Validate and resolve a project path, preventing path traversal attacks."""
     path = Path(project_path).resolve()
+
+    # Restrict user-provided paths to a trusted base directory.
+    # Can be configured via CACHE_API_ALLOWED_PROJECT_ROOT, defaults to current working directory.
+    allowed_root = Path(os.getenv("CACHE_API_ALLOWED_PROJECT_ROOT", str(Path.cwd()))).resolve()
+    try:
+        path.relative_to(allowed_root)
+    except ValueError as exc:
+        raise HTTPException(status_code=404, detail=PROJECT_PATH_NOT_FOUND) from exc
+
     # Ensure the resolved path is an existing directory (not a file or symlink to unexpected location)
     if not path.is_dir():
         raise HTTPException(status_code=404, detail=PROJECT_PATH_NOT_FOUND)
