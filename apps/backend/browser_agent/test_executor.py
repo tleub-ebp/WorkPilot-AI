@@ -142,7 +142,7 @@ class TestExecutor:
                 capture_output=True,
                 text=True,
                 timeout=300,
-                shell=True,
+                shell=False,
             )
             duration = (time.time() - start) * 1000
 

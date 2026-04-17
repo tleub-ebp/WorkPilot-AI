@@ -220,7 +220,7 @@ class ContentCompressor:
         return {
             "preview": text[:200] + "..." if len(text) > 200 else text,
             "length": len(text),
-            "hash": hashlib.md5(text.encode()).hexdigest()[:8],
+            "hash": hashlib.md5(text.encode(), usedforsecurity=False).hexdigest()[:8],
             "_type": "compressed_string",
         }
 
@@ -233,7 +233,8 @@ class ContentCompressor:
 
             for key, value in content.items():
                 value_hash = hashlib.md5(
-                    json.dumps(value, sort_keys=True, default=str).encode()
+                    json.dumps(value, sort_keys=True, default=str).encode(),
+                    usedforsecurity=False,
                 ).hexdigest()
                 if value_hash not in seen_values:
                     deduplicated[key] = value
@@ -251,7 +252,8 @@ class ContentCompressor:
 
             for item in content:
                 item_hash = hashlib.md5(
-                    json.dumps(item, sort_keys=True, default=str).encode()
+                    json.dumps(item, sort_keys=True, default=str).encode(),
+                    usedforsecurity=False,
                 ).hexdigest()
                 if item_hash not in seen_items:
                     deduplicated.append(item)
@@ -499,7 +501,8 @@ class TokenOptimizer:
     def _generate_cache_key(self, content: Any, content_type: str) -> str:
         """Generate cache key for content."""
         content_hash = hashlib.md5(
-            json.dumps(content, sort_keys=True, default=str).encode()
+            json.dumps(content, sort_keys=True, default=str).encode(),
+            usedforsecurity=False,
         ).hexdigest()
         return f"{content_type}:{content_hash}"
 
@@ -511,7 +514,7 @@ class TokenOptimizer:
                 if isinstance(value, str) and len(value) > 100:
                     # Replace long strings with references
                     optimized[key] = (
-                        f"[ref:{hashlib.md5(value.encode()).hexdigest()[:8]}]"
+                        f"[ref:{hashlib.md5(value.encode(), usedforsecurity=False).hexdigest()[:8]}]"
                     )
                 else:
                     optimized[key] = value
@@ -521,7 +524,7 @@ class TokenOptimizer:
             for item in content:
                 if isinstance(item, str) and len(item) > 100:
                     optimized.append(
-                        f"[ref:{hashlib.md5(item.encode()).hexdigest()[:8]}]"
+                        f"[ref:{hashlib.md5(item.encode(), usedforsecurity=False).hexdigest()[:8]}]"
                     )
                 else:
                     optimized.append(item)
