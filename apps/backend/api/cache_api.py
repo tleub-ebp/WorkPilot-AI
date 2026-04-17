@@ -67,31 +67,29 @@ from .intelligent_context_cache import CacheConfig, get_context_cache
 
 def _validate_project_path(project_path: str) -> Path:
     """Validate and resolve a project path, preventing path traversal attacks."""
-    # Convert to Path object and resolve to absolute path
-    path = Path(project_path)
-    try:
-        resolved = path.resolve()
-    except (OSError, RuntimeError):
-        # If resolve fails, fall back to realpath
-        resolved = Path(os.path.realpath(os.path.normpath(project_path)))
+    # Normalize and resolve the path using os.path functions first
+    normalized = os.path.normpath(project_path)
+    resolved = os.path.realpath(normalized)
 
     # Restrict user-provided paths to a trusted base directory.
-    allowed_root = Path(
+    allowed_root = os.path.realpath(
         os.getenv("CACHE_API_ALLOWED_PROJECT_ROOT", os.getcwd())
-    ).resolve()
+    )
 
     # Case-insensitive comparison for Windows compatibility
-    resolved_str = str(resolved).casefold()
-    allowed_str = str(allowed_root).casefold()
+    resolved_str = resolved.casefold()
+    allowed_str = allowed_root.casefold()
     sep = os.sep
 
     if not resolved_str.startswith(allowed_str + sep) and resolved_str != allowed_str:
         raise HTTPException(status_code=404, detail=PROJECT_PATH_NOT_FOUND)
 
     # Ensure the resolved path is an existing directory
-    if not resolved.is_dir():
+    if not os.path.isdir(resolved):
         raise HTTPException(status_code=404, detail=PROJECT_PATH_NOT_FOUND)
-    return resolved
+
+    # Return as Path object for downstream use
+    return Path(resolved)
 
 
 # Pydantic models for API
