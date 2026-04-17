@@ -47,20 +47,21 @@ from .intelligent_context_cache import CacheConfig, get_context_cache
 
 def _validate_project_path(project_path: str) -> Path:
     """Validate and resolve a project path, preventing path traversal attacks."""
-    path = Path(project_path).resolve()
+    # Normalize the path to remove traversal sequences (../../ etc.)
+    normalized = os.path.normpath(project_path)
+    resolved = os.path.realpath(normalized)
 
     # Restrict user-provided paths to a trusted base directory.
-    # Can be configured via CACHE_API_ALLOWED_PROJECT_ROOT, defaults to current working directory.
-    allowed_root = Path(os.getenv("CACHE_API_ALLOWED_PROJECT_ROOT", str(Path.cwd()))).resolve()
-    try:
-        path.relative_to(allowed_root)
-    except ValueError as exc:
-        raise HTTPException(status_code=404, detail=PROJECT_PATH_NOT_FOUND) from exc
-
-    # Ensure the resolved path is an existing directory (not a file or symlink to unexpected location)
-    if not path.is_dir():
+    allowed_root = os.path.realpath(
+        os.getenv("CACHE_API_ALLOWED_PROJECT_ROOT", os.getcwd())
+    )
+    if not resolved.startswith(allowed_root + os.sep) and resolved != allowed_root:
         raise HTTPException(status_code=404, detail=PROJECT_PATH_NOT_FOUND)
-    return path
+
+    # Ensure the resolved path is an existing directory
+    if not os.path.isdir(resolved):
+        raise HTTPException(status_code=404, detail=PROJECT_PATH_NOT_FOUND)
+    return Path(resolved)
 
 
 # Pydantic models for API
@@ -681,17 +682,21 @@ async def export_cache_data(
         if not export_path:
             export_file = path / "cache_export.json"
         else:
-            requested_export_path = Path(export_path)
-            if not requested_export_path.is_absolute():
-                requested_export_path = path / requested_export_path
-            export_file = requested_export_path.resolve()
-            try:
-                export_file.relative_to(path.resolve())
-            except ValueError:
+            project_dir = os.path.realpath(str(path))
+            resolved_export = os.path.realpath(
+                os.path.join(project_dir, export_path)
+                if not os.path.isabs(export_path)
+                else os.path.normpath(export_path)
+            )
+            if (
+                not resolved_export.startswith(project_dir + os.sep)
+                and resolved_export != project_dir
+            ):
                 raise HTTPException(
                     status_code=400,
                     detail="Export path must be inside the project directory",
                 )
+            export_file = Path(resolved_export)
 
         # Export cache data in background
         def export_data():
