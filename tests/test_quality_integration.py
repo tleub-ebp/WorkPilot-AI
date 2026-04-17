@@ -1,8 +1,10 @@
 ﻿"""Tests for Quality Badge and Integration modules"""
 
+import re
 import sys
 import tempfile
 from pathlib import Path
+from urllib.parse import urlparse
 
 import pytest
 
@@ -81,7 +83,10 @@ class TestQualityBadgeFormatter:
         badge = formatter.generate_markdown_badge(sample_score)
         
         assert "![Code Quality]" in badge
-        assert "shields.io" in badge
+        match = re.search(r"\]\(([^)]+)\)", badge)
+        assert match is not None
+        parsed = urlparse(match.group(1))
+        assert parsed.hostname in {"shields.io", "www.shields.io"}
         assert "PASSING" in badge or "FAILING" in badge
 
     def test_markdown_summary(self, sample_score):
