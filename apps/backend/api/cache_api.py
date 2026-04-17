@@ -55,7 +55,8 @@ def _validate_project_path(project_path: str) -> Path:
     allowed_root = os.path.realpath(
         os.getenv("CACHE_API_ALLOWED_PROJECT_ROOT", os.getcwd())
     )
-    if not resolved.startswith(allowed_root + os.sep) and resolved != allowed_root:
+    # Use normcase for case-insensitive comparison on Windows
+    if not os.path.normcase(resolved).startswith(os.path.normcase(allowed_root) + os.sep) and resolved != allowed_root:
         raise HTTPException(status_code=404, detail=PROJECT_PATH_NOT_FOUND)
 
     # Ensure the resolved path is an existing directory
