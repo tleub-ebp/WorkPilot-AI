@@ -5,6 +5,7 @@
 
 import { PROVIDER_MODELS_MAP } from "../constants/models";
 import type { APIProfile } from "../types/profile";
+import { detectProvider, urlMatchesDomain } from "../utils/provider-detection";
 
 export interface Provider {
 	name: string;
@@ -361,69 +362,26 @@ class ProviderRegistry {
 	 * Détecte le provider à partir d'un profil
 	 */
 	private detectProviderFromProfile(profile: APIProfile): string {
-		// Logique de détection existante
-		if (
-			profile.baseUrl?.includes("anthropic.com") ||
-			profile.name?.toLowerCase().includes("claude")
-		) {
-			return "anthropic";
+		// Use hostname-safe URL detection when baseUrl is available
+		if (profile.baseUrl) {
+			const detected = detectProvider(profile.baseUrl);
+			if (detected !== "unknown" && detected !== "ollama_local") {
+				return detected;
+			}
 		}
-		if (
-			profile.baseUrl?.includes("openai.com") ||
-			profile.name?.toLowerCase().includes("openai")
-		) {
-			return "openai";
-		}
-		if (
-			profile.baseUrl?.includes("google.com") ||
-			profile.name?.toLowerCase().includes("gemini")
-		) {
-			return "google";
-		}
-		if (
-			profile.baseUrl?.includes("meta.com") ||
-			profile.name?.toLowerCase().includes("llama")
-		) {
-			return "meta";
-		}
-		if (
-			profile.baseUrl?.includes("mistral.ai") ||
-			profile.name?.toLowerCase().includes("mistral")
-		) {
-			return "mistral";
-		}
-		if (
-			profile.baseUrl?.includes("deepseek.com") ||
-			profile.name?.toLowerCase().includes("deepseek")
-		) {
-			return "deepseek";
-		}
-		if (
-			profile.baseUrl?.includes("aws.amazon.com") ||
-			profile.name?.toLowerCase().includes("bedrock")
-		) {
-			return "aws";
-		}
-		if (
-			profile.baseUrl?.includes("ollama") ||
-			profile.name?.toLowerCase().includes("ollama")
-		) {
-			return "ollama";
-		}
-		if (
-			profile.baseUrl?.includes("x.ai") ||
-			profile.name?.toLowerCase().includes("grok")
-		) {
-			return "grok";
-		}
-		if (
-			profile.baseUrl?.includes("codeium.com") ||
-			profile.baseUrl?.includes("windsurf.com") ||
-			profile.baseUrl?.includes("windsurf.ai") ||
-			profile.name?.toLowerCase().includes("windsurf")
-		) {
-			return "windsurf";
-		}
+
+		// Fallback to name-based detection
+		const nameLower = profile.name?.toLowerCase() ?? "";
+		if (nameLower.includes("claude")) return "anthropic";
+		if (nameLower.includes("openai")) return "openai";
+		if (nameLower.includes("gemini")) return "google";
+		if (nameLower.includes("llama")) return "meta";
+		if (nameLower.includes("mistral")) return "mistral";
+		if (nameLower.includes("deepseek")) return "deepseek";
+		if (nameLower.includes("bedrock")) return "aws";
+		if (nameLower.includes("ollama")) return "ollama";
+		if (nameLower.includes("grok")) return "grok";
+		if (nameLower.includes("windsurf")) return "windsurf";
 
 		return "custom";
 	}

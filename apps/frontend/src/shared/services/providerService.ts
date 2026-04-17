@@ -7,6 +7,7 @@
  */
 
 import type { APIProfile } from "@shared/types/profile";
+import { detectProvider, urlMatchesDomain } from "@shared/utils/provider-detection";
 import { providerRegistry } from "./providerRegistry";
 
 export interface Provider {
@@ -374,28 +375,21 @@ class ProviderServiceClass {
 		detectedProvider: string,
 		baseUrlLower: string,
 	): boolean {
+		// Use hostname-safe URL parsing via detectProvider
+		const detected = detectProvider(baseUrlLower);
 		switch (providerName) {
 			case "gemini":
 			case "google":
-				return (
-					baseUrlLower.includes("googleapis.com") ||
-					baseUrlLower.includes("generativelanguage.googleapis.com")
-				);
+				return detected === "google";
 			case "mistral":
-				return (
-					baseUrlLower.includes("mistral.ai") ||
-					baseUrlLower.includes("api.mistral.ai")
-				);
+				return detected === "mistral";
 			case "windsurf":
-				return (
-					baseUrlLower.includes("codeium.com") ||
-					baseUrlLower.includes("windsurf.com") ||
-					baseUrlLower.includes("windsurf.ai")
-				);
+				return detected === "windsurf";
 			default:
 				return (
+					detected === providerName ||
 					detectedProvider === providerName ||
-					(providerName === "claude" && detectedProvider === "anthropic")
+					(providerName === "claude" && (detected === "anthropic" || detectedProvider === "anthropic"))
 				);
 		}
 	}

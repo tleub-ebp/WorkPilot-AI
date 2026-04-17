@@ -126,22 +126,28 @@ function detectDotnet(projectPath: string): DetectedRoute[] {
 		const tag = controllerName.toLowerCase();
 
 		// Method-level [HttpVerb] attributes with optional sub-path + XML doc summary
+		// Two-pass approach to avoid ReDoS from nested quantifiers
 		const methodRe =
-			/(?:\/\/\/\s*<summary>\s*((?:\/\/\/[^\n]*\n?)*?)\/\/\/\s*<\/summary>[\s\S]{0,600}?)?(\[Http(Get|Post|Put|Delete|Patch)(?:\(["']?([^"')\]]*?)["']?\))?\])/g;
+			/\[Http(Get|Post|Put|Delete|Patch)(?:\(["']?([^"')\]]*?)["']?\))?\]/g;
 
 		let m: RegExpExecArray | null;
 		// biome-ignore lint/suspicious/noAssignInExpressions: intentional assignment
 		while ((m = methodRe.exec(content)) !== null) {
-			const rawSummary = m[1] ?? "";
-			const summary =
-				rawSummary
-					.split("\n")
-					.map((l) => l.replace(/^\s*\/\/\/\s*/, "").trim())
-					.filter(Boolean)
-					.join(" ") || undefined;
+			// Extract XML doc summary from the preceding context (separate pass to avoid ReDoS)
+			const preceding = content.slice(Math.max(0, m.index - 600), m.index);
+			const summaryMatch = preceding.match(
+				/<summary>\s*([\s\S]*?)<\/summary>/,
+			);
+			const summary = summaryMatch
+				? summaryMatch[1]
+						.split("\n")
+						.map((l) => l.replace(/^\s*\/\/\/\s*/, "").trim())
+						.filter(Boolean)
+						.join(" ") || undefined
+				: undefined;
 
-			const verb = m[3];
-			const subPath = (m[4] ?? "").trim().replace(/^["']|["']$/g, "");
+			const verb = m[1];
+			const subPath = (m[2] ?? "").trim().replace(/^["']|["']$/g, "");
 			const method = verbMap[verb] ?? verb.toUpperCase();
 
 			const fullPath = subPath

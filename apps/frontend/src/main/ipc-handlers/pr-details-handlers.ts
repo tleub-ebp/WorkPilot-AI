@@ -43,12 +43,21 @@ export function registerPRDetailsHandlers(): void {
 				}
 
 				// Detect platform from URL and route accordingly
-				if (
-					prUrl.includes("dev.azure.com") ||
-					prUrl.includes("/pullrequest/")
-				) {
+				const isAzure = (() => {
+					try {
+						const host = new URL(prUrl).hostname;
+						return host === "dev.azure.com" || host.endsWith(".dev.azure.com") || host.endsWith(".visualstudio.com");
+					} catch { return prUrl.includes("/pullrequest/"); }
+				})();
+				const isGitHub = (() => {
+					try {
+						const host = new URL(prUrl).hostname;
+						return host === "github.com" || host.endsWith(".github.com");
+					} catch { return prUrl.includes("/pull/"); }
+				})();
+				if (isAzure) {
 					return getAzureDevOpsPRDetails(prNumber, prUrl, project);
-				} else if (prUrl.includes("github.com") || prUrl.includes("/pull/")) {
+				} else if (isGitHub) {
 					return getGitHubPRDetails(prNumber, prUrl, project);
 				} else {
 					return {

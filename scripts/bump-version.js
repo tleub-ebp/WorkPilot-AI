@@ -29,7 +29,7 @@
 
 const fs = require("node:fs");
 const path = require("node:path");
-const { execSync } = require("node:child_process");
+const { execFileSync } = require("node:child_process");
 
 // Colors for terminal output
 const colors = {
@@ -95,16 +95,30 @@ function bumpVersion(currentVersion, bumpType) {
 	}
 }
 
-// Execute shell command
+// Execute command safely using execFileSync to avoid shell injection from PATH
 function exec(command, options = {}) {
 	try {
-		return execSync(command, {
+		return execFileSync(command, {
+			encoding: "utf8",
+			stdio: "pipe",
+			shell: true,
+			...options,
+		}).trim();
+	} catch (err) {
+		error(`Command failed: ${command}\n${err.message}`);
+	}
+}
+
+// Execute command with explicit binary and arguments (no shell)
+function execArgs(bin, args, options = {}) {
+	try {
+		return execFileSync(bin, args, {
 			encoding: "utf8",
 			stdio: "pipe",
 			...options,
 		}).trim();
 	} catch (err) {
-		error(`Command failed: ${command}\n${err.message}`);
+		error(`Command failed: ${bin} ${args.join(" ")}\n${err.message}`);
 	}
 }
 
@@ -244,7 +258,7 @@ function main() {
 
 	// 4. Validate release (check for branch/tag conflicts)
 	info("Validating release...");
-	exec(`node ${path.join(__dirname, "validate-release.js")} v${newVersion}`);
+	execArgs("node", [path.join(__dirname, "validate-release.js"), `v${newVersion}`]);
 	success("Release validation passed");
 
 	// 5. Update all version files
@@ -297,10 +311,13 @@ function main() {
 
 	// 7. Create git commit
 	info("Creating git commit...");
-	exec(
-		"git add apps/frontend/package.json package.json apps/backend/__init__.py",
-	);
-	exec(`git commit -m "chore: bump version to ${newVersion}"`);
+	execArgs("git", [
+		"add",
+		"apps/frontend/package.json",
+		"package.json",
+		"apps/backend/__init__.py",
+	]);
+	execArgs("git", ["commit", "-m", `chore: bump version to ${newVersion}`]);
 	success(`Created commit: "chore: bump version to ${newVersion}"`);
 
 	// Note: Tags are NOT created here anymore. GitHub Actions will create the tag

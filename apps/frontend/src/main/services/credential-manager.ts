@@ -169,18 +169,8 @@ export class CredentialManager extends EventEmitter {
 	 * Détecter le provider depuis l'URL de base
 	 */
 	private detectProviderFromUrl(baseUrl: string): string {
-		if (baseUrl.includes("anthropic.com")) return "anthropic";
-		if (baseUrl.includes("openai.com")) return "openai";
-		if (baseUrl.includes("api.mistral.ai")) return "mistral";
-		if (baseUrl.includes("generativelanguage.googleapis.com")) return "google";
-		if (baseUrl.includes("api.deepseek.com")) return "deepseek";
-		if (
-			baseUrl.includes("codeium.com") ||
-			baseUrl.includes("windsurf.com") ||
-			baseUrl.includes("windsurf.ai")
-		)
-			return "windsurf";
-		return "custom";
+		const detected = detectProvider(baseUrl);
+		return detected === "unknown" ? "custom" : detected;
 	}
 
 	/**

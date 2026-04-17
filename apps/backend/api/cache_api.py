@@ -44,6 +44,15 @@ from .git_cache_invalidation import GitBasedCacheInvalidator
 from .intelligent_context_cache import CacheConfig, get_context_cache
 
 
+def _validate_project_path(project_path: str) -> Path:
+    """Validate and resolve a project path, preventing path traversal attacks."""
+    path = Path(project_path).resolve()
+    # Ensure the resolved path is an existing directory (not a file or symlink to unexpected location)
+    if not path.is_dir():
+        raise HTTPException(status_code=404, detail=PROJECT_PATH_NOT_FOUND)
+    return path
+
+
 # Pydantic models for API
 class CacheConfigRequest(BaseModel):
     """Request model for cache configuration."""
@@ -149,9 +158,7 @@ async def get_cache_stats(
 ) -> CacheStatsResponse:
     """Get comprehensive cache statistics."""
     try:
-        path = Path(project_path)
-        if not path.exists():
-            raise HTTPException(status_code=404, detail=PROJECT_PATH_NOT_FOUND)
+        path = _validate_project_path(project_path)
 
         components = get_cache_components(path)
         context_cache = components["context_cache"]
@@ -160,10 +167,12 @@ async def get_cache_stats(
 
         return CacheStatsResponse(**stats)
 
+    except HTTPException:
+        raise
     except Exception as e:
         logger.error(f"Error getting cache stats: {e}")
         raise HTTPException(
-            status_code=500, detail=f"{FAILED_TO_GET_CACHE_STATS}: {str(e)}"
+            status_code=500, detail=FAILED_TO_GET_CACHE_STATS
         )
 
 
@@ -180,9 +189,7 @@ async def update_cache_config(
 ) -> dict[str, str]:
     """Update cache configuration."""
     try:
-        path = Path(project_path)
-        if not path.exists():
-            raise HTTPException(status_code=404, detail=PROJECT_PATH_NOT_FOUND)
+        path = _validate_project_path(project_path)
 
         components = get_cache_components(path)
         context_cache = components["context_cache"]
@@ -205,10 +212,12 @@ async def update_cache_config(
 
         return {"message": "Cache configuration updated successfully"}
 
+    except HTTPException:
+        raise
     except Exception as e:
         logger.error(f"Error updating cache config: {e}")
         raise HTTPException(
-            status_code=500, detail=f"{FAILED_TO_UPDATE_CACHE_CONFIG}: {str(e)}"
+            status_code=500, detail=FAILED_TO_UPDATE_CACHE_CONFIG
         )
 
 
@@ -226,9 +235,7 @@ async def invalidate_cache(
 ) -> dict[str, Any]:
     """Invalidate cache entries."""
     try:
-        path = Path(project_path)
-        if not path.exists():
-            raise HTTPException(status_code=404, detail=PROJECT_PATH_NOT_FOUND)
+        path = _validate_project_path(project_path)
 
         components = get_cache_components(path)
         context_cache = components["context_cache"]
@@ -251,10 +258,12 @@ async def invalidate_cache(
             - after_stats["cache_size"],
         }
 
+    except HTTPException:
+        raise
     except Exception as e:
         logger.error(f"Error invalidating cache: {e}")
         raise HTTPException(
-            status_code=500, detail=f"{FAILED_TO_INVALIDATE_CACHE}: {str(e)}"
+            status_code=500, detail=FAILED_TO_INVALIDATE_CACHE
         )
 
 
@@ -270,9 +279,7 @@ async def optimize_cache(
 ) -> dict[str, Any]:
     """Optimize cache by removing stale entries."""
     try:
-        path = Path(project_path)
-        if not path.exists():
-            raise HTTPException(status_code=404, detail=PROJECT_PATH_NOT_FOUND)
+        path = _validate_project_path(project_path)
 
         components = get_cache_components(path)
         context_cache = components["context_cache"]
@@ -295,10 +302,12 @@ async def optimize_cache(
             "avg_freshness_after": after_stats["avg_freshness"],
         }
 
+    except HTTPException:
+        raise
     except Exception as e:
         logger.error(f"Error optimizing cache: {e}")
         raise HTTPException(
-            status_code=500, detail=f"{FAILED_TO_OPTIMIZE_CACHE}: {str(e)}"
+            status_code=500, detail=FAILED_TO_OPTIMIZE_CACHE
         )
 
 
@@ -315,9 +324,7 @@ async def get_cache_entries(
 ) -> list[dict[str, Any]]:
     """Get cache entries with metadata."""
     try:
-        path = Path(project_path)
-        if not path.exists():
-            raise HTTPException(status_code=404, detail=PROJECT_PATH_NOT_FOUND)
+        path = _validate_project_path(project_path)
 
         components = get_cache_components(path)
         context_cache = components["context_cache"]
@@ -349,10 +356,12 @@ async def get_cache_entries(
 
         return entries
 
+    except HTTPException:
+        raise
     except Exception as e:
         logger.error(f"Error getting cache entries: {e}")
         raise HTTPException(
-            status_code=500, detail=f"{FAILED_TO_GET_CACHE_ENTRIES}: {str(e)}"
+            status_code=500, detail=FAILED_TO_GET_CACHE_ENTRIES
         )
 
 
@@ -368,9 +377,7 @@ async def get_freshness_metrics(
 ) -> dict[str, Any]:
     """Get detailed freshness metrics for all cache entries."""
     try:
-        path = Path(project_path)
-        if not path.exists():
-            raise HTTPException(status_code=404, detail=PROJECT_PATH_NOT_FOUND)
+        path = _validate_project_path(project_path)
 
         components = get_cache_components(path)
         context_cache = components["context_cache"]
@@ -411,10 +418,12 @@ async def get_freshness_metrics(
             "freshness_metrics": freshness_metrics,
         }
 
+    except HTTPException:
+        raise
     except Exception as e:
         logger.error(f"Error getting freshness metrics: {e}")
         raise HTTPException(
-            status_code=500, detail=f"{FAILED_TO_GET_FRESHNESS_METRICS}: {str(e)}"
+            status_code=500, detail=FAILED_TO_GET_FRESHNESS_METRICS
         )
 
 
@@ -430,9 +439,7 @@ async def get_invalidation_rules(
 ) -> list[InvalidationRuleResponse]:
     """Get all invalidation rules."""
     try:
-        path = Path(project_path)
-        if not path.exists():
-            raise HTTPException(status_code=404, detail=PROJECT_PATH_NOT_FOUND)
+        path = _validate_project_path(project_path)
 
         components = get_cache_components(path)
         invalidation_engine = components["invalidation_engine"]
@@ -453,10 +460,12 @@ async def get_invalidation_rules(
             for rule in rules
         ]
 
+    except HTTPException:
+        raise
     except Exception as e:
         logger.error(f"Error getting invalidation rules: {e}")
         raise HTTPException(
-            status_code=500, detail=f"{FAILED_TO_GET_INVALIDATION_RULES}: {str(e)}"
+            status_code=500, detail=FAILED_TO_GET_INVALIDATION_RULES
         )
 
 
@@ -474,9 +483,7 @@ async def create_invalidation_rule(
 ) -> dict[str, str]:
     """Create a new invalidation rule."""
     try:
-        path = Path(project_path)
-        if not path.exists():
-            raise HTTPException(status_code=404, detail=PROJECT_PATH_NOT_FOUND)
+        path = _validate_project_path(project_path)
 
         components = get_cache_components(path)
         invalidation_engine = components["invalidation_engine"]
@@ -504,10 +511,12 @@ async def create_invalidation_rule(
             "message": f"Invalidation rule '{rule_request.name}' created successfully"
         }
 
+    except HTTPException:
+        raise
     except Exception as e:
         logger.error(f"Error creating invalidation rule: {e}")
         raise HTTPException(
-            status_code=500, detail=f"{FAILED_TO_CREATE_INVALIDATION_RULE}: {str(e)}"
+            status_code=500, detail=FAILED_TO_CREATE_INVALIDATION_RULE
         )
 
 
@@ -523,9 +532,7 @@ async def delete_invalidation_rule(
 ) -> dict[str, str]:
     """Delete an invalidation rule."""
     try:
-        path = Path(project_path)
-        if not path.exists():
-            raise HTTPException(status_code=404, detail=PROJECT_PATH_NOT_FOUND)
+        path = _validate_project_path(project_path)
 
         components = get_cache_components(path)
         invalidation_engine = components["invalidation_engine"]
@@ -540,7 +547,7 @@ async def delete_invalidation_rule(
     except Exception as e:
         logger.error(f"Error deleting invalidation rule: {e}")
         raise HTTPException(
-            status_code=500, detail=f"{FAILED_TO_DELETE_INVALIDATION_RULE}: {str(e)}"
+            status_code=500, detail=FAILED_TO_DELETE_INVALIDATION_RULE
         )
 
 
@@ -556,9 +563,7 @@ async def get_git_invalidation_stats(
 ) -> GitInvalidationStatsResponse:
     """Get git-based invalidation statistics."""
     try:
-        path = Path(project_path)
-        if not path.exists():
-            raise HTTPException(status_code=404, detail=PROJECT_PATH_NOT_FOUND)
+        path = _validate_project_path(project_path)
 
         components = get_cache_components(path)
         git_invalidator = components["git_invalidator"]
@@ -567,10 +572,12 @@ async def get_git_invalidation_stats(
 
         return GitInvalidationStatsResponse(**stats)
 
+    except HTTPException:
+        raise
     except Exception as e:
         logger.error(f"Error getting git invalidation stats: {e}")
         raise HTTPException(
-            status_code=500, detail=f"{FAILED_TO_GET_GIT_STATS}: {str(e)}"
+            status_code=500, detail=FAILED_TO_GET_GIT_STATS
         )
 
 
@@ -587,9 +594,7 @@ async def start_git_monitoring(
 ) -> dict[str, str]:
     """Start git-based cache monitoring."""
     try:
-        path = Path(project_path)
-        if not path.exists():
-            raise HTTPException(status_code=404, detail=PROJECT_PATH_NOT_FOUND)
+        path = _validate_project_path(project_path)
 
         components = get_cache_components(path)
         git_invalidator = components["git_invalidator"]
@@ -598,10 +603,12 @@ async def start_git_monitoring(
 
         return {"message": f"Git monitoring started with {interval_seconds}s interval"}
 
+    except HTTPException:
+        raise
     except Exception as e:
         logger.error(f"Error starting git monitoring: {e}")
         raise HTTPException(
-            status_code=500, detail=f"{FAILED_TO_START_GIT_MONITORING}: {str(e)}"
+            status_code=500, detail=FAILED_TO_START_GIT_MONITORING
         )
 
 
@@ -617,9 +624,7 @@ async def stop_git_monitoring(
 ) -> dict[str, str]:
     """Stop git-based cache monitoring."""
     try:
-        path = Path(project_path)
-        if not path.exists():
-            raise HTTPException(status_code=404, detail=PROJECT_PATH_NOT_FOUND)
+        path = _validate_project_path(project_path)
 
         components = get_cache_components(path)
         git_invalidator = components["git_invalidator"]
@@ -628,10 +633,12 @@ async def stop_git_monitoring(
 
         return {"message": "Git monitoring stopped"}
 
+    except HTTPException:
+        raise
     except Exception as e:
         logger.error(f"Error stopping git monitoring: {e}")
         raise HTTPException(
-            status_code=500, detail=f"{FAILED_TO_STOP_GIT_MONITORING}: {str(e)}"
+            status_code=500, detail=FAILED_TO_STOP_GIT_MONITORING
         )
 
 
@@ -647,9 +654,7 @@ async def check_git_invalidation(
 ) -> dict[str, Any]:
     """Check for git changes that would trigger invalidation."""
     try:
-        path = Path(project_path)
-        if not path.exists():
-            raise HTTPException(status_code=404, detail=PROJECT_PATH_NOT_FOUND)
+        path = _validate_project_path(project_path)
 
         components = get_cache_components(path)
         git_invalidator = components["git_invalidator"]
@@ -658,10 +663,12 @@ async def check_git_invalidation(
 
         return check_result
 
+    except HTTPException:
+        raise
     except Exception as e:
         logger.error(f"Error checking git invalidation: {e}")
         raise HTTPException(
-            status_code=500, detail=f"{FAILED_TO_CHECK_GIT_INVALIDATION}: {str(e)}"
+            status_code=500, detail=FAILED_TO_CHECK_GIT_INVALIDATION
         )
 
 
@@ -680,19 +687,22 @@ async def export_cache_data(
 ) -> dict[str, str]:
     """Export cache data for analysis."""
     try:
-        path = Path(project_path)
-        if not path.exists():
-            raise HTTPException(status_code=404, detail=PROJECT_PATH_NOT_FOUND)
+        path = _validate_project_path(project_path)
 
         components = get_cache_components(path)
         context_cache = components["context_cache"]
         git_invalidator = components["git_invalidator"]
 
-        # Determine export path
+        # Determine export path (must resolve inside the project directory)
         if not export_path:
-            export_path = str(path / "cache_export.json")
-
-        export_file = Path(export_path)
+            export_file = path / "cache_export.json"
+        else:
+            export_file = Path(export_path).resolve()
+            if not str(export_file).startswith(str(path)):
+                raise HTTPException(
+                    status_code=400,
+                    detail="Export path must be inside the project directory",
+                )
 
         # Export cache data in background
         def export_data():
@@ -704,6 +714,8 @@ async def export_cache_data(
                 git_invalidator.export_invalidation_log(str(git_log_path))
 
                 logger.info(f"Cache data exported to {export_file}")
+            except HTTPException:
+                raise
             except Exception as e:
                 logger.error(f"Error exporting cache data: {e}")
 
@@ -711,10 +723,12 @@ async def export_cache_data(
 
         return {"message": f"Cache data export started to {export_path}"}
 
+    except HTTPException:
+        raise
     except Exception as e:
         logger.error(f"Error starting cache export: {e}")
         raise HTTPException(
-            status_code=500, detail=f"{FAILED_TO_START_CACHE_EXPORT}: {str(e)}"
+            status_code=500, detail=FAILED_TO_START_CACHE_EXPORT
         )
 
 
@@ -730,9 +744,7 @@ async def cache_health_check(
 ) -> dict[str, Any]:
     """Health check for cache system."""
     try:
-        path = Path(project_path)
-        if not path.exists():
-            raise HTTPException(status_code=404, detail=PROJECT_PATH_NOT_FOUND)
+        path = _validate_project_path(project_path)
 
         components = get_cache_components(path)
         context_cache = components["context_cache"]
@@ -781,10 +793,12 @@ async def cache_health_check(
             "timestamp": time.time(),
         }
 
+    except HTTPException:
+        raise
     except Exception as e:
         logger.error(f"Error performing health check: {e}")
         raise HTTPException(
-            status_code=500, detail=f"{FAILED_TO_PERFORM_HEALTH_CHECK}: {str(e)}"
+            status_code=500, detail=FAILED_TO_PERFORM_HEALTH_CHECK
         )
 
 

@@ -39,10 +39,18 @@ export async function detectRepositoryProvider(
 					for (const match of urlMatches) {
 						const url = match.split("=", 2)[1].trim();
 
+						// Extract hostname from URL (supports both https:// and git@ formats)
+						const hostMatch = url.match(
+							/(?:\/\/|@)([^/:]+)/,
+						);
+						const host = hostMatch?.[1]?.toLowerCase() ?? "";
+
 						// Check for Azure DevOps patterns
 						if (
-							url.includes("dev.azure.com") ||
-							url.includes("visualstudio.com")
+							host === "dev.azure.com" ||
+							host.endsWith(".dev.azure.com") ||
+							host === "visualstudio.com" ||
+							host.endsWith(".visualstudio.com")
 						) {
 							return {
 								provider: "azure_devops",
@@ -52,7 +60,10 @@ export async function detectRepositoryProvider(
 						}
 
 						// Check for GitHub patterns
-						if (url.includes("github.com")) {
+						if (
+							host === "github.com" ||
+							host.endsWith(".github.com")
+						) {
 							return {
 								provider: "github",
 								remoteUrl: url,

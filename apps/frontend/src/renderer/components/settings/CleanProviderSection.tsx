@@ -1,5 +1,6 @@
 import { getProvider as getRegistryProvider } from "@shared/services/providerRegistry";
 import { ProviderService } from "@shared/services/providerService";
+import { detectProvider } from "@shared/utils/provider-detection";
 import type {
 	AuthMethod,
 	ProfileUsageSummary,
@@ -398,19 +399,9 @@ export function CleanProviderSection({
 		}
 	};
 
-	// Helper function to detect provider from URL
+	// Helper function to detect provider from URL (uses hostname-safe parsing)
 	const detectProviderFromUrl = (url: string): string => {
-		const urlLower = url.toLowerCase();
-		if (urlLower.includes("api.anthropic.com")) return "anthropic";
-		if (urlLower.includes("api.openai.com")) return "openai";
-		if (urlLower.includes("googleapis.com")) return "google";
-		if (urlLower.includes("api.mistral.ai")) return "mistral";
-		if (urlLower.includes("api.deepseek.com")) return "deepseek";
-		if (urlLower.includes("api.x.ai")) return "grok";
-		if (urlLower.includes("api.meta.ai")) return "meta";
-		if (urlLower.includes("windsurf.com") || urlLower.includes("codeium.com"))
-			return "windsurf";
-		return "unknown";
+		return detectProvider(url);
 	};
 
 	// Helper function to get API key field for provider

@@ -14,6 +14,9 @@ on:
         default: false
         type: boolean
 
+permissions:
+  contents: read
+
 jobs:
   validate-version:
     name: Validate version format

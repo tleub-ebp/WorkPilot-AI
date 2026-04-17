@@ -473,7 +473,7 @@ class HybridMemoryManager:
         """Génère un ID de décision unique"""
         timestamp = datetime.now().isoformat()
         session_id = self.session_id
-        return hashlib.md5(f"{timestamp}_{session_id}".encode()).hexdigest()[:16]
+        return hashlib.sha256(f"{timestamp}_{session_id}".encode()).hexdigest()[:16]
     
     def get_memory_statistics(self) -> dict[str, Any]:
         """Retourne des statistiques sur la mémoire hybride"""
