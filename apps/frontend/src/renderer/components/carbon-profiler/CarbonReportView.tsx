@@ -198,9 +198,9 @@ function ReportBody({
 						{t("recentRecords")}
 					</h3>
 					<div className="space-y-1">
-						{report.records.slice(0, 20).map((rec, idx) => (
+						{report.records.slice(0, 20).map((rec) => (
 							<div
-								key={`${rec.timestamp}-${idx}`}
+								key={rec.timestamp}
 								className="flex items-center gap-3 px-3 py-2 text-xs rounded hover:bg-(--bg-secondary) transition-colors"
 							>
 								<span className="text-(--text-secondary) w-20 shrink-0">

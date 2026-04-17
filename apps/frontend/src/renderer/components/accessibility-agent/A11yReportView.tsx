@@ -269,9 +269,9 @@ function ReportBody({
 			<div className="space-y-2">
 				{filter === "passed" ? (
 					<div className="space-y-2">
-						{filteredPassedRules.map((rule, idx) => (
+						{filteredPassedRules.map((rule) => (
 							<div
-								key={`passed-${rule}-${idx}`}
+								key={`passed-${rule}`}
 								className="px-4 py-3 rounded-lg border border-green-500/20 bg-green-500/10 text-green-400"
 							>
 								<p className="text-sm">{rule}</p>
@@ -279,9 +279,9 @@ function ReportBody({
 						))}
 					</div>
 				) : (
-					filteredViolations.map((v, idx) => (
+					filteredViolations.map((v) => (
 						<div
-							key={`${v.ruleId}-${v.file}-${v.line}-${idx}`}
+							key={`${v.ruleId}-${v.file}-${v.line}`}
 							className={`px-4 py-3 rounded-lg border ${SEVERITY_STYLES[v.severity]}`}
 						>
 							<div className="flex items-center gap-2 mb-1">

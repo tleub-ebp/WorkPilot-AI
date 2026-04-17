@@ -170,7 +170,6 @@ export function StreamingTest({ tasks, onTaskStart }: StreamingTestProps) {
 						</div>
 
 						<div>
-							{/* biome-ignore lint/a11y/useSemanticElements: intentional */}
 							<div
 								className="block text-sm font-medium mb-2"
 								role="status"

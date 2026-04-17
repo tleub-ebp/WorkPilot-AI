@@ -35,7 +35,8 @@ export function KanbanSkeleton({
 			)}
 			{Array.from({ length: columns }).map((_, colIdx) => (
 				<div
-					key={`skeleton-column-${String(colIdx)}`}
+					// biome-ignore lint/suspicious/noArrayIndexKey: skeleton component has no stable key
+					key={`skeleton-column-${colIdx + 1}`}
 					className="flex flex-col flex-1 min-w-[220px] max-w-[350px]"
 				>
 					{/* Column header skeleton */}

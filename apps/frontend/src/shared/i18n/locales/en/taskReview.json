@@ -69,6 +69,11 @@
 	"pr": {
 		"title": "Create Pull Request",
 		"description": "Push branch and create a pull request for \"{{taskTitle}}\"",
+		"logs": {
+			"waitingForLogs": "Waiting for logs...",
+			"reviewStarting": "Review is starting",
+			"noLogsAvailable": "No logs available"
+		},
 		"files": {
 			"title": "Pull Request Files",
 			"errorTitle": "Pull Request Files Error",

@@ -122,7 +122,7 @@ async function getCodexVersion(): Promise<string | undefined> {
 	}
 
 	// Fallback: shell execution (resolves via PATH + shell)
-	let version = await tryShellCodexVersion();
+	const version = await tryShellCodexVersion();
 	if (version) return version;
 
 	// Fallback: direct exec

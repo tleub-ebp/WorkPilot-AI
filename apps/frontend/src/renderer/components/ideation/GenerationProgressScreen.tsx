@@ -180,13 +180,13 @@ export function GenerationProgressScreen({
 				<div className="shrink-0 border-b border-border p-4 bg-muted/20">
 					<ScrollArea className="h-32 rounded-md border border-border bg-muted/30">
 						<div className="p-3 space-y-1 font-mono text-xs">
-							{logs.map((log, index) => (
+							{logs.map((log) => (
 								<div
-									key={`${index}-${log.slice(0, 20)}`}
+									key={log.slice(0, 50)}
 									className="text-muted-foreground leading-relaxed"
 								>
 									<span className="text-muted-foreground/50 mr-2 select-none">
-										{String(index + 1).padStart(3, "0")}
+										{String(logs.indexOf(log) + 1).padStart(3, "0")}
 									</span>
 									{log}
 								</div>

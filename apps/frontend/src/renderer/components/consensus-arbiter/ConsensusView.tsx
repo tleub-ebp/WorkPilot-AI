@@ -47,9 +47,9 @@ function ResultBody({
 			)}
 
 			<div className="space-y-3">
-				{result.conflicts.map((conflict, idx) => (
+				{result.conflicts.map((conflict) => (
 					<div
-						key={`${conflict.topic}-${idx}`}
+						key={`${conflict.topic}-${conflict.severity}`}
 						className={`px-4 py-3 rounded-lg border ${SEVERITY_STYLES[conflict.severity]}`}
 					>
 						<div className="flex items-center justify-between mb-2">
@@ -185,7 +185,7 @@ export function ConsensusView({
 				<p className="text-sm text-red-400">{error}</p>
 			)}
 
-			{phase === "complete" && result && result.conflicts.length === 0 && (
+			{phase === "complete" && result?.conflicts.length === 0 && (
 				<p className="text-sm text-(--text-secondary)">{t("noData")}</p>
 			)}
 

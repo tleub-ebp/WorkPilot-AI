@@ -223,9 +223,9 @@ function ReportBody({
 						{t("search.noResults")}
 					</div>
 				) : (
-					filteredIssues.map((issue, idx) => (
+					filteredIssues.map((issue) => (
 						<div
-							key={`${issue.file}-${issue.line}-${issue.key}-${idx}`}
+							key={`${issue.file}-${issue.line}-${issue.key}`}
 							className={`px-4 py-3 rounded-lg border ${SEVERITY_STYLES[issue.severity]}`}
 						>
 							<div className="flex items-center gap-2 mb-1">

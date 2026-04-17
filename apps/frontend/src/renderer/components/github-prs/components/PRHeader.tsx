@@ -20,8 +20,8 @@ import type { PRData } from "../hooks/useGitHubPRs";
 import { formatDate } from "../utils/formatDate";
 
 export interface PRHeaderProps {
-	pr: PRData;
-	isLoadingFiles?: boolean;
+	readonly pr: PRData;
+	readonly isLoadingFiles?: boolean;
 }
 
 /**
@@ -52,6 +52,57 @@ export function PRHeader({ pr, isLoadingFiles = false }: PRHeaderProps) {
 	const { t, i18n } = useTranslation("common");
 	const [showFiles, setShowFiles] = useState(false);
 	const hasFiles = pr.files && pr.files.length > 0;
+
+	const filesList = hasFiles ? (
+		<div className="divide-y divide-border/40 max-h-[300px] overflow-y-auto">
+			{pr.files.map((file) => (
+				<div
+					key={file.path}
+					className="flex items-center gap-3 px-3 py-2 hover:bg-accent/30 transition-colors"
+				>
+					<FileCode className="h-4 w-4 text-muted-foreground shrink-0" />
+					<span
+						className="font-mono text-xs truncate flex-1"
+						title={file.path}
+					>
+						{file.path}
+					</span>
+					<Badge
+						variant="outline"
+						className={cn(
+							"text-[10px] px-1.5 py-0 shrink-0",
+							getFileStatusStyle(file.status),
+						)}
+					>
+						{file.status}
+					</Badge>
+					<div className="flex items-center gap-1.5 text-xs font-mono shrink-0">
+						<span className="text-emerald-500 flex items-center gap-0.5">
+							<Plus className="h-3 w-3" />
+							{file.additions}
+						</span>
+						<span className="text-red-500 flex items-center gap-0.5">
+							<Minus className="h-3 w-3" />
+							{file.deletions}
+						</span>
+					</div>
+				</div>
+			))}
+		</div>
+	) : (
+		<div className="p-4 text-center text-muted-foreground text-sm">
+			{t("prReview.noFilesAvailable")}
+		</div>
+	);
+
+	const fileContent = isLoadingFiles ? (
+		<div className="p-4 flex items-center justify-center text-muted-foreground">
+			<Loader2 className="h-4 w-4 animate-spin mr-2" />
+			<span className="text-sm">{t("prReview.loadingFiles")}</span>
+		</div>
+	) : (
+		filesList
+	);
 
 	return (
 		<div className="mb-6">
@@ -150,52 +201,7 @@ export function PRHeader({ pr, isLoadingFiles = false }: PRHeaderProps) {
 			{/* Collapsible file list */}
 			{showFiles && (
 				<div className="mt-4 border border-border/40 rounded-lg overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200">
-					{isLoadingFiles ? (
-						<div className="p-4 flex items-center justify-center text-muted-foreground">
-							<Loader2 className="h-4 w-4 animate-spin mr-2" />
-							<span className="text-sm">{t("prReview.loadingFiles")}</span>
-						</div>
-					) : hasFiles ? (
-						<div className="divide-y divide-border/40 max-h-[300px] overflow-y-auto">
-							{pr.files.map((file, index) => (
-								<div
-									key={`${file.path}-${index}`}
-									className="flex items-center gap-3 px-3 py-2 hover:bg-accent/30 transition-colors"
-								>
-									<FileCode className="h-4 w-4 text-muted-foreground shrink-0" />
-									<span
-										className="font-mono text-xs truncate flex-1"
-										title={file.path}
-									>
-										{file.path}
-									</span>
-									<Badge
-										variant="outline"
-										className={cn(
-											"text-[10px] px-1.5 py-0 shrink-0",
-											getFileStatusStyle(file.status),
-										)}
-									>
-										{file.status}
-									</Badge>
-									<div className="flex items-center gap-1.5 text-xs font-mono shrink-0">
-										<span className="text-emerald-500 flex items-center gap-0.5">
-											<Plus className="h-3 w-3" />
-											{file.additions}
-										</span>
-										<span className="text-red-500 flex items-center gap-0.5">
-											<Minus className="h-3 w-3" />
-											{file.deletions}
-										</span>
-									</div>
-								</div>
-							))}
-						</div>
-					) : (
-						<div className="p-4 text-center text-muted-foreground text-sm">
-							{t("prReview.noFilesAvailable")}
-						</div>
-					)}
+					{fileContent}
 				</div>
 			)}
 		</div>

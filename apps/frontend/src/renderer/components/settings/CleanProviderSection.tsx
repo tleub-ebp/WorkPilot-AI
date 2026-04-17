@@ -550,7 +550,6 @@ export function CleanProviderSection({
 
 			return { hasKey: false, authMethod };
 		},
-		// biome-ignore lint/correctness/useExhaustiveDependencies: detectProviderFromUrl and getProviderApiKeyField are pure helpers defined in component scope
 		[profiles, settings, providerStatus],
 	);
 
