@@ -69,6 +69,11 @@
 	"pr": {
 		"title": "Créer une Pull Request",
 		"description": "Pousser la branche et créer une pull request pour \"{{taskTitle}}\"",
+		"logs": {
+			"waitingForLogs": "En attente des logs...",
+			"reviewStarting": "La révision démarre",
+			"noLogsAvailable": "Aucun log disponible"
+		},
 		"files": {
 			"title": "Fichiers de la Pull Request",
 			"errorTitle": "Erreur des Fichiers de la Pull Request",

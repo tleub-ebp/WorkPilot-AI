@@ -336,15 +336,15 @@ export function LlmRouterSettings() {
 									{fb.taskType}
 								</p>
 								<div className="flex items-center gap-1.5 flex-wrap">
-									{fb.chain.map((entry, i) => (
+									{fb.chain.map((entry) => (
 										<span
-											key={`${fb.taskType}-${entry}-${i}`}
+											key={`${fb.taskType}-${entry}`}
 											className="flex items-center gap-1.5"
 										>
 											<span className="rounded bg-accent px-2 py-0.5 text-[10px] font-mono">
 												{entry}
 											</span>
-											{i < fb.chain.length - 1 && (
+											{fb.chain.indexOf(entry) < fb.chain.length - 1 && (
 												<span className="text-muted-foreground text-xs">→</span>
 											)}
 										</span>

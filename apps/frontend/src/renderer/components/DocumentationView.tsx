@@ -46,7 +46,7 @@ interface DocGenerationResult {
 }
 
 interface DocumentationViewProps {
-	projectId: string;
+	readonly projectId: string;
 }
 
 // ---------------------------------------------------------------------------
@@ -57,17 +57,34 @@ function CoverageGauge({
 	pct,
 	t,
 }: {
-	pct: number;
-	t: (key: string) => string;
+	readonly pct: number;
+	readonly t: (key: string) => string;
 }) {
-	const color =
-		pct >= 80
-			? "text-emerald-500"
-			: pct >= 50
-				? "text-amber-500"
-				: "text-red-500";
-	const bgColor =
-		pct >= 80 ? "bg-emerald-500" : pct >= 50 ? "bg-amber-500" : "bg-red-500";
+	let color: string;
+	if (pct >= 80) {
+		color = "text-emerald-500";
+	} else if (pct >= 50) {
+		color = "text-amber-500";
+	} else {
+		color = "text-red-500";
+	}
+	let bgColor: string;
+	if (pct >= 80) {
+		bgColor = "bg-emerald-500";
+	} else if (pct >= 50) {
+		bgColor = "bg-amber-500";
+	} else {
+		bgColor = "bg-red-500";
+	}
+
+	let coverageText: string;
+	if (pct >= 80) {
+		coverageText = t("documentation:coverage.wellDocumented");
+	} else if (pct >= 50) {
+		coverageText = t("documentation:coverage.needsImprovement");
+	} else {
+		coverageText = t("documentation:coverage.poorlyDocumented");
+	}
 
 	return (
 		<div className="flex items-center gap-4">
@@ -104,11 +121,7 @@ function CoverageGauge({
 				<div className="mt-1 flex items-center gap-1.5">
 					<div className={cn("h-2 w-2 rounded-full", bgColor)} />
 					<span className="text-xs text-muted-foreground">
-						{pct >= 80
-							? t("documentation:coverage.wellDocumented")
-							: pct >= 50
-								? t("documentation:coverage.needsImprovement")
-								: t("documentation:coverage.poorlyDocumented")}
+						{coverageText}
 					</span>
 				</div>
 			</div>
@@ -120,7 +133,7 @@ function CoverageGauge({
 // Copy button
 // ---------------------------------------------------------------------------
 
-function CopyButton({ text }: { text: string }) {
+function CopyButton({ text }: { readonly text: string }) {
 	const { t } = useTranslation(["documentation"]);
 	const [copied, setCopied] = useState(false);
 
@@ -387,18 +400,27 @@ export function DocumentationView({ projectId }: DocumentationViewProps) {
 										{t("documentation:symbols.title")}
 									</h3>
 									<div className="space-y-1.5 max-h-60 overflow-y-auto">
-										{coverage.symbols.map((sym, idx) => (
-											<div
-												key={`symbol-${idx}-${sym.name}-${sym.status}`}
-												className="flex items-center gap-2 text-xs"
-											>
-												{sym.status === "documented" ? (
+										{coverage.symbols.map((sym) => {
+											let statusIcon: React.ReactElement;
+											if (sym.status === "documented") {
+												statusIcon = (
 													<CheckCircle2 className="h-3.5 w-3.5 text-emerald-500 shrink-0" />
-												) : sym.status === "partial" ? (
+												);
+											} else if (sym.status === "partial") {
+												statusIcon = (
 													<AlertTriangle className="h-3.5 w-3.5 text-amber-500 shrink-0" />
-												) : (
+												);
+											} else {
+												statusIcon = (
 													<XCircle className="h-3.5 w-3.5 text-red-500 shrink-0" />
-												)}
+												);
+											}
+											return (
+												<div
+													key={`symbol-${sym.name}-${sym.status}`}
+													className="flex items-center gap-2 text-xs"
+												>
+													{statusIcon}
 												<span className="font-mono text-foreground">
 													{sym.name}
 												</span>
@@ -406,7 +428,8 @@ export function DocumentationView({ projectId }: DocumentationViewProps) {
 													{sym.kind}
 												</Badge>
 											</div>
-										))}
+											);
+										})}
 									</div>
 								</CardContent>
 							</Card>
@@ -424,9 +447,9 @@ export function DocumentationView({ projectId }: DocumentationViewProps) {
 								})}
 							</h3>
 							<div className="space-y-4">
-								{generatedDocs.generated_docs.map((doc, idx) => (
+								{generatedDocs.generated_docs.map((doc) => (
 									<div
-										key={`doc-${idx}-${doc.name.slice(0, 30)}`}
+										key={`doc-${doc.name.slice(0, 50)}`}
 										className="rounded-lg border border-border p-4"
 									>
 										<div className="flex items-center justify-between mb-2">

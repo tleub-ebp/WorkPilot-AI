@@ -39,15 +39,15 @@ interface ProviderPattern {
 const PROVIDER_PATTERNS: readonly ProviderPattern[] = [
 	{
 		provider: "anthropic",
-		domainPatterns: ["api.anthropic.com"],
+		domainPatterns: ["anthropic.com"],
 	},
 	{
 		provider: "openai",
-		domainPatterns: ["api.openai.com"],
+		domainPatterns: ["openai.com"],
 	},
 	{
 		provider: "ollama",
-		domainPatterns: ["ollama.ai", "api.ollama.ai"],
+		domainPatterns: ["ollama.ai"],
 	},
 	{
 		provider: "ollama_local",
@@ -55,48 +55,42 @@ const PROVIDER_PATTERNS: readonly ProviderPattern[] = [
 	},
 	{
 		provider: "copilot",
-		domainPatterns: ["github.com", "api.github.com"],
+		domainPatterns: ["github.com"],
 	},
 	{
 		provider: "windsurf",
-		domainPatterns: [
-			"codeium.com",
-			"server.codeium.com",
-			"api.codeium.com",
-			"api.windsurf.com",
-			"windsurf.ai",
-		],
+		domainPatterns: ["codeium.com", "windsurf.com", "windsurf.ai"],
 	},
 	{
 		provider: "google",
 		domainPatterns: [
-			"generativelanguage.googleapis.com",
-			"aiplatform.googleapis.com",
+			"googleapis.com",
+			"google.com",
 		],
 	},
 	{
 		provider: "mistral",
-		domainPatterns: ["api.mistral.ai"],
+		domainPatterns: ["mistral.ai"],
 	},
 	{
 		provider: "deepseek",
-		domainPatterns: ["api.deepseek.com"],
+		domainPatterns: ["deepseek.com"],
 	},
 	{
 		provider: "grok",
-		domainPatterns: ["api.x.ai"],
+		domainPatterns: ["x.ai"],
 	},
 	{
 		provider: "meta",
-		domainPatterns: ["llama-api.meta.com", "api.meta.ai"],
+		domainPatterns: ["meta.com", "meta.ai", "together.xyz"],
 	},
 	{
 		provider: "cursor",
-		domainPatterns: ["api.cursor.com", "cursor.sh"],
+		domainPatterns: ["cursor.com", "cursor.sh"],
 	},
 	{
 		provider: "aws",
-		domainPatterns: ["bedrock.amazonaws.com", "bedrock-runtime.amazonaws.com"],
+		domainPatterns: ["amazonaws.com"],
 	},
 ] as const;
 
@@ -134,6 +128,24 @@ export function detectProvider(baseUrl: string): ApiProvider {
 		// Invalid URL format - log for debugging but return unknown
 		console.warn("Invalid URL format in provider detection:", error);
 		return "unknown";
+	}
+}
+
+/**
+ * Check if a URL's hostname matches a given domain.
+ * Uses proper URL parsing to prevent subdomain spoofing (e.g., "evil.com?anthropic.com").
+ *
+ * @param url - The URL to check
+ * @param domain - The domain to match against (e.g., "anthropic.com")
+ * @returns True if the URL's hostname matches or is a subdomain of the given domain
+ */
+export function urlMatchesDomain(url: string, domain: string): boolean {
+	try {
+		const parsed = new URL(url);
+		const hostname = parsed.hostname;
+		return hostname === domain || hostname.endsWith(`.${domain}`);
+	} catch {
+		return false;
 	}
 }
 

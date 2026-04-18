@@ -141,7 +141,7 @@ function NotebookReport({
 
 			{notebook.issues.length > 0 && (
 				<div className="space-y-2">
-					{notebook.issues.map((issue, idx) => {
+					{notebook.issues.map((issue) => {
 						let severityClass: string;
 						if (issue.severity === "error") {
 							severityClass =
@@ -155,7 +155,7 @@ function NotebookReport({
 						}
 						return (
 							<div
-								key={`${issue.cellIndex}-${idx}`}
+								key={issue.cellIndex}
 								className={`px-4 py-3 rounded-lg border ${severityClass}`}
 							>
 								<div className="flex items-center gap-2 mb-1">

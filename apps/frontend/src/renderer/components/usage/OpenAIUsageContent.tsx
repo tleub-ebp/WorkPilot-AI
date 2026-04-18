@@ -71,8 +71,8 @@ function OpenAIUsageDetailsComponent({ details }: OpenAIUsageDetailsProps) {
 					</div>
 					<ul>
 						{details.completions.data && details.completions.data.length > 0 ? (
-							details.completions.data.map((item: OpenAICompletionItem, idx: number) => (
-								<li key={`completions-${item.model || idx}`}>
+							details.completions.data.map((item: OpenAICompletionItem) => (
+								<li key={`completions-${item.model}`}>
 									{item.model}: {item.n_input_tokens_total || 0} in,{" "}
 									{item.n_output_tokens_total || 0} out
 								</li>
@@ -90,8 +90,8 @@ function OpenAIUsageDetailsComponent({ details }: OpenAIUsageDetailsProps) {
 					</div>
 					<ul>
 						{details.cost.data && details.cost.data.length > 0 ? (
-							details.cost.data.map((item: OpenAICostItem, idx: number) => (
-								<li key={`cost-${item.model || idx}`}>
+							details.cost.data.map((item: OpenAICostItem) => (
+								<li key={`cost-${item.model}`}>
 									{item.model}: $
 									{item.cost_usd
 										? (Math.round(item.cost_usd * 100) / 100).toFixed(2)
@@ -109,8 +109,8 @@ function OpenAIUsageDetailsComponent({ details }: OpenAIUsageDetailsProps) {
 					<div className="font-medium">{t("common:usage.embeddingsLabel")}</div>
 					<ul>
 						{details.embeddings.data && details.embeddings.data.length > 0 ? (
-							details.embeddings.data.map((item: OpenAIEmbeddingItem, idx: number) => (
-								<li key={`embeddings-${item.model || idx}`}>
+							details.embeddings.data.map((item: OpenAIEmbeddingItem) => (
+								<li key={`embeddings-${item.model}`}>
 									{item.model}: {item.n_input_tokens_total || 0}
 								</li>
 							))

@@ -122,7 +122,7 @@ export function registerCreateRelease(): void {
 			try {
 				// Build and execute release command
 				const args = buildReleaseArgs(version, releaseNotes, options);
-				const command = `gh ${args.map((a) => `"${a.replace(/"/g, '\\"')}"`).join(" ")}`;
+				const command = `gh ${args.map((a) => `"${a.replace(/\\/g, "\\\\").replace(/"/g, '\\"')}"`).join(" ")}`;
 
 				const output = execSync(command, {
 					cwd: project.path,

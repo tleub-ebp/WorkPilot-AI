@@ -48,6 +48,28 @@ TEMPLATE_NOT_FOUND = "Template not found"
 GITHUB_CLI_AUTH_SUCCESS = "Logged in to github.com"
 API_MODELS_ENDPOINT = "/v1/models"
 
+logger = logging.getLogger(__name__)
+
+
+def _safe_error_message(e: Exception) -> str:
+    """Return a safe error message without exposing internal stack traces."""
+    logger.error("Operation failed: %s: %s", type(e).__name__, e)
+    # Map known exception types to safe user-facing messages
+    _SAFE_MESSAGES: dict[type, str] = {
+        TimeoutError: "Request timed out",
+        ConnectionError: "Connection failed",
+        PermissionError: "Permission denied",
+        FileNotFoundError: "Resource not found",
+        ValueError: "Invalid input",
+        KeyError: "Missing required field",
+        OSError: "System error",
+    }
+    for exc_type, msg in _SAFE_MESSAGES.items():
+        if isinstance(e, exc_type):
+            return msg
+    return "An unexpected error occurred"
+
+
 # SSRF Protection - Authorized URLs list
 AUTHORIZED_URLS = {
     "anthropic": "https://api.anthropic.com",
@@ -325,7 +347,11 @@ def get_provider_status(provider: str):
 
         return {"available": True, "authenticated": True}
     except Exception as e:
-        return {"available": False, "authenticated": False, "error": str(e)}
+        return {
+            "available": False,
+            "authenticated": False,
+            "error": _safe_error_message(e),
+        }
 
 
 @app.get("/providers")
@@ -698,7 +724,7 @@ async def test_provider_api_key(request: Request, provider: str, payload: dict):
             return {"success": False, "error": resp.text}
         except Exception as e:
             set_validated(provider, key, False)
-            return {"success": False, "error": str(e)}
+            return {"success": False, "error": _safe_error_message(e)}
 
     # --- Anthropic ---
     if provider in ("anthropic", "claude"):
@@ -718,14 +744,14 @@ async def test_provider_api_key(request: Request, provider: str, payload: dict):
             return {"success": False, "error": resp.text}
         except Exception as e:
             set_validated(provider, api_key, False)
-            return {"success": False, "error": str(e)}
+            return {"success": False, "error": _safe_error_message(e)}
 
     # --- OpenAI ---
     if provider == "openai":
         try:
             safe_base_url = _validate_openai_base_url(base_url)
         except ValueError as e:
-            raise HTTPException(status_code=400, detail=str(e))
+            raise HTTPException(status_code=400, detail=_safe_error_message(e))
         url = safe_base_url + API_MODELS_ENDPOINT
         return await _test_bearer(url, api_key, provider)
 
@@ -747,7 +773,7 @@ async def test_provider_api_key(request: Request, provider: str, payload: dict):
             return {"success": False, "error": resp.text}
         except Exception as e:
             set_validated(provider, api_key, False)
-            return {"success": False, "error": str(e)}
+            return {"success": False, "error": _safe_error_message(e)}
 
     # --- Mistral AI ---
     if provider == "mistral":
@@ -758,7 +784,7 @@ async def test_provider_api_key(request: Request, provider: str, payload: dict):
             url = safe_base_url + API_MODELS_ENDPOINT
             return await _test_bearer(url, api_key, provider)
         except ValueError as e:
-            return {"success": False, "error": str(e)}
+            return {"success": False, "error": _safe_error_message(e)}
 
     # --- DeepSeek ---
     if provider == "deepseek":
@@ -769,7 +795,7 @@ async def test_provider_api_key(request: Request, provider: str, payload: dict):
             url = safe_base_url + API_MODELS_ENDPOINT
             return await _test_bearer(url, api_key, provider)
         except ValueError as e:
-            return {"success": False, "error": str(e)}
+            return {"success": False, "error": _safe_error_message(e)}
 
     # --- Grok (xAI) ---
     if provider == "grok":
@@ -779,7 +805,7 @@ async def test_provider_api_key(request: Request, provider: str, payload: dict):
             )
             return await _test_bearer(safe_url, api_key, provider)
         except ValueError as e:
-            return {"success": False, "error": str(e)}
+            return {"success": False, "error": _safe_error_message(e)}
 
     # --- Meta (via Together AI / Replicate — OpenAI-compatible) ---
     if provider == "meta":
@@ -790,7 +816,7 @@ async def test_provider_api_key(request: Request, provider: str, payload: dict):
             url = safe_base_url + API_MODELS_ENDPOINT
             return await _test_bearer(url, api_key, provider)
         except ValueError as e:
-            return {"success": False, "error": str(e)}
+            return {"success": False, "error": _safe_error_message(e)}
 
     # --- Cursor ---
     if provider == "cursor":
@@ -801,7 +827,7 @@ async def test_provider_api_key(request: Request, provider: str, payload: dict):
             url = safe_base_url + API_MODELS_ENDPOINT
             return await _test_bearer(url, api_key, provider)
         except ValueError as e:
-            return {"success": False, "error": str(e)}
+            return {"success": False, "error": _safe_error_message(e)}
 
     # --- Windsurf (Codeium) ---
     if provider == "windsurf":
@@ -834,7 +860,7 @@ async def test_provider_api_key(request: Request, provider: str, payload: dict):
             return {"success": False, "error": resp.text}
         except Exception as e:
             set_validated(provider, oauth_token, False)
-            return {"success": False, "error": str(e)}
+            return {"success": False, "error": _safe_error_message(e)}
 
     # --- Copilot (gh CLI auth — no API key test) ---
     if provider == "copilot":
@@ -860,7 +886,7 @@ async def test_provider_api_key(request: Request, provider: str, payload: dict):
         except asyncio.TimeoutError:
             return {"success": False, "error": "GitHub CLI check timed out"}
         except Exception as e:
-            return {"success": False, "error": f"GitHub CLI check failed: {e}"}
+            return {"success": False, "error": _safe_error_message(e)}
 
     # --- Ollama (local — no key needed) ---
     if provider == "ollama":
@@ -990,7 +1016,7 @@ def get_provider_capabilities(provider: str):
         instance.connect()
         return instance.get_capabilities()
     except Exception as e:
-        return {"error": str(e)}
+        return {"error": _safe_error_message(e)}
 
 
 @app.get("/providers/schema/{provider}")
@@ -1005,7 +1031,7 @@ def get_provider_schema(provider: str):
         instance = provider_cls(**config)
         return instance.get_config_schema()
     except Exception as e:
-        return {"error": str(e)}
+        return {"error": _safe_error_message(e)}
 
 
 @app.post(
@@ -1187,7 +1213,7 @@ def db_health():
         conn.close()
         return {"db_up": True}
     except Exception as e:
-        return {"db_up": False, "error": str(e)}
+        return {"db_up": False, "error": _safe_error_message(e)}
 
 
 @app.get("/health")
@@ -1208,7 +1234,7 @@ def health_check():
         conn.close()
         subsystems["database"] = {"status": "ok"}
     except Exception as e:
-        subsystems["database"] = {"status": "error", "error": str(e)}
+        subsystems["database"] = {"status": "error", "error": _safe_error_message(e)}
 
     # 2. LLM Providers — quick availability check (env vars / configs)
     provider_status: dict[str, bool] = {}
@@ -1249,7 +1275,7 @@ def health_check():
             subsystems["graphiti_memory"] = {
                 "status": "error",
                 "enabled": True,
-                "error": str(e),
+                "error": _safe_error_message(e),
             }
     else:
         subsystems["graphiti_memory"] = {"status": "disabled", "enabled": False}
@@ -1328,7 +1354,7 @@ async def get_provider_usage(provider: str):
         except Exception as e:
             return {
                 "provider": "openai",
-                "error": f"Impossible de récupérer l'usage OpenAI: {str(e)}",
+                "error": f"Impossible de récupérer l'usage OpenAI: {_safe_error_message(e)}",
                 "note": "L'endpoint /v1/usage d'OpenAI nécessite des permissions spéciales depuis 2025",
                 "alternative": "Consultez https://platform.openai.com/settings/organization/billing/overview",
             }
@@ -1468,7 +1494,7 @@ async def get_provider_usage(provider: str):
         except Exception as e:
             return {
                 "provider": "windsurf",
-                "error": f"Impossible de récupérer l'usage Windsurf: {str(e)}",
+                "error": f"Impossible de récupérer l'usage Windsurf: {_safe_error_message(e)}",
             }
     else:
         return {"error": f"Usage non supporté pour le provider '{provider}'"}
@@ -1486,8 +1512,17 @@ def _load_dashboard_snapshot(project_id: str) -> dict:
     import json as _json
     from pathlib import Path as _Path
 
-    snap_path = _Path(project_id) / ".workpilot" / "dashboard_snapshot.json"
-    if snap_path.exists():
+    base_dir = _Path.cwd().resolve()
+    try:
+        project_path = (base_dir / project_id).resolve()
+        project_path.relative_to(base_dir)
+    except Exception:
+        return {}
+
+    if not project_path.is_dir():
+        return {}
+    snap_path = project_path / ".workpilot" / "dashboard_snapshot.json"
+    if snap_path.is_file() and str(snap_path.resolve()).startswith(str(project_path)):
         try:
             return _json.loads(snap_path.read_text(encoding="utf-8"))
         except Exception:
@@ -1526,7 +1561,7 @@ def get_dashboard_snapshot(project_id: str):
         snap["avg_completion_by_complexity"] = avg_compl
         return {"success": True, "snapshot": snap}
     except Exception as e:
-        return {"success": False, "error": str(e)}
+        return {"success": False, "error": _safe_error_message(e)}
 
 
 @app.get("/api/dashboard/stats")
@@ -1551,7 +1586,7 @@ def export_dashboard(project_id: str, fmt: str = "json"):
             return {"success": True, "report": buf.getvalue(), "format": "csv"}
         return {"success": True, "report": snap, "format": "json"}
     except Exception as e:
-        return {"success": False, "error": str(e)}
+        return {"success": False, "error": _safe_error_message(e)}
 
 
 # --- 1.2 Session History ---
@@ -1569,7 +1604,7 @@ def get_sessions(project_id: str):
             ],
         }
     except Exception as e:
-        return {"success": False, "error": str(e)}
+        return {"success": False, "error": _safe_error_message(e)}
 
 
 # --- 2.1 Refactoring Agent ---
@@ -1588,7 +1623,7 @@ def detect_smells(body: Annotated[dict[str, Any], Body(...)]):
             ],
         }
     except Exception as e:
-        return {"success": False, "error": str(e)}
+        return {"success": False, "error": _safe_error_message(e)}
 
 
 @app.post("/api/refactoring/propose")
@@ -1606,7 +1641,7 @@ def propose_refactoring(body: Annotated[dict[str, Any], Body(...)]):
             ],
         }
     except Exception as e:
-        return {"success": False, "error": str(e)}
+        return {"success": False, "error": _safe_error_message(e)}
 
 
 # --- 2.2 Documentation Agent ---
@@ -1621,7 +1656,7 @@ def check_doc_coverage(body: Annotated[dict[str, Any], Body(...)]):
         coverage = agent.check_documentation_coverage(file_path=file_path)
         return {"success": True, "coverage": coverage}
     except Exception as e:
-        return {"success": False, "error": str(e)}
+        return {"success": False, "error": _safe_error_message(e)}
 
 
 @app.post("/api/documentation/generate-docstrings")
@@ -1640,7 +1675,7 @@ def generate_docstrings(body: Annotated[dict[str, Any], Body(...)]):
             else result.__dict__,
         }
     except Exception as e:
-        return {"success": False, "error": str(e)}
+        return {"success": False, "error": _safe_error_message(e)}
 
 
 @app.post("/api/documentation/generate-readme")
@@ -1659,7 +1694,7 @@ def generate_readme(body: Annotated[dict[str, Any], Body(...)]):
             else result.__dict__,
         }
     except Exception as e:
-        return {"success": False, "error": str(e)}
+        return {"success": False, "error": _safe_error_message(e)}
 
 
 # --- 2.4 Feedback Learning ---
@@ -1672,7 +1707,7 @@ def get_feedback_stats(project_id: str):
         stats = fl.get_stats(project_id)
         return {"success": True, "stats": stats}
     except Exception as e:
-        return {"success": False, "error": str(e)}
+        return {"success": False, "error": _safe_error_message(e)}
 
 
 # --- 3.2 Task Templates ---
@@ -1690,7 +1725,7 @@ def list_task_templates():
             ],
         }
     except Exception as e:
-        return {"success": False, "error": str(e)}
+        return {"success": False, "error": _safe_error_message(e)}
 
 
 # --- 3.3 AI Code Review ---
@@ -1709,7 +1744,7 @@ def analyze_code_review(body: Annotated[dict[str, Any], Body(...)]):
             else result.__dict__,
         }
     except Exception as e:
-        return {"success": False, "error": str(e)}
+        return {"success": False, "error": _safe_error_message(e)}
 
 
 # --- 6.1 Intelligent Router ---
@@ -1722,7 +1757,7 @@ def get_router_config():
         config = router.get_config()
         return {"success": True, "config": config}
     except Exception as e:
-        return {"success": False, "error": str(e)}
+        return {"success": False, "error": _safe_error_message(e)}
 
 
 # --- 6.2 Local Model Manager ---
@@ -1735,7 +1770,7 @@ def get_local_models_status():
         status = mgr.get_status()
         return {"success": True, "status": status}
     except Exception as e:
-        return {"success": False, "error": str(e)}
+        return {"success": False, "error": _safe_error_message(e)}
 
 
 # --- 6.3 Cost Estimator ---
@@ -1748,7 +1783,7 @@ def get_cost_summary(project_id: str):
         summary = ce.get_summary(project_id)
         return {"success": True, "summary": summary}
     except Exception as e:
-        return {"success": False, "error": str(e)}
+        return {"success": False, "error": _safe_error_message(e)}
 
 
 @app.get("/api/costs/budget/{project_id}")
@@ -1760,7 +1795,7 @@ def get_cost_budget(project_id: str):
         budget = ce.get_budget(project_id)
         return {"success": True, "budget": budget}
     except Exception as e:
-        return {"success": False, "error": str(e)}
+        return {"success": False, "error": _safe_error_message(e)}
 
 
 # --- 7.2 Sandbox ---
@@ -1773,7 +1808,7 @@ def get_sandbox_status():
         status = mgr.get_status()
         return {"success": True, "status": status}
     except Exception as e:
-        return {"success": False, "error": str(e)}
+        return {"success": False, "error": _safe_error_message(e)}
 
 
 # --- 7.3 Anomaly Detector ---
@@ -1786,7 +1821,7 @@ def get_anomaly_status():
         status = detector.get_status()
         return {"success": True, "status": status}
     except Exception as e:
-        return {"success": False, "error": str(e)}
+        return {"success": False, "error": _safe_error_message(e)}
 
 
 # --- 8.1 Scheduler ---
@@ -1804,7 +1839,7 @@ def get_scheduler_jobs():
             ],
         }
     except Exception as e:
-        return {"success": False, "error": str(e)}
+        return {"success": False, "error": _safe_error_message(e)}
 
 
 # --- 8.2 Auto-Detection ---
@@ -1817,7 +1852,7 @@ def get_auto_detect_status():
         status = detector.get_status()
         return {"success": True, "status": status}
     except Exception as e:
-        return {"success": False, "error": str(e)}
+        return {"success": False, "error": _safe_error_message(e)}
 
 
 # --- 9.1 GitHub PR Details ---
@@ -1875,7 +1910,7 @@ def get_pr_details(pr_url: Annotated[str, Query(...)]):
 
         return result
     except Exception as e:
-        return {"success": False, "error": str(e)}
+        return {"success": False, "error": _safe_error_message(e)}
 
 
 # --- Test Generation Agent API ---
@@ -1917,7 +1952,10 @@ def analyze_test_coverage(
             ],
         }  # added closing brace here
     except Exception as e:
-        return {"success": False, "error": str(e)}  # added except block here
+        return {
+            "success": False,
+            "error": _safe_error_message(e),
+        }  # added except block here
 
 
 @app.post("/api/test-generation/generate-unit-tests")
@@ -1969,7 +2007,7 @@ def generate_unit_tests(
             },
         }
     except Exception as e:
-        return {"success": False, "error": str(e)}
+        return {"success": False, "error": _safe_error_message(e)}
 
 
 @app.post("/api/test-generation/generate-e2e-tests")
@@ -2005,7 +2043,7 @@ def generate_e2e_tests(
             },
         }
     except Exception as e:
-        return {"success": False, "error": str(e)}
+        return {"success": False, "error": _safe_error_message(e)}
 
 
 @app.post("/api/test-generation/generate-tdd-tests")
@@ -2039,7 +2077,7 @@ def generate_tdd_tests(spec: Annotated[dict, Body(...)]):
             },
         }
     except Exception as e:
-        return {"success": False, "error": str(e)}
+        return {"success": False, "error": _safe_error_message(e)}
 
 
 @app.post("/api/test-generation/run-post-build")
@@ -2056,14 +2094,19 @@ def run_post_build_test_generation(
         agent = TestGeneratorAgent()
         results = []
 
+        project_dir = os.path.realpath(project_path)
         for file_path in modified_files:
-            if file_path.endswith(".py") and os.path.exists(file_path):
+            # Validate file path stays within project directory
+            real_file = os.path.realpath(file_path)
+            if not real_file.startswith(project_dir):
+                continue
+            if file_path.endswith(".py") and os.path.exists(real_file):
                 # Skip test files themselves
                 if "test_" in file_path or "/tests/" in file_path:
                     continue
 
                 # Find existing test file
-                test_file_path = agent._compute_test_file_path(file_path)
+                test_file_path = agent._compute_test_file_path(real_file)
                 existing_test_path = (
                     test_file_path if os.path.exists(test_file_path) else None
                 )
@@ -2090,7 +2133,7 @@ def run_post_build_test_generation(
             },
         }
     except Exception as e:
-        return {"success": False, "error": str(e)}
+        return {"success": False, "error": _safe_error_message(e)}
 
 
 # --- Event-Driven Hooks System API ---
@@ -2104,7 +2147,7 @@ def list_hooks(project_id: Annotated[str | None, Query()] = None):
         hooks = svc.list_hooks(project_id)
         return {"success": True, "hooks": hooks}
     except Exception as e:
-        return {"success": False, "error": str(e)}
+        return {"success": False, "error": _safe_error_message(e)}
 
 
 @app.get("/api/hooks/stats")
@@ -2117,7 +2160,7 @@ def get_hooks_stats():
         stats = svc.get_stats()
         return {"success": True, "stats": stats}
     except Exception as e:
-        return {"success": False, "error": str(e)}
+        return {"success": False, "error": _safe_error_message(e)}
 
 
 @app.get("/api/hooks/templates")
@@ -2130,7 +2173,7 @@ def get_hook_templates():
         templates = svc.get_templates()
         return {"success": True, "templates": templates}
     except Exception as e:
-        return {"success": False, "error": str(e)}
+        return {"success": False, "error": _safe_error_message(e)}
 
 
 @app.get("/api/hooks/{hook_id}", responses={404: {"description": "Hook not found"}})
@@ -2147,7 +2190,7 @@ def get_hook(hook_id: Annotated[str, Path(...)]):
     except HTTPException:
         raise
     except Exception as e:
-        return {"success": False, "error": str(e)}
+        return {"success": False, "error": _safe_error_message(e)}
 
 
 @app.post("/api/hooks")
@@ -2160,7 +2203,7 @@ def create_hook(body: Annotated[dict[str, Any], Body(...)]):
         hook = svc.create_hook(body)
         return {"success": True, "hook": hook}
     except Exception as e:
-        return {"success": False, "error": str(e)}
+        return {"success": False, "error": _safe_error_message(e)}
 
 
 @app.put("/api/hooks/{hook_id}", responses={404: {"description": HOOK_NOT_FOUND}})
@@ -2179,7 +2222,7 @@ def update_hook(
     except HTTPException:
         raise
     except Exception as e:
-        return {"success": False, "error": str(e)}
+        return {"success": False, "error": _safe_error_message(e)}
 
 
 @app.delete("/api/hooks/{hook_id}", responses={404: {"description": "Hook not found"}})
@@ -2196,7 +2239,7 @@ def delete_hook(hook_id: Annotated[str, Path(...)]):
     except HTTPException:
         raise
     except Exception as e:
-        return {"success": False, "error": str(e)}
+        return {"success": False, "error": _safe_error_message(e)}
 
 
 @app.post(
@@ -2215,7 +2258,7 @@ def toggle_hook(hook_id: Annotated[str, Path(...)]):
     except HTTPException:
         raise
     except Exception as e:
-        return {"success": False, "error": str(e)}
+        return {"success": False, "error": _safe_error_message(e)}
 
 
 @app.post(
@@ -2234,7 +2277,7 @@ def duplicate_hook(hook_id: Annotated[str, Path(...)]):
     except HTTPException:
         raise
     except Exception as e:
-        return {"success": False, "error": str(e)}
+        return {"success": False, "error": _safe_error_message(e)}
 
 
 @app.post(
@@ -2255,7 +2298,7 @@ def create_hook_from_template(body: Annotated[dict[str, Any], Body(...)]):
     except HTTPException:
         raise
     except Exception as e:
-        return {"success": False, "error": str(e)}
+        return {"success": False, "error": _safe_error_message(e)}
 
 
 @app.post("/api/hooks/emit")
@@ -2275,7 +2318,7 @@ async def emit_hook_event(body: Annotated[dict[str, Any], Body(...)]):
         results = await svc.emit_event(event)
         return {"success": True, "executions": results, "hooks_triggered": len(results)}
     except Exception as e:
-        return {"success": False, "error": str(e)}
+        return {"success": False, "error": _safe_error_message(e)}
 
 
 @app.get("/api/hooks/executions/history")
@@ -2290,7 +2333,7 @@ def get_hook_executions(
         executions = svc.get_executions(hook_id, limit)
         return {"success": True, "executions": executions}
     except Exception as e:
-        return {"success": False, "error": str(e)}
+        return {"success": False, "error": _safe_error_message(e)}
 
 
 # --- Analytics API (prefer real DB implementation, fall back to minimal stub) ---

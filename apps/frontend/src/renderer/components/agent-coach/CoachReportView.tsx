@@ -38,8 +38,8 @@ function ReportBody({
 	report,
 	t,
 }: {
-	report: CoachReport;
-	t: (key: string, options?: Record<string, unknown>) => string;
+	readonly report: CoachReport;
+	readonly t: (key: string, options?: Record<string, unknown>) => string;
 }): React.ReactElement {
 	return (
 		<div className="flex flex-col gap-4">
@@ -79,9 +79,9 @@ function ReportBody({
 			</div>
 
 			<div className="space-y-2">
-				{report.tips.map((tip, idx) => (
+				{report.tips.map((tip) => (
 					<div
-						key={`${tip.category}-${idx}`}
+						key={`${tip.category}-${tip.priority}-${tip.title}`}
 						className={`px-4 py-3 rounded-lg border ${PRIORITY_STYLES[tip.priority]}`}
 					>
 						<div className="flex items-center gap-2 mb-1">
@@ -192,7 +192,7 @@ export function CoachReportView({
 				<p className="text-sm text-red-400">{t("errors.failed", { error })}</p>
 			)}
 
-			{phase === "complete" && report && report.totalRuns === 0 && (
+			{phase === "complete" && report?.totalRuns === 0 && (
 				<p className="text-sm text-(--text-secondary)">{t("noData")}</p>
 			)}
 

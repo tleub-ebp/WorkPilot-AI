@@ -326,7 +326,8 @@ class ContextOptimizer:
         """Create a context checkpoint."""
         context_hash = self._hash_context(context)
         checkpoint_id = hashlib.md5(
-            f"{context_hash}:{time.time()}".encode()
+            f"{context_hash}:{time.time()}".encode(),
+            usedforsecurity=False,
         ).hexdigest()[:16]
 
         checkpoint = ContextCheckpoint(

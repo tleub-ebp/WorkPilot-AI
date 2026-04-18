@@ -36,7 +36,7 @@ interface DeepContextData {
 }
 
 interface DeepContextInsightsProps {
-	deepContext: DeepContextData;
+	readonly deepContext: DeepContextData;
 }
 
 export function DeepContextInsights({ deepContext }: DeepContextInsightsProps) {
@@ -137,9 +137,9 @@ export function DeepContextInsights({ deepContext }: DeepContextInsightsProps) {
 							{t("prReview.deepContext.violations")}
 						</h4>
 						<div className="space-y-1.5">
-							{deepContext.architectureViolations.map((v, i) => (
+							{deepContext.architectureViolations.map((v) => (
 								<div
-									key={`${v.file}-${i}`}
+									key={v.file}
 									className="text-xs p-2 rounded bg-warning/5 border border-warning/20"
 								>
 									<div className="flex items-center gap-2">
@@ -233,16 +233,21 @@ export function DeepContextInsights({ deepContext }: DeepContextInsightsProps) {
 
 						{hasInsights && (
 							<ul className="text-xs text-muted-foreground space-y-0.5 pl-3">
-								{deepContext.historicalInsights.slice(0, 5).map((hint, i) => (
-									// biome-ignore lint/suspicious/noArrayIndexKey: no stable key available
-									<li key={`insight-${i}`} className="list-disc">
-										{String(
-											(hint as Record<string, unknown>).fact ??
-												(hint as Record<string, unknown>).content ??
-												JSON.stringify(hint),
-										)}
-									</li>
-								))}
+								{deepContext.historicalInsights.slice(0, 5).map((hint) => {
+									let displayValue: string;
+									if (typeof hint.fact === "string") {
+										displayValue = hint.fact;
+									} else if (typeof hint.content === "string") {
+										displayValue = hint.content;
+									} else {
+										displayValue = JSON.stringify(hint);
+									}
+									return (
+										<li key={JSON.stringify(hint)} className="list-disc">
+											{displayValue}
+										</li>
+									);
+								})}
 							</ul>
 						)}
 
@@ -252,16 +257,21 @@ export function DeepContextInsights({ deepContext }: DeepContextInsightsProps) {
 									{t("prReview.deepContext.pastBugs")}:
 								</p>
 								<ul className="text-xs text-muted-foreground space-y-0.5 pl-3">
-									{deepContext.pastBugsInArea.slice(0, 5).map((bug, i) => (
-										// biome-ignore lint/suspicious/noArrayIndexKey: no stable key available
-										<li key={`bug-${i}`} className="list-disc">
-											{String(
-												(bug as Record<string, unknown>).description ??
-													(bug as Record<string, unknown>).fact ??
-													JSON.stringify(bug),
-											)}
-										</li>
-									))}
+									{deepContext.pastBugsInArea.slice(0, 5).map((bug) => {
+										let displayValue: string;
+										if (typeof bug.description === "string") {
+											displayValue = bug.description;
+										} else if (typeof bug.fact === "string") {
+											displayValue = bug.fact;
+										} else {
+											displayValue = JSON.stringify(bug);
+										}
+										return (
+											<li key={JSON.stringify(bug)} className="list-disc">
+												{displayValue}
+											</li>
+										);
+									})}
 								</ul>
 							</div>
 						)}
@@ -273,12 +283,8 @@ export function DeepContextInsights({ deepContext }: DeepContextInsightsProps) {
 									{t("prReview.deepContext.regressionRisks")}:
 								</p>
 								<ul className="text-xs text-muted-foreground space-y-0.5 pl-3">
-									{deepContext.regressionRisks.slice(0, 5).map((risk, i) => (
-										<li
-											// biome-ignore lint/suspicious/noArrayIndexKey: list is static and never reordered
-											key={`risk-${i}`}
-											className="list-disc text-destructive/80"
-										>
+									{deepContext.regressionRisks.slice(0, 5).map((risk) => (
+										<li key={risk} className="list-disc text-destructive/80">
 											{risk}
 										</li>
 									))}

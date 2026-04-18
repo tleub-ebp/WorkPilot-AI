@@ -258,9 +258,9 @@ export function MemoryCard({ memory }: MemoryCardProps) {
 									count={parsed.what_worked.length}
 								/>
 								<ul className="space-y-0.5">
-									{parsed.what_worked.map((item, idx) => (
+									{parsed.what_worked.map((item) => (
 										<ListItem
-											key={`worked-${idx}-${item.slice(0, 20)}`}
+											key={`worked-${item.slice(0, 50)}`}
 											variant="success"
 										>
 											{item}
@@ -279,9 +279,9 @@ export function MemoryCard({ memory }: MemoryCardProps) {
 									count={parsed.what_failed.length}
 								/>
 								<ul className="space-y-0.5">
-									{parsed.what_failed.map((item, idx) => (
+									{parsed.what_failed.map((item) => (
 										<ListItem
-											key={`failed-${idx}-${item.slice(0, 20)}`}
+											key={`failed-${item.slice(0, 50)}`}
 											variant="error"
 										>
 											{item}
@@ -333,13 +333,13 @@ export function MemoryCard({ memory }: MemoryCardProps) {
 									}
 								/>
 								<ul className="space-y-0.5">
-									{parsed.recommendations_for_next_session?.map((item, idx) => (
-										<ListItem key={`rec-${idx}-${item.slice(0, 20)}`}>
+									{parsed.recommendations_for_next_session?.map((item) => (
+										<ListItem key={`rec-${item.slice(0, 50)}`}>
 											{item}
 										</ListItem>
 									))}
-									{parsed.discoveries?.recommendations?.map((item, idx) => (
-										<ListItem key={`disc-rec-${idx}-${item.slice(0, 20)}`}>
+									{parsed.discoveries?.recommendations?.map((item) => (
+										<ListItem key={`disc-rec-${item.slice(0, 50)}`}>
 											{item}
 										</ListItem>
 									))}
@@ -358,7 +358,7 @@ export function MemoryCard({ memory }: MemoryCardProps) {
 									/>
 									<div className="flex flex-wrap gap-2 pl-4">
 										{parsed.discoveries.patterns_discovered.map(
-											(pattern, idx) => {
+											(pattern) => {
 												const text =
 													typeof pattern === "string"
 														? pattern
@@ -367,7 +367,7 @@ export function MemoryCard({ memory }: MemoryCardProps) {
 															JSON.stringify(pattern);
 												return text ? (
 													<Badge
-														key={`pattern-${idx}-${text.slice(0, 20)}`}
+														key={`pattern-${text.slice(0, 50)}`}
 														variant="secondary"
 														className="text-xs"
 													>
@@ -391,14 +391,14 @@ export function MemoryCard({ memory }: MemoryCardProps) {
 									/>
 									<ul className="space-y-0.5">
 										{parsed.discoveries.gotchas_discovered.map(
-											(gotcha, idx) => {
+											(gotcha) => {
 												const text =
 													typeof gotcha === "string"
 														? gotcha
 														: gotcha?.gotcha || JSON.stringify(gotcha);
 												return text ? (
 													<ListItem
-														key={`gotcha-${idx}-${text.slice(0, 20)}`}
+														key={`gotcha-${text.slice(0, 50)}`}
 														variant="error"
 													>
 														{text}
@@ -420,9 +420,9 @@ export function MemoryCard({ memory }: MemoryCardProps) {
 										count={parsed.discoveries.changed_files.length}
 									/>
 									<div className="flex flex-wrap gap-1.5 pl-4">
-										{parsed.discoveries.changed_files.map((file, idx) => (
+										{parsed.discoveries.changed_files.map((file) => (
 											<Badge
-												key={`file-${idx}-${file.slice(0, 20)}`}
+												key={`file-${file.slice(0, 50)}`}
 												variant="outline"
 												className="text-xs font-mono"
 											>
@@ -443,9 +443,9 @@ export function MemoryCard({ memory }: MemoryCardProps) {
 										count={parsed.discoveries.file_insights.length}
 									/>
 									<div className="space-y-2 pl-4">
-										{parsed.discoveries.file_insights.map((insight, idx) => (
+										{parsed.discoveries.file_insights.map((insight) => (
 											<div
-												key={`insight-${idx}-${insight.path?.slice(0, 20) || "no-path"}`}
+												key={`insight-${insight.path || "no-path"}`}
 												className="text-sm"
 											>
 												{insight.path && (
@@ -482,9 +482,9 @@ export function MemoryCard({ memory }: MemoryCardProps) {
 										count={parsed.subtasks_completed.length}
 									/>
 									<div className="flex flex-wrap gap-1.5 pl-4">
-										{parsed.subtasks_completed.map((task, idx) => (
+										{parsed.subtasks_completed.map((task) => (
 											<Badge
-												key={`task-${idx}-${task.slice(0, 20)}`}
+												key={`task-${task.slice(0, 50)}`}
 												variant="secondary"
 												className="text-xs font-mono"
 											>

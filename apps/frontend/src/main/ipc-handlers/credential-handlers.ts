@@ -122,7 +122,7 @@ async function getCodexVersion(): Promise<string | undefined> {
 	}
 
 	// Fallback: shell execution (resolves via PATH + shell)
-	let version = await tryShellCodexVersion();
+	const version = await tryShellCodexVersion();
 	if (version) return version;
 
 	// Fallback: direct exec
@@ -222,9 +222,8 @@ function runShellCommand(
 }
 
 /**
- * Update @openai/codex via both npm and pnpm global installs.
- * On Windows, pnpm and npm can each have their own global codex shim;
- * we update both so whichever is first on PATH gets the new version.
+ * Update @openai/codex via pnpm global install.
+ * Using pnpm as the primary package manager for consistency.
  */
 async function runCodexUpdate(): Promise<{
 	code: number;
@@ -233,37 +232,13 @@ async function runCodexUpdate(): Promise<{
 }> {
 	const results: string[] = [];
 
-	// Always run npm install -g
-	const npmResult = await runShellCommand("npm", [
+	// Always run pnpm install -g @latest to force latest version
+	const pnpmResult = await runShellCommand("pnpm", [
 		"install",
 		"-g",
 		"@openai/codex@latest",
 	]);
-	results.push(`[npm] ${npmResult.stdout.trim()}`);
-
-	// Also update via pnpm if it has a global codex
-	try {
-		const os = await import("node:os");
-		const { existsSync } = await import("node:fs");
-		const pnpmCodex = path.join(
-			os.homedir(),
-			"AppData",
-			"Local",
-			"pnpm",
-			"codex.CMD",
-		);
-		if (process.platform === "win32" && existsSync(pnpmCodex)) {
-			console.warn("[Codex CLI] pnpm global codex detected, updating via pnpm too");
-			const pnpmResult = await runShellCommand("pnpm", [
-				"add",
-				"-g",
-				"@openai/codex@latest",
-			]);
-			results.push(`[pnpm] ${pnpmResult.stdout.trim()}`);
-		}
-	} catch (err) {
-		console.warn("[Codex CLI] pnpm update skipped:", err);
-	}
+	results.push(`[pnpm] ${pnpmResult.stdout.trim()}`);
 
 	return { code: 0, stdout: results.join("\n"), stderr: "" };
 }
@@ -543,8 +518,8 @@ export function registerCredentialHandlers(): void {
 	);
 
 	/**
-	 * Installer ou mettre à jour Codex CLI via npm global, en arrière-plan.
-	 * Pas de terminal visible : on exécute directement `npm install -g @openai/codex@latest`.
+	 * Installer ou mettre à jour Codex CLI via pnpm global, en arrière-plan.
+	 * Pas de terminal visible : on exécute directement `pnpm install -g @openai/codex@latest`.
 	 */
 	ipcMain.handle(
 		"credential:updateCodexCli",
@@ -557,11 +532,11 @@ export function registerCredentialHandlers(): void {
 		}> => {
 			try {
 				console.warn(
-					"[Codex CLI] Starting npm install -g @openai/codex@latest",
+					"[Codex CLI] Starting pnpm install -g @openai/codex@latest",
 				);
 				console.warn("[Codex CLI] PATH:", process.env.PATH);
 				const result = await runCodexUpdate();
-				console.warn("[Codex CLI] npm install completed:", {
+				console.warn("[Codex CLI] pnpm install completed:", {
 					code: result.code,
 					stdout: result.stdout.slice(-500),
 					stderr: result.stderr.slice(-500),

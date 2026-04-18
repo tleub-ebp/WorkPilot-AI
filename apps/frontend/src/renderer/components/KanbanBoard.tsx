@@ -3191,13 +3191,13 @@ export function KanbanBoard({
 								</div>
 								<ScrollArea className="h-32 rounded-xl border border-slate-700/50 bg-slate-800/50 p-3 backdrop-blur-sm">
 									<div className="space-y-2">
-										{selectedTasks.map((task, idx) => (
+										{selectedTasks.map((task) => (
 											<div
 												key={task.id}
 												className="group flex items-center gap-3 rounded-lg bg-slate-700/30 px-3 py-2.5 text-sm transition-all hover:bg-slate-700/50"
 											>
 												<div className="flex h-6 w-6 items-center justify-center rounded-full bg-emerald-600/30 text-xs font-medium text-emerald-300">
-													{idx + 1}
+													{selectedTasks.indexOf(task) + 1}
 												</div>
 												<span className="flex-1 truncate text-slate-200">
 													{task.title}

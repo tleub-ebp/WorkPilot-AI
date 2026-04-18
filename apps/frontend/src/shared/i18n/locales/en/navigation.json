@@ -155,5 +155,23 @@
 		"pathChangeWarningDescription": "Switching CLI installations will use a different Claude Code binary. Any running sessions will continue using the previous installation until restarted.",
 		"switchInstallationConfirm": "Switch",
 		"versionUnknown": "version unknown"
+	},
+	"codex": {
+		"checking": "Checking Codex CLI...",
+		"installed": "Codex CLI installed",
+		"installedWithVersion": "Codex CLI ({{version}})",
+		"updateAvailableWithVersion": "Codex CLI ({{version}}) - update available",
+		"notFound": "Codex CLI not found",
+		"error": "Codex CLI error",
+		"installedShort": "Installed",
+		"updateAvailableShort": "Update available",
+		"notInstalledShort": "Not installed",
+		"checkingShort": "Checking...",
+		"current": "Current",
+		"latest": "Latest",
+		"lastChecked": "Last checked",
+		"notInstalledDescription": "Codex CLI is not installed. Click \"Install\" to install it via pnpm in the background:",
+		"installing": "Installing, please wait...",
+		"viewDocs": "View Codex CLI documentation"
 	}
 }

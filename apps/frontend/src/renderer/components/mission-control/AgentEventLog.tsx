@@ -88,7 +88,7 @@ export function AgentEventLog({ events, agents }: AgentEventLogProps) {
 	return (
 		<ScrollArea className="h-64">
 			<div className="space-y-1 pr-2">
-				{reversedEvents.map((event, idx) => {
+				{reversedEvents.map((event) => {
 					const Icon = EVENT_ICONS[event.type] ?? Activity;
 					const color = EVENT_COLORS[event.type] ?? "text-muted-foreground";
 					const agentId = event.data?.agent_id as string | undefined;
@@ -102,7 +102,7 @@ export function AgentEventLog({ events, agents }: AgentEventLogProps) {
 
 					return (
 						<div
-							key={`${event.timestamp}-${idx}`}
+							key={`${event.timestamp}-${event.type}`}
 							className="flex items-start gap-2 py-1 px-1.5 rounded text-xs hover:bg-muted/30 transition-colors"
 						>
 							<Icon className={cn("h-3.5 w-3.5 shrink-0 mt-0.5", color)} />

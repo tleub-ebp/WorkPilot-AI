@@ -140,17 +140,23 @@ export function CodexCliStatusBadge({
 	const getTooltipText = () => {
 		switch (status) {
 			case "loading":
-				return "Vérification Codex CLI...";
+				return t("navigation:codex.checking", "Checking Codex CLI...");
 			case "installed":
 				return versionInfo?.installed
-					? `Codex CLI (${versionInfo.installed})`
-					: "Codex CLI installé";
+					? t("navigation:codex.installedWithVersion", "Codex CLI ({{version}})", {
+							version: versionInfo.installed,
+						})
+					: t("navigation:codex.installed", "Codex CLI installed");
 			case "outdated":
-				return `Codex CLI (${versionInfo?.installed}) - mise à jour disponible`;
+				return t(
+					"navigation:codex.updateAvailableWithVersion",
+					"Codex CLI ({{version}}) - update available",
+					{ version: versionInfo?.installed || "" },
+				);
 			case "not-found":
-				return "Codex CLI non trouvé";
+				return t("navigation:codex.notFound", "Codex CLI not found");
 			case "error":
-				return "Erreur Codex CLI";
+				return t("navigation:codex.error", "Codex CLI error");
 			default:
 				return "Codex CLI";
 		}
@@ -215,11 +221,15 @@ export function CodexCliStatusBadge({
 							<h4 className="text-sm font-medium">OpenAI Codex CLI</h4>
 							<p className="text-xs text-muted-foreground flex items-center gap-1">
 								{getStatusIcon()}
-								{status === "installed" && "Installé"}
-								{status === "outdated" && "Mise à jour disponible"}
-								{status === "not-found" && "Non installé"}
-								{status === "loading" && "Vérification..."}
-								{status === "error" && "Erreur"}
+								{status === "installed" &&
+									t("navigation:codex.installedShort", "Installed")}
+								{status === "outdated" &&
+									t("navigation:codex.updateAvailableShort", "Update available")}
+								{status === "not-found" &&
+									t("navigation:codex.notInstalledShort", "Not installed")}
+								{status === "loading" &&
+									t("navigation:codex.checkingShort", "Checking...")}
+								{status === "error" && t("common:error", "Error")}
 							</p>
 						</div>
 					</div>
@@ -230,19 +240,25 @@ export function CodexCliStatusBadge({
 							<div className="text-xs space-y-1 p-2 bg-muted rounded-md">
 								{versionInfo.installed && (
 									<div className="flex justify-between">
-										<span className="text-muted-foreground">Actuelle :</span>
+										<span className="text-muted-foreground">
+											{t("navigation:codex.current", "Current")}:
+										</span>
 										<span className="font-mono">{versionInfo.installed}</span>
 									</div>
 								)}
 								{versionInfo.latest && (
 									<div className="flex justify-between">
-										<span className="text-muted-foreground">Dernière :</span>
+										<span className="text-muted-foreground">
+											{t("navigation:codex.latest", "Latest")}:
+										</span>
 										<span className="font-mono">{versionInfo.latest}</span>
 									</div>
 								)}
 								{lastChecked && (
 									<div className="flex justify-between text-muted-foreground">
-										<span>Vérifié :</span>
+										<span>
+											{t("navigation:codex.lastChecked", "Last checked")}:
+										</span>
 										<span>{lastChecked.toLocaleTimeString()}</span>
 									</div>
 								)}
@@ -253,11 +269,13 @@ export function CodexCliStatusBadge({
 					{(status === "not-found" || status === "error") && (
 						<div className="text-xs p-2 bg-muted/50 rounded-md text-muted-foreground">
 							<p>
-								Codex CLI n'est pas installé. Cliquez sur « Installer » pour
-								l'installer via npm en arrière-plan :
+								{t(
+									"navigation:codex.notInstalledDescription",
+									"Codex CLI is not installed. Click \"Install\" to install it via pnpm in the background:",
+								)}
 							</p>
 							<p className="mt-1 font-mono bg-muted px-1 rounded break-all">
-								npm install -g @openai/codex@latest
+								pnpm install -g @openai/codex@latest
 							</p>
 						</div>
 					)}
@@ -265,7 +283,9 @@ export function CodexCliStatusBadge({
 					{isUpdating && (
 						<div className="text-xs p-2 bg-muted/50 rounded-md text-muted-foreground flex items-center gap-2">
 							<Loader2 className="h-3 w-3 animate-spin shrink-0" />
-							<span>Installation en cours, merci de patienter…</span>
+							<span>
+								{t("navigation:codex.installing", "Installing, please wait...")}
+							</span>
 						</div>
 					)}
 
@@ -287,8 +307,8 @@ export function CodexCliStatusBadge({
 									<Download className="h-3 w-3" />
 								)}
 								{status === "not-found"
-									? t("common:install", "Installer")
-									: t("common:update", "Mettre à jour")}
+									? t("common:install", "Install")
+									: t("common:update", "Update")}
 							</Button>
 						)}
 						<Button
@@ -306,7 +326,7 @@ export function CodexCliStatusBadge({
 									status === "loading" && "animate-spin",
 								)}
 							/>
-							{t("common:refresh", "Rafraîchir")}
+							{t("common:refresh", "Refresh")}
 						</Button>
 					</div>
 
@@ -328,7 +348,7 @@ export function CodexCliStatusBadge({
 							)
 						}
 					>
-						Voir la documentation Codex CLI
+						{t("navigation:codex.viewDocs", "View Codex CLI documentation")}
 						<ExternalLink className="h-3 w-3" />
 					</Button>
 				</div>

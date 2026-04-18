@@ -54,7 +54,7 @@ function execCommandCopy(text: string, onSuccess: () => void) {
 		document.execCommand("copy");
 		onSuccess();
 	} finally {
-		document.body.removeChild(el);
+		el.remove();
 	}
 }
 
@@ -84,7 +84,7 @@ function classifyLogLevel(keyword: string): string {
  */
 function classifyLogLine(line: string): string {
 	// 1. Bracket notation: [LEVEL], (LEVEL), {LEVEL}
-	const bracketMatch = line.match(/[[({]([a-z]+)[\])}]/i);
+	const bracketMatch = /[[({]([a-z]+)[\])}]/i.exec(line);
 	if (bracketMatch) {
 		const cls = classifyLogLevel(bracketMatch[1]);
 		if (cls) return cls;
@@ -92,7 +92,7 @@ function classifyLogLine(line: string): string {
 
 	// 2. Keyword prefix at start of line, optionally after a timestamp in brackets.
 	//    Covers: "ERROR:", "warn:", "fail:", "DEBUG |", "TRACE -"
-	const prefixMatch = line.match(/^\s*(?:\[[^\]]*\]\s*)?([a-z]+)\s*[:|]/i);
+	const prefixMatch = /^\s*(?:\[[^\]]*\]\s*)?([a-z]+)\s*[:|]/i.exec(line);
 	if (prefixMatch) {
 		const cls = classifyLogLevel(prefixMatch[1]);
 		if (cls) return cls;
@@ -100,9 +100,7 @@ function classifyLogLine(line: string): string {
 
 	// 3. Uppercase standalone keyword anywhere in the line.
 	//    Uppercase-only avoids false positives on ordinary words ("error" in a sentence).
-	const upperMatch = line.match(
-		/\b(ERROR|FATAL|CRITICAL|EXCEPTION|PANIC|FAILED|WARNING|WARN|INFO|INFORMATION|DEBUG|TRACE|VERBOSE)\b/,
-	);
+	const upperMatch = /\b(ERROR|FATAL|CRITICAL|EXCEPTION|PANIC|FAILED|WARNING|WARN|INFO|INFORMATION|DEBUG|TRACE|VERBOSE)\b/.exec(line);
 	if (upperMatch) {
 		return classifyLogLevel(upperMatch[1]);
 	}
@@ -124,9 +122,9 @@ function classifyLogLine(line: string): string {
 function cleanAnsiCodes(text: string): string {
 	// Remove ANSI escape codes (both actual escape codes and text representations like [32m)
 	return text
-		.replace(/\\x1b\\[[0-9;]*m/g, "") // Actual ANSI escape codes
-		.replace(/\[(?:[0-9]+;?)*m/g, "") // Text representations like [32m, [1m, etc.
-		.replace(/\[(?:[0-9]+;?)*[A-Za-z]/g, ""); // Other ANSI sequences
+		.replaceAll(/\\x1b\\[[0-9;]*m/g, "") 		// Actual ANSI escape codes
+		.replaceAll(/\[[0-9;]{0,20}m/g, "")  		// Text representations like [32m, [1m, etc.
+		.replaceAll(/\[[0-9;]{0,20}[A-Za-z]/g, ""); // Other ANSI sequences
 }
 
 /** Render log text with per-line color highlighting based on log level. */
@@ -134,8 +132,8 @@ function renderColorizedContent(text: string) {
 	// Clean ANSI codes first to prevent display issues
 	const cleanText = cleanAnsiCodes(text);
 
-	return cleanText.split("\n").map((line, i) => (
-		<React.Fragment key={`line-${i}-${line.slice(0, 20)}`}>
+	return cleanText.split("\n").map((line) => (
+		<React.Fragment key={`line-${line.slice(0, 50)}`}>
 			<span className={`block ${classifyLogLine(line)}`}>{line}</span>
 		</React.Fragment>
 	));
@@ -399,12 +397,12 @@ export function AppEmulatorDialog() {
 							<div className="flex items-center gap-3 px-4 py-3 border-b border-border shrink-0">
 								{/* Step 1 — Detection */}
 								<div className="flex items-center gap-1.5">
-									{phase !== "detecting" ? (
+									{phase === "detecting" ? (
+										<Loader2 className="h-4 w-4 animate-spin text-primary shrink-0" />
+									) : (
 										<span className="flex h-4 w-4 items-center justify-center rounded-full bg-green-500/15">
 											<Check className="h-2.5 w-2.5 text-green-500" />
 										</span>
-									) : (
-										<Loader2 className="h-4 w-4 animate-spin text-primary shrink-0" />
 									)}
 									<span
 										className={`text-xs font-medium ${phase === "detecting" ? "text-foreground" : "text-muted-foreground"}`}
@@ -545,13 +543,17 @@ export function AppEmulatorDialog() {
 										ref={outputRef}
 										className="text-xs font-mono text-foreground whitespace-pre-wrap bg-muted/50 rounded-lg p-3"
 									>
-										{searchFilteredOutput
-											? renderColorizedContent(searchFilteredOutput)
-											: searchQuery
-												? t("appEmulator:output.noResults", {
-														query: searchQuery,
-													})
-												: t("appEmulator:output.noOutput")}
+										{(() => {
+											if (searchFilteredOutput) {
+												return renderColorizedContent(searchFilteredOutput);
+											}
+											if (searchQuery) {
+												return t("appEmulator:output.noResults", {
+													query: searchQuery,
+												});
+											}
+											return t("appEmulator:output.noOutput");
+										})()}
 									</pre>
 								</div>
 							</ScrollArea>
