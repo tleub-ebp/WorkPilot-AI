@@ -12,9 +12,9 @@ import {
 import { ScrollArea } from "./ui/scroll-area";
 
 interface CompetitorAnalysisViewerProps {
-	analysis: CompetitorAnalysis | null;
-	open: boolean;
-	onOpenChange: (open: boolean) => void;
+	readonly analysis: CompetitorAnalysis | null;
+	readonly open: boolean;
+	readonly onOpenChange: (open: boolean) => void;
 }
 
 export function CompetitorAnalysisViewer({
@@ -100,24 +100,27 @@ export function CompetitorAnalysisViewer({
 												No pain points identified
 											</p>
 										) : (
-											competitor.painPoints.map((painPoint) => (
-												<div
-													key={painPoint.id}
-													className="rounded bg-muted/50 p-3 space-y-2"
-												>
-													<div className="flex items-start gap-2">
-														<Badge
-															variant={
-																painPoint.severity === "high"
-																	? "destructive"
-																	: painPoint.severity === "medium"
-																		? "default"
-																		: "secondary"
-															}
-															className="mt-0.5"
-														>
-															{painPoint.severity}
-														</Badge>
+											competitor.painPoints.map((painPoint) => {
+												let severityVariant: "destructive" | "default" | "secondary";
+												if (painPoint.severity === "high") {
+													severityVariant = "destructive";
+												} else if (painPoint.severity === "medium") {
+													severityVariant = "default";
+												} else {
+													severityVariant = "secondary";
+												}
+												return (
+													<div
+														key={painPoint.id}
+														className="rounded bg-muted/50 p-3 space-y-2"
+													>
+														<div className="flex items-start gap-2">
+															<Badge
+																variant={severityVariant}
+																className="mt-0.5"
+															>
+																{painPoint.severity}
+															</Badge>
 														<div className="flex-1">
 															<p className="text-sm font-medium">
 																{painPoint.description}
@@ -152,7 +155,8 @@ export function CompetitorAnalysisViewer({
 														</div>
 													</div>
 												</div>
-											))
+											);
+											})
 										)}
 									</div>
 								</div>
@@ -173,9 +177,9 @@ export function CompetitorAnalysisViewer({
 										</p>
 										<ul className="text-sm space-y-1">
 											{analysis.insightsSummary.topPainPoints.map(
-												(point, idx) => (
+												(point) => (
 													<li
-														key={`pain-point-${idx}-${point.slice(0, 20)}`}
+														key={`pain-point-${point.slice(0, 50)}`}
 														className="text-muted-foreground"
 													>
 														• {point}
@@ -194,9 +198,9 @@ export function CompetitorAnalysisViewer({
 										</p>
 										<ul className="text-sm space-y-1">
 											{analysis.insightsSummary.differentiatorOpportunities.map(
-												(opp, idx) => (
+												(opp) => (
 													<li
-														key={`opportunity-${idx}-${opp.slice(0, 20)}`}
+														key={`opportunity-${opp.slice(0, 50)}`}
 														className="text-muted-foreground"
 													>
 														• {opp}
@@ -214,9 +218,9 @@ export function CompetitorAnalysisViewer({
 										</p>
 										<ul className="text-sm space-y-1">
 											{analysis.insightsSummary.marketTrends.map(
-												(trend, idx) => (
+												(trend) => (
 													<li
-														key={`trend-${idx}-${trend.slice(0, 20)}`}
+														key={`trend-${trend.slice(0, 50)}`}
 														className="text-muted-foreground"
 													>
 														• {trend}

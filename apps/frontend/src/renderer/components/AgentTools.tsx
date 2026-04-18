@@ -934,10 +934,10 @@ function AgentCard({
 
 					<div className="overflow-y-auto max-h-[400px] space-y-4 pr-1 pt-1">
 						{groupedAvailableMcps.length > 0 ? (
-							groupedAvailableMcps.map((group, groupIdx) => (
+							groupedAvailableMcps.map((group, index) => (
 								<div
 									key={group.labelKey}
-									className={groupIdx > 0 ? "pt-2" : ""}
+									className={index > 0 ? "pt-2" : ""}
 								>
 									<p className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground mb-1.5 px-1">
 										{t(group.labelKey, { defaultValue: group.fallback })}

@@ -94,7 +94,7 @@ const createSafeLink = (opensInNewWindowText: string) => {
 };
 
 interface InsightsProps {
-	projectId: string;
+	readonly projectId: string;
 }
 
 export function Insights({ projectId }: InsightsProps) {
@@ -477,11 +477,11 @@ export function Insights({ projectId }: InsightsProps) {
 }
 
 interface MessageBubbleProps {
-	message: InsightsChatMessage;
-	markdownComponents: Components;
-	onCreateTask: () => void;
-	isCreatingTask: boolean;
-	taskCreated: boolean;
+	readonly message: InsightsChatMessage;
+	readonly markdownComponents: Components;
+	readonly onCreateTask: () => void;
+	readonly isCreatingTask: boolean;
+	readonly taskCreated: boolean;
 }
 
 function MessageBubble({
@@ -493,6 +493,31 @@ function MessageBubble({
 }: MessageBubbleProps) {
 	const { t } = useTranslation(["common", "insights"]);
 	const isUser = message.role === "user";
+
+	const buttonContent = (() => {
+		if (isCreatingTask) {
+			return (
+				<>
+					<Loader2 className="mr-2 h-4 w-4 animate-spin" />
+					{t("insights:tasks.creating")}
+				</>
+			);
+		}
+		if (taskCreated) {
+			return (
+				<>
+					<CheckCircle2 className="mr-2 h-4 w-4" />
+					{t("insights:tasks.created")}
+				</>
+			);
+		}
+		return (
+			<>
+				<Plus className="mr-2 h-4 w-4" />
+				{t("insights:tasks.create")}
+			</>
+		);
+	})();
 
 	return (
 		<div className="flex gap-3">
@@ -583,22 +608,7 @@ function MessageBubble({
 								onClick={onCreateTask}
 								disabled={isCreatingTask || taskCreated}
 							>
-								{isCreatingTask ? (
-									<>
-										<Loader2 className="mr-2 h-4 w-4 animate-spin" />
-										{t("insights:tasks.creating")}
-									</>
-								) : taskCreated ? (
-									<>
-										<CheckCircle2 className="mr-2 h-4 w-4" />
-										{t("insights:tasks.created")}
-									</>
-								) : (
-									<>
-										<Plus className="mr-2 h-4 w-4" />
-										{t("insights:tasks.create")}
-									</>
-								)}
+								{buttonContent}
 							</Button>
 						</CardContent>
 					</Card>
@@ -610,10 +620,10 @@ function MessageBubble({
 
 // Tool usage history component for showing tools used in completed messages
 interface ToolUsageHistoryProps {
-	tools: Array<{
-		name: string;
-		input?: string;
-		timestamp: Date;
+	readonly tools: Array<{
+		readonly name: string;
+		readonly input?: string;
+		readonly timestamp: Date;
 	}>;
 }
 
@@ -691,11 +701,11 @@ function ToolUsageHistory({ tools }: ToolUsageHistoryProps) {
 
 			{expanded && (
 				<div className="mt-2 space-y-1 rounded-md border border-border bg-muted/30 p-2">
-					{tools.map((tool, index) => {
+					{tools.map((tool) => {
 						const Icon = getToolIcon(tool.name);
 						return (
 							<div
-								key={`${tool.name}-${index}`}
+								key={tool.name}
 								className="flex items-center gap-2 text-xs"
 							>
 								<Icon
@@ -718,8 +728,8 @@ function ToolUsageHistory({ tools }: ToolUsageHistoryProps) {
 
 // Tool indicator component for showing what the AI is currently doing
 interface ToolIndicatorProps {
-	name: string;
-	input?: string;
+	readonly name: string;
+	readonly input?: string;
 }
 
 function ToolIndicator({ name, input }: ToolIndicatorProps) {

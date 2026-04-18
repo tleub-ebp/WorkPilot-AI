@@ -171,9 +171,9 @@ export function CopilotCliStatusBadge({
 	const delay = (ms: number) =>
 		new Promise((resolve) => setTimeout(resolve, ms));
 
-	// Update command for GitHub Copilot CLI extension
-	const COPILOT_UPDATE_COMMAND = "gh extension upgrade gh-copilot\n";
-	const COPILOT_INSTALL_COMMAND = "gh extension install github/gh-copilot\n";
+	// Installation commands for GitHub Copilot CLI (gh extension, not npm)
+	const COPILOT_INSTALL_COMMAND = "gh copilot install\n";
+	const COPILOT_UPDATE_COMMAND = "gh copilot update\n";
 
 	// Helper: open an internal terminal with a command and navigate to the terminals page
 	const openTerminalWithCommand = async (label: string, command: string): Promise<boolean> => {
@@ -257,7 +257,7 @@ export function CopilotCliStatusBadge({
 				return;
 			}
 
-			const result =
+			const result = 
 				await globalThis.electronAPI.setCopilotCliActivePath(
 					selectedInstallation,
 				);

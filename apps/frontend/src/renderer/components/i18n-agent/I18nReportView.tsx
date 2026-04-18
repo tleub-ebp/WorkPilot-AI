@@ -95,6 +95,7 @@ export function I18nReportView({
 							stroke="currentColor"
 							className="w-16 h-16 mb-4 opacity-50"
 						>
+							<title>Global network icon</title>
 							<path
 								strokeLinecap="round"
 								strokeLinejoin="round"
@@ -223,9 +224,9 @@ function ReportBody({
 						{t("search.noResults")}
 					</div>
 				) : (
-					filteredIssues.map((issue, idx) => (
+					filteredIssues.map((issue) => (
 						<div
-							key={`${issue.file}-${issue.line}-${issue.key}-${idx}`}
+							key={`${issue.file}-${issue.line}-${issue.key}`}
 							className={`px-4 py-3 rounded-lg border ${SEVERITY_STYLES[issue.severity]}`}
 						>
 							<div className="flex items-center gap-2 mb-1">

@@ -68,8 +68,8 @@ function ResultCard({
 			</div>
 			{result.findings.length > 0 ? (
 				<div className="space-y-1">
-					{result.findings.map((f, idx) => (
-						<FindingRow key={`${f.layer}-${idx}`} finding={f} />
+					{result.findings.map((f) => (
+						<FindingRow key={`${f.layer}-${f.description}`} finding={f} />
 					))}
 				</div>
 			) : (
@@ -188,9 +188,9 @@ export function InjectionGuardView({
 					</div>
 
 					<div className="space-y-2">
-						{results.map((result, idx) => (
+						{results.map((result) => (
 							<ResultCard
-								key={`${result.source}-${idx}`}
+								key={result.source}
 								result={result}
 								t={t}
 							/>
