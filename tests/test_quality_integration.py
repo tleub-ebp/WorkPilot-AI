@@ -86,7 +86,7 @@ class TestQualityBadgeFormatter:
         match = re.search(r"\]\(([^)]+)\)", badge)
         assert match is not None
         parsed = urlparse(match.group(1))
-        assert parsed.hostname in {"shields.io", "www.shields.io"}
+        assert parsed.hostname in {"shields.io", "www.shields.io", "img.shields.io"}
         assert "PASSING" in badge or "FAILING" in badge
 
     def test_markdown_summary(self, sample_score):
