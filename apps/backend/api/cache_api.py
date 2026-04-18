@@ -8,6 +8,7 @@ Provides endpoints for cache monitoring, management, and configuration.
 
 import logging
 import os
+import re
 import time
 from pathlib import Path
 from typing import Annotated, Any
@@ -64,37 +65,57 @@ from .cache_freshness_system import (
 from .git_cache_invalidation import GitBasedCacheInvalidator
 from .intelligent_context_cache import CacheConfig, get_context_cache
 
+_SAFE_COMPONENT_RE = re.compile(r"^[A-Za-z0-9._\- ]+$")
+
 
 def _validate_project_path(project_path: str) -> Path:
-    """Validate and resolve a project path, preventing path traversal attacks."""
-    # Normalize and resolve the path using os.path functions first
-    normalized = os.path.normpath(project_path)
-    resolved = os.path.realpath(normalized)
+    """Validate and resolve a project path, preventing path traversal attacks.
 
-    # Restrict user-provided paths to a trusted base directory.
-    allowed_root = os.path.realpath(
-        os.getenv("CACHE_API_ALLOWED_PROJECT_ROOT", os.getcwd())
+    Strategy:
+    1. Resolve the user-supplied path and check it is contained within a
+       trusted allow-list root.
+    2. Reject each path component that contains characters outside a
+       conservative whitelist (alphanumerics, dot, underscore, hyphen,
+       space). This acts as the sanitizer recognized by static analyzers:
+       after this check, the returned path is considered safe from
+       injection.
+    3. Rebuild the Path from the trusted root and the validated
+       components, so no string from the raw query reaches downstream
+       sinks unchanged.
+    """
+    allowed_root = Path(
+        os.path.realpath(os.getenv("CACHE_API_ALLOWED_PROJECT_ROOT", os.getcwd()))
     )
 
-    # Case-insensitive comparison for Windows compatibility
-    resolved_str = resolved.casefold()
-    allowed_str = allowed_root.casefold()
-    sep = os.sep
+    requested_real = Path(os.path.realpath(os.path.normpath(project_path)))
 
-    if not resolved_str.startswith(allowed_str + sep) and resolved_str != allowed_str:
+    # Case-insensitive containment check (Windows-friendly).
+    req_cmp = str(requested_real).casefold()
+    root_cmp = str(allowed_root).casefold()
+    if req_cmp == root_cmp:
+        rel_parts: tuple[str, ...] = ()
+    elif req_cmp.startswith(root_cmp + os.sep):
+        rel_parts = Path(str(requested_real)[len(str(allowed_root)) + 1 :]).parts
+    else:
         raise HTTPException(status_code=404, detail=PROJECT_PATH_NOT_FOUND)
 
-    # Ensure the resolved path is an existing directory
+    # Validate each component against a strict whitelist, then rebuild
+    # the path from the trusted root + validated components.
+    safe_path = allowed_root
+    for part in rel_parts:
+        if part in ("", ".") or not _SAFE_COMPONENT_RE.match(part):
+            raise HTTPException(status_code=404, detail=PROJECT_PATH_NOT_FOUND)
+        safe_path = safe_path / part
+
     try:
-        is_dir = os.path.isdir(resolved)
-    except (OSError, RuntimeError):
+        is_dir = safe_path.is_dir()
+    except OSError:
         raise HTTPException(status_code=404, detail=PROJECT_PATH_NOT_FOUND)
 
     if not is_dir:
         raise HTTPException(status_code=404, detail=PROJECT_PATH_NOT_FOUND)
 
-    # Return as Path object for downstream use
-    return Path(resolved)
+    return safe_path
 
 
 # Pydantic models for API
