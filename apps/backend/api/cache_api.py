@@ -65,7 +65,6 @@ from .cache_freshness_system import (
 from .git_cache_invalidation import GitBasedCacheInvalidator
 from .intelligent_context_cache import CacheConfig, get_context_cache
 
-
 _SAFE_COMPONENT_RE = re.compile(r"^[A-Za-z0-9._\- ]+$")
 
 
@@ -85,9 +84,7 @@ def _validate_project_path(project_path: str) -> Path:
        sinks unchanged.
     """
     allowed_root = Path(
-        os.path.realpath(
-            os.getenv("CACHE_API_ALLOWED_PROJECT_ROOT", os.getcwd())
-        )
+        os.path.realpath(os.getenv("CACHE_API_ALLOWED_PROJECT_ROOT", os.getcwd()))
     )
 
     requested_real = Path(os.path.realpath(os.path.normpath(project_path)))
