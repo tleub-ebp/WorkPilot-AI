@@ -1,0 +1,48 @@
+name: Wiki · refresh narrative & translations
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: 'Sync mode'
+        required: true
+        default: full
+        type: choice
+        options: [narrative, translate, full]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: wiki-sync
+  cancel-in-progress: false
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout source repo
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install Anthropic SDK
+        run: python -m pip install --upgrade pip anthropic
+
+      - name: Run narrative + translate sync
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          GITHUB_TOKEN: ${{ secrets.WIKI_PUSH_TOKEN || secrets.GITHUB_TOKEN }}
+          GIT_USER_NAME: WorkPilot Wiki Bot
+          GIT_USER_EMAIL: noreply@workpilot.ai
+          WIKI_REPO: https://x-access-token:${{ secrets.WIKI_PUSH_TOKEN || secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.wiki.git
+        run: |
+          MODE="${{ github.event.inputs.mode || 'full' }}"
+          python scripts/wiki/sync_wiki.py --mode "$MODE"
