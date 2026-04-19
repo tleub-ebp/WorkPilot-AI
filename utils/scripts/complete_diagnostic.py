@@ -5,6 +5,7 @@ Complete diagnostic of the Copilot integration chain
 
 import json
 from pathlib import Path
+from urllib.parse import urlparse
 
 import requests
 
@@ -42,7 +43,8 @@ def test_complete_chain():
     
     # Step 2: Check provider detection
     base_url = active_profile.get('baseUrl', '')
-    detected_provider = 'copilot' if 'github.com' in base_url else 'unknown'
+    hostname = (urlparse(base_url).hostname or '').lower()
+    detected_provider = 'copilot' if hostname == 'github.com' or hostname.endswith('.github.com') else 'unknown'
     print(f"\n2. 🔍 Detected provider: {detected_provider}")
     
     if detected_provider != 'copilot':

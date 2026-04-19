@@ -703,8 +703,11 @@ def discover_credentials() -> WindsurfCredentials:
     version = get_windsurf_version()
 
     logger.info(
-        f"[WindsurfAuth] Discovered credentials: port={port}, "
-        f"csrf={csrf[:8]}..., apiKey={api_key[:8]}..., version={version}"
+        "[WindsurfAuth] Discovered credentials: port=%d, csrf_present=%s, api_key_present=%s, version=%s",
+        port,
+        bool(csrf),
+        bool(api_key),
+        version,
     )
 
     return WindsurfCredentials(

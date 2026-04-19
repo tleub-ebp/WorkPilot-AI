@@ -31,6 +31,21 @@ def is_windows():
 
 logger = logging.getLogger(__name__)
 
+
+def _token_presence(token: str | None) -> str:
+    """Return a non-sensitive presence indicator for a token, suitable for logs.
+
+    We deliberately avoid hashing or truncating the token: even a 12-char SHA-256
+    prefix is enough to pin down a known secret in a short list, and CodeQL flags
+    SHA-256 as too fast for credential-derived hashes. Logging only presence + length
+    gives us enough signal to debug "is the token loaded? did it change?" without
+    putting any token-derived bytes in logs.
+    """
+    if not token:
+        return "absent"
+    return f"present(len={len(token)})"
+
+
 # Optional import for Linux secret-service support
 # secretstorage provides access to the Freedesktop.org Secret Service API via DBus
 if TYPE_CHECKING:
@@ -1025,30 +1040,24 @@ def configure_sdk_authentication(config_dir: str | None = None) -> None:
         # This is required because the SDK doesn't know about per-profile Keychain naming
         os.environ["CLAUDE_CODE_OAUTH_TOKEN"] = oauth_token
 
-        # Log token fingerprint for debugging (safe: only first/last chars)
         # IMPORTANT: Avoid printing words like "invalid", "401", "authentication_error"
         # in stdout — the frontend's auth failure detector scans process output and
         # those keywords would cause FALSE POSITIVE auth failure detection.
-        token_fp = (
-            f"{oauth_token[:8]}...{oauth_token[-4:]}"
-            if len(oauth_token) > 16
-            else "(short)"
-        )
+        # We log only presence/length, never any token-derived bytes.
         logger.info(
             "Using OAuth authentication (token: %s, config_dir: %s)",
-            token_fp,
+            _token_presence(oauth_token),
             config_dir or "(default)",
         )
 
-        # Debug: Compare token sources to detect mismatches between env/file
+        # Debug: detect mismatches between env / resolved without logging either value
         env_token = os.environ.get("CLAUDE_CODE_OAUTH_TOKEN", "")
-        env_fp = (
-            f"{env_token[:8]}...{env_token[-4:]}"
-            if len(env_token) > 16
-            else "(not set)"
-        )
-        if env_fp != token_fp:
-            logger.warning("Token mismatch: env=%s resolved=%s", env_fp, token_fp)
+        if env_token and env_token != oauth_token:
+            logger.warning(
+                "Token mismatch between env and resolved value (env: %s, resolved: %s)",
+                _token_presence(env_token),
+                _token_presence(oauth_token),
+            )
 
 
 def ensure_claude_code_oauth_token() -> None:

@@ -323,11 +323,13 @@ def is_false_positive(line: str, matched_text: str) -> bool:
     return False
 
 
-def mask_secret(text: str, visible_chars: int = 8) -> str:
-    """Mask a secret, showing only first few characters."""
-    if len(text) <= visible_chars:
-        return text
-    return text[:visible_chars] + "***"
+def mask_secret(text: str, visible_chars: int = 0) -> str:
+    """Return a fully redacted preview of a secret.
+
+    Only the length is reported; characters are never echoed. Echoing any
+    portion of a credential to logs / JSON / stdout is itself a leak.
+    """
+    return f"<redacted, {len(text)} chars>"
 
 
 def scan_content(content: str, file_path: str) -> list[SecretMatch]:

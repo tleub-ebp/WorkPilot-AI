@@ -12,10 +12,14 @@ from apps.backend.core.auth import get_auth_token
 logger = logging.getLogger(__name__)
 
 def _mask_secret(value: str) -> str:
-    """Masque une clé API pour le logging (affiche seulement les 8 premiers caractères)."""
-    if not value or len(value) <= 8:
+    """Renvoie un placeholder pour une clé API dans les logs.
+
+    On n'écho aucun caractère du secret : même un préfixe de 8 caractères réduit
+    significativement l'entropie pour un attaquant qui aurait accès aux logs.
+    """
+    if not value:
         return "***"
-    return f"{value[:8]}..."
+    return f"<redacted, {len(value)} chars>"
 
 CONFIG_FILE = Path.home() / ".work_pilot_ai_llm_providers.json"
 

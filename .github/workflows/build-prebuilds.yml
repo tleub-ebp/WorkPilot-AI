@@ -16,9 +16,16 @@ env:
   # Default Electron version - update when upgrading Electron in package.json
   ELECTRON_VERSION: ${{ github.event.inputs.electron_version || '40.0.0' }}
 
+permissions:
+  contents: read
+
 jobs:
   build-windows:
     runs-on: windows-latest
+    # `contents: write` needed for the "Upload to release" step that uses
+    # softprops/action-gh-release. Other steps only need read access.
+    permissions:
+      contents: write
     strategy:
       matrix:
         arch: [x64]
@@ -120,6 +127,8 @@ jobs:
   package-prebuilds:
     needs: build-windows
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
       - name: Download all artifacts
         uses: actions/download-artifact@v8

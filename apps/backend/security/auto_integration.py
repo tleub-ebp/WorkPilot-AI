@@ -100,7 +100,7 @@ def check_security_setup() -> dict[str, Any]:
     """
     setup = {
         "core_features": "✅ Active (built-in)",
-        "secret_scanning": "✅ Active (built-in)",
+        "credential_leak_scanner_status": "✅ Active (built-in)",
         "recommendations": [],
         "warnings": [],
     }
@@ -156,7 +156,7 @@ def print_security_status():
     setup = check_security_setup()
 
     print(f"Core Features: {setup['core_features']}")
-    print(f"Secret Scanning: {setup['secret_scanning']}")
+    print(f"Credential leak scanning: {setup['credential_leak_scanner_status']}")
 
     if "git_hooks" in setup:
         print(f"Git Hooks: {setup['git_hooks']}")

@@ -219,20 +219,23 @@ class TestSecretMasking:
     """Tests for secret masking."""
 
     def test_masks_long_secret(self):
-        """Masks secrets showing only first few characters."""
-        masked = mask_secret("sk-1234567890abcdefghijklmnop", 8)
-        assert masked == "sk-12345***"
+        """Fully redacts the secret, leaking no characters."""
+        secret = "sk-1234567890abcdefghijklmnop"
+        masked = mask_secret(secret)
+        assert "1234" not in masked
         assert "abcdef" not in masked
+        assert str(len(secret)) in masked
 
-    def test_short_string_not_masked(self):
-        """Short strings are not masked."""
-        masked = mask_secret("short", 8)
-        assert masked == "short"
+    def test_short_string_redacted(self):
+        """Short strings are also fully redacted."""
+        masked = mask_secret("short")
+        assert "short" not in masked
+        assert "5" in masked  # length is reported
 
-    def test_custom_visible_chars(self):
-        """Respects custom visible character count."""
+    def test_visible_chars_arg_ignored(self):
+        """visible_chars is accepted for backwards-compat but never echoes characters."""
         masked = mask_secret("sk-1234567890abcdefghijklmnop", 4)
-        assert masked == "sk-1***"
+        assert "sk-1" not in masked
 
 
 class TestSecretsIgnoreFile:

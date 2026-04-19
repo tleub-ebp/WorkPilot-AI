@@ -122,7 +122,7 @@ class TestSecurityScanResult:
     def test_result_with_data(self):
         """Test result with actual data."""
         result = SecurityScanResult(
-            secrets=[{"file": "config.py", "pattern": "api_key"}],
+            leak_findings=[{"file": "config.py", "pattern": "api_key"}],
             vulnerabilities=[
                 SecurityVulnerability(
                     severity="critical",
@@ -214,7 +214,7 @@ class TestSecretsDetection:
     def test_secrets_block_qa(self, scanner, temp_dir):
         """Test that secrets block QA approval."""
         result = SecurityScanResult(
-            secrets=[{"file": "config.py", "pattern": "api_key", "line": 1}],
+            leak_findings=[{"file": "config.py", "pattern": "api_key", "line": 1}],
         )
 
         # Manually set the blocking flag as the scan method would
@@ -234,7 +234,7 @@ class TestBlockingLogic:
     def test_secrets_always_block(self):
         """Test that any secrets always block QA."""
         result = SecurityScanResult(
-            secrets=[{"file": "test.py", "pattern": "password"}],
+            leak_findings=[{"file": "test.py", "pattern": "password"}],
             has_critical_issues=True,
             should_block_qa=True,
         )
@@ -297,7 +297,7 @@ class TestSerialization:
     def test_to_dict(self, scanner):
         """Test converting result to dictionary."""
         result = SecurityScanResult(
-            secrets=[{"file": "test.py", "pattern": "api_key", "line": 1}],
+            leak_findings=[{"file": "test.py", "pattern": "api_key", "line": 1}],
             vulnerabilities=[
                 SecurityVulnerability(
                     severity="high",
