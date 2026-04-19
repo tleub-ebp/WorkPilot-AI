@@ -1,0 +1,42 @@
+name: Wiki · refresh inventories
+
+on:
+  push:
+    branches: [develop, main]
+    paths:
+      - 'apps/backend/prompts/**'
+      - 'apps/backend/integrations/**'
+      - 'apps/**/package.json'
+      - 'docs/CLI-USAGE.md'
+      - 'scripts/wiki/**'
+      - '.github/workflows/wiki-inventories.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: wiki-sync
+  cancel-in-progress: false
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout source repo
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Run inventory sync
+        env:
+          GITHUB_TOKEN: ${{ secrets.WIKI_PUSH_TOKEN || secrets.GITHUB_TOKEN }}
+          GIT_USER_NAME: WorkPilot Wiki Bot
+          GIT_USER_EMAIL: noreply@workpilot.ai
+          WIKI_REPO: https://x-access-token:${{ secrets.WIKI_PUSH_TOKEN || secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.wiki.git
+        run: python scripts/wiki/sync_wiki.py --mode inventories
