@@ -10,6 +10,7 @@ Tests the Postman HTTP client including:
 import sys
 from pathlib import Path
 from unittest.mock import MagicMock, patch
+from urllib.parse import urlparse
 
 import pytest
 import requests
@@ -305,6 +306,7 @@ class TestPostmanClientDisconnect:
         """get_connection_info() returns connection details."""
         client = PostmanClient(api_key="PMAK-test-key")
         info = client.get_connection_info()
+        parsed = urlparse(info["base_url"])
 
-        assert "api.getpostman.com" in info["base_url"]
+        assert parsed.hostname == "api.getpostman.com"
         assert info["connected"] == "False"
