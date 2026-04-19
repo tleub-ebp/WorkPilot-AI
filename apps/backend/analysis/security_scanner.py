@@ -583,7 +583,9 @@ def main() -> None:
         if result.secrets:
             print("\nSecrets Detected:")
             for finding in result.secrets:
-                print(f"  - {finding['pattern']} in {finding['file']}:{finding['line']}")
+                print(
+                    f"  - {finding['pattern']} in {finding['file']}:{finding['line']}"
+                )
 
         if result.vulnerabilities:
             print(f"\nVulnerabilities ({len(result.vulnerabilities)}):")

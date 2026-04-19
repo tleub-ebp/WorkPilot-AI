@@ -483,9 +483,7 @@ class RouteDetector(BaseAnalyzer):
             attr_pattern = re.compile(
                 r'\[Http(Get|Post|Put|Delete|Patch)(?:\(["\']?([^"\')\]]*)["\']?\))?\]'
             )
-            summary_pattern = re.compile(
-                r"///\s*<summary>([\s\S]*?)///\s*</summary>"
-            )
+            summary_pattern = re.compile(r"///\s*<summary>([\s\S]*?)///\s*</summary>")
 
             for m in attr_pattern.finditer(content):
                 # Look up to 800 chars back for the closest preceding <summary>

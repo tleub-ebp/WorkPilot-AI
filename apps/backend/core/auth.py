@@ -41,6 +41,7 @@ def _token_fingerprint(token: str) -> str:
         return "(empty)"
     return "sha256:" + hashlib.sha256(token.encode("utf-8")).hexdigest()[:12]
 
+
 # Optional import for Linux secret-service support
 # secretstorage provides access to the Freedesktop.org Secret Service API via DBus
 if TYPE_CHECKING:

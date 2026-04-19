@@ -934,7 +934,10 @@ async def test_provider_api_key(request: Request, provider: str, payload: dict):
                 "error": f"Ollama returned HTTP {resp.status_code}",
             }
         except Exception as e:
-            return {"success": False, "error": f"Ollama not reachable: {_safe_error_message(e)}"}
+            return {
+                "success": False,
+                "error": f"Ollama not reachable: {_safe_error_message(e)}",
+            }
 
     return {
         "success": False,
@@ -1419,7 +1422,9 @@ async def get_provider_usage(provider: str):
                 "providerName": "anthropic",
             }
         except ImportError as e:
-            return {"error": f"Module Anthropic usage non disponible: {_safe_error_message(e)}"}
+            return {
+                "error": f"Module Anthropic usage non disponible: {_safe_error_message(e)}"
+            }
         except Exception as e:
             return {
                 "error": f"Erreur lors de la récupération des métriques Anthropic: {_safe_error_message(e)}"
