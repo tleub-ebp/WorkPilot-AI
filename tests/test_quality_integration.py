@@ -71,7 +71,8 @@ class TestQualityBadgeFormatter:
         formatter = QualityBadgeFormatter()
         url = formatter.generate_shields_badge_url(sample_score)
         
-        assert "shields.io" in url
+        parsed = urlparse(url)
+        assert parsed.hostname in {"shields.io", "www.shields.io", "img.shields.io"}
         assert "Quality" in url
         assert "C" in url
         assert "75" in url
