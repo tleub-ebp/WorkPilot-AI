@@ -185,3 +185,14 @@ _bmad-output/
 logs/security/
 Agents.md
 nul
+
+# ===========================
+# Runtime data (SQLite, lint reports)
+# ===========================
+*.sqlite3
+*.sqlite3-journal
+/apps/backend/analytics.db
+/apps/backend/test_analytics.db
+/data/analytics.db
+/data/test_analytics.db
+/apps/frontend/lint_output.txt
