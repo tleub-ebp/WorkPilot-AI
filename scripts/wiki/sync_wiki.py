@@ -77,7 +77,22 @@ def has_changes(wiki: Path) -> bool:
 def commit_and_push(wiki: Path, message: str) -> None:
     run(["git", "-C", str(wiki), "add", "-A"])
     run(["git", "-C", str(wiki), "commit", "-m", message])
-    run(["git", "-C", str(wiki), "push"])
+    for attempt in range(3):
+        result = subprocess.run(
+            ["git", "-C", str(wiki), "push"],
+            capture_output=True,
+            text=True,
+        )
+        if result.returncode == 0:
+            print(result.stdout, end="")
+            return
+        stderr = result.stderr or ""
+        print(stderr, end="")
+        if "rejected" not in stderr and "fetch first" not in stderr and "non-fast-forward" not in stderr:
+            raise subprocess.CalledProcessError(result.returncode, result.args, result.stdout, stderr)
+        print(f"[retry {attempt + 1}/3] remote moved — pulling with rebase")
+        run(["git", "-C", str(wiki), "pull", "--rebase"])
+    raise RuntimeError("wiki push rejected 3 times in a row")
 
 
 def step_inventories(repo: Path, wiki: Path) -> None:
