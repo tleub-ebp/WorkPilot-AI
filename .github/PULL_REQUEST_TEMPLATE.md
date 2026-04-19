@@ -1,7 +1,7 @@
 ## Base Branch
 
 - [ ] This PR targets the `develop` branch (required for all feature/fix PRs)
-- [ ] This PR targets `main` (hotfix only - maintainers)
+- [ ] This PR targets `main` (release `develop` → `main`, or hotfix — maintainers only)
 
 ## Description
 
