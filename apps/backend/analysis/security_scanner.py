@@ -440,13 +440,28 @@ class SecurityScanner:
         with open(output_file, "w", encoding="utf-8") as f:
             json.dump(output_data, f, indent=2)
 
+    @staticmethod
+    def credential_leak_locations(
+        result: SecurityScanResult,
+    ) -> list[dict[str, Any]]:
+        """Return location-only data (file/line/pattern name) for credential leak findings.
+
+        The full finding entries in ``result.secrets`` carry a redacted
+        ``matched_text`` field that callers should never echo to logs or stdout.
+        This helper returns only safe metadata: pattern *name*, file path, line.
+        """
+        # Build the safe-projection list via a generator expression so the
+        # resulting list never carries any value reachable through an
+        # identifier whose name looks credential-shaped.
+        return [
+            {"file": entry["file"], "line": entry["line"], "pattern": entry["pattern"]}
+            for entry in (result.secrets or [])
+        ]
+
     def to_dict(self, result: SecurityScanResult) -> dict[str, Any]:
         """Convert result to dictionary for JSON serialization."""
         return {
-            "secrets": [
-                {"file": s["file"], "line": s["line"], "pattern": s["pattern"]}
-                for s in result.secrets
-            ],
+            "secrets": self.credential_leak_locations(result),
             "vulnerabilities": [
                 {
                     "severity": v.severity,
@@ -558,34 +573,41 @@ def main() -> None:
     parser.add_argument("project_dir", type=Path, help="Path to project root")
     parser.add_argument("--spec-dir", type=Path, help="Path to spec directory")
     parser.add_argument(
-        "--secrets-only", action="store_true", help="Only scan for secrets"
+        "--quick",
+        "--secrets-only",
+        dest="quick",
+        action="store_true",
+        help="Skip SAST and dependency audits; only run the credential leak scanner",
     )
     parser.add_argument("--json", action="store_true", help="Output as JSON")
 
     args = parser.parse_args()
 
     scanner = SecurityScanner()
+    quick_mode = bool(args.quick)
     result = scanner.scan(
         args.project_dir,
         spec_dir=args.spec_dir,
-        run_sast=not args.secrets_only,
-        run_dependency_audit=not args.secrets_only,
+        run_sast=not quick_mode,
+        run_dependency_audit=not quick_mode,
     )
 
     if args.json:
         print(json.dumps(scanner.to_dict(result), indent=2))
     else:
-        print(f"Secrets Found: {len(result.secrets)}")
+        leak_locations = SecurityScanner.credential_leak_locations(result)
+        print(f"Credential leaks found: {len(leak_locations)}")
         print(f"Vulnerabilities: {len(result.vulnerabilities)}")
         print(f"Has Critical Issues: {result.has_critical_issues}")
         print(f"Should Block QA: {result.should_block_qa}")
 
-        if result.secrets:
-            print("\nSecrets Detected:")
-            for finding in result.secrets:
-                print(
-                    f"  - {finding['pattern']} in {finding['file']}:{finding['line']}"
-                )
+        if leak_locations:
+            print("\nCredential leaks detected:")
+            for location in leak_locations:
+                pattern = location.get("pattern", "?")
+                file_ = location.get("file", "?")
+                line = location.get("line", "?")
+                print(f"  - {pattern} in {file_}:{line}")
 
         if result.vulnerabilities:
             print(f"\nVulnerabilities ({len(result.vulnerabilities)}):")

@@ -32,14 +32,18 @@ def is_windows():
 logger = logging.getLogger(__name__)
 
 
-def _token_fingerprint(token: str) -> str:
-    """Return a non-reversible 12-char fingerprint of a token for log correlation.
+def _token_presence(token: str | None) -> str:
+    """Return a non-sensitive presence indicator for a token, suitable for logs.
 
-    Uses SHA-256 so the original token bytes can never be recovered from logs.
+    We deliberately avoid hashing or truncating the token: even a 12-char SHA-256
+    prefix is enough to pin down a known secret in a short list, and CodeQL flags
+    SHA-256 as too fast for credential-derived hashes. Logging only presence + length
+    gives us enough signal to debug "is the token loaded? did it change?" without
+    putting any token-derived bytes in logs.
     """
     if not token:
-        return "(empty)"
-    return "sha256:" + hashlib.sha256(token.encode("utf-8")).hexdigest()[:12]
+        return "absent"
+    return f"present(len={len(token)})"
 
 
 # Optional import for Linux secret-service support
@@ -1039,19 +1043,21 @@ def configure_sdk_authentication(config_dir: str | None = None) -> None:
         # IMPORTANT: Avoid printing words like "invalid", "401", "authentication_error"
         # in stdout — the frontend's auth failure detector scans process output and
         # those keywords would cause FALSE POSITIVE auth failure detection.
-        # Use a non-reversible fingerprint (sha256 prefix) so logs cannot leak token bytes.
-        token_fp = _token_fingerprint(oauth_token)
+        # We log only presence/length, never any token-derived bytes.
         logger.info(
-            "Using OAuth authentication (token_fp: %s, config_dir: %s)",
-            token_fp,
+            "Using OAuth authentication (token: %s, config_dir: %s)",
+            _token_presence(oauth_token),
             config_dir or "(default)",
         )
 
-        # Debug: Compare token sources to detect mismatches between env/file
+        # Debug: detect mismatches between env / resolved without logging either value
         env_token = os.environ.get("CLAUDE_CODE_OAUTH_TOKEN", "")
-        env_fp = _token_fingerprint(env_token) if env_token else "(not set)"
-        if env_fp != token_fp:
-            logger.warning("Token mismatch: env_fp=%s resolved_fp=%s", env_fp, token_fp)
+        if env_token and env_token != oauth_token:
+            logger.warning(
+                "Token mismatch between env and resolved value (env: %s, resolved: %s)",
+                _token_presence(env_token),
+                _token_presence(oauth_token),
+            )
 
 
 def ensure_claude_code_oauth_token() -> None:
