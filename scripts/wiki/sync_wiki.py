@@ -115,11 +115,23 @@ def step_translate(repo: Path, wiki: Path) -> None:
     )
 
 
+def step_translate_en(repo: Path, wiki: Path) -> None:
+    run(
+        [
+            sys.executable,
+            str(SCRIPTS_DIR / "update_narrative.py"),
+            "translate-en",
+            "--repo", str(repo),
+            "--wiki", str(wiki),
+        ]
+    )
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
         "--mode",
-        choices=["inventories", "narrative", "translate", "full"],
+        choices=["inventories", "narrative", "translate", "translate-en", "full", "bootstrap"],
         required=True,
     )
     parser.add_argument("--repo", type=Path, default=Path.cwd())
@@ -136,13 +148,16 @@ def main() -> int:
 
     commit_msgs: list[str] = []
 
-    if args.mode in {"inventories", "full"}:
+    if args.mode in {"inventories", "full", "bootstrap"}:
         step_inventories(repo, wiki)
         commit_msgs.append("chore(wiki): refresh inventories")
     if args.mode in {"narrative", "full"}:
         step_narrative(repo, wiki)
         commit_msgs.append("chore(wiki): refresh narrative sections")
-    if args.mode in {"translate", "full"}:
+    if args.mode in {"translate-en", "bootstrap"}:
+        step_translate_en(repo, wiki)
+        commit_msgs.append("chore(wiki): bootstrap English translations from French")
+    if args.mode in {"translate", "full", "bootstrap"}:
         step_translate(repo, wiki)
         commit_msgs.append("chore(wiki): update French translations")
 
