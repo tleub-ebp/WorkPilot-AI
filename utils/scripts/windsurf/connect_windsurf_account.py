@@ -32,7 +32,6 @@ def check_windsurf_config():
     
     if oauth_token:
         print(f"✅ Token OAuth Windsurf présent ({len(oauth_token)} caractères)")
-        print(f"   Token: {oauth_token[:20]}...{oauth_token[-20:]}")
     else:
         print("❌ Token OAuth Windsurf NON trouvé")
         return False

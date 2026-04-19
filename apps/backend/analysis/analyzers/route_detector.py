@@ -476,16 +476,23 @@ class RouteDetector(BaseAnalyzer):
             if not class_base.startswith("/"):
                 class_base = f"/{class_base}"
 
-            # Extract XML doc <summary> + [HttpVerb] pairs
-            # Walk through file looking for method-level attributes
-            method_pattern = re.compile(
-                r"(?:///\s*<summary>\s*((?:///[^\n]*\n?)*?)///\s*</summary>[\s\S]{0,500}?)?"
-                r'\[Http(Get|Post|Put|Delete|Patch)(?:\(["\']?([^"\')\]]*)["\']?\))?\]',
-                re.MULTILINE,
+            # Find each [HttpVerb] attribute first; the optional <summary>
+            # block is then resolved with a bounded backward window.
+            # This avoids a single big optional+repeated regex that triggered
+            # exponential backtracking on inputs full of `///` lines.
+            attr_pattern = re.compile(
+                r'\[Http(Get|Post|Put|Delete|Patch)(?:\(["\']?([^"\')\]]*)["\']?\))?\]'
+            )
+            summary_pattern = re.compile(
+                r"///\s*<summary>([\s\S]*?)///\s*</summary>"
             )
 
-            for m in method_pattern.finditer(content):
-                raw_summary = m.group(1) or ""
+            for m in attr_pattern.finditer(content):
+                # Look up to 800 chars back for the closest preceding <summary>
+                ctx_start = max(0, m.start() - 800)
+                preceding = content[ctx_start : m.start()]
+                summary_matches = list(summary_pattern.finditer(preceding))
+                raw_summary = summary_matches[-1].group(1) if summary_matches else ""
                 # Strip leading /// and whitespace from each summary line
                 summary = (
                     " ".join(
@@ -496,8 +503,8 @@ class RouteDetector(BaseAnalyzer):
                     or None
                 )
 
-                verb = m.group(2)
-                sub_path = (m.group(3) or "").strip().strip('"').strip("'")
+                verb = m.group(1)
+                sub_path = (m.group(2) or "").strip().strip('"').strip("'")
                 method = http_verbs.get(verb, verb.upper())
 
                 full_path = (

@@ -22,8 +22,8 @@ async def test():
     creds = discover_credentials()
     print(f"   Port: {creds.port}")
     print(f"   Version: {creds.version}")
-    print(f"   CSRF: {creds.csrf_token[:12]}...")
-    print(f"   API Key: {creds.api_key[:12]}...")
+    print(f"   CSRF present: {bool(creds.csrf_token)}")
+    print(f"   API Key present: {bool(creds.api_key)}")
 
     # Step 2: Resolve model
     model_name = "claude-4-sonnet"

@@ -45,10 +45,10 @@ def test_optimization_config():
         print(f"  Parallel execution: {config.performance.parallel_execution}")
 
         print("\n🎯 Claude Code Optimization:")
-        print(f"  OAuth token support: {config.claude_code.oauth_token_support}")
-        print(
-            f"  Encrypted token validation: {config.claude_code.encrypted_token_validation}"
-        )
+        oauth_flag = config.claude_code.oauth_token_support
+        print(f"  OAuth support enabled: {bool(oauth_flag)}")
+        enc_flag = config.claude_code.encrypted_token_validation
+        print(f"  Encrypted credential validation enabled: {bool(enc_flag)}")
         print(f"  Keychain integration: {config.claude_code.keychain_integration}")
         print(f"  SDK integration: {config.claude_code.sdk_integration}")
         print(f"  Context compression: {config.claude_code.context_compression}")

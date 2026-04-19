@@ -1617,8 +1617,7 @@ class WindsurfAgentClient(AgentClient):
                 creds = discover_credentials()
                 self._api_key = creds.api_key
                 logger.info(
-                    f"[WindsurfAgent] Extracted API key from running Windsurf IDE "
-                    f"(key={self._api_key[:8]}...)"
+                    "[WindsurfAgent] Extracted API key from running Windsurf IDE"
                 )
             except Exception as e:
                 logger.warning(f"[WindsurfAgent] Failed to extract key from IDE: {e}")
@@ -1689,8 +1688,9 @@ class WindsurfAgentClient(AgentClient):
                     )
                     self._use_local_grpc = False
                     logger.info(
-                        f"[WindsurfAgent] Mode 2 (REST): {self._rest_base_url} "
-                        f"(model={self.model}, key_prefix={self._api_key[:8]}...)"
+                        "[WindsurfAgent] Mode 2 (REST): %s (model=%s)",
+                        self._rest_base_url,
+                        self.model,
                     )
             else:
                 # No IDE running — try REST (may not work if no enterprise endpoint configured)
@@ -2335,11 +2335,14 @@ class WindsurfAgentClient(AgentClient):
         tools = self._get_openai_tools()
         url = f"{self._rest_base_url}/chat/completions"
 
-        # Log initial request details for debugging
+        # Log initial request details for debugging (no key material)
         logger.info(
-            f"[WindsurfAgent] REST request: url={url}, model={self.model}, "
-            f"tools={len(tools)}, prompt_len={len(prompt)}, "
-            f"key_prefix={self._api_key[:12] if self._api_key else 'None'}..."
+            "[WindsurfAgent] REST request: url=%s, model=%s, tools=%d, prompt_len=%d, key_present=%s",
+            url,
+            self.model,
+            len(tools),
+            len(prompt),
+            bool(self._api_key),
         )
         print(
             f"[WindsurfAgent] Sending REST API request to {url} "

@@ -73,8 +73,13 @@ class PerformanceProfiler:
     def detect_algorithm_issues(self) -> list[Bottleneck]:
         """Detect O(n²) loops, recursive patterns without memoization."""
         bottlenecks = []
+        # Bounded inner-line repetition (max 50 indented lines between the two
+        # `for` statements) to avoid exponential backtracking from
+        # `(?:\s+.*\n)*?` followed by `\s+for ...`.
         nested_loop_py = re.compile(
-            r"for\s+\w+\s+in\s+[^:]+:\s*\n(?:\s+.*\n)*?\s+for\s+\w+\s+in\s+[^:]+"
+            r"for[ \t]+\w+[ \t]+in[ \t]+[^:\n]+:[ \t]*\n"
+            r"(?:[ \t]+[^\n]*\n){0,50}?"
+            r"[ \t]+for[ \t]+\w+[ \t]+in[ \t]+[^:\n]+"
         )
         nested_loop_js = re.compile(r"for\s*\([^)]+\)\s*\{[^{}]*for\s*\([^)]+\)\s*\{")
         recursive_no_memo = re.compile(r"def\s+(\w+)\s*\([^)]*\):[^}]*\1\s*\([^)]*\)")

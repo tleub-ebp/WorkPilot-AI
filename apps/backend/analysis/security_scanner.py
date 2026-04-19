@@ -443,7 +443,10 @@ class SecurityScanner:
     def to_dict(self, result: SecurityScanResult) -> dict[str, Any]:
         """Convert result to dictionary for JSON serialization."""
         return {
-            "secrets": result.secrets,
+            "secrets": [
+                {"file": s["file"], "line": s["line"], "pattern": s["pattern"]}
+                for s in result.secrets
+            ],
             "vulnerabilities": [
                 {
                     "severity": v.severity,
@@ -579,8 +582,8 @@ def main() -> None:
 
         if result.secrets:
             print("\nSecrets Detected:")
-            for secret in result.secrets:
-                print(f"  - {secret['pattern']} in {secret['file']}:{secret['line']}")
+            for finding in result.secrets:
+                print(f"  - {finding['pattern']} in {finding['file']}:{finding['line']}")
 
         if result.vulnerabilities:
             print(f"\nVulnerabilities ({len(result.vulnerabilities)}):")

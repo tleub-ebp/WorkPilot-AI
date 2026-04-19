@@ -5,6 +5,7 @@ Script to create a Copilot API profile for testing
 
 import json
 from pathlib import Path
+from urllib.parse import urlparse
 
 
 def create_copilot_profile():
@@ -30,7 +31,8 @@ def create_copilot_profile():
     # Check if Copilot profile already exists
     existing_copilot = None
     for profile in profiles_data.get('profiles', []):
-        if 'copilot' in profile.get('name', '').lower() or 'github.com' in profile.get('baseUrl', ''):
+        host = (urlparse(profile.get('baseUrl', '')).hostname or '').lower()
+        if 'copilot' in profile.get('name', '').lower() or host == 'github.com' or host.endswith('.github.com'):
             existing_copilot = profile
             break
     

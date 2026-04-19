@@ -333,11 +333,8 @@ def get_provider_status(provider: str):
         # For Windsurf, check OAuth token specifically
         if provider == "windsurf":
             oauth_token = os.getenv("WINDSURF_OAUTH_TOKEN")
-            print(
-                f"DEBUG: oauth_token = {oauth_token[:20] if oauth_token else 'None'}..."
-            )
-            print(
-                f"DEBUG: bool check = {bool(oauth_token and oauth_token.strip() != '')}"
+            logger.debug(
+                "oauth_token present: %s", bool(oauth_token and oauth_token.strip())
             )
             return {
                 "available": True,
@@ -937,7 +934,7 @@ async def test_provider_api_key(request: Request, provider: str, payload: dict):
                 "error": f"Ollama returned HTTP {resp.status_code}",
             }
         except Exception as e:
-            return {"success": False, "error": f"Ollama not reachable: {e}"}
+            return {"success": False, "error": f"Ollama not reachable: {_safe_error_message(e)}"}
 
     return {
         "success": False,
@@ -1399,10 +1396,10 @@ async def get_provider_usage(provider: str):
                 },
             }  # Added closing bracket here
         except ImportError as e:
-            return {"error": f"Module Copilot non disponible: {e}"}
+            return {"error": f"Module Copilot non disponible: {_safe_error_message(e)}"}
         except Exception as e:
             return {
-                "error": f"Erreur lors de la récupération des métriques Copilot: {e}"
+                "error": f"Erreur lors de la récupération des métriques Copilot: {_safe_error_message(e)}"
             }
     elif provider == "anthropic" or provider == "claude":
         try:
@@ -1422,10 +1419,10 @@ async def get_provider_usage(provider: str):
                 "providerName": "anthropic",
             }
         except ImportError as e:
-            return {"error": f"Module Anthropic usage non disponible: {e}"}
+            return {"error": f"Module Anthropic usage non disponible: {_safe_error_message(e)}"}
         except Exception as e:
             return {
-                "error": f"Erreur lors de la récupération des métriques Anthropic: {e}"
+                "error": f"Erreur lors de la récupération des métriques Anthropic: {_safe_error_message(e)}"
             }
     elif provider == "windsurf":
         # Windsurf (Codeium) — multi-strategy auth for GetTeamCreditBalance

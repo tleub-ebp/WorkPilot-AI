@@ -31,6 +31,16 @@ def is_windows():
 
 logger = logging.getLogger(__name__)
 
+
+def _token_fingerprint(token: str) -> str:
+    """Return a non-reversible 12-char fingerprint of a token for log correlation.
+
+    Uses SHA-256 so the original token bytes can never be recovered from logs.
+    """
+    if not token:
+        return "(empty)"
+    return "sha256:" + hashlib.sha256(token.encode("utf-8")).hexdigest()[:12]
+
 # Optional import for Linux secret-service support
 # secretstorage provides access to the Freedesktop.org Secret Service API via DBus
 if TYPE_CHECKING:
@@ -1025,30 +1035,22 @@ def configure_sdk_authentication(config_dir: str | None = None) -> None:
         # This is required because the SDK doesn't know about per-profile Keychain naming
         os.environ["CLAUDE_CODE_OAUTH_TOKEN"] = oauth_token
 
-        # Log token fingerprint for debugging (safe: only first/last chars)
         # IMPORTANT: Avoid printing words like "invalid", "401", "authentication_error"
         # in stdout — the frontend's auth failure detector scans process output and
         # those keywords would cause FALSE POSITIVE auth failure detection.
-        token_fp = (
-            f"{oauth_token[:8]}...{oauth_token[-4:]}"
-            if len(oauth_token) > 16
-            else "(short)"
-        )
+        # Use a non-reversible fingerprint (sha256 prefix) so logs cannot leak token bytes.
+        token_fp = _token_fingerprint(oauth_token)
         logger.info(
-            "Using OAuth authentication (token: %s, config_dir: %s)",
+            "Using OAuth authentication (token_fp: %s, config_dir: %s)",
             token_fp,
             config_dir or "(default)",
         )
 
         # Debug: Compare token sources to detect mismatches between env/file
         env_token = os.environ.get("CLAUDE_CODE_OAUTH_TOKEN", "")
-        env_fp = (
-            f"{env_token[:8]}...{env_token[-4:]}"
-            if len(env_token) > 16
-            else "(not set)"
-        )
+        env_fp = _token_fingerprint(env_token) if env_token else "(not set)"
         if env_fp != token_fp:
-            logger.warning("Token mismatch: env=%s resolved=%s", env_fp, token_fp)
+            logger.warning("Token mismatch: env_fp=%s resolved_fp=%s", env_fp, token_fp)
 
 
 def ensure_claude_code_oauth_token() -> None:

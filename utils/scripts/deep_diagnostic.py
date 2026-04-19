@@ -5,6 +5,7 @@ Deep diagnostic of Copilot integration issues
 
 import json
 from pathlib import Path
+from urllib.parse import urlparse
 
 import requests
 
@@ -58,11 +59,12 @@ def diagnose_copilot_integration():
     
     # Simulate detectProvider logic
     detected_provider = 'unknown'
-    if 'github.com' in base_url:
+    hostname = (urlparse(base_url).hostname or '').lower()
+    if hostname == 'github.com' or hostname.endswith('.github.com'):
         detected_provider = 'copilot'
-    elif 'api.anthropic.com' in base_url:
+    elif hostname == 'api.anthropic.com':
         detected_provider = 'anthropic'
-    elif 'api.openai.com' in base_url:
+    elif hostname == 'api.openai.com':
         detected_provider = 'openai'
     
     print(f"   Detected provider: {detected_provider}")
