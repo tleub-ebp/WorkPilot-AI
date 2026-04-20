@@ -1,0 +1,11 @@
+{
+	"title": "Slack / Teams notifications",
+	"platform": "Platform",
+	"webhookUrl": "Webhook URL",
+	"enabled": "Enable notifications",
+	"sendTest": "Send test message",
+	"sending": "Sending…",
+	"ok": "Delivered",
+	"error": "Delivery failed",
+	"help": "Notifications are sent when an agent finishes, a cost alert fires, a guardrail blocks an action, or a change has a high blast radius."
+}

@@ -1,0 +1,13 @@
+{
+	"title": "Rayon d'impact",
+	"projectRoot": "Racine du projet",
+	"targets": "Fichiers cibles (séparés par virgule ou saut de ligne)",
+	"analyze": "Analyser",
+	"analyzing": "Analyse…",
+	"score": "Score",
+	"dependents": "dépendants",
+	"tests": "tests",
+	"flags": "Feature flags référencés",
+	"dependentFiles": "Fichiers dépendants",
+	"testFiles": "Tests dans le périmètre"
+}

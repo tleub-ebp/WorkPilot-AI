@@ -4,10 +4,12 @@
  * Re-exports all individual API modules and their types
  */
 
+export * from "./agent-debugger-api";
 export * from "./architecture-visualizer-api";
 export * from "./arena-api";
 export * from "./auto-refactor-api";
 export * from "./azure-devops-api";
+export * from "./blast-radius-api";
 export * from "./changelog-api";
 export * from "./claude-code-api";
 export * from "./code-migration-api";
@@ -39,6 +41,7 @@ export * from "./roadmap-api";
 export * from "./self-healing-api";
 export * from "./shell-api";
 export * from "./smart-estimation-api";
+export * from "./team-bot-api";
 export * from "./team-sync-api";
 export * from "./test-generation-api";
 export * from "./voice-control-api";

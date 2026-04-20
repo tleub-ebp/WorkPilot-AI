@@ -11,7 +11,10 @@ import { notificationService } from "../notification-service";
 import type { PythonEnvManager } from "../python-env-manager";
 import type { TerminalManager } from "../terminal-manager";
 import { registerAccessibilityHandlers } from "./accessibility-handlers";
+import { registerAgentDebuggerHandlers } from "./agent-debugger-handlers";
 import { registerAgenteventsHandlers } from "./agent-events-handlers";
+import { registerBlastRadiusHandlers } from "./blast-radius-handlers";
+import { registerTeamBotHandlers } from "./team-bot-handlers";
 import { registerApiExplorerHandlers } from "./api-explorer-handlers";
 import { registerApiWatcherHandlers } from "./api-watcher-handlers";
 import { registerAppEmulatorHandlers } from "./app-emulator-handlers";
@@ -512,6 +515,15 @@ export function setupIpcHandlers(
 
 	// Cost Predictor handlers (ex-ante spec cost prediction)
 	registerCostPredictorHandlers();
+
+	// Agent Debugger handlers (Feature 1)
+	registerAgentDebuggerHandlers();
+
+	// Blast Radius handlers (Feature 6)
+	registerBlastRadiusHandlers();
+
+	// Team Bot handlers (Feature 4 — Slack / Microsoft Teams notifications)
+	registerTeamBotHandlers();
 
 	console.warn("[IPC] All handler modules registered successfully");
 }
