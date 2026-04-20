@@ -125,6 +125,10 @@ def handle_cost_predict_command(
             ("openai", "gpt-4o-mini"),
             ("google", "gemini-2.5-pro"),
             ("google", "gemini-2.5-flash"),
+            ("grok", "grok-4"),
+            ("copilot", "gpt-4.1"),
+            ("windsurf", "windsurf-cascade"),
+            ("ollama", "llama-3.3-70b"),
         ]
 
     predictor = CostPredictor()

@@ -1,0 +1,13 @@
+{
+	"title": "Blast Radius",
+	"projectRoot": "Project root",
+	"targets": "Target files (comma or newline separated)",
+	"analyze": "Analyze",
+	"analyzing": "Analyzing…",
+	"score": "Score",
+	"dependents": "dependents",
+	"tests": "tests",
+	"flags": "Feature flags referenced",
+	"dependentFiles": "Dependent files",
+	"testFiles": "Tests in scope"
+}

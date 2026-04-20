@@ -370,9 +370,9 @@ class CopilotUsageConnector:
                 "permission_required": ADMIN_ORG_PERMISSION
             }
         else:
-            logger.warning(
-                "Copilot usage retrieval failed for both enterprise and organization scopes",
-                exc_info=(type(organization_error or enterprise_error), organization_error or enterprise_error, (organization_error or enterprise_error).__traceback__) if (organization_error or enterprise_error) else False
+            logger.error(
+                "Unable to retrieve Copilot usage metrics via enterprise and organization endpoints",
+                exc_info=(organization_error or enterprise_error),
             )
             return {
                 "error": "COPILOT_USAGE_UNAVAILABLE",

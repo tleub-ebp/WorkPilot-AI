@@ -1372,7 +1372,7 @@ async def get_provider_usage(provider: str):
                     "error": usage_data.get("error", "COPILOT_USAGE_RETRIEVAL_FAILED"),
                     "message": usage_data.get(
                         "message",
-                        "Impossible de récupérer les métriques Copilot pour le moment."
+                        "Impossible de récupérer les métriques Copilot pour le moment.",
                     ),
                 }
 

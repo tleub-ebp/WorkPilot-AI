@@ -2,6 +2,9 @@ import i18n from "i18next";
 import { initReactI18next } from "react-i18next";
 import enAccessibility from "./locales/en/accessibility.json";
 import enAgentCoach from "./locales/en/agentCoach.json";
+import enAgentDebugger from "./locales/en/agentDebugger.json";
+import enBlastRadius from "./locales/en/blastRadius.json";
+import enTeamBot from "./locales/en/teamBot.json";
 import enFlakyTests from "./locales/en/flakyTests.json";
 import enI18nAgent from "./locales/en/i18nAgent.json";
 import enOnboardingAgent from "./locales/en/onboardingAgent.json";
@@ -74,6 +77,9 @@ import enVoiceControl from "./locales/en/voiceContol.json";
 import enWelcome from "./locales/en/welcome.json";
 import frAccessibility from "./locales/fr/accessibility.json";
 import frAgentCoach from "./locales/fr/agentCoach.json";
+import frAgentDebugger from "./locales/fr/agentDebugger.json";
+import frBlastRadius from "./locales/fr/blastRadius.json";
+import frTeamBot from "./locales/fr/teamBot.json";
 import frFlakyTests from "./locales/fr/flakyTests.json";
 import frI18nAgent from "./locales/fr/i18nAgent.json";
 import frOnboardingAgent from "./locales/fr/onboardingAgent.json";
@@ -151,6 +157,9 @@ export const resources = {
 	en: {
 		accessibility: enAccessibility,
 		agentCoach: enAgentCoach,
+		agentDebugger: enAgentDebugger,
+		blastRadius: enBlastRadius,
+		teamBot: enTeamBot,
 		flakyTests: enFlakyTests,
 		i18nAgent: enI18nAgent,
 		onboardingAgent: enOnboardingAgent,
@@ -223,6 +232,9 @@ export const resources = {
 	fr: {
 		accessibility: frAccessibility,
 		agentCoach: frAgentCoach,
+		agentDebugger: frAgentDebugger,
+		blastRadius: frBlastRadius,
+		teamBot: frTeamBot,
 		flakyTests: frFlakyTests,
 		i18nAgent: frI18nAgent,
 		onboardingAgent: frOnboardingAgent,
@@ -302,6 +314,9 @@ i18n.use(initReactI18next).init({
 	ns: [
 		"accessibility",
 		"agentCoach",
+		"agentDebugger",
+		"blastRadius",
+		"teamBot",
 		"flakyTests",
 		"i18nAgent",
 		"onboardingAgent",

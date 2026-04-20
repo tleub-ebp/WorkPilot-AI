@@ -1,0 +1,16 @@
+{
+	"title": "Agent Debugger",
+	"attach": "Attach",
+	"detach": "Detach",
+	"attachedTo": "Attached to",
+	"breakpoints": "Breakpoints",
+	"noBreakpoints": "No breakpoints yet.",
+	"ruleId": "Id",
+	"tool": "Tool",
+	"pathPattern": "Path pattern",
+	"commandPattern": "Command pattern",
+	"pausedFrames": "Paused frames",
+	"noFrames": "No paused frames.",
+	"continue": "Continue",
+	"skip": "Skip"
+}

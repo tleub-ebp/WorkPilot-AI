@@ -83,6 +83,41 @@ _DEFAULT_CATALOG: dict[str, dict[str, dict[str, float]]] = {
     "xai": {
         "grok-4": {"input": 5.0, "output": 15.0},
     },
+    # GitHub Copilot — coding assistant billed per seat, not per token.
+    # We record $0 token pricing so predictions still render without misleading cost.
+    "copilot": {
+        "gpt-4.1": {"input": 0.0, "output": 0.0},
+        "gpt-4o": {"input": 0.0, "output": 0.0},
+        "claude-sonnet-4-6": {"input": 0.0, "output": 0.0},
+        "gemini-2.5-pro": {"input": 0.0, "output": 0.0},
+    },
+    # Windsurf (Codeium) — flat-rate seat licensing; token price ≈ 0 for estimation.
+    "windsurf": {
+        "windsurf-default": {"input": 0.0, "output": 0.0},
+        "windsurf-premier": {"input": 0.0, "output": 0.0},
+        "windsurf-cascade": {"input": 0.0, "output": 0.0},
+    },
+    # AWS Bedrock — pass-through pricing that mirrors underlying foundation models.
+    "aws": {
+        "anthropic.claude-opus-4-6": {"input": 15.0, "output": 75.0},
+        "anthropic.claude-sonnet-4-6": {"input": 3.0, "output": 15.0},
+        "meta.llama-3.3-70b": {"input": 0.72, "output": 0.72},
+    },
+    # Grok — alias for xAI's provider (frontend registry names it "grok").
+    "grok": {
+        "grok-4": {"input": 5.0, "output": 15.0},
+        "grok-2": {"input": 2.0, "output": 10.0},
+        "grok-2-mini": {"input": 0.30, "output": 0.50},
+    },
+    # Meta (Llama API / direct) — reference pricing from Llama API preview.
+    "meta": {
+        "llama-3.3-70b": {"input": 0.72, "output": 0.72},
+        "llama-4-maverick": {"input": 2.0, "output": 6.0},
+    },
+    # Cursor — proxy pricing; the user pays Cursor's flat plan, not per token.
+    "cursor": {
+        "cursor-default": {"input": 0.0, "output": 0.0},
+    },
     "ollama": {
         "llama-3.3-70b": {
             "input": 0.0,

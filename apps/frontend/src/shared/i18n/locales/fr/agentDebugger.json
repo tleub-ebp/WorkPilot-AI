@@ -1,0 +1,16 @@
+{
+	"title": "Débogueur d'Agent",
+	"attach": "Attacher",
+	"detach": "Détacher",
+	"attachedTo": "Attaché à",
+	"breakpoints": "Points d'arrêt",
+	"noBreakpoints": "Aucun point d'arrêt.",
+	"ruleId": "Id",
+	"tool": "Outil",
+	"pathPattern": "Motif de chemin",
+	"commandPattern": "Motif de commande",
+	"pausedFrames": "Frames en pause",
+	"noFrames": "Aucune frame en pause.",
+	"continue": "Continuer",
+	"skip": "Ignorer"
+}

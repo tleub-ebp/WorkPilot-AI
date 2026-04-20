@@ -14,6 +14,18 @@ import {
 	createAccessibilityAPI,
 } from "./modules/accessibility-api";
 import {
+	type AgentDebuggerAPI,
+	createAgentDebuggerAPI,
+} from "./modules/agent-debugger-api";
+import {
+	type BlastRadiusAPI,
+	createBlastRadiusAPI,
+} from "./modules/blast-radius-api";
+import {
+	type TeamBotAPI,
+	createTeamBotAPI,
+} from "./modules/team-bot-api";
+import {
 	type ApiExplorerAPI,
 	createApiExplorerAPI,
 } from "./modules/api-explorer-api";
@@ -222,6 +234,9 @@ export interface ElectronAPI
 		ConsensusArbiterAPI,
 		InjectionGuardAPI,
 		GuardrailsAPI,
+		AgentDebuggerAPI,
+		BlastRadiusAPI,
+		TeamBotAPI,
 		VisualProgrammingAPI {
 	github: GitHubAPI;
 	/** Queue routing API for rate limit recovery */
@@ -342,6 +357,9 @@ export const createElectronAPI = (): ElectronAPI => {
 		...createConsensusArbiterAPI(),
 		...createInjectionGuardAPI(),
 		...createGuardrailsAPI(),
+		...createAgentDebuggerAPI(),
+		...createBlastRadiusAPI(),
+		...createTeamBotAPI(),
 		...createVisualProgrammingAPI(),
 		github: createGitHubAPI(),
 		queue: createQueueAPI(), // Queue routing for rate limit recovery
