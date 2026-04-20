@@ -370,8 +370,12 @@ class CopilotUsageConnector:
                 "permission_required": ADMIN_ORG_PERMISSION
             }
         else:
+            logger.exception(
+                "Unable to retrieve Copilot usage metrics via enterprise and organization endpoints",
+                exc_info=(organization_error or enterprise_error),
+            )
             return {
-                "error": str(organization_error or enterprise_error),
+                "error": "COPILOT_USAGE_UNAVAILABLE",
                 "message": "Unable to retrieve Copilot usage metrics. Please ensure you have the necessary permissions and Copilot is enabled for your organization/enterprise.",
                 "suggestions": [
                     "Verify GitHub CLI authentication: gh auth status",
@@ -453,10 +457,10 @@ def get_copilot_usage_metrics() -> dict[str, Any]:
     try:
         connector = CopilotUsageConnector()
         return connector.get_copilot_usage_summary()
-    except Exception as e:
-        logger.error(f"Failed to get Copilot usage metrics: {e}")
+    except Exception:
+        logger.exception("Failed to get Copilot usage metrics")
         return {
-            "error": str(e),
+            "error": "COPILOT_USAGE_UNAVAILABLE",
             "provider": "copilot",
             "available": False
         }
