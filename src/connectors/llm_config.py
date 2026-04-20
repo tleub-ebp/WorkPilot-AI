@@ -111,6 +111,6 @@ def force_claude_provider_config():
     if token and token.startswith("sk-"):
         config = {"api_key": token, "model": "claude-3-sonnet-20240229"}
         save_provider_config("claude", config)
-        logger.info("force_claude_provider_config - config sauvegardée pour clé %s", _mask_secret(token))
+        logger.info("force_claude_provider_config - config sauvegardée.")
     else:
         logger.warning("force_claude_provider_config - aucun token Claude valide trouvé.")
