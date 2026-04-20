@@ -1366,7 +1366,15 @@ async def get_provider_usage(provider: str):
 
             # Formater les données pour le frontend
             if "error" in usage_data:
-                return usage_data
+                return {
+                    "provider": "copilot",
+                    "available": False,
+                    "error": usage_data.get("error", "COPILOT_USAGE_RETRIEVAL_FAILED"),
+                    "message": usage_data.get(
+                        "message",
+                        "Impossible de récupérer les métriques Copilot pour le moment."
+                    ),
+                }
 
             return {
                 "provider": "copilot",
