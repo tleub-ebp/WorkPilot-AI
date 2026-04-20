@@ -220,6 +220,11 @@ const OnboardingGuideView = lazy(() =>
 		default: m.OnboardingGuideView,
 	})),
 );
+const OnboardingPackageView = lazy(() =>
+	import("./components/onboarding-agent/OnboardingPackageView").then((m) => ({
+		default: m.OnboardingPackageView,
+	})),
+);
 const FlakyTestReport = lazy(() =>
 	import("./components/flaky-tests/FlakyTestReport").then((m) => ({
 		default: m.FlakyTestReport,
@@ -1715,6 +1720,11 @@ export function App() {
 													</div>
 												)}
 												{activeView === "onboarding-agent" && (
+													<div className="overflow-auto" style={{ height: 'calc(100vh - 100px)' }}>
+														<OnboardingPackageView projectPath={selectedProject?.path} />
+													</div>
+												)}
+												{activeView === "onboarding-guide" && (
 													<div className="overflow-auto" style={{ height: 'calc(100vh - 100px)' }}>
 														<OnboardingGuideView projectPath={selectedProject?.path} />
 													</div>

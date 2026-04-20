@@ -24,8 +24,8 @@ backend_path = Path(__file__).parent.parent
 sys.path.insert(0, str(backend_path))
 
 from onboarding_agent import (  # noqa: E402
-    OnboardingEngine,
     OnboardingGuide,
+    OnboardingPackageBuilder,
 )
 
 
@@ -116,18 +116,23 @@ def _guide_to_dict(guide: OnboardingGuide) -> dict[str, Any]:
 
 def run_scan(project_path: Path) -> dict[str, Any]:
     _emit_event("start", {"status": "Analyzing project structure..."})
-    engine = OnboardingEngine()
-    guide = engine.generate(project_path)
+    builder = OnboardingPackageBuilder()
+    package = builder.build(project_path)
+    guide = package.guide
     _emit_event(
         "progress",
         {
             "status": (
-                f"Generated guide with {len(guide.key_files)} key file(s) and "
-                f"{len(guide.conventions)} convention(s)"
+                f"Generated package with {len(package.tour)} tour step(s), "
+                f"{len(package.quiz)} quiz question(s), "
+                f"{len(package.first_tasks)} first task(s)"
             )
         },
     )
-    result = {"guide": _guide_to_dict(guide)}
+    result = {
+        "guide": _guide_to_dict(guide),
+        "package": package.to_dict(),
+    }
     _emit_event("complete", {"steps": len(result["guide"]["steps"])})
     return result
 

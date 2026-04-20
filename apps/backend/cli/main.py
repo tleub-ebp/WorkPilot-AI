@@ -20,6 +20,7 @@ from .build_commands import handle_build_command
 from .cost_commands import (
     handle_cost_budget_command,
     handle_cost_compare_command,
+    handle_cost_predict_command,
     handle_cost_report_command,
 )
 from .env_commands import (
@@ -28,6 +29,7 @@ from .env_commands import (
     handle_env_validate_command,
 )
 from .followup_commands import handle_followup_command
+from .onboarding_commands import handle_onboard_command
 from .qa_commands import (
     handle_auto_fix_command,
     handle_qa_command,
@@ -397,6 +399,40 @@ Environment Variables:
         metavar="AMOUNT",
         help="Set budget limit in USD (no value = show current budget)",
     )
+    onboarding_group = parser.add_argument_group("Onboarding")
+    onboarding_group.add_argument(
+        "--onboard",
+        action="store_true",
+        help="Generate a newcomer onboarding guide for the current project",
+    )
+    onboarding_group.add_argument(
+        "--onboard-output",
+        type=str,
+        default=None,
+        metavar="PATH",
+        help="Write the onboarding guide to PATH instead of stdout",
+    )
+
+    cost_group.add_argument(
+        "--cost-predict",
+        type=str,
+        metavar="SPEC_ID",
+        help="Predict cost of running a spec (e.g. '001-feature-name') before launch",
+    )
+    cost_group.add_argument(
+        "--predict-model",
+        type=str,
+        default=None,
+        metavar="MODEL",
+        help="Model to use for --cost-predict (default: claude-sonnet-4-6)",
+    )
+    cost_group.add_argument(
+        "--predict-provider",
+        type=str,
+        default="anthropic",
+        metavar="PROVIDER",
+        help="Provider to use for --cost-predict (default: anthropic)",
+    )
     cost_group.add_argument(
         "--budget-period",
         type=str,
@@ -612,6 +648,20 @@ def _run_cli() -> None:
         handle_cost_budget_command(
             project_dir, limit=args.cost_budget, period=args.budget_period
         )
+        return
+
+    if args.cost_predict:
+        handle_cost_predict_command(
+            project_dir,
+            spec_id=args.cost_predict,
+            model=args.predict_model,
+            provider=args.predict_provider,
+        )
+        return
+
+    if args.onboard:
+        out_path = Path(args.onboard_output) if args.onboard_output else None
+        handle_onboard_command(project_dir, output=out_path)
         return
 
     # Handle Environment Cloner commands

@@ -45,6 +45,7 @@ import { registerContextMeshHandlers } from "./context-mesh-handlers";
 import { registerCopilotCliHandlers } from "./copilot-cli-handlers";
 import { registerCopilotOAuthHandlers } from "./copilot-oauth-handlers";
 import { registerCostHandlers } from "./cost-handlers";
+import { registerCostPredictorHandlers } from "./cost-predictor-handlers";
 import { registerCredentialHandlers } from "./credential-handlers";
 import { registerCrossLanguageTranslationHandlers } from "./cross-language-translation-handlers";
 import { registerDebugHandlers } from "./debug-handlers";
@@ -61,6 +62,7 @@ import { registerGitHubCopilotHandlers } from "./github-copilot-handlers";
 import { registerGitSurgeonHandlers } from "./git-surgeon-handlers";
 import { registerGithubHandlers } from "./github-handlers";
 import { registerGitlabHandlers } from "./gitlab-handlers";
+import { registerGuardrailsHandlers } from "./guardrails-handlers";
 import { registerI18nAgentHandlers } from "./i18n-agent-handlers";
 import { registerIdeationHandlers } from "./ideation-handlers";
 import { registerInsightsHandlers } from "./insights-handlers";
@@ -158,6 +160,7 @@ export { registerContextMeshHandlers } from "./context-mesh-handlers";
 export { registerCopilotCliHandlers } from "./copilot-cli-handlers";
 export { registerCopilotOAuthHandlers } from "./copilot-oauth-handlers";
 export { registerCostHandlers } from "./cost-handlers";
+export { registerCostPredictorHandlers } from "./cost-predictor-handlers";
 export { registerCredentialHandlers } from "./credential-handlers";
 export { registerCrossLanguageTranslationHandlers } from "./cross-language-translation-handlers";
 export { registerDebugHandlers } from "./debug-handlers";
@@ -174,6 +177,7 @@ export { registerGitHubCopilotHandlers } from "./github-copilot-handlers";
 export { registerGitSurgeonHandlers } from "./git-surgeon-handlers";
 export { registerGithubHandlers } from "./github-handlers";
 export { registerGitlabHandlers } from "./gitlab-handlers";
+export { registerGuardrailsHandlers } from "./guardrails-handlers";
 export { registerI18nAgentHandlers } from "./i18n-agent-handlers";
 export { registerIdeationHandlers } from "./ideation-handlers";
 export { registerInsightsHandlers } from "./insights-handlers";
@@ -502,6 +506,12 @@ export function setupIpcHandlers(
 
 	// Injection Guard handlers (prompt injection scanner)
 	registerInjectionGuardHandlers();
+
+	// Guardrails handlers (user-defined agent guardrails)
+	registerGuardrailsHandlers();
+
+	// Cost Predictor handlers (ex-ante spec cost prediction)
+	registerCostPredictorHandlers();
 
 	console.warn("[IPC] All handler modules registered successfully");
 }

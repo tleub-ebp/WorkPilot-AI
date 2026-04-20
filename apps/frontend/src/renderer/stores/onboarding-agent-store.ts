@@ -2,6 +2,7 @@ import { create } from "zustand";
 import type {
 	OnboardingAgentEvent,
 	OnboardingAgentResult,
+	OnboardingPackage,
 } from "../../preload/api/modules/onboarding-agent-api";
 import type { OnboardingGuide } from "../../shared/types/onboarding";
 
@@ -11,6 +12,9 @@ interface OnboardingAgentState {
 	phase: OnboardingAgentPhase;
 	status: string;
 	guide: OnboardingGuide | null;
+	pkg: OnboardingPackage | null;
+	currentTourStep: number;
+	quizAnswers: Record<number, number>;
 	error: string | null;
 
 	startScan: (projectPath: string) => Promise<void>;
@@ -18,6 +22,8 @@ interface OnboardingAgentState {
 	setStatus: (status: string) => void;
 	setResult: (result: OnboardingAgentResult) => void;
 	setError: (error: string) => void;
+	setCurrentTourStep: (idx: number) => void;
+	answerQuiz: (qIdx: number, choice: number) => void;
 	reset: () => void;
 }
 
@@ -25,6 +31,9 @@ export const useOnboardingAgentStore = create<OnboardingAgentState>((set) => ({
 	phase: "idle",
 	status: "",
 	guide: null,
+	pkg: null,
+	currentTourStep: 0,
+	quizAnswers: {},
 	error: null,
 
 	startScan: async (projectPath) => {
@@ -36,13 +45,21 @@ export const useOnboardingAgentStore = create<OnboardingAgentState>((set) => ({
 			phase: "scanning",
 			status: "Starting scan...",
 			guide: null,
+			pkg: null,
+			currentTourStep: 0,
+			quizAnswers: {},
 			error: null,
 		});
 		try {
 			const result = await globalThis.electronAPI.runOnboardingAgentScan({
 				projectPath,
 			});
-			set({ phase: "complete", guide: result.guide, status: "" });
+			set({
+				phase: "complete",
+				guide: result.guide,
+				pkg: result.package ?? null,
+				status: "",
+			});
 		} catch (err) {
 			set({
 				phase: "error",
@@ -57,9 +74,26 @@ export const useOnboardingAgentStore = create<OnboardingAgentState>((set) => ({
 	},
 
 	setStatus: (status) => set({ status }),
-	setResult: (result) => set({ guide: result.guide, phase: "complete" }),
+	setResult: (result) =>
+		set({
+			guide: result.guide,
+			pkg: result.package ?? null,
+			phase: "complete",
+		}),
 	setError: (error) => set({ error, phase: "error" }),
-	reset: () => set({ phase: "idle", status: "", guide: null, error: null }),
+	setCurrentTourStep: (idx) => set({ currentTourStep: idx }),
+	answerQuiz: (qIdx, choice) =>
+		set((s) => ({ quizAnswers: { ...s.quizAnswers, [qIdx]: choice } })),
+	reset: () =>
+		set({
+			phase: "idle",
+			status: "",
+			guide: null,
+			pkg: null,
+			currentTourStep: 0,
+			quizAnswers: {},
+			error: null,
+		}),
 }));
 
 export function setupOnboardingAgentListeners(): () => void {

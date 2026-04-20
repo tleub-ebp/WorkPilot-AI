@@ -75,6 +75,14 @@ from .compliance_analyzer import (
     ComplianceViolation,
 )
 from .git_hooks import GitHookManager
+from .guardrails import (
+    GuardrailAction,
+    GuardrailDecision,
+    GuardrailRule,
+    evaluate_rules,
+    guardrails_hook,
+    load_guardrails,
+)
 from .hooks import bash_security_hook, validate_command
 from .parser import (
     extract_commands,
@@ -201,6 +209,13 @@ __all__ = [
     "InjectionClassifier",
     "ClassificationResult",
     "injection_patterns",
+    # Guardrails
+    "guardrails_hook",
+    "load_guardrails",
+    "evaluate_rules",
+    "GuardrailRule",
+    "GuardrailAction",
+    "GuardrailDecision",
 ]
 
 # Prompt Injection Guard imports

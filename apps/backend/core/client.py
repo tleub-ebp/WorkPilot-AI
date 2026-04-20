@@ -209,6 +209,22 @@ except ImportError:
 from linear_updater import is_linear_enabled
 from prompts_pkg.project_context import detect_project_capabilities, load_project_index
 from security import bash_security_hook
+from security.guardrails import guardrails_hook as _raw_guardrails_hook
+
+
+def _make_guardrails_hook(project_dir: Path):
+    """Bind the project root so the SDK can call the hook with its own signature."""
+
+    async def _hook(
+        input_data: dict,
+        tool_use_id: str | None = None,
+        context: object | None = None,
+    ) -> dict:
+        return await _raw_guardrails_hook(
+            input_data, tool_use_id, context, project_root=project_dir
+        )
+
+    return _hook
 
 
 def _validate_custom_mcp_server(server: dict) -> bool:
@@ -977,6 +993,18 @@ def create_client(
         "hooks": {
             "PreToolUse": [
                 HookMatcher(matcher="Bash", hooks=[bash_security_hook]),
+                HookMatcher(
+                    matcher="Bash",
+                    hooks=[_make_guardrails_hook(project_dir)],
+                ),
+                HookMatcher(
+                    matcher="Write",
+                    hooks=[_make_guardrails_hook(project_dir)],
+                ),
+                HookMatcher(
+                    matcher="Edit",
+                    hooks=[_make_guardrails_hook(project_dir)],
+                ),
             ],
         },
         "max_turns": 1000,

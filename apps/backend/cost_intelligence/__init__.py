@@ -21,6 +21,13 @@ from .budget_enforcer import (
     DegradationTier,
 )
 from .catalog import ModelPricing, PricingCatalog
+from .cost_predictor import (
+    CostPrediction,
+    CostPredictor,
+    PredictionReport,
+    SpecFootprint,
+    extract_spec_footprint,
+)
 from .live_tracker import CostEvent, LiveCostTracker, TrackerSnapshot
 from .reservation import BudgetReservation, ReservationManager
 
@@ -42,4 +49,10 @@ __all__ = [
     # Reservation
     "ReservationManager",
     "BudgetReservation",
+    # Predictor
+    "CostPredictor",
+    "CostPrediction",
+    "PredictionReport",
+    "SpecFootprint",
+    "extract_spec_footprint",
 ]

@@ -105,12 +105,20 @@ import {
 	createCopilotOAuthAPI,
 } from "./modules/copilot-oauth-api";
 import { type CostAPI, createCostAPI } from "./modules/cost-api";
+import {
+	type CostPredictorAPI,
+	createCostPredictorAPI,
+} from "./modules/cost-predictor-api";
 import { createDebugAPI, type DebugAPI } from "./modules/debug-api";
 import type { DecisionLoggerAPI } from "./modules/decision-logger-api";
 import { createDecisionLoggerAPI } from "./modules/decision-logger-api";
 import type { DocumentationAgentAPI } from "./modules/documentation-agent-api";
 import { createDocumentationAgentAPI } from "./modules/documentation-agent-api";
 import { createGitHubAPI, type GitHubAPI } from "./modules/github-api";
+import {
+	type GuardrailsAPI,
+	createGuardrailsAPI,
+} from "./modules/guardrails-api";
 import { invokeIpc } from "./modules/ipc-utils";
 import type { LearningLoopAPI } from "./modules/learning-loop-api";
 import { createLearningLoopAPI } from "./modules/learning-loop-api";
@@ -195,6 +203,7 @@ export interface ElectronAPI
 		ArenaAPI,
 		TestGenerationAPI,
 		CostAPI,
+		CostPredictorAPI,
 		AccessibilityAPI,
 		I18nAgentAPI,
 		DocDriftAPI,
@@ -212,6 +221,7 @@ export interface ElectronAPI
 		RegressionGuardianAPI,
 		ConsensusArbiterAPI,
 		InjectionGuardAPI,
+		GuardrailsAPI,
 		VisualProgrammingAPI {
 	github: GitHubAPI;
 	/** Queue routing API for rate limit recovery */
@@ -313,6 +323,7 @@ export const createElectronAPI = (): ElectronAPI => {
 		...createArenaAPI(),
 		...createTestGenerationAPI(),
 		...createCostAPI(),
+		...createCostPredictorAPI(),
 		...createAccessibilityAPI(),
 		...createI18nAgentAPI(),
 		...createDocDriftAPI(),
@@ -330,6 +341,7 @@ export const createElectronAPI = (): ElectronAPI => {
 		...createRegressionGuardianAPI(),
 		...createConsensusArbiterAPI(),
 		...createInjectionGuardAPI(),
+		...createGuardrailsAPI(),
 		...createVisualProgrammingAPI(),
 		github: createGitHubAPI(),
 		queue: createQueueAPI(), // Queue routing for rate limit recovery

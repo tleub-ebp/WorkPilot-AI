@@ -53,6 +53,7 @@ import { GeneralSettings } from "./GeneralSettings";
 import { useSettings } from "./hooks/useSettings";
 import { LanguageSettings } from "./LanguageSettings";
 import { ProjectSettingsContent } from "./ProjectSettingsContent";
+import { GuardrailsSettings } from "./GuardrailsSettings";
 import { SandboxSettings } from "./SandboxSettings";
 import { SchedulerSettings } from "./SchedulerSettings";
 import { SwarmModeSettings } from "./SwarmModeSettings";
@@ -115,6 +116,7 @@ export type AppSection =
 	| "agent"
 	// Sécurité & Performance
 	| "sandbox"
+	| "guardrails"
 	| "anomaly-detection"
 	| "memory"
 	// Système & Maintenance
@@ -262,6 +264,12 @@ const createSettingsThemes = (t: {
 				id: "sandbox",
 				icon: Shield,
 				label: t("sections.sandbox.title"),
+				type: "app",
+			},
+			{
+				id: "guardrails",
+				icon: Shield,
+				label: t("guardrails.title", "Agent Guardrails"),
 				type: "app",
 			},
 			{
@@ -520,6 +528,8 @@ export function AppSettingsDialog(props: AppSettingsDialogProps) {
 				return <DebugSettings />;
 			case "sandbox":
 				return <SandboxSettings />;
+			case "guardrails":
+				return <GuardrailsSettings />;
 			case "anomaly-detection":
 				return <AnomalyDetectionSettings />;
 			case "scheduler":

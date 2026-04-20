@@ -92,6 +92,84 @@ def handle_cost_compare_command(project_dir: Path) -> None:
     print()
 
 
+def handle_cost_predict_command(
+    project_dir: Path,
+    spec_id: str,
+    model: str | None = None,
+    provider: str = "anthropic",
+    compare: bool = True,
+) -> None:
+    """Predict the cost of running a spec before launch.
+
+    Args:
+        project_dir: Path to the project root.
+        spec_id: Spec identifier, e.g. ``'001-feature-name'``.
+        model: Model name to predict for. Defaults to ``'claude-sonnet-4-6'``.
+        provider: Provider name. Defaults to ``'anthropic'``.
+        compare: When True, include alternate models in the report.
+    """
+    from cost_intelligence import CostPredictor
+
+    spec_dir = project_dir / ".workpilot" / "specs" / spec_id
+    if not spec_dir.is_dir():
+        print(f"Spec not found: {spec_dir}")
+        return
+
+    alternatives: list[tuple[str, str]] = []
+    if compare:
+        alternatives = [
+            ("anthropic", "claude-opus-4-6"),
+            ("anthropic", "claude-sonnet-4-6"),
+            ("anthropic", "claude-haiku-4-5"),
+            ("openai", "gpt-4o"),
+            ("openai", "gpt-4o-mini"),
+            ("google", "gemini-2.5-pro"),
+            ("google", "gemini-2.5-flash"),
+        ]
+
+    predictor = CostPredictor()
+    report = predictor.predict(
+        spec_dir=spec_dir,
+        project_root=project_dir,
+        selected_model=model,
+        selected_provider=provider,
+        alternative_models=alternatives,
+    )
+
+    sel = report.selected
+    print(f"\n  Cost Prediction — {report.spec_id}")
+    print(f"  {'=' * 60}")
+    print(f"  Subtasks: {report.footprint.subtask_count}")
+    print(f"  Files in scope: {report.footprint.touched_files}")
+    print(f"  LOC in scope: {report.footprint.loc_in_scope}")
+    print(f"  Complexity: {report.footprint.complexity_score:.1f}")
+    print(f"  History samples: {report.history_samples}")
+    print()
+    print(f"  Selected model: {sel.provider}/{sel.model}")
+    print(
+        f"    Tokens (in/out/thinking): "
+        f"{sel.expected_input_tokens:,} / {sel.expected_output_tokens:,} / "
+        f"{sel.expected_thinking_tokens:,}"
+    )
+    print(
+        f"    Cost: ${sel.expected_cost_usd:.4f} "
+        f"(low ${sel.low_cost_usd:.4f} / high ${sel.high_cost_usd:.4f})"
+    )
+    print(f"    Confidence: {sel.confidence:.0%}")
+    print(f"    QA iterations expected: {sel.expected_qa_iterations}")
+
+    if report.alternatives:
+        print("\n  Alternatives:")
+        print(f"    {'Model':<45} {'Cost':>12} {'Range':>22}")
+        for alt in sorted(report.alternatives, key=lambda a: a.expected_cost_usd):
+            tag = f"{alt.provider}/{alt.model}"
+            print(
+                f"    {tag:<45} ${alt.expected_cost_usd:>9.4f} "
+                f"${alt.low_cost_usd:>7.4f} – ${alt.high_cost_usd:>7.4f}"
+            )
+    print()
+
+
 def handle_cost_budget_command(
     project_dir: Path,
     limit: float | None = None,

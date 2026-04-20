@@ -172,6 +172,7 @@ export type SidebarView =
 	| "accessibility-agent"
 	| "i18n-agent"
 	| "onboarding-agent"
+	| "onboarding-guide"
 	| "flaky-tests"
 	| "doc-drift"
 	| "compliance"
