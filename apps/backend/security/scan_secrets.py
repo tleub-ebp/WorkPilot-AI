@@ -457,9 +457,8 @@ def print_results(matches: list[SecretMatch]) -> None:
     for file_path, file_matches in files_with_matches.items():
         print(f"\n{YELLOW}File: {file_path}{NC}")
         for match in file_matches:
-            masked = mask_secret(match.matched_text)
             print(f"  Line {match.line_number}: [{match.pattern_name}]")
-            print(f"    {CYAN}{masked}{NC}")
+            print(f"    {CYAN}[REDACTED: secret value not displayed]{NC}")
 
     print(f"\n{RED}{'=' * 60}{NC}")
     print(f"\n{YELLOW}If these are false positives, you can:{NC}")
@@ -481,7 +480,7 @@ def print_json_results(matches: list[SecretMatch]) -> None:
                 "file": m.file_path,
                 "line": m.line_number,
                 "type": m.pattern_name,
-                "preview": mask_secret(m.matched_text),
+                "preview": "[REDACTED]",
             }
             for m in matches
         ],
