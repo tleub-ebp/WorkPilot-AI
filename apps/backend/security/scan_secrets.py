@@ -481,7 +481,7 @@ def print_json_results(matches: list[SecretMatch]) -> None:
                 "file": m.file_path,
                 "line": m.line_number,
                 "type": m.pattern_name,
-                "preview": mask_secret(m.matched_text),
+                "preview": "[REDACTED]",
             }
             for m in matches
         ],
