@@ -158,7 +158,9 @@ def _encode_timestamp() -> bytes:
 # =============================================================================
 
 
-def _build_metadata(credentials: WindsurfCredentials) -> bytes:
+def _build_metadata(
+    credentials: WindsurfCredentials, session_id: str | None = None
+) -> bytes:
     """Build the Metadata protobuf message.
 
     Real field numbers from extension.js analysis:
@@ -172,6 +174,12 @@ def _build_metadata(credentials: WindsurfCredentials) -> bytes:
         Field 10: session_id (string)
         Field 12: extension_name (string)
         Field 26: plan_name (string)
+
+    Args:
+        session_id: Optional explicit session_id. Cascade RPCs must share a
+            session_id with the panel-init call, so pass the same value to
+            every metadata block in one flow. Falls back to a fresh UUID
+            when omitted (RawGetChatMessage path).
     """
     import platform
 
@@ -184,7 +192,9 @@ def _build_metadata(credentials: WindsurfCredentials) -> bytes:
     parts.extend(_encode_string_field(fields["ide_name"], "windsurf"))
     parts.extend(_encode_string_field(fields["ide_version"], credentials.version))
     parts.extend(_encode_string_field(fields["extension_version"], credentials.version))
-    parts.extend(_encode_string_field(fields["session_id"], str(uuid.uuid4())))
+    parts.extend(
+        _encode_string_field(fields["session_id"], session_id or str(uuid.uuid4()))
+    )
     parts.extend(_encode_string_field(fields["locale"], "en"))
 
     # Additional fields that the extension sends (use hardcoded field numbers
@@ -428,14 +438,25 @@ def _parse_connect_frames(data: bytes) -> list[tuple[int, bytes]]:
 def _check_connect_trailer(trailer_data: bytes) -> str | None:
     """Check a Connect trailer frame for errors. Returns error message or None."""
     try:
-        trailer = json.loads(trailer_data.decode("utf-8"))
+        decoded = trailer_data.decode("utf-8", errors="replace")
+        trailer = json.loads(decoded)
         error = trailer.get("error", {})
         if error:
             code = error.get("code", "unknown")
             message = error.get("message", "unknown error")
+            # Log full trailer (including any `details` array) to diagnose
+            # Windsurf 2.x protocol changes that surface as failed_precondition.
+            logger.warning(
+                "[WindsurfGRPC] Full error trailer: %s",
+                json.dumps(trailer, indent=2, ensure_ascii=False),
+            )
             return f"{code}: {message}"
-    except (json.JSONDecodeError, UnicodeDecodeError):
-        pass
+    except (json.JSONDecodeError, UnicodeDecodeError) as e:
+        logger.warning(
+            "[WindsurfGRPC] Could not parse trailer (%s), raw bytes=%r",
+            e,
+            trailer_data[:500],
+        )
     return None
 
 
@@ -473,8 +494,8 @@ async def _ensure_panel_initialized(credentials: WindsurfCredentials) -> None:
 
         metadata = _build_metadata(credentials)
         init_req = bytearray()
-        init_req.extend(_encode_bytes_field(1, metadata))  # metadata
-        init_req.extend(_encode_varint_field(3, 1))  # workspace_trusted = true
+        init_req.extend(_encode_bytes_field(1, metadata))
+        init_req.extend(_encode_varint_field(3, 1))
 
         url = f"http://localhost:{credentials.port}{INIT_PANEL_PATH}"
         headers = {
@@ -620,6 +641,27 @@ async def stream_chat(
                         # Data frame — extract text from protobuf
                         text = _extract_text_from_response(frame_payload)
                         if text:
+                            # Diagnostic: if the "response" looks like an error
+                            # (short text matching Windsurf's server-side error
+                            # patterns), dump the raw protobuf frame so we can
+                            # see every field the server sent back.
+                            lowered = text.lower()
+                            if (
+                                len(text) < 300
+                                and (
+                                    "failed_precondition" in lowered
+                                    or "please update your editor" in lowered
+                                    or "cascade session" in lowered
+                                )
+                            ):
+                                logger.warning(
+                                    "[WindsurfGRPC] Server returned error in data frame "
+                                    "(len=%d, flags=0x%02x). Raw protobuf (hex): %s | text=%r",
+                                    len(frame_payload),
+                                    flags,
+                                    frame_payload.hex(),
+                                    text,
+                                )
                             yield text
 
     except httpx.ConnectError as e:

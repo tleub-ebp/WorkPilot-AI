@@ -3,7 +3,7 @@
 		"windsurf-local": {
 			"command": "python",
 			"args": [
-				"c:\\Users\\thomas.leberre\\Repositories\\WorkPilot-AI\\utils\\mcp\\windsurf_mcp_server.py"
+				"c:\\Users\\thomas.leberre\\Repositories\\Auto-Claude_EBP\\utils\\mcp\\windsurf_mcp_server.py"
 			],
 			"env": { "WINDSURF_OAUTH_TOKEN": "${env:WINDSURF_OAUTH_TOKEN}" }
 		}

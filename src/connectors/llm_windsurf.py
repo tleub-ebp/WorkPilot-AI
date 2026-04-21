@@ -14,7 +14,6 @@ import asyncio
 import logging
 import os
 from typing import Any
-
 from .llm_base import BaseLLMProvider
 
 logger = logging.getLogger(__name__)
@@ -34,7 +33,13 @@ class WindsurfProvider(BaseLLMProvider):
         model: str = "claude-4-sonnet",
         base_url: str = "https://server.codeium.com/api/v1",
     ):
-        self.api_key = api_key or os.environ.get("WINDSURF_API_KEY", "")
+        # Priority: explicit api_key > WINDSURF_API_KEY > WINDSURF_OAUTH_TOKEN > CODEIUM_API_KEY
+        self.api_key = (
+            api_key
+            or os.environ.get("WINDSURF_API_KEY", "")
+            or os.environ.get("WINDSURF_OAUTH_TOKEN", "")
+            or os.environ.get("CODEIUM_API_KEY", "")
+        )
         self.model = model
         self.base_url = base_url
         self._client = None
@@ -42,8 +47,20 @@ class WindsurfProvider(BaseLLMProvider):
         self._credentials = None
 
     def connect(self) -> None:
-        """Establish connection — tries local gRPC first, then REST."""
-        # Try Mode 1: Local gRPC
+        """Establish connection — tries REST API first if token available, then local gRPC."""
+        # Mode 1: REST API via OpenAI client (preferred when token is available)
+        if self.api_key:
+            try:
+                import openai
+            except ImportError:
+                raise ImportError("openai package is required. Install with: pip install openai")
+
+            self._client = openai.OpenAI(api_key=self.api_key, base_url=self.base_url)
+            self._use_local_grpc = False
+            logger.info(f"[WindsurfProvider] Mode 1: REST API to {self.base_url} (model={self.model})")
+            return
+
+        # Mode 2: Local gRPC (fallback when no token, requires Windsurf IDE running)
         try:
             from integrations.windsurf_proxy.auth import (
                 discover_credentials,
@@ -54,28 +71,16 @@ class WindsurfProvider(BaseLLMProvider):
                 self._credentials = discover_credentials()
                 self._use_local_grpc = True
                 logger.info(
-                    f"[WindsurfProvider] Mode 1: gRPC proxy to localhost:{self._credentials.port}"
+                    f"[WindsurfProvider] Mode 2: gRPC proxy to localhost:{self._credentials.port}"
                 )
                 return
         except Exception as e:
             logger.debug(f"[WindsurfProvider] gRPC discovery failed: {e}")
 
-        # Mode 2: REST fallback via OpenAI client
-        if not self.api_key:
-            logger.warning(
-                "[WindsurfProvider] No API key and Windsurf IDE not running. "
-                "Set WINDSURF_API_KEY or start Windsurf IDE."
-            )
-            return
-
-        try:
-            import openai
-        except ImportError:
-            raise ImportError("openai package is required. Install with: pip install openai")
-
-        self._client = openai.OpenAI(api_key=self.api_key, base_url=self.base_url)
-        self._use_local_grpc = False
-        logger.info(f"[WindsurfProvider] Mode 2: REST API to {self.base_url} (model={self.model})")
+        logger.warning(
+            "[WindsurfProvider] No API key and Windsurf IDE not running. "
+            "Set WINDSURF_API_KEY or WINDSURF_OAUTH_TOKEN or start Windsurf IDE."
+        )
 
     def validate(self) -> bool:
         """Validate the provider configuration."""

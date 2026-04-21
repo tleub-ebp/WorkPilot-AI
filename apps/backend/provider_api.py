@@ -307,7 +307,7 @@ def get_env_provider_config(name: str) -> dict | None:
             or os.getenv("CODEIUM_API_KEY")
         )
         if token:
-            return {"api_key": token, "model": "swe-1.5"}
+            return {"api_key": token, "model": "swe-1.6-fast"}
         return None
 
     # Cursor

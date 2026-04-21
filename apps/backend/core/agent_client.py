@@ -1631,7 +1631,10 @@ class WindsurfAgentClient(AgentClient):
 
         is_ide_key = bool(self._api_key and self._api_key.startswith("sk-ws-"))
 
-        if is_ide_key:
+        # Check if REST mode is forced via environment variable
+        force_rest = _os.environ.get("WINDSURF_FORCE_REST", "").lower() in ("1", "true", "yes")
+
+        if is_ide_key and not force_rest:
             # sk-ws-* keys only work through the local Windsurf IDE language
             # server (gRPC).  They do NOT work with any REST chat completions
             # endpoint.  Tool execution is handled via text-based tool calling.
@@ -1661,24 +1664,71 @@ class WindsurfAgentClient(AgentClient):
                     "sk-ws-* keys only work through the local Windsurf IDE.\n"
                     "Please start Windsurf IDE to use your Windsurf credits."
                 )
+        elif is_ide_key and force_rest:
+            # sk-ws-* key but REST mode forced via environment variable
+            # This may not work as sk-ws-* keys are not officially supported by REST
+            self._use_local_grpc = False
+            logger.warning(
+                "[WindsurfAgent] Mode 2 (REST): sk-ws-* key with WINDSURF_FORCE_REST enabled. "
+                "This may not work as sk-ws-* keys are not officially supported by REST API."
+            )
+            print(
+                "[WindsurfAgent] ⚠️  Using REST mode with sk-ws-* key (forced via WINDSURF_FORCE_REST). "
+                "This may not work - sk-ws-* keys are designed for gRPC only.",
+                flush=True,
+            )
         elif self._api_key:
             # Non-IDE key (SSO/enterprise/OAuth token).
-            # Windsurf has no public REST chat completions endpoint — all known
-            # remote URLs (windsurf.com/api/v1, api.codeium.com/v1,
-            # server.codeium.com/api/v1) return 404 for /chat/completions.
-            # If the local Windsurf IDE is running, prefer gRPC (Connect protocol)
-            # through the local language server, which works with any credential type.
-            if is_windsurf_running():
+            # PREFER REST mode for OAuth tokens - it supports full tool execution via
+            # OpenAI function calling and doesn't require Windsurf IDE to be running.
+            # Only fall back to gRPC if REST fails or if explicitly configured.
+            
+            # Debug logging
+            logger.info(
+                f"[WindsurfAgent] API key found (length={len(self._api_key)}, starts_with={self._api_key[:20] if len(self._api_key) >= 20 else self._api_key})"
+            )
+            logger.info(
+                f"[WindsurfAgent] Windsurf IDE running: {is_windsurf_running()}"
+            )
+            
+            # Check if this is an OAuth token (starts with specific prefixes or is long)
+            is_oauth_token = (
+                self._api_key.startswith("oauth_") or 
+                self._api_key.startswith("sso_") or
+                len(self._api_key) > 100  # OAuth tokens are typically long
+            )
+            
+            logger.info(
+                f"[WindsurfAgent] OAuth token detection: is_oauth_token={is_oauth_token}, "
+                f"starts_with_oauth={self._api_key.startswith('oauth_')}, "
+                f"starts_with_sso={self._api_key.startswith('sso_')}, "
+                f"len>100={len(self._api_key) > 100}"
+            )
+            
+            if is_oauth_token:
+                # OAuth token → prefer REST mode for reliability
+                self._use_local_grpc = False
+                logger.info(
+                    "[WindsurfAgent] Mode 2 (REST): OAuth token detected → using REST API "
+                    "with function calling (model=%s)",
+                    self.model,
+                )
+                print(
+                    "[WindsurfAgent] Using REST API (OAuth token) - full tool execution support",
+                    flush=True,
+                )
+            elif is_windsurf_running():
+                # Non-OAuth token (SSO/enterprise) + IDE running → try gRPC first
                 try:
                     self._credentials = discover_credentials()
                     self._use_local_grpc = True
                     logger.info(
-                        f"[WindsurfAgent] Mode 1 (gRPC): SSO/OAuth token + IDE running → "
+                        f"[WindsurfAgent] Mode 1 (gRPC): SSO/enterprise token + IDE running → "
                         f"routing through local language server at localhost:{self._credentials.port} "
                         f"(model={self.model})"
                     )
                     print(
-                        "[WindsurfAgent] Using Windsurf IDE gRPC (SSO token, IDE running)",
+                        "[WindsurfAgent] Using Windsurf IDE gRPC (SSO/enterprise token, IDE running)",
                         flush=True,
                     )
                 except Exception as e:
@@ -1691,6 +1741,10 @@ class WindsurfAgentClient(AgentClient):
                         "[WindsurfAgent] Mode 2 (REST): %s (model=%s)",
                         self._rest_base_url,
                         self.model,
+                    )
+                    print(
+                        "[WindsurfAgent] ⚠️ gRPC failed, falling back to REST API",
+                        flush=True,
                     )
             else:
                 # No IDE running — try REST (may not work if no enterprise endpoint configured)
@@ -1802,10 +1856,12 @@ class WindsurfAgentClient(AgentClient):
             discover_credentials,
             invalidate_process_cache,
         )
+        from integrations.windsurf_proxy.cascade_client import cascade_chat
         from integrations.windsurf_proxy.grpc_client import stream_chat
-        from integrations.windsurf_proxy.models import resolve_model
+        from integrations.windsurf_proxy.models import requires_cascade, resolve_model
 
         model_enum, model_name = resolve_model(self.model)
+        use_cascade = requires_cascade(self.model)
         messages = []
 
         if self.system_prompt:
@@ -1838,14 +1894,24 @@ class WindsurfAgentClient(AgentClient):
 
             text_parts = []
             try:
-                async for chunk in stream_chat(
-                    credentials=self._credentials,
-                    messages=messages,
-                    model_enum=model_enum,
-                    model_name=model_name,
-                    system_prompt=self.system_prompt,
-                ):
-                    text_parts.append(chunk)
+                if use_cascade:
+                    full = await cascade_chat(
+                        credentials=self._credentials,
+                        messages=messages,
+                        model_enum=model_enum,
+                        model_uid=model_name,
+                    )
+                    if full:
+                        text_parts.append(full)
+                else:
+                    async for chunk in stream_chat(
+                        credentials=self._credentials,
+                        messages=messages,
+                        model_enum=model_enum,
+                        model_name=model_name,
+                        system_prompt=self.system_prompt,
+                    ):
+                        text_parts.append(chunk)
                 last_error = None
             except Exception as e:
                 last_error = e
@@ -2029,10 +2095,12 @@ class WindsurfAgentClient(AgentClient):
             discover_credentials,
             invalidate_process_cache,
         )
+        from integrations.windsurf_proxy.cascade_client import cascade_chat
         from integrations.windsurf_proxy.grpc_client import stream_chat
-        from integrations.windsurf_proxy.models import resolve_model
+        from integrations.windsurf_proxy.models import requires_cascade, resolve_model
 
         model_enum, model_name = resolve_model(self.model)
+        use_cascade = requires_cascade(self.model)
 
         # Build system prompt with tool definitions appended
         tool_prompt = self._build_tool_prompt_text()
@@ -2084,14 +2152,28 @@ class WindsurfAgentClient(AgentClient):
 
                 text_parts = []
                 try:
-                    async for chunk in stream_chat(
-                        credentials=self._credentials,
-                        messages=messages,
-                        model_enum=model_enum,
-                        model_name=model_name,
-                        system_prompt=full_system_prompt,
-                    ):
-                        text_parts.append(chunk)
+                    if use_cascade:
+                        # Cascade flattens the whole conversation into one
+                        # text payload, so we pass the already-built messages
+                        # list (incl. system prompt + tool preamble) and let
+                        # cascade_chat stitch it server-side.
+                        full = await cascade_chat(
+                            credentials=self._credentials,
+                            messages=messages,
+                            model_enum=model_enum,
+                            model_uid=model_name,
+                        )
+                        if full:
+                            text_parts.append(full)
+                    else:
+                        async for chunk in stream_chat(
+                            credentials=self._credentials,
+                            messages=messages,
+                            model_enum=model_enum,
+                            model_name=model_name,
+                            system_prompt=full_system_prompt,
+                        ):
+                            text_parts.append(chunk)
                     turn_error = None
                 except Exception as e:
                     turn_error = e
