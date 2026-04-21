@@ -30,7 +30,7 @@ interface AddProjectModalProps {
 	) => void | Promise<void>;
 }
 
-type RemoteType = "github" | "azure" | null;
+type RemoteType = "github" | "azure" | "jira" | null;
 type RemoteConfigType = "github" | "azure" | null;
 
 interface RemoteConfig {
@@ -66,15 +66,12 @@ export function AddProjectModal({
 	const [projectLocation, setProjectLocation] = useState<string>("");
 	const [initGit, setInitGit] = useState<boolean>(true);
 	const [remoteType, setRemoteType] = useState<RemoteType>(null);
-	const [showRemoteConfigModal, setShowRemoteConfigModal] =
-		useState<boolean>(false);
-	const [remoteConfigType, setRemoteConfigType] =
-		useState<RemoteConfigType>(null);
+	const [showRemoteConfigModal, setShowRemoteConfigModal] = useState<boolean>(false);
+	const [remoteConfigType, setRemoteConfigType] = useState<RemoteConfigType>(null);
 	const [remoteConfig, setRemoteConfig] = useState<RemoteConfig>({});
 	const [isCreating, setIsCreating] = useState<boolean>(false);
 	const [error, setError] = useState<string | null>(null);
-	// biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
-	const [_createdProject, setCreatedProject] = useState<any>(null);
+	const [_, setCreatedProject] = useState<Project | null>(null);
 	const [providerSelected, setProviderSelected] = useState<boolean>(false);
 	const [showGitCommitModal, setShowGitCommitModal] = useState<boolean>(false);
 	const [pendingProjectPath, setPendingProjectPath] = useState<string | null>(
@@ -149,6 +146,66 @@ export function AddProjectModal({
 			setShowRemoteConfigModal(false);
 		}
 	}, [step]);
+
+	// Function to check if a string is a repository URL (not a local path)
+	const isRepositoryUrl = useCallback((url: string): boolean => {
+		try {
+			// Check if it starts with http:// or https://
+			if (url.startsWith("http://") || url.startsWith("https://")) {
+				return true;
+			}
+			return false;
+		} catch {
+			return false;
+		}
+	}, []);
+
+	// Function to extract repository name from various URL formats or local directory paths
+	const extractRepoNameFromUrl = useCallback((url: string): string | null => {
+		try {
+			// Azure DevOps URL pattern: https://dev.azure.com/{org}/{project}/_git/{repo}
+			const azurePattern = /\/_git\/([^\/\s?#]+)/;
+			const azureMatch = azurePattern.exec(url);
+			if (azureMatch) {
+				return azureMatch[1];
+			}
+
+			// GitHub URL pattern: https://github.com/{owner}/{repo}
+			const githubPattern = /github\.com\/([^\/\s?#]+)\/([^\/\s?#]+)/;
+			const githubMatch = githubPattern.exec(url);
+			if (githubMatch) {
+				return githubMatch[2];
+			}
+
+			// GitLab URL pattern: https://gitlab.com/{owner}/{repo}
+			const gitlabPattern = /gitlab\.com\/([^\/\s?#]+)\/([^\/\s?#]+)/;
+			const gitlabMatch = gitlabPattern.exec(url);
+			if (gitlabMatch) {
+				return gitlabMatch[2];
+			}
+
+			// Bitbucket URL pattern: https://bitbucket.org/{owner}/{repo}
+			const bitbucketPattern = /bitbucket\.org\/([^\/\s?#]+)\/([^\/\s?#]+)/;
+			const bitbucketMatch = bitbucketPattern.exec(url);
+			if (bitbucketMatch) {
+				return bitbucketMatch[2];
+			}
+
+			// Local directory path (Windows: C:\path\to\folder, Unix: /path/to/folder)
+			// Extract the last component of the path
+			if (url.includes("\\") || url.includes("/")) {
+				const parts = url.split(/[\\/]/);
+				const lastPart = parts.at(-1);
+				if (lastPart && lastPart.trim() !== "") {
+					return lastPart;
+				}
+			}
+
+			return null;
+		} catch {
+			return null;
+		}
+	}, []);
 
 	// Function to detect repository provider from existing git repository
 	const detectRepositoryProvider = useCallback(async (projectPath: string) => {
@@ -264,27 +321,24 @@ export function AddProjectModal({
 		detectRepositoryProvider,
 	]);
 
-	// Determine which provider options to show
+	// Determine which provider options to show.
+	// Jira is always offered as an explicit option because it cannot be detected from a git remote.
 	const shouldShowProviderOptions = () => {
-		// If we have a detected provider and it's not unknown, only show that option
 		if (detectedProvider && detectedProvider !== "unknown") {
-			const options = {
+			return {
 				showGithub: detectedProvider === "github",
 				showAzure: detectedProvider === "azure_devops",
-				showJira: false, // Never auto-detect Jira from git
-				showSkip: true, // Always allow skipping
+				showJira: true,
+				showSkip: true,
 			};
-			return options;
 		}
 
-		// Otherwise show all options
-		const options = {
+		return {
 			showGithub: true,
 			showAzure: true,
-			showJira: false,
+			showJira: true,
 			showSkip: true,
 		};
-		return options;
 	};
 
 	// Rendu de la première étape
@@ -315,6 +369,13 @@ export function AddProjectModal({
 							placeholder={t("addProject.locationPlaceholder")}
 							value={projectLocation}
 							onChange={(e) => setProjectLocation(e.target.value)}
+							onPaste={(e) => {
+								const pastedText = e.clipboardData.getData("text");
+								const repoName = extractRepoNameFromUrl(pastedText);
+								if (repoName && !projectName) {
+									setProjectName(repoName);
+								}
+							}}
 							className="flex-1"
 						/>
 						<Button
@@ -385,6 +446,30 @@ export function AddProjectModal({
 									</h3>
 									<p className="text-sm text-muted-foreground mt-0.5">
 										{t("repoProvider.azureDescription")}
+									</p>
+								</div>
+							</button>
+						)}
+
+						{shouldShowProviderOptions().showJira && (
+							<button
+								type="button"
+								aria-pressed={remoteType === "jira"}
+								onClick={() => {
+									setRemoteType("jira");
+									setProviderSelected(true);
+								}}
+								className={`w-full flex items-center gap-4 p-4 rounded-xl border border-border bg-card hover:bg-accent hover:border-accent transition-all duration-200 text-left ${remoteType === "jira" ? "ring-2 ring-primary" : ""}`}
+							>
+								<div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg bg-primary/10">
+									<Globe className="h-6 w-6 text-primary" />
+								</div>
+								<div className="flex-1 min-w-0">
+									<h3 className="font-medium text-foreground">
+										{t("repoProvider.jiraTitle")}
+									</h3>
+									<p className="text-sm text-muted-foreground mt-0.5">
+										{t("repoProvider.jiraDescription")}
 									</p>
 								</div>
 							</button>
@@ -508,6 +593,12 @@ export function AddProjectModal({
 										<span className="text-sm font-medium">Azure DevOps</span>
 									</div>
 								)}
+								{remoteType === "jira" && (
+									<div className="flex items-center gap-2 px-3 py-2 rounded-md bg-muted/50">
+										<Globe className="h-4 w-4" />
+										<span className="text-sm font-medium">Jira</span>
+									</div>
+								)}
 								{remoteType === null && (
 									<div className="px-3 py-2 rounded-md bg-muted/30">
 										<span className="text-sm text-muted-foreground">
@@ -568,6 +659,14 @@ export function AddProjectModal({
 			return;
 		}
 
+		// Check if projectLocation is a repository URL instead of a local path
+		if (isRepositoryUrl(projectLocation)) {
+			setError(
+				"L'emplacement doit être un chemin local, pas une URL de repository. Cliquez sur 'Parcourir' pour sélectionner un dossier.",
+			);
+			return;
+		}
+
 		setIsCreating(true);
 		setError(null);
 		try {
@@ -607,6 +706,12 @@ export function AddProjectModal({
 					azureDevOpsEnabled: true,
 					azureDevOpsOrgUrl: remoteConfig.azureOrg || remoteConfig.orgUrl,
 					azureDevOpsPat: remoteConfig.azurePat || remoteConfig.pat,
+				});
+			} else if (project && remoteType === "jira") {
+				// Enable Jira so the import button surfaces on the Kanban board;
+				// credentials (URL, email, API token, project key) are filled in settings.
+				await globalThis.electronAPI.updateProjectEnv(project.id, {
+					jiraEnabled: true,
 				});
 			}
 
@@ -703,16 +808,16 @@ export function AddProjectModal({
 										} else if (remoteType === "azure") {
 											setRemoteConfigType("azure");
 											setShowRemoteConfigModal(true);
+										} else if (remoteType === "jira") {
+											// Jira has no git remote config — credentials are set later in settings.
+											setStep(1);
 										} else if (projectLocation && projectName) {
 											// Auto-detect repository type for existing git repositories
 											const projectPath = `${projectLocation}/${projectName.trim()}`;
 
 											// Check if .git directory exists (indicating an existing repository)
 											try {
-												const gitStatus =
-													await globalThis.electronAPI.checkGitStatus(
-														projectPath,
-													);
+												const gitStatus = await globalThis.electronAPI.checkGitStatus(projectPath);
 												if (gitStatus?.success && gitStatus.data?.isGitRepo) {
 													const detected =
 														await detectRepositoryProvider(projectPath);

@@ -330,6 +330,7 @@ import {
 	renameProject,
 	useProjectStore,
 } from "./stores/project-store";
+import { loadProjectEnvConfig, useProjectEnvStore } from "./stores/project-env-store";
 import {
 	loadProfiles,
 	loadSettings,
@@ -591,32 +592,22 @@ export function App() {
 		return [];
 	}, [projects, activeProjectId]);
 
-	// Helper function to check if project should be skipped
+	// Helper function to check if project should be skipped.
+	// Note: project.settings.provider is the AI provider (e.g. "anthropic"), NOT the repo provider —
+	// it must not gate repo auto-detection, otherwise the Azure DevOps / GitHub import button never appears.
 	const shouldSkipProjectDetection = async (
 		project: Project,
 	): Promise<boolean> => {
-		// Skip if project already has a provider configured in settings
-		if (project.settings?.provider) {
-			return true;
-		}
-
-		// Skip if Azure DevOps or GitHub is already configured in .env
-		if (project.autoBuildPath) {
-			try {
-				const envResult = await globalThis.electronAPI.getProjectEnv(
-					project.id,
+		try {
+			const envResult = await globalThis.electronAPI.getProjectEnv(project.id);
+			if (envResult.success && envResult.data) {
+				return (
+					envResult.data.azureDevOpsEnabled || envResult.data.githubEnabled
 				);
-				if (envResult.success && envResult.data) {
-					return (
-						envResult.data.azureDevOpsEnabled || envResult.data.githubEnabled
-					);
-				}
-			} catch {
-				// If env check fails, proceed with detection
-				return false;
 			}
+		} catch {
+			return false;
 		}
-
 		return false;
 	};
 
@@ -932,6 +923,21 @@ export function App() {
 			});
 		}
 	}, [activeProjectId, selectedProjectId, selectedProject?.path]);
+
+	// Load environment config when active project changes
+	// Clear stale config first, then load new config to avoid showing wrong data during transition
+	useEffect(() => {
+		const currentProjectId = activeProjectId || selectedProjectId;
+		if (currentProjectId) {
+			const envStore = useProjectEnvStore.getState();
+			// Clear config if it's from a different project
+			if (envStore.projectId && envStore.projectId !== currentProjectId) {
+				envStore.setEnvConfigOnly(null, null);
+			}
+			// Load new config
+			loadProjectEnvConfig(currentProjectId);
+		}
+	}, [activeProjectId, selectedProjectId]);
 
 	// Apply theme on load
 	useEffect(() => {

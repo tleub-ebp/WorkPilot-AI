@@ -1013,8 +1013,9 @@ export function KanbanBoard({
 	// Project store for queue settings
 	const projects = useProjectStore((state) => state.projects);
 	const selectedProjectId = useProjectStore((state) => state.selectedProjectId);
+	const activeProjectId = useProjectStore((state) => state.activeProjectId);
 
-	// Project environment store for Azure DevOps configuration
+	// Project environment store for Azure DevOps configuration.
 	const envConfig = useProjectEnvStore((state) => state.envConfig);
 
 	// Kanban settings store for column preferences (collapse state, width, lock state, order)
@@ -1056,25 +1057,21 @@ export function KanbanBoard({
 	// Capture projectId at resize start to avoid stale closure if project changes during resize
 	const resizeProjectIdRef = useRef<string | null>(null);
 
-	// Get projectId from first task, fallback to selectedProjectId
-	const projectId = tasks[0]?.projectId || selectedProjectId;
-	const project = selectedProjectId
-		? projects.find((p) => p.id === selectedProjectId)
+	// Get projectId from active tab (activeProjectId), fallback to selectedProjectId for backward compatibility
+	const projectId = activeProjectId || selectedProjectId;
+	const project = projectId
+		? projects.find((p) => p.id === projectId)
 		: undefined;
 	const maxParallelTasks = project?.settings?.maxParallelTasks ?? 3;
 
-	// Load environment config when selected project changes
+	// Check Azure DevOps connection status when enabled or credentials change.
 	useEffect(() => {
-		if (selectedProjectId) {
-			loadProjectEnvConfig(selectedProjectId);
-		}
-	}, [selectedProjectId]);
-
-	// Check Azure DevOps connection status when enabled or credentials change
-	useEffect(() => {
-		if (selectedProjectId && envConfig?.azureDevOpsEnabled) {
+		if (
+			activeProjectId &&
+			envConfig?.azureDevOpsEnabled
+		) {
 			globalThis.electronAPI
-				.checkAzureDevOpsConnection(selectedProjectId)
+				.checkAzureDevOpsConnection(activeProjectId)
 				.then((result) => {
 					setAzureDevOpsConnected(
 						result.success && result.data?.connected === true,
@@ -1082,20 +1079,23 @@ export function KanbanBoard({
 					setAzureDevOpsProjectName(result.data?.projectName || null);
 				})
 				.catch(() => {
-					setAzureDevOpsConnected(false);
+					setAzureDevOpsConnected(null);
 					setAzureDevOpsProjectName(null);
 				});
 		} else {
 			setAzureDevOpsConnected(null);
 			setAzureDevOpsProjectName(null);
 		}
-	}, [selectedProjectId, envConfig?.azureDevOpsEnabled]);
+	}, [activeProjectId, envConfig?.azureDevOpsEnabled]);
 
-	// Check Jira connection status when enabled
+	// Check Jira connection status when enabled.
 	useEffect(() => {
-		if (selectedProjectId && envConfig?.jiraEnabled) {
+		if (
+			activeProjectId &&
+			envConfig?.jiraEnabled
+		) {
 			globalThis.electronAPI
-				.checkJiraConnection(selectedProjectId)
+				.checkJiraConnection(activeProjectId)
 				.then((result) => {
 					setJiraConnected(result.success && result.data?.connected === true);
 				})
@@ -1105,7 +1105,7 @@ export function KanbanBoard({
 		} else {
 			setJiraConnected(null);
 		}
-	}, [selectedProjectId, envConfig?.jiraEnabled]);
+	}, [activeProjectId, envConfig?.jiraEnabled]);
 
 	// Queue settings modal state
 	const [showQueueSettings, setShowQueueSettings] = useState(false);
@@ -1466,8 +1466,7 @@ export function KanbanBoard({
 	}, []);
 
 	const handleArchiveAll = useCallback(async () => {
-		// Get projectId from the first task (read from store to avoid stale closure)
-		const projectId = useTaskStore.getState().tasks[0]?.projectId;
+		// Use the current projectId (from active tab) to ensure we archive the correct project's tasks
 		if (!projectId) {
 			console.error("[KanbanBoard] No projectId found");
 			return;
@@ -2131,7 +2130,7 @@ export function KanbanBoard({
 
 			let currentElement = target.parentElement;
 			while (currentElement) {
-				if (currentElement.hasAttribute("data-column-status")) {
+				if (currentElement.dataset.columnStatus !== undefined) {
 					return currentElement;
 				}
 				currentElement = currentElement.parentElement;
@@ -2820,7 +2819,8 @@ export function KanbanBoard({
 					)}
 				</div>
 				<div className="flex items-center gap-2">
-					{selectedProjectId && envConfig?.azureDevOpsEnabled && (
+					{activeProjectId &&
+						envConfig?.azureDevOpsEnabled && (
 						<Button
 							variant="ghost"
 							size="sm"
@@ -2857,7 +2857,8 @@ export function KanbanBoard({
 							)}
 						</Button>
 					)}
-					{selectedProjectId && envConfig?.jiraEnabled && (
+					{activeProjectId &&
+						envConfig?.jiraEnabled && (
 						<Button
 							variant="ghost"
 							size="sm"
