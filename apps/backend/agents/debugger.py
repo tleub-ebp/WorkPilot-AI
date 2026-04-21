@@ -61,9 +61,7 @@ class Breakpoint:
         if self.path_pattern and not re.search(self.path_pattern, path):
             return False
 
-        content = str(
-            tool_input.get("content") or tool_input.get("new_string") or ""
-        )
+        content = str(tool_input.get("content") or tool_input.get("new_string") or "")
         if self.content_pattern and not re.search(self.content_pattern, content):
             return False
         return True
@@ -154,13 +152,13 @@ class DebuggerSession:
 class DebuggerRegistry:
     """Process-wide registry of debugger sessions."""
 
-    _instance: "DebuggerRegistry | None" = None
+    _instance: DebuggerRegistry | None = None
 
     def __init__(self) -> None:
         self._sessions: dict[str, DebuggerSession] = {}
 
     @classmethod
-    def instance(cls) -> "DebuggerRegistry":
+    def instance(cls) -> DebuggerRegistry:
         if cls._instance is None:
             cls._instance = cls()
         return cls._instance

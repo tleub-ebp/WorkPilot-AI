@@ -1,0 +1,41 @@
+{
+	"title": "Bounty Board",
+	"description": "Lancez N participants en parallèle avec des combinaisons provider/modèle différentes. Un juge impartial choisit le gagnant.",
+	"projectPath": "Chemin du projet",
+	"specId": "Identifiant de spec",
+	"contestants": "Participants",
+	"contestantsCount": "{{count}} participants",
+	"addContestant": "Ajouter un participant",
+	"remove": "Supprimer le participant",
+	"start": "Lancer la bounty",
+	"running": "En cours…",
+	"liveBoard": "Tableau en direct",
+	"archives": "Rounds précédents",
+	"field": {
+		"provider": "Provider",
+		"model": "Modèle",
+		"profile": "Profil (optionnel)"
+	},
+	"metrics": {
+		"score": "Score",
+		"tokens": "Tokens",
+		"duration": "Durée",
+		"cost": "Coût"
+	},
+	"status": {
+		"queued": "En attente",
+		"running": "En cours",
+		"completed": "Terminé",
+		"archived": "Archivé",
+		"error": "Erreur",
+		"winner": "Gagnant"
+	},
+	"verdict": {
+		"title": "Verdict du juge",
+		"winnerIs": "Gagnant :",
+		"noWinner": "Aucun participant n'a satisfait les critères d'acceptation.",
+		"ranking": "Classement",
+		"contestant": "Participant",
+		"rationale": "Justification"
+	}
+}

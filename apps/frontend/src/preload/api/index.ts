@@ -22,6 +22,14 @@ import {
 	createBlastRadiusAPI,
 } from "./modules/blast-radius-api";
 import {
+	type BountyBoardAPI,
+	createBountyBoardAPI,
+} from "./modules/bounty-board-api";
+import {
+	type TechDebtAPI,
+	createTechDebtAPI,
+} from "./modules/tech-debt-api";
+import {
 	type TeamBotAPI,
 	createTeamBotAPI,
 } from "./modules/team-bot-api";
@@ -236,6 +244,8 @@ export interface ElectronAPI
 		GuardrailsAPI,
 		AgentDebuggerAPI,
 		BlastRadiusAPI,
+		BountyBoardAPI,
+		TechDebtAPI,
 		TeamBotAPI,
 		VisualProgrammingAPI {
 	github: GitHubAPI;
@@ -359,6 +369,8 @@ export const createElectronAPI = (): ElectronAPI => {
 		...createGuardrailsAPI(),
 		...createAgentDebuggerAPI(),
 		...createBlastRadiusAPI(),
+		...createBountyBoardAPI(),
+		...createTechDebtAPI(),
 		...createTeamBotAPI(),
 		...createVisualProgrammingAPI(),
 		github: createGitHubAPI(),

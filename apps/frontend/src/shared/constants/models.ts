@@ -26,6 +26,12 @@ export const PROVIDER_MODELS_MAP: Record<string, ProviderModel[]> = {
 	// ---- Anthropic (Claude) ----
 	anthropic: [
 		{
+			value: "claude-opus-4-7",
+			label: "Claude Opus 4.7",
+			tier: "flagship",
+			supportsThinking: true,
+		},
+		{
 			value: "claude-opus-4-6",
 			label: "Claude Opus 4.6",
 			tier: "flagship",
@@ -234,13 +240,31 @@ export const PROVIDER_MODELS_MAP: Record<string, ProviderModel[]> = {
 	// ---- Grok (xAI) ----
 	grok: [
 		{
-			value: "grok-2",
-			label: "Grok 2",
+			value: "grok-4",
+			label: "Grok 4",
 			tier: "flagship",
 			supportsThinking: true,
 		},
-		{ value: "grok-2-mini", label: "Grok 2 Mini", tier: "standard" },
-		{ value: "grok-beta", label: "Grok Beta", tier: "standard" },
+		{
+			value: "grok-4-fast",
+			label: "Grok 4 Fast",
+			tier: "fast",
+			supportsThinking: true,
+		},
+		{
+			value: "grok-3",
+			label: "Grok 3",
+			tier: "flagship",
+			supportsThinking: true,
+		},
+		{
+			value: "grok-3-mini",
+			label: "Grok 3 Mini",
+			tier: "standard",
+			supportsThinking: true,
+		},
+		{ value: "grok-2", label: "Grok 2", tier: "standard" },
+		{ value: "grok-2-mini", label: "Grok 2 Mini", tier: "fast" },
 	],
 
 	// ---- Meta (LLaMA) ----

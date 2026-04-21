@@ -42,6 +42,7 @@
 		"codeReview": "Code Review",
 		"refactoring": "Refactoring",
 		"documentation": "Documentation",
+		"onboardingGuide": "Onboarding Guide",
 		"costEstimator": "Cost Estimator",
 		"sessionHistory": "Session History",
 		"testGeneration": "Test Generation",
@@ -67,6 +68,8 @@
 		"pipelineGenerator": "Pipeline Generator",
 		"pluginMarketplace": "Plugin Marketplace",
 		"arenaMode": "Arena Mode",
+		"bountyBoard": "Bounty Board",
+		"techDebt": "Tech Debt Dashboard",
 		"apiExplorer": "API Studio",
 		"sandbox": "Agent Simulation Sandbox",
 		"regressionGuardian": "Regression Guardian",
@@ -84,7 +87,13 @@
 		"consensusArbiter": "Cross-Agent Consensus Arbiter",
 		"notebookAgent": "Notebook Agent",
 		"specRefinement": "Incremental Spec Refinement",
-		"agentCoach": "Personal Agent Coach"
+		"agentCoach": "Personal Agent Coach",
+		"agentDebugger": "Agent Debugger",
+		"teamBot": "Team Bot (Slack/Teams)",
+		"blastRadius": "Blast Radius Impact",
+		"guardrails": "Agent Guardrails",
+		"envSnapshot": "Environment Snapshots",
+		"offlineMode": "Offline Mode"
 	},
 	"search": {
 		"placeholder": "Search...",

@@ -1,0 +1,41 @@
+{
+	"title": "Bounty Board",
+	"description": "Run N contestants in parallel with different provider/model combinations. An impartial judge picks the winner.",
+	"projectPath": "Project path",
+	"specId": "Spec id",
+	"contestants": "Contestants",
+	"contestantsCount": "{{count}} contestants",
+	"addContestant": "Add contestant",
+	"remove": "Remove contestant",
+	"start": "Start bounty",
+	"running": "Running…",
+	"liveBoard": "Live board",
+	"archives": "Previous rounds",
+	"field": {
+		"provider": "Provider",
+		"model": "Model",
+		"profile": "Profile (optional)"
+	},
+	"metrics": {
+		"score": "Score",
+		"tokens": "Tokens",
+		"duration": "Duration",
+		"cost": "Cost"
+	},
+	"status": {
+		"queued": "Queued",
+		"running": "Running",
+		"completed": "Completed",
+		"archived": "Archived",
+		"error": "Error",
+		"winner": "Winner"
+	},
+	"verdict": {
+		"title": "Judge verdict",
+		"winnerIs": "Winner:",
+		"noWinner": "No contestant met the acceptance criteria.",
+		"ranking": "Ranking",
+		"contestant": "Contestant",
+		"rationale": "Rationale"
+	}
+}

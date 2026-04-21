@@ -69,8 +69,7 @@ _SEVERITY_COLORS = {
 
 def _slack_body(payload: NotificationPayload) -> dict[str, Any]:
     fields = [
-        {"title": k, "value": str(v), "short": True}
-        for k, v in payload.fields.items()
+        {"title": k, "value": str(v), "short": True} for k, v in payload.fields.items()
     ]
     return {
         "text": payload.title,

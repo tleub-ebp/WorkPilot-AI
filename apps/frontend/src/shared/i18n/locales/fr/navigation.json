@@ -42,6 +42,7 @@
 		"codeReview": "Revue de code",
 		"refactoring": "Refactoring",
 		"documentation": "Documentation",
+		"onboardingGuide": "Guide d'intégration",
 		"costEstimator": "Estimateur de coûts",
 		"sessionHistory": "Historique des sessions",
 		"testGeneration": "Génération de tests",
@@ -67,6 +68,8 @@
 		"pipelineGenerator": "Générateur de Pipeline",
 		"pluginMarketplace": "Marketplace de Plugins",
 		"arenaMode": "Mode Arena",
+		"bountyBoard": "Bounty Board",
+		"techDebt": "Dette technique",
 		"apiExplorer": "API Studio",
 		"sandbox": "Bac à sable de simulation d'agent",
 		"regressionGuardian": "Gardien de régression",
@@ -84,7 +87,13 @@
 		"consensusArbiter": "Arbitre de consensus multi-agents",
 		"notebookAgent": "Agent Notebook",
 		"specRefinement": "Raffinement incrémental de spécification",
-		"agentCoach": "Coach personnel d'agent"
+		"agentCoach": "Coach personnel d'agent",
+		"agentDebugger": "Débogueur d'Agent",
+		"teamBot": "Bot d'équipe (Slack/Teams)",
+		"blastRadius": "Impact Blast Radius",
+		"guardrails": "Guardrails d'Agent",
+		"envSnapshot": "Snapshots d'Environnement",
+		"offlineMode": "Mode Hors-Ligne"
 	},
 	"search": {
 		"placeholder": "Rechercher...",

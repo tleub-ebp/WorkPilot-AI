@@ -14,6 +14,8 @@ import { registerAccessibilityHandlers } from "./accessibility-handlers";
 import { registerAgentDebuggerHandlers } from "./agent-debugger-handlers";
 import { registerAgenteventsHandlers } from "./agent-events-handlers";
 import { registerBlastRadiusHandlers } from "./blast-radius-handlers";
+import { registerBountyBoardHandlers } from "./bounty-board-handlers";
+import { registerTechDebtHandlers } from "./tech-debt-handlers";
 import { registerTeamBotHandlers } from "./team-bot-handlers";
 import { registerApiExplorerHandlers } from "./api-explorer-handlers";
 import { registerApiWatcherHandlers } from "./api-watcher-handlers";
@@ -521,6 +523,12 @@ export function setupIpcHandlers(
 
 	// Blast Radius handlers (Feature 6)
 	registerBlastRadiusHandlers();
+
+	// Bounty Board handlers (Feature 3 — competitive multi-agent rounds)
+	registerBountyBoardHandlers();
+
+	// Tech Debt handlers (Feature 9 — ROI-scored tech debt dashboard)
+	registerTechDebtHandlers();
 
 	// Team Bot handlers (Feature 4 — Slack / Microsoft Teams notifications)
 	registerTeamBotHandlers();
