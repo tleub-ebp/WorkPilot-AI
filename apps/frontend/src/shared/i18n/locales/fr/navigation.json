@@ -87,7 +87,13 @@
 		"consensusArbiter": "Arbitre de consensus multi-agents",
 		"notebookAgent": "Agent Notebook",
 		"specRefinement": "Raffinement incrémental de spécification",
-		"agentCoach": "Coach personnel d'agent"
+		"agentCoach": "Coach personnel d'agent",
+		"agentDebugger": "Débogueur d'Agent",
+		"teamBot": "Bot d'équipe (Slack/Teams)",
+		"blastRadius": "Impact Blast Radius",
+		"guardrails": "Guardrails d'Agent",
+		"envSnapshot": "Snapshots d'Environnement",
+		"offlineMode": "Mode Hors-Ligne"
 	},
 	"search": {
 		"placeholder": "Rechercher...",

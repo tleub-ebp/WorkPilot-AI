@@ -7,12 +7,14 @@ import {
 	Accessibility,
 	AlertTriangle,
 	BarChart3,
+	Bug,
 	BookOpen,
 	BookOpenCheck,
 	Box,
 	Brain,
 	Building2,
 	Calendar,
+	Camera,
 	CheckCircle,
 	ChevronRight,
 	Code,
@@ -38,6 +40,7 @@ import {
 	Lightbulb,
 	// biome-ignore lint/suspicious/noShadowRestrictedNames: shadow name is intentional
 	Map,
+	MessageSquare,
 	Mic,
 	Monitor,
 	PanelLeft,
@@ -62,6 +65,8 @@ import {
 	Users,
 	Wand2,
 	WandSparkles,
+	Wifi,
+	WifiOff,
 	Wrench,
 	X,
 	Zap,
@@ -186,7 +191,13 @@ export type SidebarView =
 	| "spec-refinement"
 	| "agent-coach"
 	| "bounty-board"
-	| "tech-debt";
+	| "tech-debt"
+	| "agent-debugger"
+	| "team-bot"
+	| "blast-radius"
+	| "guardrails"
+	| "env-snapshot"
+	| "offline-mode";
 
 interface SidebarProps {
 	readonly onSettingsClick: () => void;
@@ -222,25 +233,25 @@ const navGroups: NavGroup[] = [
 				id: "kanban",
 				labelKey: "navigation:items.kanban",
 				icon: LayoutGrid,
-				shortcut: "K",
+				shortcut: "WK",
 			},
 			{
 				id: "mission-control",
 				labelKey: "navigation:items.missionControl",
 				icon: Rocket,
-				shortcut: "Q",
+				shortcut: "WM",
 			},
 			{
 				id: "dashboard",
 				labelKey: "navigation:items.dashboard",
 				icon: BarChart3,
-				shortcut: "H",
+				shortcut: "WD",
 			},
 			{
 				id: "session-history",
 				labelKey: "navigation:items.sessionHistory",
 				icon: History,
-				shortcut: "S",
+				shortcut: "WS",
 			},
 		],
 		defaultExpanded: true,
@@ -267,6 +278,12 @@ const navGroups: NavGroup[] = [
 				labelKey: "navigation:items.agentReplay",
 				icon: RotateCcw,
 				shortcut: "R",
+			},
+			{
+				id: "agent-debugger",
+				labelKey: "navigation:items.agentDebugger",
+				icon: Bug,
+				shortcut: "D",
 			},
 			{
 				id: "self-healing",
@@ -474,6 +491,12 @@ const navGroups: NavGroup[] = [
 				icon: Gauge,
 				shortcut: "Z",
 			},
+			{
+				id: "env-snapshot",
+				labelKey: "navigation:items.envSnapshot",
+				icon: Camera,
+				shortcut: "S",
+			},
 		],
 		defaultExpanded: false,
 	},
@@ -531,6 +554,20 @@ const navGroups: NavGroup[] = [
 				labelKey: "navigation:items.dependencySentinel",
 				icon: Shield,
 				shortcut: "D",
+				subGroup: "navigation:subGroups.codeQuality",
+			},
+			{
+				id: "blast-radius",
+				labelKey: "navigation:items.blastRadius",
+				icon: Target,
+				shortcut: "B",
+				subGroup: "navigation:subGroups.codeQuality",
+			},
+			{
+				id: "guardrails",
+				labelKey: "navigation:items.guardrails",
+				icon: Shield,
+				shortcut: "G",
 				subGroup: "navigation:subGroups.codeQuality",
 			},
 			// Documentation & Spec
@@ -621,6 +658,13 @@ const navGroups: NavGroup[] = [
 				shortcut: "I",
 				subGroup: "navigation:subGroups.automation",
 			},
+			{
+				id: "team-bot",
+				labelKey: "navigation:items.teamBot",
+				icon: MessageSquare,
+				shortcut: "T",
+				subGroup: "navigation:subGroups.automation",
+			},
 			// Utilities
 			{
 				id: "voice-control",
@@ -648,6 +692,13 @@ const navGroups: NavGroup[] = [
 				labelKey: "navigation:items.contextAwareSnippets",
 				icon: Code,
 				shortcut: "S",
+				subGroup: "navigation:subGroups.utilities",
+			},
+			{
+				id: "offline-mode",
+				labelKey: "navigation:items.offlineMode",
+				icon: WifiOff,
+				shortcut: "O",
 				subGroup: "navigation:subGroups.utilities",
 			},
 		],
@@ -709,6 +760,8 @@ export function Sidebar({
 	const [searchQuery, setSearchQuery] = useState("");
 	const [isSearchOpen, setIsSearchOpen] = useState(false);
 	const searchInputRef = useRef<HTMLInputElement>(null);
+	const shortcutBufferRef = useRef<string>("");
+	const shortcutBufferTimeRef = useRef<number>(0);
 
 	const [showGitHubSetup, setShowGitHubSetup] = useState(false);
 	const [gitHubSetupProject, setGitHubSetupProject] = useState<Project | null>(
@@ -892,11 +945,43 @@ export function Sidebar({
 				return;
 			}
 
+			// Ignore non-letter keys for 2-char shortcuts
+			if (!/^[A-Za-z]$/.test(e.key)) return;
+
 			const key = e.key.toUpperCase();
+			const now = Date.now();
+			const SHORTCUT_WINDOW_MS = 1000;
 
-			// Find matching nav item from visible items only
+			const prefix = shortcutBufferRef.current;
+			const prefixAge = now - shortcutBufferTimeRef.current;
+
+			// If a recent prefix exists, try to match the full 2-char combo
+			if (prefix && prefixAge <= SHORTCUT_WINDOW_MS) {
+				const combo = prefix + key;
+				const matched = visibleNavItems.find((item) => item.shortcut === combo);
+				shortcutBufferRef.current = "";
+				shortcutBufferTimeRef.current = 0;
+				if (matched) {
+					e.preventDefault();
+					onViewChange?.(matched.id);
+					return;
+				}
+				// Fall through to treat current key as a new prefix
+			}
+
+			// Check if this letter is a known prefix (first letter of any shortcut)
+			const isPrefix = visibleNavItems.some(
+				(item) => item.shortcut?.length === 2 && item.shortcut[0] === key,
+			);
+			if (isPrefix) {
+				e.preventDefault();
+				shortcutBufferRef.current = key;
+				shortcutBufferTimeRef.current = now;
+				return;
+			}
+
+			// Legacy single-char shortcut support (none remain, but kept defensively)
 			const matchedItem = visibleNavItems.find((item) => item.shortcut === key);
-
 			if (matchedItem) {
 				e.preventDefault();
 				onViewChange?.(matchedItem.id);
