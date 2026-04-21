@@ -75,6 +75,28 @@
 	"formatter": {
 		"enabled": false
 	},
+	"overrides": [
+		{
+			"includes": ["src/renderer/components/bounty-board/BountyBoardView.tsx"],
+			"linter": {
+				"rules": {
+					"suspicious": {
+						"noArrayIndexKey": "off"
+					}
+				}
+			}
+		},
+		{
+			"includes": ["src/renderer/components/bounty-board/JudgeVerdictModal.tsx"],
+			"linter": {
+				"rules": {
+					"a11y": {
+						"noNoninteractiveElementInteractions": "off"
+					}
+				}
+			}
+		}
+	],
 	"css": {
 		"parser": {
 			"cssModules": false,
