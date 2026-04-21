@@ -646,13 +646,10 @@ async def stream_chat(
                             # patterns), dump the raw protobuf frame so we can
                             # see every field the server sent back.
                             lowered = text.lower()
-                            if (
-                                len(text) < 300
-                                and (
-                                    "failed_precondition" in lowered
-                                    or "please update your editor" in lowered
-                                    or "cascade session" in lowered
-                                )
+                            if len(text) < 300 and (
+                                "failed_precondition" in lowered
+                                or "please update your editor" in lowered
+                                or "cascade session" in lowered
                             ):
                                 logger.warning(
                                     "[WindsurfGRPC] Server returned error in data frame "

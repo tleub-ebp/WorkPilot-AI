@@ -1632,7 +1632,11 @@ class WindsurfAgentClient(AgentClient):
         is_ide_key = bool(self._api_key and self._api_key.startswith("sk-ws-"))
 
         # Check if REST mode is forced via environment variable
-        force_rest = _os.environ.get("WINDSURF_FORCE_REST", "").lower() in ("1", "true", "yes")
+        force_rest = _os.environ.get("WINDSURF_FORCE_REST", "").lower() in (
+            "1",
+            "true",
+            "yes",
+        )
 
         if is_ide_key and not force_rest:
             # sk-ws-* keys only work through the local Windsurf IDE language
@@ -1682,7 +1686,7 @@ class WindsurfAgentClient(AgentClient):
             # PREFER REST mode for OAuth tokens - it supports full tool execution via
             # OpenAI function calling and doesn't require Windsurf IDE to be running.
             # Only fall back to gRPC if REST fails or if explicitly configured.
-            
+
             # Debug logging
             logger.info(
                 f"[WindsurfAgent] API key found (length={len(self._api_key)}, starts_with={self._api_key[:20] if len(self._api_key) >= 20 else self._api_key})"
@@ -1690,21 +1694,21 @@ class WindsurfAgentClient(AgentClient):
             logger.info(
                 f"[WindsurfAgent] Windsurf IDE running: {is_windsurf_running()}"
             )
-            
+
             # Check if this is an OAuth token (starts with specific prefixes or is long)
             is_oauth_token = (
-                self._api_key.startswith("oauth_") or 
-                self._api_key.startswith("sso_") or
-                len(self._api_key) > 100  # OAuth tokens are typically long
+                self._api_key.startswith("oauth_")
+                or self._api_key.startswith("sso_")
+                or len(self._api_key) > 100  # OAuth tokens are typically long
             )
-            
+
             logger.info(
                 f"[WindsurfAgent] OAuth token detection: is_oauth_token={is_oauth_token}, "
                 f"starts_with_oauth={self._api_key.startswith('oauth_')}, "
                 f"starts_with_sso={self._api_key.startswith('sso_')}, "
                 f"len>100={len(self._api_key) > 100}"
             )
-            
+
             if is_oauth_token:
                 # OAuth token → prefer REST mode for reliability
                 self._use_local_grpc = False
