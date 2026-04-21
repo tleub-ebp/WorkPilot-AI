@@ -370,7 +370,7 @@ class CopilotUsageConnector:
                 "permission_required": ADMIN_ORG_PERMISSION
             }
         else:
-            logger.exception(
+            logger.error(
                 "Unable to retrieve Copilot usage metrics via enterprise and organization endpoints",
                 exc_info=(organization_error or enterprise_error),
             )
@@ -460,7 +460,8 @@ def get_copilot_usage_metrics() -> dict[str, Any]:
     except Exception:
         logger.exception("Failed to get Copilot usage metrics")
         return {
-            "error": "COPILOT_USAGE_UNAVAILABLE",
+            "error": "COPILOT_USAGE_RETRIEVAL_FAILED",
+            "message": "Unable to retrieve Copilot usage metrics at this time.",
             "provider": "copilot",
             "available": False
         }
