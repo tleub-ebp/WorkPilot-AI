@@ -275,6 +275,16 @@ const CoachReportView = lazy(() =>
 		default: m.CoachReportView,
 	})),
 );
+const BountyBoardView = lazy(() =>
+	import("./components/bounty-board/BountyBoardView").then((m) => ({
+		default: m.BountyBoardView,
+	})),
+);
+const TechDebtDashboard = lazy(() =>
+	import("./components/tech-debt/TechDebtDashboard").then((m) => ({
+		default: m.TechDebtDashboard,
+	})),
+);
 
 import {
 	COLOR_THEMES,
@@ -1777,6 +1787,16 @@ export function App() {
 												{activeView === "agent-coach" && (
 													<div className="overflow-auto" style={{ height: 'calc(100vh - 100px)' }}>
 														<CoachReportView projectPath={selectedProject?.path} />
+													</div>
+												)}
+												{activeView === "bounty-board" && (
+													<div className="overflow-auto" style={{ height: 'calc(100vh - 100px)' }}>
+														<BountyBoardView projectPath={selectedProject?.path} />
+													</div>
+												)}
+												{activeView === "tech-debt" && (
+													<div className="overflow-auto" style={{ height: 'calc(100vh - 100px)' }}>
+														<TechDebtDashboard projectPath={selectedProject?.path} />
 													</div>
 												)}
 											</>

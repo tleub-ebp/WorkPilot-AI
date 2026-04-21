@@ -1,0 +1,49 @@
+{
+	"title": "Tableau de dette technique",
+	"description": "Vue priorisée par ROI de la dette technique du projet.",
+	"empty": "Aucun élément de dette ne correspond aux filtres.",
+	"noTrend": "Pas encore d'historique — lancez un scan pour commencer le suivi.",
+	"lastScanned": "Dernier scan : {{when}}",
+	"specCreated": "Spec créé : {{path}}",
+	"trendAria": "Total d'éléments de dette au fil du temps",
+	"trendFrom": "début : {{count}}",
+	"trendTo": "maintenant : {{count}} ({{delta}})",
+	"fields": {
+		"projectPath": "Chemin du projet",
+		"minScore": "ROI minimum",
+		"search": "Filtre",
+		"searchPlaceholder": "fichier, message, tag"
+	},
+	"actions": {
+		"scan": "Lancer un scan",
+		"createSpec": "Créer un spec"
+	},
+	"sections": {
+		"trend": "Évolution de la dette",
+		"heatmap": "Heatmap (top 20 fichiers)",
+		"top": "Top {{count}} éléments"
+	},
+	"summary": {
+		"total": "Éléments",
+		"totalCost": "Coût",
+		"totalEffort": "Effort (h)",
+		"avgRoi": "ROI moyen"
+	},
+	"columns": {
+		"kind": "Type",
+		"file": "Emplacement",
+		"message": "Message",
+		"cost": "Coût",
+		"effort": "Effort",
+		"roi": "ROI",
+		"actions": "Actions"
+	},
+	"kinds": {
+		"todo_fixme": "TODO/FIXME",
+		"long_function": "Fonction trop longue",
+		"deep_complexity": "Imbrication profonde",
+		"duplication": "Duplication",
+		"stale_deps": "Dépendances obsolètes",
+		"low_coverage": "Faible couverture"
+	}
+}

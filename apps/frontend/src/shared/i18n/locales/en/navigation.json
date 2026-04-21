@@ -67,6 +67,8 @@
 		"pipelineGenerator": "Pipeline Generator",
 		"pluginMarketplace": "Plugin Marketplace",
 		"arenaMode": "Arena Mode",
+		"bountyBoard": "Bounty Board",
+		"techDebt": "Tech Debt Dashboard",
 		"apiExplorer": "API Studio",
 		"sandbox": "Agent Simulation Sandbox",
 		"regressionGuardian": "Regression Guardian",

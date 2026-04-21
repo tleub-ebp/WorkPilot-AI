@@ -1,0 +1,49 @@
+{
+	"title": "Tech Debt Dashboard",
+	"description": "ROI-scored view of technical debt across the project.",
+	"empty": "No debt items match the current filters.",
+	"noTrend": "No trend data yet — run a scan to start tracking.",
+	"lastScanned": "Last scanned: {{when}}",
+	"specCreated": "Spec created at: {{path}}",
+	"trendAria": "Total debt items over time",
+	"trendFrom": "start: {{count}}",
+	"trendTo": "now: {{count}} ({{delta}})",
+	"fields": {
+		"projectPath": "Project path",
+		"minScore": "Min ROI",
+		"search": "Filter",
+		"searchPlaceholder": "file, message, tag"
+	},
+	"actions": {
+		"scan": "Scan now",
+		"createSpec": "Create spec"
+	},
+	"sections": {
+		"trend": "Debt trend",
+		"heatmap": "Heatmap (top 20 files)",
+		"top": "Top {{count}} items"
+	},
+	"summary": {
+		"total": "Items",
+		"totalCost": "Cost",
+		"totalEffort": "Effort (h)",
+		"avgRoi": "Avg ROI"
+	},
+	"columns": {
+		"kind": "Kind",
+		"file": "Location",
+		"message": "Message",
+		"cost": "Cost",
+		"effort": "Effort",
+		"roi": "ROI",
+		"actions": "Actions"
+	},
+	"kinds": {
+		"todo_fixme": "TODO/FIXME",
+		"long_function": "Long function",
+		"deep_complexity": "Deep nesting",
+		"duplication": "Duplication",
+		"stale_deps": "Stale deps",
+		"low_coverage": "Low coverage"
+	}
+}

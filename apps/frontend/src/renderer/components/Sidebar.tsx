@@ -23,6 +23,7 @@ import {
 	FileEdit,
 	FileJson,
 	FileText,
+	Gauge,
 	GitBranch,
 	GitFork,
 	GitMerge,
@@ -56,6 +57,7 @@ import {
 	Target,
 	Terminal,
 	TestTube,
+	Trophy,
 	UserCheck,
 	Users,
 	Wand2,
@@ -182,7 +184,9 @@ export type SidebarView =
 	| "consensus-arbiter"
 	| "notebook-agent"
 	| "spec-refinement"
-	| "agent-coach";
+	| "agent-coach"
+	| "bounty-board"
+	| "tech-debt";
 
 interface SidebarProps {
 	readonly onSettingsClick: () => void;
@@ -275,6 +279,11 @@ const navGroups: NavGroup[] = [
 				labelKey: "navigation:items.arenaMode",
 				icon: Swords,
 				shortcut: "W",
+			},
+			{
+				id: "bounty-board",
+				labelKey: "navigation:items.bountyBoard",
+				icon: Trophy,
 			},
 			{
 				id: "consensus-arbiter",
@@ -451,6 +460,11 @@ const navGroups: NavGroup[] = [
 				labelKey: "navigation:items.carbonProfiler",
 				icon: Leaf,
 				shortcut: "C",
+			},
+			{
+				id: "tech-debt",
+				labelKey: "navigation:items.techDebt",
+				icon: Gauge,
 			},
 		],
 		defaultExpanded: false,

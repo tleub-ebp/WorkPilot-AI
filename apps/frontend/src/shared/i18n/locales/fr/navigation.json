@@ -67,6 +67,8 @@
 		"pipelineGenerator": "Générateur de Pipeline",
 		"pluginMarketplace": "Marketplace de Plugins",
 		"arenaMode": "Mode Arena",
+		"bountyBoard": "Bounty Board",
+		"techDebt": "Dette technique",
 		"apiExplorer": "API Studio",
 		"sandbox": "Bac à sable de simulation d'agent",
 		"regressionGuardian": "Gardien de régression",
