@@ -65,7 +65,6 @@ import {
 	Users,
 	Wand2,
 	WandSparkles,
-	Wifi,
 	WifiOff,
 	Wrench,
 	X,
