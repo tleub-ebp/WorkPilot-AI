@@ -42,6 +42,7 @@
 		"codeReview": "Code Review",
 		"refactoring": "Refactoring",
 		"documentation": "Documentation",
+		"onboardingGuide": "Onboarding Guide",
 		"costEstimator": "Cost Estimator",
 		"sessionHistory": "Session History",
 		"testGeneration": "Test Generation",

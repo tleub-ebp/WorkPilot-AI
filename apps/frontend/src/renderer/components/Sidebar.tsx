@@ -349,6 +349,12 @@ const navGroups: NavGroup[] = [
 				shortcut: "O",
 			},
 			{
+				id: "onboarding-guide",
+				labelKey: "navigation:items.onboardingGuide",
+				icon: BookOpen,
+				shortcut: "Q",
+			},
+			{
 				id: "flaky-tests",
 				labelKey: "navigation:items.flakyTests",
 				icon: AlertTriangle,

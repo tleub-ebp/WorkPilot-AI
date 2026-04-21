@@ -16,7 +16,9 @@ import {
 import { ContestantCard } from "./ContestantCard";
 import { JudgeVerdictModal } from "./JudgeVerdictModal";
 
-const PROVIDERS = Object.keys(PROVIDER_MODELS_MAP).sort();
+const PROVIDERS = Object.keys(PROVIDER_MODELS_MAP).sort((a, b) =>
+	a.localeCompare(b),
+);
 
 function firstModelFor(provider: string): string {
 	const list = PROVIDER_MODELS_MAP[provider];
@@ -43,7 +45,7 @@ export function BountyBoardView({ projectPath, specId }: Props) {
 		loadArchives,
 	} = useBountyBoardStore();
 
-	const [projectInput, setProjectInput] = useState(projectPath ?? "");
+	const [projectInput] = useState(projectPath ?? "");
 	const [specInput, setSpecInput] = useState(specId ?? "");
 	const [verdictOpen, setVerdictOpen] = useState(false);
 
@@ -93,8 +95,10 @@ export function BountyBoardView({ projectPath, specId }: Props) {
 					</Label>
 					<Input
 						value={projectInput}
-						onChange={(e) => setProjectInput(e.target.value)}
+						readOnly
+						disabled
 						placeholder="/path/to/repo"
+						className="bg-muted cursor-not-allowed"
 					/>
 				</div>
 				<div>
