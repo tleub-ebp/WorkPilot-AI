@@ -35,6 +35,9 @@ Desktop.ini
 .secrets
 secrets/
 credentials/
+# MCP configuration files (may contain personal paths/tokens)
+utils/mcp/mcp_config_*.json
+utils/mcp/*_config.json
 
 # ===========================
 # IDE & Editors
