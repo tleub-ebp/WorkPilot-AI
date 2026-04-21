@@ -284,6 +284,7 @@ const navGroups: NavGroup[] = [
 				id: "bounty-board",
 				labelKey: "navigation:items.bountyBoard",
 				icon: Trophy,
+				shortcut: "Y",
 			},
 			{
 				id: "consensus-arbiter",
@@ -465,6 +466,7 @@ const navGroups: NavGroup[] = [
 				id: "tech-debt",
 				labelKey: "navigation:items.techDebt",
 				icon: Gauge,
+				shortcut: "Z",
 			},
 		],
 		defaultExpanded: false,

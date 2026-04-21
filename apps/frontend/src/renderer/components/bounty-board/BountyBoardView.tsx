@@ -1,12 +1,27 @@
 import { Plus, Swords, Trash2 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { PROVIDER_MODELS_MAP } from "@shared/constants/models";
 import { useBountyBoardStore } from "../../stores/bounty-board-store";
 import { Button } from "../ui/button";
 import { Input } from "../ui/input";
 import { Label } from "../ui/label";
+import {
+	Select,
+	SelectContent,
+	SelectItem,
+	SelectTrigger,
+	SelectValue,
+} from "../ui/select";
 import { ContestantCard } from "./ContestantCard";
 import { JudgeVerdictModal } from "./JudgeVerdictModal";
+
+const PROVIDERS = Object.keys(PROVIDER_MODELS_MAP).sort();
+
+function firstModelFor(provider: string): string {
+	const list = PROVIDER_MODELS_MAP[provider];
+	return list && list.length > 0 ? list[0].value : "";
+}
 
 interface Props {
 	readonly projectPath?: string;
@@ -103,7 +118,10 @@ export function BountyBoardView({ projectPath, specId }: Props) {
 						size="sm"
 						variant="outline"
 						onClick={() =>
-							addContestant({ provider: "anthropic", model: "claude-haiku-4-6" })
+							addContestant({
+								provider: "anthropic",
+								model: firstModelFor("anthropic"),
+							})
 						}
 					>
 						<Plus className="w-3 h-3 mr-1" />
@@ -121,25 +139,48 @@ export function BountyBoardView({ projectPath, specId }: Props) {
 								<Label className="text-[10px]">
 									{t("bountyBoard:field.provider", "Provider")}
 								</Label>
-								<Input
+								<Select
 									value={c.provider}
-									onChange={(e) =>
-										updateContestant(idx, { provider: e.target.value })
+									onValueChange={(provider) =>
+										updateContestant(idx, {
+											provider,
+											model: firstModelFor(provider),
+										})
 									}
-									placeholder="anthropic / openai / google / ollama / copilot / windsurf / custom"
-								/>
+								>
+									<SelectTrigger>
+										<SelectValue />
+									</SelectTrigger>
+									<SelectContent>
+										{PROVIDERS.map((p) => (
+											<SelectItem key={p} value={p}>
+												{p}
+											</SelectItem>
+										))}
+									</SelectContent>
+								</Select>
 							</div>
 							<div className="col-span-4">
 								<Label className="text-[10px]">
 									{t("bountyBoard:field.model", "Model")}
 								</Label>
-								<Input
+								<Select
 									value={c.model}
-									onChange={(e) =>
-										updateContestant(idx, { model: e.target.value })
+									onValueChange={(model) =>
+										updateContestant(idx, { model })
 									}
-									placeholder="claude-sonnet-4-6"
-								/>
+								>
+									<SelectTrigger>
+										<SelectValue />
+									</SelectTrigger>
+									<SelectContent>
+										{(PROVIDER_MODELS_MAP[c.provider] ?? []).map((m) => (
+											<SelectItem key={m.value} value={m.value}>
+												{m.label}
+											</SelectItem>
+										))}
+									</SelectContent>
+								</Select>
 							</div>
 							<div className="col-span-3">
 								<Label className="text-[10px]">
