@@ -61,6 +61,8 @@ TODO_PATTERN = re.compile(
 FUNCTION_PATTERN = re.compile(
     r"^\s*(?:async\s+)?(?:def|function|fn|public|private|protected)\s+[\w$]+",
 )
+PACKAGE_JSON = "package.json"
+REQUIREMENTS_TXT = "requirements.txt"
 
 
 @dataclass
@@ -334,7 +336,7 @@ def _scan_duplication(root: Path, block_size: int = 6) -> list[DebtItem]:
 
 def _scan_stale_deps(root: Path) -> list[DebtItem]:
     items: list[DebtItem] = []
-    pkg_json = root / "package.json"
+    pkg_json = root / PACKAGE_JSON
     if pkg_json.exists():
         try:
             data = json.loads(pkg_json.read_text(encoding="utf-8"))
@@ -345,9 +347,9 @@ def _scan_stale_deps(root: Path) -> list[DebtItem]:
             if isinstance(version, str) and ("^0." in version or "~0." in version):
                 items.append(
                     DebtItem(
-                        id=_make_id("stale_deps", "package.json", 0, name),
+                        id=_make_id("stale_deps", PACKAGE_JSON, 0, name),
                         kind="stale_deps",
-                        file_path="package.json",
+                        file_path=PACKAGE_JSON,
                         line=0,
                         message=f"{name}@{version} is pre-1.0 (unstable)",
                         cost=1.5,
@@ -356,7 +358,7 @@ def _scan_stale_deps(root: Path) -> list[DebtItem]:
                         tags=["dependencies"],
                     )
                 )
-    req = root / "requirements.txt"
+    req = root / REQUIREMENTS_TXT
     if req.exists():
         try:
             for idx, line in enumerate(
@@ -368,9 +370,9 @@ def _scan_stale_deps(root: Path) -> list[DebtItem]:
                 if "==" not in s and ">=" not in s:
                     items.append(
                         DebtItem(
-                            id=_make_id("stale_deps", "requirements.txt", idx, s),
+                            id=_make_id("stale_deps", REQUIREMENTS_TXT, idx, s),
                             kind="stale_deps",
-                            file_path="requirements.txt",
+                            file_path=REQUIREMENTS_TXT,
                             line=idx,
                             message=f"{s} is unpinned",
                             cost=1.0,
