@@ -22,9 +22,10 @@ from __future__ import annotations
 import hashlib
 import json
 import re
+from collections.abc import Iterable
 from dataclasses import asdict, dataclass, field
 from pathlib import Path
-from typing import Iterable, Literal
+from typing import Literal
 
 DebtKind = Literal[
     "todo_fixme",
@@ -37,9 +38,21 @@ DebtKind = Literal[
 
 SCAN_EXTS = {".py", ".ts", ".tsx", ".js", ".jsx", ".go", ".rs", ".java", ".cs"}
 SKIP_DIRS = {
-    ".git", "node_modules", "dist", "build", ".venv", "venv", "__pycache__",
-    ".next", ".turbo", "coverage", ".mypy_cache", ".pytest_cache", ".cache",
-    "target", "out",
+    ".git",
+    "node_modules",
+    "dist",
+    "build",
+    ".venv",
+    "venv",
+    "__pycache__",
+    ".next",
+    ".turbo",
+    "coverage",
+    ".mypy_cache",
+    ".pytest_cache",
+    ".cache",
+    "target",
+    "out",
 }
 
 TODO_PATTERN = re.compile(
@@ -105,7 +118,7 @@ def _iter_source_files(root: Path) -> Iterable[Path]:
 
 
 def _make_id(kind: str, file_path: str, line: int, msg: str) -> str:
-    key = f"{kind}|{file_path}|{line}|{msg}".encode("utf-8")
+    key = f"{kind}|{file_path}|{line}|{msg}".encode()
     return hashlib.sha1(key).hexdigest()[:12]
 
 
@@ -186,7 +199,12 @@ def _scan_long_functions(root: Path, threshold: int = 60) -> list[DebtItem]:
                 func_start = idx
                 func_name = stripped.split("(")[0][:80]
                 indent = cur_indent
-            elif in_func and stripped and cur_indent <= indent and not stripped.startswith(("@", "//", "#")):
+            elif (
+                in_func
+                and stripped
+                and cur_indent <= indent
+                and not stripped.startswith(("@", "//", "#"))
+            ):
                 # left the function body
                 if (idx - func_start) > threshold:
                     rel = str(path.relative_to(root))
@@ -270,12 +288,19 @@ def _scan_duplication(root: Path, block_size: int = 6) -> list[DebtItem]:
     blocks: dict[str, list[tuple[str, int]]] = {}
     for path in _iter_source_files(root):
         try:
-            lines = [ln.strip() for ln in path.read_text(encoding="utf-8", errors="ignore").splitlines()]
+            lines = [
+                ln.strip()
+                for ln in path.read_text(encoding="utf-8", errors="ignore").splitlines()
+            ]
         except OSError:
             continue
         rel = str(path.relative_to(root))
         for i in range(len(lines) - block_size):
-            block_lines = [ln for ln in lines[i : i + block_size] if ln and not ln.startswith(("#", "//"))]
+            block_lines = [
+                ln
+                for ln in lines[i : i + block_size]
+                if ln and not ln.startswith(("#", "//"))
+            ]
             if len(block_lines) < block_size - 1:
                 continue
             key = hashlib.sha1("\n".join(block_lines).encode("utf-8")).hexdigest()
@@ -332,7 +357,9 @@ def _scan_stale_deps(root: Path) -> list[DebtItem]:
     req = root / "requirements.txt"
     if req.exists():
         try:
-            for idx, line in enumerate(req.read_text(encoding="utf-8").splitlines(), start=1):
+            for idx, line in enumerate(
+                req.read_text(encoding="utf-8").splitlines(), start=1
+            ):
                 s = line.strip()
                 if not s or s.startswith("#"):
                     continue
@@ -390,10 +417,16 @@ def scan_project(
     if not root.exists():
         raise ValueError(f"project_path does not exist: {root}")
 
-    enabled = set(kinds or [
-        "todo_fixme", "long_function", "deep_complexity",
-        "duplication", "stale_deps",
-    ])
+    enabled = set(
+        kinds
+        or [
+            "todo_fixme",
+            "long_function",
+            "deep_complexity",
+            "duplication",
+            "stale_deps",
+        ]
+    )
     items: list[DebtItem] = []
     if "todo_fixme" in enabled:
         items.extend(_scan_todos(root))
@@ -411,14 +444,11 @@ def scan_project(
     summary = {
         "total": len(items),
         "by_kind": {
-            k: sum(1 for i in items if i.kind == k)
-            for k in {i.kind for i in items}
+            k: sum(1 for i in items if i.kind == k) for k in {i.kind for i in items}
         },
         "total_cost": round(sum(i.cost for i in items), 2),
         "total_effort": round(sum(i.effort for i in items), 2),
-        "avg_roi": round(
-            sum(i.roi for i in items) / len(items), 3
-        ) if items else 0.0,
+        "avg_roi": round(sum(i.roi for i in items) / len(items), 3) if items else 0.0,
     }
 
     now = time.time()

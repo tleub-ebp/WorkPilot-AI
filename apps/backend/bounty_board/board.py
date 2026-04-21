@@ -154,7 +154,11 @@ async def default_contestant_runner(
         )
     finally:
         contestant.completed_at = int(time.time() * 1000)
-        contestant.duration_ms = max(0, contestant.completed_at - (contestant.started_at or contestant.completed_at))
+        contestant.duration_ms = max(
+            0,
+            contestant.completed_at
+            - (contestant.started_at or contestant.completed_at),
+        )
 
 
 def contestant_prompt(contestant: Contestant, spec_prompt: str) -> str:
@@ -189,7 +193,9 @@ async def default_judge(
     criteria: list[str] = []
     for line in spec_prompt.splitlines():
         stripped = line.strip().lstrip("-*0123456789. ").strip()
-        if 4 <= len(stripped) <= 120 and any(kw in line.lower() for kw in ("must", "should", "doit", "devrait")):
+        if 4 <= len(stripped) <= 120 and any(
+            kw in line.lower() for kw in ("must", "should", "doit", "devrait")
+        ):
             criteria.append(stripped.lower())
 
     max_duration = max((c.duration_ms for c in contestants if c.duration_ms), default=1)
@@ -197,7 +203,12 @@ async def default_judge(
     for c in contestants:
         if c.status != "completed":
             c.score = 0.0
-            c.quality_breakdown = {"completion": 0.0, "coverage": 0.0, "signal": 0.0, "latency": 0.0}
+            c.quality_breakdown = {
+                "completion": 0.0,
+                "coverage": 0.0,
+                "signal": 0.0,
+                "latency": 0.0,
+            }
             rationale[c.id] = c.error or "Did not complete."
             scored.append((c, 0.0))
             continue
@@ -258,7 +269,9 @@ class BountyBoard:
 
     async def run(self) -> BountyResult:
         spec_prompt = _load_spec_prompt(self.spec_dir)
-        worktrees = _prepare_worktrees(self.project_path, self.bounty_id, self.contestants)
+        worktrees = _prepare_worktrees(
+            self.project_path, self.bounty_id, self.contestants
+        )
 
         # Run all contestants in parallel.
         await asyncio.gather(
@@ -269,9 +282,15 @@ class BountyBoard:
         )
 
         # Judge phase.
-        winner_id, rationale = await self.judge(self.contestants, spec_prompt, self.spec_dir)
+        winner_id, rationale = await self.judge(
+            self.contestants, spec_prompt, self.spec_dir
+        )
         for c in self.contestants:
-            c.status = "winner" if c.id == winner_id else ("archived" if c.status == "completed" else c.status)
+            c.status = (
+                "winner"
+                if c.id == winner_id
+                else ("archived" if c.status == "completed" else c.status)
+            )
 
         result = BountyResult(
             id=self.bounty_id,
@@ -313,7 +332,9 @@ def _load_spec_prompt(spec_dir: Path) -> str:
     return f"Spec {spec_dir.name}"
 
 
-def _prepare_worktrees(project_path: Path, bounty_id: str, contestants: list[Contestant]) -> dict[str, str]:
+def _prepare_worktrees(
+    project_path: Path, bounty_id: str, contestants: list[Contestant]
+) -> dict[str, str]:
     """Create (or stub) per-contestant isolated directories.
 
     We intentionally DO NOT call `git worktree add` here to stay runnable in
@@ -336,7 +357,9 @@ def _format_judge_report(contestants: list[Contestant], winner_id: str | None) -
     lines = ["# Judge report", ""]
     for c in sorted(contestants, key=lambda x: x.score or -1, reverse=True):
         marker = " 🏆" if c.id == winner_id else ""
-        lines.append(f"- **{c.label}** ({c.provider}:{c.model}) — score: {c.score}{marker}")
+        lines.append(
+            f"- **{c.label}** ({c.provider}:{c.model}) — score: {c.score}{marker}"
+        )
     return "\n".join(lines)
 
 

@@ -70,7 +70,9 @@ async def _main_async(args: argparse.Namespace) -> int:
 
     providers_models = _parse_contestants(args.contestants)
     if not providers_models:
-        print(json.dumps({"error": "No contestants provided (--contestants)"}), flush=True)
+        print(
+            json.dumps({"error": "No contestants provided (--contestants)"}), flush=True
+        )
         return 1
 
     profiles = _parse_list(args.profiles, ",")
@@ -87,7 +89,9 @@ async def _main_async(args: argparse.Namespace) -> int:
             )
         )
 
-    result = await run_bounty(spec_dir=spec_dir, project_path=project_root, contestants=specs)
+    result = await run_bounty(
+        spec_dir=spec_dir, project_path=project_root, contestants=specs
+    )
     print(json.dumps({"result": result.to_dict()}), flush=True)
     return 0
 

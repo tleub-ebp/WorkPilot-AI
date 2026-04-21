@@ -49,11 +49,18 @@ def _cmd_list(args: argparse.Namespace) -> int:
     items = data.get("items", [])
     min_score = float(args.min_score or 0)
     items = [i for i in items if float(i.get("roi", 0)) >= min_score]
-    print(json.dumps({"result": {
-        "items": items,
-        "trend": data.get("trend", []),
-        "summary": data.get("summary", {}),
-    }}), flush=True)
+    print(
+        json.dumps(
+            {
+                "result": {
+                    "items": items,
+                    "trend": data.get("trend", []),
+                    "summary": data.get("summary", {}),
+                }
+            }
+        ),
+        flush=True,
+    )
     return 0
 
 
