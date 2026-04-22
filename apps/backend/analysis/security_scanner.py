@@ -24,10 +24,13 @@ Usage:
 from __future__ import annotations
 
 import json
+import logging
 import subprocess
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
+
+logger = logging.getLogger(__name__)
 
 # Import the existing secrets scanner
 try:
@@ -366,12 +369,17 @@ class SecurityScanner:
                             )
                         )
                 except json.JSONDecodeError:
-                    pass  # npm audit may return invalid JSON on no findings
+                    logger.debug(
+                        "npm audit returned non-JSON output (likely no findings)"
+                    )
 
         except subprocess.TimeoutExpired:
             result.scan_errors.append("npm audit timed out")
         except FileNotFoundError:
-            pass  # npm not available
+            result.scan_errors.append(
+                "npm not available on PATH — dependency audit skipped"
+            )
+            logger.info("npm not found; skipping npm audit")
         except Exception as e:
             result.scan_errors.append(f"npm audit error: {str(e)}")
 
@@ -406,14 +414,18 @@ class SecurityScanner:
                             )
                         )
                 except json.JSONDecodeError:
-                    pass
+                    logger.debug("pip-audit returned non-JSON output")
 
         except FileNotFoundError:
-            pass  # pip-audit not available
+            result.scan_errors.append(
+                "pip-audit not available — Python dependency audit skipped"
+            )
+            logger.info("pip-audit not found; skipping Python dependency scan")
         except subprocess.TimeoutExpired:
-            pass
-        except Exception:
-            pass
+            result.scan_errors.append("pip-audit timed out")
+        except Exception as e:
+            result.scan_errors.append(f"pip-audit error: {str(e)}")
+            logger.warning("pip-audit failed", exc_info=True)
 
     def _is_python_project(self, project_dir: Path) -> bool:
         """Check if this is a Python project."""

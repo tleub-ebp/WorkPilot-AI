@@ -19,24 +19,12 @@ let TEST_DIR: string;
 let TEST_PROJECT_PATH: string;
 let TEST_SPEC_DIR: string;
 
-// Mock ipcRenderer for renderer-side tests
-const mockIpcRenderer = {
-	invoke: vi.fn(),
-	send: vi.fn(),
-	on: vi.fn(),
-	once: vi.fn(),
-	removeListener: vi.fn(),
-	removeAllListeners: vi.fn(),
-	setMaxListeners: vi.fn(),
-};
+// Shared electron mock — see src/__tests__/helpers/electron-mock.ts for the
+// rationale (avoids ~20 copies of this scaffolding across test files).
+import { createElectronRendererMock } from "../helpers/electron-mock";
 
-// Mock contextBridge
-const exposedApis: Record<string, unknown> = {};
-const mockContextBridge = {
-	exposeInMainWorld: vi.fn((name: string, api: unknown) => {
-		exposedApis[name] = api;
-	}),
-};
+const { mockIpcRenderer, mockContextBridge, exposedApis } =
+	createElectronRendererMock();
 
 vi.mock("electron", () => ({
 	ipcRenderer: mockIpcRenderer,

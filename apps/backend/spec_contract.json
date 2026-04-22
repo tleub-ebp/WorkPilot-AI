@@ -123,8 +123,8 @@
 						"type": "json",
 						"required_fields": ["feature", "workflow_type", "phases"],
 						"phases_validation": {
-							"required_fields": ["phase", "name", "chunks"],
-							"chunks_validation": {
+							"required_fields": ["id", "name", "subtasks"],
+							"subtasks_validation": {
 								"required_fields": ["id", "description", "status"],
 								"status_values": [
 									"pending",

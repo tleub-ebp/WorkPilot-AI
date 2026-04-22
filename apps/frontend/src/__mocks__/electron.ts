@@ -3,11 +3,18 @@
  */
 import { EventEmitter } from "node:events";
 
-// Helper function to create mock functions
+// Helper function to create mock functions.
+// ``T`` is typed as an unknown callable here because createMockFn is used
+// both for "empty" mocks (where the caller doesn't supply an impl) and for
+// mocks wrapping a concrete function — narrowing with a callable signature
+// removes the need for an ``any`` escape hatch.
+type AnyFn = (...args: unknown[]) => unknown;
+
 const createMockFn = <T>(impl?: T): T => {
 	const mockFn = ((...args: unknown[]) => {
-		// biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
-		if (impl && typeof impl === "function") return (impl as any)(...args);
+		if (impl && typeof impl === "function") {
+			return (impl as AnyFn)(...args);
+		}
 		return undefined;
 	}) as T;
 	return mockFn;

@@ -2,11 +2,13 @@ import { AlertCircle, Info, Loader2, Sparkles } from "lucide-react";
 import type React from "react";
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
+import type { AppSettings } from "@shared/types/settings";
 import { cn } from "@/lib/utils";
 import { Alert, AlertDescription } from "../ui/alert";
 import { Button } from "../ui/button";
 import { ElegantProviderGrid } from "./ElegantProviderGrid";
 import { getAllConnectors } from "./multiconnector/utils";
+import { ProviderConfigDialog } from "./ProviderConfigDialog";
 import { SettingsSection } from "./SettingsSection";
 
 interface Provider {
@@ -23,10 +25,8 @@ interface Provider {
 }
 
 interface SophisticatedProviderSectionProps {
-	// biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
-	settings: any;
-	// biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
-	onSettingsChange: (settings: any) => void;
+	settings: AppSettings & Record<string, unknown>;
+	onSettingsChange: (settings: AppSettings & Record<string, unknown>) => void;
 	isOpen: boolean;
 }
 
@@ -72,7 +72,7 @@ export function SophisticatedProviderSection({
 	settings,
 	onSettingsChange,
 	isOpen,
-}: SophisticatedProviderSectionProps) {
+}: Readonly<SophisticatedProviderSectionProps>) {
 	const { t } = useTranslation("settings");
 	const [connectors, setConnectors] = useState<
 		Array<{ id: string; label: string }>
@@ -82,6 +82,8 @@ export function SophisticatedProviderSection({
 	const [testingProviders, setTestingProviders] = useState<Set<string>>(
 		new Set(),
 	);
+	const [selectedProvider, setSelectedProvider] = useState<Provider | null>(null);
+	const [configDialogOpen, setConfigDialogOpen] = useState(false);
 
 	// Charger les connecteurs avec animation
 	useEffect(() => {
@@ -128,7 +130,10 @@ export function SophisticatedProviderSection({
 	const providers: Provider[] = connectors.map((connector) => {
 		const category = providerCategories[connector.id] || "independent";
 		const apiKeyField = getApiKeyField(connector.id);
-		const hasApiKey = apiKeyField && settings[apiKeyField];
+		const hasApiKey = Boolean(apiKeyField && (settings[apiKeyField] as string));
+		const isEnabled = apiKeyField
+			? (settings[`${apiKeyField}Enabled`] as boolean | undefined) !== false
+			: true;
 
 		return {
 			id: connector.id,
@@ -136,7 +141,7 @@ export function SophisticatedProviderSection({
 			category,
 			description: providerDescriptions[connector.id],
 			isConfigured: !!hasApiKey,
-			isWorking: hasApiKey ? true : undefined,
+			isWorking: hasApiKey && isEnabled,
 			lastTested: hasApiKey ? new Date().toISOString() : undefined,
 			usageCount: Math.floor(Math.random() * 100),
 			isPremium: ["anthropic", "claude", "openai", "gemini"].includes(
@@ -145,9 +150,12 @@ export function SophisticatedProviderSection({
 		};
 	});
 
-	const handleConfigure = (_providerId: string) => {
-		// Ouvrir la configuration du provider avec une animation
-		// TODO: Implémenter la modale de configuration élégante
+	const handleConfigure = (providerId: string) => {
+		const provider = providers.find((p) => p.id === providerId);
+		if (provider) {
+			setSelectedProvider(provider);
+			setConfigDialogOpen(true);
+		}
 	};
 
 	const handleTest = async (providerId: string) => {
@@ -181,7 +189,7 @@ export function SophisticatedProviderSection({
 		const apiKeyField = getApiKeyField(providerId);
 		if (
 			apiKeyField &&
-			window.confirm(
+			globalThis.confirm(
 				"Êtes-vous sûr de vouloir supprimer la configuration de ce provider ?",
 			)
 		) {
@@ -193,7 +201,7 @@ export function SophisticatedProviderSection({
 	};
 
 	const handleRefresh = () => {
-		window.location.reload();
+		globalThis.location.reload();
 	};
 
 	if (isLoading) {
@@ -262,28 +270,28 @@ export function SophisticatedProviderSection({
 						<AlertDescription className="text-blue-700">
 							<div className="space-y-1">
 								<p className="font-medium">
-									Commencez avec votre premier provider
+									{t("accounts.alerts.sophisticated.noProvidersTitle")}
 								</p>
 								<p className="text-sm opacity-90">
-									Configurez au moins un provider pour commencer à utiliser
-									l'application.
+									{t("accounts.alerts.sophisticated.noProvidersDescription")}
 								</p>
 							</div>
 						</AlertDescription>
 					</Alert>
 				)}
 
-				{providers.filter((p) => p.isWorking === false).length > 0 && (
+				{providers.some((p) => p.isWorking === false) && (
 					<Alert className="border-amber-200/50 bg-amber-50/50 rounded-2xl">
 						<AlertCircle className="h-4 w-4 text-amber-600" />
 						<AlertDescription className="text-amber-700">
 							<div className="space-y-1">
 								<p className="font-medium">
-									{providers.filter((p) => p.isWorking === false).length}{" "}
-									provider(s) nécessitent votre attention
+									{t("accounts.alerts.sophisticated.providersNeedAttention", {
+										count: providers.filter((p) => p.isWorking === false).length,
+									})}
 								</p>
 								<p className="text-sm opacity-90">
-									Vérifiez vos clés API et réessayez.
+									{t("accounts.alerts.sophisticated.checkApiKeys")}
 								</p>
 							</div>
 						</AlertDescription>
@@ -300,6 +308,18 @@ export function SophisticatedProviderSection({
 					onRefreshProviders={handleRefresh}
 					isLoading={testingProviders.size > 0}
 				/>
+
+				{/* Configuration Dialog */}
+				{selectedProvider && (
+					<ProviderConfigDialog
+						isOpen={configDialogOpen}
+						onOpenChange={setConfigDialogOpen}
+						provider={selectedProvider}
+						settings={settings}
+						onSettingsChange={onSettingsChange}
+						onTest={handleTest}
+					/>
+				)}
 			</div>
 		</SettingsSection>
 	);

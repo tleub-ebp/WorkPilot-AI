@@ -15,6 +15,7 @@ import type {
 	RepoProviderDetectionResult,
 } from "../../shared/types";
 import type { AgentManager } from "../agent";
+import { appEmulatorService } from "../app-emulator-service";
 import { changelogService } from "../changelog-service";
 import { getToolPath } from "../cli-tool-manager";
 import { insightsService } from "../insights-service";
@@ -427,6 +428,7 @@ const configureServicesWithPython = (
 ): void => {
 	console.warn("[IPC] Configuring services with Python:", pythonPath);
 	agentManager.configure(pythonPath, autoBuildPath);
+	appEmulatorService.configure(pythonPath, autoBuildPath);
 	changelogService.configure(pythonPath, autoBuildPath);
 	insightsService.configure(pythonPath, autoBuildPath);
 	titleGenerator.configure(pythonPath, autoBuildPath);
