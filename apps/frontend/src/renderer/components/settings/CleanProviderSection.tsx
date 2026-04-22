@@ -679,6 +679,8 @@ export function CleanProviderSection({
 		providerTestResults,
 		t,
 		getApiKeyInfo,
+		getProviderApiKeyField,
+		settings,
 	]);
 
 	// Synchronize providersState with providers (avoid infinite loop)

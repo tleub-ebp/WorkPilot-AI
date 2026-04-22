@@ -123,22 +123,26 @@ export function EnvSnapshotView({ projectPath }: Props) {
 							const Icon = opt.icon;
 							const active = opt.value === format;
 							return (
-								<button
+								<label
 									key={opt.value}
-									type="button"
-									role="radio"
-									aria-checked={active}
-									onClick={() => setFormat(opt.value)}
-									title={t(`envSnapshot:${opt.descriptionKey}`)}
-									className={`flex items-center gap-1 px-3 py-1 text-xs rounded-sm transition-colors ${
+									className={`flex items-center gap-1 px-3 py-1 text-xs rounded-sm transition-colors cursor-pointer ${
 										active
 											? "bg-primary text-primary-foreground"
 											: "text-muted-foreground hover:text-foreground"
 									}`}
+									title={t(`envSnapshot:${opt.descriptionKey}`)}
 								>
+									<input
+										type="radio"
+										name="format"
+										value={opt.value}
+										checked={active}
+										onChange={() => setFormat(opt.value)}
+										className="sr-only"
+									/>
 									<Icon className="w-3 h-3" />
 									{t(`envSnapshot:${opt.labelKey}`)}
-								</button>
+								</label>
 							);
 						})}
 					</div>

@@ -1479,7 +1479,7 @@ export function KanbanBoard({
 		if (!result.success) {
 			console.error("[KanbanBoard] Failed to archive tasks:", result.error);
 		}
-	}, [tasksByStatus.done]);
+	}, [tasksByStatus.done, projectId]);
 
 	const handleDeleteTask = useCallback(async (taskId: string) => {
 		// Get the task information for the confirmation dialog
