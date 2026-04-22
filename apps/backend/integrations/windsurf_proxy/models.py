@@ -22,6 +22,8 @@ class ChatModelType(IntEnum):
     SWE_1_5 = 359
     SWE_1_5_THINKING = 369
     SWE_1_5_SLOW = 377
+    SWE_1_6 = 420
+    SWE_1_6_FAST = 421
 
     # Claude models
     CLAUDE_3_OPUS_20240229 = 63
@@ -159,11 +161,16 @@ class ChatModelType(IntEnum):
 # =============================================================================
 
 MODEL_NAME_TO_ENUM: dict[str, ChatModelType] = {
-    # SWE
-    "swe-1.5": ChatModelType.SWE_1_5,
+    # SWE — default `swe-1.5` routes to the free SWE_1_5_SLOW variant (377),
+    # matching dwgx/WindsurfAPI. The paid SWE_1_5 (359) is reached via
+    # `swe-1.5-fast`. Prevents silent quota burn when the UI just picks the
+    # canonical `swe-1.5` slug.
+    "swe-1.5": ChatModelType.SWE_1_5_SLOW,
     "swe-1.5-thinking": ChatModelType.SWE_1_5_THINKING,
     "swe-1.5-slow": ChatModelType.SWE_1_5_SLOW,
-    "swe-1.5-fast": ChatModelType.SWE_1_5,  # alias
+    "swe-1.5-fast": ChatModelType.SWE_1_5,
+    "swe-1.6": ChatModelType.SWE_1_6,
+    "swe-1.6-fast": ChatModelType.SWE_1_6_FAST,
     # Claude
     "claude-3-opus": ChatModelType.CLAUDE_3_OPUS_20240229,
     "claude-3-sonnet": ChatModelType.CLAUDE_3_SONNET_20240229,
@@ -258,6 +265,15 @@ MODEL_NAME_TO_ENUM: dict[str, ChatModelType] = {
 DEFAULT_MODEL = "claude-4-sonnet"
 
 
+# Models whose modelUid is a slug rather than the MODEL_<ENUM> name.
+# For these, the Windsurf server expects enum=0 (UNSPECIFIED) and routes by UID string.
+# Source: dwgx/WindsurfAPI src/models.js.
+_SLUG_MODEL_UIDS: dict[str, str] = {
+    "swe-1.6": "swe-1-6",
+    "swe-1.6-fast": "swe-1-6-fast",
+}
+
+
 def resolve_model(name: str) -> tuple[int, str]:
     """Resolve a friendly model name to (enum_value, model_name_string).
 
@@ -266,10 +282,13 @@ def resolve_model(name: str) -> tuple[int, str]:
 
     Returns:
         Tuple of (ChatModelType enum int, model name string for gRPC).
-        The model name string includes the ``MODEL_`` prefix required by
-        the Windsurf language server (e.g., ``MODEL_CLAUDE_4_SONNET``).
+        Most models use the ``MODEL_<ENUM>`` name (e.g., ``MODEL_CLAUDE_4_SONNET``).
+        SWE-1.6 variants use enum=0 with a slug UID (e.g., ``swe-1-6``).
     """
     name_lower = name.lower().strip()
+
+    if name_lower in _SLUG_MODEL_UIDS:
+        return (0, _SLUG_MODEL_UIDS[name_lower])
 
     if name_lower in MODEL_NAME_TO_ENUM:
         enum_val = MODEL_NAME_TO_ENUM[name_lower]
@@ -294,3 +313,13 @@ def resolve_model(name: str) -> tuple[int, str]:
 def get_available_models() -> list[str]:
     """Return list of all available model friendly names."""
     return sorted(MODEL_NAME_TO_ENUM.keys())
+
+
+def requires_cascade(name: str) -> bool:
+    """Return True if this model must be routed through the Cascade flow.
+
+    SWE-1.6 and other UID-based models are only accepted by
+    SendUserCascadeMessage, not RawGetChatMessage — the server rejects them
+    with 'failed_precondition: Cascade session error' on the legacy endpoint.
+    """
+    return name.lower().strip() in _SLUG_MODEL_UIDS

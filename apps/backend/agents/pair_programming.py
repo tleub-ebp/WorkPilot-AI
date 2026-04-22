@@ -737,23 +737,22 @@ class PairProgrammingSession:
         """Generate a code preview for a step.
 
         If an LLM provider is configured, delegates to it.
-        Otherwise returns a placeholder.
+        Otherwise returns a placeholder that clearly signals no LLM ran —
+        the UI should not render this as generated code.
         """
         preview_lines = [
-            f"# Preview for: {step.title}",
+            "# Preview unavailable — no LLM provider configured for pair programming.",
+            f"# Step: {step.title}",
             f"# File: {step.file_path or 'TBD'}",
             f"# Type: {step.step_type.value}",
-            "",
+            f"# Description: {step.description}",
         ]
 
         if comments_context:
+            preview_lines.append("#")
             preview_lines.append("# User guidance:")
             for line in comments_context.splitlines():
                 preview_lines.append(f"# {line}")
-            preview_lines.append("")
-
-        preview_lines.append(f"# TODO: Implementation for '{step.description}'")
-        preview_lines.append("pass")
 
         return "\n".join(preview_lines)
 

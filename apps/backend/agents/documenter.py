@@ -373,19 +373,24 @@ class DocGenerator:
         return self._generate_google_docstring(symbol)
 
     def _generate_google_docstring(self, symbol: SymbolDoc) -> str:
-        """Generate Google-style docstring."""
+        """Generate Google-style docstring.
+
+        We deliberately avoid emitting the ``TODO`` keyword: it leaks into user
+        code and gets picked up by linters and TODO-trackers. Instead we emit
+        an empty description slot so IDEs auto-suggest filling it in.
+        """
         parts = [f"    {self._infer_description(symbol)}"]
 
         if symbol.args:
             parts.append("")
             parts.append("    Args:")
             for arg in symbol.args:
-                parts.append(f"        {arg}: TODO — describe parameter.")
+                parts.append(f"        {arg}: ")
 
         if symbol.return_type and symbol.return_type != "None":
             parts.append("")
             parts.append("    Returns:")
-            parts.append(f"        {symbol.return_type}: TODO — describe return value.")
+            parts.append(f"        {symbol.return_type}: ")
 
         docstring = '    """' + "\n".join(parts) + '\n    """'
         return docstring
@@ -399,7 +404,7 @@ class DocGenerator:
             parts.append("    Parameters")
             parts.append("    ----------")
             for arg in symbol.args:
-                parts.append(f"    {arg} : TODO")
+                parts.append(f"    {arg}")
                 parts.append(f"        Description of {arg}.")
 
         if symbol.return_type and symbol.return_type != "None":
@@ -407,7 +412,7 @@ class DocGenerator:
             parts.append("    Returns")
             parts.append("    -------")
             parts.append(f"    {symbol.return_type}")
-            parts.append("        TODO — describe return value.")
+            parts.append("        ")
 
         docstring = '    """' + "\n".join(parts) + '\n    """'
         return docstring
@@ -419,11 +424,10 @@ class DocGenerator:
         if symbol.args:
             parts.append("")
             for arg in symbol.args:
-                parts.append(f"    :param {arg}: TODO — describe parameter.")
-                parts.append(f"    :type {arg}: TODO")
+                parts.append(f"    :param {arg}: ")
 
         if symbol.return_type and symbol.return_type != "None":
-            parts.append("    :returns: TODO — describe return value.")
+            parts.append("    :returns: ")
             parts.append(f"    :rtype: {symbol.return_type}")
 
         docstring = '    """' + "\n".join(parts) + '\n    """'
@@ -434,11 +438,9 @@ class DocGenerator:
         parts = ["/**", f" * {self._infer_description(symbol)}"]
         if symbol.args:
             for arg in symbol.args:
-                parts.append(f" * @param {{*}} {arg} - TODO describe parameter")
+                parts.append(f" * @param {{*}} {arg}")
         if symbol.return_type and symbol.return_type != "None":
-            parts.append(
-                f" * @returns {{{symbol.return_type}}} TODO describe return value"
-            )
+            parts.append(f" * @returns {{{symbol.return_type}}}")
         parts.append(" */")
         return "\n".join(parts)
 
@@ -451,7 +453,9 @@ class DocGenerator:
         if words.startswith("  "):
             words = words.lstrip()
         if not words:
-            return "TODO — add description."
+            # Empty name: leave the slot blank rather than emitting a TODO
+            # that would leak into the final docstring.
+            return ""
         return words.capitalize() + "."
 
     def generate_readme(self, module_info: ModuleInfo) -> str:
