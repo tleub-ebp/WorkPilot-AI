@@ -1,4 +1,4 @@
-import { ipcRenderer } from "electron";
+import { ipcRenderer, type IpcRendererEvent } from "electron";
 import { IPC_CHANNELS } from "../../shared/constants";
 import type {
 	AutoBuildVersionInfo,
@@ -384,8 +384,9 @@ export const createProjectAPI = (): ProjectAPI => ({
 			percentage: number;
 		}) => void,
 	) => {
-		// biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
-		const listener = (_: any, data: any) => callback(data);
+		type ProgressPayload = Parameters<typeof callback>[0];
+		const listener = (_event: IpcRendererEvent, data: ProgressPayload) =>
+			callback(data);
 		ipcRenderer.on(IPC_CHANNELS.OLLAMA_PULL_PROGRESS, listener);
 		return () => ipcRenderer.off(IPC_CHANNELS.OLLAMA_PULL_PROGRESS, listener);
 	},

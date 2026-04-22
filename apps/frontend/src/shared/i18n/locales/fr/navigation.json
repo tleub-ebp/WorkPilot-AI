@@ -90,7 +90,7 @@
 		"agentCoach": "Coach personnel d'agent",
 		"agentDebugger": "Débogueur d'Agent",
 		"teamBot": "Bot d'équipe (Slack/Teams)",
-		"blastRadius": "Impact Blast Radius",
+		"blastRadius": "Rayon d'impact",
 		"guardrails": "Guardrails d'Agent",
 		"envSnapshot": "Snapshots d'Environnement",
 		"offlineMode": "Mode Hors-Ligne"

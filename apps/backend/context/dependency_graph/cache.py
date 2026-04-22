@@ -10,10 +10,13 @@ from __future__ import annotations
 
 import hashlib
 import json
+import logging
 from pathlib import Path
 
 from .builder import _JS_TS_EXTS, _PYTHON_EXTS, _SKIP_DIRS, DependencyGraphBuilder
 from .models import DependencyGraph
+
+logger = logging.getLogger(__name__)
 
 _CACHE_FILE = "dependency_graph.json"
 _SUPPORTED_EXTS = _PYTHON_EXTS | _JS_TS_EXTS
@@ -104,4 +107,8 @@ class DependencyGraphCache:
             with open(self._cache_path, "w", encoding="utf-8") as f:
                 json.dump(data, f)
         except OSError:
-            pass  # Non-critical — cache is a best-effort optimization
+            logger.debug(
+                "Dependency graph cache write failed at %s",
+                self._cache_path,
+                exc_info=True,
+            )
