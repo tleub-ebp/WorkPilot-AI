@@ -453,7 +453,9 @@ class DocGenerator:
         if words.startswith("  "):
             words = words.lstrip()
         if not words:
-            return "TODO — add description."
+            # Empty name: leave the slot blank rather than emitting a TODO
+            # that would leak into the final docstring.
+            return ""
         return words.capitalize() + "."
 
     def generate_readme(self, module_info: ModuleInfo) -> str:
