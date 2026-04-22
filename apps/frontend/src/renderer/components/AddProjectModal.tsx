@@ -747,8 +747,7 @@ export function AddProjectModal({
 			});
 			if (project) onProjectAdded?.(project, false);
 			onOpenChange(false); // FERMETURE TOTALE
-			// biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
-		} catch (err: any) {
+		} catch (err: unknown) {
 			setError(
 				err instanceof Error ? err.message : t("addProject.failedToCreate"),
 			);
