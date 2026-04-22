@@ -164,28 +164,28 @@ export function AddProjectModal({
 	const extractRepoNameFromUrl = useCallback((url: string): string | null => {
 		try {
 			// Azure DevOps URL pattern: https://dev.azure.com/{org}/{project}/_git/{repo}
-			const azurePattern = /\/_git\/([^\/\s?#]+)/;
+			const azurePattern = /\/_git\/([^/\s?#]+)/;
 			const azureMatch = azurePattern.exec(url);
 			if (azureMatch) {
 				return azureMatch[1];
 			}
 
 			// GitHub URL pattern: https://github.com/{owner}/{repo}
-			const githubPattern = /github\.com\/([^\/\s?#]+)\/([^\/\s?#]+)/;
+			const githubPattern = /github\.com\/([^/\s?#]+)\/([^/\s?#]+)/;
 			const githubMatch = githubPattern.exec(url);
 			if (githubMatch) {
 				return githubMatch[2];
 			}
 
 			// GitLab URL pattern: https://gitlab.com/{owner}/{repo}
-			const gitlabPattern = /gitlab\.com\/([^\/\s?#]+)\/([^\/\s?#]+)/;
+			const gitlabPattern = /gitlab\.com\/([^/\s?#]+)\/([^/\s?#]+)/;
 			const gitlabMatch = gitlabPattern.exec(url);
 			if (gitlabMatch) {
 				return gitlabMatch[2];
 			}
 
 			// Bitbucket URL pattern: https://bitbucket.org/{owner}/{repo}
-			const bitbucketPattern = /bitbucket\.org\/([^\/\s?#]+)\/([^\/\s?#]+)/;
+			const bitbucketPattern = /bitbucket\.org\/([^/\s?#]+)\/([^/\s?#]+)/;
 			const bitbucketMatch = bitbucketPattern.exec(url);
 			if (bitbucketMatch) {
 				return bitbucketMatch[2];
