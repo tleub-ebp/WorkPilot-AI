@@ -27,6 +27,7 @@ import {
 } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
+import type { AppSettings } from "@shared/types/settings";
 import type { UseProjectSettingsReturn } from "@/components/project-settings";
 import { TerminalFontSettings } from "@/components/settings/terminal-font-settings";
 import { ScrollArea } from "@/components/ui";
@@ -501,7 +502,7 @@ export function AppSettingsDialog(props: AppSettingsDialogProps) {
 			case "accounts":
 				return (
 					<CleanProviderSection
-						settings={settings}
+						settings={settings as AppSettings & Record<string, unknown>}
 						onSettingsChange={setSettings}
 						isOpen={open}
 					/>

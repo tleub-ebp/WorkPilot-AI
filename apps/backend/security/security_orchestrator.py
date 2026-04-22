@@ -259,8 +259,12 @@ class SecurityOrchestrator:
         """
         print(f"🔒 Scanning {len(changed_files)} changed files...")
 
-        # For commit scans, focus on secrets
-        # TODO: Implement file-specific scanning in vulnerability_scanner
+        # For commit scans we focus on secrets. ``vulnerability_scanner`` does
+        # not yet expose a file-scoped API, so we scan the whole tree and filter
+        # results by ``changed_files`` below. This is acceptable for commit
+        # hooks (secrets scans are fast); if dependency or container scans are
+        # ever enabled here, a dedicated file-scoped entrypoint should be
+        # added to ``vulnerability_scanner`` first.
         vuln_result = self.vulnerability_scanner.scan_all(
             include_secrets=True,
             include_sast=False,  # Too slow for commits

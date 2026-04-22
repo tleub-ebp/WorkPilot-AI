@@ -4,6 +4,8 @@ import enAccessibility from "./locales/en/accessibility.json";
 import enAgentCoach from "./locales/en/agentCoach.json";
 import enAgentDebugger from "./locales/en/agentDebugger.json";
 import enBlastRadius from "./locales/en/blastRadius.json";
+import enEnvSnapshot from "./locales/en/envSnapshot.json";
+import enOfflineMode from "./locales/en/offlineMode.json";
 import enBountyBoard from "./locales/en/bountyBoard.json";
 import enTechDebt from "./locales/en/techDebt.json";
 import enTeamBot from "./locales/en/teamBot.json";
@@ -81,6 +83,8 @@ import frAccessibility from "./locales/fr/accessibility.json";
 import frAgentCoach from "./locales/fr/agentCoach.json";
 import frAgentDebugger from "./locales/fr/agentDebugger.json";
 import frBlastRadius from "./locales/fr/blastRadius.json";
+import frEnvSnapshot from "./locales/fr/envSnapshot.json";
+import frOfflineMode from "./locales/fr/offlineMode.json";
 import frBountyBoard from "./locales/fr/bountyBoard.json";
 import frTechDebt from "./locales/fr/techDebt.json";
 import frTeamBot from "./locales/fr/teamBot.json";
@@ -163,6 +167,8 @@ export const resources = {
 		agentCoach: enAgentCoach,
 		agentDebugger: enAgentDebugger,
 		blastRadius: enBlastRadius,
+		envSnapshot: enEnvSnapshot,
+		offlineMode: enOfflineMode,
 		bountyBoard: enBountyBoard,
 		techDebt: enTechDebt,
 		teamBot: enTeamBot,
@@ -240,6 +246,8 @@ export const resources = {
 		agentCoach: frAgentCoach,
 		agentDebugger: frAgentDebugger,
 		blastRadius: frBlastRadius,
+		envSnapshot: frEnvSnapshot,
+		offlineMode: frOfflineMode,
 		bountyBoard: frBountyBoard,
 		techDebt: frTechDebt,
 		teamBot: frTeamBot,
@@ -324,6 +332,8 @@ i18n.use(initReactI18next).init({
 		"agentCoach",
 		"agentDebugger",
 		"blastRadius",
+		"envSnapshot",
+		"offlineMode",
 		"bountyBoard",
 		"techDebt",
 		"teamBot",

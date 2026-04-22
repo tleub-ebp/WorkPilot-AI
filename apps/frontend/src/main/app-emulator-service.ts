@@ -10,7 +10,12 @@ import {
 import http from "node:http";
 import net from "node:net";
 import path from "node:path";
+import { fileURLToPath } from "node:url";
 import { app } from "electron";
+
+// ESM-compatible __dirname
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 /**
  * A single runnable service within a fullstack project (e.g. .NET backend, Angular frontend).
@@ -85,24 +90,33 @@ export class AppEmulatorService extends EventEmitter {
 	 * Uses the same resolution strategy as agent-process.ts.
 	 */
 	private getAutoBuildSourcePath(): string | null {
-		if (this.autoBuildSourcePath && existsSync(this.autoBuildSourcePath)) {
+		const markerPath = (p: string) =>
+			path.join(p, "runners", "app_emulator_runner.py");
+
+		// If manually configured AND valid, use that.
+		if (
+			this.autoBuildSourcePath &&
+			existsSync(markerPath(this.autoBuildSourcePath))
+		) {
 			return this.autoBuildSourcePath;
 		}
 
+		const appPath = app.getAppPath();
 		const possiblePaths = [
 			// Packaged app: backend is in extraResources (process.resourcesPath/backend)
 			...(app.isPackaged ? [path.join(process.resourcesPath, "backend")] : []),
-			// Dev mode: from dist/main -> ../../backend (apps/frontend/out/main -> apps/backend)
+			// Dev mode: from out/main -> ../../../backend (apps/frontend/out/main -> apps/backend)
 			path.resolve(__dirname, "..", "..", "..", "backend"),
-			// Alternative: from app root -> apps/backend
-			path.resolve(app.getAppPath(), "..", "backend"),
-			// If running from repo root with apps structure
+			// Sibling to asar (some packaged layouts)
+			path.resolve(appPath, "..", "backend"),
+			// macOS bundle structure
+			path.resolve(appPath, "..", "..", "Resources", "backend"),
+			// If running from repo root
 			path.resolve(process.cwd(), "apps", "backend"),
 		];
 
 		for (const p of possiblePaths) {
-			const runnerPath = path.join(p, "runners", "app_emulator_runner.py");
-			if (existsSync(runnerPath)) {
+			if (existsSync(markerPath(p))) {
 				this.autoBuildSourcePath = p;
 				return p;
 			}
@@ -117,11 +131,15 @@ export class AppEmulatorService extends EventEmitter {
 	 */
 	async detectProject(projectDirRaw: string): Promise<AppEmulatorConfig> {
 		// Decode URI-encoded paths (e.g. spaces stored as %20)
-		const projectDir = decodeURIComponent(projectDirRaw);
+		const projectDirInput = decodeURIComponent(projectDirRaw);
 
-		if (!existsSync(projectDir)) {
-			throw new Error(`Project directory not found: ${projectDir}`);
+		if (!existsSync(projectDirInput)) {
+			throw new Error(`Project directory not found: ${projectDirInput}`);
 		}
+
+		// If the configured directory is a WorkPilot workspace stub (contains .workpilot/
+		// but no source files), resolve to a nearby directory that has real code.
+		const projectDir = this.resolveSourceDir(projectDirInput);
 
 		// Cancel any existing detection
 		if (this.detectionProcess) {
@@ -146,6 +164,81 @@ export class AppEmulatorService extends EventEmitter {
 
 		// Fallback: Python runner
 		return this.detectProjectViaPython(projectDir);
+	}
+
+	/**
+	 * Check whether a directory looks like a runnable project root.
+	 * Used to pick a real source dir when the configured project is a WorkPilot stub.
+	 */
+	private hasProjectMarkers(dir: string): boolean {
+		try {
+			const entries = readdirSync(dir);
+			if (
+				entries.includes("package.json") ||
+				entries.includes("pyproject.toml") ||
+				entries.includes("requirements.txt") ||
+				entries.includes("manage.py") ||
+				entries.includes("app.py") ||
+				entries.includes("main.py") ||
+				entries.includes("go.mod") ||
+				entries.includes("Cargo.toml") ||
+				entries.includes("Dockerfile") ||
+				entries.includes("docker-compose.yml") ||
+				entries.includes("docker-compose.yaml") ||
+				entries.some((f) => f.endsWith(".sln") || f.endsWith(".csproj"))
+			) {
+				return true;
+			}
+		} catch {
+			/* ignore */
+		}
+		return false;
+	}
+
+	/**
+	 * If `projectDir` is a WorkPilot workspace stub (contains .workpilot/ but no
+	 * actual source), try the parent and its sibling directories (preferring ones
+	 * named Sources/src/source) before giving up and returning the original path.
+	 */
+	private resolveSourceDir(projectDir: string): string {
+		if (this.hasProjectMarkers(projectDir)) return projectDir;
+
+		const hasWorkpilot = existsSync(path.join(projectDir, ".workpilot"));
+		if (!hasWorkpilot) return projectDir;
+
+		const parent = path.dirname(projectDir);
+		if (!parent || parent === projectDir) return projectDir;
+
+		if (this.hasProjectMarkers(parent)) return parent;
+
+		let siblings: string[];
+		try {
+			siblings = readdirSync(parent);
+		} catch {
+			return projectDir;
+		}
+
+		const preferred = new Set(["sources", "src", "source"]);
+		const ordered = siblings
+			.filter((s) => path.join(parent, s) !== projectDir)
+			.sort((a, b) => {
+				const ap = preferred.has(a.toLowerCase()) ? 0 : 1;
+				const bp = preferred.has(b.toLowerCase()) ? 0 : 1;
+				return ap - bp;
+			});
+
+		for (const name of ordered) {
+			if (name.startsWith(".") || name === "node_modules") continue;
+			const candidate = path.join(parent, name);
+			try {
+				if (!statSync(candidate).isDirectory()) continue;
+			} catch {
+				continue;
+			}
+			if (this.hasProjectMarkers(candidate)) return candidate;
+		}
+
+		return projectDir;
 	}
 
 	/**

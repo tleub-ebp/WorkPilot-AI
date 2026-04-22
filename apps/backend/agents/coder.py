@@ -603,7 +603,7 @@ async def run_autonomous_agent(
                     {"totalCount": total},
                 )
             except Exception:
-                pass  # Don't fail the return path for event emission
+                logger.debug("Failed to emit ALL_SUBTASKS_DONE event", exc_info=True)
             return
 
         # Start/continue coding phase in task logger

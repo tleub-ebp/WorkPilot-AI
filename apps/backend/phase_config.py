@@ -75,7 +75,7 @@ AWS_BEDROCK_MODEL = "anthropic.claude-sonnet-4-5-v1"
 OLLAMA_MODEL = "llama3.3"
 
 # Windsurf default model
-WINDSURF_MODEL = "swe-1.5"
+WINDSURF_MODEL = "swe-1.6-fast"
 
 # GitHub Copilot default model (must be accepted by api.githubcopilot.com for this account)
 COPILOT_MODEL = "claude-sonnet-4.6"

@@ -25,7 +25,8 @@
 		"package:win": "cd apps/frontend && pnpm run package:win",
 		"package:linux": "cd apps/frontend && pnpm run package:linux",
 		"merge-upstream": "node scripts/merge-upstream.js",
-		"validate:upstream": "node scripts/validate-upstream-setup.js"
+		"validate:upstream": "node scripts/validate-upstream-setup.js",
+		"validate:npm-scripts": "node scripts/validate-npm-scripts.js"
 	},
 	"engines": {
 		"node": ">=20.0.0",
@@ -47,7 +48,7 @@
 		"concurrently": "^8.2.2"
 	},
 	"dependencies": {
-		"@lydell/node-pty": "^1.1.0",
+		"@lydell/node-pty": "1.1.0",
 		"@lydell/node-pty-darwin-arm64": "1.2.0-beta.10",
 		"lucide-react": "^1.8.0",
 		"unzipper": "^0.10.11",

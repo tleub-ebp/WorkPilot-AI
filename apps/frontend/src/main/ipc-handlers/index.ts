@@ -61,6 +61,8 @@ import {
 	setupDocumentationAgentEventForwarding,
 } from "./documentation-agent-handlers";
 import { registerEnvHandlers } from "./env-handlers";
+import { registerEnvSnapshotHandlers } from "./env-snapshot-handlers";
+import { registerOfflineModeHandlers } from "./offline-mode-handlers";
 import { registerFileHandlers } from "./file-handlers";
 import { registerFlakyTestsHandlers } from "./flaky-tests-handlers";
 import { registerGitHubCopilotHandlers } from "./github-copilot-handlers";
@@ -176,6 +178,8 @@ export {
 	setupDocumentationAgentEventForwarding,
 } from "./documentation-agent-handlers";
 export { registerEnvHandlers } from "./env-handlers";
+export { registerEnvSnapshotHandlers } from "./env-snapshot-handlers";
+export { registerOfflineModeHandlers } from "./offline-mode-handlers";
 export { registerFileHandlers } from "./file-handlers";
 export { registerFlakyTestsHandlers } from "./flaky-tests-handlers";
 export { registerGitHubCopilotHandlers } from "./github-copilot-handlers";
@@ -532,6 +536,12 @@ export function setupIpcHandlers(
 
 	// Team Bot handlers (Feature 4 — Slack / Microsoft Teams notifications)
 	registerTeamBotHandlers();
+
+	// Env Snapshot handlers (Feature 11 — reproducible environment snapshots)
+	registerEnvSnapshotHandlers();
+
+	// Offline Mode handlers (Feature 12 — local model routing + confidentiality)
+	registerOfflineModeHandlers();
 
 	console.warn("[IPC] All handler modules registered successfully");
 }

@@ -447,13 +447,18 @@ class VersionedSkillManager:
     def _find_migration_path(
         self, skill_name: str, from_version: str, to_version: str
     ) -> list[VersionMigration] | None:
-        """Find migration path between versions."""
+        """Find migration path between versions.
+
+        Tries a direct migration first, then falls back to a breadth-first
+        search over the registered migrations — this supports chains like
+        1.0 -> 1.1 -> 2.0 when no direct 1.0 -> 2.0 migration exists.
+        """
         if skill_name not in self.migrations:
             return None
 
         migrations = self.migrations[skill_name]
 
-        # Simple direct migration
+        # Fast path: direct migration available.
         for migration in migrations:
             if (
                 migration.from_version == from_version
@@ -461,7 +466,28 @@ class VersionedSkillManager:
             ):
                 return [migration]
 
-        # TODO: Implement more complex path finding for multi-step migrations
+        # BFS over the migration graph. Each edge is a registered migration;
+        # the queue holds (current_version, path_of_migrations_so_far).
+        from collections import deque
+
+        adjacency: dict[str, list[VersionMigration]] = {}
+        for m in migrations:
+            adjacency.setdefault(m.from_version, []).append(m)
+
+        queue: deque[tuple[str, list[VersionMigration]]] = deque([(from_version, [])])
+        visited: set[str] = {from_version}
+
+        while queue:
+            current, path = queue.popleft()
+            for edge in adjacency.get(current, []):
+                if edge.to_version in visited:
+                    continue
+                new_path = path + [edge]
+                if edge.to_version == to_version:
+                    return new_path
+                visited.add(edge.to_version)
+                queue.append((edge.to_version, new_path))
+
         return None
 
     def rollback_skill(self, skill_name: str, target_version: str) -> bool:
@@ -640,12 +666,19 @@ class VersionedSkillManager:
 
         versions = self.skill_versions[skill_name]
 
-        # Simple case: direct upgrade
-        if from_version in versions and to_version in versions:
-            return [from_version, to_version]
+        if from_version not in versions or to_version not in versions:
+            return []
 
-        # TODO: Implement more complex path finding
-        return []
+        # Reuse the migration graph BFS so upgrade paths match what
+        # ``_find_migration_path`` would actually execute.
+        path = self._find_migration_path(skill_name, from_version, to_version)
+        if path is None:
+            # Direct leap with no registered migration — caller will have to
+            # handle this as an unsupported upgrade.
+            return [from_version, to_version] if from_version != to_version else []
+
+        versions_sequence = [from_version] + [m.to_version for m in path]
+        return versions_sequence
 
     def cleanup_old_versions(self, skill_name: str, keep_count: int = 3):
         """Clean up old versions, keeping only the most recent ones."""

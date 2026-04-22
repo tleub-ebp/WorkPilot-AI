@@ -5,7 +5,7 @@
 	"main": "run.py",
 	"scripts": {
 		"dev": "node dev-server.js",
-		"start": "node start-backend.js",
-		"start-full": "node start-backend.js"
+		"start": "python start_backend.py",
+		"start-full": "python start_backend.py"
 	}
 }
