@@ -139,7 +139,6 @@ MODULE = "workspace"
 # - _async_ai_call
 # - _merge_file_with_ai_async
 # - _run_parallel_merges
-# - _record_merge_completion
 # - _get_task_intent
 # - _get_recent_merges_context
 # - _merge_file_with_ai
@@ -1600,11 +1599,6 @@ def _resolve_git_conflicts_with_ai(
                             )
         except Exception as e:
             print(muted(f"    Warning: Could not process {file_path}: {e}"))
-
-    # V2: Record merge completion in Evolution Tracker for future context
-    # TODO: _record_merge_completion not yet implemented - see line 141
-    # if resolved_files:
-    #     _record_merge_completion(project_dir, spec_name, resolved_files)
 
     # Build result - partial success if some files failed but we got others
     result = {

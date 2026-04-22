@@ -3,6 +3,9 @@ Streaming marker functionality for real-time UI updates.
 """
 
 import json
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 def emit_marker(marker_type: str, data: dict, enabled: bool = True) -> None:
@@ -20,4 +23,4 @@ def emit_marker(marker_type: str, data: dict, enabled: bool = True) -> None:
         marker = f"__TASK_LOG_{marker_type.upper()}__:{json.dumps(data)}"
         print(marker, flush=True)
     except Exception:
-        pass  # Don't let marker emission break logging
+        logger.debug("Failed to emit streaming marker %s", marker_type, exc_info=True)

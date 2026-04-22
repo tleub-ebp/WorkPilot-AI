@@ -16,6 +16,22 @@ from .config import Settings
 
 logger = logging.getLogger(__name__)
 
+# Set to True to silence the mock-data warning (e.g. in test environments).
+# In production we want the warning so nobody thinks the connector is live.
+_SUPPRESS_MOCK_WARNING_ENV = "WORKPILOT_AZURE_DEVOPS_ALLOW_MOCK"
+
+
+def _warn_mock(operation: str) -> None:
+    import os as _os
+    if _os.environ.get(_SUPPRESS_MOCK_WARNING_ENV):
+        return
+    logger.warning(
+        "AzureDevOpsConnector.%s is returning MOCK DATA — the real Azure DevOps "
+        "REST integration is not implemented yet. Set %s=1 to silence this warning.",
+        operation,
+        _SUPPRESS_MOCK_WARNING_ENV,
+    )
+
 
 class AzureDevOpsConnector(BaseIntegratedConnector):
     """Unified connector for Azure DevOps source control and work items.
@@ -44,6 +60,7 @@ class AzureDevOpsConnector(BaseIntegratedConnector):
         self, project: str, item_types: list[str] | None = None, max_items: int = 100
     ) -> list[dict[str, Any]]:
         """List work items from backlog."""
+        _warn_mock("list_backlog_items")
         # Mock implementation for now - in real implementation, this would call Azure DevOps API
         # For now, return mock data with repository information
         mock_items = [
@@ -104,6 +121,7 @@ class AzureDevOpsConnector(BaseIntegratedConnector):
 
     def list_repositories(self, project: str) -> list[dict[str, Any]]:
         """List repositories in a project."""
+        _warn_mock("list_repositories")
         # Mock implementation for now
         return []
 
@@ -197,6 +215,7 @@ class AzureDevOpsConnector(BaseIntegratedConnector):
         self, pull_request_id: int, repository: str
     ) -> dict[str, Any]:
         """Fallback mock implementation for PR details."""
+        _warn_mock("get_pull_request_details")
         return {
             "id": pull_request_id,
             "title": f"Pull Request #{pull_request_id}",
@@ -223,7 +242,7 @@ class AzureDevOpsConnector(BaseIntegratedConnector):
     ) -> list[dict[str, Any]]:
         """Get files changed in a pull request."""
         try:
-            # Mock implementation
+            _warn_mock("get_pull_request_files")
             logger.info(f"Getting PR files for {repository}#{pull_request_id}")
 
             return [

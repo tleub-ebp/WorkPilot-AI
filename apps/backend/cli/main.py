@@ -399,6 +399,13 @@ Environment Variables:
         metavar="AMOUNT",
         help="Set budget limit in USD (no value = show current budget)",
     )
+    # Diagnostics
+    parser.add_argument(
+        "--doctor",
+        action="store_true",
+        help="Print a health report for optional dependencies and environment",
+    )
+
     onboarding_group = parser.add_argument_group("Onboarding")
     onboarding_group.add_argument(
         "--onboard",
@@ -506,22 +513,28 @@ def handle_provider_command(args):
 
     from src.connectors.llm_config import (
         delete_provider_config,
+        get_active_provider,
         list_provider_configs,
         load_provider_config,
         save_provider_config,
+        set_active_provider,
     )
     from src.connectors.llm_discovery import discover_llm_providers
 
     if args.action == "list":
+        active = get_active_provider()
         print("Providers disponibles:")
         for cls in discover_llm_providers():
-            print(f"- {cls().get_name()}")
+            name = cls().get_name()
+            marker = " (actif)" if name == active else ""
+            print(f"- {name}{marker}")
         print("Configurations enregistrées:")
         for name in list_provider_configs():
-            print(f"- {name}")
+            marker = " (actif)" if name == active else ""
+            print(f"- {name}{marker}")
     elif args.action == "select":
-        # TODO: Persister le provider sélectionné
-        print(f"Provider sélectionné: {args.provider}")
+        set_active_provider(args.provider)
+        print(f"Provider sélectionné et persisté: {args.provider}")
     elif args.action == "add":
         config = json.loads(args.config)
         save_provider_config(args.provider, config)
@@ -547,6 +560,56 @@ def handle_provider_command(args):
                     print(f"Erreur: {e}")
                 return
         print("Provider non trouvé.")
+
+
+def handle_doctor_command() -> None:
+    """Print a health report for optional dependencies and environment.
+
+    Designed to be a one-stop "why isn't X working" diagnostic that users
+    can paste into bug reports. Each probe is isolated so a single failing
+    import does not abort the whole report.
+    """
+    import importlib
+    import platform
+
+    print("WorkPilot AI — doctor")
+    print("=" * 60)
+    print(f"Platform   : {platform.system()} {platform.release()} ({platform.machine()})")
+    print(f"Python     : {platform.python_version()}")
+    print()
+
+    optional_deps = [
+        ("secretstorage", "Linux Secret Service (credential storage)"),
+        ("graphiti_core", "Graph-based memory (Graphiti)"),
+        ("google.generativeai", "Google Gemini provider"),
+        ("openai", "OpenAI / Azure OpenAI provider"),
+        ("anthropic", "Anthropic SDK"),
+        ("httpx", "HTTP client (required)"),
+        ("pydantic", "Validation (required)"),
+    ]
+    print("Optional dependencies")
+    print("-" * 60)
+    for module_name, description in optional_deps:
+        try:
+            importlib.import_module(module_name)
+            status = "OK"
+        except ImportError:
+            status = "MISSING"
+        print(f"  [{status:>7}] {module_name:<24} — {description}")
+
+    print()
+    print("Environment variables")
+    print("-" * 60)
+    env_vars = [
+        "CLAUDE_CODE_OAUTH_TOKEN",
+        "ANTHROPIC_AUTH_TOKEN",
+        "ANTHROPIC_BASE_URL",
+        "CLAUDE_CONFIG_DIR",
+        "WORKPILOT_AZURE_DEVOPS_ALLOW_MOCK",
+    ]
+    for var in env_vars:
+        present = "set" if os.environ.get(var) else "not set"
+        print(f"  {var:<38} {present}")
 
 
 def main() -> None:
@@ -592,6 +655,11 @@ def _run_cli() -> None:
     # Get model from CLI arg or env var (None if not explicitly set)
     # This allows get_phase_model() to fall back to task_metadata.json
     model = args.model or os.environ.get("AUTO_BUILD_MODEL")
+
+    # Handle --doctor command (short-circuits everything else)
+    if args.doctor:
+        handle_doctor_command()
+        return
 
     # Handle --list command
     if args.list:

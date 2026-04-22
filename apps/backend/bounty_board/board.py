@@ -138,6 +138,13 @@ async def default_contestant_runner(
             # Provider-agnostic stub fallback for environments without the
             # multi-provider client wired up yet. The judge will still score
             # these equally and fail gracefully.
+            logger.warning(
+                "llm_client unavailable — contestant %s (%s/%s) is running with "
+                "a deterministic STUB output, not a real model call.",
+                contestant.label,
+                contestant.provider,
+                contestant.model,
+            )
             contestant.output = (
                 f"[stub:{contestant.provider}:{contestant.model}] {prompt[:200]}"
             )

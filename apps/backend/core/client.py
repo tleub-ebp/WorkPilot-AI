@@ -1132,7 +1132,7 @@ def _get_active_provider(spec_dir: Path | None = None) -> str:
                     )
                     return _mapped
         except Exception:
-            pass  # best-effort; fall through to env var and project checks
+            logger.debug("Could not read provider from task_metadata.json", exc_info=True)
 
     # 2. Environment variable override
     env_provider = os.environ.get("AUTO_CLAUDE_PROVIDER", "").lower().strip()

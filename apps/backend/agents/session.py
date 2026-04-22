@@ -552,7 +552,7 @@ async def run_agent_session(
             agent_type=_phase_to_agent.get(phase, phase.value),
         )
     except Exception:
-        pass  # Decision logger is always non-critical
+        logger.debug("Failed to create decision logger; continuing without it", exc_info=True)
 
     try:
         # Send the query

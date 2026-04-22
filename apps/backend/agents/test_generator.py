@@ -1035,18 +1035,22 @@ Return ONLY a raw JSON object (no markdown) matching this schema:
 
 import pytest
 
-# Tests would be generated here when API is available
+_PLACEHOLDER_REASON = (
+    "Test generator fell back to placeholders — no LLM response available. "
+    "Replace these with real assertions once the feature is implemented."
+)
+
+
 def test_{feature_name}_happy_path():
-    """Placeholder test - replace with actual tests."""
-    assert True
+    pytest.skip(_PLACEHOLDER_REASON)
+
 
 def test_{feature_name}_error_handling():
-    """Placeholder test - replace with actual tests."""
-    assert True
+    pytest.skip(_PLACEHOLDER_REASON)
+
 
 def test_{feature_name}_edge_cases():
-    """Placeholder test - replace with actual tests."""
-    assert True
+    pytest.skip(_PLACEHOLDER_REASON)
 '''
                         tests_generated = 3
                         functions_analyzed = functions_count
@@ -1055,10 +1059,14 @@ def test_{feature_name}_edge_cases():
 
 import pytest
 
-# Tests would be generated here when API is available
+
 def test_placeholder():
-    """Placeholder test - replace with actual tests."""
-    assert True
+    """Placeholder: the LLM was unavailable when this file was generated.
+
+    We ``skip`` instead of asserting True so the gap shows up in CI reports
+    rather than silently inflating the pass rate.
+    """
+    pytest.skip("Test generator fell back to placeholder — no LLM response available.")
 '''
                         tests_generated = max(1, functions_count)  # At least 1 test
                         functions_analyzed = functions_count

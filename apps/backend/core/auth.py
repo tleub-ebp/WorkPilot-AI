@@ -55,6 +55,14 @@ else:
         import secretstorage  # type: ignore[import-untyped]
     except ImportError:
         secretstorage = None  # type: ignore[assignment]
+        # Warn only on Linux: on Windows/macOS `secretstorage` is not used at all,
+        # so its absence is expected and should not spam the logs.
+        if is_linux():
+            logger.warning(
+                "secretstorage is not installed — tokens on Linux will not be "
+                "read from the Freedesktop Secret Service. "
+                "Install with: pip install secretstorage"
+            )
 
 # Priority order for auth token resolution
 # NOTE: We intentionally do NOT fall back to ANTHROPIC_API_KEY.
