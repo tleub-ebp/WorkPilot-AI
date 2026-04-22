@@ -115,7 +115,7 @@ See the [Setup Guide](docs/SETUP.md) for detailed instructions.
 |----------|-------------|
 | **GitHub** | Import issues, AI investigation, PR review, batch review wizard, auto-PR creation |
 | **GitLab** | Issues and merge request management with AI severity categorization |
-| **Azure DevOps** | Work item import, PR review, batch operations — _experimental: backend still returns mock data for several endpoints, see [docs/CONFIGURATION.md](docs/CONFIGURATION.md)_ |
+| **Azure DevOps** | Work item import, PR review, batch operations — _experimental: backend still returns mock data for several endpoints, see [shared_docs/CONFIGURATION.md](shared_docs/CONFIGURATION.md)_ |
 | **Linear** | Bulk issue import with team/project filtering |
 | **Jira** | Issue management integration |
 | **MCP Marketplace** | Browse, install, and configure Model Context Protocol servers |
