@@ -181,12 +181,19 @@ class DocumentationUpdater:
 
 
 def _generate_python_docstring(name: str, kind: str) -> str:
+    """Produce a minimal, honest docstring skeleton.
+
+    We deliberately avoid emitting ``TODO`` placeholders for params/returns:
+    they leak into user code and get flagged by linters. A one-line summary
+    is strictly more useful than a structured template full of TODOs.
+    """
     if kind == "class":
-        return f"{name} class.\n\nAttributes:\n    TODO: document attributes.\n"
-    return f"Execute {name}.\n\nArgs:\n    TODO: document parameters.\n\nReturns:\n    TODO: document return value.\n"
+        return f"{name} class.\n"
+    return f"Execute {name}.\n"
 
 
 def _generate_jsdoc(name: str, kind: str) -> str:
+    """JSDoc counterpart of ``_generate_python_docstring`` — same rationale."""
     if kind == "class":
-        return f"@class {name}\n@description TODO: describe this class."
-    return f"@function {name}\n@description TODO: describe this function.\n@param {{any}} params - TODO: document parameters\n@returns {{any}} TODO: document return value"
+        return f"@class {name}"
+    return f"@function {name}"

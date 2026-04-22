@@ -48,6 +48,10 @@ TEMPLATE_NOT_FOUND = "Template not found"
 GITHUB_CLI_AUTH_SUCCESS = "Logged in to github.com"
 API_MODELS_ENDPOINT = "/v1/models"
 
+# Default HTTP timeout (seconds) applied as a safety net to every AsyncClient.
+# Individual requests may still override with their own `timeout=` kwarg.
+DEFAULT_HTTP_TIMEOUT = httpx.Timeout(30.0, connect=10.0)
+
 logger = logging.getLogger(__name__)
 
 
@@ -307,7 +311,7 @@ def get_env_provider_config(name: str) -> dict | None:
             or os.getenv("CODEIUM_API_KEY")
         )
         if token:
-            return {"api_key": token, "model": "swe-1.5"}
+            return {"api_key": token, "model": "swe-1.6-fast"}
         return None
 
     # Cursor
@@ -712,7 +716,7 @@ async def test_provider_api_key(request: Request, provider: str, payload: dict):
         """Helper: test a Bearer-authenticated API_MODELS_ENDPOINT endpoint."""
         try:
             headers = {"Authorization": f"Bearer {key}"}
-            async with httpx.AsyncClient() as client:
+            async with httpx.AsyncClient(timeout=DEFAULT_HTTP_TIMEOUT) as client:
                 resp = await client.get(url, headers=headers, timeout=10)
             if resp.status_code == 200:
                 set_validated(provider, key, True)
@@ -732,7 +736,7 @@ async def test_provider_api_key(request: Request, provider: str, payload: dict):
                 + API_MODELS_ENDPOINT
             )
             headers = {"x-api-key": api_key, "anthropic-version": "2023-06-01"}
-            async with httpx.AsyncClient() as client:
+            async with httpx.AsyncClient(timeout=DEFAULT_HTTP_TIMEOUT) as client:
                 resp = await client.get(safe_url, headers=headers, timeout=10)
             if resp.status_code in (200, 403):
                 set_validated(provider, api_key, True)
@@ -761,7 +765,7 @@ async def test_provider_api_key(request: Request, provider: str, payload: dict):
                 )
                 + API_MODELS_ENDPOINT
             )
-            async with httpx.AsyncClient() as client:
+            async with httpx.AsyncClient(timeout=DEFAULT_HTTP_TIMEOUT) as client:
                 resp = await client.get(f"{safe_url}?key={api_key}", timeout=10)
             if resp.status_code == 200:
                 set_validated(provider, api_key, True)
@@ -848,7 +852,7 @@ async def test_provider_api_key(request: Request, provider: str, payload: dict):
                 + API_MODELS_ENDPOINT
             )
             headers = {"Authorization": f"Bearer {oauth_token}"}
-            async with httpx.AsyncClient() as client:
+            async with httpx.AsyncClient(timeout=DEFAULT_HTTP_TIMEOUT) as client:
                 resp = await client.get(safe_url, headers=headers, timeout=10)
             if resp.status_code in [200, 404]:
                 set_validated(provider, oauth_token, True)
@@ -925,7 +929,7 @@ async def test_provider_api_key(request: Request, provider: str, payload: dict):
 
         try:
             url = build_ollama_url(base_url)
-            async with httpx.AsyncClient() as client:
+            async with httpx.AsyncClient(timeout=DEFAULT_HTTP_TIMEOUT) as client:
                 resp = await client.get(url, timeout=5)
             if resp.status_code == 200:
                 return {"success": True}
@@ -1075,7 +1079,7 @@ async def validate_provider_key(
         try:
             url = "https://api.openai.comAPI_MODELS_ENDPOINT"
             headers = {"Authorization": f"Bearer {api_key}"}
-            async with httpx.AsyncClient() as client:
+            async with httpx.AsyncClient(timeout=DEFAULT_HTTP_TIMEOUT) as client:
                 resp = await client.get(url, headers=headers, timeout=10)
             if resp.status_code != 200:
                 set_validated(provider, api_key, False)
@@ -1091,7 +1095,7 @@ async def validate_provider_key(
         try:
             url = "https://api.x.aiAPI_MODELS_ENDPOINT"
             headers = {"Authorization": f"Bearer {api_key}"}
-            async with httpx.AsyncClient() as client:
+            async with httpx.AsyncClient(timeout=DEFAULT_HTTP_TIMEOUT) as client:
                 resp = await client.get(url, headers=headers, timeout=10)
             if resp.status_code != 200:
                 set_validated(provider, api_key, False)
@@ -1106,7 +1110,7 @@ async def validate_provider_key(
     elif provider in ("anthropic", "claude"):
         try:
             headers = {"x-api-key": api_key, "anthropic-version": "2023-06-01"}
-            async with httpx.AsyncClient() as client:
+            async with httpx.AsyncClient(timeout=DEFAULT_HTTP_TIMEOUT) as client:
                 resp = await client.get(
                     "https://api.anthropic.comAPI_MODELS_ENDPOINT",
                     headers=headers,
@@ -1124,7 +1128,7 @@ async def validate_provider_key(
             )
     elif provider in ("google",):
         try:
-            async with httpx.AsyncClient() as client:
+            async with httpx.AsyncClient(timeout=DEFAULT_HTTP_TIMEOUT) as client:
                 resp = await client.get(
                     f"https://generativelanguage.googleapis.comAPI_MODELS_ENDPOINT?key={api_key}",
                     timeout=10,
@@ -1143,7 +1147,7 @@ async def validate_provider_key(
         try:
             url = "https://server.codeium.com/apiAPI_MODELS_ENDPOINT"
             headers = {"Authorization": f"Bearer {api_key}"}
-            async with httpx.AsyncClient() as client:
+            async with httpx.AsyncClient(timeout=DEFAULT_HTTP_TIMEOUT) as client:
                 resp = await client.get(url, headers=headers, timeout=10)
             if resp.status_code not in (200, 404):
                 set_validated(provider, api_key, False)
@@ -1159,7 +1163,7 @@ async def validate_provider_key(
         try:
             url = "https://api.mistral.aiAPI_MODELS_ENDPOINT"
             headers = {"Authorization": f"Bearer {api_key}"}
-            async with httpx.AsyncClient() as client:
+            async with httpx.AsyncClient(timeout=DEFAULT_HTTP_TIMEOUT) as client:
                 resp = await client.get(url, headers=headers, timeout=10)
             if resp.status_code != 200:
                 set_validated(provider, api_key, False)
@@ -1175,7 +1179,7 @@ async def validate_provider_key(
         try:
             url = "https://api.deepseek.comAPI_MODELS_ENDPOINT"
             headers = {"Authorization": f"Bearer {api_key}"}
-            async with httpx.AsyncClient() as client:
+            async with httpx.AsyncClient(timeout=DEFAULT_HTTP_TIMEOUT) as client:
                 resp = await client.get(url, headers=headers, timeout=10)
             if resp.status_code != 200:
                 set_validated(provider, api_key, False)
@@ -1327,7 +1331,7 @@ async def get_provider_usage(provider: str):
         # Essai avec l'endpoint alternatif /v1/organization/usage si disponible
         try:
             headers = {"Authorization": f"Bearer {api_key}"}
-            async with httpx.AsyncClient() as client:
+            async with httpx.AsyncClient(timeout=DEFAULT_HTTP_TIMEOUT) as client:
                 # Tentative avec l'endpoint d'organisation (peut aussi nécessiter des permissions spéciales)
                 resp = await client.get(
                     "https://api.openai.com/v1/organization/usage",
@@ -1447,7 +1451,7 @@ async def get_provider_usage(provider: str):
                 "alternative": "Consultez le dashboard Windsurf pour obtenir votre service key.",
             }
         try:
-            async with httpx.AsyncClient() as client:
+            async with httpx.AsyncClient(timeout=DEFAULT_HTTP_TIMEOUT) as client:
                 # Strategy 1: service_key in body (standard for team service keys)
                 resp = await client.post(
                     "https://server.codeium.com/api/v1/GetTeamCreditBalance",
@@ -1472,7 +1476,7 @@ async def get_provider_usage(provider: str):
                 }
             # Strategy 3: Validate key via GetUser if credit balance unavailable
             try:
-                async with httpx.AsyncClient() as client:
+                async with httpx.AsyncClient(timeout=DEFAULT_HTTP_TIMEOUT) as client:
                     user_resp = await client.post(
                         "https://server.codeium.com/exa.api_server_pb.ApiServerService/GetUser",
                         headers={

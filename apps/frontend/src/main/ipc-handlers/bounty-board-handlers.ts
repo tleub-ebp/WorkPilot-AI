@@ -80,10 +80,10 @@ export function registerBountyBoardHandlers(): void {
 				.map((c) => `${c.provider}:${c.model}`)
 				.join(",");
 			const profilesArg = req.contestants
-				.map((c) => c.profileId ?? "")
+				.map((c) => c.profileId || "")
 				.join(",");
 			const overridesArg = req.contestants
-				.map((c) => (c.promptOverride ?? "").replace(/\|\|/g, "|"))
+				.map((c) => (c.promptOverride || "").replaceAll("||", "|"))
 				.join("||");
 
 			const args = [
@@ -95,10 +95,10 @@ export function registerBountyBoardHandlers(): void {
 				"--contestants",
 				contestantsArg,
 			];
-			if (profilesArg.replaceAll(/,/g, "").length > 0) {
+			if (profilesArg.includes(",")) {
 				args.push("--profiles", profilesArg);
 			}
-			if (overridesArg.replaceAll(/\|/g, "").length > 0) {
+			if (overridesArg.includes("|")) {
 				args.push("--prompt-overrides", overridesArg);
 			}
 
@@ -119,7 +119,7 @@ export function registerBountyBoardHandlers(): void {
 				child.on("error", (err) => reject(err));
 				child.on("close", (code) => {
 					const lines = stdout.trim().split("\n").filter(Boolean);
-					const lastLine = lines[lines.length - 1] ?? "";
+					const lastLine = lines.at(-1) ?? "";
 					try {
 						const parsed = JSON.parse(lastLine);
 						if (parsed.error) {
@@ -163,7 +163,7 @@ export function registerBountyBoardHandlers(): void {
 			const files = fs
 				.readdirSync(bountyDir)
 				.filter((f) => f.endsWith(".json"))
-				.sort()
+				.sort((a, b) => a.localeCompare(b))
 				.reverse();
 
 			const archives: unknown[] = [];

@@ -269,19 +269,16 @@ def detect_implicit_conflicts(
         List of implicit conflict regions
 
     Note:
-        These advanced checks are currently TODO.
-        The main location-based detection handles most cases.
+        Only a subset of semantic conflict detection is implemented here.
+        The main location-based detection (see ``conflict_analysis_location``)
+        already handles the common cases; the patterns below are reserved
+        slots for future additions — they intentionally return no conflicts
+        rather than pretending to check them.
     """
-    conflicts = []
+    conflicts: list = []
 
-    # Check for function rename + function call changes
-    # (If task A renames a function and task B calls the old name)
-
-    # Check for import removal + usage
-    # (If task A removes an import and task B uses it)
-
-    # For now, these advanced checks are TODO
-    # The main location-based detection handles most cases
+    # Reserved for: function rename in task A + call to the old name in task B.
+    # Reserved for: import removal in task A + usage of that import in task B.
 
     return conflicts
 

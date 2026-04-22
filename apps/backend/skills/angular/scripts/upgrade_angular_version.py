@@ -316,10 +316,14 @@ class AngularVersionUpgrader:
         return updated_files > 0
 
     def _add_defer_support(self) -> bool:
-        """Add @defer support for lazy loading."""
-        # This is a placeholder for defer implementation
-        # Real implementation would analyze components and add defer blocks
-        return True
+        """Add @defer support for lazy loading.
+
+        Not implemented yet — adding `@defer` blocks requires component-level
+        analysis (which routes, which components are lazy, which templates)
+        that we don't have in-tree. Returning ``False`` so the caller records
+        this as a manual-fix item instead of silently claiming success.
+        """
+        return False
 
     def _enable_hydration(self) -> bool:
         """Enable hydration support."""

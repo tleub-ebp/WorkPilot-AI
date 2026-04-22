@@ -96,7 +96,23 @@ def delete_provider_config(name: str) -> None:
             json.dump(all_configs, f, indent=2)
 
 def list_provider_configs() -> list[str]:
-    return list(load_all_provider_configs().keys())
+    return [k for k in load_all_provider_configs() if not k.startswith("__")]
+
+
+_ACTIVE_PROVIDER_KEY = "__active_provider__"
+
+
+def set_active_provider(name: str) -> None:
+    """Persist the currently selected provider in the config file."""
+    all_configs = load_all_provider_configs()
+    all_configs[_ACTIVE_PROVIDER_KEY] = name
+    with open(CONFIG_FILE, "w", encoding="utf-8") as f:
+        json.dump(all_configs, f, indent=2)
+
+
+def get_active_provider() -> str | None:
+    """Return the name of the provider previously selected, or None."""
+    return load_all_provider_configs().get(_ACTIVE_PROVIDER_KEY)
 
 def get_claude_token_from_system() -> str | None:
     """Récupère le token Claude Code depuis le keychain/credential manager (via core.auth)."""

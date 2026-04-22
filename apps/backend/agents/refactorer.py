@@ -828,10 +828,21 @@ class RefactoringAgent:
         target = proposal.target_symbol or "target"
         safe_target = re.sub(r"[^a-zA-Z0-9_]", "_", target)
 
+        # We intentionally emit ``pytest.skip`` skeletons rather than
+        # ``assert True`` with TODO comments: skipped tests surface in CI
+        # reports as gaps to fill, whereas passing placeholders silently
+        # inflate the coverage of the refactored code.
+        placeholder_reason = (
+            f"Regression test scaffold for '{target}' — "
+            "replace this skip with a real assertion against the refactored symbol."
+        )
         tests = [
             f'"""Regression tests for refactoring: {proposal.description[:80]}"""',
             "",
             "import pytest",
+            "",
+            "",
+            f"_SKIP_REASON = {placeholder_reason!r}",
             "",
             "",
             f"class TestRefactoring_{safe_target}:",
@@ -839,18 +850,15 @@ class RefactoringAgent:
             "",
             f"    def test_{safe_target}_still_callable(self):",
             f'        """Verify that {target} is still callable after refactoring."""',
-            "        # TODO: Import and call the refactored symbol",
-            "        assert True  # placeholder",
+            "        pytest.skip(_SKIP_REASON)",
             "",
             f"    def test_{safe_target}_output_unchanged(self):",
             f'        """Verify that {target} produces the same output after refactoring."""',
-            "        # TODO: Compare outputs before/after",
-            "        assert True  # placeholder",
+            "        pytest.skip(_SKIP_REASON)",
             "",
             f"    def test_{safe_target}_no_regressions(self):",
             '        """Verify no regressions introduced by the refactoring."""',
-            "        # TODO: Run existing tests and check",
-            "        assert True  # placeholder",
+            "        pytest.skip(_SKIP_REASON)",
         ]
         return "\n".join(tests)
 

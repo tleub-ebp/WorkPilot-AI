@@ -18,6 +18,7 @@ Example:
 """
 
 import logging
+import posixpath
 import statistics
 import uuid
 from dataclasses import asdict, dataclass, field
@@ -26,6 +27,36 @@ from enum import Enum
 from typing import Any
 
 logger = logging.getLogger(__name__)
+
+# Sensitive path prefixes that should never be accessed by an agent.
+# Normalized with forward slashes; comparisons are done on normalized paths.
+_SENSITIVE_PATH_PREFIXES: tuple[str, ...] = (
+    "/etc/",
+    "/root/",
+    "/proc/",
+    "/sys/",
+    "/boot/",
+    "/var/log/",
+    "c:/windows/",
+    "c:/program files/",
+    "c:/programdata/",
+)
+
+
+def _normalize_for_traversal_check(path: str) -> str:
+    """Lowercase, forward-slash normalized path suitable for prefix matching.
+
+    Uses ``posixpath.normpath`` on a forward-slash version of the input so that
+    segments like ``foo/../etc/passwd`` collapse to ``etc/passwd`` and encoded
+    variants (``/etc//passwd``) are flattened. Lowercased to catch Windows
+    case-insensitive variants.
+    """
+    if not path:
+        return ""
+    normalized = path.replace("\\", "/")
+    # Preserve absolute-path leading slash; posixpath.normpath keeps it.
+    normalized = posixpath.normpath(normalized)
+    return normalized.lower()
 
 
 # ---------------------------------------------------------------------------
@@ -622,13 +653,18 @@ class AnomalyDetector:
         ):
             return
         path = event.metadata.get("path", "")
-        if ".." in path or path.startswith("/etc/") or path.startswith("/root/"):
+        normalized = _normalize_for_traversal_check(path)
+        has_traversal_segment = ".." in path.replace("\\", "/").split("/")
+        hits_sensitive = any(
+            normalized.startswith(prefix) for prefix in _SENSITIVE_PATH_PREFIXES
+        )
+        if has_traversal_segment or hits_sensitive:
             self._register_anomaly(
                 session,
                 AnomalyType.PATH_TRAVERSAL_ATTEMPT.value,
                 "critical",
                 f"Path traversal attempt detected: {path}",
-                {"path": path},
+                {"path": path, "normalized": normalized},
             )
 
     def _check_rapid_file_changes(self, session: MonitoredSession) -> None:

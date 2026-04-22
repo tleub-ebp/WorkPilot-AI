@@ -2,7 +2,8 @@
 	"title": "Paramètres",
 	"common": {
 		"enabled": "Activé",
-		"disabled": "Désactivé"
+		"disabled": "Désactivé",
+		"retry": "Réessayer"
 	},
 	"tabs": {
 		"app": "Paramètres de l'application",
@@ -12,7 +13,13 @@
 		"accounts": {
 			"alerts": {
 				"noProviders": "Aucun fournisseur configuré. Configurez vos clés API pour commencer.",
-				"providerErrors": "{{count}} fournisseur(s) avec erreurs"
+				"providerErrors": "{{count}} fournisseur(s) avec erreurs",
+				"sophisticated": {
+					"noProvidersTitle": "Commencez avec votre premier provider",
+					"noProvidersDescription": "Configurez au moins un provider pour commencer à utiliser l'application.",
+					"providersNeedAttention": "{{count}} provider(s) nécessitent votre attention",
+					"checkApiKeys": "Vérifiez vos clés API et réessayez."
+				}
 			},
 			"autoSwitching": {
 				"globalDescription": "Basculer automatiquement entre vos comptes selon l'utilisation et les limites de débit.",
