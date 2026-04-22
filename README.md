@@ -180,7 +180,7 @@ See the [Setup Guide](docs/SETUP.md) for detailed instructions.
 
 | Feature | Description |
 |---------|-------------|
-| **Analytics Dashboard** _(experimental — endpoints return placeholder data pending the DB-backed implementation)_ | Token consumption, cost tracking, success rates, and execution time metrics |
+| **Analytics Dashboard** | Token consumption, cost tracking, success rates, and execution time metrics — live SQLite-backed API; falls back to an explicit 503 when the analytics DB is unavailable |
 | **Cost Estimator** | Per-task cost calculation with provider comparison and budget alerts |
 | **Rate Limit Monitor** | Real-time usage tracking with proactive warnings and auto-switching triggers |
 | **Workflow Logger** | Structured execution logs with trace IDs for all agents, skills, and hooks |
