@@ -136,6 +136,14 @@ import type { DocumentationAgentAPI } from "./modules/documentation-agent-api";
 import { createDocumentationAgentAPI } from "./modules/documentation-agent-api";
 import { createGitHubAPI, type GitHubAPI } from "./modules/github-api";
 import {
+	createEnvSnapshotAPI,
+	type EnvSnapshotAPI,
+} from "./modules/env-snapshot-api";
+import {
+	createOfflineModeAPI,
+	type OfflineModeAPI,
+} from "./modules/offline-mode-api";
+import {
 	type GuardrailsAPI,
 	createGuardrailsAPI,
 } from "./modules/guardrails-api";
@@ -247,6 +255,8 @@ export interface ElectronAPI
 		BountyBoardAPI,
 		TechDebtAPI,
 		TeamBotAPI,
+		EnvSnapshotAPI,
+		OfflineModeAPI,
 		VisualProgrammingAPI {
 	github: GitHubAPI;
 	/** Queue routing API for rate limit recovery */
@@ -372,6 +382,8 @@ export const createElectronAPI = (): ElectronAPI => {
 		...createBountyBoardAPI(),
 		...createTechDebtAPI(),
 		...createTeamBotAPI(),
+		...createEnvSnapshotAPI(),
+		...createOfflineModeAPI(),
 		...createVisualProgrammingAPI(),
 		github: createGitHubAPI(),
 		queue: createQueueAPI(), // Queue routing for rate limit recovery

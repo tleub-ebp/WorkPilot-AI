@@ -543,6 +543,8 @@ class ProviderRegistry:
             requires_oauth=True,  # Also supports SSO/OAuth authentication
             requires_cli=False,
             models=[
+                {"value": "swe-1.6", "label": "SWE-1.6", "tier": "flagship"},
+                {"value": "swe-1.6-fast", "label": "SWE-1.6 Fast", "tier": "fast"},
                 {"value": "swe-1.5", "label": "SWE-1.5", "tier": "flagship"},
                 {
                     "value": "swe-1.5-thinking",

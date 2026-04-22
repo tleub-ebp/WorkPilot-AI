@@ -2,9 +2,11 @@ import { AlertCircle, Info, Loader2 } from "lucide-react";
 import type React from "react";
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
+import type { AppSettings } from "@shared/types/settings";
 import { Alert, AlertDescription } from "../ui/alert";
 import { Button } from "../ui/button";
 import { getAllConnectors } from "./multiconnector/utils";
+import { ProviderConfigDialog } from "./ProviderConfigDialog";
 import { SettingsSection } from "./SettingsSection";
 import { ThemedProviderGrid } from "./ThemedProviderGrid";
 
@@ -24,10 +26,8 @@ interface Provider {
 }
 
 interface ThemedProviderSectionProps {
-	// biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
-	settings: any;
-	// biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
-	onSettingsChange: (settings: any) => void;
+	settings: AppSettings & Record<string, unknown>;
+	onSettingsChange: (settings: AppSettings & Record<string, unknown>) => void;
 	isOpen: boolean;
 }
 
@@ -83,6 +83,8 @@ export function ThemedProviderSection({
 	const [testingProviders, setTestingProviders] = useState<Set<string>>(
 		new Set(),
 	);
+	const [selectedProvider, setSelectedProvider] = useState<Provider | null>(null);
+	const [configDialogOpen, setConfigDialogOpen] = useState(false);
 
 	// Vérifier si l'utilisateur est authentifié via OAuth (Claude Code CLI)
 	// Check both settings AND CLI config files via IPC
@@ -214,11 +216,14 @@ export function ThemedProviderSection({
 	const providers: Provider[] = connectors.map((connector) => {
 		const category = providerCategories[connector.id] || "independent";
 		const apiKeyField = getApiKeyField(connector.id);
-		const rawApiKey = apiKeyField ? settings[apiKeyField] : "";
+		const rawApiKey = apiKeyField ? (settings[apiKeyField] as string) : "";
 		const hasApiKey = !!rawApiKey;
 		const authType = getAuthType(connector.id, hasApiKey);
 		const isConfigured =
 			authType === "oauth" || authType === "cli" || hasApiKey;
+		const isEnabled = apiKeyField
+			? settings[`${apiKeyField}Enabled`] !== false
+			: true;
 
 		return {
 			id: connector.id,
@@ -226,7 +231,7 @@ export function ThemedProviderSection({
 			category,
 			description: providerDescriptions[connector.id],
 			isConfigured,
-			isWorking: isConfigured ? true : undefined,
+			isWorking: isConfigured && isEnabled,
 			lastTested: undefined,
 			usageCount: undefined,
 			isPremium: ["anthropic", "claude", "openai", "gemini"].includes(
@@ -238,9 +243,12 @@ export function ThemedProviderSection({
 		};
 	});
 
-	const handleConfigure = (_providerId: string) => {
-		// Ouvrir la configuration du provider
-		// TODO: Implémenter la modale de configuration
+	const handleConfigure = (providerId: string) => {
+		const provider = providers.find((p) => p.id === providerId);
+		if (provider) {
+			setSelectedProvider(provider);
+			setConfigDialogOpen(true);
+		}
 	};
 
 	const handleTest = async (providerId: string) => {
@@ -380,6 +388,18 @@ export function ThemedProviderSection({
 					onRefreshProviders={handleRefresh}
 					isLoading={testingProviders.size > 0}
 				/>
+
+				{/* Configuration Dialog */}
+				{selectedProvider && (
+					<ProviderConfigDialog
+						isOpen={configDialogOpen}
+						onOpenChange={setConfigDialogOpen}
+						provider={selectedProvider}
+						settings={settings}
+						onSettingsChange={onSettingsChange}
+						onTest={handleTest}
+					/>
+				)}
 			</div>
 		</SettingsSection>
 	);

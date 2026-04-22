@@ -212,6 +212,40 @@ Do NOT just describe what the file should contain - you must actually call the W
 - file_path: `implementation_plan.json` (in the spec directory)
 - content: The complete JSON plan structure shown below
 
+**🚨 CRITICAL FOR WINDSURF/OPENAI/COPILOT USERS 🚨**
+If you are using Windsurf, OpenAI, Copilot, or any non-Claude provider:
+- You MUST include a "phases" array in your JSON - this is NOT optional
+- The "phases" array MUST contain at least one phase object
+- Each phase MUST have a "subtasks" array with at least one subtask
+- A plan without "phases" will fail validation with "No phases defined"
+- Do NOT create a plan with an empty phases array: "phases": []
+- The validation will reject empty phases arrays
+
+**Minimal valid structure (use this as template):**
+```json
+{
+  "feature": "Task description",
+  "workflow_type": "feature",
+  "phases": [
+    {
+      "id": "phase-1",
+      "name": "Implementation",
+      "type": "implementation",
+      "description": "Implement the feature",
+      "depends_on": [],
+      "parallel_safe": true,
+      "subtasks": [
+        {
+          "id": "subtask-1",
+          "description": "First implementation step",
+          "status": "pending"
+        }
+      ]
+    }
+  ]
+}
+```
+
 Based on the workflow type and services involved, create the implementation plan.
 
 ### Plan Structure
