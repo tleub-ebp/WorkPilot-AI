@@ -401,7 +401,7 @@ export function CleanProviderSection({
 	};
 
 	// Helper function to get API key field for provider
-	const getProviderApiKeyField = (providerId: string): string | null => {
+	const getProviderApiKeyField = useCallback((providerId: string): string | null => {
 		const apiKeyMap: Record<string, string> = {
 			openai: "globalOpenAIApiKey",
 			gemini: "globalGoogleApiKey",
@@ -417,7 +417,7 @@ export function CleanProviderSection({
 			"azure-openai": "globalOpenAIApiKey",
 		};
 		return apiKeyMap[providerId] || null;
-	};
+	}, []);
 
 	// Utiliser la même logique que ProviderSelector pour déterminer le statut
 	const [staticProviders, setStaticProviders] = useState<CanonicalProvider[]>(

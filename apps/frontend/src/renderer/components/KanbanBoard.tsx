@@ -70,7 +70,6 @@ import {
 	useKanbanSettingsStore,
 } from "../stores/kanban-settings-store";
 import {
-	loadProjectEnvConfig,
 	useProjectEnvStore,
 } from "../stores/project-env-store";
 import {

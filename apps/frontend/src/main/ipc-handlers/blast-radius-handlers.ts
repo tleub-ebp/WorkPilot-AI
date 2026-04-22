@@ -39,7 +39,6 @@ function runAnalysis(
 	);
 
 	let effectiveProjectRoot = projectRoot;
-	let relativeTargets: string[];
 
 	if (!allUnderRoot) {
 		// Find common ancestor of all target files to use as project root
@@ -68,7 +67,7 @@ function runAnalysis(
 
 	// Convert targets to relative paths from the effective project root
 	const resolvedEffectiveRoot = path.resolve(effectiveProjectRoot);
-	relativeTargets = resolvedTargets.map((target) => {
+	const relativeTargets = resolvedTargets.map((target) => {
 		if (target.startsWith(resolvedEffectiveRoot)) {
 			return path.relative(resolvedEffectiveRoot, target);
 		}
