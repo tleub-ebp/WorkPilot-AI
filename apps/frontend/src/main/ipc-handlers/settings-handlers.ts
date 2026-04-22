@@ -30,6 +30,7 @@ import type {
 	SourceEnvConfig,
 } from "../../shared/types";
 import type { AgentManager } from "../agent";
+import { appEmulatorService } from "../app-emulator-service";
 import { setAppLanguage } from "../app-language";
 import {
 	setUpdateChannel,
@@ -611,6 +612,10 @@ export function registerSettingsHandlers(
 				// Apply Python path if changed
 				if (settings.pythonPath || settings.autoBuildPath) {
 					agentManager.configure(settings.pythonPath, settings.autoBuildPath);
+					appEmulatorService.configure(
+						settings.pythonPath,
+						settings.autoBuildPath,
+					);
 				}
 
 				// Configure CLI tools if any paths changed

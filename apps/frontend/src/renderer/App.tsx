@@ -285,6 +285,36 @@ const TechDebtDashboard = lazy(() =>
 		default: m.TechDebtDashboard,
 	})),
 );
+const AgentDebuggerPanel = lazy(() =>
+	import("./components/agent-debugger/AgentDebuggerPanel").then((m) => ({
+		default: m.AgentDebuggerPanel,
+	})),
+);
+const BlastRadiusView = lazy(() =>
+	import("./components/blast-radius/BlastRadiusView").then((m) => ({
+		default: m.BlastRadiusView,
+	})),
+);
+const TeamBotSettings = lazy(() =>
+	import("./components/settings/TeamBotSettings").then((m) => ({
+		default: m.TeamBotSettings,
+	})),
+);
+const GuardrailsSettings = lazy(() =>
+	import("./components/settings/GuardrailsSettings").then((m) => ({
+		default: m.GuardrailsSettings,
+	})),
+);
+const EnvSnapshotView = lazy(() =>
+	import("./components/env-snapshot/EnvSnapshotView").then((m) => ({
+		default: m.EnvSnapshotView,
+	})),
+);
+const OfflineModeSettings = lazy(() =>
+	import("./components/offline-mode/OfflineModeSettings").then((m) => ({
+		default: m.OfflineModeSettings,
+	})),
+);
 
 import {
 	COLOR_THEMES,
@@ -1803,6 +1833,36 @@ export function App() {
 												{activeView === "tech-debt" && (
 													<div className="overflow-auto" style={{ height: 'calc(100vh - 100px)' }}>
 														<TechDebtDashboard projectPath={selectedProject?.path} />
+													</div>
+												)}
+												{activeView === "agent-debugger" && (
+													<div className="overflow-auto" style={{ height: 'calc(100vh - 100px)' }}>
+														<AgentDebuggerPanel />
+													</div>
+												)}
+												{activeView === "blast-radius" && (
+													<div className="overflow-auto" style={{ height: 'calc(100vh - 100px)' }}>
+														<BlastRadiusView projectRoot={selectedProject?.path} />
+													</div>
+												)}
+												{activeView === "team-bot" && (
+													<div className="overflow-auto" style={{ height: 'calc(100vh - 100px)' }}>
+														<TeamBotSettings />
+													</div>
+												)}
+												{activeView === "guardrails" && (
+													<div className="overflow-auto" style={{ height: 'calc(100vh - 100px)' }}>
+														<GuardrailsSettings />
+													</div>
+												)}
+												{activeView === "env-snapshot" && (
+													<div className="overflow-auto" style={{ height: 'calc(100vh - 100px)' }}>
+														<EnvSnapshotView projectPath={selectedProject?.path} />
+													</div>
+												)}
+												{activeView === "offline-mode" && (
+													<div className="overflow-auto" style={{ height: 'calc(100vh - 100px)' }}>
+														<OfflineModeSettings projectPath={selectedProject?.path} />
 													</div>
 												)}
 											</>
