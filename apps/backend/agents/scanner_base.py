@@ -109,9 +109,7 @@ class BaseScanReport(Generic[FindingT]):
     def blocking_count(self) -> int:
         """Number of findings whose severity is in ``blocking_severities``."""
         return sum(
-            1
-            for f in self.findings
-            if _severity_value(f) in self.blocking_severities
+            1 for f in self.findings if _severity_value(f) in self.blocking_severities
         )
 
     @property

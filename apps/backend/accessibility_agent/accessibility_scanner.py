@@ -61,9 +61,7 @@ class A11yReport(BaseScanReport[A11yViolation]):
     """
 
     target_level: WcagLevel = WcagLevel.AA
-    blocking_severities: frozenset[str] = field(
-        default_factory=lambda: _A11Y_BLOCKING
-    )
+    blocking_severities: frozenset[str] = field(default_factory=lambda: _A11Y_BLOCKING)
 
     @property
     def violations(self) -> list[A11yViolation]:
