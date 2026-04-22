@@ -6,6 +6,7 @@ import type {
 	ProfileUsageSummary,
 	UsageSnapshot,
 } from "@shared/types/agent";
+import type { AppSettings } from "@shared/types/settings";
 import {
 	type CanonicalProvider,
 	getStaticProviders,
@@ -52,10 +53,8 @@ interface Provider {
 }
 
 interface CleanProviderSectionProps {
-	// biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
-	settings: any;
-	// biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
-	onSettingsChange: (settings: any) => void;
+	settings: AppSettings & Record<string, unknown>;
+	onSettingsChange: (settings: AppSettings & Record<string, unknown>) => void;
 	isOpen: boolean;
 }
 
@@ -148,12 +147,11 @@ export function CleanProviderSection({
 
 	// Create a unified settings object and onSettingsChange that updates both props and store
 	const settings = storeSettings;
-	// biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
-	const onSettingsChange = async (newSettings: any) => {
+	const onSettingsChange = async (newSettings: AppSettings & Record<string, unknown>) => {
 		// Update props for backward compatibility
 		propsOnSettingsChange(newSettings);
 		// Update store for real-time sync across components
-		updateSettings(newSettings);
+		updateSettings(newSettings as AppSettings);
 		// Persist to disk so settings survive app restart
 		await saveSettingsToDisk(newSettings);
 	};
@@ -217,8 +215,7 @@ export function CleanProviderSection({
 		);
 	};
 
-	// biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
-	const handleAllProfilesUsageUpdated = (allProfilesUsage: any) => {
+	const handleAllProfilesUsageUpdated = (allProfilesUsage: { allProfiles: ProfileUsageSummary[] }) => {
 		setProfileUsageData((prev) => {
 			const next = new Map(prev);
 			allProfilesUsage.allProfiles.forEach((profile: ProfileUsageSummary) => {
@@ -379,8 +376,7 @@ export function CleanProviderSection({
 			Object.keys(settings).forEach((key) => {
 				if (key.startsWith("testResult_")) {
 					const providerId = key.replace("testResult_", "");
-					// biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
-					const result = (settings as any)[key];
+					const result = (settings as AppSettings & Record<string, unknown>)[key] as { date?: string; success?: boolean };
 					if (result?.date) {
 						testResults.set(providerId, {
 							date: result.date,
@@ -405,7 +401,7 @@ export function CleanProviderSection({
 	};
 
 	// Helper function to get API key field for provider
-	const getProviderApiKeyField = (providerId: string): string | null => {
+	const getProviderApiKeyField = useCallback((providerId: string): string | null => {
 		const apiKeyMap: Record<string, string> = {
 			openai: "globalOpenAIApiKey",
 			gemini: "globalGoogleApiKey",
@@ -421,7 +417,7 @@ export function CleanProviderSection({
 			"azure-openai": "globalOpenAIApiKey",
 		};
 		return apiKeyMap[providerId] || null;
-	};
+	}, []);
 
 	// Utiliser la même logique que ProviderSelector pour déterminer le statut
 	const [staticProviders, setStaticProviders] = useState<CanonicalProvider[]>(
@@ -498,12 +494,10 @@ export function CleanProviderSection({
 
 			// Check settings for API keys (for providers like OpenAI, etc.)
 			const apiKeyField = getProviderApiKeyField(providerId);
-			// biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
-			if (apiKeyField && (settings as any)[apiKeyField]) {
+			if (apiKeyField && (settings as AppSettings & Record<string, unknown>)[apiKeyField]) {
 				return {
 					hasKey: true,
-					// biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
-					keyPreview: (settings as any)[apiKeyField],
+					keyPreview: (settings as AppSettings & Record<string, unknown>)[apiKeyField] as string,
 					isOAuth: false,
 					authMethod: "api-key",
 				};
@@ -561,8 +555,7 @@ export function CleanProviderSection({
 	}, []);
 
 	// Extracted functions to reduce nesting
-	// biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
-	const enrichSettingsWithOAuth = async (baseSettings: any) => {
+	const enrichSettingsWithOAuth = async (baseSettings: AppSettings & Record<string, unknown>) => {
 		const enrichedSettings = { ...baseSettings };
 
 		// Enrich with Claude OAuth status
@@ -597,7 +590,7 @@ export function CleanProviderSection({
 
 	const loadProviders = async () => {
 		try {
-			const enrichedSettings = await enrichSettingsWithOAuth(settings);
+			const enrichedSettings = await enrichSettingsWithOAuth(settings as AppSettings & Record<string, unknown>);
 			const result = await getStaticProviders(profiles, enrichedSettings);
 			setStaticProviders(result.providers);
 			setProviderStatus(result.status);
@@ -649,6 +642,10 @@ export function CleanProviderSection({
 
 			// Get API key info for this provider
 			const apiKeyInfo = getApiKeyInfo(provider.name);
+			const apiKeyField = getProviderApiKeyField(provider.name);
+			const isEnabled = apiKeyField
+				? (settings as AppSettings & Record<string, unknown>)[`${apiKeyField}Enabled`] as boolean | undefined !== false
+				: true;
 
 			const mappedProvider = {
 				id: provider.name,
@@ -658,7 +655,7 @@ export function CleanProviderSection({
 					t(`sections.accounts.providers.${provider.name}`) ||
 					provider.description,
 				isConfigured: providerStatus[provider.name] || false,
-				isWorking: providerStatus[provider.name] ? true : undefined,
+				isWorking: providerStatus[provider.name] && isEnabled,
 				// Use real data instead of dummy data
 				lastTested: testResult?.date,
 				usageCount: usageData?.sessionPercent
@@ -682,6 +679,8 @@ export function CleanProviderSection({
 		providerTestResults,
 		t,
 		getApiKeyInfo,
+		getProviderApiKeyField,
+		settings,
 	]);
 
 	// Synchronize providersState with providers (avoid infinite loop)
@@ -753,11 +752,10 @@ export function CleanProviderSection({
 		return await ProviderService.testProvider(providerId);
 	};
 
-	// biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
-	const processTestResult = async (providerId: string, result: any) => {
+	const processTestResult = async (providerId: string, result: { success?: boolean }) => {
 		const testResult = {
 			date: new Date().toISOString(),
-			success: result.success,
+			success: result.success ?? false,
 		};
 
 		// Update provider test results
@@ -776,8 +774,7 @@ export function CleanProviderSection({
 		}
 	};
 
-	// biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
-	const handleTestSuccess = async (providerId: string, result: any) => {
+	const handleTestSuccess = async (providerId: string, result: { success?: boolean; details?: { modelCount?: number; model?: string; error?: string } }) => {
 		setProviderStatus((prev) => ({
 			...prev,
 			[providerId]: true,
@@ -804,8 +801,7 @@ export function CleanProviderSection({
 		});
 	};
 
-	// biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
-	const handleTestFailure = (providerId: string, result: any) => {
+	const handleTestFailure = (providerId: string, result: { success?: boolean; error?: string; message?: string; details?: { error?: string } }) => {
 		toast({
 			variant: "destructive",
 			title: t("sections.accounts.providerCard.testError"),
@@ -818,8 +814,7 @@ export function CleanProviderSection({
 		console.error("Test failed:", providerId, result.message);
 	};
 
-	// biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
-	const handleTestError = (providerId: string, err: any) => {
+	const handleTestError = (providerId: string, err: unknown) => {
 		console.error("Test error:", err);
 
 		toast({
@@ -949,7 +944,7 @@ export function CleanProviderSection({
 						</AlertDescription>
 					</Alert>
 					<Button onClick={handleRefresh} variant="outline" size="sm">
-						Réessayer
+						{t("common.retry")}
 					</Button>
 				</div>
 			</SettingsSection>
@@ -1037,9 +1032,9 @@ export function CleanProviderSection({
 
 								<div className="space-y-4">
 									<GlobalAutoSwitching
-										settings={settings}
-										onSettingsChange={onSettingsChange}
 										isOpen={true}
+										settings={settings}
+										onSettingsChange={(newSettings: AppSettings) => onSettingsChange(newSettings as AppSettings & Record<string, unknown>)}
 										providerStatus={providerStatus}
 									/>
 								</div>

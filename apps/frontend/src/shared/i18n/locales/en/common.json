@@ -813,7 +813,9 @@
 	"install": "Install",
 	"common": {
 		"noProjectSelected": "No project selected",
-		"injectionGuardComingSoon": "Injection Guard - Coming Soon"
+		"injectionGuardComingSoon": "Injection Guard - Coming Soon",
+		"envSnapshotComingSoon": "Environment Snapshots - Coming Soon",
+		"offlineModeComingSoon": "Offline Mode - Coming Soon"
 	},
 	"noProject": {
 		"greeting": "Welcome to WorkPilot AI!",

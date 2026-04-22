@@ -254,6 +254,8 @@ def _format_windsurf_model_label(model: str) -> str:
     """Format Windsurf model label for display."""
     model_labels = {
         # SWE models (Windsurf proprietary)
+        "swe-1.6": "SWE-1.6",
+        "swe-1.6-fast": "SWE-1.6 Fast",
         "swe-1.5": "SWE-1.5",
         "swe-1.5-thinking": "SWE-1.5 Thinking",
         "swe-1.5-slow": "SWE-1.5 Slow",

@@ -22,11 +22,14 @@ Decision types captured:
 from __future__ import annotations
 
 import json
+import logging
 from dataclasses import asdict, dataclass, field
 from datetime import datetime, timezone
 from pathlib import Path
 
 from core.task_event import TaskEventEmitter
+
+logger = logging.getLogger(__name__)
 
 # Maximum entries kept in the JSON file (oldest are dropped when exceeded)
 MAX_LOG_ENTRIES = 500
@@ -246,7 +249,7 @@ class AgentDecisionLogger:
         try:
             self._emitter.emit("DECISION_LOG_ENTRY", {"entry": entry.to_dict()})
         except Exception:
-            pass  # Non-critical — logging must never break the agent
+            logger.debug("Failed to emit DECISION_LOG_ENTRY event", exc_info=True)
 
     def _append_to_file(self, entry: DecisionEntry) -> None:
         """Append the entry to decision_log.json, capping at MAX_LOG_ENTRIES."""
@@ -259,7 +262,9 @@ class AgentDecisionLogger:
                 entries = entries[-MAX_LOG_ENTRIES:]
             log_file.write_text(json.dumps(entries, indent=2), encoding="utf-8")
         except Exception:
-            pass  # Non-critical
+            logger.debug(
+                "Failed to persist decision log entry to %s", log_file, exc_info=True
+            )
 
     def _load_existing(self) -> list[dict]:
         log_file = self.spec_dir / DECISION_LOG_FILE

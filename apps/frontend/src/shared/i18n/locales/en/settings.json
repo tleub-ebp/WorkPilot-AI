@@ -2,7 +2,8 @@
 	"title": "Settings",
 	"common": {
 		"enabled": "Enabled",
-		"disabled": "Disabled"
+		"disabled": "Disabled",
+		"retry": "Retry"
 	},
 	"tabs": {
 		"app": "App Settings",
@@ -36,6 +37,16 @@
 		"accounts": {
 			"title": "Accounts",
 			"description": "Accounts & API endpoints",
+			"alerts": {
+				"noProviders": "No provider configured. Configure your API keys to get started.",
+				"providerErrors": "{{count}} provider(s) with errors",
+				"sophisticated": {
+					"noProvidersTitle": "Get started with your first provider",
+					"noProvidersDescription": "Configure at least one provider to start using the application.",
+					"providersNeedAttention": "{{count}} provider(s) need your attention",
+					"checkApiKeys": "Check your API keys and try again."
+				}
+			},
 			"form": {
 				"addAccount": "Add {{provider}} Account",
 				"name": "Account Name",
@@ -165,10 +176,6 @@
 				"description": "{{providerId}} has been {{action}} successfully",
 				"error": "Error",
 				"errorDescription": "Failed to {{action}} provider {{providerId}}"
-			},
-			"alerts": {
-				"noProviders": "No providers configured. Configure your API keys to get started.",
-				"providerErrors": "{{count}} provider(s) with errors"
 			}
 		},
 		"updates": {

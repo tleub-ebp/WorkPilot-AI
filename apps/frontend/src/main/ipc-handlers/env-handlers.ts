@@ -472,8 +472,8 @@ ${envLine(existingVars, GITLAB_ENV_KEYS.AUTO_SYNC, "false")}
 ${existingVars[AZURE_DEVOPS_ENV_KEYS.ENABLED] ? `${AZURE_DEVOPS_ENV_KEYS.ENABLED}=${existingVars[AZURE_DEVOPS_ENV_KEYS.ENABLED]}` : `# ${AZURE_DEVOPS_ENV_KEYS.ENABLED}=true`}
 ${envLine(existingVars, AZURE_DEVOPS_ENV_KEYS.ORG_URL, "https://dev.azure.com/your-org")}
 ${envLine(existingVars, AZURE_DEVOPS_ENV_KEYS.PAT)}
-${envLine(existingVars, AZURE_DEVOPS_ENV_KEYS.PROJECT, "MyProject")}
-${envLine(existingVars, AZURE_DEVOPS_ENV_KEYS.REPOSITORY, "MyRepository")}
+${existingVars[AZURE_DEVOPS_ENV_KEYS.ENABLED] === "true" ? `${AZURE_DEVOPS_ENV_KEYS.PROJECT}=${existingVars[AZURE_DEVOPS_ENV_KEYS.PROJECT] || ""}` : envLine(existingVars, AZURE_DEVOPS_ENV_KEYS.PROJECT, "MyProject")}
+${existingVars[AZURE_DEVOPS_ENV_KEYS.ENABLED] === "true" ? `${AZURE_DEVOPS_ENV_KEYS.REPOSITORY}=${existingVars[AZURE_DEVOPS_ENV_KEYS.REPOSITORY] || ""}` : envLine(existingVars, AZURE_DEVOPS_ENV_KEYS.REPOSITORY, "MyRepository")}
 ${existingVars[AZURE_DEVOPS_ENV_KEYS.AUTO_SYNC] ? `${AZURE_DEVOPS_ENV_KEYS.AUTO_SYNC}=${existingVars[AZURE_DEVOPS_ENV_KEYS.AUTO_SYNC]}` : `# ${AZURE_DEVOPS_ENV_KEYS.AUTO_SYNC}=false`}
 
 # =============================================================================
@@ -882,11 +882,17 @@ ${existingVars.GRAPHITI_DB_PATH ? `GRAPHITI_DB_PATH=${existingVars.GRAPHITI_DB_P
 				return { success: false, error: "Project not found" };
 			}
 
-			if (!project.autoBuildPath) {
-				return { success: false, error: "Project not initialized" };
+			// If the project hasn't been initialized yet (no .workpilot/ on disk yet),
+			// bootstrap autoBuildPath so integration config set at creation time (e.g. Azure/Jira
+			// from AddProjectModal) can still be persisted. The .workpilot/ directory itself is
+			// created below by the mkdirSync fallback when writing the .env file.
+			let autoBuildPath = project.autoBuildPath;
+			if (!autoBuildPath) {
+				autoBuildPath = ".workpilot";
+				projectStore.updateAutoBuildPath(project.id, autoBuildPath);
 			}
 
-			const envPath = path.join(project.path, project.autoBuildPath, ".env");
+			const envPath = path.join(project.path, autoBuildPath, ".env");
 
 			try {
 				// Read existing content if file exists (atomic read, no TOCTOU)

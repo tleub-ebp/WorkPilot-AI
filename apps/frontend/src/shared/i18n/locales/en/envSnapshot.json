@@ -1,0 +1,38 @@
+{
+	"title": "Environment Snapshots",
+	"noProject": "Select a project to view snapshots.",
+	"labelField": "Label (optional)",
+	"labelPlaceholder": "Pre-migration baseline",
+	"capture": "Capture snapshot",
+	"capturing": "Capturing…",
+	"history": "History",
+	"empty": "No snapshots captured yet.",
+	"selectPrompt": "Select a snapshot to see details.",
+	"dirty": "dirty",
+	"osLabel": "OS",
+	"commit": "Commit",
+	"lockfiles": "Lockfiles",
+	"noLockfiles": "No lockfiles detected.",
+	"format": "Replay format",
+	"replayTargetLabel": "Replay target",
+	"targetHint": "Target:",
+	"formats": {
+		"docker": {
+			"label": "Docker",
+			"description": "Generate a Dockerfile that recreates the toolchain and checks out the captured commit."
+		},
+		"nix": {
+			"label": "Nix",
+			"description": "Generate a flake.nix shell with matching Node/Python/Git for reproducible entry."
+		},
+		"script": {
+			"label": "Shell",
+			"description": "Generate a bash script that asserts tool versions and checks out the captured commit."
+		}
+	},
+	"preview": "Preview",
+	"export": "Export",
+	"exporting": "Exporting…",
+	"exportedTo": "Exported to",
+	"copy": "Copy"
+}
