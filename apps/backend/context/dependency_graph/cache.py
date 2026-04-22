@@ -107,4 +107,8 @@ class DependencyGraphCache:
             with open(self._cache_path, "w", encoding="utf-8") as f:
                 json.dump(data, f)
         except OSError:
-            logger.debug("Dependency graph cache write failed at %s", self._cache_path, exc_info=True)
+            logger.debug(
+                "Dependency graph cache write failed at %s",
+                self._cache_path,
+                exc_info=True,
+            )

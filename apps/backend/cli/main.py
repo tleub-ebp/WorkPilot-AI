@@ -574,7 +574,9 @@ def handle_doctor_command() -> None:
 
     print("WorkPilot AI — doctor")
     print("=" * 60)
-    print(f"Platform   : {platform.system()} {platform.release()} ({platform.machine()})")
+    print(
+        f"Platform   : {platform.system()} {platform.release()} ({platform.machine()})"
+    )
     print(f"Python     : {platform.python_version()}")
     print()
 

@@ -23,6 +23,7 @@ _SUPPRESS_MOCK_WARNING_ENV = "WORKPILOT_AZURE_DEVOPS_ALLOW_MOCK"
 
 def _warn_mock(operation: str) -> None:
     import os as _os
+
     if _os.environ.get(_SUPPRESS_MOCK_WARNING_ENV):
         return
     logger.warning(

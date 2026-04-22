@@ -262,7 +262,9 @@ class AgentDecisionLogger:
                 entries = entries[-MAX_LOG_ENTRIES:]
             log_file.write_text(json.dumps(entries, indent=2), encoding="utf-8")
         except Exception:
-            logger.debug("Failed to persist decision log entry to %s", log_file, exc_info=True)
+            logger.debug(
+                "Failed to persist decision log entry to %s", log_file, exc_info=True
+            )
 
     def _load_existing(self) -> list[dict]:
         log_file = self.spec_dir / DECISION_LOG_FILE

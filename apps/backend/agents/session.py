@@ -552,7 +552,9 @@ async def run_agent_session(
             agent_type=_phase_to_agent.get(phase, phase.value),
         )
     except Exception:
-        logger.debug("Failed to create decision logger; continuing without it", exc_info=True)
+        logger.debug(
+            "Failed to create decision logger; continuing without it", exc_info=True
+        )
 
     try:
         # Send the query

@@ -369,12 +369,16 @@ class SecurityScanner:
                             )
                         )
                 except json.JSONDecodeError:
-                    logger.debug("npm audit returned non-JSON output (likely no findings)")
+                    logger.debug(
+                        "npm audit returned non-JSON output (likely no findings)"
+                    )
 
         except subprocess.TimeoutExpired:
             result.scan_errors.append("npm audit timed out")
         except FileNotFoundError:
-            result.scan_errors.append("npm not available on PATH — dependency audit skipped")
+            result.scan_errors.append(
+                "npm not available on PATH — dependency audit skipped"
+            )
             logger.info("npm not found; skipping npm audit")
         except Exception as e:
             result.scan_errors.append(f"npm audit error: {str(e)}")
@@ -413,7 +417,9 @@ class SecurityScanner:
                     logger.debug("pip-audit returned non-JSON output")
 
         except FileNotFoundError:
-            result.scan_errors.append("pip-audit not available — Python dependency audit skipped")
+            result.scan_errors.append(
+                "pip-audit not available — Python dependency audit skipped"
+            )
             logger.info("pip-audit not found; skipping Python dependency scan")
         except subprocess.TimeoutExpired:
             result.scan_errors.append("pip-audit timed out")
