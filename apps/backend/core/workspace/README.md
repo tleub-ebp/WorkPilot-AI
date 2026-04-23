@@ -11,7 +11,7 @@ workspace/
 ├── __init__.py          (130 lines) - Public API exports
 ├── models.py            (133 lines) - Data classes and enums
 ├── git_utils.py         (283 lines) - Git operations and utilities
-├── setup.py             (357 lines) - Workspace setup and initialization
+├── workspace_setup.py   (357 lines) - Workspace setup and initialization
 ├── display.py           (136 lines) - UI display functions
 ├── finalization.py      (494 lines) - Post-build finalization and user interaction
 └── README.md            - This file
@@ -52,7 +52,7 @@ Git operations and utilities:
 - `BINARY_EXTENSIONS` - Set of binary file extensions
 - `MERGE_LOCK_TIMEOUT` - Lock timeout in seconds (300)
 
-### setup.py
+### workspace_setup.py
 Workspace setup and initialization:
 - `choose_workspace()` - Let user choose workspace mode
 - `copy_spec_to_worktree()` - Copy spec files to worktree
@@ -105,7 +105,7 @@ from workspace import (
 ```python
 from workspace.models import WorkspaceMode, MergeLock
 from workspace.git_utils import has_uncommitted_changes
-from workspace.setup import choose_workspace
+from workspace.workspace_setup import choose_workspace
 from workspace.display import show_build_summary
 from workspace.finalization import review_existing_build
 ```
