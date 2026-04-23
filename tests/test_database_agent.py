@@ -14,11 +14,10 @@ import pytest
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "apps" / "backend"))
 
 from database_agent.backfill_estimator import (
-    BackfillEstimate,
     BackfillEstimator,
     OperationType,
 )
-from database_agent.lock_detector import LockDetector, LockSeverity, LockWarning
+from database_agent.lock_detector import LockDetector, LockSeverity
 from database_agent.migration_planner import (
     MigrationPhase,
     MigrationPlan,
@@ -41,17 +40,17 @@ from database_agent.schema_analyzer import (
 
 class TestSchemaAnalyzer:
     def test_detect_postgresql(self):
-        assert SchemaAnalyzer.detect_engine("postgresql://localhost/mydb") == DatabaseEngine.POSTGRESQL
+        assert SchemaAnalyzer.detect_engine("postgresql://user:password@localhost/mydb") == DatabaseEngine.POSTGRESQL
 
     def test_detect_mysql(self):
-        assert SchemaAnalyzer.detect_engine("mysql://root@localhost/mydb") == DatabaseEngine.MYSQL
+        assert SchemaAnalyzer.detect_engine("mysql://root:password@localhost/mydb") == DatabaseEngine.MYSQL
 
     def test_detect_sqlite(self):
         assert SchemaAnalyzer.detect_engine("sqlite:///app.db") == DatabaseEngine.SQLITE
         assert SchemaAnalyzer.detect_engine("data.sqlite3") == DatabaseEngine.SQLITE
 
     def test_detect_sqlserver(self):
-        assert SchemaAnalyzer.detect_engine("mssql://sa@localhost") == DatabaseEngine.SQLSERVER
+        assert SchemaAnalyzer.detect_engine("mssql://sa:password@localhost") == DatabaseEngine.SQLSERVER
 
     def test_detect_unknown(self):
         assert SchemaAnalyzer.detect_engine("redis://localhost") == DatabaseEngine.UNKNOWN
@@ -329,7 +328,7 @@ class TestBackfillEstimator:
     def test_zero_rows(self):
         estimator = BackfillEstimator()
         est = estimator.estimate(OperationType.SIMPLE_UPDATE, row_count=0)
-        assert est.estimated_seconds == 0.0
+        assert est.estimated_seconds == 0
         assert "instant" in est.human_readable
 
     def test_human_readable_formatting(self):
@@ -355,7 +354,7 @@ class TestBackfillEstimator:
         estimator = BackfillEstimator()
         est = estimator.estimate_index_build(row_count=10_000_000, concurrent=True)
         assert est.estimated_seconds > 0
-        assert est.estimated_lock_ms == 0.0  # concurrent = no lock
+        assert est.estimated_lock_ms == 0  # concurrent = no lock
 
     def test_non_concurrent_index_has_lock(self):
         estimator = BackfillEstimator()
