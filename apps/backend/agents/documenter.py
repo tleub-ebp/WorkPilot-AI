@@ -24,6 +24,9 @@ from typing import Any
 
 logger = logging.getLogger(__name__)
 
+# Constants
+DEFAULT_SOURCE_PATH = "<source>"
+NONE_PATH = "<none>"
 
 # ---------------------------------------------------------------------------
 # Enums
@@ -425,6 +428,7 @@ class DocGenerator:
             parts.append("")
             for arg in symbol.args:
                 parts.append(f"    :param {arg}: ")
+                parts.append(f"    :type {arg}: ")
 
         if symbol.return_type and symbol.return_type != "None":
             parts.append("    :returns: ")
