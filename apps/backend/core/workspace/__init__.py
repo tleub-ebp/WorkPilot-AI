@@ -96,7 +96,7 @@ from .models import (
 )
 
 # Setup Functions
-from .setup import (
+from .workspace_setup import (
     # Export private names for backward compatibility
     _ensure_timeline_hook_installed,
     _initialize_timeline_tracking,
