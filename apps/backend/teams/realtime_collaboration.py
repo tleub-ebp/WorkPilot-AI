@@ -418,11 +418,227 @@ class CollaborationServer:
 
         return True
 
+    # Task broadcast updates (optimistic concurrency via ``task_versions``)
+    def broadcast_task_update(
+        self,
+        task_id: str,
+        sender_id: str,
+        changes: dict[str, Any] | None = None,
+    ) -> int:
+        """Broadcast a task update to every subscriber.
+
+        Increments the task's version counter and emits a ``TASK_UPDATE``
+        event. Returns the new version so callers can confirm their update
+        was applied.
+
+        ``changes`` is a free-form dict of field → new-value pairs; the
+        server does not mutate any task store (that's the caller's job),
+        it just broadcasts the intent so connected peers can reconcile.
+        """
+        self.task_versions[task_id] = self.task_versions.get(task_id, 0) + 1
+        version = self.task_versions[task_id]
+        event = RealtimeEvent(
+            event_id=str(uuid.uuid4()),
+            event_type=EventType.TASK_UPDATE,
+            sender_id=sender_id,
+            data={
+                "task_id": task_id,
+                "version": version,
+                "changes": changes or {},
+            },
+        )
+        self._add_event(event)
+        return version
+
+    def broadcast_task_move(
+        self,
+        task_id: str,
+        sender_id: str,
+        from_column: str,
+        to_column: str,
+    ) -> int:
+        """Broadcast a Kanban task move (column change).
+
+        Bumps the task version and emits a ``TASK_MOVE`` event. Returns
+        the new version.
+        """
+        self.task_versions[task_id] = self.task_versions.get(task_id, 0) + 1
+        version = self.task_versions[task_id]
+        event = RealtimeEvent(
+            event_id=str(uuid.uuid4()),
+            event_type=EventType.TASK_MOVE,
+            sender_id=sender_id,
+            data={
+                "task_id": task_id,
+                "version": version,
+                "from_column": from_column,
+                "to_column": to_column,
+            },
+        )
+        self._add_event(event)
+        return version
+
+    def get_task_version(self, task_id: str) -> int:
+        """Return the current version counter for a task (0 if unseen)."""
+        return self.task_versions.get(task_id, 0)
+
+    # Chat search
+    def search_chat(self, query: str, limit: int = 50) -> list[ChatMessage]:
+        """Return chat messages whose content matches ``query``.
+
+        Case-insensitive substring match. Returns at most ``limit``
+        messages, newest-first.
+        """
+        if not query:
+            return []
+        needle = query.lower()
+        hits = [
+            msg for msg in self.chat_messages if needle in msg.content.lower()
+        ]
+        # Newest-first ordering is what chat UIs expect for search results.
+        return list(reversed(hits))[:limit] if limit > 0 else list(reversed(hits))
+
+    # Agent integration — bridges agent runs with the collaborative Kanban
+    def notify_agent_started(
+        self,
+        task_id: str,
+        agent_id: str,
+        agent_type: str = "coder",
+    ) -> bool:
+        """Mark a task as being worked on by an agent.
+
+        Acquires an agent-typed lock on the task so human users see it as
+        taken, and emits ``AGENT_STARTED``. Returns ``True`` when the lock
+        was acquired, ``False`` if the task was already locked.
+        """
+        acquired = self.lock_task(
+            task_id,
+            agent_id,
+            lock_type=LockType.AGENT,
+            reason=f"Agent {agent_type} running",
+        )
+        if not acquired:
+            return False
+        event = RealtimeEvent(
+            event_id=str(uuid.uuid4()),
+            event_type=EventType.AGENT_STARTED,
+            sender_id=agent_id,
+            data={
+                "task_id": task_id,
+                "agent_id": agent_id,
+                "agent_type": agent_type,
+            },
+        )
+        self._add_event(event)
+        return True
+
+    def notify_agent_completed(
+        self,
+        task_id: str,
+        agent_id: str,
+        outcome: str = "success",
+    ) -> bool:
+        """Release the agent's lock on a task and emit ``AGENT_COMPLETED``.
+
+        Returns ``True`` if a lock owned by ``agent_id`` was released,
+        ``False`` otherwise — callers can use this to detect out-of-order
+        completion events from zombie agents.
+        """
+        released = self.unlock_task(task_id, agent_id)
+        event = RealtimeEvent(
+            event_id=str(uuid.uuid4()),
+            event_type=EventType.AGENT_COMPLETED,
+            sender_id=agent_id,
+            data={
+                "task_id": task_id,
+                "agent_id": agent_id,
+                "outcome": outcome,
+                "released": released,
+            },
+        )
+        self._add_event(event)
+        return released
+
+    # Sync / notifications — the catch-up pattern after a temporary disconnect
+    def request_sync(self, user_id: str, since_event_id: str | None = None) -> dict:
+        """Return the state a reconnecting client needs to catch up.
+
+        If ``since_event_id`` is provided, only events emitted *after* that
+        event are returned; otherwise the full event log is returned.
+        Also returns the current users / task locks / task versions so the
+        client has a full snapshot.
+        """
+        events: list[RealtimeEvent]
+        if since_event_id:
+            cutoff_index = next(
+                (i for i, e in enumerate(self.events) if e.event_id == since_event_id),
+                -1,
+            )
+            events = self.events[cutoff_index + 1 :] if cutoff_index >= 0 else list(
+                self.events
+            )
+        else:
+            events = list(self.events)
+
+        event = RealtimeEvent(
+            event_id=str(uuid.uuid4()),
+            event_type=EventType.SYNC_REQUESTED,
+            sender_id=user_id,
+            data={"since_event_id": since_event_id, "event_count": len(events)},
+        )
+        self._add_event(event)
+
+        return {
+            "users": [u.to_dict() for u in self.users.values()],
+            "locks": {tid: lock.to_dict() for tid, lock in self.task_locks.items()},
+            "task_versions": dict(self.task_versions),
+            "events": [e.to_dict() for e in events],
+        }
+
+    def notify_user(
+        self,
+        recipient_id: str,
+        message: str,
+        sender_id: str = "system",
+        level: str = "info",
+    ) -> RealtimeEvent:
+        """Send a targeted NOTIFICATION event to a single user.
+
+        The event's ``data`` payload carries ``recipient_id`` so frontends
+        can filter out notifications not meant for them. Returns the
+        emitted event.
+        """
+        event = RealtimeEvent(
+            event_id=str(uuid.uuid4()),
+            event_type=EventType.NOTIFICATION,
+            sender_id=sender_id,
+            data={
+                "recipient_id": recipient_id,
+                "message": message,
+                "level": level,
+            },
+        )
+        self._add_event(event)
+        return event
+
     # Event handling
-    def add_event_handler(self, event_type: EventType, handler: callable) -> None:
+    def add_event_handler(
+        self, event_type: EventType | str, handler: callable
+    ) -> None:
+        """Subscribe ``handler`` to ``event_type``.
+
+        Pass :data:`CollaborationServer.WILDCARD_EVENT` (or the string
+        ``"*"``) to receive every event. A handler can be registered
+        multiple times, which is intentional — fan-out is the caller's
+        responsibility.
+        """
         if event_type not in self.event_handlers:
             self.event_handlers[event_type] = []
         self.event_handlers[event_type].append(handler)
+
+    def on_event(self, handler: callable) -> None:
+        """Shortcut for ``add_event_handler(WILDCARD_EVENT, handler)``."""
+        self.add_event_handler(self.WILDCARD_EVENT, handler)
 
     def get_events(
         self, event_type: EventType | None = None, limit: int = 100
@@ -435,13 +651,19 @@ class CollaborationServer:
     def _add_event(self, event: RealtimeEvent) -> None:
         self.events.append(event)
 
-        # Trigger event handlers
-        if event.event_type in self.event_handlers:
-            for handler in self.event_handlers[event.event_type]:
-                try:
-                    handler(event)
-                except Exception as e:
-                    print(f"Event handler error: {e}")
+        # Trigger typed event handlers
+        for handler in self.event_handlers.get(event.event_type, ()):
+            try:
+                handler(event)
+            except Exception as e:
+                print(f"Event handler error: {e}")
+
+        # Trigger wildcard handlers
+        for handler in self.event_handlers.get(self.WILDCARD_EVENT, ()):
+            try:
+                handler(event)
+            except Exception as e:
+                print(f"Wildcard event handler error: {e}")
 
     # Statistics and monitoring
     def get_stats(self) -> dict[str, Any]:
