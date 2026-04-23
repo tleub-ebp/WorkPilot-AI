@@ -6,34 +6,33 @@ Covers: SchemaAnalyzer, MigrationPlanner, LockDetector, BackfillEstimator, Rollb
 
 from __future__ import annotations
 
+import sys
 from pathlib import Path
 
 import pytest
 
-import sys
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "apps" / "backend"))
 
+from database_agent.backfill_estimator import (
+    BackfillEstimate,
+    BackfillEstimator,
+    OperationType,
+)
+from database_agent.lock_detector import LockDetector, LockSeverity, LockWarning
+from database_agent.migration_planner import (
+    MigrationPhase,
+    MigrationPlan,
+    MigrationPlanner,
+    MigrationStep,
+    MigrationType,
+)
+from database_agent.rollback_generator import RollbackGenerator, RollbackScript
 from database_agent.schema_analyzer import (
     ColumnInfo,
     DatabaseEngine,
     SchemaAnalyzer,
     TableInfo,
 )
-from database_agent.migration_planner import (
-    MigrationPlan,
-    MigrationPlanner,
-    MigrationStep,
-    MigrationType,
-    MigrationPhase,
-)
-from database_agent.lock_detector import LockDetector, LockSeverity, LockWarning
-from database_agent.backfill_estimator import (
-    BackfillEstimate,
-    BackfillEstimator,
-    OperationType,
-)
-from database_agent.rollback_generator import RollbackGenerator, RollbackScript
-
 
 # =========================================================================
 # SchemaAnalyzer tests
