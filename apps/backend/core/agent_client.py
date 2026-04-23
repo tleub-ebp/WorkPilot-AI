@@ -1687,10 +1687,8 @@ class WindsurfAgentClient(AgentClient):
             # OpenAI function calling and doesn't require Windsurf IDE to be running.
             # Only fall back to gRPC if REST fails or if explicitly configured.
 
-            # Debug logging
-            logger.info(
-                f"[WindsurfAgent] API key found (length={len(self._api_key)}, starts_with={self._api_key[:20] if len(self._api_key) >= 20 else self._api_key})"
-            )
+            # Debug logging (never log key material, even partial prefixes)
+            logger.info(f"[WindsurfAgent] API key found (length={len(self._api_key)})")
             logger.info(
                 f"[WindsurfAgent] Windsurf IDE running: {is_windsurf_running()}"
             )
