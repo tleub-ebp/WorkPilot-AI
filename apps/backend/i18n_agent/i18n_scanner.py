@@ -67,9 +67,7 @@ class I18nReport(BaseScanReport[I18nIssue]):
     locales_found: list[str] = field(default_factory=list)
     total_keys: int = 0
     coverage: dict[str, float] = field(default_factory=dict)
-    blocking_severities: frozenset[str] = field(
-        default_factory=lambda: _I18N_BLOCKING
-    )
+    blocking_severities: frozenset[str] = field(default_factory=lambda: _I18N_BLOCKING)
 
     @property
     def issues(self) -> list[I18nIssue]:
@@ -92,9 +90,7 @@ class I18nReport(BaseScanReport[I18nIssue]):
             return "No issues"
         by_type: dict[str, int] = {}
         for issue in self.findings:
-            by_type[issue.issue_type.value] = (
-                by_type.get(issue.issue_type.value, 0) + 1
-            )
+            by_type[issue.issue_type.value] = by_type.get(issue.issue_type.value, 0) + 1
         # Stable ordering so test snapshots don't flap.
         ordered = sorted(by_type.items(), key=lambda kv: kv[0])
         return ", ".join(f"{count} {t}" for t, count in ordered)
