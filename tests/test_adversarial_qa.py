@@ -6,30 +6,13 @@ Covers: Fuzzer, EdgeCaseGenerator, InjectionTester, ConcurrencyAnalyzer, Adversa
 
 from __future__ import annotations
 
+import sys
 from pathlib import Path
 
 import pytest
 
-import sys
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "apps" / "backend"))
 
-from adversarial_qa.fuzzer import FuzzResult, Fuzzer, FuzzStrategy
-from adversarial_qa.edge_case_generator import (
-    EdgeCase,
-    EdgeCaseCategory,
-    EdgeCaseGenerator,
-)
-from adversarial_qa.injection_tester import (
-    InjectionResult,
-    InjectionTester,
-    InjectionType,
-)
-from adversarial_qa.concurrency_analyzer import (
-    ConcurrencyAnalyzer,
-    ConcurrencyFinding,
-    ConcurrencyIssueType,
-    RaceCondition,
-)
 from adversarial_qa.adversarial_agent import (
     AdversarialAgent,
     AdversarialConfig,
@@ -38,7 +21,23 @@ from adversarial_qa.adversarial_agent import (
     Finding,
     FindingSeverity,
 )
-
+from adversarial_qa.concurrency_analyzer import (
+    ConcurrencyAnalyzer,
+    ConcurrencyFinding,
+    ConcurrencyIssueType,
+    RaceCondition,
+)
+from adversarial_qa.edge_case_generator import (
+    EdgeCase,
+    EdgeCaseCategory,
+    EdgeCaseGenerator,
+)
+from adversarial_qa.fuzzer import Fuzzer, FuzzResult, FuzzStrategy
+from adversarial_qa.injection_tester import (
+    InjectionResult,
+    InjectionTester,
+    InjectionType,
+)
 
 # =========================================================================
 # Fuzzer tests
