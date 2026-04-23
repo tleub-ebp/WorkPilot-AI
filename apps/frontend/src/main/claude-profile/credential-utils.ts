@@ -229,18 +229,38 @@ export function getWindowsCredentialTarget(configDir?: string): string {
 }
 
 /**
- * Validate the structure of parsed credential JSON data
- * @param data - Parsed JSON data from credential store
- * @returns true if data structure is valid, false otherwise
+ * Shape of the credential JSON after structural validation.
+ *
+ * Extractor functions may rely on additional fields (refreshToken,
+ * expiresAt, …) that are validated defensively in the extractor
+ * itself. This base shape is what ``validateCredentialData`` narrows
+ * to, and what ``parseCredentialJson``'s ``extractFn`` parameter is
+ * typed against — richer extractors stay compatible via structural
+ * subtyping with extra optional fields.
  */
-function validateCredentialData(data: unknown): data is {
+type ValidatedCredentialData = {
 	claudeAiOauth?: {
 		accessToken?: string;
 		email?: string;
 		emailAddress?: string;
+		// Additional optional fields that richer extractors may read.
+		// Keeping them here means callers can pass their extended
+		// extractor signature without widening to `any` or `unknown`.
+		refreshToken?: string;
+		expiresAt?: number;
+		scopes?: string[];
+		subscriptionType?: string;
+		rateLimitTier?: string;
 	};
 	email?: string;
-} {
+};
+
+/**
+ * Validate the structure of parsed credential JSON data
+ * @param data - Parsed JSON data from credential store
+ * @returns true if data structure is valid, false otherwise
+ */
+function validateCredentialData(data: unknown): data is ValidatedCredentialData {
 	if (!data || typeof data !== "object") {
 		return false;
 	}
@@ -431,8 +451,12 @@ function executeCredentialRead(
 function parseCredentialJson<T extends PlatformCredentials>(
 	credentialsJson: string | null,
 	identifier: string,
-	// biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
-	extractFn: (data: any) => T,
+	// Replaces a previous `any`. ``ValidatedCredentialData`` is what
+	// ``validateCredentialData`` narrows to — it already covers the
+	// rich fields (refreshToken, expiresAt, scopes, …) that the richer
+	// extractor implementations read, so callers stay structurally
+	// compatible without widening to ``any``.
+	extractFn: (data: ValidatedCredentialData) => T,
 ): T {
 	if (!credentialsJson) {
 		return extractFn({}) as T;
