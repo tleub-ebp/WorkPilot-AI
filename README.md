@@ -146,7 +146,7 @@ See the [Setup Guide](docs/SETUP.md) for detailed instructions.
 | **Architecture Visualizer** | Dependency graphs, module hierarchy, and component relationship diagrams |
 | **Performance Profiler** | AI-powered bottleneck identification with optimization suggestions |
 | **Dependency Sentinel** | Monitors security vulnerabilities, version conflicts, and outdated dependencies |
-| **Self-Healing Codebase** _(experimental)_ | Automatically generates fixes when CI tests fail; integrates with Sentry, Datadog, PagerDuty for production incidents |
+| **Self-Healing Codebase** | Automatically generates fixes when CI tests fail; integrates with Sentry, Datadog, PagerDuty for production incidents |
 | **Risk Classifier** | Scores code changes by risk level with impact assessment |
 
 ### Developer Productivity
@@ -162,7 +162,7 @@ See the [Setup Guide](docs/SETUP.md) for detailed instructions.
 | **Pipeline Generator** | Generates GitHub Actions, GitLab CI, and Azure Pipelines configurations |
 | **Browser Agent** | Autonomous browser interaction for E2E test generation and visual regression |
 | **Arena Mode** | Side-by-side comparison of different AI models on the same task |
-| **Voice Control** _(experimental)_ | Hands-free task and terminal control via speech-to-text |
+| **Voice Control** | Hands-free task and terminal control via speech-to-text |
 | **Multi-Repo Orchestration** | Coordinate changes across multiple repositories simultaneously |
 | **Code Playground** | Sandbox environment for testing code snippets in isolation |
 | **Prompt Optimizer** | Analyzes and rewrites prompts for better AI output |
