@@ -492,9 +492,7 @@ class CollaborationServer:
         if not query:
             return []
         needle = query.lower()
-        hits = [
-            msg for msg in self.chat_messages if needle in msg.content.lower()
-        ]
+        hits = [msg for msg in self.chat_messages if needle in msg.content.lower()]
         # Newest-first ordering is what chat UIs expect for search results.
         return list(reversed(hits))[:limit] if limit > 0 else list(reversed(hits))
 
@@ -574,8 +572,10 @@ class CollaborationServer:
                 (i for i, e in enumerate(self.events) if e.event_id == since_event_id),
                 -1,
             )
-            events = self.events[cutoff_index + 1 :] if cutoff_index >= 0 else list(
-                self.events
+            events = (
+                self.events[cutoff_index + 1 :]
+                if cutoff_index >= 0
+                else list(self.events)
             )
         else:
             events = list(self.events)
@@ -622,9 +622,7 @@ class CollaborationServer:
         return event
 
     # Event handling
-    def add_event_handler(
-        self, event_type: EventType | str, handler: callable
-    ) -> None:
+    def add_event_handler(self, event_type: EventType | str, handler: callable) -> None:
         """Subscribe ``handler`` to ``event_type``.
 
         Pass :data:`CollaborationServer.WILDCARD_EVENT` (or the string
