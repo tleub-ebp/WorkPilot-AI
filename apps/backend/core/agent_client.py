@@ -1688,9 +1688,7 @@ class WindsurfAgentClient(AgentClient):
             # Only fall back to gRPC if REST fails or if explicitly configured.
 
             # Debug logging (never log key material, even partial prefixes)
-            logger.info(
-                f"[WindsurfAgent] API key found (length={len(self._api_key)})"
-            )
+            logger.info(f"[WindsurfAgent] API key found (length={len(self._api_key)})")
             logger.info(
                 f"[WindsurfAgent] Windsurf IDE running: {is_windsurf_running()}"
             )
