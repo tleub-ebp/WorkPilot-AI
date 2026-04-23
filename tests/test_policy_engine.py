@@ -7,14 +7,25 @@ Covers: PolicyLoader, PolicyEngine, SemanticAnalyzer, ApprovalGate.
 from __future__ import annotations
 
 import json
+import sys
 import tempfile
 from pathlib import Path
 
 import pytest
 
-import sys
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "apps" / "backend"))
 
+from core.governance.approval_gate import (
+    ApprovalGate,
+    ApprovalRequest,
+    ApprovalStatus,
+)
+from core.governance.policy_engine import (
+    AgentAction,
+    PolicyEngine,
+    PolicyEvaluation,
+    PolicyVerdict,
+)
 from core.governance.policy_loader import (
     PolicyFile,
     PolicyLoader,
@@ -23,23 +34,11 @@ from core.governance.policy_loader import (
     RuleAction,
     RuleScope,
 )
-from core.governance.policy_engine import (
-    AgentAction,
-    PolicyEngine,
-    PolicyEvaluation,
-    PolicyVerdict,
-)
 from core.governance.semantic_analyzer import (
     SemanticAnalyzer,
     SemanticViolation,
     ViolationType,
 )
-from core.governance.approval_gate import (
-    ApprovalGate,
-    ApprovalRequest,
-    ApprovalStatus,
-)
-
 
 # =========================================================================
 # Fixtures
