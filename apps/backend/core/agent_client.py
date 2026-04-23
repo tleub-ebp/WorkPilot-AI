@@ -1687,8 +1687,8 @@ class WindsurfAgentClient(AgentClient):
             # OpenAI function calling and doesn't require Windsurf IDE to be running.
             # Only fall back to gRPC if REST fails or if explicitly configured.
 
-            # Debug logging (never log key material, even partial prefixes)
-            logger.info(f"[WindsurfAgent] API key found (length={len(self._api_key)})")
+            # Debug logging (sanitized: do not log API key contents/metadata)
+            logger.info("[WindsurfAgent] API key found")
             logger.info(
                 f"[WindsurfAgent] Windsurf IDE running: {is_windsurf_running()}"
             )
@@ -1700,12 +1700,7 @@ class WindsurfAgentClient(AgentClient):
                 or len(self._api_key) > 100  # OAuth tokens are typically long
             )
 
-            logger.info(
-                f"[WindsurfAgent] OAuth token detection: is_oauth_token={is_oauth_token}, "
-                f"starts_with_oauth={self._api_key.startswith('oauth_')}, "
-                f"starts_with_sso={self._api_key.startswith('sso_')}, "
-                f"len>100={len(self._api_key) > 100}"
-            )
+            logger.info("[WindsurfAgent] OAuth token detection completed")
 
             if is_oauth_token:
                 # OAuth token → prefer REST mode for reliability

@@ -11,6 +11,8 @@ import logging
 from dataclasses import dataclass, field
 from enum import Enum
 
+from agents.scanner_base import BaseScanReport
+
 logger = logging.getLogger(__name__)
 
 
@@ -36,6 +38,10 @@ class FlakyConfidence(str, Enum):
 class TestRun:
     """A single test execution result."""
 
+    # pytest would otherwise try to collect this dataclass as a test class
+    # because of the ``Test`` prefix.
+    __test__ = False
+
     test_name: str
     passed: bool
     duration_ms: float = 0.0
@@ -46,7 +52,14 @@ class TestRun:
 
 @dataclass
 class FlakyTest:
-    """A test identified as flaky."""
+    """A test identified as flaky.
+
+    Implements :class:`agents.scanner_base.HasSeverity` via the
+    ``severity`` and ``file`` attributes, letting ``FlakyReport`` reuse
+    the shared report machinery (per-severity counts, ``blocking_count``,
+    ``passed``) from the scanner base without forcing flaky detection
+    into the per-file scanner shape.
+    """
 
     test_name: str
     file_path: str = ""
@@ -58,29 +71,66 @@ class FlakyTest:
     error_patterns: list[str] = field(default_factory=list)
     suggested_fix: str = ""
 
+    @property
+    def file(self) -> str:
+        """Alias required by :class:`HasSeverity`; exposes ``file_path``."""
+        return self.file_path
+
+    @property
+    def severity(self) -> str:
+        """Map confidence to severity vocabulary for the shared report.
+
+        A high-confidence flaky test blocks the build (you're confident
+        it's broken); low/unknown confidence is informational only.
+        """
+        if self.confidence == FlakyConfidence.HIGH:
+            return "high"
+        if self.confidence == FlakyConfidence.MEDIUM:
+            return "medium"
+        return "low"
+
 
 @dataclass
-class FlakyReport:
-    """Report of flaky test analysis."""
+class FlakyReport(BaseScanReport[FlakyTest]):
+    """Report of flaky test analysis.
 
-    flaky_tests: list[FlakyTest] = field(default_factory=list)
+    Reuses :class:`BaseScanReport` for the per-severity counters and the
+    ``passed`` / ``blocking_count`` semantics. The historical
+    ``flaky_tests`` attribute is kept as an alias for ``findings`` so
+    existing consumers (runner, frontend view) stay compatible. The
+    ``summary`` property is overridden to group by *cause* (timing /
+    network / …) rather than severity — that's what the UI renders.
+    """
+
     total_tests_analysed: int = 0
     total_runs_analysed: int = 0
 
     @property
+    def flaky_tests(self) -> list[FlakyTest]:
+        """Back-compat alias — same list object as ``findings``."""
+        return self.findings
+
+    @flaky_tests.setter
+    def flaky_tests(self, value: list[FlakyTest]) -> None:
+        self.findings = value
+
+    @property
     def flaky_count(self) -> int:
-        return len(self.flaky_tests)
+        return len(self.findings)
 
     @property
     def summary(self) -> str:
-        if not self.flaky_tests:
+        """Per-cause summary — what the UI has always displayed."""
+        if not self.findings:
             return "No flaky tests detected"
-        by_cause = {}
-        for ft in self.flaky_tests:
+        by_cause: dict[str, int] = {}
+        for ft in self.findings:
             by_cause[ft.probable_cause.value] = (
                 by_cause.get(ft.probable_cause.value, 0) + 1
             )
-        parts = [f"{count} {cause}" for cause, count in by_cause.items()]
+        # Stable ordering so test snapshots don't flap.
+        ordered = sorted(by_cause.items(), key=lambda kv: kv[0])
+        parts = [f"{count} {cause}" for cause, count in ordered]
         return f"{self.flaky_count} flaky tests: {', '.join(parts)}"
 
 
@@ -165,7 +215,7 @@ class FlakyAnalyzer:
             errors = [r.error_message for r in test_runs if r.error_message]
             cause = self._classify_cause(errors)
 
-            report.flaky_tests.append(
+            report.findings.append(
                 FlakyTest(
                     test_name=test_name,
                     total_runs=len(test_runs),
@@ -178,7 +228,7 @@ class FlakyAnalyzer:
                 )
             )
 
-        report.flaky_tests.sort(key=lambda ft: ft.flakiness_rate, reverse=True)
+        report.findings.sort(key=lambda ft: ft.flakiness_rate, reverse=True)
         return report
 
     @staticmethod
