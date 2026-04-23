@@ -38,10 +38,15 @@ class is kept bespoke, but the *report* can still reuse
 | Agent | File | Status |
 |---|---|---|
 | `flaky_test_detective` | `flaky_analyzer.py` | ✅ report migrated |
-| `git_surgeon` | `history_analyzer.py` | ⚪ candidate |
-| `prediction` | `risk_analyzer.py` | ⚪ candidate |
-| `review.test_coverage` | — | ⚪ candidate |
-| `spec.complexity` | `complexity_analyzer.py` | ⚪ candidate |
+| `git_surgeon` | `history_analyzer.py` | ✅ report migrated |
+
+**Previously listed as candidates but ruled out after audit:**
+
+| Agent | Why it doesn't fit |
+|---|---|
+| `prediction.RiskAnalyzer` | output is `list[PredictedIssue]` embedded in `PreImplementationChecklist` with many other domain fields (patterns, files_to_reference, common_mistakes). `PredictedIssue` has `likelihood` (not `severity`) and no `file`. Data model isn't a findings-report. |
+| `review.TestCoverageAnalyzer` | `analyze_coverage()` returns a `dict[str, Any]` (stats aggregate), not a `Report` class with findings. |
+| `spec.ComplexityAnalyzer` | `ComplexityAssessment` is a *single-value* assessment (one `Complexity` tier + confidence + signals), not a findings-list. Forcing `BaseScanReport` here would invent a fake findings concept. |
 
 ### Bucket 3 — stateful monitors / orchestrators (no base fits)
 

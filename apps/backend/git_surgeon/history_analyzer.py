@@ -15,6 +15,8 @@ from dataclasses import dataclass, field
 from enum import Enum
 from pathlib import Path
 
+from agents.scanner_base import BaseScanReport
+
 logger = logging.getLogger(__name__)
 
 
@@ -36,7 +38,14 @@ class SurgeryAction(str, Enum):
 
 @dataclass
 class HistoryIssue:
-    """A detected issue in Git history."""
+    """A detected issue in Git history.
+
+    Implements the :class:`agents.scanner_base.HasSeverity` duck-typed
+    contract (``severity`` + ``file``) so :class:`SurgeryPlan` can ride
+    on :class:`BaseScanReport`. ``file`` is a read-only alias of
+    ``file_path`` — we don't rename the field because the frontend view
+    and the runner serializer read ``file_path``.
+    """
 
     issue_type: HistoryIssueType
     severity: str = "medium"
@@ -46,23 +55,53 @@ class HistoryIssue:
     size_bytes: int = 0
     suggested_action: SurgeryAction = SurgeryAction.SQUASH
 
+    @property
+    def file(self) -> str:
+        """Alias required by :class:`HasSeverity`; exposes ``file_path``."""
+        return self.file_path
+
 
 @dataclass
-class SurgeryPlan:
-    """A proposed plan to clean up Git history."""
+class SurgeryPlan(BaseScanReport[HistoryIssue]):
+    """A proposed plan to clean up Git history.
 
-    issues: list[HistoryIssue] = field(default_factory=list)
+    Backed by :class:`BaseScanReport[HistoryIssue]` for the per-severity
+    counters and ``passed`` / ``blocking_count`` semantics. The
+    historical ``issues`` attribute is kept as an alias for ``findings``
+    so the runner (which reads ``plan.issues``) and frontend view stay
+    compatible.
+
+    ``summary`` is overridden to group by ``issue_type`` (large_blob /
+    sensitive_data / messy_commits / …) because that's what the UI
+    renders — not the severity bucket.
+    """
+
     actions: list[tuple[SurgeryAction, str]] = field(default_factory=list)
     estimated_size_savings_mb: float = 0.0
     requires_force_push: bool = False
 
     @property
+    def issues(self) -> list[HistoryIssue]:
+        """Back-compat alias — same list object as ``findings``."""
+        return self.findings
+
+    @issues.setter
+    def issues(self, value: list[HistoryIssue]) -> None:
+        self.findings = value
+
+    @property
     def summary(self) -> str:
-        by_type = {}
-        for issue in self.issues:
-            by_type[issue.issue_type.value] = by_type.get(issue.issue_type.value, 0) + 1
-        parts = [f"{count} {t}" for t, count in by_type.items()]
-        return ", ".join(parts) or "Clean history"
+        """Per-issue-type summary — what the UI has always displayed."""
+        if not self.findings:
+            return "Clean history"
+        by_type: dict[str, int] = {}
+        for issue in self.findings:
+            by_type[issue.issue_type.value] = (
+                by_type.get(issue.issue_type.value, 0) + 1
+            )
+        # Stable ordering so test snapshots don't flap.
+        ordered = sorted(by_type.items(), key=lambda kv: kv[0])
+        return ", ".join(f"{count} {t}" for t, count in ordered)
 
 
 _SENSITIVE_PATTERNS = [

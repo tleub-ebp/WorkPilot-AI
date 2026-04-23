@@ -37,6 +37,12 @@ from flaky_test_detective.flaky_analyzer import (  # noqa: E402
     FlakyTest,
     TestRun,
 )
+from git_surgeon.history_analyzer import (  # noqa: E402
+    HistoryIssue,
+    HistoryIssueType,
+    SurgeryAction,
+    SurgeryPlan,
+)
 from i18n_agent.i18n_scanner import (  # noqa: E402
     I18nIssue,
     I18nIssueType,
@@ -249,3 +255,83 @@ def test_flaky_empty_summary() -> None:
     assert report.summary == "No flaky tests detected"
     assert report.passed is True
     assert report.blocking_count == 0
+
+
+# ---------------------------------------------------------------------------
+# SurgeryPlan (git_surgeon).
+# ---------------------------------------------------------------------------
+
+
+def test_surgery_plan_issues_alias_is_same_object() -> None:
+    plan = SurgeryPlan()
+    assert plan.issues is plan.findings
+
+
+def test_history_issue_file_aliases_file_path() -> None:
+    issue = HistoryIssue(
+        issue_type=HistoryIssueType.LARGE_BLOB,
+        severity="high",
+        file_path="assets/video.mp4",
+    )
+    # .file is the HasSeverity alias required by BaseScanReport.
+    assert issue.file == "assets/video.mp4"
+    assert issue.file == issue.file_path
+
+
+def test_surgery_plan_passed_reflects_high_and_critical() -> None:
+    plan = SurgeryPlan()
+    # Medium-severity finding: not blocking by default.
+    plan.findings.append(
+        HistoryIssue(
+            issue_type=HistoryIssueType.MESSY_COMMITS,
+            severity="medium",
+        )
+    )
+    assert plan.passed is True
+    assert plan.blocking_count == 0
+
+    # High-severity finding: blocking.
+    plan.findings.append(
+        HistoryIssue(
+            issue_type=HistoryIssueType.LARGE_BLOB,
+            severity="high",
+            file_path="video.mp4",
+        )
+    )
+    assert plan.passed is False
+    assert plan.blocking_count == 1
+
+
+def test_surgery_plan_summary_groups_by_type_stably() -> None:
+    # Two plans, same issues, different insertion order — summary must match.
+    def make_plan(order: list[HistoryIssueType]) -> SurgeryPlan:
+        plan = SurgeryPlan()
+        for t in order:
+            plan.findings.append(
+                HistoryIssue(issue_type=t, severity="high", file_path="x")
+            )
+        return plan
+
+    first = make_plan([HistoryIssueType.LARGE_BLOB, HistoryIssueType.SENSITIVE_DATA]).summary
+    second = make_plan([HistoryIssueType.SENSITIVE_DATA, HistoryIssueType.LARGE_BLOB]).summary
+    assert first == second
+    assert "large_blob" in first
+    assert "sensitive_data" in first
+
+
+def test_surgery_plan_empty_summary() -> None:
+    plan = SurgeryPlan()
+    assert plan.summary == "Clean history"
+    assert plan.passed is True
+
+
+def test_surgery_plan_domain_fields_preserved() -> None:
+    """BaseScanReport migration must not drop the plan-specific fields."""
+    plan = SurgeryPlan(
+        actions=[(SurgeryAction.BFG_REMOVE, "remove video")],
+        estimated_size_savings_mb=42.5,
+        requires_force_push=True,
+    )
+    assert plan.actions == [(SurgeryAction.BFG_REMOVE, "remove video")]
+    assert plan.estimated_size_savings_mb == 42.5
+    assert plan.requires_force_push is True
