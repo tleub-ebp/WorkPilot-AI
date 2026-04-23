@@ -31,10 +31,14 @@ class EventType(str, Enum):
     TASK_LOCK = "task_lock"
     TASK_UNLOCK = "task_unlock"
     TASK_UPDATE = "task_update"
+    TASK_MOVE = "task_move"
     CHAT_MESSAGE = "chat_message"
     CONFLICT_DETECTED = "conflict_detected"
     CONFLICT_RESOLVED = "conflict_resolved"
     NOTIFICATION = "notification"
+    AGENT_STARTED = "agent_started"
+    AGENT_COMPLETED = "agent_completed"
+    SYNC_REQUESTED = "sync_requested"
 
 
 class ConflictResolution(str, Enum):
@@ -201,6 +205,11 @@ class ConflictRecord:
 
 
 class CollaborationServer:
+    #: Sentinel used by ``add_event_handler`` and ``on_event`` to subscribe
+    #: a listener to *every* event type. Distinct from ``None`` so callers
+    #: can still pass ``None`` to mean "not set".
+    WILDCARD_EVENT = "*"
+
     def __init__(self, base_path: Path | None = None):
         self.base_path = base_path or Path(".collaboration")
         self.base_path.mkdir(parents=True, exist_ok=True)
@@ -212,8 +221,13 @@ class CollaborationServer:
         self.events: list[RealtimeEvent] = []
         self.conflicts: dict[str, ConflictRecord] = {}
 
-        # Event handlers
-        self.event_handlers: dict[EventType, list[callable]] = {}
+        # Per-task monotonic version counters for optimistic concurrency:
+        # every ``broadcast_task_update`` / ``broadcast_task_move`` increments
+        # the version so clients can detect missed updates.
+        self.task_versions: dict[str, int] = {}
+
+        # Event handlers — keyed by EventType *or* ``WILDCARD_EVENT``.
+        self.event_handlers: dict[EventType | str, list[callable]] = {}
 
     # User management
     def connect_user(

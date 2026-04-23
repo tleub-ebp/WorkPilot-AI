@@ -31,8 +31,9 @@ function getModelInfoForLogs(): { provider: string; modelLabel: string } {
 			let modelLabel = modelId;
 
 			if (providerModels) {
-				// biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
-				const modelInfo = providerModels.find((m: any) => m.value === modelId);
+				const modelInfo = (
+					providerModels as ReadonlyArray<{ value: string; label: string }>
+				).find((m) => m.value === modelId);
 				if (modelInfo) {
 					modelLabel = modelInfo.label;
 				}
@@ -145,8 +146,7 @@ function getTimestamp(): string {
 	});
 }
 
-// biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
-function formatValue(value: any, maxLength: number = 200): string {
+function formatValue(value: unknown, maxLength: number = 200): string {
 	if (value === null || value === undefined) {
 		return "None";
 	}
@@ -244,9 +244,11 @@ function writeFrontendLog(
 	if (process.stderr?.write) {
 		process.stderr.write(`${formatted}\n`);
 	} else {
-		// Fallback to original console if available
-		// biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
-		const originalConsole = (console as any).original;
+		// Fallback to original console if available. The console-override
+		// block further down may attach an ``.original`` back-reference
+		// when it wraps the native console methods — that lives at runtime
+		// only, hence the narrow cast here.
+		const originalConsole = (console as { original?: Console }).original;
 		if (originalConsole?.error) {
 			originalConsole.error(formatted);
 		} else {
@@ -262,117 +264,92 @@ function writeFrontendLog(
 
 // Main frontend logger object
 export const frontendLog = {
-	// biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
-	debug: (message: string, ...kwargs: any[]) => {
+	debug: (message: string, ...kwargs: unknown[]) => {
 		writeFrontendLog(message, "DEBUG", "frontend", ...kwargs);
 	},
 
-	// biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
-	info: (message: string, ...kwargs: any[]) => {
+	info: (message: string, ...kwargs: unknown[]) => {
 		writeFrontendLog(message, "INFO", "frontend", ...kwargs);
 	},
 
-	// biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
-	success: (message: string, ...kwargs: any[]) => {
+	success: (message: string, ...kwargs: unknown[]) => {
 		writeFrontendLog(message, "SUCCESS", "frontend", ...kwargs);
 	},
 
-	// biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
-	warn: (message: string, ...kwargs: any[]) => {
+	warn: (message: string, ...kwargs: unknown[]) => {
 		writeFrontendLog(message, "WARNING", "frontend", ...kwargs);
 	},
 
-	// biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
-	error: (message: string, ...kwargs: any[]) => {
+	error: (message: string, ...kwargs: unknown[]) => {
 		writeFrontendLog(message, "ERROR", "frontend", ...kwargs);
 	},
 
 	// Module-specific loggers
 	main: {
-		// biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
-		debug: (message: string, ...kwargs: any[]) => {
+		debug: (message: string, ...kwargs: unknown[]) => {
 			writeFrontendLog(message, "DEBUG", "main", ...kwargs);
 		},
-		// biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
-		info: (message: string, ...kwargs: any[]) => {
+		info: (message: string, ...kwargs: unknown[]) => {
 			writeFrontendLog(message, "INFO", "main", ...kwargs);
 		},
-		// biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
-		success: (message: string, ...kwargs: any[]) => {
+		success: (message: string, ...kwargs: unknown[]) => {
 			writeFrontendLog(message, "SUCCESS", "main", ...kwargs);
 		},
-		// biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
-		warn: (message: string, ...kwargs: any[]) => {
+		warn: (message: string, ...kwargs: unknown[]) => {
 			writeFrontendLog(message, "WARNING", "main", ...kwargs);
 		},
-		// biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
-		error: (message: string, ...kwargs: any[]) => {
+		error: (message: string, ...kwargs: unknown[]) => {
 			writeFrontendLog(message, "ERROR", "main", ...kwargs);
 		},
 	},
 
 	renderer: {
-		// biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
-		debug: (message: string, ...kwargs: any[]) => {
+		debug: (message: string, ...kwargs: unknown[]) => {
 			writeFrontendLog(message, "DEBUG", "renderer", ...kwargs);
 		},
-		// biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
-		info: (message: string, ...kwargs: any[]) => {
+		info: (message: string, ...kwargs: unknown[]) => {
 			writeFrontendLog(message, "INFO", "renderer", ...kwargs);
 		},
-		// biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
-		success: (message: string, ...kwargs: any[]) => {
+		success: (message: string, ...kwargs: unknown[]) => {
 			writeFrontendLog(message, "SUCCESS", "renderer", ...kwargs);
 		},
-		// biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
-		warn: (message: string, ...kwargs: any[]) => {
+		warn: (message: string, ...kwargs: unknown[]) => {
 			writeFrontendLog(message, "WARNING", "renderer", ...kwargs);
 		},
-		// biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
-		error: (message: string, ...kwargs: any[]) => {
+		error: (message: string, ...kwargs: unknown[]) => {
 			writeFrontendLog(message, "ERROR", "renderer", ...kwargs);
 		},
 	},
 
 	ipc: {
-		// biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
-		debug: (message: string, ...kwargs: any[]) => {
+		debug: (message: string, ...kwargs: unknown[]) => {
 			writeFrontendLog(message, "DEBUG", "ipc", ...kwargs);
 		},
-		// biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
-		info: (message: string, ...kwargs: any[]) => {
+		info: (message: string, ...kwargs: unknown[]) => {
 			writeFrontendLog(message, "INFO", "ipc", ...kwargs);
 		},
-		// biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
-		success: (message: string, ...kwargs: any[]) => {
+		success: (message: string, ...kwargs: unknown[]) => {
 			writeFrontendLog(message, "SUCCESS", "ipc", ...kwargs);
 		},
-		// biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
-		warn: (message: string, ...kwargs: any[]) => {
+		warn: (message: string, ...kwargs: unknown[]) => {
 			writeFrontendLog(message, "WARNING", "ipc", ...kwargs);
 		},
-		// biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
-		error: (message: string, ...kwargs: any[]) => {
+		error: (message: string, ...kwargs: unknown[]) => {
 			writeFrontendLog(message, "ERROR", "ipc", ...kwargs);
 		},
 	},
 };
 
 // Export convenience functions
-// biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
-export const logFrontendDebug = (message: string, ...kwargs: any[]) =>
+export const logFrontendDebug = (message: string, ...kwargs: unknown[]) =>
 	frontendLog.debug(message, ...kwargs);
-// biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
-export const logFrontendInfo = (message: string, ...kwargs: any[]) =>
+export const logFrontendInfo = (message: string, ...kwargs: unknown[]) =>
 	frontendLog.info(message, ...kwargs);
-// biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
-export const logFrontendSuccess = (message: string, ...kwargs: any[]) =>
+export const logFrontendSuccess = (message: string, ...kwargs: unknown[]) =>
 	frontendLog.success(message, ...kwargs);
-// biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
-export const logFrontendWarning = (message: string, ...kwargs: any[]) =>
+export const logFrontendWarning = (message: string, ...kwargs: unknown[]) =>
 	frontendLog.warn(message, ...kwargs);
-// biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
-export const logFrontendError = (message: string, ...kwargs: any[]) =>
+export const logFrontendError = (message: string, ...kwargs: unknown[]) =>
 	frontendLog.error(message, ...kwargs);
 
 // NOTE: Console override disabled to prevent recursion issues

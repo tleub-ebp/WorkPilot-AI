@@ -115,7 +115,7 @@ See the [Setup Guide](docs/SETUP.md) for detailed instructions.
 |----------|-------------|
 | **GitHub** | Import issues, AI investigation, PR review, batch review wizard, auto-PR creation |
 | **GitLab** | Issues and merge request management with AI severity categorization |
-| **Azure DevOps** | Work item import, PR review, batch operations — _experimental: backend still returns mock data for several endpoints, see [docs/CONFIGURATION.md](docs/CONFIGURATION.md)_ |
+| **Azure DevOps** | Work item import, PR review, batch operations — _experimental: backend still returns mock data for several endpoints, see [shared_docs/CONFIGURATION.md](shared_docs/CONFIGURATION.md)_ |
 | **Linear** | Bulk issue import with team/project filtering |
 | **Jira** | Issue management integration |
 | **MCP Marketplace** | Browse, install, and configure Model Context Protocol servers |
@@ -146,7 +146,7 @@ See the [Setup Guide](docs/SETUP.md) for detailed instructions.
 | **Architecture Visualizer** | Dependency graphs, module hierarchy, and component relationship diagrams |
 | **Performance Profiler** | AI-powered bottleneck identification with optimization suggestions |
 | **Dependency Sentinel** | Monitors security vulnerabilities, version conflicts, and outdated dependencies |
-| **Self-Healing Codebase** _(experimental)_ | Automatically generates fixes when CI tests fail; integrates with Sentry, Datadog, PagerDuty for production incidents |
+| **Self-Healing Codebase** | Automatically generates fixes when CI tests fail; integrates with Sentry, Datadog, PagerDuty for production incidents |
 | **Risk Classifier** | Scores code changes by risk level with impact assessment |
 
 ### Developer Productivity
@@ -162,7 +162,7 @@ See the [Setup Guide](docs/SETUP.md) for detailed instructions.
 | **Pipeline Generator** | Generates GitHub Actions, GitLab CI, and Azure Pipelines configurations |
 | **Browser Agent** | Autonomous browser interaction for E2E test generation and visual regression |
 | **Arena Mode** | Side-by-side comparison of different AI models on the same task |
-| **Voice Control** _(experimental)_ | Hands-free task and terminal control via speech-to-text |
+| **Voice Control** | Hands-free task and terminal control via speech-to-text |
 | **Multi-Repo Orchestration** | Coordinate changes across multiple repositories simultaneously |
 | **Code Playground** | Sandbox environment for testing code snippets in isolation |
 | **Prompt Optimizer** | Analyzes and rewrites prompts for better AI output |
@@ -180,7 +180,7 @@ See the [Setup Guide](docs/SETUP.md) for detailed instructions.
 
 | Feature | Description |
 |---------|-------------|
-| **Analytics Dashboard** _(experimental — endpoints return placeholder data pending the DB-backed implementation)_ | Token consumption, cost tracking, success rates, and execution time metrics |
+| **Analytics Dashboard** | Token consumption, cost tracking, success rates, and execution time metrics — live SQLite-backed API; falls back to an explicit 503 when the analytics DB is unavailable |
 | **Cost Estimator** | Per-task cost calculation with provider comparison and budget alerts |
 | **Rate Limit Monitor** | Real-time usage tracking with proactive warnings and auto-switching triggers |
 | **Workflow Logger** | Structured execution logs with trace IDs for all agents, skills, and hooks |
