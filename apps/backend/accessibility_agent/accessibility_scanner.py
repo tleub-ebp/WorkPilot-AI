@@ -13,6 +13,8 @@ import re
 from dataclasses import dataclass, field
 from enum import Enum
 
+from agents.scanner_base import BaseScanner, BaseScanReport
+
 logger = logging.getLogger(__name__)
 
 
@@ -44,29 +46,36 @@ class A11yViolation:
     suggestion: str = ""
 
 
-@dataclass
-class A11yReport:
-    """Accessibility audit report."""
+# Accessibility uses a richer severity vocabulary than the default
+# {critical, high, medium, low, info} — only "critical" blocks by default.
+_A11Y_BLOCKING = frozenset({A11ySeverity.CRITICAL.value})
 
-    violations: list[A11yViolation] = field(default_factory=list)
-    files_scanned: int = 0
+
+@dataclass
+class A11yReport(BaseScanReport[A11yViolation]):
+    """Accessibility audit report.
+
+    Backed by :class:`agents.scanner_base.BaseScanReport`. Keeps a
+    ``violations`` alias because existing callers (runners, tests) already
+    iterate ``.violations``; new code should prefer ``.findings``.
+    """
+
     target_level: WcagLevel = WcagLevel.AA
+    blocking_severities: frozenset[str] = field(default_factory=lambda: _A11Y_BLOCKING)
+
+    @property
+    def violations(self) -> list[A11yViolation]:
+        """Back-compat alias — same list object as ``findings``."""
+        return self.findings
+
+    @violations.setter
+    def violations(self, value: list[A11yViolation]) -> None:
+        self.findings = value
 
     @property
     def critical_count(self) -> int:
-        return sum(1 for v in self.violations if v.severity == A11ySeverity.CRITICAL)
-
-    @property
-    def passed(self) -> bool:
-        return self.critical_count == 0
-
-    @property
-    def summary(self) -> str:
-        by_sev = {}
-        for v in self.violations:
-            by_sev[v.severity.value] = by_sev.get(v.severity.value, 0) + 1
-        parts = [f"{count} {sev}" for sev, count in by_sev.items()]
-        return ", ".join(parts) or "No violations"
+        """Back-compat: a11y only considers CRITICAL findings blocking."""
+        return self.blocking_count
 
 
 # Rule definitions: (regex, rule_id, description, severity, wcag_level, wcag_criteria, suggestion)
@@ -153,7 +162,7 @@ _HTML_RULES: list[
 ]
 
 
-class AccessibilityScanner:
+class AccessibilityScanner(BaseScanner[A11yViolation, A11yReport]):
     """Scan files for WCAG accessibility violations.
 
     Usage::
@@ -162,8 +171,13 @@ class AccessibilityScanner:
         report = scanner.scan_file("src/App.tsx", content)
     """
 
+    report_cls = A11yReport
+
     def __init__(self, target_level: WcagLevel = WcagLevel.AA) -> None:
         self._target_level = target_level
+
+    def _new_report(self) -> A11yReport:
+        return A11yReport(target_level=self._target_level)
 
     def scan_file(self, file_path: str, content: str) -> A11yReport:
         """Scan a single file for violations."""
@@ -181,7 +195,7 @@ class AccessibilityScanner:
         ) in _HTML_RULES:
             for i, line in enumerate(lines, 1):
                 if rule_pattern.search(line):
-                    report.violations.append(
+                    report.findings.append(
                         A11yViolation(
                             rule_id=rule_id,
                             description=desc,
@@ -195,13 +209,4 @@ class AccessibilityScanner:
                         )
                     )
 
-        return report
-
-    def scan_files(self, files: dict[str, str]) -> A11yReport:
-        """Scan multiple files. Keys are paths, values are content."""
-        report = A11yReport(target_level=self._target_level)
-        for path, content in files.items():
-            sub = self.scan_file(path, content)
-            report.violations.extend(sub.violations)
-            report.files_scanned += 1
         return report

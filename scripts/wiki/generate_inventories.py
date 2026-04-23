@@ -58,6 +58,8 @@ AGENT_CATEGORIES = {
     "competitor_analysis": "Roadmap",
 }
 
+AUTH_METHOD_API_KEY = "API Key"
+
 
 def render_agents(repo: Path, lang: str) -> str:
     prompts_dir = repo / "apps" / "backend" / "prompts"
@@ -127,24 +129,21 @@ def render_providers(repo: Path, lang: str) -> str:
             "|----------|-------------|----------------------|"
         )
     rows = [
-        ("Anthropic Claude", "OAuth / API Key", "`ANTHROPIC_API_KEY`"),
-        ("OpenAI", "OAuth / API Key", "`OPENAI_API_KEY`"),
-        ("Google Gemini", "API Key", "`GOOGLE_API_KEY`"),
-        ("Grok / xAI", "API Key", "`XAI_API_KEY`"),
+        ("Anthropic Claude", f"OAuth / {AUTH_METHOD_API_KEY}", "`ANTHROPIC_API_KEY`"),
+        ("OpenAI", f"OAuth / {AUTH_METHOD_API_KEY}", "`OPENAI_API_KEY`"),
+        ("Google Gemini", AUTH_METHOD_API_KEY, "`GOOGLE_API_KEY`"),
+        ("Grok / xAI", AUTH_METHOD_API_KEY, "`XAI_API_KEY`"),
         ("Ollama (local)", "Endpoint", "`OLLAMA_BASE_URL`"),
-        ("Azure OpenAI", "API Key + Endpoint", "`AZURE_OPENAI_*`"),
+        ("Azure OpenAI", f"{AUTH_METHOD_API_KEY} + Endpoint", "`AZURE_OPENAI_*`"),
         ("GitHub Copilot", "OAuth", "via UI"),
-        ("OpenAI-compatible custom", "API Key", "via UI"),
+        ("OpenAI-compatible custom", AUTH_METHOD_API_KEY, "via UI"),
     ]
     body = "\n".join(f"| {p} | {a} | {v} |" for p, a, v in rows)
     return f"{header}\n{body}"
 
 
-def render_modules(repo: Path, lang: str) -> str:
-    apps = repo / "apps"
-    if not apps.is_dir():
-        return _placeholder("apps directory not found", lang)
-
+def _collect_module_rows(apps: Path, repo: Path) -> list[tuple[str, str]]:
+    """Collect module rows from the apps directory."""
     rows: list[tuple[str, str]] = []
     for app in sorted(apps.iterdir()):
         if app.is_dir() and not app.name.startswith("."):
@@ -152,6 +151,15 @@ def render_modules(repo: Path, lang: str) -> str:
                 if sub.is_dir() and not sub.name.startswith((".", "_", "node_modules", "dist")):
                     rel = sub.relative_to(repo).as_posix()
                     rows.append((f"{app.name}/{sub.name}", rel))
+    return rows
+
+
+def render_modules(repo: Path, lang: str) -> str:
+    apps = repo / "apps"
+    if not apps.is_dir():
+        return _placeholder("apps directory not found", lang)
+
+    rows = _collect_module_rows(apps, repo)
 
     if lang == "fr":
         header = "| Module | Chemin |\n|--------|--------|"
@@ -231,7 +239,7 @@ def process_wiki(repo: Path, wiki: Path, dry_run: bool = False) -> int:
             continue
         lang = _lang_of(md)
 
-        def replace(match: re.Match[str]) -> str:
+        def replace(match: re.Match[str], lang=lang) -> str:
             name = match.group("name")
             renderer = RENDERERS.get(name)
             if not renderer:

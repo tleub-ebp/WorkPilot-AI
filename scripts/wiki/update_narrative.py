@@ -106,7 +106,7 @@ def refresh_narrative(claude: str, repo: Path, wiki: Path, dry_run: bool = False
         lang = _lang_of(md)
         topic = md.stem.replace(".fr", "").replace("-", " ")
 
-        def replace(match: re.Match[str]) -> str:
+        def replace(match: re.Match[str], topic=topic, lang=lang) -> str:
             nonlocal changed
             prompt = _build_narrative_prompt(topic, lang, sources)
             if dry_run:

@@ -35,29 +35,23 @@ vi.mock("electron", () => ({
 }));
 
 import { EventEmitter } from "node:events";
-import {
-	existsSync,
-	mkdirSync,
-	mkdtempSync,
-	rmSync,
-	writeFileSync,
-} from "node:fs";
-import { tmpdir } from "node:os";
-import path from "node:path";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import {
+	type AutoClaudeFixture,
+	cleanupAutoClaudeFixture,
+	createAutoClaudeFixture,
+} from "../helpers/auto-claude-fixtures";
 import {
 	findPythonCommand,
 	parsePythonCommand,
 } from "../../main/python-detector";
 
-// Test directories - use secure temp directory with random suffix
-let TEST_DIR: string;
+// Shared fixture — populated by ``beforeEach`` / ``afterEach`` below.
+// Individual tests read ``fixture.projectPath`` / ``fixture.autoClaudeSource``.
+let fixture: AutoClaudeFixture;
+// Aliases kept for parity with the earlier test file so diffs stay small.
 let TEST_PROJECT_PATH: string;
-
-function initTestDirectories(): void {
-	TEST_DIR = mkdtempSync(path.join(tmpdir(), "subprocess-spawn-test-"));
-	TEST_PROJECT_PATH = path.join(TEST_DIR, "test-project");
-}
+let AUTO_CLAUDE_SOURCE: string;
 
 // Detect the Python command that will actually be used
 // Add fallback for CI environments where Python detection might fail
@@ -121,7 +115,7 @@ if (process.env.CI) {
 }
 
 vi.mock("child_process", async (importOriginal) => {
-	const actual = await importOriginal<typeof import("child_process")>();
+	const actual = await importOriginal<typeof import("node:child_process")>();
 	return {
 		...actual,
 		spawn: vi.fn(() => mockProcess),
@@ -238,37 +232,18 @@ vi.mock("../../main/rate-limit-detector", () => ({
 	detectAuthFailure: vi.fn(() => ({ isAuthFailure: false })),
 }));
 
-// Auto-claude source path (for getAutoBuildSourcePath to find)
-let AUTO_CLAUDE_SOURCE: string;
-
-// Setup test directories
+// ``setupTestDirs`` / ``cleanupTestDirs`` are thin wrappers around the
+// shared fixture helper so that the rest of the file keeps reading
+// ``TEST_PROJECT_PATH`` / ``AUTO_CLAUDE_SOURCE`` without churn.
 function setupTestDirs(): void {
-	initTestDirectories();
-	AUTO_CLAUDE_SOURCE = path.join(TEST_DIR, "auto-claude-source");
-	mkdirSync(TEST_PROJECT_PATH, { recursive: true });
-
-	// Create auto-claude source directory that getAutoBuildSourcePath looks for
-	mkdirSync(AUTO_CLAUDE_SOURCE, { recursive: true });
-
-	// Create runners subdirectory with spec_runner.py marker (used by getAutoBuildSourcePath)
-	mkdirSync(path.join(AUTO_CLAUDE_SOURCE, "runners"), { recursive: true });
-
-	// Create mock spec_runner.py in runners/ subdirectory (used as backend marker)
-	writeFileSync(
-		path.join(AUTO_CLAUDE_SOURCE, "runners", "spec_runner.py"),
-		'# Mock spec runner\nprint("Starting spec creation")',
-	);
-	// Create mock run.py
-	writeFileSync(
-		path.join(AUTO_CLAUDE_SOURCE, "run.py"),
-		'# Mock run.py\nprint("Starting task execution")',
-	);
+	fixture = createAutoClaudeFixture();
+	TEST_PROJECT_PATH = fixture.projectPath;
+	AUTO_CLAUDE_SOURCE = fixture.autoClaudeSource;
 }
 
-// Cleanup test directories
 function cleanupTestDirs(): void {
-	if (TEST_DIR && existsSync(TEST_DIR)) {
-		rmSync(TEST_DIR, { recursive: true, force: true });
+	if (fixture) {
+		cleanupAutoClaudeFixture(fixture);
 	}
 }
 
@@ -294,7 +269,11 @@ describe("Subprocess Spawn Integration", () => {
 		vi.clearAllMocks();
 	});
 
-	describe("AgentManager", () => {
+	// -----------------------------------------------------------------
+	// Spawning — verifies that AgentManager constructs the right argv /
+	// env / cwd when starting subprocesses for each workflow phase.
+	// -----------------------------------------------------------------
+	describe("AgentManager · spawning", () => {
 		it("should spawn Python process for spec creation", async () => {
 			// Add delay for CI mock initialization
 			if (setupMockDelay > 0) {
@@ -463,7 +442,13 @@ describe("Subprocess Spawn Integration", () => {
 				expect.any(Object),
 			);
 		}, 30000); // Increase timeout for Windows CI (dynamic imports are slow)
+	});
 
+	// -----------------------------------------------------------------
+	// Event streaming — stdout/stderr buffering into `log` events, plus
+	// the one-shot `exit` and `error` events from the child process.
+	// -----------------------------------------------------------------
+	describe("AgentManager · event streaming", () => {
 		it("should emit log events from stdout", async () => {
 			// Add delay for CI mock initialization
 			if (setupMockDelay > 0) {
@@ -565,7 +550,13 @@ describe("Subprocess Spawn Integration", () => {
 				undefined,
 			);
 		}, 30000); // Increase timeout for Windows CI (dynamic imports are slow)
+	});
 
+	// -----------------------------------------------------------------
+	// Task lifecycle — explicit kill / track / re-run paths that manage
+	// the process registry, independent of the subprocess internals.
+	// -----------------------------------------------------------------
+	describe("AgentManager · task lifecycle", () => {
 		it("should kill task and remove from tracking", async () => {
 			// Add delay for CI mock initialization
 			if (setupMockDelay > 0) {
@@ -655,7 +646,13 @@ describe("Subprocess Spawn Integration", () => {
 				{ timeout: 5000 },
 			);
 		}, 15000);
+	});
 
+	// -----------------------------------------------------------------
+	// Configuration & multi-task — Python path overrides, bulk kill,
+	// sequential reuse of the same task slot.
+	// -----------------------------------------------------------------
+	describe("AgentManager · configuration & multi-task", () => {
 		it("should use configured Python path", async () => {
 			// Add delay for CI mock initialization
 			if (setupMockDelay > 0) {

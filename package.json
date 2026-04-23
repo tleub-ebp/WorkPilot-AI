@@ -26,7 +26,9 @@
 		"package:linux": "cd apps/frontend && pnpm run package:linux",
 		"merge-upstream": "node scripts/merge-upstream.js",
 		"validate:upstream": "node scripts/validate-upstream-setup.js",
-		"validate:npm-scripts": "node scripts/validate-npm-scripts.js"
+		"validate:npm-scripts": "node scripts/validate-npm-scripts.js",
+		"generate:provider-types": "node scripts/generate-provider-types.js",
+		"validate:provider-types": "node scripts/generate-provider-types.js --check"
 	},
 	"engines": {
 		"node": ">=20.0.0",
