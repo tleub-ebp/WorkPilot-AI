@@ -2,6 +2,23 @@
 
 // Types
 import type { GitStatus, Project } from "@shared/types";
+// Drag and drop (dnd-kit)
+import {
+	closestCenter,
+	DndContext,
+	type DragEndEvent,
+	DragOverlay,
+	type DragStartEvent,
+	KeyboardSensor,
+	PointerSensor,
+	useSensor,
+	useSensors,
+} from "@dnd-kit/core";
+import {
+	SortableContext,
+	sortableKeyboardCoordinates,
+	verticalListSortingStrategy,
+} from "@dnd-kit/sortable";
 // Icons
 import {
 	Accessibility,
@@ -38,8 +55,7 @@ import {
 	LayoutGrid,
 	Leaf,
 	Lightbulb,
-	// biome-ignore lint/suspicious/noShadowRestrictedNames: shadow name is intentional
-	Map,
+	Map as MapIcon,
 	MessageSquare,
 	Mic,
 	Monitor,
@@ -47,6 +63,7 @@ import {
 	PanelLeftClose,
 	Plus,
 	Puzzle,
+	RefreshCcw,
 	Rocket,
 	RotateCcw,
 	Search,
@@ -55,6 +72,7 @@ import {
 	ShieldAlert,
 	ShieldCheck,
 	Sparkles,
+	Star,
 	Store,
 	Swords,
 	Target,
@@ -125,6 +143,14 @@ import {
 	TooltipProvider,
 	TooltipTrigger,
 } from "./ui/tooltip";
+import {
+	decodeSortableId,
+	encodeSortableId,
+	FavoritesDropZone,
+	FavoritesDropZoneEmpty,
+	SortableWrapper,
+} from "./sidebar/sortable-primitives";
+import { useSidebarPrefs } from "./sidebar/use-sidebar-prefs";
 import { VoiceControlDialog } from "./voice-control/VoiceControlDialog";
 
 export type SidebarView =
@@ -451,7 +477,7 @@ const navGroups: NavGroup[] = [
 			{
 				id: "roadmap",
 				labelKey: "navigation:items.roadmap",
-				icon: Map,
+				icon: MapIcon,
 				shortcut: "RM",
 			},
 			{
@@ -753,9 +779,30 @@ export function Sidebar({
 	const gitSetupSkippedForProjectRef = useRef<string | null>(null);
 	const [gitStatus, setGitStatus] = useState<GitStatus | null>(null);
 	const [_pendingProject, setPendingProject] = useState<Project | null>(null);
-	const [expandedGroups, setExpandedGroups] = useState<Set<string>>(
-		new Set(["workspace"]),
-	); // Workspace group expanded by default
+	const {
+		prefs: sidebarPrefs,
+		toggleItemPin,
+		toggleGroupPin,
+		reorderGroups,
+		reorderItems,
+		toggleGroupExpanded,
+		setFavoritesExpanded,
+		reset: resetSidebarPrefs,
+		mergeOrder,
+	} = useSidebarPrefs();
+	const expandedGroups = useMemo(
+		() => new Set(sidebarPrefs.expandedGroups),
+		[sidebarPrefs.expandedGroups],
+	);
+	const pinnedItemsSet = useMemo(
+		() => new Set(sidebarPrefs.pinnedItems),
+		[sidebarPrefs.pinnedItems],
+	);
+	const pinnedGroupsSet = useMemo(
+		() => new Set(sidebarPrefs.pinnedGroups),
+		[sidebarPrefs.pinnedGroups],
+	);
+	const [activeDragId, setActiveDragId] = useState<string | null>(null);
 	const [searchQuery, setSearchQuery] = useState("");
 	const [isSearchOpen, setIsSearchOpen] = useState(false);
 	const searchInputRef = useRef<HTMLInputElement>(null);
@@ -850,25 +897,92 @@ export function Sidebar({
 	// Track the last loaded project ID to avoid redundant loads
 	const lastLoadedProjectIdRef = useRef<string | null>(null);
 
-	// Compute visible nav groups based on GitHub/GitLab enabled state from store
+	// Compute visible nav groups based on GitHub/GitLab enabled state from store,
+	// then apply the user's custom group + per-group item ordering from sidebarPrefs.
+	// Order merging is permissive: unknown ids in prefs are dropped, new ids fall
+	// through to their default code position — so shipping new menu items doesn't
+	// require a settings migration.
 	const visibleNavGroups = useMemo(() => {
-		const groups = [...navGroups];
+		const groups = navGroups.map((g) => ({ ...g, items: [...g.items] }));
 
-		// Add GitHub/GitLab items to integration group if enabled
 		const integrationGroup = groups.find((g) => g.id === "git-integrations");
 		if (integrationGroup) {
-			const integrationItems = [...integrationGroup.items];
 			if (githubEnabled) {
-				integrationItems.push(...githubNavItems);
+				integrationGroup.items.push(...githubNavItems);
 			}
 			if (gitlabEnabled) {
-				integrationItems.push(...gitlabNavItems);
+				integrationGroup.items.push(...gitlabNavItems);
 			}
-			integrationGroup.items = integrationItems;
 		}
 
-		return groups;
-	}, [githubEnabled, gitlabEnabled]);
+		// Apply custom group order
+		const actualGroupIds = groups.map((g) => g.id);
+		const orderedGroupIds = mergeOrder(sidebarPrefs.groupOrder, actualGroupIds);
+		const byId = new Map(groups.map((g) => [g.id, g]));
+		const orderedGroups = orderedGroupIds
+			.map((id) => byId.get(id))
+			.filter((g): g is NavGroup => Boolean(g));
+
+		// Apply custom per-group item order
+		return orderedGroups.map((group) => {
+			const actualItemIds = group.items.map((i) => i.id);
+			const preferredOrder = sidebarPrefs.itemOrder[group.id] ?? [];
+			const orderedItemIds = mergeOrder(preferredOrder, actualItemIds);
+			const itemById = new Map(group.items.map((i) => [i.id, i]));
+			const items = orderedItemIds
+				.map((id) => itemById.get(id as SidebarView))
+				.filter((i): i is NavItem => Boolean(i));
+			return { ...group, items };
+		});
+	}, [
+		githubEnabled,
+		gitlabEnabled,
+		sidebarPrefs.groupOrder,
+		sidebarPrefs.itemOrder,
+		mergeOrder,
+	]);
+
+	// Build the synthetic "Favorites" group from pinned items and pinned groups.
+	// Pinned groups contribute all their items; pinned standalone items are added
+	// in their pin order. Dedup preserves pin order so "first pinned, first shown".
+	const favoritesGroup = useMemo<NavGroup | null>(() => {
+		const allItems = visibleNavGroups.flatMap((g) => g.items);
+		const itemById = new Map(allItems.map((i) => [i.id, i]));
+
+		const collected: NavItem[] = [];
+		const seen = new Set<string>();
+
+		for (const groupId of sidebarPrefs.pinnedGroups) {
+			const group = visibleNavGroups.find((g) => g.id === groupId);
+			if (!group) continue;
+			for (const item of group.items) {
+				if (seen.has(item.id)) continue;
+				seen.add(item.id);
+				collected.push(item);
+			}
+		}
+		for (const itemId of sidebarPrefs.pinnedItems) {
+			if (seen.has(itemId)) continue;
+			const item = itemById.get(itemId as SidebarView);
+			if (!item) continue;
+			seen.add(item.id);
+			collected.push(item);
+		}
+
+		if (collected.length === 0) return null;
+
+		return {
+			id: "__favorites__",
+			labelKey: "navigation:groups.favorites",
+			icon: Star,
+			items: collected,
+			defaultExpanded: true,
+		};
+	}, [
+		visibleNavGroups,
+		sidebarPrefs.pinnedGroups,
+		sidebarPrefs.pinnedItems,
+	]);
 
 	// Get all visible items for keyboard shortcuts
 	const visibleNavItems = useMemo(() => {
@@ -1203,20 +1317,89 @@ export function Sidebar({
 	};
 
 	const toggleGroupExpansion = (groupId: string) => {
-		setExpandedGroups((prevSet) => {
-			const newSet = new Set(prevSet);
-			if (newSet.has(groupId)) {
-				newSet.delete(groupId);
-			} else {
-				newSet.add(groupId);
-			}
-			return newSet;
-		});
+		toggleGroupExpanded(groupId);
 	};
 
-	const renderNavItem = (item: NavItem, isSubItem = false) => {
+	// Require 6px of pointer movement before starting a drag so regular clicks on
+	// menu items (the most common interaction by far) never get swallowed by dnd-kit.
+	const dndSensors = useSensors(
+		useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),
+		useSensor(KeyboardSensor, {
+			coordinateGetter: sortableKeyboardCoordinates,
+		}),
+	);
+
+	const handleDragStart = useCallback((event: DragStartEvent) => {
+		setActiveDragId(String(event.active.id));
+	}, []);
+
+	// Drag-end router. A drop's effect depends on the decoded "kind" of both
+	// active and over ids — group-onto-group reorders, item-onto-item reorders
+	// within the same group (cross-group drops are ignored to keep the mental
+	// model simple), and dropping an item onto the favorites zone pins it.
+	const handleDragEnd = useCallback(
+		(event: DragEndEvent) => {
+			setActiveDragId(null);
+			const { active, over } = event;
+			if (!over) return;
+
+			const activeInfo = decodeSortableId(String(active.id));
+			const overInfo = decodeSortableId(String(over.id));
+			if (!activeInfo || !overInfo) return;
+
+			// Dropped on the favorites drop zone -> pin the item/group
+			if (overInfo.kind === "fav-group" || over.id === "__fav_drop__") {
+				if (activeInfo.kind === "item" && !pinnedItemsSet.has(activeInfo.id)) {
+					toggleItemPin(activeInfo.id);
+				} else if (
+					activeInfo.kind === "group" &&
+					!pinnedGroupsSet.has(activeInfo.id)
+				) {
+					toggleGroupPin(activeInfo.id);
+				}
+				return;
+			}
+
+			// Reorder groups (same kind, both "group")
+			if (activeInfo.kind === "group" && overInfo.kind === "group") {
+				if (activeInfo.id === overInfo.id) return;
+				const actualOrder = visibleNavGroups.map((g) => g.id);
+				reorderGroups(activeInfo.id, overInfo.id, actualOrder);
+				return;
+			}
+
+			// Reorder items within the same group
+			if (activeInfo.kind === "item" && overInfo.kind === "item") {
+				if (activeInfo.id === overInfo.id) return;
+				const group = visibleNavGroups.find(
+					(g) =>
+						g.items.some((i) => i.id === activeInfo.id) &&
+						g.items.some((i) => i.id === overInfo.id),
+				);
+				if (!group) return;
+				const actualOrder = group.items.map((i) => i.id);
+				reorderItems(group.id, activeInfo.id, overInfo.id, actualOrder);
+			}
+		},
+		[
+			visibleNavGroups,
+			pinnedItemsSet,
+			pinnedGroupsSet,
+			reorderGroups,
+			reorderItems,
+			toggleItemPin,
+			toggleGroupPin,
+		],
+	);
+
+	const renderNavItem = (
+		item: NavItem,
+		isSubItem = false,
+		context: "default" | "favorites" = "default",
+	) => {
 		const isActive = activeView === item.id;
 		const Icon = item.icon;
+		const isPinned = pinnedItemsSet.has(item.id);
 
 		// Determine CSS classes based on collapsed state and sub-item status
 		const getLayoutClasses = () => {
@@ -1229,33 +1412,78 @@ export function Sidebar({
 			return "gap-3 px-3 py-2";
 		};
 
-		const button = (
+		// Pin star lives OUTSIDE the nav button (nested <button> is invalid HTML).
+		// It's rendered as a sibling and positioned at the end of the row via flex;
+		// the button takes flex-1 so the star sits after the kbd shortcut without overlap.
+		const starButton = !isCollapsed && context !== "favorites" ? (
 			<button
 				type="button"
-				key={item.id}
-				onClick={() => handleNavClick(item.id)}
-				disabled={!selectedProjectId}
-				aria-keyshortcuts={item.shortcut}
+				onClick={(e) => {
+					e.stopPropagation();
+					toggleItemPin(item.id);
+				}}
+				aria-label={
+					isPinned
+						? t("navigation:actions.unpin")
+						: t("navigation:actions.pin")
+				}
+				aria-pressed={isPinned}
 				className={cn(
-					"flex w-[calc(100%-(--spacing(5)))] items-center rounded-lg text-sm transition-all duration-200",
-					"hover:bg-accent hover:text-accent-foreground",
-					"disabled:pointer-events-none disabled:opacity-50",
-					isActive && "bg-accent text-accent-foreground",
-					getLayoutClasses(),
+					"flex items-center justify-center w-5 h-5 shrink-0 rounded",
+					"transition-all duration-200",
+					"hover:bg-accent/60 hover:scale-110",
+					isPinned
+						? "text-amber-400 opacity-100"
+						: "text-muted-foreground/40 hover:text-amber-400 opacity-0 group-hover/nav-item:opacity-100 focus-visible:opacity-100",
 				)}
 			>
-				<Icon className="h-4 w-4 shrink-0" />
-				{!isCollapsed && (
-					<>
-						<span className="flex-1 text-left">{t(item.labelKey)}</span>
-						{item.shortcut && (
-							<kbd className="pointer-events-none hidden h-5 select-none items-center gap-1 rounded-md border border-border bg-secondary px-1.5 font-mono text-[10px] font-medium text-muted-foreground sm:flex">
-								{item.shortcut}
-							</kbd>
-						)}
-					</>
-				)}
+				<Star
+					className={cn("h-3.5 w-3.5", isPinned && "fill-amber-400")}
+				/>
 			</button>
+		) : null;
+
+		const button = (
+			<div
+				key={item.id}
+				className={cn(
+					"group/nav-item flex items-center gap-1",
+					!isCollapsed && "pr-1",
+				)}
+			>
+				<button
+					type="button"
+					onClick={() => handleNavClick(item.id)}
+					disabled={!selectedProjectId}
+					aria-keyshortcuts={item.shortcut}
+					className={cn(
+						"flex flex-1 min-w-0 items-center rounded-lg text-sm transition-all duration-200",
+						"hover:bg-accent hover:text-accent-foreground",
+						"disabled:pointer-events-none disabled:opacity-50",
+						isActive && "bg-accent text-accent-foreground",
+						isPinned &&
+							!isActive &&
+							context !== "favorites" &&
+							"ring-1 ring-inset ring-amber-400/20 shadow-[inset_0_0_12px_-6px_rgba(251,191,36,0.25)]",
+						getLayoutClasses(),
+					)}
+				>
+					<Icon className="h-4 w-4 shrink-0" />
+					{!isCollapsed && (
+						<>
+							<span className="flex-1 text-left truncate">
+								{t(item.labelKey)}
+							</span>
+							{item.shortcut && (
+								<kbd className="pointer-events-none hidden h-5 select-none items-center gap-1 rounded-md border border-border bg-secondary px-1.5 font-mono text-[10px] font-medium text-muted-foreground sm:flex">
+									{item.shortcut}
+								</kbd>
+							)}
+						</>
+					)}
+				</button>
+				{starButton}
+			</div>
 		);
 
 		// Wrap in tooltip when collapsed
@@ -1333,59 +1561,116 @@ export function Sidebar({
 		));
 	};
 
-	const renderExpandedSubGroupItem = (item: NavItem, delay: number) => (
-		<div
-			key={item.id}
-			className="animate-in slide-in-from-left-2 duration-200 ease-out"
-			style={{ animationDelay: `${delay}ms` }}
-		>
-			{renderNavItem(item, true)}
-		</div>
-	);
-
-	const renderExpandedItems = (items: NavItem[]) => {
-		const hasSubGroups = items.some((item) => item.subGroup);
-
-		if (!hasSubGroups) {
+	const renderExpandedSubGroupItem = (
+		item: NavItem,
+		delay: number,
+		context: "default" | "favorites" = "default",
+	) => {
+		// Items inside the favorites group are mirrors of the originals — they are
+		// not independently sortable, so we skip the SortableWrapper there. This
+		// keeps dnd-kit ids unique (only "item:<id>" exists, not "fav-item:<id>").
+		if (context === "favorites") {
 			return (
-				<div className="rounded-lg overflow-hidden bg-white/4 border border-white/8 px-1.5 py-1.5 space-y-0.5">
-					{items.map((item, index) =>
-						renderExpandedSubGroupItem(item, index * 50),
-					)}
+				<div
+					key={item.id}
+					className="animate-in slide-in-from-left-2 duration-200 ease-out"
+					style={{ animationDelay: `${delay}ms` }}
+				>
+					{renderNavItem(item, true, context)}
 				</div>
 			);
 		}
-
-		const subGroups = groupItemsBySubGroup(items);
-		let itemIndex = 0;
-		return subGroups.map((sg, sgIndex) => (
-			<div
-				key={sg.key}
-				className={cn(
-					"rounded-lg overflow-hidden bg-white/4 border border-white/8 px-1.5 py-1.5",
-					sgIndex > 0 && "mt-2",
-				)}
+		return (
+			<SortableWrapper
+				key={item.id}
+				sortableId={encodeSortableId("item", item.id)}
 			>
-				{sg.key && (
-					<div className="px-2 py-1 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/70">
-						{t(sg.key)}
+				{({ setNodeRef, style, isDragging, dragHandle }) => (
+					<div
+						ref={setNodeRef}
+						style={{ ...style, animationDelay: `${delay}ms` }}
+						className={cn(
+							"relative group animate-in slide-in-from-left-2 duration-200 ease-out",
+							isDragging &&
+								"ring-1 ring-primary/50 rounded-lg bg-background/80 backdrop-blur",
+						)}
+					>
+						<div className="absolute left-3 top-1/2 -translate-y-1/2 z-10">
+							{dragHandle}
+						</div>
+						{renderNavItem(item, true, context)}
 					</div>
 				)}
-				<div className="space-y-0.5">
-					{sg.items.map((item) => {
-						const delay = itemIndex * 50;
-						itemIndex++;
-						return renderExpandedSubGroupItem(item, delay);
-					})}
-				</div>
-			</div>
-		));
+			</SortableWrapper>
+		);
 	};
 
-	const renderNavGroup = (group: NavGroup) => {
-		const isExpanded = searchQuery.trim() ? true : expandedGroups.has(group.id);
+	const renderExpandedItems = (
+		items: NavItem[],
+		context: "default" | "favorites" = "default",
+	) => {
+		const hasSubGroups = items.some((item) => item.subGroup);
+		const sortableIds = items.map((i) => encodeSortableId("item", i.id));
+
+		const content = !hasSubGroups ? (
+			<div className="rounded-lg overflow-hidden bg-white/4 border border-white/8 px-1.5 py-1.5 space-y-0.5">
+				{items.map((item, index) =>
+					renderExpandedSubGroupItem(item, index * 50, context),
+				)}
+			</div>
+		) : (
+			(() => {
+				const subGroups = groupItemsBySubGroup(items);
+				let itemIndex = 0;
+				return subGroups.map((sg, sgIndex) => (
+					<div
+						key={sg.key}
+						className={cn(
+							"rounded-lg overflow-hidden bg-white/4 border border-white/8 px-1.5 py-1.5",
+							sgIndex > 0 && "mt-2",
+						)}
+					>
+						{sg.key && (
+							<div className="px-2 py-1 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/70">
+								{t(sg.key)}
+							</div>
+						)}
+						<div className="space-y-0.5">
+							{sg.items.map((item) => {
+								const delay = itemIndex * 50;
+								itemIndex++;
+								return renderExpandedSubGroupItem(item, delay, context);
+							})}
+						</div>
+					</div>
+				));
+			})()
+		);
+
+		if (context === "favorites") return content;
+		return (
+			<SortableContext
+				items={sortableIds}
+				strategy={verticalListSortingStrategy}
+			>
+				{content}
+			</SortableContext>
+		);
+	};
+
+	const renderNavGroup = (
+		group: NavGroup,
+		context: "default" | "favorites" = "default",
+	) => {
+		const isFavorites = group.id === "__favorites__";
+		const isExpanded = searchQuery.trim()
+			? true
+			: isFavorites
+				? sidebarPrefs.favoritesExpanded
+				: expandedGroups.has(group.id);
 		const GroupIcon = group.icon;
 		const hasActiveItem = group.items.some((item) => activeView === item.id);
+		const isPinned = pinnedGroupsSet.has(group.id);
 
 		if (isCollapsed) {
 			// In collapsed mode, show group icon with tooltip containing all items
@@ -1399,9 +1684,15 @@ export function Sidebar({
 									hasActiveItem
 										? "bg-accent text-accent-foreground shadow-sm"
 										: "hover:bg-accent hover:text-accent-foreground",
+									isFavorites && "ring-1 ring-amber-400/40",
 								)}
 							>
-								<GroupIcon className="h-4 w-4" />
+								<GroupIcon
+									className={cn(
+										"h-4 w-4",
+										isFavorites && "fill-amber-400 text-amber-400",
+									)}
+								/>
 							</div>
 						</div>
 					</TooltipTrigger>
@@ -1415,47 +1706,105 @@ export function Sidebar({
 			);
 		}
 
+		const toggleExpand = () => {
+			if (isFavorites) {
+				setFavoritesExpanded(!isExpanded);
+			} else {
+				toggleGroupExpansion(group.id);
+			}
+		};
+
 		return (
-			<div key={group.id} className="space-y-1">
-				<button
-					type="button"
-					onClick={() => toggleGroupExpansion(group.id)}
-					className={cn(
-						"flex w-full items-center rounded-lg text-sm transition-all duration-200 hover:scale-[1.02]",
-						"hover:bg-accent hover:text-accent-foreground hover:shadow-sm",
-						hasActiveItem && "bg-accent/50 text-accent-foreground shadow-sm",
-						"gap-3 px-3 py-2.5",
-					)}
-				>
-					<div
+			<div
+				key={group.id}
+				className={cn(
+					"group/nav-group space-y-1",
+					isFavorites &&
+						"rounded-lg bg-linear-to-b from-amber-400/5 to-transparent border border-amber-400/20 p-1",
+				)}
+			>
+				<div className="flex items-center gap-1 pr-1">
+					<button
+						type="button"
+						onClick={toggleExpand}
 						className={cn(
-							"flex items-center justify-center w-8 h-8 rounded-md transition-colors",
-							hasActiveItem
-								? "bg-primary/10 text-primary"
-								: "text-muted-foreground",
+							"flex flex-1 min-w-0 items-center rounded-lg text-sm transition-all duration-200 hover:scale-[1.02]",
+							"hover:bg-accent hover:text-accent-foreground hover:shadow-sm",
+							hasActiveItem && "bg-accent/50 text-accent-foreground shadow-sm",
+							"gap-3 px-3 py-2.5",
 						)}
 					>
-						<GroupIcon className="h-4 w-4" />
-					</div>
-					<span className="flex-1 text-left font-medium">
-						{t(group.labelKey)}
-					</span>
-					<div className="flex items-center gap-1">
-						<span className="text-xs text-muted-foreground bg-muted px-1.5 py-0.5 rounded-full">
-							{group.items.length}
-						</span>
-						<ChevronRight
+						<div
 							className={cn(
-								"h-4 w-4 shrink-0 transition-transform duration-300 text-muted-foreground",
-								isExpanded && "rotate-90",
+								"flex items-center justify-center w-8 h-8 rounded-md transition-colors shrink-0",
+								isFavorites
+									? "bg-amber-400/10 text-amber-400"
+									: hasActiveItem
+										? "bg-primary/10 text-primary"
+										: "text-muted-foreground",
 							)}
-						/>
-					</div>
-				</button>
+						>
+							<GroupIcon
+								className={cn(
+									"h-4 w-4",
+									isFavorites && "fill-amber-400 text-amber-400",
+								)}
+							/>
+						</div>
+						<span className="flex-1 text-left font-medium truncate">
+							{t(group.labelKey)}
+						</span>
+						<div className="flex items-center gap-1 shrink-0">
+							<span
+								className={cn(
+									"text-xs px-1.5 py-0.5 rounded-full",
+									isFavorites
+										? "text-amber-400 bg-amber-400/10"
+										: "text-muted-foreground bg-muted",
+								)}
+							>
+								{group.items.length}
+							</span>
+							<ChevronRight
+								className={cn(
+									"h-4 w-4 shrink-0 transition-transform duration-300 text-muted-foreground",
+									isExpanded && "rotate-90",
+								)}
+							/>
+						</div>
+					</button>
+					{context !== "favorites" && !isFavorites && (
+						<button
+							type="button"
+							onClick={(e) => {
+								e.stopPropagation();
+								toggleGroupPin(group.id);
+							}}
+							aria-label={
+								isPinned
+									? t("navigation:actions.unpinGroup")
+									: t("navigation:actions.pinGroup")
+							}
+							aria-pressed={isPinned}
+							className={cn(
+								"flex items-center justify-center w-5 h-5 shrink-0 rounded",
+								"transition-all duration-200",
+								"hover:bg-accent/60 hover:scale-110",
+								isPinned
+									? "text-amber-400 opacity-100"
+									: "text-muted-foreground/40 hover:text-amber-400 opacity-0 group-hover/nav-group:opacity-100 focus-visible:opacity-100",
+							)}
+						>
+							<Star
+								className={cn("h-3.5 w-3.5", isPinned && "fill-amber-400")}
+							/>
+						</button>
+					)}
+				</div>
 
 				{isExpanded && (
 					<div className="space-y-1 animate-in slide-in-from-top-2 duration-300 ease-out">
-						{renderExpandedItems(group.items)}
+						{renderExpandedItems(group.items, context)}
 					</div>
 				)}
 			</div>
@@ -1610,17 +1959,111 @@ export function Sidebar({
 							isCollapsed ? "px-2" : "px-3",
 						)}
 					>
-						{/* Navigation Groups */}
-						<div className="space-y-2">
-							{filteredNavGroups.map(renderNavGroup)}
-							{!isCollapsed &&
-								searchQuery.trim() &&
-								filteredNavGroups.length === 0 && (
-									<p className="px-3 py-4 text-sm text-center text-muted-foreground">
-										{t("search.noResults")}
-									</p>
+						{/* Navigation Groups with DnD */}
+						<DndContext
+							sensors={dndSensors}
+							collisionDetection={closestCenter}
+							onDragStart={handleDragStart}
+							onDragEnd={handleDragEnd}
+							onDragCancel={() => setActiveDragId(null)}
+						>
+							<div className="space-y-2">
+								{favoritesGroup && !searchQuery.trim() && (
+									<FavoritesDropZone
+										isDragging={Boolean(activeDragId)}
+										active={Boolean(
+											activeDragId &&
+												decodeSortableId(activeDragId)?.kind !== "fav-group",
+										)}
+									>
+										{renderNavGroup(favoritesGroup, "favorites")}
+									</FavoritesDropZone>
 								)}
-						</div>
+								{!favoritesGroup &&
+									!searchQuery.trim() &&
+									!isCollapsed &&
+									Boolean(activeDragId) && (
+										<FavoritesDropZoneEmpty
+											label={t("navigation:favorites.dropHint")}
+										/>
+									)}
+								<SortableContext
+									items={filteredNavGroups.map((g) =>
+										encodeSortableId("group", g.id),
+									)}
+									strategy={verticalListSortingStrategy}
+								>
+									{filteredNavGroups.map((group) => (
+										<SortableWrapper
+											key={group.id}
+											sortableId={encodeSortableId("group", group.id)}
+											disabled={Boolean(searchQuery.trim()) || isCollapsed}
+										>
+											{({ setNodeRef, style, isDragging, dragHandle }) => (
+												<div
+													ref={setNodeRef}
+													style={style}
+													className={cn(
+														"relative group",
+														isDragging &&
+															"ring-1 ring-primary/50 rounded-lg bg-background/80 backdrop-blur",
+													)}
+												>
+													{!isCollapsed && !searchQuery.trim() && (
+														<div className="absolute -left-0.5 top-4 z-10">
+															{dragHandle}
+														</div>
+													)}
+													{renderNavGroup(group)}
+												</div>
+											)}
+										</SortableWrapper>
+									))}
+								</SortableContext>
+								{!isCollapsed &&
+									searchQuery.trim() &&
+									filteredNavGroups.length === 0 && (
+										<p className="px-3 py-4 text-sm text-center text-muted-foreground">
+											{t("search.noResults")}
+										</p>
+									)}
+								{!isCollapsed &&
+									!searchQuery.trim() &&
+									(sidebarPrefs.pinnedItems.length > 0 ||
+										sidebarPrefs.pinnedGroups.length > 0 ||
+										sidebarPrefs.groupOrder.length > 0 ||
+										Object.keys(sidebarPrefs.itemOrder).length > 0) && (
+										<button
+											type="button"
+											onClick={resetSidebarPrefs}
+											className="mt-3 w-full flex items-center justify-center gap-2 px-3 py-1.5 rounded-md text-xs text-muted-foreground hover:text-foreground hover:bg-accent/50 transition-colors"
+										>
+											<RefreshCcw className="h-3 w-3" />
+											{t("navigation:actions.resetLayout")}
+										</button>
+									)}
+							</div>
+							<DragOverlay dropAnimation={null}>
+								{activeDragId ? (
+									<div className="rounded-lg bg-accent/80 backdrop-blur border border-primary/40 shadow-2xl px-3 py-2 text-sm">
+										{(() => {
+											const info = decodeSortableId(activeDragId);
+											if (!info) return null;
+											if (info.kind === "group") {
+												const g = visibleNavGroups.find(
+													(x) => x.id === info.id,
+												);
+												return g ? t(g.labelKey) : null;
+											}
+											const item = visibleNavGroups
+												.flatMap((x) => x.items)
+												.find((x) => x.id === info.id);
+											return item ? t(item.labelKey) : null;
+										})()}
+									</div>
+								) : null}
+							</DragOverlay>
+						</DndContext>
 					</div>
 				</ScrollArea>
 
