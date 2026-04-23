@@ -6,20 +6,18 @@ Covers: VisualDiffEngine, SemanticDiffAnalyzer, RenderLoop.
 
 from __future__ import annotations
 
+import sys
 from pathlib import Path
 
 import pytest
 
-import sys
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "apps" / "backend"))
 
-from design_to_code.visual_diff import (
-    DiffSeverity,
-    PixelGrid,
-    RegionDiff,
-    VisualDiffConfig,
-    VisualDiffEngine,
-    VisualDiffResult,
+from design_to_code.render_loop import (
+    RenderIteration,
+    RenderLoop,
+    RenderLoopConfig,
+    RenderResult,
 )
 from design_to_code.semantic_diff import (
     ComponentDiff,
@@ -29,13 +27,14 @@ from design_to_code.semantic_diff import (
     SemanticDiffAnalyzer,
     SemanticDiffResult,
 )
-from design_to_code.render_loop import (
-    RenderIteration,
-    RenderLoop,
-    RenderLoopConfig,
-    RenderResult,
+from design_to_code.visual_diff import (
+    DiffSeverity,
+    PixelGrid,
+    RegionDiff,
+    VisualDiffConfig,
+    VisualDiffEngine,
+    VisualDiffResult,
 )
-
 
 # =========================================================================
 # Helpers
