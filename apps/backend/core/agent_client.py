@@ -1700,9 +1700,7 @@ class WindsurfAgentClient(AgentClient):
                 or len(self._api_key) > 100  # OAuth tokens are typically long
             )
 
-            logger.info(
-                "[WindsurfAgent] OAuth token detection completed"
-            )
+            logger.info("[WindsurfAgent] OAuth token detection completed")
 
             if is_oauth_token:
                 # OAuth token → prefer REST mode for reliability
