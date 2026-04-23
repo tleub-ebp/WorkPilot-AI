@@ -7,16 +7,14 @@ Covers: PricingCatalog, LiveCostTracker, BudgetEnforcer, ReservationManager.
 from __future__ import annotations
 
 import json
+import sys
 import time
 from pathlib import Path
 
 import pytest
 
-import sys
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "apps" / "backend"))
 
-from cost_intelligence.catalog import ModelPricing, PricingCatalog
-from cost_intelligence.live_tracker import CostEvent, LiveCostTracker, TrackerSnapshot
 from cost_intelligence.budget_enforcer import (
     AlertLevel,
     BudgetConfig,
@@ -25,12 +23,13 @@ from cost_intelligence.budget_enforcer import (
     CircuitBreakerState,
     DegradationTier,
 )
+from cost_intelligence.catalog import ModelPricing, PricingCatalog
+from cost_intelligence.live_tracker import CostEvent, LiveCostTracker, TrackerSnapshot
 from cost_intelligence.reservation import (
     BudgetReservation,
     ReservationManager,
     ReservationStatus,
 )
-
 
 # =========================================================================
 # PricingCatalog tests
