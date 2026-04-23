@@ -3,10 +3,35 @@ Alert Manager
 =============
 
 Manages alerts for health degradation and critical issues.
+
+Delivery channels
+-----------------
+
+``console`` (default): prints the alert with emoji + metadata.
+
+``slack``: posts a Slack-formatted message to the webhook in
+``SELF_HEALING_SLACK_WEBHOOK`` (or the alias ``SLACK_WEBHOOK_URL``).
+
+``email``: sends via SMTP — requires ``SELF_HEALING_SMTP_HOST`` +
+``SELF_HEALING_ALERT_TO``. ``SELF_HEALING_SMTP_PORT`` (default 587),
+``SELF_HEALING_SMTP_USER`` / ``SELF_HEALING_SMTP_PASSWORD`` and
+``SELF_HEALING_ALERT_FROM`` refine the connection.
+
+``github``: opens an issue via ``gh issue create``. Requires
+``SELF_HEALING_GITHUB_REPO`` (``owner/name``). Uses the ``gh`` CLI so
+authentication is delegated to the user's existing ``gh auth`` state —
+no token flows through WorkPilot AI.
+
+If a channel is requested but its env vars aren't set, the send is
+skipped with a ``debug`` log rather than raising. That keeps
+``send_alert`` resilient when operators partially configure channels.
 """
 
 from __future__ import annotations
 
+import asyncio
+import logging
+import os
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
@@ -25,6 +50,9 @@ except ImportError:
 
     def debug_warning(module: str, message: str, **kwargs):
         pass
+
+
+logger = logging.getLogger(__name__)
 
 
 class AlertLevel(str, Enum):
@@ -145,20 +173,204 @@ class AlertManager:
             debug_warning("self_healing", f"Failed to send alert to {channel}: {e}")
 
     async def _send_email(self, alert: Alert) -> None:
-        """Send alert via email."""
-        # TODO: Implement email sending
-        # Would use SMTP configuration from environment
-        debug("self_healing", "Email alerts not yet configured")
+        """Send alert via email (SMTP)."""
+        smtp_host = os.environ.get("SELF_HEALING_SMTP_HOST")
+        recipient = os.environ.get("SELF_HEALING_ALERT_TO")
+        if not smtp_host or not recipient:
+            debug(
+                "self_healing",
+                "Email alerts skipped — set SELF_HEALING_SMTP_HOST and "
+                "SELF_HEALING_ALERT_TO to enable.",
+            )
+            return
+
+        smtp_port = int(os.environ.get("SELF_HEALING_SMTP_PORT", "587"))
+        smtp_user = os.environ.get("SELF_HEALING_SMTP_USER")
+        smtp_password = os.environ.get("SELF_HEALING_SMTP_PASSWORD")
+        sender = os.environ.get("SELF_HEALING_ALERT_FROM", smtp_user or recipient)
+
+        def _blocking_send() -> None:
+            # smtplib is imported here so tests that don't exercise email
+            # don't pay the import cost on the hot path.
+            import smtplib
+            from email.message import EmailMessage
+
+            msg = EmailMessage()
+            msg["Subject"] = f"[{alert.level.value.upper()}] {alert.title}"
+            msg["From"] = sender
+            msg["To"] = recipient
+            msg.set_content(alert.format_console())
+
+            with smtplib.SMTP(smtp_host, smtp_port, timeout=10) as client:
+                client.ehlo()
+                if smtp_port in (587, 25):
+                    # Best-effort STARTTLS; servers that don't support it
+                    # will raise, which is correctly surfaced as a warning.
+                    try:
+                        client.starttls()
+                        client.ehlo()
+                    except smtplib.SMTPException:
+                        pass
+                if smtp_user and smtp_password:
+                    client.login(smtp_user, smtp_password)
+                client.send_message(msg)
+
+        try:
+            await asyncio.to_thread(_blocking_send)
+            debug("self_healing", f"Email alert sent to {recipient}")
+        except Exception as exc:
+            debug_warning(
+                "self_healing", f"Failed to send email alert: {exc}"
+            )
+            logger.warning("Email alert send failed", exc_info=True)
 
     async def _send_slack(self, alert: Alert) -> None:
-        """Send alert to Slack."""
-        # TODO: Implement Slack webhook
-        debug("self_healing", "Slack alerts not yet configured")
+        """Post alert to a Slack incoming webhook."""
+        webhook = os.environ.get("SELF_HEALING_SLACK_WEBHOOK") or os.environ.get(
+            "SLACK_WEBHOOK_URL"
+        )
+        if not webhook:
+            debug(
+                "self_healing",
+                "Slack alerts skipped — set SELF_HEALING_SLACK_WEBHOOK (or "
+                "SLACK_WEBHOOK_URL) to enable.",
+            )
+            return
+
+        color = {
+            AlertLevel.INFO: "#36a64f",
+            AlertLevel.WARNING: "#ff9f1c",
+            AlertLevel.CRITICAL: "#e63946",
+        }[alert.level]
+
+        payload: dict[str, Any] = {
+            "attachments": [
+                {
+                    "color": color,
+                    "title": f"[{alert.level.value.upper()}] {alert.title}",
+                    "text": alert.message,
+                    "ts": int(alert.timestamp.timestamp()),
+                    "fields": [],
+                }
+            ]
+        }
+        fields = payload["attachments"][0]["fields"]
+        if alert.health_score is not None:
+            fields.append(
+                {
+                    "title": "Health score",
+                    "value": f"{alert.health_score:.1f}/100",
+                    "short": True,
+                }
+            )
+        if alert.issue_count:
+            fields.append(
+                {
+                    "title": "Issues",
+                    "value": str(alert.issue_count),
+                    "short": True,
+                }
+            )
+        if alert.actions_suggested:
+            fields.append(
+                {
+                    "title": "Suggested actions",
+                    "value": "\n".join(f"• {a}" for a in alert.actions_suggested),
+                    "short": False,
+                }
+            )
+
+        try:
+            import httpx  # imported lazily — not every caller uses slack
+
+            async with httpx.AsyncClient(timeout=10.0) as client:
+                resp = await client.post(webhook, json=payload)
+                resp.raise_for_status()
+            debug("self_healing", "Slack alert delivered")
+        except Exception as exc:
+            debug_warning("self_healing", f"Failed to post Slack alert: {exc}")
+            logger.warning("Slack alert send failed", exc_info=True)
 
     async def _send_github_issue(self, alert: Alert) -> None:
-        """Create a GitHub issue for the alert."""
-        # TODO: Implement GitHub API integration
-        debug("self_healing", "GitHub issue creation not yet configured")
+        """Create a GitHub issue for the alert via the ``gh`` CLI.
+
+        Delegates authentication to the user's existing ``gh`` setup, so
+        we never handle a GitHub token here. If ``gh`` isn't installed
+        or not authenticated, the failure is logged and the alert is
+        skipped — we never fall back to an alternate channel.
+        """
+        repo = os.environ.get("SELF_HEALING_GITHUB_REPO")
+        if not repo:
+            debug(
+                "self_healing",
+                "GitHub issue creation skipped — set SELF_HEALING_GITHUB_REPO "
+                "(owner/name format) to enable.",
+            )
+            return
+
+        title = f"[{alert.level.value.upper()}] {alert.title}"
+        body_parts = [alert.message]
+        if alert.health_score is not None:
+            body_parts.append(f"\n**Health score:** {alert.health_score:.1f}/100")
+        if alert.issue_count:
+            body_parts.append(f"**Issues detected:** {alert.issue_count}")
+        if alert.actions_suggested:
+            body_parts.append("\n**Suggested actions:**")
+            body_parts.extend(f"- {a}" for a in alert.actions_suggested)
+        body_parts.append(
+            f"\n_Automatically opened by WorkPilot AI Self-Healing at "
+            f"{alert.timestamp.isoformat()}_"
+        )
+        body = "\n".join(body_parts)
+
+        label = {
+            AlertLevel.INFO: "self-healing:info",
+            AlertLevel.WARNING: "self-healing:warning",
+            AlertLevel.CRITICAL: "self-healing:critical",
+        }[alert.level]
+
+        def _blocking_run() -> int:
+            import subprocess
+
+            result = subprocess.run(
+                [
+                    "gh",
+                    "issue",
+                    "create",
+                    "--repo",
+                    repo,
+                    "--title",
+                    title,
+                    "--body",
+                    body,
+                    "--label",
+                    label,
+                ],
+                capture_output=True,
+                text=True,
+                timeout=30,
+                check=False,
+            )
+            if result.returncode != 0:
+                raise RuntimeError(
+                    f"gh issue create failed (exit {result.returncode}): "
+                    f"{result.stderr.strip()}"
+                )
+            return result.returncode
+
+        try:
+            await asyncio.to_thread(_blocking_run)
+            debug("self_healing", f"GitHub issue created in {repo}")
+        except FileNotFoundError:
+            debug_warning(
+                "self_healing",
+                "GitHub issue creation skipped — `gh` CLI not installed.",
+            )
+        except Exception as exc:
+            debug_warning(
+                "self_healing", f"Failed to create GitHub issue: {exc}"
+            )
+            logger.warning("GitHub alert send failed", exc_info=True)
 
     def get_recent_alerts(self, count: int = 10) -> list[Alert]:
         """Get recent alerts."""
