@@ -219,9 +219,7 @@ class AlertManager:
             await asyncio.to_thread(_blocking_send)
             debug("self_healing", f"Email alert sent to {recipient}")
         except Exception as exc:
-            debug_warning(
-                "self_healing", f"Failed to send email alert: {exc}"
-            )
+            debug_warning("self_healing", f"Failed to send email alert: {exc}")
             logger.warning("Email alert send failed", exc_info=True)
 
     async def _send_slack(self, alert: Alert) -> None:
@@ -367,9 +365,7 @@ class AlertManager:
                 "GitHub issue creation skipped — `gh` CLI not installed.",
             )
         except Exception as exc:
-            debug_warning(
-                "self_healing", f"Failed to create GitHub issue: {exc}"
-            )
+            debug_warning("self_healing", f"Failed to create GitHub issue: {exc}")
             logger.warning("GitHub alert send failed", exc_info=True)
 
     def get_recent_alerts(self, count: int = 10) -> list[Alert]:

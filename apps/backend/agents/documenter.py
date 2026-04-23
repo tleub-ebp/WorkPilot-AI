@@ -27,6 +27,8 @@ logger = logging.getLogger(__name__)
 # Constants
 DEFAULT_SOURCE_PATH = "<source>"
 NONE_PATH = "<none>"
+DOCSTRING_PREFIX = '    """'
+DOCSTRING_SUFFIX = '\n    """'
 
 # ---------------------------------------------------------------------------
 # Enums
@@ -193,7 +195,7 @@ class DocAnalyzer:
         return self.analyze_source(source, file_path)
 
     def analyze_source(
-        self, source: str, file_path: str = "<source>"
+        self, source: str, file_path: str = DEFAULT_SOURCE_PATH
     ) -> list[SymbolDoc]:
         """Analyze Python source code for documentation coverage.
 
@@ -395,7 +397,7 @@ class DocGenerator:
             parts.append("    Returns:")
             parts.append(f"        {symbol.return_type}: ")
 
-        docstring = '    """' + "\n".join(parts) + '\n    """'
+        docstring = DOCSTRING_PREFIX + "\n".join(parts) + DOCSTRING_SUFFIX
         return docstring
 
     def _generate_numpy_docstring(self, symbol: SymbolDoc) -> str:
@@ -417,7 +419,7 @@ class DocGenerator:
             parts.append(f"    {symbol.return_type}")
             parts.append("        ")
 
-        docstring = '    """' + "\n".join(parts) + '\n    """'
+        docstring = DOCSTRING_PREFIX + "\n".join(parts) + DOCSTRING_SUFFIX
         return docstring
 
     def _generate_sphinx_docstring(self, symbol: SymbolDoc) -> str:
@@ -434,7 +436,7 @@ class DocGenerator:
             parts.append("    :returns: ")
             parts.append(f"    :rtype: {symbol.return_type}")
 
-        docstring = '    """' + "\n".join(parts) + '\n    """'
+        docstring = DOCSTRING_PREFIX + "\n".join(parts) + DOCSTRING_SUFFIX
         return docstring
 
     def _generate_jsdoc(self, symbol: SymbolDoc) -> str:
@@ -630,14 +632,16 @@ class DocumentationAgent:
         output_format = fmt or self.default_format
 
         if source:
-            symbols = self.analyzer.analyze_source(source, file_path or "<source>")
+            symbols = self.analyzer.analyze_source(
+                source, file_path or DEFAULT_SOURCE_PATH
+            )
         elif file_path:
             symbols = self.analyzer.analyze_file(file_path)
         else:
-            return DocGenerationResult(source_path="<none>")
+            return DocGenerationResult(source_path=NONE_PATH)
 
         result = DocGenerationResult(
-            source_path=file_path or "<source>",
+            source_path=file_path or DEFAULT_SOURCE_PATH,
             symbols_analyzed=len(symbols),
             output_format=output_format,
         )
@@ -707,7 +711,9 @@ class DocumentationAgent:
         else:
             # Class diagram
             if source:
-                symbols = self.analyzer.analyze_source(source, file_path or "<source>")
+                symbols = self.analyzer.analyze_source(
+                    source, file_path or DEFAULT_SOURCE_PATH
+                )
             elif file_path:
                 symbols = self.analyzer.analyze_file(file_path)
             else:
@@ -715,7 +721,7 @@ class DocumentationAgent:
             diagram = self.generator.generate_mermaid_class_diagram(symbols)
 
         result = DocGenerationResult(
-            source_path=dir_path or file_path or "<source>",
+            source_path=dir_path or file_path or DEFAULT_SOURCE_PATH,
             diagram_content=diagram,
             symbols_analyzed=len(symbols)
             if diagram_type != DiagramType.MODULE_DEPENDENCY
@@ -741,7 +747,9 @@ class DocumentationAgent:
             Dict with coverage statistics.
         """
         if source:
-            symbols = self.analyzer.analyze_source(source, file_path or "<source>")
+            symbols = self.analyzer.analyze_source(
+                source, file_path or DEFAULT_SOURCE_PATH
+            )
         elif file_path:
             symbols = self.analyzer.analyze_file(file_path)
         else:
