@@ -96,9 +96,7 @@ class SurgeryPlan(BaseScanReport[HistoryIssue]):
             return "Clean history"
         by_type: dict[str, int] = {}
         for issue in self.findings:
-            by_type[issue.issue_type.value] = (
-                by_type.get(issue.issue_type.value, 0) + 1
-            )
+            by_type[issue.issue_type.value] = by_type.get(issue.issue_type.value, 0) + 1
         # Stable ordering so test snapshots don't flap.
         ordered = sorted(by_type.items(), key=lambda kv: kv[0])
         return ", ".join(f"{count} {t}" for t, count in ordered)
