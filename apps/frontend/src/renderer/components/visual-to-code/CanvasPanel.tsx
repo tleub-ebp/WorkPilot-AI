@@ -604,17 +604,37 @@ export const CanvasPanel: React.FC = () => {
 		onEdgesChange(changes);
 	};
 
-	const getDefaultExplorerRoot = () => {
-		if (globalThis.electronAPI?.getUserHome) {
-			const home = globalThis.electronAPI.getUserHome();
-			if (home && home.length > 0) return home;
-		}
+	const getFallbackExplorerRoot = () => {
 		// biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
 		if ((globalThis as any).platform?.isWindows) return "C:\\";
 		return "/";
 	};
-	const [explorerRoot, setExplorerRoot] = useState(getDefaultExplorerRoot());
+	const [explorerRoot, setExplorerRoot] = useState(getFallbackExplorerRoot());
 	const [explorerRootInput, setExplorerRootInput] = useState(explorerRoot);
+
+	React.useEffect(() => {
+		let cancelled = false;
+		const api = globalThis.electronAPI?.getUserHome;
+		if (!api) return;
+		(async () => {
+			try {
+				const home = await api();
+				if (cancelled || !home) return;
+				setExplorerRoot((prev) =>
+					prev === getFallbackExplorerRoot() ? home : prev,
+				);
+				setExplorerRootInput((prev) =>
+					prev === getFallbackExplorerRoot() ? home : prev,
+				);
+			} catch {
+				// keep fallback
+			}
+		})();
+		return () => {
+			cancelled = true;
+		};
+		// biome-ignore lint/correctness/useExhaustiveDependencies: getFallbackExplorerRoot is stable
+	}, []);
 
 	React.useEffect(() => {
 		if (showSaveAsDialog) {

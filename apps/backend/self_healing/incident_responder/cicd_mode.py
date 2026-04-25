@@ -154,6 +154,13 @@ class CICDMode:
         cwd = str(working_dir or self.project_dir)
         test_cmd = self._detect_test_command()
 
+        if not test_cmd:
+            return (
+                False,
+                "No test command detected for this project",
+                ["NO_TEST_COMMAND"],
+            )
+
         try:
             result = subprocess.run(
                 test_cmd,
@@ -161,9 +168,9 @@ class CICDMode:
                 capture_output=True,
                 text=True,
                 timeout=300,
-                shell=True,  # nosec B602 - command uses shell features (2>&1 redirection) from _detect_test_command
+                shell=False,
             )
-            output = result.stdout + "\n" + result.stderr
+            output = (result.stdout or "") + "\n" + (result.stderr or "")
             passed = result.returncode == 0
             failing = self._parse_failing_tests(output) if not passed else []
             return passed, output, failing
@@ -172,15 +179,19 @@ class CICDMode:
         except (FileNotFoundError, OSError) as e:
             return False, f"Failed to run tests: {e}", ["EXECUTION_ERROR"]
 
-    def _detect_test_command(self) -> str:
-        """Detect the appropriate test command for the project."""
+    def _detect_test_command(self) -> list[str]:
+        """Detect the appropriate test command for the project.
+
+        Returns the command as an argv list (for shell=False execution).
+        Returns an empty list when no test command can be inferred.
+        """
         project = self.project_dir
 
         # Python
         if (project / "pytest.ini").exists() or (project / "pyproject.toml").exists():
             if (project / ".venv").exists():
-                return ".venv/bin/pytest -v --tb=short 2>&1"
-            return "pytest -v --tb=short 2>&1"
+                return [".venv/bin/pytest", "-v", "--tb=short"]
+            return ["pytest", "-v", "--tb=short"]
 
         # Node.js
         if (project / "package.json").exists():
@@ -191,22 +202,22 @@ class CICDMode:
                 scripts = pkg.get("scripts", {})
                 if "test" in scripts:
                     if (project / "pnpm-lock.yaml").exists():
-                        return "pnpm test 2>&1"
+                        return ["pnpm", "test"]
                     elif (project / "yarn.lock").exists():
-                        return "yarn test 2>&1"
-                    return "npm test 2>&1"
+                        return ["yarn", "test"]
+                    return ["npm", "test"]
             except (json.JSONDecodeError, OSError):
                 pass
 
         # Go
         if (project / "go.mod").exists():
-            return "go test ./... 2>&1"
+            return ["go", "test", "./..."]
 
         # Rust
         if (project / "Cargo.toml").exists():
-            return "cargo test 2>&1"
+            return ["cargo", "test"]
 
-        return "echo 'No test command detected'"
+        return []
 
     def _get_commit_diff(self, commit_sha: str) -> str:
         """Get the diff for a specific commit."""

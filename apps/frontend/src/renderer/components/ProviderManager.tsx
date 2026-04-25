@@ -48,11 +48,12 @@ export const ProviderManager: React.FC<{ selected: string }> = ({
 	const [isGenerating, setIsGenerating] = useState(false);
 
 	useEffect(() => {
+		const controller = new AbortController();
 		setIsLoadingProviders(true);
 		setIsLoadingConfigs(true);
 
 		Promise.all([
-			fetch(`${API_BASE}/providers`).then((res) => {
+			fetch(`${API_BASE}/providers`, { signal: controller.signal }).then((res) => {
 				if (!res.ok) throw new Error(`HTTP ${res.status}`);
 				const contentType = res.headers.get("content-type");
 				if (!contentType?.includes("application/json")) {
@@ -60,14 +61,16 @@ export const ProviderManager: React.FC<{ selected: string }> = ({
 				}
 				return res.json();
 			}),
-			fetch(`${API_BASE}/providers/configs`).then((res) => {
-				if (!res.ok) throw new Error(`HTTP ${res.status}`);
-				const contentType = res.headers.get("content-type");
-				if (!contentType?.includes("application/json")) {
-					throw new Error("Response is not JSON");
-				}
-				return res.json();
-			}),
+			fetch(`${API_BASE}/providers/configs`, { signal: controller.signal }).then(
+				(res) => {
+					if (!res.ok) throw new Error(`HTTP ${res.status}`);
+					const contentType = res.headers.get("content-type");
+					if (!contentType?.includes("application/json")) {
+						throw new Error("Response is not JSON");
+					}
+					return res.json();
+				},
+			),
 		])
 			.then(([providersData, configsData]) => {
 				setProviders(providersData.providers || []);
@@ -76,6 +79,7 @@ export const ProviderManager: React.FC<{ selected: string }> = ({
 				setProvidersError("");
 			})
 			.catch((err) => {
+				if (err?.name === "AbortError") return;
 				if (err.message === "Response is not JSON") {
 					console.info("[ProviderManager] Backend providers API not available");
 				} else {
@@ -89,75 +93,91 @@ export const ProviderManager: React.FC<{ selected: string }> = ({
 				);
 			})
 			.finally(() => {
+				if (controller.signal.aborted) return;
 				setIsLoadingProviders(false);
 				setIsLoadingConfigs(false);
 			});
+		return () => controller.abort();
 	}, []);
 
 	useEffect(() => {
-		if (selected) {
-			setIsLoadingCapabilities(true);
-			fetch(`${API_BASE}/providers/capabilities/${selected}`)
-				.then((res) => {
-					if (!res.ok) throw new Error(`HTTP ${res.status}`);
-					const contentType = res.headers.get("content-type");
-					if (!contentType?.includes("application/json")) {
-						throw new Error("Response is not JSON");
-					}
-					return res.json();
-				})
-				.then((data) => setCapabilities(data))
-				.catch((err) => {
-					console.error("Failed to fetch provider capabilities:", err);
-					setCapabilities(null);
-				})
-				.finally(() => {
-					setIsLoadingCapabilities(false);
-				});
-		} else {
+		if (!selected) {
 			setCapabilities(null);
 			setIsLoadingCapabilities(false);
+			return;
 		}
+		const controller = new AbortController();
+		setIsLoadingCapabilities(true);
+		fetch(`${API_BASE}/providers/capabilities/${selected}`, {
+			signal: controller.signal,
+		})
+			.then((res) => {
+				if (!res.ok) throw new Error(`HTTP ${res.status}`);
+				const contentType = res.headers.get("content-type");
+				if (!contentType?.includes("application/json")) {
+					throw new Error("Response is not JSON");
+				}
+				return res.json();
+			})
+			.then((data) => setCapabilities(data))
+			.catch((err) => {
+				if (err?.name === "AbortError") return;
+				console.error("Failed to fetch provider capabilities:", err);
+				setCapabilities(null);
+			})
+			.finally(() => {
+				if (controller.signal.aborted) return;
+				setIsLoadingCapabilities(false);
+			});
+		return () => controller.abort();
 	}, [selected]);
 
 	useEffect(() => {
-		if (selected) {
-			setIsLoadingSchema(true);
-			Promise.all([
-				fetch(`${API_BASE}/providers/schema/${selected}`).then((res) => {
-					if (!res.ok) throw new Error(`HTTP ${res.status}`);
-					const contentType = res.headers.get("content-type");
-					if (!contentType?.includes("application/json")) {
-						throw new Error("Response is not JSON");
-					}
-					return res.json();
-				}),
-				fetch(`${API_BASE}/providers/config/${selected}`).then((res) => {
-					if (!res.ok) throw new Error(`HTTP ${res.status}`);
-					const contentType = res.headers.get("content-type");
-					if (!contentType?.includes("application/json")) {
-						throw new Error("Response is not JSON");
-					}
-					return res.json();
-				}),
-			])
-				.then(([schemaData, configData]) => {
-					setSchema(schemaData);
-					setConfigForm(configData || {});
-				})
-				.catch((err) => {
-					console.error("Failed to fetch provider schema/config:", err);
-					setSchema(null);
-					setConfigForm({});
-				})
-				.finally(() => {
-					setIsLoadingSchema(false);
-				});
-		} else {
+		if (!selected) {
 			setSchema(null);
 			setConfigForm({});
 			setIsLoadingSchema(false);
+			return;
 		}
+		const controller = new AbortController();
+		setIsLoadingSchema(true);
+		Promise.all([
+			fetch(`${API_BASE}/providers/schema/${selected}`, {
+				signal: controller.signal,
+			}).then((res) => {
+				if (!res.ok) throw new Error(`HTTP ${res.status}`);
+				const contentType = res.headers.get("content-type");
+				if (!contentType?.includes("application/json")) {
+					throw new Error("Response is not JSON");
+				}
+				return res.json();
+			}),
+			fetch(`${API_BASE}/providers/config/${selected}`, {
+				signal: controller.signal,
+			}).then((res) => {
+				if (!res.ok) throw new Error(`HTTP ${res.status}`);
+				const contentType = res.headers.get("content-type");
+				if (!contentType?.includes("application/json")) {
+					throw new Error("Response is not JSON");
+				}
+				return res.json();
+			}),
+		])
+			.then(([schemaData, configData]) => {
+				setSchema(schemaData);
+				setConfigForm(configData || {});
+			})
+			.catch((err) => {
+				if (err?.name === "AbortError") return;
+				console.error("Failed to fetch provider schema/config:", err);
+				setSchema(null);
+				setConfigForm({});
+			})
+			.finally(() => {
+				if (controller.signal.aborted) return;
+				setIsLoadingSchema(false);
+			});
+		return () => controller.abort();
 	}, [selected]);
 
 	useEffect(() => {
@@ -189,8 +209,11 @@ export const ProviderManager: React.FC<{ selected: string }> = ({
 			setIsLoadingModels(false);
 			return;
 		}
+		const controller = new AbortController();
 		setIsLoadingModels(true);
-		fetch(`${API_BASE}/providers/models/${selected}`)
+		fetch(`${API_BASE}/providers/models/${selected}`, {
+			signal: controller.signal,
+		})
 			.then((res) => {
 				if (!res.ok) throw new Error(`HTTP ${res.status}`);
 				const contentType = res.headers.get("content-type");
@@ -212,13 +235,16 @@ export const ProviderManager: React.FC<{ selected: string }> = ({
 				}
 			})
 			.catch((err) => {
+				if (err?.name === "AbortError") return;
 				console.error("Failed to fetch provider models:", err);
 				setClaudeModels([]);
 				setClaudeModelsError(`Failed to fetch models: ${err.message}`);
 			})
 			.finally(() => {
+				if (controller.signal.aborted) return;
 				setIsLoadingModels(false);
 			});
+		return () => controller.abort();
 	}, [selected]);
 
 	const handleConfigChange = (k: string, v: string) => {

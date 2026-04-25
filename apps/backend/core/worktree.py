@@ -373,8 +373,32 @@ class WorktreeManager:
 
     # ==================== Per-Spec Worktree Methods ====================
 
+    # Whitelist for spec_name. Allows letters, digits, dot, underscore, hyphen.
+    # Rejects path separators, "..", null bytes, and anything that could escape
+    # the worktree root or inject git ref-name metacharacters.
+    _SPEC_NAME_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$")
+
+    @classmethod
+    def _validate_spec_name(cls, spec_name: str) -> str:
+        """Validate spec_name to prevent path traversal and ref-name injection.
+
+        Why: spec_name is interpolated into filesystem paths and git branch
+        refs (workpilot/{spec_name}). An unvalidated value like "../../etc"
+        or "foo/..bar" could escape the worktree root or break git plumbing.
+        """
+        if not isinstance(spec_name, str) or not spec_name:
+            raise ValueError("spec_name must be a non-empty string")
+        if not cls._SPEC_NAME_RE.fullmatch(spec_name):
+            raise ValueError(
+                f"Invalid spec_name {spec_name!r}: must match "
+                f"{cls._SPEC_NAME_RE.pattern}"
+            )
+        return spec_name
+
     def get_worktree_path(self, spec_name: str) -> Path:
         """Get the worktree path for a spec (checks new and legacy locations)."""
+        spec_name = self._validate_spec_name(spec_name)
+
         # New path first (.workpilot/worktrees/tasks/)
         new_path = self.worktrees_dir / spec_name
         if new_path.exists():
@@ -390,7 +414,7 @@ class WorktreeManager:
 
     def get_branch_name(self, spec_name: str) -> str:
         """Get the branch name for a spec."""
-        return f"workpilot/{spec_name}"
+        return f"workpilot/{self._validate_spec_name(spec_name)}"
 
     def worktree_exists(self, spec_name: str) -> bool:
         """Check if a worktree exists for a spec."""

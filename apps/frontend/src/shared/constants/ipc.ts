@@ -539,6 +539,7 @@ export const IPC_CHANNELS = {
 	FILE_EXPLORER_LIST: "fileExplorer:list",
 	FILE_EXPLORER_READ: "fileExplorer:read",
 	FILE_EXPLORER_SAVE: "fileExplorer:save", // Save JSON files
+	FILE_EXPLORER_GET_USER_HOME: "fileExplorer:getUserHome",
 
 	// API Explorer — project route scanning
 	API_EXPLORER_SCAN_ROUTES: "apiExplorer:scanRoutes",

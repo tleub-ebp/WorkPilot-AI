@@ -550,7 +550,7 @@ const browserMockAPI: ElectronAPI = {
 	}),
 
 	// User directory operations
-	getUserHome: () => "/mock/user/home",
+	getUserHome: async () => "/mock/user/home",
 
 	// Learning Loop Operations
 	getLearningPatterns: async () => ({ success: true, data: [] }),
