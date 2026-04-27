@@ -117,6 +117,7 @@ import { registerConsensusArbiterHandlers } from "./consensus-arbiter-handlers";
 import { registerInjectionGuardHandlers } from "./injection-guard-handlers";
 import { registerSpecApprovalHandlers } from "./spec-approval-handlers";
 import { registerSpecRefinementHandlers } from "./spec-refinement-handlers";
+import { registerPhase35FeatureHandlers } from "./phase35-features-handlers";
 import { registerTaskHandlers } from "./task-handlers";
 import { registerTeamSyncHandlers } from "./team-sync-handlers";
 import { registerTerminalWorktreeIpcHandlers } from "./terminal";
@@ -464,6 +465,9 @@ export function setupIpcHandlers(
 
 	// Agent Time Travel handlers (Temporal debugger for AI agents)
 	registerTimeTravelHandlers(getMainWindow);
+
+	// Phase 3-5 backend feature modules (#3.1, 3.2, 3.3, 3.4, 3.5, 3.6, 3.7, 3.8, 3.9, 3.10, 3.11, 3.12)
+	registerPhase35FeatureHandlers(getMainWindow);
 
 	// Accessibility Agent handlers (WCAG scanner)
 	registerAccessibilityHandlers();

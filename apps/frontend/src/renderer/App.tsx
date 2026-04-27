@@ -141,6 +141,11 @@ const McpMarketplace = lazy(() =>
 		default: m.McpMarketplace,
 	})),
 );
+const Phase35Hub = lazy(() =>
+	import("./components/phase35").then((m) => ({
+		default: m.Phase35Hub,
+	})),
+);
 const MissionControlDashboard = lazy(() =>
 	import("./components/mission-control/MissionControlDashboard").then((m) => ({
 		default: m.MissionControlDashboard,
@@ -1341,8 +1346,9 @@ export function App() {
 
 	// RÃ©cupÃ¨re la liste des providers au chargement
 	useEffect(() => {
+		const controller = new AbortController();
 		const backendUrl = import.meta.env?.VITE_BACKEND_URL || "";
-		fetch(`${backendUrl}/providers`)
+		fetch(`${backendUrl}/providers`, { signal: controller.signal })
 			.then((res) => {
 				if (!res.ok) {
 					throw new Error(`HTTP ${res.status}`);
@@ -1371,6 +1377,7 @@ export function App() {
 				}
 			})
 			.catch((err) => {
+				if (err?.name === "AbortError") return;
 				// Don't log loudly if backend is not available - this is expected in some setups
 				if (err.message === "Response is not JSON") {
 					console.info(
@@ -1381,6 +1388,7 @@ export function App() {
 				}
 				setProviders([]);
 			});
+		return () => controller.abort();
 	}, [selectedProvider]);
 
 	// RÃ©cupÃ¨re les modÃ¨les du provider sÃ©lectionnÃ©
@@ -1390,8 +1398,11 @@ export function App() {
 			setProviderModelsError("");
 			return;
 		}
+		const controller = new AbortController();
 		const backendUrl = import.meta.env?.VITE_BACKEND_URL || "";
-		fetch(`${backendUrl}/providers/models/${selectedProvider}`)
+		fetch(`${backendUrl}/providers/models/${selectedProvider}`, {
+			signal: controller.signal,
+		})
 			.then((res) => {
 				if (!res.ok) {
 					throw new Error(`HTTP ${res.status}`);
@@ -1408,6 +1419,7 @@ export function App() {
 				setProviderModelsError(data.error || "");
 			})
 			.catch((err) => {
+				if (err?.name === "AbortError") return;
 				// Don't log loudly if backend is not available - this is expected in some setups
 				if (err.message === "Response is not JSON") {
 					console.info(
@@ -1424,6 +1436,7 @@ export function App() {
 					`Erreur lors de la rÃ©cupÃ©ration des modÃ¨les pour le provider Â«${selectedProvider}Â».`,
 				);
 			});
+		return () => controller.abort();
 	}, [selectedProvider]);
 
 	const getKanbanContent = () => {
@@ -1532,6 +1545,11 @@ export function App() {
 											</div>
 										}
 									>
+										{activeView === "phase35-hub" && (
+											<Phase35Hub
+												projectPath={selectedProject?.path || ""}
+											/>
+										)}
 										{activeView === "mcp-marketplace" && <McpMarketplace />}
 										{activeView === "plugin-marketplace" && (
 											<PluginMarketplace />

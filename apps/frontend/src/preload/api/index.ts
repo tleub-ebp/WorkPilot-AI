@@ -22,6 +22,10 @@ import {
 	createBlastRadiusAPI,
 } from "./modules/blast-radius-api";
 import {
+	type Phase35FeaturesAPI,
+	createPhase35FeaturesAPI,
+} from "./modules/phase35-features-api";
+import {
 	type BountyBoardAPI,
 	createBountyBoardAPI,
 } from "./modules/bounty-board-api";
@@ -252,6 +256,7 @@ export interface ElectronAPI
 		GuardrailsAPI,
 		AgentDebuggerAPI,
 		BlastRadiusAPI,
+		Phase35FeaturesAPI,
 		BountyBoardAPI,
 		TechDebtAPI,
 		TeamBotAPI,
@@ -379,6 +384,7 @@ export const createElectronAPI = (): ElectronAPI => {
 		...createGuardrailsAPI(),
 		...createAgentDebuggerAPI(),
 		...createBlastRadiusAPI(),
+		...createPhase35FeaturesAPI(),
 		...createBountyBoardAPI(),
 		...createTechDebtAPI(),
 		...createTeamBotAPI(),

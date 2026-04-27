@@ -15,3 +15,4 @@ export { settingsMock } from "./settings-mock";
 export { taskMock } from "./task-mock";
 export { terminalMock } from "./terminal-mock";
 export { workspaceMock } from "./workspace-mock";
+export { phase35Mock } from "./phase35-mock";
