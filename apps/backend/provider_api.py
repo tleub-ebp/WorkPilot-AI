@@ -8,6 +8,15 @@ from contextlib import asynccontextmanager
 
 logging.basicConfig(level=logging.INFO, stream=sys.stdout, force=True)
 
+# Install the global log redaction filter as early as possible — before
+# any module logs anything sensitive at import time. Idempotent.
+try:
+    from core.log_redaction import install_global_redaction
+
+    install_global_redaction()
+except Exception as _e:  # noqa: BLE001 — never block boot on this
+    logging.getLogger(__name__).warning("Could not install log redaction: %s", _e)
+
 import ipaddress
 import json
 import os
@@ -2456,6 +2465,38 @@ try:
     app.include_router(license_governance_router)
 except ImportError as e:
     print(f"Warning: Could not import license_governance router: {e}")
+
+# --- Domain-Specific Agent Factory API ---
+try:
+    from domain_agents.api import router as domain_agents_router
+
+    app.include_router(domain_agents_router)
+except ImportError as e:
+    print(f"Warning: Could not import domain_agents router: {e}")
+
+# --- i18n Auto-Scaler API ---
+try:
+    from i18n_scaler.api import router as i18n_scaler_router
+
+    app.include_router(i18n_scaler_router)
+except ImportError as e:
+    print(f"Warning: Could not import i18n_scaler router: {e}")
+
+# --- Audit Trail API ---
+try:
+    from audit_trail.api import router as audit_trail_router
+
+    app.include_router(audit_trail_router)
+except ImportError as e:
+    print(f"Warning: Could not import audit_trail router: {e}")
+
+# --- Real-time Pair Programming API ---
+try:
+    from pair_realtime.api import router as pair_realtime_router
+
+    app.include_router(pair_realtime_router)
+except ImportError as e:
+    print(f"Warning: Could not import pair_realtime router: {e}")
 
 if __name__ == "__main__":
     import uvicorn

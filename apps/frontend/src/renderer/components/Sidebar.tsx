@@ -222,7 +222,8 @@ export type SidebarView =
 	| "blast-radius"
 	| "guardrails"
 	| "env-snapshot"
-	| "offline-mode";
+	| "offline-mode"
+	| "phase35-hub";
 
 interface SidebarProps {
 	readonly onSettingsClick: () => void;
@@ -265,6 +266,11 @@ const navGroups: NavGroup[] = [
 				labelKey: "navigation:items.missionControl",
 				icon: Rocket,
 				shortcut: "WM",
+			},
+			{
+				id: "phase35-hub",
+				labelKey: "navigation:items.phase35Hub",
+				icon: Sparkles,
 			},
 			{
 				id: "dashboard",

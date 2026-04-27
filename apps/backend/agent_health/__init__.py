@@ -15,6 +15,12 @@ from .monitor import (
     HealthMonitor,
     HealthStatus,
 )
+from .persistence import (
+    default_state_path,
+    ingest_from_analytics,
+    load_from_disk,
+    save_to_disk,
+)
 
 __all__ = [
     "AgentHealthScore",
@@ -22,4 +28,8 @@ __all__ = [
     "HealthAction",
     "HealthMonitor",
     "HealthStatus",
+    "default_state_path",
+    "ingest_from_analytics",
+    "load_from_disk",
+    "save_to_disk",
 ]

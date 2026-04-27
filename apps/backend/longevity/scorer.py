@@ -115,6 +115,9 @@ class LongevityScorer:
     MAX_PENALTY_STALE_DEPS = 25.0
     MAX_PENALTY_TREND = 10.0
     MAX_BONUS_TREND = 5.0
+    # Optional extra signals (off by default — caller provides the values)
+    MAX_PENALTY_VULNERABILITIES = 25.0
+    MAX_PENALTY_LOW_COVERAGE = 15.0
 
     # Density thresholds (signals per 1k LoC where the penalty saturates).
     TODO_SATURATION_PER_KLOC = 10.0
@@ -123,18 +126,48 @@ class LongevityScorer:
     DUPLICATION_SATURATION_PER_KLOC = 4.0
     STALE_DEPS_SATURATION = 20  # absolute count
 
+    # Vulnerabilities are weighted by severity. A single critical CVE is
+    # already a "fix this week" item, so we let it consume a big chunk
+    # of the cap on its own.
+    VULN_SEVERITY_WEIGHTS = {
+        "critical": 8.0,
+        "high": 4.0,
+        "medium": 1.5,
+        "low": 0.5,
+    }
+    # Coverage is in [0.0, 1.0]. < 0.5 starts hurting; below 0.2 saturates.
+    COVERAGE_FLOOR = 0.20
+    COVERAGE_CEILING = 0.80
+
     def score_report(
         self,
         report: DebtReport,
         approx_loc: int | None = None,
+        *,
+        vulnerabilities: list[dict] | None = None,
+        coverage_ratio: float | None = None,
     ) -> LongevityReport:
-        """Score a pre-computed `DebtReport`."""
+        """Score a pre-computed `DebtReport`.
+
+        Optional extra signals:
+            vulnerabilities: list of dicts with at least a `severity` field
+                (`critical`/`high`/`medium`/`low`). Weighted accordingly.
+            coverage_ratio: test-coverage ratio in [0.0, 1.0]. Anything
+                below `COVERAGE_CEILING` (0.80) starts costing points;
+                `COVERAGE_FLOOR` (0.20) saturates the penalty.
+        """
         loc = approx_loc or self._estimate_loc(report)
         # Avoid division-by-zero edge cases in tests on synthetic projects.
         kloc = max(loc / 1000.0, 0.1)
 
         counts = _count_by_kind(report.items)
         penalties = self._penalties(counts, kloc)
+
+        # New: vulnerabilities + coverage
+        if vulnerabilities is not None:
+            penalties["vulnerabilities"] = self._vuln_penalty(vulnerabilities)
+        if coverage_ratio is not None:
+            penalties["low_coverage"] = self._coverage_penalty(coverage_ratio)
 
         bonuses, projection = self._trend_signal(report)
 
@@ -145,19 +178,55 @@ class LongevityScorer:
 
         riskiest = _riskiest_files(report.items, top_n=5)
 
+        summary: dict[str, Any] = {
+            "loc": loc,
+            "total_debt_items": len(report.items),
+            "by_kind": counts,
+        }
+        if vulnerabilities is not None:
+            summary["vulnerabilities"] = {
+                "total": len(vulnerabilities),
+                "by_severity": _count_by_severity(vulnerabilities),
+            }
+        if coverage_ratio is not None:
+            summary["coverage_ratio"] = round(coverage_ratio, 4)
+
         return LongevityReport(
             project_path=report.project_path,
             score=score,
             grade=grade,
             penalties=penalties,
             bonuses=bonuses,
-            summary={
-                "loc": loc,
-                "total_debt_items": len(report.items),
-                "by_kind": counts,
-            },
+            summary=summary,
             projection=projection,
             riskiest_files=riskiest,
+        )
+
+    # ------------------------------------------------------------------
+    # New signals
+
+    def _vuln_penalty(self, vulnerabilities: list[dict]) -> float:
+        """Sum the per-CVE weights, capped at `MAX_PENALTY_VULNERABILITIES`."""
+        score = 0.0
+        for v in vulnerabilities:
+            sev = str((v or {}).get("severity", "")).lower()
+            score += self.VULN_SEVERITY_WEIGHTS.get(sev, 0.0)
+        return min(self.MAX_PENALTY_VULNERABILITIES, score)
+
+    def _coverage_penalty(self, coverage_ratio: float) -> float:
+        """Linear ramp between CEILING (no penalty) and FLOOR (max penalty)."""
+        if coverage_ratio >= self.COVERAGE_CEILING:
+            return 0.0
+        if coverage_ratio <= self.COVERAGE_FLOOR:
+            return self.MAX_PENALTY_LOW_COVERAGE
+        # Interpolate
+        span = self.COVERAGE_CEILING - self.COVERAGE_FLOOR
+        if span <= 0:
+            return self.MAX_PENALTY_LOW_COVERAGE
+        progress = (self.COVERAGE_CEILING - coverage_ratio) / span
+        return min(
+            self.MAX_PENALTY_LOW_COVERAGE,
+            max(0.0, progress * self.MAX_PENALTY_LOW_COVERAGE),
         )
 
     # ------------------------------------------------------------------
@@ -279,6 +348,14 @@ def _count_by_kind(items: list[DebtItem]) -> dict[str, int]:
     counts: dict[str, int] = {}
     for item in items:
         counts[item.kind] = counts.get(item.kind, 0) + 1
+    return counts
+
+
+def _count_by_severity(vulnerabilities: list[dict]) -> dict[str, int]:
+    counts: dict[str, int] = {}
+    for v in vulnerabilities:
+        sev = str((v or {}).get("severity", "unknown")).lower()
+        counts[sev] = counts.get(sev, 0) + 1
     return counts
 
 

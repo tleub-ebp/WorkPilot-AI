@@ -9,6 +9,7 @@ Different from `continuous_ai/dependency_sentinel.py` which focuses on
 **vulnerabilities** (CVEs). This module focuses on **licences**.
 """
 
+from .resolvers import make_registry_resolver, npm_resolver, pypi_resolver
 from .scanner import (
     DependencyRecord,
     LicenseCategory,
@@ -27,4 +28,7 @@ __all__ = [
     "LicenseReport",
     "LicenseScanner",
     "classify_license",
+    "make_registry_resolver",
+    "npm_resolver",
+    "pypi_resolver",
 ]

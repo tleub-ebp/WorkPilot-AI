@@ -230,5 +230,120 @@ class TestEndToEnd:
         assert report.summary["by_kind"].get("todo_fixme", 0) >= 2
 
 
+# ----------------------------------------------------------------------
+# Optional vulnerability + coverage signals
+
+
+class TestVulnerabilities:
+    def test_no_vulns_means_no_penalty(self) -> None:
+        scorer = LongevityScorer()
+        report = scorer.score_report(
+            _make_report(), approx_loc=10_000, vulnerabilities=[]
+        )
+        assert report.penalties.get("vulnerabilities", 0) == 0
+        assert report.summary["vulnerabilities"]["total"] == 0
+
+    def test_critical_cve_outweighs_low(self) -> None:
+        scorer = LongevityScorer()
+        with_critical = scorer.score_report(
+            _make_report(),
+            approx_loc=10_000,
+            vulnerabilities=[{"severity": "critical"}],
+        )
+        with_low = scorer.score_report(
+            _make_report(),
+            approx_loc=10_000,
+            vulnerabilities=[{"severity": "low"}],
+        )
+        assert (
+            with_critical.penalties["vulnerabilities"]
+            > with_low.penalties["vulnerabilities"]
+        )
+
+    def test_vuln_penalty_capped(self) -> None:
+        scorer = LongevityScorer()
+        # 100 critical CVEs would compute to 800 points; cap kicks in.
+        report = scorer.score_report(
+            _make_report(),
+            approx_loc=10_000,
+            vulnerabilities=[{"severity": "critical"}] * 100,
+        )
+        assert report.penalties["vulnerabilities"] == pytest.approx(
+            scorer.MAX_PENALTY_VULNERABILITIES
+        )
+
+    def test_unknown_severity_ignored(self) -> None:
+        scorer = LongevityScorer()
+        report = scorer.score_report(
+            _make_report(),
+            approx_loc=10_000,
+            vulnerabilities=[{"severity": "spicy"}, {"severity": "high"}],
+        )
+        # Only the "high" CVE contributes — the unknown one weighs 0.
+        assert report.penalties["vulnerabilities"] == pytest.approx(
+            scorer.VULN_SEVERITY_WEIGHTS["high"]
+        )
+
+    def test_summary_breaks_down_by_severity(self) -> None:
+        scorer = LongevityScorer()
+        report = scorer.score_report(
+            _make_report(),
+            approx_loc=10_000,
+            vulnerabilities=[
+                {"severity": "high"},
+                {"severity": "high"},
+                {"severity": "low"},
+            ],
+        )
+        bs = report.summary["vulnerabilities"]["by_severity"]
+        assert bs["high"] == 2
+        assert bs["low"] == 1
+
+
+class TestCoverage:
+    def test_high_coverage_no_penalty(self) -> None:
+        scorer = LongevityScorer()
+        report = scorer.score_report(
+            _make_report(), approx_loc=10_000, coverage_ratio=0.9
+        )
+        assert report.penalties["low_coverage"] == 0
+
+    def test_zero_coverage_max_penalty(self) -> None:
+        scorer = LongevityScorer()
+        report = scorer.score_report(
+            _make_report(), approx_loc=10_000, coverage_ratio=0.0
+        )
+        assert report.penalties["low_coverage"] == pytest.approx(
+            scorer.MAX_PENALTY_LOW_COVERAGE
+        )
+
+    def test_mid_coverage_partial_penalty(self) -> None:
+        scorer = LongevityScorer()
+        report = scorer.score_report(
+            _make_report(), approx_loc=10_000, coverage_ratio=0.5
+        )
+        # Linear ramp 0.20→max, 0.80→0 → 0.5 should be in between
+        assert 0 < report.penalties["low_coverage"] < scorer.MAX_PENALTY_LOW_COVERAGE
+
+    def test_summary_carries_coverage_ratio(self) -> None:
+        scorer = LongevityScorer()
+        report = scorer.score_report(
+            _make_report(), approx_loc=10_000, coverage_ratio=0.42
+        )
+        assert report.summary["coverage_ratio"] == pytest.approx(0.42)
+
+
+class TestBackwardCompat:
+    def test_no_optional_signals_no_extra_keys(self) -> None:
+        # Calling without the new args should give the exact same shape
+        # as the old version — no `vulnerabilities` / `low_coverage` in
+        # penalties, no extra summary keys.
+        report = LongevityScorer().score_report(_make_report(), approx_loc=10_000)
+        assert "vulnerabilities" not in report.penalties
+        assert "low_coverage" not in report.penalties
+        assert "vulnerabilities" not in report.summary
+        assert "coverage_ratio" not in report.summary
+
+
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])

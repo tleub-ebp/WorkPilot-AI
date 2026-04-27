@@ -14,6 +14,7 @@ import {
 	infrastructureMock,
 	insightsMock,
 	integrationMock,
+	phase35Mock,
 	projectMock,
 	settingsMock,
 	taskMock,
@@ -38,6 +39,9 @@ const browserMockAPI: ElectronAPI = {
 
 	// Workspace Management
 	...workspaceMock,
+
+	// Phase 3-5 backend feature modules (browser fallback: report unavailable)
+	...phase35Mock,
 
 	// Terminal Operations
 	...terminalMock,

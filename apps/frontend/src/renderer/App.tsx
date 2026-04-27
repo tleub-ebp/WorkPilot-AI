@@ -141,6 +141,11 @@ const McpMarketplace = lazy(() =>
 		default: m.McpMarketplace,
 	})),
 );
+const Phase35Hub = lazy(() =>
+	import("./components/phase35").then((m) => ({
+		default: m.Phase35Hub,
+	})),
+);
 const MissionControlDashboard = lazy(() =>
 	import("./components/mission-control/MissionControlDashboard").then((m) => ({
 		default: m.MissionControlDashboard,
@@ -1540,6 +1545,11 @@ export function App() {
 											</div>
 										}
 									>
+										{activeView === "phase35-hub" && (
+											<Phase35Hub
+												projectPath={selectedProject?.path || ""}
+											/>
+										)}
 										{activeView === "mcp-marketplace" && <McpMarketplace />}
 										{activeView === "plugin-marketplace" && (
 											<PluginMarketplace />
