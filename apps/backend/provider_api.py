@@ -8,6 +8,15 @@ from contextlib import asynccontextmanager
 
 logging.basicConfig(level=logging.INFO, stream=sys.stdout, force=True)
 
+# Install the global log redaction filter as early as possible — before
+# any module logs anything sensitive at import time. Idempotent.
+try:
+    from core.log_redaction import install_global_redaction
+
+    install_global_redaction()
+except Exception as _e:  # noqa: BLE001 — never block boot on this
+    logging.getLogger(__name__).warning("Could not install log redaction: %s", _e)
+
 import ipaddress
 import json
 import os
@@ -202,8 +211,16 @@ app.add_middleware(
     allow_origins=_ALLOWED_ORIGINS,
     allow_origin_regex=r"^https?://(localhost|127\.0\.0\.1)(:\d+)?$",
     allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+    allow_headers=[
+        "Accept",
+        "Accept-Language",
+        "Authorization",
+        "Content-Type",
+        "Content-Language",
+        "X-Requested-With",
+        "X-Provider",
+    ],
 )
 
 # Global variable to store selected provider (ContextVar doesn't work across HTTP requests)
@@ -2384,6 +2401,102 @@ try:
     app.include_router(replay_router)
 except ImportError as e:
     print(f"Warning: Could not import replay router: {e}")
+
+# --- Adaptive Model Router API ---
+try:
+    from model_router.api import router as model_router_api
+
+    app.include_router(model_router_api)
+except ImportError as e:
+    print(f"Warning: Could not import model_router api: {e}")
+
+# --- Codebase Longevity API ---
+try:
+    from longevity.api import router as longevity_router
+
+    app.include_router(longevity_router)
+except ImportError as e:
+    print(f"Warning: Could not import longevity router: {e}")
+
+# --- Architecture Drift Detection API ---
+try:
+    from architecture_drift.api import router as architecture_drift_router
+
+    app.include_router(architecture_drift_router)
+except ImportError as e:
+    print(f"Warning: Could not import architecture_drift router: {e}")
+
+# --- Generational Test Archive API ---
+try:
+    from generational_tests.api import router as generational_tests_router
+
+    app.include_router(generational_tests_router)
+except ImportError as e:
+    print(f"Warning: Could not import generational_tests router: {e}")
+
+# --- Cognitive Context Optimizer API ---
+try:
+    from cognitive_context.api import router as cognitive_context_router
+
+    app.include_router(cognitive_context_router)
+except ImportError as e:
+    print(f"Warning: Could not import cognitive_context router: {e}")
+
+# --- Agent Health Monitor API ---
+try:
+    from agent_health.api import router as agent_health_router
+
+    app.include_router(agent_health_router)
+except ImportError as e:
+    print(f"Warning: Could not import agent_health router: {e}")
+
+# --- CI/CD Anomaly Detective API ---
+try:
+    from cicd_anomaly.api import router as cicd_anomaly_router
+
+    app.include_router(cicd_anomaly_router)
+except ImportError as e:
+    print(f"Warning: Could not import cicd_anomaly router: {e}")
+
+# --- License Governance API ---
+try:
+    from license_governance.api import router as license_governance_router
+
+    app.include_router(license_governance_router)
+except ImportError as e:
+    print(f"Warning: Could not import license_governance router: {e}")
+
+# --- Domain-Specific Agent Factory API ---
+try:
+    from domain_agents.api import router as domain_agents_router
+
+    app.include_router(domain_agents_router)
+except ImportError as e:
+    print(f"Warning: Could not import domain_agents router: {e}")
+
+# --- i18n Auto-Scaler API ---
+try:
+    from i18n_scaler.api import router as i18n_scaler_router
+
+    app.include_router(i18n_scaler_router)
+except ImportError as e:
+    print(f"Warning: Could not import i18n_scaler router: {e}")
+
+# --- Audit Trail API ---
+try:
+    from audit_trail.api import router as audit_trail_router
+
+    app.include_router(audit_trail_router)
+except ImportError as e:
+    print(f"Warning: Could not import audit_trail router: {e}")
+
+# --- Real-time Pair Programming API ---
+try:
+    from pair_realtime.api import router as pair_realtime_router
+
+    app.include_router(pair_realtime_router)
+except ImportError as e:
+    print(f"Warning: Could not import pair_realtime router: {e}")
 
 if __name__ == "__main__":
     import uvicorn

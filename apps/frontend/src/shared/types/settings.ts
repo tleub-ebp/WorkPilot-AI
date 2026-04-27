@@ -237,6 +237,29 @@ export interface AgentProfile {
 	isAutoProfile?: boolean;
 }
 
+// User customization of the sidebar navigation.
+// `pinnedItems` / `pinnedGroups` drive the synthetic "Favorites" group shown at the top.
+// `groupOrder` / `itemOrder` override the default navGroups order when non-empty;
+// any group/item unknown to these lists falls through to the default declaration order
+// so newly shipped features remain discoverable without a migration.
+export interface SidebarPrefs {
+	pinnedItems: string[];
+	pinnedGroups: string[];
+	groupOrder: string[];
+	itemOrder: Record<string, string[]>;
+	expandedGroups: string[];
+	favoritesExpanded: boolean;
+}
+
+export const DEFAULT_SIDEBAR_PREFS: SidebarPrefs = {
+	pinnedItems: [],
+	pinnedGroups: [],
+	groupOrder: [],
+	itemOrder: {},
+	expandedGroups: ["workspace"],
+	favoritesExpanded: true,
+};
+
 export interface AppSettings {
 	theme: "light" | "dark" | "system";
 	colorTheme?: ColorTheme;
@@ -332,6 +355,8 @@ export interface AppSettings {
 	sidebarWidth?: number;
 	// CLI panel expanded state in sidebar
 	cliPanelExpanded?: boolean;
+	// User sidebar customization: pinned favorites, group/item ordering, expanded state
+	sidebarPrefs?: SidebarPrefs;
 	providerPriorityOrder?: import("../../renderer/components/settings/multiconnector/types").LLMProvider[];
 	// Providers explicitly disabled from auto-switching by user toggle
 	disabledAutoSwitchProviders?: string[];

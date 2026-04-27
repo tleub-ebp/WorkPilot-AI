@@ -15,12 +15,45 @@
  */
 
 import { type ChildProcess, spawn } from "node:child_process";
+import { realpathSync, statSync } from "node:fs";
 import path from "node:path";
 import { app, BrowserWindow, ipcMain } from "electron";
 import { pythonEnvManager } from "../python-env-manager.js";
 
 interface RunRequest {
 	projectPath: string;
+}
+
+/**
+ * Normalize and validate a project path before passing it to the Python
+ * runner. Rejects relative paths, argv-style strings ("-foo") that could
+ * be re-interpreted as options, and paths that don't resolve to a real
+ * existing directory (defensive against typos and symlink games).
+ */
+function normalizeProjectPath(input: unknown): string {
+	if (typeof input !== "string" || input.trim() === "") {
+		throw new Error("projectPath must be a non-empty string");
+	}
+	const trimmed = input.trim();
+	if (trimmed.startsWith("-")) {
+		throw new Error("projectPath must not start with '-'");
+	}
+	const resolved = path.resolve(trimmed);
+	if (!path.isAbsolute(resolved)) {
+		throw new Error("projectPath must resolve to an absolute path");
+	}
+	let real: string;
+	try {
+		real = realpathSync(resolved);
+		const st = statSync(real);
+		if (!st.isDirectory()) {
+			throw new Error("projectPath must be a directory");
+		}
+	} catch (err) {
+		const detail = err instanceof Error ? err.message : String(err);
+		throw new Error(`Invalid projectPath: ${detail}`);
+	}
+	return real;
 }
 
 const EVENT_PREFIX = "INJECTION_GUARD_EVENT:";
@@ -48,8 +81,11 @@ export function registerInjectionGuardHandlers(): void {
 		async (_event, { projectPath }: RunRequest) => {
 			killExisting();
 
-			if (!projectPath) {
-				const message = "projectPath is required";
+			let safeProjectPath: string;
+			try {
+				safeProjectPath = normalizeProjectPath(projectPath);
+			} catch (err) {
+				const message = err instanceof Error ? err.message : String(err);
 				broadcast("injection-guard-error", message);
 				throw new Error(message);
 			}
@@ -70,7 +106,7 @@ export function registerInjectionGuardHandlers(): void {
 
 			const child = spawn(
 				pythonExe,
-				[runnerPath, "--project-path", projectPath],
+				[runnerPath, "--project-path", safeProjectPath],
 				{
 					cwd: backendPath,
 					env: { ...process.env, PYTHONPATH: backendPath },

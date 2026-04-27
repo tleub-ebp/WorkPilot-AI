@@ -1535,10 +1535,11 @@ export interface ElectronAPI {
 	) => Promise<{ success: boolean; error?: string }>;
 
 	/**
-	 * Retourne le chemin du dossier utilisateur (home directory)
-	 * @returns Le chemin du home directory (ex: C:\Users\user ou /home/user)
+	 * Retourne le chemin du dossier utilisateur (home directory).
+	 * Async because the implementation now goes through IPC to support
+	 * the Electron renderer sandbox (no direct Node access in preload).
 	 */
-	getUserHome: () => string;
+	getUserHome: () => Promise<string>;
 }
 
 /** Platform information exposed via contextBridge for platform-specific behavior */
