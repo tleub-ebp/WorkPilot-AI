@@ -29,6 +29,7 @@ import enApiWatcher from "./locales/en/api-watcher.json";
 
 // Import English translation resources
 import enAppEmulator from "./locales/en/appEmulator.json";
+import enPhase35 from "./locales/en/phase35.json";
 import enArena from "./locales/en/arena.json";
 import enBrowserAgent from "./locales/en/browserAgent.json";
 import enChangelog from "./locales/en/changelog.json";
@@ -108,6 +109,7 @@ import frApiWatcher from "./locales/fr/api-watcher.json";
 
 // Import French translation resources
 import frAppEmulator from "./locales/fr/appEmulator.json";
+import frPhase35 from "./locales/fr/phase35.json";
 import frArena from "./locales/fr/arena.json";
 import frBrowserAgent from "./locales/fr/browserAgent.json";
 import frChangelog from "./locales/fr/changelog.json";
@@ -176,6 +178,7 @@ export const resources = {
 		i18nAgent: enI18nAgent,
 		onboardingAgent: enOnboardingAgent,
 		appEmulator: enAppEmulator,
+		phase35: enPhase35,
 		analytics: enAnalytics,
 		browserAgent: enBrowserAgent,
 		carbonProfiler: enCarbonProfiler,
@@ -255,6 +258,7 @@ export const resources = {
 		i18nAgent: frI18nAgent,
 		onboardingAgent: frOnboardingAgent,
 		appEmulator: frAppEmulator,
+		phase35: frPhase35,
 		analytics: frAnalytics,
 		browserAgent: frBrowserAgent,
 		carbonProfiler: frCarbonProfiler,
@@ -341,6 +345,7 @@ i18n.use(initReactI18next).init({
 		"i18nAgent",
 		"onboardingAgent",
 		"appEmulator",
+		"phase35",
 		"analytics",
 		"browserAgent",
 		"carbonProfiler",

@@ -539,6 +539,7 @@ export const IPC_CHANNELS = {
 	FILE_EXPLORER_LIST: "fileExplorer:list",
 	FILE_EXPLORER_READ: "fileExplorer:read",
 	FILE_EXPLORER_SAVE: "fileExplorer:save", // Save JSON files
+	FILE_EXPLORER_GET_USER_HOME: "fileExplorer:getUserHome",
 
 	// API Explorer — project route scanning
 	API_EXPLORER_SCAN_ROUTES: "apiExplorer:scanRoutes",
@@ -871,4 +872,66 @@ export const IPC_CHANNELS = {
 	TIME_TRAVEL_CHECKPOINTS_READY: "timeTravel:checkpointsReady",
 	TIME_TRAVEL_FORK_STATUS_CHANGED: "timeTravel:forkStatusChanged",
 	TIME_TRAVEL_ERROR: "timeTravel:error",
+
+	// === Phase 3-5 backend modules (one HTTP-backed channel per module) ===
+	// Longevity Score (#3.8)
+	LONGEVITY_SCORE: "longevity:score",
+	// Agent Health Monitor (#3.11)
+	AGENT_HEALTH_RECORD: "agentHealth:record",
+	AGENT_HEALTH_RECORD_BATCH: "agentHealth:recordBatch",
+	AGENT_HEALTH_SCORE: "agentHealth:score",
+	AGENT_HEALTH_SCORES: "agentHealth:scores",
+	AGENT_HEALTH_RESET: "agentHealth:reset",
+	// Adaptive Model Routing (#3.1)
+	MODEL_ROUTER_ROUTE: "modelRouter:route",
+	MODEL_ROUTER_COMPARE: "modelRouter:compare",
+	// Domain-Specific Agents (#3.6)
+	DOMAIN_AGENTS_LIST: "domainAgents:list",
+	DOMAIN_AGENTS_PROFILE: "domainAgents:profile",
+	DOMAIN_AGENTS_BUILD: "domainAgents:build",
+	// CI/CD Anomaly Detective (#3.4)
+	CICD_ANOMALY_SCAN: "cicdAnomaly:scan",
+	CICD_ANOMALY_ANALYSE: "cicdAnomaly:analyse",
+	// License Governance (#3.7)
+	LICENSE_GOV_SCAN: "licenseGov:scan",
+	LICENSE_GOV_CLASSIFY: "licenseGov:classify",
+	// Architecture Drift (#3.9)
+	ARCH_DRIFT_SCAN: "archDrift:scan",
+	ARCH_DRIFT_SAVE_BASELINE: "archDrift:saveBaseline",
+	ARCH_DRIFT_COMPARE: "archDrift:compare",
+	// Generational Testing (#3.10)
+	GEN_TESTS_LIST: "genTests:list",
+	GEN_TESTS_CAPTURE: "genTests:capture",
+	GEN_TESTS_COMPARE: "genTests:compare",
+	GEN_TESTS_DELETE: "genTests:delete",
+	// i18n Auto-Scaling (#3.12)
+	I18N_SCALER_DIFF: "i18nScaler:diff",
+	I18N_SCALER_SKELETON: "i18nScaler:skeleton",
+	I18N_SCALER_REPORT_FROM_DIR: "i18nScaler:reportFromDir",
+	// Cognitive Context Optimizer (#3.2)
+	COGNITIVE_CONTEXT_OPTIMIZE: "cognitiveContext:optimize",
+	// Audit Trail (#3.3)
+	AUDIT_TRAIL_APPEND: "auditTrail:append",
+	AUDIT_TRAIL_APPEND_DECISION: "auditTrail:appendDecision",
+	AUDIT_TRAIL_EVENTS: "auditTrail:events",
+	AUDIT_TRAIL_REPLAY: "auditTrail:replay",
+	AUDIT_TRAIL_VERIFY: "auditTrail:verify",
+	AUDIT_TRAIL_LIST: "auditTrail:list",
+	// Pair Programming Realtime (#3.5)
+	PAIR_RT_CREATE_ROOM: "pairRT:createRoom",
+	PAIR_RT_LIST_ROOMS: "pairRT:listRooms",
+	PAIR_RT_GET_ROOM: "pairRT:getRoom",
+	PAIR_RT_CLOSE_ROOM: "pairRT:closeRoom",
+	PAIR_RT_JOIN: "pairRT:join",
+	PAIR_RT_LEAVE: "pairRT:leave",
+	PAIR_RT_EDIT: "pairRT:edit",
+	PAIR_RT_CURSOR: "pairRT:cursor",
+	PAIR_RT_CHAT: "pairRT:chat",
+	PAIR_RT_SUGGESTION: "pairRT:suggestion",
+	PAIR_RT_OPS: "pairRT:ops",
+	PAIR_RT_SUBSCRIBE: "pairRT:subscribe",
+	PAIR_RT_UNSUBSCRIBE: "pairRT:unsubscribe",
+	// Pair Programming SSE event (main -> renderer)
+	PAIR_RT_OP_EVENT: "pairRT:opEvent",
+	PAIR_RT_STREAM_ERROR: "pairRT:streamError",
 } as const;

@@ -1,4 +1,3 @@
-import os from "node:os";
 import { ipcRenderer } from "electron";
 import { IPC_CHANNELS } from "../../shared/constants";
 import type { IPCResult } from "../../shared/types";
@@ -14,7 +13,7 @@ export interface FileAPI {
 		fileName: string,
 		data: unknown,
 	) => Promise<IPCResult<boolean>>;
-	getUserHome: () => string;
+	getUserHome: () => Promise<string>;
 }
 
 export const createFileAPI = (): FileAPI => ({
@@ -36,5 +35,6 @@ export const createFileAPI = (): FileAPI => ({
 			fileName,
 			data,
 		),
-	getUserHome: (): string => os.homedir(),
+	getUserHome: (): Promise<string> =>
+		ipcRenderer.invoke(IPC_CHANNELS.FILE_EXPLORER_GET_USER_HOME),
 });

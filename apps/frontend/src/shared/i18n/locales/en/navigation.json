@@ -10,7 +10,11 @@
 		"explore": " Explore",
 		"gitIntegrations": " Git & Integrations",
 		"planning": " Planning",
-		"toolbox": " Toolbox"
+		"toolbox": " Toolbox",
+		"favorites": "Favorites"
+	},
+	"favorites": {
+		"dropHint": "Drop here to pin"
 	},
 	"subGroups": {
 		"extensions": "Extensions",
@@ -60,6 +64,7 @@
 		"mcpMarketplace": "MCP Marketplace",
 		"multiRepoOrchestration": "Multi-Repo",
 		"missionControl": "Mission Control",
+		"phase35Hub": "Phase 3-5 Features",
 		"pixelOffice": "Pixel Office",
 		"agentReplay": "Agent Replay",
 		"selfHealing": "Self-Healing",
@@ -105,7 +110,12 @@
 		"help": "Help & Feedback",
 		"newTask": "New Task",
 		"collapseSidebar": "Collapse Sidebar",
-		"expandSidebar": "Expand Sidebar"
+		"expandSidebar": "Expand Sidebar",
+		"pin": "Pin to favorites",
+		"unpin": "Remove from favorites",
+		"pinGroup": "Pin group to favorites",
+		"unpinGroup": "Remove group from favorites",
+		"resetLayout": "Reset layout"
 	},
 	"tooltips": {
 		"settings": "Application Settings",

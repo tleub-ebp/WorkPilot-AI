@@ -1,5 +1,6 @@
 import { readdirSync, statSync } from "node:fs";
 import { readFile } from "node:fs/promises";
+import os from "node:os";
 import path from "node:path";
 import { ipcMain } from "electron";
 import { IPC_CHANNELS } from "../../shared/constants";
@@ -176,5 +177,10 @@ export function registerFileHandlers(): void {
 				};
 			}
 		},
+	);
+
+	ipcMain.handle(
+		IPC_CHANNELS.FILE_EXPLORER_GET_USER_HOME,
+		async (): Promise<string> => os.homedir(),
 	);
 }
