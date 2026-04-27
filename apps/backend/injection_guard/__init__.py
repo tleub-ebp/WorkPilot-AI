@@ -6,6 +6,13 @@ classifier to detect direct instruction override, system-role confusion,
 tool/shell injection, data exfiltration, and encoded payloads.
 """
 
+from .middleware import (
+    PromptInjectionBlocked,
+    get_default_scanner,
+    guard_async_runner,
+    guard_runner,
+    guarded_prompt,
+)
 from .scanner import (
     InjectionScanner,
     ScanFinding,
@@ -15,7 +22,12 @@ from .scanner import (
 
 __all__ = [
     "InjectionScanner",
+    "PromptInjectionBlocked",
     "ScanFinding",
     "ScanResult",
     "ThreatLevel",
+    "get_default_scanner",
+    "guard_async_runner",
+    "guard_runner",
+    "guarded_prompt",
 ]
