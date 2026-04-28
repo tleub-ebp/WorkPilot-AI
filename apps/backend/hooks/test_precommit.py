@@ -12,6 +12,7 @@ from hooks.precommit import (
     HOOK_EXIT_OK,
     HOOK_EXIT_VIOLATION,
     main,
+    run_attribution_update,
     run_drift_check,
     run_gen_tests_check,
     run_license_check,
@@ -205,6 +206,127 @@ class TestMain:
     def test_gen_tests_with_no_data_via_cli(self, tmp_path: Path) -> None:
         rc = main(["gen-tests-check", "--project-dir", str(tmp_path)])
         assert rc == HOOK_EXIT_OK
+
+    def test_attribution_update_with_no_deps_via_cli(self, tmp_path: Path) -> None:
+        rc = main(["attribution-update", "--project-dir", str(tmp_path)])
+        assert rc == HOOK_EXIT_OK
+
+
+# ---------------------------------------------------------------------------
+# attribution-update
+
+
+class TestRunAttributionUpdate:
+    def test_no_deps_skips_silently(self, tmp_path: Path, capsys) -> None:
+        rc = run_attribution_update(tmp_path)
+        assert rc == HOOK_EXIT_OK
+        assert "no dependencies" in capsys.readouterr().out
+
+    def test_writes_attribution_md_when_deps_present(self, tmp_path: Path) -> None:
+        # A package.json with a single dep is enough for the scanner to
+        # produce a non-empty report.
+        (tmp_path / "package.json").write_text(
+            json.dumps(
+                {
+                    "name": "demo",
+                    "license": "MIT",
+                    "dependencies": {"react": "^18.0.0"},
+                }
+            ),
+            encoding="utf-8",
+        )
+        rc = run_attribution_update(tmp_path, stage=False)
+        assert rc == HOOK_EXIT_OK
+        attribution = tmp_path / "ATTRIBUTION.md"
+        assert attribution.exists()
+        content = attribution.read_text(encoding="utf-8")
+        assert "react" in content
+
+    def test_idempotent_when_called_twice(self, tmp_path: Path) -> None:
+        # Running the hook twice should produce identical output (the
+        # generator is deterministic — sorted by category, ecosystem, name).
+        (tmp_path / "package.json").write_text(
+            json.dumps(
+                {
+                    "name": "demo",
+                    "license": "MIT",
+                    "dependencies": {"alpha": "1", "beta": "2"},
+                }
+            ),
+            encoding="utf-8",
+        )
+        run_attribution_update(tmp_path, stage=False)
+        first = (tmp_path / "ATTRIBUTION.md").read_text(encoding="utf-8")
+        # Strip the date line — that's the one source of non-determinism
+        # between calls (timestamp ticks). Everything else must match.
+        run_attribution_update(tmp_path, stage=False)
+        second = (tmp_path / "ATTRIBUTION.md").read_text(encoding="utf-8")
+        first_filtered = "\n".join(
+            line for line in first.splitlines() if "Generated on" not in line
+        )
+        second_filtered = "\n".join(
+            line for line in second.splitlines() if "Generated on" not in line
+        )
+        assert first_filtered == second_filtered
+
+    def test_project_name_override_appears_in_header(self, tmp_path: Path) -> None:
+        (tmp_path / "package.json").write_text(
+            json.dumps(
+                {"name": "x", "license": "MIT", "dependencies": {"react": "^1"}}
+            ),
+            encoding="utf-8",
+        )
+        run_attribution_update(tmp_path, project_name="My Cool App", stage=False)
+        content = (tmp_path / "ATTRIBUTION.md").read_text(encoding="utf-8")
+        assert "My Cool App" in content
+
+    def test_no_transitive_filters_indirect_deps(self, tmp_path: Path) -> None:
+        # The npm parser marks devDependencies-style entries as direct,
+        # so a package.json doesn't easily produce transitives. The flag
+        # is exercised here by verifying the call shape — we trust the
+        # underlying renderer (which has its own coverage in
+        # test_attribution.py).
+        (tmp_path / "package.json").write_text(
+            json.dumps(
+                {"name": "x", "license": "MIT", "dependencies": {"react": "^1"}}
+            ),
+            encoding="utf-8",
+        )
+        rc = run_attribution_update(tmp_path, include_transitive=False, stage=False)
+        assert rc == HOOK_EXIT_OK
+        # File still produced (direct deps remain).
+        assert (tmp_path / "ATTRIBUTION.md").exists()
+
+    def test_stage_is_no_op_outside_git_repo(self, tmp_path: Path) -> None:
+        # tmp_path is not a git repo → _git_stage returns False, but the
+        # hook still writes the file and exits OK.
+        (tmp_path / "package.json").write_text(
+            json.dumps(
+                {"name": "x", "license": "MIT", "dependencies": {"react": "^1"}}
+            ),
+            encoding="utf-8",
+        )
+        rc = run_attribution_update(tmp_path, stage=True)
+        assert rc == HOOK_EXIT_OK
+        assert (tmp_path / "ATTRIBUTION.md").exists()
+
+    def test_scanner_failure_returns_infra_error(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        # Force LicenseScanner.scan() to raise.
+        from license_governance import scanner as scanner_mod
+
+        original = scanner_mod.LicenseScanner.scan
+
+        def boom(self):  # type: ignore[no-untyped-def]
+            raise RuntimeError("simulated scanner crash")
+
+        monkeypatch.setattr(scanner_mod.LicenseScanner, "scan", boom)
+        try:
+            rc = run_attribution_update(tmp_path)
+            assert rc == HOOK_EXIT_INFRASTRUCTURE_ERROR
+        finally:
+            monkeypatch.setattr(scanner_mod.LicenseScanner, "scan", original)
 
 
 if __name__ == "__main__":

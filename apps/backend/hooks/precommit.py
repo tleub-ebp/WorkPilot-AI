@@ -18,6 +18,8 @@ from __future__ import annotations
 import argparse
 import json
 import logging
+import shutil
+import subprocess
 import sys
 from pathlib import Path
 from typing import TextIO
@@ -285,18 +287,121 @@ def run_gen_tests_check(
 
 
 # ---------------------------------------------------------------------------
+# Attribution auto-update
+
+
+def _git_stage(file_path: Path, *, stderr: TextIO) -> bool:
+    """Best-effort `git add <file>`. Returns True on success, False otherwise.
+
+    Silent no-op when git isn't on PATH or when the project isn't a repo.
+    The hook still exits OK in those cases — generating the file already
+    delivered the value; staging is a convenience.
+    """
+    git = shutil.which("git")
+    if git is None:
+        return False
+    try:
+        result = subprocess.run(
+            [git, "-C", str(file_path.parent), "add", "--", file_path.name],
+            capture_output=True,
+            text=True,
+            timeout=10,
+            check=False,
+        )
+    except (OSError, subprocess.TimeoutExpired) as exc:
+        print(f"[attribution-update] git add failed: {exc}", file=stderr)
+        return False
+    if result.returncode != 0:
+        # Most common cause: not a git repo. Don't shout about it.
+        return False
+    return True
+
+
+def run_attribution_update(
+    project_dir: Path,
+    *,
+    project_name: str | None = None,
+    include_transitive: bool = True,
+    include_unknown: bool = True,
+    stage: bool = True,
+    stderr: TextIO | None = None,
+) -> int:
+    """Generate / update ``ATTRIBUTION.md`` at the project root.
+
+    Always exits 0 unless the underlying scanner explodes — auto-attribution
+    should never block a commit on a manifest hiccup. When ``stage`` is true
+    and ``git`` is on PATH, the freshly-written file is also staged so the
+    contributor doesn't forget it.
+    """
+    err = stderr or sys.stderr
+    try:
+        from license_governance import (
+            ATTRIBUTION_FILENAME,
+            AttributionOptions,
+            LicenseScanner,
+            write_attribution,
+        )
+    except ImportError:
+        print(
+            "[attribution-update] license_governance not available — skipping",
+            file=err,
+        )
+        return HOOK_EXIT_OK
+
+    try:
+        scanner = LicenseScanner(project_dir=project_dir)
+        report = scanner.scan()
+    except Exception as exc:  # noqa: BLE001
+        print(f"[attribution-update] scanner error: {exc}", file=err)
+        return HOOK_EXIT_INFRASTRUCTURE_ERROR
+
+    if not report.dependencies:
+        print(
+            "[attribution-update] no dependencies discovered — skipping "
+            "(no ATTRIBUTION.md needed)"
+        )
+        return HOOK_EXIT_OK
+
+    opts = AttributionOptions(
+        project_name=project_name or project_dir.name,
+        include_transitive=include_transitive,
+        include_unknown=include_unknown,
+    )
+    try:
+        written = write_attribution(report, project_dir, opts)
+    except Exception as exc:  # noqa: BLE001
+        print(f"[attribution-update] write failed: {exc}", file=err)
+        return HOOK_EXIT_INFRASTRUCTURE_ERROR
+
+    staged = _git_stage(written, stderr=err) if stage else False
+    print(
+        f"[attribution-update] OK — {ATTRIBUTION_FILENAME} updated "
+        f"({len(report.dependencies)} deps)" + (" + staged" if staged else "")
+    )
+    return HOOK_EXIT_OK
+
+
+# ---------------------------------------------------------------------------
 # CLI entrypoint
 
 
 def _build_parser() -> argparse.ArgumentParser:
     p = argparse.ArgumentParser(
         prog="wp-precommit",
-        description="WorkPilot AI pre-commit checks (license, drift, gen-tests).",
+        description=(
+            "WorkPilot AI pre-commit checks "
+            "(license / drift / gen-tests / attribution)."
+        ),
     )
     p.add_argument(
         "mode",
-        choices=("license-check", "drift-check", "gen-tests-check"),
-        help="Which check to run.",
+        choices=(
+            "license-check",
+            "drift-check",
+            "gen-tests-check",
+            "attribution-update",
+        ),
+        help="Which action to run.",
     )
     p.add_argument(
         "--project-dir",
@@ -324,6 +429,29 @@ def _build_parser() -> argparse.ArgumentParser:
         default=None,
         help="Path to JUnit XML (gen-tests-check only).",
     )
+    p.add_argument(
+        "--project-name",
+        default=None,
+        help="Display name in the generated header (attribution-update only).",
+    )
+    p.add_argument(
+        "--no-transitive",
+        action="store_true",
+        help="Omit transitive deps from the attribution (attribution-update only).",
+    )
+    p.add_argument(
+        "--no-unknown",
+        action="store_true",
+        help="Omit deps with no declared license (attribution-update only).",
+    )
+    p.add_argument(
+        "--no-stage",
+        action="store_true",
+        help=(
+            "Skip `git add` after writing the file "
+            "(attribution-update only). Default: stage when in a repo."
+        ),
+    )
     return p
 
 
@@ -347,6 +475,14 @@ def main(argv: list[str] | None = None) -> int:
     if args.mode == "gen-tests-check":
         junit = Path(args.junit_xml) if args.junit_xml else None
         return run_gen_tests_check(project_dir, junit_xml=junit)
+    if args.mode == "attribution-update":
+        return run_attribution_update(
+            project_dir,
+            project_name=args.project_name,
+            include_transitive=not args.no_transitive,
+            include_unknown=not args.no_unknown,
+            stage=not args.no_stage,
+        )
 
     return HOOK_EXIT_INFRASTRUCTURE_ERROR  # unreachable
 
