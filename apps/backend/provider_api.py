@@ -159,7 +159,7 @@ def force_claude_provider_config(*args, **kwargs):
     return _get_llm_config()["force_claude_provider_config"](*args, **kwargs)
 
 
-from apps.backend.validated_keys_db import is_validated, set_validated
+from validated_keys_db import is_validated, set_validated
 
 
 @asynccontextmanager
@@ -2497,6 +2497,14 @@ try:
     app.include_router(pair_realtime_router)
 except ImportError as e:
     print(f"Warning: Could not import pair_realtime router: {e}")
+
+# --- Code Playground API ---
+try:
+    from code_playground.api import router as code_playground_router
+
+    app.include_router(code_playground_router)
+except ImportError as e:
+    print(f"Warning: Could not import code_playground router: {e}")
 
 if __name__ == "__main__":
     import uvicorn

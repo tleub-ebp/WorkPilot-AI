@@ -44,6 +44,7 @@ class AuditEventKind(str, Enum):
     AGENT_INVOKED = "agent_invoked"
     AGENT_COMPLETED = "agent_completed"
     AGENT_FAILED = "agent_failed"
+    AGENT_PAUSED = "agent_paused"
     DECISION_MADE = "decision_made"
     APPROVAL_GIVEN = "approval_given"
     APPROVAL_REVOKED = "approval_revoked"

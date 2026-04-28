@@ -521,6 +521,48 @@ def load_claude_md(project_dir: Path) -> str | None:
     return None
 
 
+# Map AGENT_CONFIGS agent_type → DomainAgentFactory role enum value.
+# Kept here (rather than in feature_wiring) because it depends on the
+# specific agent_type vocabulary used in this client layer.
+_DOMAIN_ROLE_BY_AGENT_TYPE = {
+    "coder": "coder",
+    "planner": "planner",
+    "qa_reviewer": "reviewer",
+    "qa_fixer": "reviewer",
+    "documenter": "documenter",
+}
+
+
+def _inject_domain_addendum(
+    base_prompt: str,
+    agent_type: str,
+    spec_dir: Path | None,
+) -> str:
+    """Append the Domain Agents prompt addendum when the spec declares a
+    ``domain`` field in ``requirements.json``.
+
+    Best-effort. Returns the prompt unchanged if anything goes wrong (no
+    domain configured, unknown role, addendum module missing, etc).
+    Centralised so all four provider branches (Claude / Copilot / Windsurf /
+    OpenAI) get the addendum the same way.
+    """
+    if spec_dir is None:
+        return base_prompt
+    role = _DOMAIN_ROLE_BY_AGENT_TYPE.get(agent_type)
+    if not role:
+        return base_prompt
+    try:
+        from agents.feature_wiring import load_domain_addendum
+
+        addendum = load_domain_addendum(spec_dir, role=role)
+    except Exception:  # noqa: BLE001
+        return base_prompt
+    if not addendum:
+        return base_prompt
+    print(f"   - Domain addendum: injected ({len(addendum)} chars, role={role})")
+    return f"{base_prompt}\n\n# Domain-Specific Guidance\n\n{addendum}"
+
+
 def create_client(
     project_dir: Path,
     spec_dir: Path,
@@ -982,6 +1024,9 @@ def create_client(
             print("   - CLAUDE.md: not found in project root")
     else:
         print("   - CLAUDE.md: disabled by project settings")
+
+    base_prompt = _inject_domain_addendum(base_prompt, agent_type, spec_dir)
+
     print()
 
     # Build options dict, conditionally including output_format
@@ -1264,6 +1309,7 @@ def create_agent_client(
             f"your work through thorough testing. You communicate progress through Git commits "
             f"and build-progress.txt updates."
         )
+        base_prompt = _inject_domain_addendum(base_prompt, agent_type, spec_dir)
 
         # Convert agents dict to SubagentDefinition if provided
         copilot_agents: dict[str, SubagentDefinition] | None = None
@@ -1338,6 +1384,9 @@ def create_agent_client(
             f"to interact with the filesystem and execute commands. Do not just describe what to do — "
             f"actually do it by calling the tools."
         )
+        windsurf_system_prompt = _inject_domain_addendum(
+            windsurf_system_prompt, agent_type, spec_dir
+        )
 
         logger.info(
             "[create_agent_client] Using WindsurfAgentClient "
@@ -1368,6 +1417,9 @@ def create_agent_client(
             f"You MUST use the provided tools (read_file, write_file, list_files, run_command) "
             f"to interact with the filesystem and execute commands. Do not just describe what to do — "
             f"actually do it by calling the tools."
+        )
+        openai_system_prompt = _inject_domain_addendum(
+            openai_system_prompt, agent_type, spec_dir
         )
 
         logger.info(

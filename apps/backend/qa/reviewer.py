@@ -14,6 +14,7 @@ from pathlib import Path
 from typing import Any, Union
 
 # Memory integration for cross-session learning
+from agents.agent_audit import audit_event
 from agents.memory_manager import get_graphiti_context, save_session_memory
 from core.agent_client import AgentClient, ContentBlockType
 
@@ -194,6 +195,14 @@ async def run_qa_agent_session(
         spec_dir=str(spec_dir),
         qa_session=qa_session,
         max_iterations=max_iterations,
+    )
+    audit_event(
+        project_dir,
+        kind="agent_invoked",
+        actor="qa_reviewer",
+        correlation_id=spec_dir.name,
+        summary=f"QA reviewer session {qa_session} invoked",
+        payload={"qa_session": qa_session, "max_iterations": max_iterations},
     )
 
     print(f"\n{'=' * 70}")
@@ -876,6 +885,19 @@ async def _process_qa_result(
         tool_count=tool_count,
         response_length=len(response_text),
         qa_status=status.get("status") if status else "unknown",
+    )
+    qa_status_value = status.get("status") if status else "unknown"
+    audit_event(
+        project_dir,
+        kind="agent_completed" if qa_status_value == "approved" else "agent_failed",
+        actor="qa_reviewer",
+        correlation_id=spec_dir.name,
+        summary=f"QA reviewer session {qa_session} → {qa_status_value}",
+        payload={
+            "qa_session": qa_session,
+            "verdict": qa_status_value,
+            "result_error": (str(result_error)[:500] if result_error else ""),
+        },
     )
 
     qa_discoveries = {

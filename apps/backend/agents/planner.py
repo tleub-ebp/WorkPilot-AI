@@ -27,6 +27,12 @@ from ui import (
     print_status,
 )
 
+from .agent_audit import audit_decision, audit_event
+from .feature_wiring import (
+    apply_router_override,
+    load_domain_addendum,
+    suggest_routed_model,
+)
 from .session import run_agent_session
 
 logger = logging.getLogger(__name__)
@@ -69,6 +75,75 @@ async def run_followup_planner(
     status_manager = StatusManager(project_dir)
     status_manager.set_active(spec_dir.name, BuildState.PLANNING)
     emit_phase(ExecutionPhase.PLANNING, "Follow-up planning")
+
+    audit_event(
+        project_dir,
+        kind="agent_invoked",
+        actor="planner",
+        correlation_id=spec_dir.name,
+        summary="follow-up planner invoked",
+        payload={"model": model, "spec_dir": str(spec_dir)},
+    )
+
+    # --- Feature wiring (opt-in) --------------------------------------------
+    try:
+        new_model, override_info = apply_router_override(
+            model,
+            spec_dir=spec_dir,
+            phase="planning",
+            prompt_hint=f"follow-up planning for spec {spec_dir.name}",
+        )
+        if override_info is not None:
+            audit_decision(
+                project_dir,
+                actor="model_router",
+                spec_dir=spec_dir,
+                decision_id=f"router-override-planner-{spec_dir.name}",
+                title="Planner model substituted by router (no explicit user choice)",
+                chosen=new_model,
+                rejected=(model,),
+                rationale=(
+                    f"ModelRouter substituted {model} → {new_model} "
+                    f"(~${override_info['estimated_cost_usd']:.4f}). "
+                    f"Override active because no CLI/task_metadata model was set."
+                ),
+            )
+            model = new_model  # noqa: PLW2901 — intentional reassignment
+        else:
+            suggestion = suggest_routed_model(
+                prompt=f"follow-up planning for spec {spec_dir.name}",
+                task_hint="planning",
+            )
+            if suggestion and suggestion["model"] != model:
+                audit_decision(
+                    project_dir,
+                    actor="model_router",
+                    spec_dir=spec_dir,
+                    decision_id=f"router-suggest-planner-{spec_dir.name}",
+                    title="Cheaper planner model available",
+                    chosen=model,
+                    rejected=(suggestion["model"],),
+                    rationale=(
+                        f"ModelRouter suggested {suggestion['model']} "
+                        f"(~${suggestion['estimated_cost_usd']:.4f}); "
+                        f"user choice {model} kept."
+                    ),
+                )
+    except Exception:
+        pass
+
+    try:
+        if load_domain_addendum(spec_dir, role="planner"):
+            audit_event(
+                project_dir,
+                kind="system_event",
+                actor="domain_agents",
+                correlation_id=spec_dir.name,
+                summary="domain addendum available for planner",
+            )
+    except Exception:
+        pass
+    # ------------------------------------------------------------------------
 
     # Initialize task logger for persistent logging
     task_logger = get_task_logger(spec_dir)
@@ -132,6 +207,14 @@ async def run_followup_planner(
             print()
             print_status("Follow-up planning failed", "error")
             status_manager.update(state=BuildState.ERROR)
+            audit_event(
+                project_dir,
+                kind="agent_failed",
+                actor="planner",
+                correlation_id=spec_dir.name,
+                summary="follow-up planning failed (session error)",
+                payload={"error_info": str(error_info)[:500] if error_info else ""},
+            )
             return False
 
         # Verify the plan was updated (should have pending subtasks now)
@@ -161,6 +244,17 @@ async def run_followup_planner(
                 print(box(content, width=70, style="heavy"))
                 print()
                 status_manager.update(state=BuildState.PAUSED)
+                audit_event(
+                    project_dir,
+                    kind="agent_completed",
+                    actor="planner",
+                    correlation_id=spec_dir.name,
+                    summary=f"follow-up planning added {len(pending_subtasks)} subtasks",
+                    payload={
+                        "new_pending_subtasks": len(pending_subtasks),
+                        "total_subtasks": len(all_subtasks),
+                    },
+                )
                 return True
             else:
                 print()
@@ -170,6 +264,14 @@ async def run_followup_planner(
                 print(muted("The planner may not have added new subtasks."))
                 print(muted("Check implementation_plan.json manually."))
                 status_manager.update(state=BuildState.PAUSED)
+                audit_event(
+                    project_dir,
+                    kind="agent_completed",
+                    actor="planner",
+                    correlation_id=spec_dir.name,
+                    summary="follow-up planning produced no new subtasks",
+                    payload={"total_subtasks": len(all_subtasks)},
+                )
                 return False
         else:
             print()
@@ -177,6 +279,13 @@ async def run_followup_planner(
                 "Error: implementation_plan.json not found after planning", "error"
             )
             status_manager.update(state=BuildState.ERROR)
+            audit_event(
+                project_dir,
+                kind="agent_failed",
+                actor="planner",
+                correlation_id=spec_dir.name,
+                summary="follow-up planning: implementation_plan.json missing",
+            )
             return False
 
     except Exception as e:
@@ -185,4 +294,12 @@ async def run_followup_planner(
         if task_logger:
             task_logger.log_error(f"Follow-up planning error: {e}", LogPhase.PLANNING)
         status_manager.update(state=BuildState.ERROR)
+        audit_event(
+            project_dir,
+            kind="agent_failed",
+            actor="planner",
+            correlation_id=spec_dir.name,
+            summary=f"follow-up planning crashed: {type(e).__name__}",
+            payload={"error": str(e)[:500]},
+        )
         return False

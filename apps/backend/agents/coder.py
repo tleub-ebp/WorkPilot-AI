@@ -13,6 +13,13 @@ import re
 from datetime import datetime, timedelta
 from pathlib import Path
 
+from agents.agent_audit import audit_decision, audit_event
+from agents.feature_wiring import (
+    apply_router_override,
+    cognitive_context_enabled,
+    load_domain_addendum,
+    suggest_routed_model,
+)
 from core.client import create_agent_client
 from core.task_event import TaskEventEmitter
 from core.workflow_logger import workflow_logger
@@ -451,6 +458,108 @@ async def run_autonomous_agent(
             "streaming_session_id": streaming_session_id,
         },
     )
+    audit_event(
+        project_dir,
+        kind="agent_invoked",
+        actor="coder",
+        correlation_id=spec_dir.name,
+        summary="coder autonomous loop invoked",
+        payload={
+            "model": model,
+            "max_iterations": max_iterations,
+            "spec_dir": str(spec_dir),
+        },
+    )
+
+    # --- Feature wiring (opt-in) --------------------------------------------
+    # ModelRouter:
+    #   * Default mode (override flag OFF): suggest a cheaper model and log
+    #     the divergence. The user's configured model is kept.
+    #   * Override mode (WORKPILOT_MODEL_ROUTER_ENABLED=1) AND no explicit
+    #     user choice: substitute `model` with the router's suggestion. We
+    #     never overrule a CLI/UI/spec-file choice silently.
+    try:
+        new_model, override_info = apply_router_override(
+            model,
+            spec_dir=spec_dir,
+            phase="coding",
+            prompt_hint=f"coder run on spec {spec_dir.name}",
+        )
+        if override_info is not None:
+            # Override took effect — record it as a decision and replace model.
+            audit_decision(
+                project_dir,
+                actor="model_router",
+                spec_dir=spec_dir,
+                decision_id=f"router-override-{spec_dir.name}",
+                title="Model substituted by router (no explicit user choice)",
+                chosen=new_model,
+                rejected=(model,),
+                rationale=(
+                    f"ModelRouter substituted {model} → {new_model} "
+                    f"(~${override_info['estimated_cost_usd']:.4f}, "
+                    f"{override_info['reason']}). "
+                    f"Override active because no CLI/task_metadata model was set."
+                ),
+            )
+            model = new_model  # noqa: PLW2901 — intentional reassignment
+        else:
+            # Override mode off OR user picked explicitly — log the suggestion
+            # for cost analyses but keep the user's choice.
+            suggestion = suggest_routed_model(
+                prompt=f"coder run on spec {spec_dir.name}",
+                task_hint="coding",
+            )
+            if suggestion and suggestion["model"] != model:
+                audit_decision(
+                    project_dir,
+                    actor="model_router",
+                    spec_dir=spec_dir,
+                    decision_id=f"router-suggest-{spec_dir.name}",
+                    title="Cheaper model available",
+                    chosen=model,
+                    rejected=(suggestion["model"],),
+                    rationale=(
+                        f"ModelRouter suggested {suggestion['model']} "
+                        f"(~${suggestion['estimated_cost_usd']:.4f}, "
+                        f"{suggestion['reason']}); user choice {model} kept."
+                    ),
+                )
+    except Exception:
+        # Wiring is best-effort. Never break the build.
+        pass
+
+    # Domain Agents: log when a domain addendum is available so downstream
+    # tooling (and the audit trail) can show that a domain-specific
+    # context was active for this run. Injecting the addendum into the
+    # actual SDK system prompt is intentionally NOT done here — that
+    # requires a coordinated change to the runtime/client layer and is
+    # tracked separately. For now we surface the signal.
+    try:
+        domain_addendum = load_domain_addendum(spec_dir, role="coder")
+        if domain_addendum:
+            audit_event(
+                project_dir,
+                kind="system_event",
+                actor="domain_agents",
+                correlation_id=spec_dir.name,
+                summary="domain addendum available for coder",
+                payload={"addendum_chars": len(domain_addendum)},
+            )
+    except Exception:
+        pass
+
+    # Cognitive Context Optimizer flag — record whether opt-in was active
+    # so reproducibility audits can correlate output quality vs context size.
+    if cognitive_context_enabled():
+        audit_event(
+            project_dir,
+            kind="system_event",
+            actor="cognitive_context",
+            correlation_id=spec_dir.name,
+            summary="cognitive context optimizer flag enabled for this run",
+        )
+    # ------------------------------------------------------------------------
 
     # Start build tracking (best-effort)
     if _ut_start_build is not None:
@@ -1390,6 +1499,18 @@ async def run_autonomous_agent(
             },
             agent_trace_id,
         )
+        audit_event(
+            project_dir,
+            kind="agent_completed",
+            actor="coder",
+            correlation_id=spec_dir.name,
+            summary=f"coder completed: {completed}/{total} subtasks",
+            payload={
+                "completed_subtasks": completed,
+                "total_subtasks": total,
+                "total_sessions": iteration,
+            },
+        )
     else:
         status_manager.update(state=BuildState.PAUSED)
         if _ut_finish_build is not None:
@@ -1416,6 +1537,18 @@ async def run_autonomous_agent(
                 "spec_dir": str(spec_dir.name),
             },
             agent_trace_id,
+        )
+        audit_event(
+            project_dir,
+            kind="agent_paused",
+            actor="coder",
+            correlation_id=spec_dir.name,
+            summary=f"coder paused: {completed}/{total} subtasks",
+            payload={
+                "completed_subtasks": completed,
+                "total_subtasks": total,
+                "remaining": total - completed,
+            },
         )
 
     # Clean up streaming session
