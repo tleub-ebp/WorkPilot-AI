@@ -58,10 +58,11 @@ export function AuditTrailPanel() {
 			<div className="space-y-3 text-sm">
 				<div className="grid grid-cols-2 gap-3">
 					<div>
-						<label className="block font-medium mb-1">
+						<label htmlFor="storage-dir-input" className="block font-medium mb-1">
 							{t("audit.storageDir")}
 						</label>
 						<input
+							id="storage-dir-input"
 							value={storageDir}
 							onChange={(e) => setStorageDir(e.target.value)}
 							className="w-full rounded border bg-background p-2 font-mono text-xs"
@@ -69,10 +70,11 @@ export function AuditTrailPanel() {
 						/>
 					</div>
 					<div>
-						<label className="block font-medium mb-1">
+						<label htmlFor="trail-name-input" className="block font-medium mb-1">
 							{t("audit.trailName")}
 						</label>
 						<input
+							id="trail-name-input"
 							value={trailName}
 							onChange={(e) => setTrailName(e.target.value)}
 							className="w-full rounded border bg-background p-2 text-sm"
@@ -82,10 +84,11 @@ export function AuditTrailPanel() {
 
 				<div className="flex gap-2 items-end">
 					<div className="flex-1">
-						<label className="block font-medium mb-1">
+						<label htmlFor="correlation-id-input" className="block font-medium mb-1">
 							{t("audit.correlationId")}
 						</label>
 						<input
+							id="correlation-id-input"
 							value={correlationId}
 							onChange={(e) => setCorrelationId(e.target.value)}
 							className="w-full rounded border bg-background p-2 text-sm"

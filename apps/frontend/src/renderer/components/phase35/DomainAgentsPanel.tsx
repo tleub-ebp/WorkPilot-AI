@@ -48,10 +48,11 @@ export function DomainAgentsPanel() {
 			<div className="space-y-3">
 				<div className="grid grid-cols-2 gap-3">
 					<div>
-						<label className="block text-sm font-medium mb-1">
+						<label htmlFor="domain-select" className="block text-sm font-medium mb-1">
 							{t("domainAgents.domain")}
 						</label>
 						<select
+							id="domain-select"
 							value={selected}
 							onChange={(e) => setSelected(e.target.value)}
 							className="w-full rounded border bg-background p-2 text-sm"
@@ -64,10 +65,11 @@ export function DomainAgentsPanel() {
 						</select>
 					</div>
 					<div>
-						<label className="block text-sm font-medium mb-1">
+						<label htmlFor="role-select" className="block text-sm font-medium mb-1">
 							{t("domainAgents.role")}
 						</label>
 						<select
+							id="role-select"
 							value={role}
 							onChange={(e) => setRole(e.target.value)}
 							className="w-full rounded border bg-background p-2 text-sm"
@@ -89,8 +91,8 @@ export function DomainAgentsPanel() {
 									{t("domainAgents.guardrails")} ({bundle.guardrails.length})
 								</summary>
 								<ul className="ml-4 mt-1 list-disc space-y-1 text-muted-foreground">
-									{bundle.guardrails.map((g, i) => (
-										<li key={i}>{g}</li>
+									{bundle.guardrails.map((g) => (
+										<li key={g}>{g}</li>
 									))}
 								</ul>
 							</details>
@@ -129,8 +131,8 @@ export function DomainAgentsPanel() {
 									{t("domainAgents.validationRules")} ({bundle.validation_rules.length})
 								</summary>
 								<ul className="ml-4 mt-1 list-disc text-muted-foreground">
-									{bundle.validation_rules.map((r, i) => (
-										<li key={i}>{r}</li>
+									{bundle.validation_rules.map((r) => (
+										<li key={r}>{r}</li>
 									))}
 								</ul>
 							</details>

@@ -43,10 +43,11 @@ export function CicdAnomalyPanel() {
 		>
 			<div className="space-y-3">
 				<div>
-					<label className="block text-sm font-medium mb-1">
+					<label htmlFor="log-textarea" className="block text-sm font-medium mb-1">
 						{t("cicdAnomaly.logLabel")}
 					</label>
 					<textarea
+						id="log-textarea"
 						value={log}
 						onChange={(e) => setLog(e.target.value)}
 						rows={10}
@@ -61,8 +62,8 @@ export function CicdAnomalyPanel() {
 							{t("cicdAnomaly.signals")} ({signals.length})
 						</div>
 						<ul className="space-y-2 text-sm">
-							{signals.map((s, i) => (
-								<li key={i} className="rounded border p-2">
+							{signals.map((s) => (
+								<li key={`${s.kind}-${s.line_number}`} className="rounded border p-2">
 									<div className="flex items-center gap-2">
 										<Badge className={SEV_COLOR[s.severity] ?? "bg-muted"}>
 											{s.severity}

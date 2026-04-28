@@ -37,10 +37,11 @@ export function I18nScalerPanel() {
 			<div className="space-y-3 text-sm">
 				<div className="grid grid-cols-2 gap-3">
 					<div>
-						<label className="block font-medium mb-1">
+						<label htmlFor="locales-dir-input" className="block font-medium mb-1">
 							{t("i18nScaler.localesDir")}
 						</label>
 						<input
+							id="locales-dir-input"
 							value={dir}
 							onChange={(e) => setDir(e.target.value)}
 							className="w-full rounded border bg-background p-2 font-mono text-xs"
@@ -48,10 +49,11 @@ export function I18nScalerPanel() {
 						/>
 					</div>
 					<div>
-						<label className="block font-medium mb-1">
+						<label htmlFor="source-locale-input" className="block font-medium mb-1">
 							{t("i18nScaler.sourceLocale")}
 						</label>
 						<input
+							id="source-locale-input"
 							value={source}
 							onChange={(e) => setSource(e.target.value)}
 							className="w-full rounded border bg-background p-2 text-sm"

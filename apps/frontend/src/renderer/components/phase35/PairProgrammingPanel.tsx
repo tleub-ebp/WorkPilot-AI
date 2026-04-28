@@ -61,7 +61,19 @@ export function PairProgrammingPanel() {
 		}
 	}, []);
 
-	const isRunning = phase === "running";
+		const isRunning = phase === "running";
+
+	// Helper to safely stringify values, converting objects to JSON instead of "[object Object]"
+	const safeStringify = (value: unknown): string => {
+		if (typeof value === "string") return value;
+		if (typeof value === "number" || typeof value === "boolean") return String(value);
+		if (value === null || value === undefined) return "";
+		try {
+			return JSON.stringify(value);
+		} catch {
+			return "[object]";
+		}
+	};
 
 	return (
 		<PanelShell
@@ -84,43 +96,7 @@ export function PairProgrammingPanel() {
 				)
 			}
 		>
-			{!currentRoom ? (
-				<div className="grid grid-cols-2 gap-3 text-sm">
-					<div>
-						<label className="block font-medium mb-1">{t("pair.roomId")}</label>
-						<input
-							value={roomId}
-							onChange={(e) => setRoomId(e.target.value)}
-							className="w-full rounded border bg-background p-2 text-sm"
-						/>
-					</div>
-					<div>
-						<label className="block font-medium mb-1">{t("pair.yourName")}</label>
-						<input
-							value={displayName}
-							onChange={(e) => {
-								setDisplayName(e.target.value);
-								setUserId(e.target.value.toLowerCase().replace(/\s+/g, "-") || "you");
-							}}
-							className="w-full rounded border bg-background p-2 text-sm"
-						/>
-					</div>
-					<div>
-						<label className="block font-medium mb-1">{t("pair.role")}</label>
-						<select
-							value={role}
-							onChange={(e) => setRole(e.target.value as typeof role)}
-							className="w-full rounded border bg-background p-2 text-sm"
-						>
-							{ROLES.map((r) => (
-								<option key={r} value={r}>
-									{r}
-								</option>
-							))}
-						</select>
-					</div>
-				</div>
-			) : (
+			{currentRoom ? (
 				<div className="space-y-3 text-sm">
 					<div className="flex items-center gap-3">
 						<Badge variant="outline">room: {currentRoom.room_id}</Badge>
@@ -168,12 +144,12 @@ export function PairProgrammingPanel() {
 										</Badge>{" "}
 										<span>{op.actor}</span>
 										{op.kind === "chat" && (
-											<span className="ml-2">{String(op.payload.text ?? "")}</span>
+											<span className="ml-2">{safeStringify(op.payload.text)}</span>
 										)}
 										{op.kind === "edit" && (
 											<span className="ml-2">
-												{String(op.payload.file_path ?? "")}:
-												{String(op.payload.start_line ?? 0)}
+												{safeStringify(op.payload.file_path)}:
+												{safeStringify(op.payload.start_line)}
 											</span>
 										)}
 									</div>
@@ -201,6 +177,45 @@ export function PairProgrammingPanel() {
 							{t("pair.send")}
 						</Button>
 					</form>
+				</div>
+			) : (
+				<div className="grid grid-cols-2 gap-3 text-sm">
+					<div>
+						<label htmlFor="room-id-input" className="block font-medium mb-1">{t("pair.roomId")}</label>
+						<input
+							id="room-id-input"
+							value={roomId}
+							onChange={(e) => setRoomId(e.target.value)}
+							className="w-full rounded border bg-background p-2 text-sm"
+						/>
+					</div>
+					<div>
+						<label htmlFor="display-name-input" className="block font-medium mb-1">{t("pair.yourName")}</label>
+						<input
+							id="display-name-input"
+							value={displayName}
+							onChange={(e) => {
+								setDisplayName(e.target.value);
+								setUserId(e.target.value.toLowerCase().replaceAll(/\s+/g, "-") || "you");
+							}}
+							className="w-full rounded border bg-background p-2 text-sm"
+						/>
+					</div>
+					<div>
+						<label htmlFor="role-select" className="block font-medium mb-1">{t("pair.role")}</label>
+						<select
+							id="role-select"
+							value={role}
+							onChange={(e) => setRole(e.target.value as typeof role)}
+							className="w-full rounded border bg-background p-2 text-sm"
+						>
+							{ROLES.map((r) => (
+								<option key={r} value={r}>
+									{r}
+								</option>
+							))}
+						</select>
+					</div>
 				</div>
 			)}
 		</PanelShell>

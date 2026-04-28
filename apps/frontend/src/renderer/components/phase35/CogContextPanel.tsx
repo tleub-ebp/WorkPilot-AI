@@ -46,10 +46,11 @@ export function CogContextPanel() {
 		>
 			<div className="space-y-3 text-sm">
 				<div>
-					<label className="block font-medium mb-1">
+					<label htmlFor="prompt-textarea" className="block font-medium mb-1">
 						{t("cogContext.prompt")}
 					</label>
 					<textarea
+						id="prompt-textarea"
 						value={prompt}
 						onChange={(e) => setPrompt(e.target.value)}
 						rows={2}
@@ -58,10 +59,11 @@ export function CogContextPanel() {
 				</div>
 				<div className="grid grid-cols-3 gap-3">
 					<div className="col-span-2">
-						<label className="block font-medium mb-1">
+						<label htmlFor="files-textarea" className="block font-medium mb-1">
 							{t("cogContext.candidateFiles")}
 						</label>
 						<textarea
+							id="files-textarea"
 							value={files}
 							onChange={(e) => setFiles(e.target.value)}
 							rows={5}
@@ -70,10 +72,11 @@ export function CogContextPanel() {
 						/>
 					</div>
 					<div>
-						<label className="block font-medium mb-1">
+						<label htmlFor="budget-input" className="block font-medium mb-1">
 							{t("cogContext.tokenBudget")}
 						</label>
 						<input
+							id="budget-input"
 							type="number"
 							value={budget}
 							onChange={(e) => setBudget(Number.parseInt(e.target.value, 10) || 0)}

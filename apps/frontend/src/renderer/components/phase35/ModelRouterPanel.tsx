@@ -57,10 +57,11 @@ export function ModelRouterPanel() {
 		>
 			<div className="space-y-3">
 				<div>
-					<label className="block text-sm font-medium mb-1">
+					<label htmlFor="prompt-input" className="block text-sm font-medium mb-1">
 						{t("modelRouter.prompt")}
 					</label>
 					<textarea
+						id="prompt-input"
 						value={prompt}
 						onChange={(e) => setPrompt(e.target.value)}
 						rows={3}
@@ -70,10 +71,11 @@ export function ModelRouterPanel() {
 				</div>
 				<div className="grid grid-cols-2 gap-3">
 					<div>
-						<label className="block text-sm font-medium mb-1">
+						<label htmlFor="hint-input" className="block text-sm font-medium mb-1">
 							{t("modelRouter.hint")}
 						</label>
 						<input
+							id="hint-input"
 							value={hint}
 							onChange={(e) => setHint(e.target.value)}
 							className="w-full rounded border bg-background p-2 text-sm"
@@ -81,10 +83,11 @@ export function ModelRouterPanel() {
 						/>
 					</div>
 					<div>
-						<label className="block text-sm font-medium mb-1">
+						<label htmlFor="providers-input" className="block text-sm font-medium mb-1">
 							{t("modelRouter.availableProviders")}
 						</label>
 						<input
+							id="providers-input"
 							value={providers}
 							onChange={(e) => setProviders(e.target.value)}
 							className="w-full rounded border bg-background p-2 text-sm font-mono"
