@@ -10,6 +10,13 @@ for audit reports — this module is the **immutable source of truth** that
 the collector (and anyone else) can consume.
 """
 
+from .exports import (
+    DSARBundle,
+    build_dsar_bundle,
+    export_gdpr_dsar,
+    export_soc2_csv,
+    render_soc2_csv,
+)
 from .trail import (
     AuditEvent,
     AuditEventKind,
@@ -23,7 +30,12 @@ __all__ = [
     "AuditEvent",
     "AuditEventKind",
     "AuditTrail",
+    "DSARBundle",
     "Decision",
     "IntegrityReport",
     "ReplayBundle",
+    "build_dsar_bundle",
+    "export_gdpr_dsar",
+    "export_soc2_csv",
+    "render_soc2_csv",
 ]

@@ -2,12 +2,14 @@
 
 Mounted at `/api/audit-trail`. Endpoints:
 
-* `POST /append`             — append one event
-* `POST /append-decision`    — convenience for DECISION_MADE events
-* `GET  /events`             — filter events (actor / kind / since / until)
-* `GET  /replay/{cid}`       — replay all events for a correlation_id
-* `GET  /verify`             — confirm chain integrity
-* `GET  /trails`             — list trails on disk
+* `POST /append`              — append one event
+* `POST /append-decision`     — convenience for DECISION_MADE events
+* `GET  /events`              — filter events (actor / kind / since / until)
+* `GET  /replay/{cid}`        — replay all events for a correlation_id
+* `GET  /verify`              — confirm chain integrity
+* `GET  /trails`              — list trails on disk
+* `GET  /export/soc2`         — flat CSV log for SOC2 audits
+* `GET  /export/gdpr`         — JSON DSAR bundle for GDPR data subject requests
 """
 
 from __future__ import annotations
@@ -19,8 +21,10 @@ from typing import Any
 
 from fastapi import APIRouter, Query
 from fastapi import Path as PathParam
+from fastapi.responses import PlainTextResponse
 from pydantic import BaseModel, Field
 
+from .exports import build_dsar_bundle, render_soc2_csv
 from .trail import AuditEventKind, AuditTrail, Decision
 
 logger = logging.getLogger(__name__)
@@ -189,4 +193,54 @@ def list_trails(storage_dir: str = Query(...)):
         return {"success": False, "error": str(e)}
     except Exception as e:  # noqa: BLE001
         logger.exception("list_trails failed")
+        return {"success": False, "error": str(e)}
+
+
+@router.get("/export/soc2")
+def export_soc2(
+    storage_dir: str = Query(...),
+    trail_name: str = Query("default"),
+    since: float | None = Query(None),
+    until: float | None = Query(None),
+):
+    """Return the trail as a SOC2-formatted CSV (text/csv)."""
+    try:
+        trail = _get_trail(storage_dir, trail_name)
+        events = trail.filter(since=since, until=until)
+        csv_text = render_soc2_csv(events)
+        return PlainTextResponse(
+            content=csv_text,
+            media_type="text/csv",
+            headers={
+                "Content-Disposition": (
+                    f'attachment; filename="audit_trail_{trail_name}_soc2.csv"'
+                ),
+            },
+        )
+    except ValueError as e:
+        return {"success": False, "error": str(e)}
+    except Exception as e:  # noqa: BLE001
+        logger.exception("export_soc2 failed")
+        return {"success": False, "error": str(e)}
+
+
+@router.get("/export/gdpr")
+def export_gdpr(
+    storage_dir: str = Query(...),
+    trail_name: str = Query("default"),
+    actor: str | None = Query(None),
+    correlation_id: str | None = Query(None),
+):
+    """Return a GDPR DSAR bundle (JSON) for the given data subject.
+
+    Exactly one of ``actor`` / ``correlation_id`` must be supplied.
+    """
+    try:
+        trail = _get_trail(storage_dir, trail_name)
+        bundle = build_dsar_bundle(trail, actor=actor, correlation_id=correlation_id)
+        return {"success": True, "bundle": bundle.to_dict()}
+    except ValueError as e:
+        return {"success": False, "error": str(e)}
+    except Exception as e:  # noqa: BLE001
+        logger.exception("export_gdpr failed")
         return {"success": False, "error": str(e)}
