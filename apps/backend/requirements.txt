@@ -43,7 +43,7 @@ sentry-sdk>=2.0.0
 # Security-First Features
 # Basic secret scanning is built-in, these enhance capabilities
 # Bandit for Python SAST (strongly recommended, will warn if missing)
-bandit>=1.7.0
+bandit>=1.9.4
 # Semgrep for advanced SAST (optional but recommended)
 # Install separately: pip install semgrep
 # pip-audit for dependency vulnerability scanning (optional but recommended)
