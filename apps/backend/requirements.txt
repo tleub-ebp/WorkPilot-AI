@@ -14,7 +14,7 @@ tomli>=2.0.0; python_version < "3.11"
 # Linux Secret Service support for credential storage
 # Provides access to the Freedesktop.org Secret Service API via DBus
 # Used on Linux to store OAuth tokens in gnome-keyring/kwallet
-secretstorage>=3.3.3; sys_platform == "linux"
+secretstorage>=3.5.0; sys_platform == "linux"
 
 # Memory Integration - LadybugDB (embedded graph database)
 #real_ladybug>=0.14.1; python_version >= "3.13"
