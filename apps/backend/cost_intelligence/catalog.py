@@ -54,6 +54,22 @@ class ModelPricing:
 # Built-in pricing catalog (can be overridden by a JSON/YAML file)
 _DEFAULT_CATALOG: dict[str, dict[str, dict[str, float]]] = {
     "anthropic": {
+        # 4.7 (current latest) — alias to 4.6 pricing pending public price sheet.
+        "claude-opus-4-7": {
+            "input": 15.0,
+            "output": 75.0,
+            "cache_write": 18.75,
+            "cache_read": 1.50,
+            "thinking": 75.0,
+        },
+        "claude-sonnet-4-7": {
+            "input": 3.0,
+            "output": 15.0,
+            "cache_write": 3.75,
+            "cache_read": 0.30,
+        },
+        "claude-haiku-4-7": {"input": 0.80, "output": 4.0},
+        # 4.6
         "claude-opus-4-6": {
             "input": 15.0,
             "output": 75.0,
@@ -67,7 +83,37 @@ _DEFAULT_CATALOG: dict[str, dict[str, dict[str, float]]] = {
             "cache_write": 3.75,
             "cache_read": 0.30,
         },
+        "claude-haiku-4-6": {"input": 0.80, "output": 4.0},
+        # 4.5 (the date-stamped IDs DEFAULT_PHASE_MODELS resolves to today).
+        "claude-opus-4-5": {
+            "input": 15.0,
+            "output": 75.0,
+            "cache_write": 18.75,
+            "cache_read": 1.50,
+            "thinking": 75.0,
+        },
+        "claude-opus-4-5-20251101": {
+            "input": 15.0,
+            "output": 75.0,
+            "cache_write": 18.75,
+            "cache_read": 1.50,
+            "thinking": 75.0,
+        },
+        "claude-sonnet-4-5": {
+            "input": 3.0,
+            "output": 15.0,
+            "cache_write": 3.75,
+            "cache_read": 0.30,
+        },
+        "claude-sonnet-4-5-20250929": {
+            "input": 3.0,
+            "output": 15.0,
+            "cache_write": 3.75,
+            "cache_read": 0.30,
+        },
         "claude-haiku-4-5": {"input": 0.80, "output": 4.0},
+        "claude-haiku-4-5-20251001": {"input": 0.80, "output": 4.0},
+        # 4.0 (older snapshots kept for replay reproducibility).
         "claude-opus-4-20250514": {"input": 15.0, "output": 75.0},
         "claude-sonnet-4-20250514": {"input": 3.0, "output": 15.0},
     },

@@ -2506,6 +2506,30 @@ try:
 except ImportError as e:
     print(f"Warning: Could not import code_playground router: {e}")
 
+# --- Cost Estimator API (pre-build cost preview) ---
+try:
+    from cost_intelligence.api import router as cost_estimator_router
+
+    app.include_router(cost_estimator_router)
+except ImportError as e:
+    print(f"Warning: Could not import cost_estimator router: {e}")
+
+# --- Restart Planner API (read-only restart inspection + cleanup) ---
+try:
+    from restart_planner.api import router as restart_planner_router
+
+    app.include_router(restart_planner_router)
+except ImportError as e:
+    print(f"Warning: Could not import restart_planner router: {e}")
+
+# --- Prompt Preview API (debug helper for the kanban "Voir prompt" button) ---
+try:
+    from core.prompt_preview_api import router as prompt_preview_router
+
+    app.include_router(prompt_preview_router)
+except ImportError as e:
+    print(f"Warning: Could not import prompt_preview router: {e}")
+
 if __name__ == "__main__":
     import uvicorn
 
