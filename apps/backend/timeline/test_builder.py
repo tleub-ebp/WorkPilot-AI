@@ -16,9 +16,7 @@ def _seed(project_dir: Path, events: list[tuple[str, str, str, str]]) -> None:
     storage.mkdir(parents=True, exist_ok=True)
     trail = AuditTrail(storage_dir=storage, name="default")
     for kind, actor, cid, summary in events:
-        trail.append(
-            kind=kind, actor=actor, correlation_id=cid, summary=summary
-        )
+        trail.append(kind=kind, actor=actor, correlation_id=cid, summary=summary)
 
 
 # ---------------------------------------------------------------------------
