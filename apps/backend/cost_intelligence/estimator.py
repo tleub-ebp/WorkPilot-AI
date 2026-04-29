@@ -106,7 +106,12 @@ class CostEstimate:
 def _read_spec_chars(spec_dir: Path) -> int:
     """Return total characters across the spec's main text files."""
     total = 0
-    for name in ("spec.md", "requirements.json", "context.json", "implementation_plan.json"):
+    for name in (
+        "spec.md",
+        "requirements.json",
+        "context.json",
+        "implementation_plan.json",
+    ):
         path = spec_dir / name
         if not path.exists():
             continue

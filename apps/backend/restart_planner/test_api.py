@@ -44,9 +44,7 @@ class TestPlanEndpoint:
         self, client: TestClient, tmp_path: Path
     ) -> None:
         spec = _seed(tmp_path)
-        resp = client.get(
-            "/api/restart/plan", params={"spec_dir": str(spec)}
-        )
+        resp = client.get("/api/restart/plan", params={"spec_dir": str(spec)})
         assert resp.status_code == 200
         body = resp.json()
         assert body["success"] is True
@@ -56,17 +54,13 @@ class TestPlanEndpoint:
         assert plan_dict["next_subtask_for_coder"] == "b"
 
     def test_invalid_spec_dir_returns_error(self, client: TestClient) -> None:
-        resp = client.get(
-            "/api/restart/plan", params={"spec_dir": "/does/not/exist"}
-        )
+        resp = client.get("/api/restart/plan", params={"spec_dir": "/does/not/exist"})
         body = resp.json()
         assert body["success"] is False
 
 
 class TestPrepareEndpoint:
-    def test_qa_cleanup_via_endpoint(
-        self, client: TestClient, tmp_path: Path
-    ) -> None:
+    def test_qa_cleanup_via_endpoint(self, client: TestClient, tmp_path: Path) -> None:
         spec = _seed(tmp_path)
         (spec / "qa_report.md").write_text("x", encoding="utf-8")
         resp = client.post(

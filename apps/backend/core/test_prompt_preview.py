@@ -8,7 +8,6 @@ from pathlib import Path
 import pytest
 from core.prompt_preview import _phase_for, build_prompt_preview
 
-
 # ---------------------------------------------------------------------------
 # Smoke / shape
 

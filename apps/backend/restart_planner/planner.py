@@ -148,8 +148,7 @@ def plan_restart(spec_dir: Path) -> RestartPlan:
     can_restart_coder = completed < total
     if not can_restart_coder:
         reasons["coder"] = (
-            f"all {total} subtask(s) already completed — "
-            "use full restart to redo"
+            f"all {total} subtask(s) already completed — use full restart to redo"
         )
 
     can_restart_qa = completed > 0

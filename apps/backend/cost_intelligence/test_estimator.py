@@ -13,7 +13,6 @@ from cost_intelligence.estimator import (
     _PHASE_PROFILES,
 )
 
-
 # ---------------------------------------------------------------------------
 # Sanity / shape
 
@@ -75,8 +74,8 @@ class TestPhaseMath:
         base = result.base_input_tokens
         for phase in result.phases:
             profile = _PHASE_PROFILES[phase.phase]
-            expected_input = (
-                int(base * profile["input_multiplier"]) * int(profile["iterations"])
+            expected_input = int(base * profile["input_multiplier"]) * int(
+                profile["iterations"]
             )
             assert phase.input_tokens == expected_input
 
@@ -85,9 +84,7 @@ class TestPhaseMath:
         result = estimate_build_cost(tmp_path)
         for phase in result.phases:
             profile = _PHASE_PROFILES[phase.phase]
-            expected_output = int(profile["output_tokens"]) * int(
-                profile["iterations"]
-            )
+            expected_output = int(profile["output_tokens"]) * int(profile["iterations"])
             assert phase.output_tokens == expected_output
 
     def test_total_cost_is_sum_of_phase_costs(self, tmp_path: Path) -> None:

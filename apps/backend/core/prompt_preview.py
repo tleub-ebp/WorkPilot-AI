@@ -99,7 +99,9 @@ def build_prompt_preview(
                 )
                 claude_md_included = True
             else:
-                notes.append("CLAUDE.md flag enabled but file not found at project root")
+                notes.append(
+                    "CLAUDE.md flag enabled but file not found at project root"
+                )
         else:
             notes.append("CLAUDE.md disabled by USE_CLAUDE_MD env var")
     except Exception as exc:  # noqa: BLE001
@@ -132,7 +134,9 @@ def build_prompt_preview(
     # --- Allowed tools -----------------------------------------------------
     allowed_tools: list[str] = []
     try:
-        from agents.tools_pkg.models import AGENT_CONFIGS  # type: ignore[import-not-found]
+        from agents.tools_pkg.models import (
+            AGENT_CONFIGS,  # type: ignore[import-not-found]
+        )
 
         cfg = AGENT_CONFIGS.get(agent_type)
         if cfg is None:

@@ -13,8 +13,7 @@ def _seed_plan(spec_dir: Path, subtask_statuses: list[str]) -> None:
     """Write a minimal implementation_plan.json with one phase per call."""
     spec_dir.mkdir(parents=True, exist_ok=True)
     subtasks = [
-        {"id": f"st-{i}", "status": status}
-        for i, status in enumerate(subtask_statuses)
+        {"id": f"st-{i}", "status": status} for i, status in enumerate(subtask_statuses)
     ]
     plan = {
         "feature": "demo",
@@ -46,9 +45,7 @@ class TestPlanRestart:
         assert "coder" in result.reasons
 
     def test_corrupt_plan_treated_as_no_plan(self, tmp_path: Path) -> None:
-        (tmp_path / "implementation_plan.json").write_text(
-            "not json", encoding="utf-8"
-        )
+        (tmp_path / "implementation_plan.json").write_text("not json", encoding="utf-8")
         result = plan_restart(tmp_path)
         assert result.can_restart_full is True
         assert result.can_restart_qa is False
