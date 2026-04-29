@@ -1158,6 +1158,30 @@ async def run_autonomous_agent(
             except Exception as e:
                 logger.debug(f"Learning loop post-build analysis skipped: {e}")
 
+            # Coder self-review handoff (opt-in via WORKPILOT_SELF_REVIEW_ENABLED).
+            # Writes self_review.md at the spec root so the QA reviewer starts
+            # with the coder's own risk notes instead of a blank slate. We pass
+            # `client=None` here — the SDK-backed call would re-spawn the coder
+            # for one extra turn which is a coordinated change to plumb properly,
+            # so for now we just write the deterministic stub from the diff.
+            try:
+                from agents.self_review import (
+                    run_self_review,
+                    self_review_enabled,
+                )
+
+                if self_review_enabled():
+                    written = await run_self_review(
+                        client=None, spec_dir=spec_dir, project_dir=project_dir
+                    )
+                    if written is not None:
+                        print_status(
+                            f"Self-review handoff written to {written.name}",
+                            "info",
+                        )
+            except Exception as e:
+                logger.debug(f"Self-review skipped: {e}")
+
             break
 
         elif status == "continue":

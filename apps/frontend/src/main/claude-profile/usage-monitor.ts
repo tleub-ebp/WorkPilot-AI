@@ -41,6 +41,32 @@ import { parseUsageOutput } from "./usage-parser";
 import { getVelocityTracker } from "./velocity-tracker";
 
 /**
+ * Translate usage window label keys to human-readable values for debug logging.
+ * Since the main process doesn't have access to i18next, we use a simple mapping.
+ *
+ * @param labelKey - The translation key (e.g., "common:usage.windowWeeklyQuota")
+ * @returns Human-readable label or the original key if not found
+ */
+function translateUsageLabel(labelKey: string | undefined): string {
+	if (!labelKey) return "Unknown";
+	const translations: Record<string, string> = {
+		"common:usage.window5Hour": "5-hour window",
+		"common:usage.window7Day": "7-day window",
+		"common:usage.window5HoursQuota": "5 Hours Quota",
+		"common:usage.windowMonthlyToolsQuota": "Monthly Tools Quota",
+		"common:usage.windowCredits": "Credits used",
+		"common:usage.windowBillingCycle": "Billing cycle",
+		"common:usage.windowDailyQuota": "Daily quota",
+		"common:usage.windowWeeklyQuota": "Weekly quota",
+		"common:usage.windowMonthlyQuota": "Monthly quota",
+		"common:usage.windowMonthlyProgress": "Monthly progress",
+		"common:usage.sessionDefault": "Session",
+		"common:usage.weeklyDefault": "Weekly",
+	};
+	return translations[labelKey] || labelKey;
+}
+
+/**
  * Create a safe fingerprint of a credential for debug logging.
  * Shows first 8 and last 4 characters, hiding the sensitive middle portion.
  * This is NOT for authentication - only for human-readable debug identification.
@@ -3893,7 +3919,12 @@ export class UsageMonitor extends EventEmitter {
 						{
 							sessionPercent: result.sessionPercent,
 							weeklyPercent: result.weeklyPercent,
-							usageWindows: result.usageWindows,
+							usageWindows: result.usageWindows
+								? {
+										sessionWindowLabel: translateUsageLabel(result.usageWindows.sessionWindowLabel),
+										weeklyWindowLabel: translateUsageLabel(result.usageWindows.weeklyWindowLabel),
+									}
+								: undefined,
 							windsurfCredits: result.windsurfCredits,
 						},
 					);
