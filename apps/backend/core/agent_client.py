@@ -1632,13 +1632,16 @@ class WindsurfAgentClient(AgentClient):
         is_ide_key = bool(self._api_key and self._api_key.startswith("sk-ws-"))
 
         # Check if REST mode is forced via environment variable
+        # NOTE: sk-ws-* keys are designed for gRPC only and should ignore WINDSURF_FORCE_REST
         force_rest = _os.environ.get("WINDSURF_FORCE_REST", "").lower() in (
             "1",
             "true",
             "yes",
         )
 
-        if is_ide_key and not force_rest:
+        # sk-ws-* keys ALWAYS use gRPC mode (ignore WINDSURF_FORCE_REST)
+        # These keys are specifically designed for Windsurf IDE gRPC communication
+        if is_ide_key:
             # sk-ws-* keys only work through the local Windsurf IDE language
             # server (gRPC).  They do NOT work with any REST chat completions
             # endpoint.  Tool execution is handled via text-based tool calling.
@@ -1668,19 +1671,6 @@ class WindsurfAgentClient(AgentClient):
                     "sk-ws-* keys only work through the local Windsurf IDE.\n"
                     "Please start Windsurf IDE to use your Windsurf credits."
                 )
-        elif is_ide_key and force_rest:
-            # sk-ws-* key but REST mode forced via environment variable
-            # This may not work as sk-ws-* keys are not officially supported by REST
-            self._use_local_grpc = False
-            logger.warning(
-                "[WindsurfAgent] Mode 2 (REST): sk-ws-* key with WINDSURF_FORCE_REST enabled. "
-                "This may not work as sk-ws-* keys are not officially supported by REST API."
-            )
-            print(
-                "[WindsurfAgent] ⚠️  Using REST mode with sk-ws-* key (forced via WINDSURF_FORCE_REST). "
-                "This may not work - sk-ws-* keys are designed for gRPC only.",
-                flush=True,
-            )
         elif self._api_key:
             # Non-IDE key (SSO/enterprise/OAuth token).
             # PREFER REST mode for OAuth tokens - it supports full tool execution via
