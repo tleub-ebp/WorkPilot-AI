@@ -2530,6 +2530,46 @@ try:
 except ImportError as e:
     print(f"Warning: Could not import prompt_preview router: {e}")
 
+# --- Timeline API (UI-friendly view of the audit_trail per spec) ---
+try:
+    from timeline.api import router as timeline_router
+
+    app.include_router(timeline_router)
+except ImportError as e:
+    print(f"Warning: Could not import timeline router: {e}")
+
+# --- Progress Indicator API (fine-grained sub-status for the kanban) ---
+try:
+    from progress_indicator.api import router as progress_indicator_router
+
+    app.include_router(progress_indicator_router)
+except ImportError as e:
+    print(f"Warning: Could not import progress_indicator router: {e}")
+
+# --- QA Auto-Promotion API (skip human_review when score is high enough) ---
+try:
+    from qa_promotion.api import router as qa_promotion_router
+
+    app.include_router(qa_promotion_router)
+except ImportError as e:
+    print(f"Warning: Could not import qa_promotion router: {e}")
+
+# --- Parallel Variations API (local Arena: scaffold + compare, never auto-merge) ---
+try:
+    from parallel_variations.api import router as parallel_variations_router
+
+    app.include_router(parallel_variations_router)
+except ImportError as e:
+    print(f"Warning: Could not import parallel_variations router: {e}")
+
+# --- Virtual Reviewer API (advisory only, no signature, no PR) ---
+try:
+    from virtual_reviewer.api import router as virtual_reviewer_router
+
+    app.include_router(virtual_reviewer_router)
+except ImportError as e:
+    print(f"Warning: Could not import virtual_reviewer router: {e}")
+
 if __name__ == "__main__":
     import uvicorn
 

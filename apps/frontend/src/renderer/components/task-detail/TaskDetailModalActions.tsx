@@ -9,7 +9,7 @@ import {
 import { useTranslation } from "react-i18next";
 import { TASK_STATUS_LABELS } from "../../../shared/constants";
 import type { Project, Task } from "../../../shared/types";
-import { AgentToolsButton } from "../agent-tools";
+import { AgentToolsButton, ProgressIndicatorBadge } from "../agent-tools";
 import { StreamingSessionButton } from "../streaming/StreamingSessionButton";
 import { Button } from "../ui/button";
 
@@ -43,13 +43,24 @@ function RunnableActions({
 	onStartStop,
 }: RunnableActionsProps) {
 	const { t } = useTranslation(["tasks"]);
-	// Pre-build cards (backlog/queue) get the cost estimator + prompt preview;
-	// running cards get prompt preview + restart.
-	const tools: Array<"cost" | "restart" | "prompt"> =
-		task.status === "in_progress" ? ["restart", "prompt"] : ["cost", "prompt"];
+	// Pre-build cards (backlog/queue): cost estimator + prompt preview +
+	//   variations (Arena scaffolding before launching).
+	// Running cards (in_progress): restart + prompt + timeline.
+	// Timeline is always available once an audit_trail exists for the spec.
+	const tools: Array<
+		"cost" | "restart" | "prompt" | "timeline" | "variations"
+	> =
+		task.status === "in_progress"
+			? ["restart", "prompt", "timeline"]
+			: ["cost", "variations", "prompt", "timeline"];
 
 	return (
 		<div className="flex items-center gap-2">
+			{/* Live sub-status pill (renders nothing when idle/unknown). */}
+			{task.specsPath && task.status === "in_progress" && (
+				<ProgressIndicatorBadge specDir={task.specsPath} />
+			)}
+
 			{activeProject?.path && (
 				<StreamingSessionButton
 					taskId={task.id}
@@ -82,6 +93,39 @@ function RunnableActions({
 					</>
 				)}
 			</Button>
+		</div>
+	);
+}
+
+interface ReviewableActionsProps {
+	readonly task: Task;
+	readonly activeProject?: Project;
+}
+
+/** Action row for tasks awaiting review (ai_review / human_review).
+ *
+ * Surfaces the QA promotion check, the virtual reviewer (advisory) and the
+ * timeline drawer. No mutating buttons here — the existing review UI in the
+ * modal body is responsible for moving the card.
+ */
+function ReviewableActions({ task, activeProject }: ReviewableActionsProps) {
+	if (!activeProject?.path || !task.specsPath) return null;
+
+	// `promotion` is most relevant in ai_review (deciding whether to skip
+	// human_review); `virtual_review` is most relevant in human_review (advisory
+	// commentary for the reviewer).
+	const tools: Array<"timeline" | "promotion" | "virtual_review"> =
+		task.status === "ai_review"
+			? ["promotion", "virtual_review", "timeline"]
+			: ["virtual_review", "timeline"];
+
+	return (
+		<div className="flex items-center gap-2">
+			<AgentToolsButton
+				projectDir={activeProject.path}
+				specDir={task.specsPath}
+				tools={tools}
+			/>
 		</div>
 	);
 }
@@ -153,6 +197,10 @@ export function TaskDetailModalActions({
 				onStartStop={handleStartStop}
 			/>
 		);
+	}
+
+	if (task.status === "ai_review" || task.status === "human_review") {
+		return <ReviewableActions task={task} activeProject={activeProject} />;
 	}
 
 	if (task.status === "done" && task.metadata?.prUrl) {

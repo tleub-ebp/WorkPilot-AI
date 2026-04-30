@@ -10,9 +10,16 @@ import {
 	DropdownMenuTrigger,
 } from "../ui/dropdown-menu";
 import { CostEstimatorDialog } from "./CostEstimatorDialog";
+import { PromotionDecisionDialog } from "./PromotionDecisionDialog";
 import { PromptPreviewDialog } from "./PromptPreviewDialog";
 import { RestartDialog } from "./RestartDialog";
-import type { RestartMode } from "../../lib/agent-tools-api";
+import { TimelineDialog } from "./TimelineDialog";
+import { VariationsDialog } from "./VariationsDialog";
+import { VirtualReviewerDialog } from "./VirtualReviewerDialog";
+import type {
+	PromotionDecision,
+	RestartMode,
+} from "../../lib/agent-tools-api";
 
 export interface AgentToolsButtonProps {
 	readonly projectDir: string;
@@ -33,14 +40,45 @@ export interface AgentToolsButtonProps {
 	 */
 	readonly onRestart?: (mode: RestartMode, deleted: string[]) => void;
 	/**
-	 * Subset of tools to show. Defaults to all three. Useful when a card
+	 * Triggered when the user accepts the auto-promotion suggestion. The
+	 * Kanban moves the card from ai_review to (after) human_review.
+	 */
+	readonly onPromote?: (decision: PromotionDecision) => void;
+	/**
+	 * Triggered when the user picks a winning variation in the Arena.
+	 * The Kanban does the actual merge (we never auto-merge).
+	 */
+	readonly onPickVariation?: (label: string, path: string) => void;
+	/**
+	 * Triggered after virtual_review.md is written. The Kanban can show a
+	 * notification or refresh its file tree.
+	 */
+	readonly onVirtualReviewWritten?: (path: string) => void;
+	/**
+	 * Subset of tools to show. Defaults to all of them. Useful when a card
 	 * is in a state where, say, the cost estimator is irrelevant (already
 	 * running) or the prompt preview makes no sense (no spec yet).
 	 */
-	readonly tools?: ReadonlyArray<"cost" | "restart" | "prompt">;
+	readonly tools?: ReadonlyArray<
+		| "cost"
+		| "restart"
+		| "prompt"
+		| "timeline"
+		| "promotion"
+		| "variations"
+		| "virtual_review"
+	>;
 }
 
-const ALL_TOOLS = ["cost", "restart", "prompt"] as const;
+const ALL_TOOLS = [
+	"cost",
+	"restart",
+	"prompt",
+	"timeline",
+	"promotion",
+	"variations",
+	"virtual_review",
+] as const;
 
 export function AgentToolsButton({
 	projectDir,
@@ -48,18 +86,39 @@ export function AgentToolsButton({
 	agentType = "coder",
 	onStartBuild,
 	onRestart,
+	onPromote,
+	onPickVariation,
+	onVirtualReviewWritten,
 	tools = ALL_TOOLS,
 }: AgentToolsButtonProps) {
 	const { t } = useTranslation("agentTools");
 	const [openCost, setOpenCost] = useState(false);
 	const [openRestart, setOpenRestart] = useState(false);
 	const [openPrompt, setOpenPrompt] = useState(false);
+	const [openTimeline, setOpenTimeline] = useState(false);
+	const [openPromotion, setOpenPromotion] = useState(false);
+	const [openVariations, setOpenVariations] = useState(false);
+	const [openVirtualReview, setOpenVirtualReview] = useState(false);
 
 	const showCost = tools.includes("cost");
 	const showRestart = tools.includes("restart");
 	const showPrompt = tools.includes("prompt");
+	const showTimeline = tools.includes("timeline");
+	const showPromotion = tools.includes("promotion");
+	const showVariations = tools.includes("variations");
+	const showVirtualReview = tools.includes("virtual_review");
 
-	if (!showCost && !showRestart && !showPrompt) return null;
+	if (
+		!showCost &&
+		!showRestart &&
+		!showPrompt &&
+		!showTimeline &&
+		!showPromotion &&
+		!showVariations &&
+		!showVirtualReview
+	) {
+		return null;
+	}
 
 	return (
 		<>
@@ -107,6 +166,46 @@ export function AgentToolsButton({
 							{t("showActivePrompt")}
 						</DropdownMenuItem>
 					)}
+					{showTimeline && (
+						<DropdownMenuItem
+							onSelect={(e) => {
+								e.preventDefault();
+								setOpenTimeline(true);
+							}}
+						>
+							{t("showTimeline", "Show timeline…")}
+						</DropdownMenuItem>
+					)}
+					{showPromotion && (
+						<DropdownMenuItem
+							onSelect={(e) => {
+								e.preventDefault();
+								setOpenPromotion(true);
+							}}
+						>
+							{t("checkPromotion", "Check QA promotion…")}
+						</DropdownMenuItem>
+					)}
+					{showVariations && (
+						<DropdownMenuItem
+							onSelect={(e) => {
+								e.preventDefault();
+								setOpenVariations(true);
+							}}
+						>
+							{t("manageVariations", "Variations (Arena)…")}
+						</DropdownMenuItem>
+					)}
+					{showVirtualReview && (
+						<DropdownMenuItem
+							onSelect={(e) => {
+								e.preventDefault();
+								setOpenVirtualReview(true);
+							}}
+						>
+							{t("virtualReviewer", "Virtual reviewer…")}
+						</DropdownMenuItem>
+					)}
 				</DropdownMenuContent>
 			</DropdownMenu>
 
@@ -133,6 +232,41 @@ export function AgentToolsButton({
 					projectDir={projectDir}
 					specDir={specDir}
 					agentType={agentType}
+				/>
+			)}
+			{showTimeline && (
+				<TimelineDialog
+					open={openTimeline}
+					onOpenChange={setOpenTimeline}
+					projectDir={projectDir}
+					// correlation_id = the spec_id, which is the spec_dir's basename.
+					// Mirrors what `agents/agent_audit.py` writes to the trail.
+					correlationId={specDir.split(/[/\\]/).pop() ?? ""}
+				/>
+			)}
+			{showPromotion && (
+				<PromotionDecisionDialog
+					open={openPromotion}
+					onOpenChange={setOpenPromotion}
+					specDir={specDir}
+					onAcceptPromotion={(d) => onPromote?.(d)}
+				/>
+			)}
+			{showVariations && (
+				<VariationsDialog
+					open={openVariations}
+					onOpenChange={setOpenVariations}
+					specDir={specDir}
+					onPickWinner={(label, path) => onPickVariation?.(label, path)}
+				/>
+			)}
+			{showVirtualReview && (
+				<VirtualReviewerDialog
+					open={openVirtualReview}
+					onOpenChange={setOpenVirtualReview}
+					projectDir={projectDir}
+					specDir={specDir}
+					onReviewWritten={(path) => onVirtualReviewWritten?.(path)}
 				/>
 			)}
 		</>

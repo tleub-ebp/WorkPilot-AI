@@ -17,7 +17,7 @@ export type ApiResult<T> =
 	| { ok: false; error: string };
 
 const backendUrl = (): string =>
-	(import.meta.env?.VITE_BACKEND_URL as string | undefined) ?? "";
+	(import.meta.env?.VITE_BACKEND_URL) ?? "";
 
 async function _post<T>(
 	path: string,
@@ -195,6 +195,208 @@ export async function fetchPromptPreview(
 			spec_dir: specDir,
 			agent_type: agentType,
 		},
+		signal,
+	);
+}
+
+// ---------------------------------------------------------------------------
+// Timeline (audit trail per spec)
+
+export interface TimelineEntry {
+	sequence: number;
+	timestamp_unix: number;
+	timestamp_iso: string;
+	delta_seconds: number;
+	kind: string;
+	actor: string;
+	phase: string;
+	summary: string;
+	payload: Record<string, unknown>;
+	event_hash: string;
+}
+
+export interface Timeline {
+	correlation_id: string;
+	entries: TimelineEntry[];
+	entry_count: number;
+	integrity: { intact: boolean; reason: string | null };
+	duration_seconds: number;
+	phase_counts: Record<string, number>;
+}
+
+export async function fetchTimeline(
+	projectDir: string,
+	correlationId: string,
+	options?: {
+		actor?: string;
+		kind?: string;
+		signal?: AbortSignal;
+	},
+): Promise<ApiResult<{ timeline: Timeline }>> {
+	const params: Record<string, string> = { project_dir: projectDir };
+	if (options?.actor) params.actor = options.actor;
+	if (options?.kind) params.kind = options.kind;
+	return _get<{ timeline: Timeline }>(
+		`/api/timeline/${encodeURIComponent(correlationId)}`,
+		params,
+		options?.signal,
+	);
+}
+
+// ---------------------------------------------------------------------------
+// Progress indicator (fine-grained sub-status)
+
+export interface ProgressIndicatorPayload {
+	spec_id: string;
+	label: string;
+	phase:
+		| "planning"
+		| "coding"
+		| "qa"
+		| "idle"
+		| "completed"
+		| "unknown";
+	sub_phase: string | null;
+	subtasks_completed: number;
+	subtasks_total: number;
+	current_subtask_id: string | null;
+	current_session: number | null;
+	last_activity_iso: string | null;
+	warnings: string[];
+}
+
+export async function fetchProgressIndicator(
+	specDir: string,
+	signal?: AbortSignal,
+): Promise<ApiResult<{ indicator: ProgressIndicatorPayload }>> {
+	return _get<{ indicator: ProgressIndicatorPayload }>(
+		"/api/progress-indicator/",
+		{ spec_dir: specDir },
+		signal,
+	);
+}
+
+// ---------------------------------------------------------------------------
+// QA auto-promotion (item 8)
+
+export interface PromotionDecision {
+	spec_id: string;
+	score: number;
+	threshold: number | null;
+	promote: boolean;
+	reasons: string[];
+	breakdown: Record<string, number>;
+}
+
+export async function fetchPromotionDecision(
+	specDir: string,
+	signal?: AbortSignal,
+): Promise<ApiResult<{ decision: PromotionDecision }>> {
+	return _post<{ decision: PromotionDecision }>(
+		"/api/qa-promotion/decide",
+		{ spec_dir: specDir },
+		signal,
+	);
+}
+
+// ---------------------------------------------------------------------------
+// Parallel variations (item 9)
+
+export interface VariationDescriptor {
+	label: string;
+	path: string;
+	spec_id: string;
+	seed: number;
+}
+
+export interface VariationManifest {
+	spec_id: string;
+	parent_path: string;
+	variations: VariationDescriptor[];
+}
+
+export interface VariationComparison {
+	spec_id: string;
+	rows: Array<{
+		label: string;
+		subtasks_completed: number;
+		subtasks_total: number;
+		qa_status: string;
+		qa_report_chars: number;
+		has_self_review: boolean;
+	}>;
+	suggested_winner: string | null;
+}
+
+export async function listVariations(
+	specDir: string,
+	signal?: AbortSignal,
+): Promise<ApiResult<{ manifest: VariationManifest }>> {
+	return _get<{ manifest: VariationManifest }>(
+		"/api/parallel-variations/list",
+		{ spec_dir: specDir },
+		signal,
+	);
+}
+
+export async function createVariations(
+	specDir: string,
+	count: number,
+	signal?: AbortSignal,
+): Promise<ApiResult<{ manifest: VariationManifest }>> {
+	return _post<{ manifest: VariationManifest }>(
+		"/api/parallel-variations/create",
+		{ spec_dir: specDir, count },
+		signal,
+	);
+}
+
+export async function compareVariations(
+	specDir: string,
+	signal?: AbortSignal,
+): Promise<ApiResult<{ comparison: VariationComparison }>> {
+	return _get<{ comparison: VariationComparison }>(
+		"/api/parallel-variations/compare",
+		{ spec_dir: specDir },
+		signal,
+	);
+}
+
+// ---------------------------------------------------------------------------
+// Virtual reviewer (item 10)
+
+export interface VirtualReviewSummaryPayload {
+	spec_id: string;
+	spec_chars: number;
+	qa_report_chars: number;
+	self_review_present: boolean;
+	diff_excerpt: string;
+	diff_truncated: boolean;
+	error: string | null;
+}
+
+export async function fetchVirtualReviewSummary(
+	specDir: string,
+	projectDir: string,
+	signal?: AbortSignal,
+): Promise<
+	ApiResult<{ summary: VirtualReviewSummaryPayload; enabled: boolean }>
+> {
+	return _get<{ summary: VirtualReviewSummaryPayload; enabled: boolean }>(
+		"/api/virtual-reviewer/summary",
+		{ spec_dir: specDir, project_dir: projectDir },
+		signal,
+	);
+}
+
+export async function runVirtualReview(
+	specDir: string,
+	projectDir: string,
+	signal?: AbortSignal,
+): Promise<ApiResult<{ written_to: string; filename: string }>> {
+	return _post<{ written_to: string; filename: string }>(
+		"/api/virtual-reviewer/run",
+		{ spec_dir: specDir, project_dir: projectDir },
 		signal,
 	);
 }
