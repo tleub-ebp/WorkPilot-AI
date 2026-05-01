@@ -464,6 +464,7 @@ export function providerSupportsThinking(provider: string): boolean {
 // ============================================
 
 export const AVAILABLE_MODELS = [
+	{ value: "opus-4-7", label: "Claude Opus 4.7" },
 	{ value: "opus", label: "Claude Opus 4.6" },
 	{ value: "sonnet", label: "Claude Sonnet 4.6" },
 	{ value: "haiku", label: "Claude Haiku 4.6" },
@@ -472,8 +473,12 @@ export const AVAILABLE_MODELS = [
 	{ value: "haiku-4-5", label: "Claude Haiku 4.5" },
 ] as const;
 
-// Maps model shorthand to actual Claude model IDs
+// Maps model shorthand to actual Claude model IDs.
+// Short aliases (opus/sonnet/haiku) intentionally still point to 4.6 so
+// existing tasks persisted with these values keep working. Newer versions
+// are exposed under explicit version-suffixed keys (e.g. "opus-4-7").
 export const MODEL_ID_MAP: Record<string, string> = {
+	"opus-4-7": "claude-opus-4-7",
 	opus: "claude-opus-4-6",
 	sonnet: "claude-sonnet-4-6",
 	haiku: "claude-haiku-4-6",
