@@ -173,7 +173,10 @@
 		"pathChangeWarningTitle": "Switch CLI installation?",
 		"pathChangeWarningDescription": "Switching CLI installations will use a different Claude Code binary. Any running sessions will continue using the previous installation until restarted.",
 		"switchInstallationConfirm": "Switch",
-		"versionUnknown": "version unknown"
+		"versionUnknown": "version unknown",
+		"installFailed": "Installation failed",
+		"versionSwitchFailed": "Failed to switch version",
+		"terminalUnavailable": "Could not open a terminal. Update Claude Code from a terminal manually."
 	},
 	"codex": {
 		"checking": "Checking Codex CLI...",

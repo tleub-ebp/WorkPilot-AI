@@ -202,13 +202,19 @@ export function ClaudeCodeStatusBadge({
 
 		const terminalId = `cli-action-${Date.now()}`;
 
+		// `projectPath` may point at a folder the user has since deleted. Fall
+		// back to `.` (which the main process resolves to the user's home dir)
+		// so a missing project doesn't block global CLI actions.
+		const safeCwd =
+			projectPath && projectPath !== "." ? projectPath : ".";
+
 		// 1. Create PTY in main process first
 		const terminalResult = await globalThis.electronAPI.createTerminal({
 			id: terminalId,
-			cwd: projectPath,
+			cwd: safeCwd,
 			cols: 80,
 			rows: 25,
-			projectPath: projectPath,
+			projectPath: safeCwd,
 		});
 
 		if (!terminalResult.success) {
@@ -229,18 +235,50 @@ export function ClaudeCodeStatusBadge({
 		return true;
 	};
 
-	// Perform the actual install/update
+	// Perform the actual install/update.
+	//
+	// Strategy: try the silent-update path first (`claude install --force latest`
+	// run in the background via IPC). It works whenever Claude is already
+	// installed — which is the overwhelming majority case for the Update button.
+	// If silent install isn't available (fresh install) or the renderer hasn't
+	// exposed the IPC, fall back to opening an internal terminal.
 	const performInstall = async () => {
 		setIsInstalling(true);
 		setShowUpdateWarning(false);
 		setInstallError(null);
 		try {
-			const label = status === "outdated" ? "Claude Code Update" : "Claude Code Install";
+			const silentApi = globalThis.electronAPI?.installClaudeCodeSilent;
+			if (silentApi) {
+				const result = await silentApi();
+				if (result.success) {
+					await refreshClaude();
+					setTimeout(() => refreshClaude(), VERSION_RECHECK_DELAY_MS);
+					return;
+				}
+				// Only fall through to terminal mode for the explicit "needs a
+				// terminal" sentinel (fresh install). Any other error is shown
+				// to the user without launching a doomed terminal flow.
+				if (!result.error?.startsWith("silent_install_unavailable")) {
+					setInstallError(
+						result.error ||
+							t("navigation:claudeCode.installFailed", "Installation failed"),
+					);
+					return;
+				}
+			}
+
+			const label =
+				status === "outdated" ? "Claude Code Update" : "Claude Code Install";
 			const command = "claude install --force latest\n";
 
 			const opened = await openInternalTerminal(label, command);
 			if (!opened) {
-				setInstallError("Failed to open terminal");
+				setInstallError(
+					t(
+						"navigation:claudeCode.terminalUnavailable",
+						"Could not open a terminal. Try installing Claude Code from a terminal manually.",
+					),
+				);
 				return;
 			}
 
@@ -251,7 +289,9 @@ export function ClaudeCodeStatusBadge({
 		} catch (err) {
 			console.error("Failed to install Claude Code:", err);
 			setInstallError(
-				err instanceof Error ? err.message : "Installation failed",
+				err instanceof Error
+					? err.message
+					: t("navigation:claudeCode.installFailed", "Installation failed"),
 			);
 		} finally {
 			setIsInstalling(false);
@@ -272,7 +312,12 @@ export function ClaudeCodeStatusBadge({
 
 			const opened = await openInternalTerminal(label, command);
 			if (!opened) {
-				setInstallError("Failed to open terminal");
+				setInstallError(
+					t(
+						"navigation:claudeCode.terminalUnavailable",
+						"Could not open a terminal. Try installing Claude Code from a terminal manually.",
+					),
+				);
 				return;
 			}
 
@@ -283,7 +328,12 @@ export function ClaudeCodeStatusBadge({
 		} catch (err) {
 			console.error("Failed to switch Claude Code version:", err);
 			setInstallError(
-				err instanceof Error ? err.message : "Failed to switch version",
+				err instanceof Error
+					? err.message
+					: t(
+							"navigation:claudeCode.versionSwitchFailed",
+							"Failed to switch version",
+						),
 			);
 		} finally {
 			setIsInstalling(false);

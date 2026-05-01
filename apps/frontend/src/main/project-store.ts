@@ -332,6 +332,24 @@ export class ProjectStore {
 	}
 
 	/**
+	 * Update the on-disk path of a project. Used when the user moves or
+	 * renames the project folder outside the app and re-points it via the
+	 * "missing path" recovery flow in the tab bar.
+	 *
+	 * Caller is responsible for verifying the new path exists and is a
+	 * directory before calling this.
+	 */
+	repathProject(projectId: string, newPath: string): Project | undefined {
+		const project = this.data.projects.find((p) => p.id === projectId);
+		if (project) {
+			project.path = newPath;
+			project.updatedAt = new Date();
+			this.save();
+		}
+		return project;
+	}
+
+	/**
 	 * Get tasks for a project by scanning specs directory
 	 * Implements caching with 3-second TTL to prevent excessive worktree scanning
 	 */

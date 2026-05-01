@@ -10,7 +10,12 @@
 		"addProjectAriaLabel": "Ajouter un projet",
 		"addProjectTooltip": "Ajouter un nouveau projet",
 		"selectTab": "Passer à {{projectName}}",
-		"renameAriaLabel": "Renommer le projet"
+		"renameAriaLabel": "Renommer le projet",
+		"missingPathTitle": "Le dossier du projet est introuvable",
+		"missingPathDescription": "Le projet a peut-être été déplacé ou supprimé. Sélectionnez le nouveau dossier pour le récupérer, ou retirez-le de l'application.",
+		"missingPathFix": "Réparer ce projet",
+		"missingPathFixAction": "Re-pointer…",
+		"missingPathRemove": "Retirer"
 	},
 	"accessibility": {
 		"deleteFeatureAriaLabel": "Supprimer la fonctionnalité",

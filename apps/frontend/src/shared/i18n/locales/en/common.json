@@ -10,7 +10,12 @@
 		"addProjectAriaLabel": "Add project",
 		"addProjectTooltip": "Add new project",
 		"selectTab": "Switch to {{projectName}}",
-		"renameAriaLabel": "Rename project"
+		"renameAriaLabel": "Rename project",
+		"missingPathTitle": "Project folder no longer exists",
+		"missingPathDescription": "The project may have been moved or deleted. Pick the new folder to recover it, or remove it from the app.",
+		"missingPathFix": "Fix this project",
+		"missingPathFixAction": "Re-point…",
+		"missingPathRemove": "Remove"
 	},
 	"accessibility": {
 		"deleteFeatureAriaLabel": "Delete feature",

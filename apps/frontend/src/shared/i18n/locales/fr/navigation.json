@@ -173,7 +173,10 @@
 		"pathChangeWarningTitle": "Changer d'installation CLI ?",
 		"pathChangeWarningDescription": "Le changement d'installation CLI utilisera un binaire CLI IA différent. Les sessions en cours continueront à utiliser l'installation précédente jusqu'à leur redémarrage.",
 		"switchInstallationConfirm": "Changer",
-		"versionUnknown": "version inconnue"
+		"versionUnknown": "version inconnue",
+		"installFailed": "Échec de l'installation",
+		"versionSwitchFailed": "Échec du changement de version",
+		"terminalUnavailable": "Impossible d'ouvrir un terminal. Mettez à jour Claude Code depuis un terminal manuellement."
 	},
 	"codex": {
 		"checking": "Vérification Codex CLI...",

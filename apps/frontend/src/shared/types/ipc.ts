@@ -224,6 +224,11 @@ export interface ElectronAPI {
 	checkProjectVersion: (
 		projectId: string,
 	) => Promise<IPCResult<AutoBuildVersionInfo>>;
+	checkProjectPaths: () => Promise<IPCResult<Record<string, boolean>>>;
+	repathProject: (
+		projectId: string,
+		newPath: string,
+	) => Promise<IPCResult<Project>>;
 
 	// Tab State (persisted in the main process for reliability)
 	getTabState: () => Promise<IPCResult<TabState>>;
@@ -1472,6 +1477,9 @@ export interface ElectronAPI {
 		IPCResult<import("./cli").ClaudeCodeVersionInfo>
 	>;
 	installClaudeCode: () => Promise<IPCResult<{ command: string }>>;
+	installClaudeCodeSilent: () => Promise<
+		IPCResult<{ stdout: string; stderr: string }>
+	>;
 	getClaudeCodeVersions: () => Promise<
 		IPCResult<import("./cli").ClaudeCodeVersionList>
 	>;

@@ -589,6 +589,58 @@ export function registerProjectHandlers(
 		},
 	);
 
+	// Batch existence check for every known project. Returned map keys are
+	// project IDs and values are `true` when the on-disk path still exists
+	// AND is a directory. Used by the tab bar to surface a "missing path"
+	// indicator without doing N renderer-side fs probes.
+	ipcMain.handle(
+		IPC_CHANNELS.PROJECT_CHECK_PATHS,
+		async (): Promise<IPCResult<Record<string, boolean>>> => {
+			try {
+				const projects = projectStore.getProjects();
+				const result: Record<string, boolean> = {};
+				for (const project of projects) {
+					try {
+						result[project.id] = existsSync(project.path);
+					} catch {
+						result[project.id] = false;
+					}
+				}
+				return { success: true, data: result };
+			} catch (error) {
+				return {
+					success: false,
+					error: error instanceof Error ? error.message : "Unknown error",
+				};
+			}
+		},
+	);
+
+	// Re-point a project at a new on-disk location. Used by the "missing
+	// path" recovery flow in the tab bar when the user moved/renamed the
+	// folder outside the app.
+	ipcMain.handle(
+		IPC_CHANNELS.PROJECT_REPATH,
+		async (
+			_,
+			projectId: string,
+			newPath: string,
+		): Promise<IPCResult<Project>> => {
+			const trimmed = (newPath ?? "").trim();
+			if (!trimmed) {
+				return { success: false, error: "Path cannot be empty" };
+			}
+			if (!existsSync(trimmed)) {
+				return { success: false, error: "Path does not exist" };
+			}
+			const project = projectStore.repathProject(projectId, trimmed);
+			if (project) {
+				return { success: true, data: project };
+			}
+			return { success: false, error: "Project not found" };
+		},
+	);
+
 	// ============================================
 	// Tab State Operations (persisted in main process)
 	// ============================================

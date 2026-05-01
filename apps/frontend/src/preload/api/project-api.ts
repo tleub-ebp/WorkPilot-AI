@@ -44,6 +44,23 @@ export interface ProjectAPI {
 		projectId: string,
 	) => Promise<IPCResult<AutoBuildVersionInfo>>;
 
+	/**
+	 * Returns a map of `projectId → exists` indicating whether each known
+	 * project's on-disk path still resolves to a directory. Cheap enough
+	 * to call on every window focus.
+	 */
+	checkProjectPaths: () => Promise<IPCResult<Record<string, boolean>>>;
+
+	/**
+	 * Update the on-disk path of a project. Use after the user has picked
+	 * a new folder via the directory picker. Validates the path exists
+	 * and is a directory before persisting.
+	 */
+	repathProject: (
+		projectId: string,
+		newPath: string,
+	) => Promise<IPCResult<Project>>;
+
 	// Tab State (persisted in main process for reliability)
 	getTabState: () => Promise<IPCResult<TabState>>;
 	saveTabState: (tabState: TabState) => Promise<IPCResult>;
@@ -256,6 +273,15 @@ export const createProjectAPI = (): ProjectAPI => ({
 		projectId: string,
 	): Promise<IPCResult<AutoBuildVersionInfo>> =>
 		ipcRenderer.invoke(IPC_CHANNELS.PROJECT_CHECK_VERSION, projectId),
+
+	checkProjectPaths: (): Promise<IPCResult<Record<string, boolean>>> =>
+		ipcRenderer.invoke(IPC_CHANNELS.PROJECT_CHECK_PATHS),
+
+	repathProject: (
+		projectId: string,
+		newPath: string,
+	): Promise<IPCResult<Project>> =>
+		ipcRenderer.invoke(IPC_CHANNELS.PROJECT_REPATH, projectId, newPath),
 
 	// Tab State (persisted in main process for reliability)
 	getTabState: (): Promise<IPCResult<TabState>> =>

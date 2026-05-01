@@ -12,6 +12,8 @@ export const IPC_CHANNELS = {
 	PROJECT_RENAME: "project:rename",
 	PROJECT_INITIALIZE: "project:initialize",
 	PROJECT_CHECK_VERSION: "project:checkVersion",
+	PROJECT_CHECK_PATHS: "project:checkPaths",
+	PROJECT_REPATH: "project:repath",
 
 	// Tab state operations (persisted in main process)
 	TAB_STATE_GET: "tabState:get",
@@ -596,6 +598,7 @@ export const IPC_CHANNELS = {
 	// Claude Code CLI operations
 	CLAUDE_CODE_CHECK_VERSION: "claudeCode:checkVersion",
 	CLAUDE_CODE_INSTALL: "claudeCode:install",
+	CLAUDE_CODE_INSTALL_SILENT: "claudeCode:installSilent",
 	CLAUDE_CODE_GET_VERSIONS: "claudeCode:getVersions",
 	CLAUDE_CODE_INSTALL_VERSION: "claudeCode:installVersion",
 	CLAUDE_CODE_GET_INSTALLATIONS: "claudeCode:getInstallations",

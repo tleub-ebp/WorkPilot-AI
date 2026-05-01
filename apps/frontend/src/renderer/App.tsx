@@ -610,8 +610,17 @@ export function App() {
 		// Initialize global download progress listener for Ollama model downloads
 		const cleanupDownloadListener = initDownloadProgressListener();
 
+		// Re-check project paths when the window regains focus — handles the
+		// case where the user moved/deleted a project folder while the app
+		// was in the background.
+		const onFocus = () => {
+			void useProjectStore.getState().refreshMissingPaths();
+		};
+		window.addEventListener("focus", onFocus);
+
 		return () => {
 			cleanupDownloadListener();
+			window.removeEventListener("focus", onFocus);
 		};
 	}, []);
 

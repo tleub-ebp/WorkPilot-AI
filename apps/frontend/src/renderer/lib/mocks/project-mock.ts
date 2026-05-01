@@ -43,6 +43,16 @@ export const projectMock = {
 		},
 	}),
 
+	checkProjectPaths: async () => ({ success: true, data: {} }),
+
+	// Browser-mock no-op: in real usage this hits the main process.
+	// Returning an error keeps consumers honest — they can't accidentally
+	// rely on a fake successful repath in browser preview.
+	repathProject: async () => ({
+		success: false as const,
+		error: "Not available in browser mock",
+	}),
+
 	// Tab state operations (persisted in main process)
 	getTabState: async () => ({
 		success: true,
