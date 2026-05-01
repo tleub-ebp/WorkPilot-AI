@@ -83,6 +83,12 @@ export interface ProjectAPI {
 
 	// Dialog Operations
 	selectDirectory: () => Promise<string | null>;
+	selectFiles: (options?: {
+		title?: string;
+		defaultPath?: string;
+		multi?: boolean;
+		filters?: { name: string; extensions: string[] }[];
+	}) => Promise<string[]>;
 	createProjectFolder: (
 		location: string,
 		name: string,
@@ -307,6 +313,14 @@ export const createProjectAPI = (): ProjectAPI => ({
 	// Dialog Operations
 	selectDirectory: (): Promise<string | null> =>
 		ipcRenderer.invoke(IPC_CHANNELS.DIALOG_SELECT_DIRECTORY),
+
+	selectFiles: (options?: {
+		title?: string;
+		defaultPath?: string;
+		multi?: boolean;
+		filters?: { name: string; extensions: string[] }[];
+	}): Promise<string[]> =>
+		ipcRenderer.invoke(IPC_CHANNELS.DIALOG_SELECT_FILES, options),
 
 	createProjectFolder: (
 		location: string,

@@ -67,6 +67,18 @@ export const projectMock = {
 		);
 	},
 
+	selectFiles: async () => {
+		const input = prompt(
+			"Enter file paths separated by newlines (browser mock):",
+			"",
+		);
+		if (!input) return [];
+		return input
+			.split("\n")
+			.map((s) => s.trim())
+			.filter(Boolean);
+	},
+
 	createProjectFolder: async (
 		_location: string,
 		name: string,

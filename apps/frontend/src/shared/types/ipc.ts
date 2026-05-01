@@ -19,6 +19,10 @@ import type {
 	AppUpdateProgress,
 } from "./app-update";
 import type {
+	ConflictPredictionEvent,
+	ConflictPredictionResult,
+} from "../../renderer/stores/conflict-predictor-store";
+import type {
 	BranchDiffOptions,
 	ChangelogGenerationProgress,
 	ChangelogGenerationRequest,
@@ -205,6 +209,7 @@ export interface TabState {
 export interface ElectronAPI {
 	// biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
 	[x: string]: any;
+
 	// Project operations
 	addProject: (projectPath: string) => Promise<IPCResult<Project>>;
 	removeProject: (projectId: string) => Promise<IPCResult>;
@@ -666,6 +671,12 @@ export interface ElectronAPI {
 
 	// Dialog operations
 	selectDirectory: () => Promise<string | null>;
+	selectFiles: (options?: {
+		title?: string;
+		defaultPath?: string;
+		multi?: boolean;
+		filters?: { name: string; extensions: string[] }[];
+	}) => Promise<string[]>;
 	createProjectFolder: (
 		location: string,
 		name: string,
@@ -1512,11 +1523,9 @@ export interface ElectronAPI {
 	cancelConflictPrediction: () => Promise<boolean>;
 
 	// Conflict Predictor event listeners
-	// biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
-	onConflictPredictionEvent: (callback: (event: any) => void) => () => void;
+	onConflictPredictionEvent: (callback: (event: ConflictPredictionEvent) => void) => () => void;
 	onConflictPredictionError: (callback: (error: string) => void) => () => void;
-	// biome-ignore lint/suspicious/noExplicitAny: TODO: type this properly
-	onConflictPredictionComplete: (callback: (result: any) => void) => () => void;
+	onConflictPredictionComplete: (callback: (result: ConflictPredictionResult) => void) => () => void;
 
 	// Queue Routing API (rate limit recovery)
 	queue: import("../../preload/api/queue-api").QueueAPI;

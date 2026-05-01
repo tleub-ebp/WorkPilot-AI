@@ -268,11 +268,6 @@ const navGroups: NavGroup[] = [
 				shortcut: "WM",
 			},
 			{
-				id: "phase35-hub",
-				labelKey: "navigation:items.phase35Hub",
-				icon: Sparkles,
-			},
-			{
 				id: "dashboard",
 				labelKey: "navigation:items.dashboard",
 				icon: BarChart3,
@@ -283,6 +278,12 @@ const navGroups: NavGroup[] = [
 				labelKey: "navigation:items.sessionHistory",
 				icon: History,
 				shortcut: "WS",
+			},
+			{
+				id: "phase35-hub",
+				labelKey: "navigation:items.phase35Hub",
+				icon: Sparkles,
+				shortcut: "WA",
 			},
 		],
 		defaultExpanded: true,
