@@ -124,23 +124,18 @@ export function AgentProfileSelector({
 	const { t } = useTranslation("settings");
 	const [showPhaseDetails, setShowPhaseDetails] = useState(false);
 
-	// Resolve the active provider: explicit prop > context > "" (legacy/Claude)
+	// Resolve the active provider: explicit prop > context > "" (defaults to anthropic-like)
 	const { selectedProvider } = useProviderContext();
 	const activeProvider = provider ?? selectedProvider ?? "";
-	const isClaude =
-		!activeProvider ||
-		activeProvider === "anthropic" ||
-		activeProvider === "claude";
 
-	// Live model catalog for the active provider. The hook returns the static
-	// catalog instantly and switches to the live one once the backend responds.
-	// For the legacy Claude provider we keep AVAILABLE_MODELS (short ids
-	// "opus"/"sonnet"/…) so existing preset profiles and persisted phaseModels
-	// continue to match — the live ids would not match the short ones.
+	// Live model catalog for the active provider. The hook unions the live
+	// API response with the local static catalog (legacy short aliases +
+	// curated entries) so freshly-released models like "claude-opus-4-7"
+	// appear automatically while preset profiles using "opus"/"sonnet" keep
+	// matching.
 	const liveCatalog = useProviderModelCatalog(activeProvider);
-	const providerModels: readonly { value: string; label: string }[] = isClaude
-		? AVAILABLE_MODELS
-		: liveCatalog.models;
+	const providerModels: readonly { value: string; label: string }[] =
+		liveCatalog.models;
 
 	const isCustom = profileId === "custom";
 	const _isAuto = profileId === "auto";
@@ -150,13 +145,12 @@ export function AgentProfileSelector({
 	const currentPhaseThinking = phaseThinking || DEFAULT_PHASE_THINKING;
 
 	// When the active provider changes, migrate any phase model that is not
-	// available in the new provider's catalog to the provider's flagship model.
-	// Without this, the Select trigger would render empty for stale values
+	// available in the (live + static) catalog to the provider's flagship.
+	// Without this the Select trigger would render empty for stale values
 	// (e.g. "opus" left over from Anthropic when switching to OpenAI).
-	// We wait until the live catalog is loaded so we don't migrate against
+	// We wait until the live catalog has loaded so we don't migrate against
 	// the static fallback only to migrate again once the live list arrives.
 	useEffect(() => {
-		if (isClaude) return;
 		if (!onPhaseModelsChange) return;
 		if (liveCatalog.loading) return;
 		if (providerModels.length === 0) return;
@@ -188,7 +182,6 @@ export function AgentProfileSelector({
 		});
 	}, [
 		activeProvider,
-		isClaude,
 		liveCatalog.loading,
 		providerModels,
 		currentPhaseModels,
@@ -197,7 +190,6 @@ export function AgentProfileSelector({
 
 	// Same migration for the custom-mode single model.
 	useEffect(() => {
-		if (isClaude) return;
 		if (!isCustom) return;
 		if (!model) return;
 		if (liveCatalog.loading) return;
@@ -213,7 +205,6 @@ export function AgentProfileSelector({
 		if (fallback) onModelChange(fallback);
 	}, [
 		activeProvider,
-		isClaude,
 		isCustom,
 		liveCatalog.loading,
 		model,
@@ -384,9 +375,8 @@ export function AgentProfileSelector({
 							<ChevronDown className="h-4 w-4 text-muted-foreground" />
 						)}
 					</button>
-					{/* Catalog provenance + refresh — only relevant for non-Claude
-					    providers since Claude uses the legacy short-id catalog */}
-					{!isClaude && showPhaseDetails && (
+					{/* Catalog provenance + manual refresh button. */}
+					{showPhaseDetails && (
 						<div className="px-4 pb-2 -mt-2">
 							<ModelCatalogStatus catalog={liveCatalog} />
 						</div>

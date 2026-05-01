@@ -1,18 +1,26 @@
 /**
- * Fetches the live model catalog for a given AI provider from the backend.
+ * Fetches the live model catalog for a given AI provider from the backend
+ * and unions it with the local static catalog so the dropdown always
+ * exposes both:
  *
- * Backed by `GET /providers/models/{provider}/catalog`, which is itself
- * backed by a 6-hour disk cache and falls back to a static catalog when
- * the provider's API is unreachable or no API key is configured.
+ *  - The freshest live entries from the provider's /v1/models response
+ *    (so a brand-new model like "claude-opus-4-7" or "gpt-5.5" appears
+ *    automatically the day the provider lists it).
+ *  - The local static entries (legacy short aliases like "opus"/"sonnet"
+ *    used by preset agent profiles, plus curated additions in
+ *    PROVIDER_MODELS_MAP). These are kept so existing tasks persisted
+ *    with these values keep working.
  *
- * The hook returns the most current data it can offer at every moment:
- *  - while the network call is in flight, it serves the static catalog
- *    from `getModelsForProvider()` so the UI never sees an empty dropdown
- *  - once the response arrives, it switches to the live (or cached) list
- *  - `refresh()` forces a bypass of the backend cache
+ * Backed by `GET /providers/models/{provider}/catalog`, which has a 24h
+ * disk cache and falls back to a static catalog when the provider's API
+ * is unreachable or no API key is configured.
+ *
+ * The hook serves static entries instantly so the UI never shows an empty
+ * dropdown, then upgrades the union as the live response arrives.
+ * `refresh()` bypasses the backend cache.
  */
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
 	AVAILABLE_MODELS,
 	getModelsForProvider,
@@ -20,9 +28,7 @@ import {
 
 export type CatalogSource = "live" | "cache" | "static";
 
-/** Subset of ProviderModel — `tier` and `supportsThinking` are optional here
- * because the legacy AVAILABLE_MODELS catalog used as instant fallback for
- * Claude does not expose them. */
+/** Subset of ProviderModel — `tier` and `supportsThinking` are optional. */
 export interface CatalogModel {
 	value: string;
 	label: string;
@@ -47,19 +53,54 @@ interface CatalogResponse {
 	error: string | null;
 }
 
-/** Static catalog used until the backend response arrives. */
-function staticCatalog(provider: string): readonly CatalogModel[] {
+/** Local static entries shown for `provider` regardless of what the live
+ * API returns (legacy aliases, curated additions). */
+function localStaticEntries(provider: string): readonly CatalogModel[] {
 	const isClaude =
 		!provider || provider === "anthropic" || provider === "claude";
-	return isClaude ? AVAILABLE_MODELS : getModelsForProvider(provider);
+	if (isClaude) {
+		// AVAILABLE_MODELS holds the short aliases (opus/sonnet/haiku/…) used
+		// by preset agent profiles. We also surface the modern PROVIDER_MODELS
+		// curated list for Anthropic so anything the live API hides (e.g.
+		// when the key cannot list a model the user is still authorised to
+		// call) remains selectable.
+		return [...AVAILABLE_MODELS, ...getModelsForProvider("anthropic")];
+	}
+	return getModelsForProvider(provider);
+}
+
+/** Merge two model lists, deduplicating by `value`. Items from `primary`
+ * win over `secondary` (so live entries override stale static ones). */
+function mergeCatalogs(
+	primary: readonly CatalogModel[],
+	secondary: readonly CatalogModel[],
+): CatalogModel[] {
+	const seen = new Set<string>();
+	const out: CatalogModel[] = [];
+	for (const m of primary) {
+		if (m.value && !seen.has(m.value)) {
+			seen.add(m.value);
+			out.push(m);
+		}
+	}
+	for (const m of secondary) {
+		if (m.value && !seen.has(m.value)) {
+			seen.add(m.value);
+			out.push(m);
+		}
+	}
+	return out;
 }
 
 export function useProviderModelCatalog(
 	provider: string,
 ): ProviderModelCatalog {
-	const [models, setModels] = useState<readonly CatalogModel[]>(() =>
-		staticCatalog(provider),
-	);
+	const staticEntries = useMemo(() => localStaticEntries(provider), [provider]);
+
+	// `liveModels` holds whatever the backend last returned for this provider
+	// (empty until the first response). The exposed catalog is always the
+	// union staticEntries ∪ liveModels.
+	const [liveModels, setLiveModels] = useState<readonly CatalogModel[]>([]);
 	const [source, setSource] = useState<CatalogSource>("static");
 	const [fetchedAt, setFetchedAt] = useState<number | null>(null);
 	const [error, setError] = useState<string | null>(null);
@@ -70,11 +111,11 @@ export function useProviderModelCatalog(
 	const refresh = useCallback(() => setBumpToken((n) => n + 1), []);
 
 	useEffect(() => {
-		// Reset to static catalog whenever the provider changes; this keeps
-		// dropdowns coherent with the new provider while the live fetch runs.
+		// Reset live data whenever the provider changes; static entries are
+		// already provider-correct via useMemo above.
 		if (lastProviderRef.current !== provider) {
 			lastProviderRef.current = provider;
-			setModels(staticCatalog(provider));
+			setLiveModels([]);
 			setSource("static");
 			setFetchedAt(null);
 			setError(null);
@@ -99,18 +140,11 @@ export function useProviderModelCatalog(
 				return res.json() as Promise<CatalogResponse>;
 			})
 			.then((data) => {
-				if (Array.isArray(data?.models) && data.models.length > 0) {
-					setModels(data.models);
-					setSource(data.source);
-					setFetchedAt(data.fetchedAt);
-					setError(data.error);
-				} else {
-					// Empty live catalog (e.g. no key) — keep static fallback,
-					// but surface the source/error so the UI can show a hint.
-					setSource(data?.source ?? "static");
-					setFetchedAt(data?.fetchedAt ?? null);
-					setError(data?.error ?? null);
-				}
+				const models = Array.isArray(data?.models) ? data.models : [];
+				setLiveModels(models);
+				setSource(data?.source ?? "static");
+				setFetchedAt(data?.fetchedAt ?? null);
+				setError(data?.error ?? null);
 			})
 			.catch((err) => {
 				if (err?.name === "AbortError") return;
@@ -120,6 +154,13 @@ export function useProviderModelCatalog(
 
 		return () => controller.abort();
 	}, [provider, bumpToken]);
+
+	// Live first → static second so a freshly listed model (e.g. Opus 4.7
+	// returned by /v1/models) shows above its statically-curated peer.
+	const models = useMemo(
+		() => mergeCatalogs(liveModels, staticEntries),
+		[liveModels, staticEntries],
+	);
 
 	return { models, source, fetchedAt, error, loading, refresh };
 }
