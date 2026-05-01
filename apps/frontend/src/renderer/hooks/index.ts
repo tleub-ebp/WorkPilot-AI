@@ -4,6 +4,11 @@ export { useToast } from "./use-toast";
 export { useIpcListeners } from "./useIpc";
 export { useProjectRouteScan } from "./useProjectRouteScan";
 export {
+	type CatalogSource,
+	type ProviderModelCatalog,
+	useProviderModelCatalog,
+} from "./useProviderModelCatalog";
+export {
 	type AgentSettingsSource,
 	type ResolvedAgentSettings,
 	resolveAgentSettings,

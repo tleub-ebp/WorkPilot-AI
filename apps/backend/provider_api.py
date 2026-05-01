@@ -967,61 +967,41 @@ async def test_provider_api_key(request: Request, provider: str, payload: dict):
 
 
 @app.get("/providers/models/{provider}")
-def get_provider_models(provider: str):
-    """Returns a list of known models for the given provider."""
-    PROVIDER_MODELS: dict[str, list[str]] = {
-        "anthropic": [
-            "claude-opus-4-5",
-            "claude-sonnet-4-5",
-            "claude-haiku-4-5",
-            "claude-3-5-sonnet-20241022",
-            "claude-3-5-haiku-20241022",
-            "claude-3-opus-20240229",
-        ],
-        "claude": [
-            "claude-opus-4-5",
-            "claude-sonnet-4-5",
-            "claude-haiku-4-5",
-            "claude-3-5-sonnet-20241022",
-            "claude-3-5-haiku-20241022",
-        ],
-        "openai": ["gpt-4o", "gpt-4o-mini", "gpt-4-turbo", "gpt-4", "gpt-3.5-turbo"],
-        "google": [
-            "gemini-2.0-flash",
-            "gemini-1.5-pro",
-            "gemini-1.5-flash",
-            "gemini-pro",
-        ],
-        "mistral": [
-            "mistral-large-latest",
-            "mistral-medium-latest",
-            "mistral-small-latest",
-            "open-mistral-7b",
-        ],
-        "meta": ["llama-3.3-70b-instruct", "llama-3.1-8b-instruct"],
-        "deepseek": ["deepseek-chat", "deepseek-reasoner"],
-        "aws": [
-            "anthropic.claude-3-5-sonnet-20241022-v2:0",
-            "amazon.titan-text-premier-v1:0",
-        ],
-        "ollama": [],
+def get_provider_models(provider: str, refresh: bool = False):
+    """Returns a list of known model IDs for the given provider.
+
+    Backed by the dynamic catalog (live API call → cache → static fallback).
+    Kept as a string list for backwards compatibility with existing callers
+    (App.tsx, ProviderManager.tsx, AccountForm.tsx). For the rich format
+    (label, tier, supportsThinking, source provenance) use
+    `/providers/models/{provider}/catalog`.
+    """
+    from provider_models_catalog import list_models
+
+    catalog = list_models(provider, force_refresh=refresh)
+    return {
+        "models": [m["value"] for m in catalog["models"]],
+        "provider": provider,
     }
 
-    models = PROVIDER_MODELS.get(provider, [])
 
-    # For Ollama, try to fetch available models from local instance
-    if provider == "ollama":
-        try:
-            import httpx
+@app.get("/providers/models/{provider}/catalog")
+def get_provider_models_catalog(provider: str, refresh: bool = False):
+    """Returns the full model catalog for `provider` with provenance.
 
-            resp = httpx.get("http://localhost:11434/api/tags", timeout=3)
-            if resp.status_code == 200:
-                data = resp.json()
-                models = [m["name"] for m in data.get("models", [])]
-        except Exception:
-            models = []
+    Response shape::
 
-    return {"models": models, "provider": provider}
+        {
+            "provider": str,
+            "models": [{"value", "label", "tier", "supportsThinking"?}, ...],
+            "source": "live" | "cache" | "static",
+            "fetchedAt": float | None,
+            "error": str | None
+        }
+    """
+    from provider_models_catalog import list_models
+
+    return list_models(provider, force_refresh=refresh)
 
 
 @app.get("/providers/capabilities/{provider}")

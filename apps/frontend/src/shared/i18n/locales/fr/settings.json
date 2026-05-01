@@ -1551,7 +1551,10 @@
 		"agentConfiguration": {
 			"title": "Configuration de l'agent",
 			"description": "Configurer le modèle et les paramètres de l'agent",
-			"model": "Modèle Claude"
+			"model": "Modèle Claude",
+			"modelGeneric": "Modèle",
+			"summary": "Profil : {{profile}} · Modèle phare : {{model}}",
+			"managedInSettings": "Géré dans Paramètres → Agent. Cliquez pour modifier."
 		},
 		"autoBuild": {
 			"title": "Intégration Auto-Build",

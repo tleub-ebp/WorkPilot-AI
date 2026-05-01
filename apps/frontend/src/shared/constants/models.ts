@@ -135,14 +135,35 @@ export const PROVIDER_MODELS_MAP: Record<string, ProviderModel[]> = {
 	],
 
 	// ---- OpenAI ----
-	// Source: platform.openai.com/docs/models
+	// Source: platform.openai.com/docs/models — GPT-5.5 family released April 2026
 	openai: [
-		{ value: "gpt-4o", label: "GPT-4o", tier: "flagship" },
-		{ value: "gpt-4.1", label: "GPT-4.1", tier: "flagship" },
-		{ value: "o3", label: "o3", tier: "flagship", supportsThinking: true },
 		{
-			value: "o1-pro",
-			label: "o1 Pro",
+			value: "gpt-5.5-pro",
+			label: "GPT-5.5 Pro",
+			tier: "flagship",
+			supportsThinking: true,
+		},
+		{
+			value: "gpt-5.5",
+			label: "GPT-5.5",
+			tier: "flagship",
+			supportsThinking: true,
+		},
+		{
+			value: "gpt-5.5-mini",
+			label: "GPT-5.5 mini",
+			tier: "standard",
+			supportsThinking: true,
+		},
+		{
+			value: "gpt-5.2",
+			label: "GPT-5.2",
+			tier: "flagship",
+			supportsThinking: true,
+		},
+		{
+			value: "o4",
+			label: "o4",
 			tier: "flagship",
 			supportsThinking: true,
 		},
@@ -152,23 +173,8 @@ export const PROVIDER_MODELS_MAP: Record<string, ProviderModel[]> = {
 			tier: "standard",
 			supportsThinking: true,
 		},
-		{ value: "gpt-4.1-mini", label: "GPT-4.1 mini", tier: "standard" },
-		{ value: "o1", label: "o1", tier: "standard", supportsThinking: true },
-		{
-			value: "o3-mini",
-			label: "o3-mini",
-			tier: "standard",
-			supportsThinking: true,
-		},
-		{ value: "gpt-4o-mini", label: "GPT-4o mini", tier: "fast" },
-		{ value: "gpt-4.1-nano", label: "GPT-4.1 nano", tier: "fast" },
-		{
-			value: "o1-mini",
-			label: "o1-mini",
-			tier: "fast",
-			supportsThinking: true,
-		},
-		{ value: "gpt-4-turbo", label: "GPT-4 Turbo", tier: "standard" },
+		{ value: "gpt-4.1", label: "GPT-4.1", tier: "standard" },
+		{ value: "gpt-4.1-mini", label: "GPT-4.1 mini", tier: "fast" },
 	],
 
 	// ---- Google Gemini ----
@@ -238,7 +244,26 @@ export const PROVIDER_MODELS_MAP: Record<string, ProviderModel[]> = {
 	],
 
 	// ---- Grok (xAI) ----
+	// Source: docs.x.ai/developers/models — Grok 4.3 flagship as of April 30, 2026
 	grok: [
+		{
+			value: "grok-4.3",
+			label: "Grok 4.3",
+			tier: "flagship",
+			supportsThinking: true,
+		},
+		{
+			value: "grok-4.20-reasoning",
+			label: "Grok 4.20 Reasoning",
+			tier: "flagship",
+			supportsThinking: true,
+		},
+		{
+			value: "grok-4.1-fast",
+			label: "Grok 4.1 Fast",
+			tier: "fast",
+			supportsThinking: true,
+		},
 		{
 			value: "grok-4",
 			label: "Grok 4",
@@ -246,25 +271,11 @@ export const PROVIDER_MODELS_MAP: Record<string, ProviderModel[]> = {
 			supportsThinking: true,
 		},
 		{
-			value: "grok-4-fast",
-			label: "Grok 4 Fast",
-			tier: "fast",
-			supportsThinking: true,
-		},
-		{
 			value: "grok-3",
 			label: "Grok 3",
-			tier: "flagship",
-			supportsThinking: true,
-		},
-		{
-			value: "grok-3-mini",
-			label: "Grok 3 Mini",
 			tier: "standard",
 			supportsThinking: true,
 		},
-		{ value: "grok-2", label: "Grok 2", tier: "standard" },
-		{ value: "grok-2-mini", label: "Grok 2 Mini", tier: "fast" },
 	],
 
 	// ---- Meta (LLaMA) ----
@@ -379,24 +390,31 @@ export const PROVIDER_MODELS_MAP: Record<string, ProviderModel[]> = {
 	],
 
 	// ---- Windsurf (Codeium) ----
-	// Source: docs.windsurf.com/windsurf/models
+	// Source: docs.windsurf.com/windsurf/models — supports Opus 4.7, GPT-5.5, SWE-1.6
 	windsurf: [
-		{ value: "swe-1.5", label: "SWE-1.5", tier: "flagship" },
+		{ value: "swe-1.6", label: "SWE-1.6", tier: "flagship" },
+		{ value: "swe-1.5", label: "SWE-1.5", tier: "standard" },
 		{
-			value: "swe-1.5-thinking",
-			label: "SWE-1.5 Thinking",
+			value: "claude-opus-4-7",
+			label: "Claude Opus 4.7 (Windsurf)",
 			tier: "flagship",
 			supportsThinking: true,
 		},
 		{
-			value: "claude-sonnet-4",
-			label: "Claude Sonnet 4 (Windsurf)",
+			value: "claude-sonnet-4-6",
+			label: "Claude Sonnet 4.6 (Windsurf)",
 			tier: "flagship",
 			supportsThinking: true,
 		},
 		{
-			value: "claude-opus-4",
-			label: "Claude Opus 4 (Windsurf)",
+			value: "gpt-5.5",
+			label: "GPT-5.5 (Windsurf)",
+			tier: "flagship",
+			supportsThinking: true,
+		},
+		{
+			value: "gemini-3.1-pro",
+			label: "Gemini 3.1 Pro (Windsurf)",
 			tier: "flagship",
 			supportsThinking: true,
 		},
@@ -405,26 +423,6 @@ export const PROVIDER_MODELS_MAP: Record<string, ProviderModel[]> = {
 			label: "Claude 3.7 Sonnet (Windsurf)",
 			tier: "standard",
 			supportsThinking: true,
-		},
-		{ value: "gpt-4.1", label: "GPT-4.1 (Windsurf)", tier: "standard" },
-		{ value: "gpt-4o", label: "GPT-4o (Windsurf)", tier: "standard" },
-		{
-			value: "gemini-2.5-pro",
-			label: "Gemini 2.5 Pro (Windsurf)",
-			tier: "standard",
-			supportsThinking: true,
-		},
-		{
-			value: "deepseek-r1",
-			label: "DeepSeek R1 (Windsurf)",
-			tier: "standard",
-			supportsThinking: true,
-		},
-		{ value: "deepseek-v3", label: "DeepSeek V3 (Windsurf)", tier: "standard" },
-		{
-			value: "gemini-2.0-flash",
-			label: "Gemini 2.0 Flash (Windsurf)",
-			tier: "fast",
 		},
 		{ value: "swe-1.5-fast", label: "SWE-1.5 Fast", tier: "fast" },
 	],

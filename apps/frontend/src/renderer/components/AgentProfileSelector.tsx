@@ -18,15 +18,14 @@ import {
 	Sparkles,
 	Zap,
 } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
 	AVAILABLE_MODELS,
 	DEFAULT_AGENT_PROFILES,
 	DEFAULT_PHASE_MODELS,
 	DEFAULT_PHASE_THINKING,
-	getModelsForProvider,
-	type ProviderModel,
+	getDefaultModelForProvider,
 	THINKING_LEVELS,
 } from "../../shared/constants";
 import type { ThinkingLevel } from "../../shared/types";
@@ -34,7 +33,9 @@ import type {
 	PhaseModelConfig,
 	PhaseThinkingConfig,
 } from "../../shared/types/settings";
+import { useProviderModelCatalog } from "../hooks";
 import { cn } from "../lib/utils";
+import { ModelCatalogStatus } from "./ModelCatalogStatus";
 import { useProviderContext } from "./ProviderContext";
 import { Label } from "./ui/label";
 import {
@@ -131,16 +132,15 @@ export function AgentProfileSelector({
 		activeProvider === "anthropic" ||
 		activeProvider === "claude";
 
-	// Models available for the active provider.
-	// For Claude we keep AVAILABLE_MODELS (short ids "opus"/"sonnet"/...) so existing
-	// preset profiles and stored phaseModels continue to match.
-	const providerModels: readonly { value: string; label: string }[] = useMemo(
-		() =>
-			isClaude
-				? AVAILABLE_MODELS
-				: (getModelsForProvider(activeProvider) as readonly ProviderModel[]),
-		[activeProvider, isClaude],
-	);
+	// Live model catalog for the active provider. The hook returns the static
+	// catalog instantly and switches to the live one once the backend responds.
+	// For the legacy Claude provider we keep AVAILABLE_MODELS (short ids
+	// "opus"/"sonnet"/…) so existing preset profiles and persisted phaseModels
+	// continue to match — the live ids would not match the short ones.
+	const liveCatalog = useProviderModelCatalog(activeProvider);
+	const providerModels: readonly { value: string; label: string }[] = isClaude
+		? AVAILABLE_MODELS
+		: liveCatalog.models;
 
 	const isCustom = profileId === "custom";
 	const _isAuto = profileId === "auto";
@@ -148,6 +148,78 @@ export function AgentProfileSelector({
 	// Use provided phase configs or defaults
 	const currentPhaseModels = phaseModels || DEFAULT_PHASE_MODELS;
 	const currentPhaseThinking = phaseThinking || DEFAULT_PHASE_THINKING;
+
+	// When the active provider changes, migrate any phase model that is not
+	// available in the new provider's catalog to the provider's flagship model.
+	// Without this, the Select trigger would render empty for stale values
+	// (e.g. "opus" left over from Anthropic when switching to OpenAI).
+	// We wait until the live catalog is loaded so we don't migrate against
+	// the static fallback only to migrate again once the live list arrives.
+	useEffect(() => {
+		if (isClaude) return;
+		if (!onPhaseModelsChange) return;
+		if (liveCatalog.loading) return;
+		if (providerModels.length === 0) return;
+		const validValues = new Set(providerModels.map((m) => m.value));
+		const hasInvalid = (
+			Object.keys(currentPhaseModels) as Array<keyof PhaseModelConfig>
+		).some((phase) => !validValues.has(currentPhaseModels[phase]));
+		if (!hasInvalid) return;
+		const fallback =
+			providerModels.find(
+				(m) => (m as { tier?: string }).tier === "flagship",
+			)?.value ||
+			providerModels[0]?.value ||
+			getDefaultModelForProvider(activeProvider);
+		if (!fallback) return;
+		onPhaseModelsChange({
+			spec: validValues.has(currentPhaseModels.spec)
+				? currentPhaseModels.spec
+				: fallback,
+			planning: validValues.has(currentPhaseModels.planning)
+				? currentPhaseModels.planning
+				: fallback,
+			coding: validValues.has(currentPhaseModels.coding)
+				? currentPhaseModels.coding
+				: fallback,
+			qa: validValues.has(currentPhaseModels.qa)
+				? currentPhaseModels.qa
+				: fallback,
+		});
+	}, [
+		activeProvider,
+		isClaude,
+		liveCatalog.loading,
+		providerModels,
+		currentPhaseModels,
+		onPhaseModelsChange,
+	]);
+
+	// Same migration for the custom-mode single model.
+	useEffect(() => {
+		if (isClaude) return;
+		if (!isCustom) return;
+		if (!model) return;
+		if (liveCatalog.loading) return;
+		if (providerModels.length === 0) return;
+		const validValues = new Set(providerModels.map((m) => m.value));
+		if (validValues.has(model)) return;
+		const fallback =
+			providerModels.find(
+				(m) => (m as { tier?: string }).tier === "flagship",
+			)?.value ||
+			providerModels[0]?.value ||
+			getDefaultModelForProvider(activeProvider);
+		if (fallback) onModelChange(fallback);
+	}, [
+		activeProvider,
+		isClaude,
+		isCustom,
+		liveCatalog.loading,
+		model,
+		providerModels,
+		onModelChange,
+	]);
 
 	const handleProfileSelect = (selectedId: string) => {
 		if (selectedId === "custom") {
@@ -312,6 +384,13 @@ export function AgentProfileSelector({
 							<ChevronDown className="h-4 w-4 text-muted-foreground" />
 						)}
 					</button>
+					{/* Catalog provenance + refresh — only relevant for non-Claude
+					    providers since Claude uses the legacy short-id catalog */}
+					{!isClaude && showPhaseDetails && (
+						<div className="px-4 pb-2 -mt-2">
+							<ModelCatalogStatus catalog={liveCatalog} />
+						</div>
+					)}
 
 					{/* Compact summary when collapsed */}
 					{!showPhaseDetails && (
@@ -372,7 +451,7 @@ export function AgentProfileSelector({
 													<SelectValue />
 												</SelectTrigger>
 												<SelectContent>
-													{AVAILABLE_MODELS.map((m) => (
+													{providerModels.map((m) => (
 														<SelectItem key={m.value} value={m.value}>
 															{m.label}
 														</SelectItem>
@@ -434,7 +513,7 @@ export function AgentProfileSelector({
 								<SelectValue placeholder={t("agentProfile.selectModel")} />
 							</SelectTrigger>
 							<SelectContent>
-								{AVAILABLE_MODELS.map((m) => (
+								{providerModels.map((m) => (
 									<SelectItem key={m.value} value={m.value}>
 										{m.label}
 									</SelectItem>

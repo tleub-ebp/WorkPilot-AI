@@ -796,7 +796,10 @@
 		},
 		"agentConfiguration": {
 			"title": "Agent Configuration",
-			"model": "Claude Model"
+			"model": "Claude Model",
+			"modelGeneric": "Model",
+			"summary": "Profile: {{profile}} · Flagship model: {{model}}",
+			"managedInSettings": "Managed in Settings → Agent. Click to edit."
 		},
 		"claude": {
 			"title": "Claude Auth",
