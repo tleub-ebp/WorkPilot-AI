@@ -115,7 +115,8 @@
 		"unpin": "Remove from favorites",
 		"pinGroup": "Pin group to favorites",
 		"unpinGroup": "Remove group from favorites",
-		"resetLayout": "Reset layout"
+		"resetLayout": "Reset layout",
+		"clearAllFavorites": "Clear all favorites"
 	},
 	"tooltips": {
 		"settings": "Application Settings",

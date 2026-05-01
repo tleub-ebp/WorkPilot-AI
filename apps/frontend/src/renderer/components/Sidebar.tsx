@@ -794,6 +794,7 @@ export function Sidebar({
 		reorderItems,
 		toggleGroupExpanded,
 		setFavoritesExpanded,
+		clearAllFavorites,
 		reset: resetSidebarPrefs,
 		mergeOrder,
 	} = useSidebarPrefs();
@@ -1805,6 +1806,24 @@ export function Sidebar({
 							<Star
 								className={cn("h-3.5 w-3.5", isPinned && "fill-amber-400")}
 							/>
+						</button>
+					)}
+					{isFavorites && (
+						<button
+							type="button"
+							onClick={(e) => {
+								e.stopPropagation();
+								clearAllFavorites();
+							}}
+							aria-label={t("navigation:actions.clearAllFavorites")}
+							title={t("navigation:actions.clearAllFavorites")}
+							className={cn(
+								"flex items-center justify-center w-5 h-5 shrink-0 rounded",
+								"transition-all duration-200",
+								"text-muted-foreground/60 hover:text-destructive hover:bg-destructive/10 hover:scale-110",
+							)}
+						>
+							<X className="h-3.5 w-3.5" />
 						</button>
 					)}
 				</div>

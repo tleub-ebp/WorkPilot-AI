@@ -115,7 +115,8 @@
 		"unpin": "Retirer des favoris",
 		"pinGroup": "Épingler le groupe aux favoris",
 		"unpinGroup": "Retirer le groupe des favoris",
-		"resetLayout": "Réinitialiser la disposition"
+		"resetLayout": "Réinitialiser la disposition",
+		"clearAllFavorites": "Supprimer tous les favoris"
 	},
 	"tooltips": {
 		"settings": "Paramètres de l'application",

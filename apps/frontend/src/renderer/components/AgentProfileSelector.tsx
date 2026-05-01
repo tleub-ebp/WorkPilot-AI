@@ -18,13 +18,15 @@ import {
 	Sparkles,
 	Zap,
 } from "lucide-react";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
 	AVAILABLE_MODELS,
 	DEFAULT_AGENT_PROFILES,
 	DEFAULT_PHASE_MODELS,
 	DEFAULT_PHASE_THINKING,
+	getModelsForProvider,
+	type ProviderModel,
 	THINKING_LEVELS,
 } from "../../shared/constants";
 import type { ThinkingLevel } from "../../shared/types";
@@ -33,6 +35,7 @@ import type {
 	PhaseThinkingConfig,
 } from "../../shared/types/settings";
 import { cn } from "../lib/utils";
+import { useProviderContext } from "./ProviderContext";
 import { Label } from "./ui/label";
 import {
 	Select,
@@ -69,6 +72,8 @@ interface AgentProfileSelectorProps {
 	readonly onPhaseThinkingChange?: (phaseThinking: PhaseThinkingConfig) => void;
 	/** Whether the selector is disabled */
 	readonly disabled?: boolean;
+	/** Optional override for the active AI provider (defaults to the provider context). */
+	readonly provider?: string;
 }
 
 const iconMap: Record<string, React.ElementType> = {
@@ -113,9 +118,29 @@ export function AgentProfileSelector({
 	onPhaseModelsChange,
 	onPhaseThinkingChange,
 	disabled,
+	provider,
 }: AgentProfileSelectorProps) {
 	const { t } = useTranslation("settings");
 	const [showPhaseDetails, setShowPhaseDetails] = useState(false);
+
+	// Resolve the active provider: explicit prop > context > "" (legacy/Claude)
+	const { selectedProvider } = useProviderContext();
+	const activeProvider = provider ?? selectedProvider ?? "";
+	const isClaude =
+		!activeProvider ||
+		activeProvider === "anthropic" ||
+		activeProvider === "claude";
+
+	// Models available for the active provider.
+	// For Claude we keep AVAILABLE_MODELS (short ids "opus"/"sonnet"/...) so existing
+	// preset profiles and stored phaseModels continue to match.
+	const providerModels: readonly { value: string; label: string }[] = useMemo(
+		() =>
+			isClaude
+				? AVAILABLE_MODELS
+				: (getModelsForProvider(activeProvider) as readonly ProviderModel[]),
+		[activeProvider, isClaude],
+	);
 
 	const isCustom = profileId === "custom";
 	const _isAuto = profileId === "auto";
@@ -296,9 +321,9 @@ export function AgentProfileSelector({
 									Object.keys(PHASE_LABEL_KEYS) as Array<keyof PhaseModelConfig>
 								).map((phase) => {
 									const modelLabel =
-										AVAILABLE_MODELS.find(
-											(m) => m.value === currentPhaseModels[phase],
-										)?.label?.replace("Claude ", "") ||
+										providerModels
+											.find((m) => m.value === currentPhaseModels[phase])
+											?.label?.replace("Claude ", "") ||
 										currentPhaseModels[phase];
 									return (
 										<div
