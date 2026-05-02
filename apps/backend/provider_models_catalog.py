@@ -425,7 +425,7 @@ def _fetch_openai() -> list[dict[str, Any]]:
                 "supportsThinking": _supports_thinking("openai", mid),
             }
         )
-    out.sort(key=lambda m: (_openai_sort_key(m["value"])))
+    out.sort(key=lambda m: _openai_sort_key(m["value"]))
     return out
 
 
