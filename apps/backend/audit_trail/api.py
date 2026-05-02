@@ -15,6 +15,7 @@ Mounted at `/api/audit-trail`. Endpoints:
 from __future__ import annotations
 
 import logging
+import os
 from pathlib import Path
 from threading import Lock
 from typing import Any
@@ -37,10 +38,32 @@ _trails: dict[tuple[str, str], AuditTrail] = {}
 _trails_lock = Lock()
 
 
+def _allowed_storage_roots() -> list[Path]:
+    """Roots under which audit-trail storage_dir is allowed to live.
+
+    Why: every endpoint accepts ``storage_dir`` from the HTTP request and
+    creates the directory if missing (via Path.mkdir). Without an allowlist,
+    a caller on the same host could trigger arbitrary directory creation
+    and write JSONL files to surprising locations. We restrict to the env
+    var ``AUDIT_TRAIL_ALLOWED_ROOTS`` (os-pathsep separated) when set, or
+    fall back to the current working directory only.
+    """
+    raw = os.environ.get("AUDIT_TRAIL_ALLOWED_ROOTS", "").strip()
+    if not raw:
+        return [Path.cwd().resolve()]
+    return [Path(p).expanduser().resolve() for p in raw.split(os.pathsep) if p.strip()]
+
+
 def _validate_dir(raw: str) -> Path:
     if not raw or raw.strip().startswith("-"):
         raise ValueError("storage_dir must not be empty or start with '-'")
     p = Path(raw).expanduser().resolve()
+    allowed = _allowed_storage_roots()
+    if not any(p == root or p.is_relative_to(root) for root in allowed):
+        raise ValueError(
+            "storage_dir is not under any allowed root "
+            "(set AUDIT_TRAIL_ALLOWED_ROOTS to extend the allowlist)"
+        )
     p.mkdir(parents=True, exist_ok=True)
     return p
 
