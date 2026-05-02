@@ -9,6 +9,7 @@ real working tree.
 from __future__ import annotations
 
 import logging
+import re
 import shutil
 import subprocess
 import tempfile
@@ -17,6 +18,18 @@ from pathlib import Path
 from typing import Any
 
 logger = logging.getLogger(__name__)
+
+# Git refs may contain alnum, `_ . / @ ^ ~ + -`. We additionally forbid a
+# leading `-` so the ref cannot be parsed by git as an option flag, and we
+# always pass `--` before the ref to terminate option parsing as defense in
+# depth (see CVE-2017-1000117 family for git argument-injection precedent).
+_REF_PATTERN = re.compile(r"^[A-Za-z0-9_./@^~+-]+$")
+
+
+def _validate_ref(ref: str) -> str:
+    if not ref or ref.startswith("-") or not _REF_PATTERN.match(ref):
+        raise ValueError(f"Invalid git ref: {ref!r}")
+    return ref
 
 
 @dataclass
@@ -115,8 +128,12 @@ class WorktreeManager:
 
     def _resolve_ref(self, ref: str) -> str:
         try:
+            ref = _validate_ref(ref)
+        except ValueError:
+            return "unknown"
+        try:
             result = subprocess.run(
-                ["git", "rev-parse", ref],
+                ["git", "rev-parse", "--", ref],
                 cwd=str(self._repo_root),
                 capture_output=True,
                 text=True,
@@ -127,6 +144,7 @@ class WorktreeManager:
             return "unknown"
 
     def _create_git_worktree(self, dest: Path, ref: str) -> None:
+        ref = _validate_ref(ref)
         # Remove the temp dir first — git worktree add needs a non-existing target
         if dest.exists():
             shutil.rmtree(dest)

@@ -34,11 +34,31 @@ SECURITY_TOOLS_AVAILABLE = {
 }
 
 
-def _check_tool_availability():
-    """Check which optional security tools are available."""
+_TOOL_AVAILABILITY_CHECKED = False
+
+
+def _check_tool_availability(force: bool = False):
+    """Check which optional security tools are available.
+
+    Lazy: only runs the first time it's actually needed (e.g., from
+    `check_security_setup()`), so importing this module does not spawn 4
+    subprocesses synchronously. Spawning at import time both blocked startup
+    by up to ~1s on Windows and could execute attacker-controlled binaries
+    named bandit/snyk/etc. that happened to be on PATH.
+    """
+    global _TOOL_AVAILABILITY_CHECKED
+    if _TOOL_AVAILABILITY_CHECKED and not force:
+        return
+    _TOOL_AVAILABILITY_CHECKED = True
+
+    import shutil
     import subprocess
 
     for tool in SECURITY_TOOLS_AVAILABLE.keys():
+        # shutil.which() avoids spawning the binary at all when it is not on
+        # PATH. We only invoke `--version` once we know the binary exists.
+        if shutil.which(tool) is None:
+            continue
         try:
             subprocess.run(
                 [tool, "--version"],
@@ -49,9 +69,6 @@ def _check_tool_availability():
             SECURITY_TOOLS_AVAILABLE[tool] = True
         except (FileNotFoundError, subprocess.TimeoutExpired):
             pass
-
-
-_check_tool_availability()
 
 
 def get_default_security_config() -> dict[str, Any]:
@@ -264,7 +281,14 @@ def run_quick_security_check() -> bool:
 
 
 def _initialize_security():
-    """Initialize security features automatically."""
+    """Initialize security features.
+
+    Must be called explicitly by application entry points — NOT at import
+    time. Importing this module from anywhere previously created a
+    `.security-reports/` directory in whatever cwd happened to be set,
+    polluting random user directories whenever the package was loaded as a
+    subprocess or from a CLI plugin context.
+    """
     # Ensure reports directory exists
     ensure_security_reports_dir()
 
@@ -275,14 +299,6 @@ def _initialize_security():
     # Auto-install Git hooks in development
     if os.getenv("AUTO_CLAUDE_DEV_MODE") == "1":
         auto_install_git_hooks()
-
-
-# Initialize on import
-try:
-    _initialize_security()
-except Exception:
-    # Silent fail - don't break the application
-    pass
 
 
 # =============================================================================
