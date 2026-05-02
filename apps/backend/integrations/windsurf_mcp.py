@@ -8,7 +8,6 @@ import logging
 from typing import Any
 
 from mcp.client.session import ClientSession
-from mcp.client.stdio import stdio_client
 
 
 class WindsurMCPIntegration:
@@ -20,17 +19,19 @@ class WindsurMCPIntegration:
         self.logger = logging.getLogger(__name__)
 
     async def initialize(self):
-        """Initialise la connexion MCP"""
-        try:
-            self.session = await stdio_client()
-            await self.session.initialize()
-            self.connected = True
-            self.logger.info("MCP Windsurf connecté")
-            return True
-        except Exception as e:
-            self.logger.error(f"Erreur connexion MCP Windsurf: {e}")
-            self.connected = False
-            return False
+        """Initialise la connexion MCP.
+
+        Currently a stub: the original implementation called `stdio_client()`
+        without server parameters, which raises immediately at runtime. The
+        feature has no configured MCP server to point at, so we explicitly
+        mark the integration as unavailable instead of attempting (and
+        silently failing) the call. Callers fall back to the direct REST API.
+        """
+        self.connected = False
+        self.logger.debug(
+            "MCP Windsurf integration is not configured (no MCP server URL)"
+        )
+        return False
 
     async def get_available_models(self) -> dict[str, Any]:
         """Récupère les modèles Windsurf disponibles"""
