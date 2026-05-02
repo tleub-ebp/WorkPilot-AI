@@ -180,7 +180,7 @@ async def lifespan(app: FastAPI):
             f"Could not initialize analytics database: {e}"
         )
 
-    logging.getLogger(__name__).info(
+    logging.getLogger(__name__).debug(
         "Backend started without WebSocket (disabled for stability)"
     )
 
@@ -2356,15 +2356,16 @@ try:
 
     app.include_router(analytics_router)
 except Exception as e:
-    print(
-        f"Warning: Could not load real analytics router ({e}), falling back to minimal stub"
+    logging.getLogger(__name__).warning(
+        "Could not load real analytics router (%s), falling back to minimal stub",
+        e,
     )
     try:
         from analytics.api_minimal import router as analytics_router
 
         app.include_router(analytics_router)
     except ImportError as e2:
-        print(f"Warning: Could not import analytics router: {e2}")
+        logging.getLogger(__name__).warning("Could not import analytics router: %s", e2)
 
 # --- Mission Control API ---
 try:

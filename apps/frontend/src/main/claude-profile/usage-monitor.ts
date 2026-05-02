@@ -3331,6 +3331,9 @@ export class UsageMonitor extends EventEmitter {
 
 		try {
 			const { spawn } = await import("node:child_process");
+			const { getSpawnCommand, getSpawnOptions } = await import(
+				"../env-utils"
+			);
 
 			const result = await new Promise<{
 				stdout: string;
@@ -3342,20 +3345,23 @@ export class UsageMonitor extends EventEmitter {
 				// Try different approaches to find claude executable
 				const claudePath = "claude"; // Let system find it in PATH
 
-				const process = spawn(claudePath, ["usage"], {
-					shell: true,
+				// Use helpers so shell:true is only set on Windows .cmd/.bat targets,
+				// avoiding Node DEP0190 (shell:true with array args).
+				const spawnCommand = getSpawnCommand(claudePath);
+				const spawnOptions = getSpawnOptions(claudePath, {
 					stdio: ["pipe", "pipe", "pipe"],
-					timeout: 15000, // 15 second timeout
+					timeout: 15000,
 				});
+				const process = spawn(spawnCommand, ["usage"], spawnOptions);
 
 				let stdout = "";
 				let stderr = "";
 
-				process.stdout.on("data", (data) => {
+				process.stdout?.on("data", (data) => {
 					stdout += data.toString();
 				});
 
-				process.stderr.on("data", (data) => {
+				process.stderr?.on("data", (data) => {
 					stderr += data.toString();
 				});
 

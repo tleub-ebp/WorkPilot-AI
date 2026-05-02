@@ -3,6 +3,7 @@ Database connection and session management for Build Analytics.
 """
 
 import os
+from pathlib import Path
 
 from sqlalchemy import create_engine
 from sqlalchemy.orm import Session, sessionmaker
@@ -10,8 +11,17 @@ from sqlalchemy.pool import StaticPool
 
 from .database_schema import Base
 
+
+def _default_database_url() -> str:
+    # Anchor the SQLite file to <repo_root>/data so it works regardless of cwd.
+    repo_root = Path(__file__).resolve().parents[3]
+    db_path = repo_root / "data" / "analytics.db"
+    db_path.parent.mkdir(parents=True, exist_ok=True)
+    return f"sqlite:///{db_path.as_posix()}"
+
+
 # Database configuration
-DATABASE_URL = os.getenv("ANALYTICS_DATABASE_URL", "sqlite:///./data/analytics.db")
+DATABASE_URL = os.getenv("ANALYTICS_DATABASE_URL", _default_database_url())
 
 # Create engine
 if DATABASE_URL.startswith("sqlite"):
