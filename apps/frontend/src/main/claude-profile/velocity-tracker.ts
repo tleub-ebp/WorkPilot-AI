@@ -67,6 +67,16 @@ class VelocityTracker {
 		sessionPercent: number,
 		weeklyPercent: number,
 	): void {
+		if (
+			!Number.isFinite(sessionPercent) ||
+			!Number.isFinite(weeklyPercent) ||
+			sessionPercent < 0 ||
+			sessionPercent > 100 ||
+			weeklyPercent < 0 ||
+			weeklyPercent > 100
+		) {
+			return;
+		}
 		const now = Date.now();
 		const point: UsageDataPoint = {
 			sessionPercent,

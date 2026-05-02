@@ -3,6 +3,7 @@ Database connection and session management for Build Analytics.
 """
 
 import os
+from collections.abc import Generator
 from pathlib import Path
 
 from sqlalchemy import create_engine
@@ -43,11 +44,14 @@ def create_tables():
     Base.metadata.create_all(bind=engine)
 
 
-def get_db() -> Session:
-    """Get database session."""
+def get_db() -> Generator[Session, None, None]:
+    """Get database session, rolling back on errors and always closing."""
     db = SessionLocal()
     try:
         yield db
+    except Exception:
+        db.rollback()
+        raise
     finally:
         db.close()
 

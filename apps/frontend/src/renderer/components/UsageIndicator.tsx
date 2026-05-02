@@ -217,7 +217,18 @@ export function UsageIndicator() {
 						await handleRetry(provider, retryCount);
 					}
 				} catch (error) {
-					console.warn("[UsageIndicator] Failed to fetch usage data:", error);
+					// Timeouts are expected occasionally (slow upstream provider API).
+					// They are recovered by handleTimeoutError's retry + stale-while-revalidate,
+					// so do not surface them as console warnings — only log truly unexpected errors.
+					const isTimeout =
+						error instanceof Error &&
+						error.message.includes("timed out after 20s");
+					if (!isTimeout) {
+						console.warn(
+							"[UsageIndicator] Failed to fetch usage data:",
+							error,
+						);
+					}
 					await handleTimeoutError(error, provider, retryCount);
 					setIsLoading(false);
 				} finally {

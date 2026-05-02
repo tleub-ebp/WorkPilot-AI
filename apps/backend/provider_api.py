@@ -302,8 +302,8 @@ def get_env_provider_config(name: str) -> dict | None:
             req = urllib.request.Request(f"{base_url}/api/tags", method="GET")
             with urllib.request.urlopen(req, timeout=2):
                 return {"model": "llama3.3", "base_url": base_url}
-        except Exception:
-            pass
+        except Exception as e:
+            logger.debug("Ollama availability check failed at %s: %s", base_url, e)
         return None
 
     # GitHub Copilot (gh CLI)
@@ -316,8 +316,8 @@ def get_env_provider_config(name: str) -> dict | None:
             )
             if GITHUB_CLI_AUTH_SUCCESS in (result.stdout + result.stderr):
                 return {"authenticated": True, "model": "gpt-4o"}
-        except Exception:
-            pass
+        except Exception as e:
+            logger.debug("GitHub Copilot auth check failed: %s", e)
         return None
 
     # Windsurf (Codeium)
@@ -1074,7 +1074,7 @@ async def validate_provider_key(
     # Actually test the key before marking it as validated
     if provider in ("openai",):
         try:
-            url = "https://api.openai.comAPI_MODELS_ENDPOINT"
+            url = "https://api.openai.com" + API_MODELS_ENDPOINT
             headers = {"Authorization": f"Bearer {api_key}"}
             async with httpx.AsyncClient(timeout=DEFAULT_HTTP_TIMEOUT) as client:
                 resp = await client.get(url, headers=headers, timeout=10)
@@ -1086,11 +1086,12 @@ async def validate_provider_key(
         except httpx.HTTPError as e:
             set_validated(provider, api_key, False)
             raise HTTPException(
-                status_code=400, detail=API_KEY_VALIDATION_FAILED_ERROR.format(e=e)
+                status_code=400,
+                detail=API_KEY_VALIDATION_FAILED_ERROR.format(e=_safe_error_message(e)),
             )
     elif provider in ("grok",):
         try:
-            url = "https://api.x.aiAPI_MODELS_ENDPOINT"
+            url = "https://api.x.ai" + API_MODELS_ENDPOINT
             headers = {"Authorization": f"Bearer {api_key}"}
             async with httpx.AsyncClient(timeout=DEFAULT_HTTP_TIMEOUT) as client:
                 resp = await client.get(url, headers=headers, timeout=10)
@@ -1102,14 +1103,15 @@ async def validate_provider_key(
         except httpx.HTTPError as e:
             set_validated(provider, api_key, False)
             raise HTTPException(
-                status_code=400, detail=API_KEY_VALIDATION_FAILED_ERROR.format(e=e)
+                status_code=400,
+                detail=API_KEY_VALIDATION_FAILED_ERROR.format(e=_safe_error_message(e)),
             )
     elif provider in ("anthropic", "claude"):
         try:
             headers = {"x-api-key": api_key, "anthropic-version": "2023-06-01"}
             async with httpx.AsyncClient(timeout=DEFAULT_HTTP_TIMEOUT) as client:
                 resp = await client.get(
-                    "https://api.anthropic.comAPI_MODELS_ENDPOINT",
+                    "https://api.anthropic.com" + API_MODELS_ENDPOINT,
                     headers=headers,
                     timeout=10,
                 )
@@ -1121,13 +1123,14 @@ async def validate_provider_key(
         except httpx.HTTPError as e:
             set_validated(provider, api_key, False)
             raise HTTPException(
-                status_code=400, detail=API_KEY_VALIDATION_FAILED_ERROR.format(e=e)
+                status_code=400,
+                detail=API_KEY_VALIDATION_FAILED_ERROR.format(e=_safe_error_message(e)),
             )
     elif provider in ("google",):
         try:
             async with httpx.AsyncClient(timeout=DEFAULT_HTTP_TIMEOUT) as client:
                 resp = await client.get(
-                    f"https://generativelanguage.googleapis.comAPI_MODELS_ENDPOINT?key={api_key}",
+                    f"https://generativelanguage.googleapis.com{API_MODELS_ENDPOINT}?key={api_key}",
                     timeout=10,
                 )
             if resp.status_code != 200:
@@ -1138,11 +1141,12 @@ async def validate_provider_key(
         except httpx.HTTPError as e:
             set_validated(provider, api_key, False)
             raise HTTPException(
-                status_code=400, detail=API_KEY_VALIDATION_FAILED_ERROR.format(e=e)
+                status_code=400,
+                detail=API_KEY_VALIDATION_FAILED_ERROR.format(e=_safe_error_message(e)),
             )
     elif provider in ("windsurf",):
         try:
-            url = "https://server.codeium.com/apiAPI_MODELS_ENDPOINT"
+            url = "https://server.codeium.com/api" + API_MODELS_ENDPOINT
             headers = {"Authorization": f"Bearer {api_key}"}
             async with httpx.AsyncClient(timeout=DEFAULT_HTTP_TIMEOUT) as client:
                 resp = await client.get(url, headers=headers, timeout=10)
@@ -1154,11 +1158,12 @@ async def validate_provider_key(
         except httpx.HTTPError as e:
             set_validated(provider, api_key, False)
             raise HTTPException(
-                status_code=400, detail=API_KEY_VALIDATION_FAILED_ERROR.format(e=e)
+                status_code=400,
+                detail=API_KEY_VALIDATION_FAILED_ERROR.format(e=_safe_error_message(e)),
             )
     elif provider in ("mistral",):
         try:
-            url = "https://api.mistral.aiAPI_MODELS_ENDPOINT"
+            url = "https://api.mistral.ai" + API_MODELS_ENDPOINT
             headers = {"Authorization": f"Bearer {api_key}"}
             async with httpx.AsyncClient(timeout=DEFAULT_HTTP_TIMEOUT) as client:
                 resp = await client.get(url, headers=headers, timeout=10)
@@ -1170,11 +1175,12 @@ async def validate_provider_key(
         except httpx.HTTPError as e:
             set_validated(provider, api_key, False)
             raise HTTPException(
-                status_code=400, detail=API_KEY_VALIDATION_FAILED_ERROR.format(e=e)
+                status_code=400,
+                detail=API_KEY_VALIDATION_FAILED_ERROR.format(e=_safe_error_message(e)),
             )
     elif provider in ("deepseek",):
         try:
-            url = "https://api.deepseek.comAPI_MODELS_ENDPOINT"
+            url = "https://api.deepseek.com" + API_MODELS_ENDPOINT
             headers = {"Authorization": f"Bearer {api_key}"}
             async with httpx.AsyncClient(timeout=DEFAULT_HTTP_TIMEOUT) as client:
                 resp = await client.get(url, headers=headers, timeout=10)
@@ -1186,7 +1192,8 @@ async def validate_provider_key(
         except httpx.HTTPError as e:
             set_validated(provider, api_key, False)
             raise HTTPException(
-                status_code=400, detail=API_KEY_VALIDATION_FAILED_ERROR.format(e=e)
+                status_code=400,
+                detail=API_KEY_VALIDATION_FAILED_ERROR.format(e=_safe_error_message(e)),
             )
     else:
         # For providers without specific validation (meta, cursor, copilot, ollama, aws)

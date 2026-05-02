@@ -356,6 +356,33 @@ export class UsageMonitor extends EventEmitter {
 		}
 	}
 
+	private async fetchBackendWithRetry(
+		url: string,
+		init: RequestInit,
+		context: string,
+	): Promise<Response> {
+		const MAX_RETRIES = 2;
+		const BASE_DELAY_MS = 500;
+		let lastResponse: Response | null = null;
+		for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
+			const response = await fetch(url, init);
+			if (response.status !== 429) {
+				return response;
+			}
+			lastResponse = response;
+			if (attempt === MAX_RETRIES) break;
+			const retryAfter = Number(response.headers.get("retry-after"));
+			const delay = Number.isFinite(retryAfter) && retryAfter > 0
+				? retryAfter * 1000
+				: BASE_DELAY_MS * 2 ** attempt;
+			this.debugLog(
+				`[UsageMonitor:${context}] 429 received, retrying in ${delay}ms (attempt ${attempt + 1}/${MAX_RETRIES})`,
+			);
+			await new Promise((resolve) => setTimeout(resolve, delay));
+		}
+		return lastResponse as Response;
+	}
+
 	private constructor() {
 		super();
 		this.debugLog("[UsageMonitor] Initialized");
@@ -730,8 +757,24 @@ export class UsageMonitor extends EventEmitter {
 				}
 			});
 
-			// Wait for all fetches to complete in parallel
-			const fetchResults = await Promise.all(fetchPromises);
+			// Wait for all fetches to complete in parallel, with a global safety timeout
+			// in case any sub-promise hangs (sub-promises have their own 10s timeouts).
+			const FETCH_ALL_TIMEOUT_MS = 30000;
+			const timeoutPromise = new Promise<never>((_, reject) =>
+				setTimeout(
+					() =>
+						reject(
+							new Error(
+								`Usage fetch batch timed out after ${FETCH_ALL_TIMEOUT_MS}ms`,
+							),
+						),
+					FETCH_ALL_TIMEOUT_MS,
+				),
+			);
+			const fetchResults = await Promise.race([
+				Promise.all(fetchPromises),
+				timeoutPromise,
+			]);
 
 			// Collect all updates and build summaries
 			for (const result of fetchResults) {
@@ -2300,13 +2343,17 @@ export class UsageMonitor extends EventEmitter {
 				try {
 					// Call our FastAPI backend endpoint
 					const backendUrl = `http://localhost:9000/providers/usage/${provider}`;
-					const response = await fetch(backendUrl, {
-						method: "GET",
-						headers: {
-							"Content-Type": "application/json",
+					const response = await this.fetchBackendWithRetry(
+						backendUrl,
+						{
+							method: "GET",
+							headers: {
+								"Content-Type": "application/json",
+							},
+							signal: AbortSignal.timeout(10000), // 10 second timeout
 						},
-						signal: AbortSignal.timeout(10000), // 10 second timeout
-					});
+						provider,
+					);
 
 					if (!response.ok) {
 						this.debugLog(
@@ -2459,6 +2506,7 @@ export class UsageMonitor extends EventEmitter {
 			const response = await fetch(usageEndpoint, {
 				method: "GET",
 				headers,
+				signal: AbortSignal.timeout(15000),
 			});
 
 			if (!response.ok) {
