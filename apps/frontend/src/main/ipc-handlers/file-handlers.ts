@@ -220,13 +220,20 @@ export function registerFileHandlers(): void {
 			data: unknown,
 		): Promise<IPCResult<boolean>> => {
 			try {
-				// Validate and normalize path
-				const validation = validatePath(dirPath);
-				if (!validation.valid) {
-					return { success: false, error: validation.error };
+				// Validate the directory.
+				const dirValidation = validatePath(dirPath);
+				if (!dirValidation.valid) {
+					return { success: false, error: dirValidation.error };
 				}
-				const safeDir = validation.path;
-				const safeFile = path.join(safeDir, fileName);
+				// Validate the filename SEPARATELY — `path.join` does NOT block
+				// traversal, so a fileName like `../../etc/cron.d/evil` would
+				// have escaped the validated directory and written arbitrary
+				// host files. validateFileName rejects any path separator.
+				const nameValidation = validateFileName(fileName);
+				if (!nameValidation.valid) {
+					return { success: false, error: nameValidation.error };
+				}
+				const safeFile = path.join(dirValidation.path, nameValidation.name);
 				// Write JSON file
 				const fs = await import("node:fs/promises");
 				await fs.writeFile(safeFile, JSON.stringify(data, null, 2), "utf-8");
