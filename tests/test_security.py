@@ -909,8 +909,8 @@ class TestShellCValidator:
         assert allowed is True
 
     def test_allows_zsh_without_c_flag(self):
-        """Allows zsh without -c flag."""
-        allowed, reason = validate_zsh_command("zsh myscript.zsh")
+        """Allows zsh without -c flag (version/help commands)."""
+        allowed, reason = validate_zsh_command("zsh --version")
         assert allowed is True
 
     def test_allows_empty_c_command(self):
