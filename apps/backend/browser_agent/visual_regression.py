@@ -7,11 +7,24 @@ Uses Pillow for pixel-by-pixel diff with configurable threshold.
 """
 
 import json
+import re
 import shutil
 from datetime import datetime
 from pathlib import Path
 
 from .models import BaselineInfo, ComparisonResult
+
+
+def _sanitize_baseline_name(name: str, *, max_len: int = 128) -> str:
+    """Restrict baseline names to a safe alnum + `._-` charset.
+
+    Without this, `name="../../etc/evil"` lets `set_baseline`/`compare`/
+    `delete_baseline` write or unlink arbitrary host files.
+    """
+    if not name:
+        return "baseline"
+    cleaned = re.sub(r"[^A-Za-z0-9._-]", "_", name).strip("._")
+    return (cleaned or "baseline")[:max_len]
 
 
 class VisualRegressionEngine:
@@ -34,7 +47,7 @@ class VisualRegressionEngine:
         if not screenshot_path.exists():
             raise FileNotFoundError(f"Screenshot not found: {screenshot_path}")
 
-        safe_name = name.replace(" ", "_").replace("/", "_")
+        safe_name = _sanitize_baseline_name(name)
         baseline_path = self.baselines_dir / f"{safe_name}.png"
         shutil.copy2(str(screenshot_path), str(baseline_path))
 
@@ -68,7 +81,7 @@ class VisualRegressionEngine:
     def compare(self, name: str, current_path: Path) -> ComparisonResult:
         """Compare a current screenshot against its baseline."""
         current_path = Path(current_path)
-        safe_name = name.replace(" ", "_").replace("/", "_")
+        safe_name = _sanitize_baseline_name(name)
         baseline_path = self.baselines_dir / f"{safe_name}.png"
 
         if not baseline_path.exists():
@@ -174,7 +187,7 @@ class VisualRegressionEngine:
 
     def delete_baseline(self, name: str) -> bool:
         """Delete a baseline by name."""
-        safe_name = name.replace(" ", "_").replace("/", "_")
+        safe_name = _sanitize_baseline_name(name)
         png_path = self.baselines_dir / f"{safe_name}.png"
         meta_path = self.baselines_dir / f"{safe_name}.json"
         diff_path = self.diffs_dir / f"{safe_name}_diff.png"
@@ -189,6 +202,6 @@ class VisualRegressionEngine:
 
     def get_diff_image(self, name: str) -> Path | None:
         """Get the diff image path for a given baseline name."""
-        safe_name = name.replace(" ", "_").replace("/", "_")
+        safe_name = _sanitize_baseline_name(name)
         diff_path = self.diffs_dir / f"{safe_name}_diff.png"
         return diff_path if diff_path.exists() else None

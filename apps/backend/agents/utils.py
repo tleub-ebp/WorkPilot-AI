@@ -119,29 +119,37 @@ def sync_spec_to_source(spec_dir: Path, source_spec_dir: Path | None) -> bool:
     # Ensure source directory exists
     source_spec_dir.mkdir(parents=True, exist_ok=True)
 
+    # Sync all files and directories from worktree spec to source spec.
+    # Per-item try/except so a single permission error doesn't abort the
+    # entire sync (which previously left the source spec dir in a
+    # silently-partial state — synced_any could still be True from earlier
+    # successful copies, masking the failure).
     try:
-        # Sync all files and directories from worktree spec to source spec
-        for item in spec_dir.iterdir():
-            # Skip symlinks to prevent path traversal attacks
-            if item.is_symlink():
-                logger.warning(f"Skipping symlink during sync: {item.name}")
-                continue
+        items = list(spec_dir.iterdir())
+    except OSError as exc:
+        logger.warning(f"Cannot list spec directory {spec_dir}: {exc}")
+        return False
 
-            source_item = source_spec_dir / item.name
+    for item in items:
+        # Skip symlinks to prevent path traversal attacks
+        if item.is_symlink():
+            logger.warning(f"Skipping symlink during sync: {item.name}")
+            continue
 
+        source_item = source_spec_dir / item.name
+
+        try:
             if item.is_file():
-                # Copy file (preserves timestamps)
                 shutil.copy2(item, source_item)
                 logger.debug(f"Synced {item.name} to source")
                 synced_any = True
-
             elif item.is_dir():
-                # Recursively sync directory
                 _sync_directory(item, source_item)
                 synced_any = True
-
-    except Exception as e:
-        logger.warning(f"Failed to sync spec directory to source: {e}")
+        except (OSError, shutil.Error) as exc:
+            logger.warning(
+                f"Failed to sync {item.name} to source: {exc}"
+            )
 
     return synced_any
 

@@ -142,6 +142,18 @@ def get_detector(spec_dir: Path) -> LoopDetector:
         return det
 
 
+def release_detector(spec_dir: Path) -> bool:
+    """Drop the LoopDetector for a finished spec.
+
+    The Electron backend is long-running and the previous code never
+    evicted detectors — every spec ever opened in a session held its
+    detector + history forever (small but unbounded leak).
+    """
+    spec_id = Path(spec_dir).name
+    with _REGISTRY_LOCK:
+        return _REGISTRY.pop(spec_id, None) is not None
+
+
 def reset_registry_for_tests() -> None:
     """Test-only: drop the in-memory detectors so tests stay independent."""
     with _REGISTRY_LOCK:
