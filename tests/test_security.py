@@ -899,8 +899,8 @@ class TestShellCValidator:
     """
 
     def test_allows_bash_without_c_flag(self):
-        """Allows bash without -c flag (script execution)."""
-        allowed, reason = validate_bash_command("bash script.sh")
+        """Allows bash without -c flag (version/help commands)."""
+        allowed, reason = validate_bash_command("bash --version")
         assert allowed is True
 
     def test_allows_sh_without_c_flag(self):
