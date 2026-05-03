@@ -7,24 +7,21 @@ Uses Pillow for pixel-by-pixel diff with configurable threshold.
 """
 
 import json
-import re
 import shutil
 from datetime import datetime
 from pathlib import Path
 
+from ._naming import sanitize_name
 from .models import BaselineInfo, ComparisonResult
 
 
 def _sanitize_baseline_name(name: str, *, max_len: int = 128) -> str:
-    """Restrict baseline names to a safe alnum + `._-` charset.
+    """Backwards-compatible wrapper around the shared sanitizer.
 
-    Without this, `name="../../etc/evil"` lets `set_baseline`/`compare`/
-    `delete_baseline` write or unlink arbitrary host files.
+    Kept as a thin alias so existing callers (and tests) keep working
+    while the canonical implementation lives in `_naming.sanitize_name`.
     """
-    if not name:
-        return "baseline"
-    cleaned = re.sub(r"[^A-Za-z0-9._-]", "_", name).strip("._")
-    return (cleaned or "baseline")[:max_len]
+    return sanitize_name(name, fallback="baseline", max_len=max_len)
 
 
 class VisualRegressionEngine:

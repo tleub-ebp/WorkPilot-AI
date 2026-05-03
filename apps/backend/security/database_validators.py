@@ -82,13 +82,16 @@ def _is_safe_database_name(db_name: str) -> bool:
     """
     db_lower = db_name.lower()
     for pattern in SAFE_DATABASE_PATTERNS:
-        # Anchor each pattern as a full-string match to avoid substring leaks.
-        # Patterns like `^test` already have a start anchor; we add `.*` after
-        # to require a full match while still allowing the original prefix /
-        # suffix semantics.
-        if re.fullmatch(
-            pattern + r".*" if pattern.startswith("^") else r".*" + pattern, db_lower
-        ):
+        # Promote each substring pattern to a full-string regex by padding
+        # the unanchored side with `.*`. `^test` becomes `^test.*` (any DB
+        # starting with `test`); `_test$` becomes `.*_test$` (any DB
+        # ending with `_test`). re.fullmatch then refuses substring leaks
+        # like `mockingbird_prod` matching `^mock`.
+        if pattern.startswith("^"):
+            full_pattern = pattern + r".*"
+        else:
+            full_pattern = r".*" + pattern
+        if re.fullmatch(full_pattern, db_lower):
             return True
     return False
 

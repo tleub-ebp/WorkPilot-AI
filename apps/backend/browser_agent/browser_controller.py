@@ -7,12 +7,12 @@ Provides async API for browser automation: navigation, screenshots, interaction.
 """
 
 import logging
-import re
 from collections import deque
 from datetime import datetime
 from pathlib import Path
 from typing import Any
 
+from ._naming import safe_artifact_path
 from .models import ScreenshotInfo
 
 logger = logging.getLogger(__name__)
@@ -21,31 +21,6 @@ logger = logging.getLogger(__name__)
 # scripts, dev warnings) used to grow `_console_errors` unboundedly during
 # long sessions, eating RAM and making `get_console_errors()` slow.
 _MAX_CONSOLE_ERRORS = 1000
-
-
-def _sanitize_artifact_name(name: str, *, max_len: int = 128) -> str:
-    """Reduce a user-supplied artifact name to a safe single filename token.
-
-    The previous `name.replace(" ", "_").replace("/", "_")` did NOT strip
-    `..`, backslashes, drive letters, or null bytes, so an agent passing
-    `name="../../etc/evil"` could write outside the screenshots/baselines
-    directory. Restrict to a conservative alnum + `._-` allowlist.
-    """
-    if not name:
-        return "screenshot"
-    cleaned = re.sub(r"[^A-Za-z0-9._-]", "_", name).strip("._")
-    return (cleaned or "screenshot")[:max_len]
-
-
-def _safe_artifact_path(root: Path, name: str, suffix: str) -> Path:
-    """Build `root/<sanitized name><suffix>` and assert it stays under root."""
-    safe = _sanitize_artifact_name(name)
-    candidate = (root / f"{safe}{suffix}").resolve()
-    root_resolved = root.resolve()
-    if root_resolved != candidate and root_resolved not in candidate.parents:
-        # Should be unreachable after sanitization; defense in depth.
-        raise ValueError(f"Artifact path escapes {root}: {name!r}")
-    return candidate
 
 
 class BrowserController:
@@ -129,7 +104,12 @@ class BrowserController:
 
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         # Sanitize aggressively: `name` may originate from an LLM tool call.
-        filepath = _safe_artifact_path(self.screenshots_dir, name, f"_{timestamp}.png")
+        filepath = safe_artifact_path(
+            self.screenshots_dir,
+            name,
+            f"_{timestamp}.png",
+            fallback="screenshot",
+        )
 
         await self._page.screenshot(path=str(filepath), full_page=full_page)
 
