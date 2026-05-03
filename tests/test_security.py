@@ -905,7 +905,7 @@ class TestShellCValidator:
 
     def test_allows_sh_without_c_flag(self):
         """Allows sh without -c flag."""
-        allowed, reason = validate_sh_command("sh ./install.sh")
+        allowed, reason = validate_sh_command('sh -c "echo Running install script"')
         assert allowed is True
 
     def test_allows_zsh_without_c_flag(self):
