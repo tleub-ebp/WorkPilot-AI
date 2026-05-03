@@ -62,9 +62,7 @@ def _validate_ref(ref: str) -> str:
     # No ref component (slash-separated) may start with a `.`.
     for component in ref.split("/"):
         if component.startswith(".") or component.endswith(".lock"):
-            raise ValueError(
-                f"Invalid git ref component {component!r} in ref {ref!r}"
-            )
+            raise ValueError(f"Invalid git ref component {component!r} in ref {ref!r}")
 
     return ref
 
