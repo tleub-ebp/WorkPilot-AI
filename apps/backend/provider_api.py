@@ -673,37 +673,79 @@ def _validate_url_ssrf(provider: str, url: str) -> str:
             safe_url += f":{parsed.port}"
         return safe_url.rstrip("/")
 
-    # For any other hostname, perform IP address validation
+    # For any other hostname, perform IP address validation.
+    #
+    # SECURITY: this code path is currently unreachable from production
+    # (every caller passes a provider that is in AUTHORIZED_URLS). It
+    # exists for future custom-provider support and via the public
+    # wrapper. We resolve ALL addresses (not just the first IPv4) to
+    # close the multi-record DNS rebinding loophole, and we pin the
+    # validated IP into the returned URL so the HTTP client cannot
+    # re-resolve to a different address between validation and use.
     try:
-        # Resolve hostname to IP address
-        ip = socket.gethostbyname(hostname)
-
-        # Try to parse as IPv4 first, then IPv6
-        try:
-            ip_obj = ipaddress.IPv4Address(ip)
-        except ipaddress.AddressValueError:
-            # For IPv6, we'd need the getaddrinfo instead of gethostbyname
-            # For now, we'll be conservative and block unknown hostnames
-            raise ValueError(
-                f"Unable to validate IPv6 address for hostname: {hostname}"
-            )
-
-        # Check if IP is in private ranges
-        for private_range in PRIVATE_IP_RANGES:
-            if ip_obj in private_range:
-                raise ValueError(f"IP address {ip} is in private range and not allowed")
-
+        # getaddrinfo returns every A/AAAA record so an attacker cannot
+        # hide a private IP behind a multi-record response (the previous
+        # gethostbyname call only saw one).
+        infos = socket.getaddrinfo(
+            hostname, None, family=socket.AF_UNSPEC, type=socket.SOCK_STREAM
+        )
     except socket.gaierror:
         raise ValueError(f"Unable to resolve hostname: {hostname}")
-    except ValueError:
-        # Re-raise our custom ValueError
-        raise
-    except Exception as e:
-        raise ValueError(f"IP validation failed: {e}")
 
-    # If all checks pass, return normalized URL
-    safe_url = f"{parsed.scheme}://{parsed.netloc}"
-    return safe_url.rstrip("/")
+    if not infos:
+        raise ValueError(f"No addresses resolved for hostname: {hostname}")
+
+    resolved_ips: list[str] = []
+    for info in infos:
+        family, _, _, _, sockaddr = info
+        ip_str = sockaddr[0]
+        try:
+            if family == socket.AF_INET6:
+                ip_obj: ipaddress.IPv4Address | ipaddress.IPv6Address = (
+                    ipaddress.IPv6Address(ip_str.split("%", 1)[0])
+                )
+            else:
+                ip_obj = ipaddress.IPv4Address(ip_str)
+        except ipaddress.AddressValueError as exc:
+            raise ValueError(f"Invalid resolved address {ip_str!r}: {exc}")
+
+        # Reject ANY private/loopback/link-local/multicast/reserved address
+        # — covers the explicit PRIVATE_IP_RANGES list AND the broader
+        # ipaddress library checks (e.g., 0.0.0.0/8, IPv6 fc00::/7 already
+        # listed, multicast, reserved blocks).
+        if (
+            ip_obj.is_private
+            or ip_obj.is_loopback
+            or ip_obj.is_link_local
+            or ip_obj.is_multicast
+            or ip_obj.is_reserved
+            or ip_obj.is_unspecified
+        ):
+            raise ValueError(
+                f"Resolved IP {ip_str} is in a non-routable / private "
+                f"range and is not allowed"
+            )
+        for private_range in PRIVATE_IP_RANGES:
+            if ip_obj in private_range:
+                raise ValueError(
+                    f"Resolved IP {ip_str} is in private range and not allowed"
+                )
+        resolved_ips.append(ip_str)
+
+    # Defense against DNS rebinding: return the URL with the literal IP
+    # we just validated, NOT the hostname. The HTTP client therefore
+    # cannot re-resolve the hostname to a different address between
+    # validation and connection. Bracket IPv6 literals.
+    pinned = resolved_ips[0]
+    if ":" in pinned:
+        host_part = f"[{pinned}]"
+    else:
+        host_part = pinned
+    if parsed.port:
+        netloc = f"{host_part}:{parsed.port}"
+    else:
+        netloc = host_part
+    return f"{parsed.scheme}://{netloc}".rstrip("/")
 
 
 def _validate_openai_base_url(base_url: str | None) -> str:
@@ -2105,8 +2147,6 @@ def run_post_build_test_generation(
 ):
     """Run automatic test generation after a build (post-build hook)."""
     try:
-        import os
-
         from agents.test_generator import TestGeneratorAgent
 
         agent = TestGeneratorAgent()

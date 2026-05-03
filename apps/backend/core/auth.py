@@ -1099,7 +1099,6 @@ def trigger_login() -> bool:
 
 def _trigger_login_macos() -> bool:
     """Trigger login on macOS using expect."""
-    import shutil
     import tempfile
 
     # Check if expect is available

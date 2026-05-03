@@ -27,8 +27,45 @@ _REF_PATTERN = re.compile(r"^[A-Za-z0-9_./@^~+-]+$")
 
 
 def _validate_ref(ref: str) -> str:
+    """Validate a git ref against `git check-ref-format` rules.
+
+    Beyond rejecting argument-injection attempts (`-`-prefixed refs), we
+    pre-check the additional invariants from git-check-ref-format(1) so
+    callers get a clear error before git itself fails:
+    - no `..` (parent-traversal)
+    - no `.lock` suffix (git uses these as locking sentinels)
+    - no `@{` sequence (refs reserved for reflog)
+    - not just `@`
+    - no consecutive slashes
+    - no leading/trailing slash
+    - no leading/trailing dot
+    - no path component starting with `.`
+    """
     if not ref or ref.startswith("-") or not _REF_PATTERN.match(ref):
         raise ValueError(f"Invalid git ref: {ref!r}")
+
+    # Per git-check-ref-format(1): these patterns make a ref invalid even
+    # if every char is in our allowed charset.
+    if (
+        ref == "@"
+        or ".." in ref
+        or "//" in ref
+        or "@{" in ref
+        or ref.endswith(".lock")
+        or ref.endswith("/")
+        or ref.startswith("/")
+        or ref.endswith(".")
+        or ref.startswith(".")
+    ):
+        raise ValueError(f"Invalid git ref (violates check-ref-format): {ref!r}")
+
+    # No ref component (slash-separated) may start with a `.`.
+    for component in ref.split("/"):
+        if component.startswith(".") or component.endswith(".lock"):
+            raise ValueError(
+                f"Invalid git ref component {component!r} in ref {ref!r}"
+            )
+
     return ref
 
 

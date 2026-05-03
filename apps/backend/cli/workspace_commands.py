@@ -736,8 +736,6 @@ def _check_git_merge_conflicts(
         - base_branch: str
         - spec_branch: str
     """
-    import subprocess
-
     debug(MODULE, "Checking for git-level merge conflicts (non-destructive)...")
 
     spec_branch = f"workpilot/{spec_name}"

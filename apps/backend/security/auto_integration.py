@@ -81,6 +81,11 @@ def get_default_security_config() -> dict[str, Any]:
     Returns:
         Default security configuration
     """
+    # Trigger lazy detection so SECURITY_TOOLS_AVAILABLE reflects the
+    # actual install state. Without this, the dict stays at all-False
+    # forever (the eager detection at import time was removed for safety
+    # — see `_check_tool_availability` docstring).
+    _check_tool_availability()
     return {
         "enabled": True,  # ALWAYS True - cannot be disabled
         "scan_on_commit": True,  # Automatic pre-commit secret scanning
@@ -115,6 +120,8 @@ def check_security_setup() -> dict[str, Any]:
     Returns:
         Dictionary with setup status and recommendations
     """
+    # Trigger lazy detection — see `get_default_security_config` for why.
+    _check_tool_availability()
     setup = {
         "core_features": "✅ Active (built-in)",
         "credential_leak_scanner_status": "✅ Active (built-in)",
@@ -280,7 +287,7 @@ def run_quick_security_check() -> bool:
 # It ensures security features are always available
 
 
-def _initialize_security():
+def initialize_security() -> None:
     """Initialize security features.
 
     Must be called explicitly by application entry points — NOT at import
@@ -288,6 +295,10 @@ def _initialize_security():
     `.security-reports/` directory in whatever cwd happened to be set,
     polluting random user directories whenever the package was loaded as a
     subprocess or from a CLI plugin context.
+
+    Renamed from `_initialize_security` so external callers (e.g., the
+    backend startup hook) can wire it up — the leading underscore caused
+    every caller to skip it and the security init never ran in practice.
     """
     # Ensure reports directory exists
     ensure_security_reports_dir()
@@ -301,6 +312,10 @@ def _initialize_security():
         auto_install_git_hooks()
 
 
+# Backwards-compat alias for any caller that still references the old name.
+_initialize_security = initialize_security
+
+
 # =============================================================================
 # Public API
 # =============================================================================
@@ -309,6 +324,7 @@ __all__ = [
     "is_security_enabled",
     "get_default_security_config",
     "check_security_setup",
+    "initialize_security",
     "print_security_status",
     "auto_install_git_hooks",
     "run_quick_security_check",

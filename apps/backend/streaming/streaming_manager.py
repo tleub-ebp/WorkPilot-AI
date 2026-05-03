@@ -320,8 +320,6 @@ class StreamingManager:
         browser tab) — every subsequent event was held back indefinitely
         for ALL viewers.
         """
-        import asyncio
-
         session_id = event.session_id
 
         # Update event count

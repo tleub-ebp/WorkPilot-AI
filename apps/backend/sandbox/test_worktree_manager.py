@@ -92,3 +92,48 @@ class TestValidateRef:
     def test_null_byte_rejected(self) -> None:
         with pytest.raises(ValueError):
             _validate_ref("main\0evil")
+
+    # ── git-check-ref-format(1) extra invariants ────────────────────────
+
+    def test_double_dot_anywhere_rejected(self) -> None:
+        # Pre-fix: charset allowed `.` so `..` slipped through.
+        with pytest.raises(ValueError):
+            _validate_ref("..")
+        with pytest.raises(ValueError):
+            _validate_ref("foo..bar")
+
+    def test_consecutive_slashes_rejected(self) -> None:
+        with pytest.raises(ValueError):
+            _validate_ref("foo//bar")
+
+    def test_at_brace_sequence_rejected(self) -> None:
+        # `@{` is reserved for reflog syntax — git refuses it in ref names.
+        with pytest.raises(ValueError):
+            _validate_ref("foo@{bar}")
+
+    def test_bare_at_rejected(self) -> None:
+        with pytest.raises(ValueError):
+            _validate_ref("@")
+
+    def test_lock_suffix_rejected(self) -> None:
+        with pytest.raises(ValueError):
+            _validate_ref("feature.lock")
+        with pytest.raises(ValueError):
+            _validate_ref("feature/branch.lock")
+
+    def test_leading_or_trailing_slash_rejected(self) -> None:
+        with pytest.raises(ValueError):
+            _validate_ref("/foo")
+        with pytest.raises(ValueError):
+            _validate_ref("foo/")
+
+    def test_leading_or_trailing_dot_rejected(self) -> None:
+        with pytest.raises(ValueError):
+            _validate_ref(".foo")
+        with pytest.raises(ValueError):
+            _validate_ref("foo.")
+
+    def test_component_starting_with_dot_rejected(self) -> None:
+        # `feature/.hidden` — component starts with `.`.
+        with pytest.raises(ValueError):
+            _validate_ref("feature/.hidden")
