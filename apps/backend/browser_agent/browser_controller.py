@@ -129,9 +129,7 @@ class BrowserController:
 
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         # Sanitize aggressively: `name` may originate from an LLM tool call.
-        filepath = _safe_artifact_path(
-            self.screenshots_dir, name, f"_{timestamp}.png"
-        )
+        filepath = _safe_artifact_path(self.screenshots_dir, name, f"_{timestamp}.png")
 
         await self._page.screenshot(path=str(filepath), full_page=full_page)
 

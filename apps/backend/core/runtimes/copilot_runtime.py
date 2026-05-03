@@ -63,9 +63,7 @@ class CopilotRuntime(AgentRuntime):
             cwd=self.project_dir,
         )
         try:
-            stdout, stderr = await asyncio.wait_for(
-                proc.communicate(), timeout=60
-            )
+            stdout, stderr = await asyncio.wait_for(proc.communicate(), timeout=60)
         except asyncio.TimeoutError:
             # Without this, asyncio.wait_for cancels the future but the gh
             # subprocess keeps running, holding stdout/stderr file

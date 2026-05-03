@@ -481,9 +481,7 @@ class StreamingWebSocketServer:
             # raise AttributeError on a JSON string/array/number, producing
             # error-level log spam (and no rate limit).
             if not isinstance(data, dict):
-                logger.debug(
-                    "Ignoring non-object WS message: %r", type(data).__name__
-                )
+                logger.debug("Ignoring non-object WS message: %r", type(data).__name__)
                 return
             msg_type = data.get("type")
             session_id = ctx["session_id"]

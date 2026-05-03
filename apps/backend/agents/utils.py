@@ -147,9 +147,7 @@ def sync_spec_to_source(spec_dir: Path, source_spec_dir: Path | None) -> bool:
                 _sync_directory(item, source_item)
                 synced_any = True
         except (OSError, shutil.Error) as exc:
-            logger.warning(
-                f"Failed to sync {item.name} to source: {exc}"
-            )
+            logger.warning(f"Failed to sync {item.name} to source: {exc}")
 
     return synced_any
 

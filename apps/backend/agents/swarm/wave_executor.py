@@ -344,9 +344,7 @@ class WaveExecutor:
             await stderr_task
             duration = time.time() - start
 
-            stderr_output = b"".join(stderr_chunks).decode(
-                "utf-8", errors="replace"
-            )
+            stderr_output = b"".join(stderr_chunks).decode("utf-8", errors="replace")
 
             success = process.returncode == 0
             error = None

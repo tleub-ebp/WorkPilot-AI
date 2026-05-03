@@ -105,9 +105,7 @@ class TestExecutor:
         # to project_dir; callers may pass absolute paths. Normalize both
         # sides via resolve() to avoid the silent "0 results" surprise.
         if test_files:
-            requested = {
-                str((self.project_dir / t).resolve()) for t in test_files
-            }
+            requested = {str((self.project_dir / t).resolve()) for t in test_files}
 
             def _matches(t: TestInfo) -> bool:
                 return (
