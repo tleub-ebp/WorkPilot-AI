@@ -12,6 +12,7 @@ import json
 import logging
 import os
 import re
+import threading
 import time
 import uuid
 from collections.abc import Callable
@@ -310,6 +311,10 @@ class HookService:
     """Core service for managing event-driven hooks."""
 
     _instance: HookService | None = None
+    # Lock prevents two threads from racing into _load() during bootstrap
+    # (which reads + parses the hooks JSON file twice and creates two
+    # HookService instances, each holding its own copy of the hooks dict).
+    _instance_lock: threading.Lock = threading.Lock()
 
     def __init__(self):
         self._hooks: dict[str, Hook] = {}
@@ -320,8 +325,11 @@ class HookService:
 
     @classmethod
     def get_instance(cls) -> HookService:
+        # Double-checked locking — fast path is lock-free.
         if cls._instance is None:
-            cls._instance = cls()
+            with cls._instance_lock:
+                if cls._instance is None:
+                    cls._instance = cls()
         return cls._instance
 
     # ── Persistence ───────────────────────────────────────────────────────

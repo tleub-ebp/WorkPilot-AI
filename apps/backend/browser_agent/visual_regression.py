@@ -93,8 +93,14 @@ class VisualRegressionEngine:
         except ImportError:
             raise RuntimeError("Pillow is not installed. Run: pip install Pillow")
 
-        baseline_img = Image.open(baseline_path).convert("RGBA")
-        current_img = Image.open(current_path).convert("RGBA")
+        # PIL is lazy: `Image.open(...).convert(...)` returns a new image in
+        # memory but the underlying file handle of the source stays open
+        # until garbage-collected. On Windows that prevents the source
+        # file from being deleted or replaced. Use `with` to force close.
+        with Image.open(baseline_path) as src:
+            baseline_img = src.convert("RGBA")
+        with Image.open(current_path) as src:
+            current_img = src.convert("RGBA")
 
         # Resize current to match baseline if dimensions differ
         if current_img.size != baseline_img.size:

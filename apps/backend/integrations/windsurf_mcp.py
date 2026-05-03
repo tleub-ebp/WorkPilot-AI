@@ -84,15 +84,25 @@ class WindsurMCPIntegration:
 
 
 # Instance globale de l'intégration MCP
-_windsurf_mcp_instance = None
+_windsurf_mcp_instance: WindsurMCPIntegration | None = None
+# asyncio.Lock guards the bootstrap race: two concurrent awaiters could
+# both observe `_windsurf_mcp_instance is None`, both create an
+# instance, and both call `initialize()` (opening duplicate gRPC
+# connections, leaking auth state).
+_windsurf_mcp_lock = asyncio.Lock()
 
 
 async def get_windsurf_mcp() -> WindsurMCPIntegration:
     """Récupère l'instance MCP Windsurf (singleton)"""
     global _windsurf_mcp_instance
     if _windsurf_mcp_instance is None:
-        _windsurf_mcp_instance = WindsurMCPIntegration()
-        await _windsurf_mcp_instance.initialize()
+        async with _windsurf_mcp_lock:
+            if _windsurf_mcp_instance is None:
+                instance = WindsurMCPIntegration()
+                await instance.initialize()
+                # Publish only after init completes so other awaiters
+                # never see a half-initialized object.
+                _windsurf_mcp_instance = instance
     return _windsurf_mcp_instance
 
 
