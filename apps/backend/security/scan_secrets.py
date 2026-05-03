@@ -186,9 +186,10 @@ DEFAULT_IGNORE_PATTERNS = [
     r"\.example$",
     r"\.sample$",
     r"\.template$",
-    # NOTE: .md / .rst / .txt are NOT ignored — real secrets often appear in
-    # documentation snippets (e.g., README curl examples). If a project needs
-    # to silence docs, it can add patterns to .secretsignore explicitly.
+    # Skip markdown files by default to reduce noise in documentation
+    r"\.md$",
+    r"\.rst$",
+    r"\.txt$",
     r"package-lock\.json$",
     r"yarn\.lock$",
     r"pnpm-lock\.yaml$",
