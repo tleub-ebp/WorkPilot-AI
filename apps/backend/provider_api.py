@@ -303,9 +303,7 @@ def get_env_provider_config(name: str) -> dict | None:
         except Exception:
             return None
         if parsed.scheme not in ("http", "https"):
-            logger.debug(
-                "Refusing Ollama probe to non-http(s) URL: %s", base_url
-            )
+            logger.debug("Refusing Ollama probe to non-http(s) URL: %s", base_url)
             return None
         # Vérifier si Ollama est accessible
         try:
