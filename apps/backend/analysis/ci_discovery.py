@@ -25,10 +25,13 @@ Usage:
 from __future__ import annotations
 
 import json
+import logging
 import re
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
+
+logger = logging.getLogger(__name__)
 
 # Try to import yaml, fall back gracefully
 try:
@@ -300,7 +303,11 @@ class CIDiscovery:
                 result.environment_variables.extend(variables.keys())
 
         except Exception:
-            pass
+            logger.debug(
+                "Failed to parse GitLab CI config %s — returning partial result",
+                config_file,
+                exc_info=True,
+            )
 
         return result
 
@@ -358,7 +365,11 @@ class CIDiscovery:
                 )
 
         except Exception:
-            pass
+            logger.debug(
+                "Failed to parse CircleCI config %s — returning partial result",
+                config_file,
+                exc_info=True,
+            )
 
         return result
 
@@ -403,7 +414,11 @@ class CIDiscovery:
                 )
 
         except Exception:
-            pass
+            logger.debug(
+                "Failed to parse Jenkinsfile %s — returning partial result",
+                config_file,
+                exc_info=True,
+            )
 
         return result
 

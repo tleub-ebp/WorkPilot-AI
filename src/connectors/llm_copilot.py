@@ -5,13 +5,49 @@ Fournit l'accès aux métriques d'utilisation de GitHub Copilot via l'API REST G
 Nécessite une authentification via GitHub CLI (gh) ou token GitHub avec les permissions appropriées.
 """
 
+import ipaddress
 import json
 import logging
+import socket
 import subprocess
 from datetime import datetime, timezone
 from typing import Any
+from urllib.parse import urlparse
 
 logger = logging.getLogger(__name__)
+
+
+def _is_safe_report_url(url: str) -> bool:
+    """Validate a Copilot signed-report URL against SSRF.
+
+    Reject any URL whose scheme isn't https, or whose host resolves to a
+    private/loopback/link-local address (cloud metadata, RFC1918, etc.).
+    """
+    try:
+        parsed = urlparse(url)
+    except Exception:
+        return False
+    if parsed.scheme != "https":
+        return False
+    host = parsed.hostname
+    if not host:
+        return False
+    try:
+        # getaddrinfo returns a list of (family, type, proto, canon, sockaddr).
+        for info in socket.getaddrinfo(host, None):
+            ip = ipaddress.ip_address(info[4][0])
+            if (
+                ip.is_private
+                or ip.is_loopback
+                or ip.is_link_local
+                or ip.is_multicast
+                or ip.is_reserved
+                or ip.is_unspecified
+            ):
+                return False
+    except (socket.gaierror, ValueError):
+        return False
+    return True
 
 # GitHub CLI permission scope required for Copilot usage metrics
 ADMIN_ORG_PERMISSION = "admin:org"
@@ -192,18 +228,26 @@ class CopilotUsageConnector:
         Raises:
             RuntimeError: Si le téléchargement échoue
         """
+        if not _is_safe_report_url(report_url):
+            # Refuse anything that isn't an https URL pointing at a public
+            # IP. Guards against signed-URL spoofing pointing at cloud
+            # metadata (169.254.169.254), localhost, RFC1918, file://, etc.
+            raise RuntimeError("Refused unsafe report URL (SSRF guard)")
+
         try:
             import requests
-            response = requests.get(report_url, timeout=30)
+            # allow_redirects=False so a 30x to an internal host can't bypass
+            # the validation we just did above.
+            response = requests.get(report_url, timeout=30, allow_redirects=False)
             response.raise_for_status()
-            
+
             # Le rapport est généralement un fichier JSON
             if report_url.endswith('.json'):
                 return response.json()
             else:
                 # Pour les autres formats, essayer de parser comme JSON
                 return json.loads(response.text)
-                
+
         except Exception as e:
             logger.error(f"Failed to download report from {report_url}: {e}")
             raise RuntimeError(f"Failed to download report: {e}")

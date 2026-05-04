@@ -347,12 +347,23 @@ class StreamingManager:
         )
 
         # Drop subscribers that failed or timed out.
+        # Cancelling ws.send mid-flight can leave the framing in an
+        # indeterminate state — close the underlying websocket so the
+        # client cannot keep receiving partially-framed messages.
         live_set = self._subscribers.get(session_id)
         if live_set is None:
             return
         for ws, ok in results:
             if not ok:
                 live_set.discard(ws)
+                close = getattr(ws, "close", None)
+                if close is not None:
+                    try:
+                        result = close(code=1011)
+                        if asyncio.iscoroutine(result):
+                            asyncio.create_task(result)
+                    except Exception:
+                        pass
 
     def subscribe(self, session_id: str, websocket: Any) -> None:
         """Subscribe a websocket to a session."""

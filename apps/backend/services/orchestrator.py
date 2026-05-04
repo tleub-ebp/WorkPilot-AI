@@ -392,6 +392,9 @@ class ServiceOrchestrator:
             except Exception:
                 try:
                     proc.kill()
+                    # Reap the zombie so its pipes are released; without
+                    # this, fds linger until GC.
+                    proc.wait(timeout=5)
                 except Exception:
                     pass
         self._processes.clear()

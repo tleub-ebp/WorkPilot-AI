@@ -4,6 +4,11 @@ Approval Gate — Human-in-the-loop for sandbox results.
 After a dry-run, the user reviews the predicted diff and either
 approves (apply to real working tree), rejects, or partially approves
 specific files.
+
+Not to be confused with ``core.governance.approval_gate``: that module
+gates *policy-flagged* actions (persistent request queue, deny/approve
+by approver), while this module tracks per-file approval of a sandbox
+diff prediction and physically applies it to the working tree.
 """
 
 from __future__ import annotations

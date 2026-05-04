@@ -83,13 +83,24 @@ def _kill_process_safely(proc: psutil.Process, pid: int, name: str) -> None:
     logger.info(f"Terminating process {pid} ({name})")
     proc.terminate()
 
-    # Wait for graceful termination
-    time.sleep(1)
+    # Wait for graceful termination — use psutil.wait so we actually reap
+    # the child instead of polling and leaving a zombie behind.
+    try:
+        proc.wait(timeout=1)
+        return
+    except psutil.TimeoutExpired:
+        pass
+    except psutil.NoSuchProcess:
+        return
 
     # Force kill if still running
     if proc.is_running():
         logger.warning(f"Force killing process {pid}")
         proc.kill()
+        try:
+            proc.wait(timeout=2)
+        except (psutil.TimeoutExpired, psutil.NoSuchProcess):
+            pass
 
 
 def _is_target_connection(conn, port: int) -> bool:

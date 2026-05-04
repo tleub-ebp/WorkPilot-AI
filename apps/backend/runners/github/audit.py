@@ -239,7 +239,8 @@ class AuditLogger:
     @classmethod
     def reset_instance(cls) -> None:
         """Reset singleton (for testing)."""
-        cls._instance = None
+        with cls._instance_lock:
+            cls._instance = None
 
     def _get_log_file_path(self) -> Path:
         """Get path for current day's log file."""

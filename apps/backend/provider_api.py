@@ -295,12 +295,24 @@ def get_env_provider_config(name: str) -> dict | None:
     # Ollama (local)
     if name == "ollama":
         base_url = os.getenv("OLLAMA_BASE_URL", "http://localhost:11434")
+        # Reject schemes other than http/https before opening the URL —
+        # otherwise urlopen would happily handle file://, ftp://, etc.,
+        # and the env var is operator-supplied, not constant.
+        try:
+            parsed = urlparse(base_url)
+        except Exception:
+            return None
+        if parsed.scheme not in ("http", "https"):
+            logger.debug(
+                "Refusing Ollama probe to non-http(s) URL: %s", base_url
+            )
+            return None
         # Vérifier si Ollama est accessible
         try:
             import urllib.request
 
             req = urllib.request.Request(f"{base_url}/api/tags", method="GET")
-            with urllib.request.urlopen(req, timeout=2):
+            with urllib.request.urlopen(req, timeout=2):  # noqa: S310 — scheme validated above
                 return {"model": "llama3.3", "base_url": base_url}
         except Exception as e:
             logger.debug("Ollama availability check failed at %s: %s", base_url, e)
@@ -934,7 +946,15 @@ async def test_provider_api_key(request: Request, provider: str, payload: dict):
                 stdout=asyncio.subprocess.PIPE,
                 stderr=asyncio.subprocess.PIPE,
             )
-            stdout, stderr = await asyncio.wait_for(proc.communicate(), timeout=5)
+            try:
+                stdout, stderr = await asyncio.wait_for(proc.communicate(), timeout=5)
+            except asyncio.TimeoutError:
+                proc.kill()
+                try:
+                    await proc.wait()
+                except Exception:
+                    pass
+                return {"success": False, "error": "GitHub CLI check timed out"}
             stdout_text = stdout.decode() if stdout else ""
             stderr_text = stderr.decode() if stderr else ""
             if GITHUB_CLI_AUTH_SUCCESS in (stdout_text + stderr_text):
@@ -943,8 +963,6 @@ async def test_provider_api_key(request: Request, provider: str, payload: dict):
                 "success": False,
                 "error": "GitHub CLI not authenticated. Run: gh auth login",
             }
-        except asyncio.TimeoutError:
-            return {"success": False, "error": "GitHub CLI check timed out"}
         except Exception as e:
             return {"success": False, "error": _safe_error_message(e)}
 

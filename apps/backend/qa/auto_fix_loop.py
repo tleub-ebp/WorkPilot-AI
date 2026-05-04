@@ -435,6 +435,10 @@ class AutoFixLoop:
             except asyncio.TimeoutError:
                 debug_error("auto_fix_loop", "Tests timed out")
                 proc.kill()
+                try:
+                    await proc.wait()
+                except Exception:
+                    pass
                 return AutoFixTestResult(
                     executed=True,
                     passed=False,

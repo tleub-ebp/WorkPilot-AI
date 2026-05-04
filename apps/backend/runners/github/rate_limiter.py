@@ -364,8 +364,9 @@ class RateLimiter:
     @classmethod
     def reset_instance(cls) -> None:
         """Reset singleton (for testing)."""
-        cls._instance = None
-        cls._initialized = False
+        with cls._instance_lock:
+            cls._instance = None
+            cls._initialized = False
 
     async def acquire_github(self, timeout: float | None = None) -> bool:
         """
