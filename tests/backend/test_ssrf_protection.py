@@ -95,16 +95,16 @@ class TestSSRFProtection:
             [(socket.AF_INET, socket.SOCK_STREAM, 0, '', ('127.0.0.1', 0))],
         ]
         
-        with pytest.raises(ValueError, match="Resolved IP .* is in private range"):
+        with pytest.raises(ValueError, match="Resolved IP .* is in a non-routable / private range"):
             validate_url_ssrf("unknown", "https://internal.example.com")
 
-        with pytest.raises(ValueError, match="Resolved IP .* is in private range"):
+        with pytest.raises(ValueError, match="Resolved IP .* is in a non-routable / private range"):
             validate_url_ssrf("unknown", "https://corporate.example.com")
 
-        with pytest.raises(ValueError, match="Resolved IP .* is in private range"):
+        with pytest.raises(ValueError, match="Resolved IP .* is in a non-routable / private range"):
             validate_url_ssrf("unknown", "https://local.example.com")
 
-        with pytest.raises(ValueError, match="Resolved IP .* is in private range"):
+        with pytest.raises(ValueError, match="Resolved IP .* is in a non-routable / private range"):
             validate_url_ssrf("unknown", "https://loopback.example.com")
 
     @patch('socket.getaddrinfo')
@@ -165,12 +165,14 @@ class TestSSRFProtection:
 
     def test_provider_not_in_authorized_list(self):
         """Test behavior for providers not in authorized list."""
-        with patch('socket.gethostbyname') as mock_gethostbyname:
-            mock_gethostbyname.return_value = "8.8.8.8"
-            
+        with patch('socket.getaddrinfo') as mock_getaddrinfo:
+            mock_getaddrinfo.return_value = [
+                (socket.AF_INET, socket.SOCK_STREAM, 0, '', ('8.8.8.8', 0))
+            ]
+
             # Should work for unknown providers with public IPs
             result = validate_url_ssrf("unknown_provider", "https://public.example.com")
-            assert result == "https://public.example.com"
+            assert result == "https://8.8.8.8"
 
     def test_ipv6_private_ranges(self):
         """Test that IPv6 private ranges are included."""
