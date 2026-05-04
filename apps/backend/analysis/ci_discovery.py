@@ -416,7 +416,7 @@ class CIDiscovery:
         except Exception:
             logger.debug(
                 "Failed to parse Jenkinsfile %s — returning partial result",
-                config_file,
+                jenkinsfile,
                 exc_info=True,
             )
 
