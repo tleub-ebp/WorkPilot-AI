@@ -21,7 +21,7 @@ class ClaudeProvider(BaseLLMProvider):
         try:
             self.connect()
             # There is no public 'list models' endpoint, so just check API key format
-            return self.api_key.startswith("sk-")
+            return self.api_key.startswith("sk-ant-")
         except Exception:
             return False
 

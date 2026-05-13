@@ -22,8 +22,10 @@ class OpenAIProvider(BaseLLMProvider):
     def validate(self) -> bool:
         try:
             self.connect()
-            models = self._client.Model.list()
-            return any(m.id == self.model for m in models.data)
+            client = self._client.OpenAI(api_key=self.api_key, base_url=self.base_url)
+            response = client.models.list()
+            models = list(response)
+            return any(m.id == self.model for m in models)
         except Exception:
             return False
 

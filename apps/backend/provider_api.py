@@ -21,6 +21,7 @@ import ipaddress
 import json
 import os
 import socket
+import threading
 from typing import Annotated, Any
 from urllib.parse import urlparse
 
@@ -225,6 +226,33 @@ app.add_middleware(
 
 # Global variable to store selected provider (ContextVar doesn't work across HTTP requests)
 _selected_provider: str | None = None
+_provider_lock = threading.Lock()
+
+
+def _get_anthropic_token() -> str | None:
+    """Get the first available Anthropic auth token from env or system keyring."""
+    token = (
+        os.getenv("ANTHROPIC_API_KEY")
+        or os.getenv("CLAUDE_CODE_OAUTH_TOKEN")
+        or os.getenv("CLAUDE_API_KEY")
+    )
+    if not token:
+        from src.connectors.llm_config import get_claude_token_from_system
+        token = get_claude_token_from_system()
+    return token
+
+
+def _check_copilot_gh_auth() -> bool:
+    """Return True if 'gh auth status' reports success."""
+    import subprocess
+    try:
+        result = subprocess.run(
+            ["gh", "auth", "status"], capture_output=True, text=True, timeout=5
+        )
+        return GITHUB_CLI_AUTH_SUCCESS in (result.stdout + result.stderr)
+    except Exception:
+        logger.debug("Failed to check GitHub Copilot auth — skipping", exc_info=True)
+        return False
 
 
 def get_env_provider_config(name: str) -> dict | None:
@@ -301,6 +329,7 @@ def get_env_provider_config(name: str) -> dict | None:
         try:
             parsed = urlparse(base_url)
         except Exception:
+            logger.debug("Failed to parse Ollama base URL — skipping", exc_info=True)
             return None
         if parsed.scheme not in ("http", "https"):
             logger.debug("Refusing Ollama probe to non-http(s) URL: %s", base_url)
@@ -318,16 +347,8 @@ def get_env_provider_config(name: str) -> dict | None:
 
     # GitHub Copilot (gh CLI)
     if name == "copilot":
-        try:
-            import subprocess
-
-            result = subprocess.run(
-                ["gh", "auth", "status"], capture_output=True, text=True, timeout=5
-            )
-            if GITHUB_CLI_AUTH_SUCCESS in (result.stdout + result.stderr):
-                return {"authenticated": True, "model": "gpt-4o"}
-        except Exception as e:
-            logger.debug("GitHub Copilot auth check failed: %s", e)
+        if _check_copilot_gh_auth():
+            return {"authenticated": True, "model": "gpt-4o"}
         return None
 
     # Windsurf (Codeium)
@@ -436,26 +457,13 @@ def get_providers():
         for p in providers:
             name = p["name"]
             config = None
-            # print(f"DEBUG: provider={name} tentative fichier: fichier absent")
             config = get_env_provider_config(name)
-            # print(f"DEBUG: provider={name} tentative env: config={config}")
             if name == "anthropic" or name == "claude":
-                token = (
-                    os.getenv("ANTHROPIC_API_KEY")
-                    or os.getenv("CLAUDE_CODE_OAUTH_TOKEN")
-                    or os.getenv("CLAUDE_API_KEY")
-                )
-                if not token:
-                    from src.connectors.llm_config import get_claude_token_from_system
-
-                    token = get_claude_token_from_system()
-                status[name] = bool(token)
-                # print(f"DEBUG: provider={name} status OAuth/API={status[name]}")
+                status[name] = bool(_get_anthropic_token())
             else:
                 status[name] = bool(
                     config and (config.get("api_key") or config.get("base_url"))
                 )
-                # print(f"DEBUG: provider={name} status final={status[name]}")
         return {"providers": providers, "status": status}
     # Si le fichier existe, on garde la logique mixte
     with open(config_path, encoding="utf-8") as f:
@@ -475,13 +483,7 @@ def get_providers():
             cfg.get("oauth_token") for cfg in provider_configs if cfg.get("oauth_token")
         )
         if name == "anthropic" or name == "claude":
-            token = os.getenv("ANTHROPIC_API_KEY")
-            if not token:
-                from src.connectors.llm_config import get_claude_token_from_system
-
-                token = get_claude_token_from_system()
-            status[name] = bool(token) or has_valid_key or has_oauth_token
-            # print(f"DEBUG: provider={name} status OAuth/API={status[name]}")
+            status[name] = bool(_get_anthropic_token()) or has_valid_key or has_oauth_token
         else:
             env_key = os.getenv(f"{name.upper()}_API_KEY")
             # For Windsurf, check OAuth token instead of API key
@@ -514,20 +516,7 @@ def get_providers():
                 is_valid = is_validated(name, api_key)
             # Cas spécial pour Copilot : vérifier l'authentification gh CLI
             if name == "copilot":
-                try:
-                    import subprocess
-
-                    result = subprocess.run(
-                        ["gh", "auth", "status"],
-                        capture_output=True,
-                        text=True,
-                        timeout=5,
-                    )
-                    status[name] = GITHUB_CLI_AUTH_SUCCESS in (
-                        result.stdout + result.stderr
-                    )
-                except Exception:
-                    status[name] = False
+                status[name] = _check_copilot_gh_auth()
             else:
                 status[name] = is_valid or (
                     env_key is not None and env_key.strip() != ""
@@ -566,7 +555,8 @@ def delete_provider_config_api(provider: str):
 @app.post("/providers/select")
 def select_provider(provider: Annotated[str, Query(...)]):
     global _selected_provider
-    _selected_provider = provider
+    with _provider_lock:
+        _selected_provider = provider
     return {"selected": provider}
 
 
@@ -577,8 +567,8 @@ def get_selected_provider_endpoint():
 
 
 def get_selected_provider() -> str | None:
-    global _selected_provider
-    return _selected_provider
+    with _provider_lock:
+        return _selected_provider
 
 
 @app.post(
@@ -1317,6 +1307,7 @@ def health_check():
             cfg = get_env_provider_config(name)
             provider_status[name] = cfg is not None
         except Exception:
+            logger.debug("Failed to check provider %s availability", name, exc_info=True)
             provider_status[name] = False
     subsystems["providers"] = {"status": "ok", "available": provider_status}
 
@@ -1560,7 +1551,7 @@ async def get_provider_usage(provider: str):
                         "fetched_at": "now",
                     }
             except Exception:
-                pass
+                logger.debug("Failed to call Windsurf GetUser endpoint — skipping", exc_info=True)
             return {
                 "provider": "windsurf",
                 "error": f"Erreur {resp.status_code}: {resp.text[:200]}",
