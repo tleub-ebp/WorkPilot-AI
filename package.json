@@ -20,6 +20,7 @@
 		"lint": "cd apps/frontend && pnpm run lint",
 		"test": "cd apps/frontend && pnpm test",
 		"test:backend": "node scripts/test-backend.js",
+		"test:all": "node scripts/pre-push.js",
 		"package": "cd apps/frontend && pnpm run package",
 		"package:mac": "cd apps/frontend && pnpm run package:mac",
 		"package:win": "cd apps/frontend && pnpm run package:win",
