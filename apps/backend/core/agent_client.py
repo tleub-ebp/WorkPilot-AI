@@ -37,6 +37,8 @@ from dataclasses import dataclass, field
 from enum import Enum
 from typing import Any
 
+from apps.backend.models_registry import get_pricing
+
 logger = logging.getLogger(__name__)
 
 # =============================================================================
@@ -1092,38 +1094,25 @@ class CopilotAgentClient(AgentClient):
 # =============================================================================
 
 
-# OpenAI pricing ($/M tokens, input/output) — update as rates change
-_OPENAI_PRICING: dict[str, tuple[float, float]] = {
-    "gpt-4o": (2.50, 10.00),
-    "gpt-4o-mini": (0.15, 0.60),
-    "gpt-4.1": (2.00, 8.00),
-    "gpt-4.1-mini": (0.40, 1.60),
-    "gpt-4.1-nano": (0.10, 0.40),
-    "gpt-4-turbo": (10.00, 30.00),
-    "gpt-4": (30.00, 60.00),
-    "gpt-3.5-turbo": (0.50, 1.50),
-    "o1": (15.00, 60.00),
-    "o1-mini": (3.00, 12.00),
-    "o1-pro": (150.00, 600.00),
-    "o3": (10.00, 40.00),
-    "o3-mini": (1.10, 4.40),
-    "o4-mini": (1.10, 4.40),
-}
-
-
 def _openai_cost_usd(model: str, input_tokens: int, output_tokens: int) -> float:
-    """Estimate cost in USD for an OpenAI API call."""
-    # Try exact match, then prefix match (e.g. "gpt-4o-2024-11-20" → "gpt-4o")
-    rates = _OPENAI_PRICING.get(model)
-    if rates is None:
-        for key, r in _OPENAI_PRICING.items():
-            if model.startswith(key):
-                rates = r
-                break
-    if rates is None:
-        return 0.0
-    in_rate, out_rate = rates
-    return (input_tokens * in_rate + output_tokens * out_rate) / 1_000_000
+    """Estimate cost in USD for an OpenAI API call using registry lookup."""
+    # Try exact match
+    entry = get_pricing("openai", model)
+    if entry:
+        in_rate = entry.price_input
+        out_rate = entry.price_output
+        return (input_tokens * in_rate + output_tokens * out_rate) / 1_000_000
+
+    # Try prefix match (e.g. "gpt-4o-2024-11-20" → "gpt-4o")
+    # This handles dated snapshots by checking if model starts with a known model
+    from apps.backend.models_registry import list_provider
+    for registry_entry in list_provider("openai"):
+        if model.startswith(registry_entry.model_id):
+            in_rate = registry_entry.price_input
+            out_rate = registry_entry.price_output
+            return (input_tokens * in_rate + output_tokens * out_rate) / 1_000_000
+
+    return 0.0
 
 
 class OpenAIAgentClient(AgentClient):

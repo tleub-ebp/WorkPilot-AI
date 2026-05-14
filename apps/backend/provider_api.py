@@ -34,6 +34,8 @@ from slowapi.util import get_remote_address
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "../../")))
 
+from apps.backend.models_registry import get_default
+
 # Import specific exception for provider validation failures
 try:
     from integrations.graphiti.providers_pkg.exceptions import ProviderError
@@ -238,6 +240,7 @@ def _get_anthropic_token() -> str | None:
     )
     if not token:
         from src.connectors.llm_config import get_claude_token_from_system
+
         token = get_claude_token_from_system()
     return token
 
@@ -245,6 +248,7 @@ def _get_anthropic_token() -> str | None:
 def _check_copilot_gh_auth() -> bool:
     """Return True if 'gh auth status' reports success."""
     import subprocess
+
     try:
         result = subprocess.run(
             ["gh", "auth", "status"], capture_output=True, text=True, timeout=5
@@ -264,46 +268,60 @@ def get_env_provider_config(name: str) -> dict | None:
 
             token = get_claude_token_from_system()
         if token:
-            return {"api_key": token, "model": "claude-opus-4-6"}
+            default_model = get_default("anthropic")
+            model_id = default_model.model_id if default_model else "claude-opus-4-7"
+            return {"api_key": token, "model": model_id}
         return None
 
     # OpenAI
     if name == "openai" and os.getenv("OPENAI_API_KEY"):
+        default_model = get_default("openai")
+        model_id = default_model.model_id if default_model else "gpt-5.5"
         return {
             "api_key": os.getenv("OPENAI_API_KEY"),
-            "model": "gpt-5.2",
+            "model": model_id,
             "base_url": os.getenv("OPENAI_BASE_URL", "https://api.openai.com/v1"),
         }
 
     # Google Gemini
     if name == "google" and os.getenv("GOOGLE_API_KEY"):
-        return {"api_key": os.getenv("GOOGLE_API_KEY"), "model": "gemini-2.5-pro"}
+        default_model = get_default("google")
+        model_id = default_model.model_id if default_model else "gemini-3.1-pro"
+        return {"api_key": os.getenv("GOOGLE_API_KEY"), "model": model_id}
 
     # Mistral AI
     if name == "mistral" and os.getenv("MISTRAL_API_KEY"):
+        default_model = get_default("mistral")
+        model_id = default_model.model_id if default_model else "mistral-large-3"
         return {
             "api_key": os.getenv("MISTRAL_API_KEY"),
-            "model": "mistral-large-2",
+            "model": model_id,
             "base_url": os.getenv("MISTRAL_BASE_URL", "https://api.mistral.ai/v1"),
         }
 
     # DeepSeek
     if name == "deepseek" and os.getenv("DEEPSEEK_API_KEY"):
+        default_model = get_default("deepseek")
+        model_id = default_model.model_id if default_model else "deepseek-v4"
         return {
             "api_key": os.getenv("DEEPSEEK_API_KEY"),
-            "model": "deepseek-r2",
+            "model": model_id,
             "base_url": os.getenv("DEEPSEEK_BASE_URL", "https://api.deepseek.com/v1"),
         }
 
     # Grok (xAI)
     if name == "grok" and os.getenv("GROK_API_KEY"):
-        return {"api_key": os.getenv("GROK_API_KEY"), "model": "grok-2"}
+        default_model = get_default("grok")
+        model_id = default_model.model_id if default_model else "grok-4.3"
+        return {"api_key": os.getenv("GROK_API_KEY"), "model": model_id}
 
     # Meta (LLaMA) — via Together AI or Replicate
     if name == "meta" and os.getenv("META_API_KEY"):
+        default_model = get_default("meta")
+        model_id = default_model.model_id if default_model else "meta-llama/llama-4-scout"
         return {
             "api_key": os.getenv("META_API_KEY"),
-            "model": "meta-llama/llama-4-scout",
+            "model": model_id,
             "base_url": os.getenv("META_BASE_URL", "https://api.together.xyz/v1"),
         }
 
@@ -312,11 +330,13 @@ def get_env_provider_config(name: str) -> dict | None:
         access_key = os.getenv("AWS_ACCESS_KEY_ID")
         secret_key = os.getenv("AWS_SECRET_ACCESS_KEY")
         if access_key and secret_key:
+            default_model = get_default("aws")
+            model_id = default_model.model_id if default_model else "anthropic.claude-opus-4-7"
             return {
                 "api_key": access_key,
                 "secret_key": secret_key,
                 "region": os.getenv("AWS_DEFAULT_REGION", "us-east-1"),
-                "model": "anthropic.claude-opus-4-6-v1",
+                "model": model_id,
             }
         return None
 
@@ -483,7 +503,9 @@ def get_providers():
             cfg.get("oauth_token") for cfg in provider_configs if cfg.get("oauth_token")
         )
         if name == "anthropic" or name == "claude":
-            status[name] = bool(_get_anthropic_token()) or has_valid_key or has_oauth_token
+            status[name] = (
+                bool(_get_anthropic_token()) or has_valid_key or has_oauth_token
+            )
         else:
             env_key = os.getenv(f"{name.upper()}_API_KEY")
             # For Windsurf, check OAuth token instead of API key
@@ -1307,7 +1329,9 @@ def health_check():
             cfg = get_env_provider_config(name)
             provider_status[name] = cfg is not None
         except Exception:
-            logger.debug("Failed to check provider %s availability", name, exc_info=True)
+            logger.debug(
+                "Failed to check provider %s availability", name, exc_info=True
+            )
             provider_status[name] = False
     subsystems["providers"] = {"status": "ok", "available": provider_status}
 
@@ -1551,7 +1575,9 @@ async def get_provider_usage(provider: str):
                         "fetched_at": "now",
                     }
             except Exception:
-                logger.debug("Failed to call Windsurf GetUser endpoint — skipping", exc_info=True)
+                logger.debug(
+                    "Failed to call Windsurf GetUser endpoint — skipping", exc_info=True
+                )
             return {
                 "provider": "windsurf",
                 "error": f"Erreur {resp.status_code}: {resp.text[:200]}",
