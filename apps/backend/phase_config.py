@@ -12,7 +12,12 @@ import re
 from pathlib import Path
 from typing import Literal, TypedDict
 
-from .models_registry import get_default
+try:
+    from .models_registry import get_default
+except ImportError:
+    # Module is imported as a top-level "phase_config" (no package context),
+    # e.g. by tests that put apps/backend on sys.path directly.
+    from models_registry import get_default  # type: ignore[no-redef]
 
 # Model shorthand to full model ID mapping
 MODEL_ID_MAP: dict[str, str] = {
