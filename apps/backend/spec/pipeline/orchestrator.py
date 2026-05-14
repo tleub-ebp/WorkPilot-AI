@@ -465,8 +465,9 @@ class SpecOrchestrator:
         assessment_file = self.spec_dir / "complexity_assessment.json"
         requirements_file = self.spec_dir / "requirements.json"
 
-        # Load requirements for full context
-        requirements_context = self._load_requirements_context(requirements_file)
+        # Load requirements for full context — call is for the side effect of
+        # populating self.task_description; the returned string is unused here.
+        self._load_requirements_context(requirements_file)
 
         if self.complexity_override:
             # Manual override
