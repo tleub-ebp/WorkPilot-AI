@@ -16,6 +16,7 @@ from dataclasses import dataclass
 from enum import Enum
 
 from apps.backend.models_registry import get_tier
+
 from .live_tracker import LiveCostTracker
 
 logger = logging.getLogger(__name__)

@@ -234,7 +234,11 @@ class CIDiscovery:
                     result.environment_variables.extend(env.keys())
 
             except Exception:
-                logger.debug("Failed to parse GitHub Actions workflow %s — skipping", wf_file, exc_info=True)
+                logger.debug(
+                    "Failed to parse GitHub Actions workflow %s — skipping",
+                    wf_file,
+                    exc_info=True,
+                )
                 continue
 
         return result

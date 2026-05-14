@@ -318,7 +318,9 @@ def get_env_provider_config(name: str) -> dict | None:
     # Meta (LLaMA) — via Together AI or Replicate
     if name == "meta" and os.getenv("META_API_KEY"):
         default_model = get_default("meta")
-        model_id = default_model.model_id if default_model else "meta-llama/llama-4-scout"
+        model_id = (
+            default_model.model_id if default_model else "meta-llama/llama-4-scout"
+        )
         return {
             "api_key": os.getenv("META_API_KEY"),
             "model": model_id,
@@ -331,7 +333,9 @@ def get_env_provider_config(name: str) -> dict | None:
         secret_key = os.getenv("AWS_SECRET_ACCESS_KEY")
         if access_key and secret_key:
             default_model = get_default("aws")
-            model_id = default_model.model_id if default_model else "anthropic.claude-opus-4-7"
+            model_id = (
+                default_model.model_id if default_model else "anthropic.claude-opus-4-7"
+            )
             return {
                 "api_key": access_key,
                 "secret_key": secret_key,
