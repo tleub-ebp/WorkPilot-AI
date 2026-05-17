@@ -28,7 +28,12 @@ from typing import Any
 
 import httpx
 
-from .models_registry import ModelEntry, list_provider
+try:
+    from .models_registry import ModelEntry, list_provider
+except ImportError:
+    # Module is imported as a top-level "provider_models_catalog" (no package
+    # context), e.g. by provider_api.py when apps/backend is on sys.path.
+    from models_registry import ModelEntry, list_provider  # type: ignore[no-redef]
 
 logger = logging.getLogger(__name__)
 

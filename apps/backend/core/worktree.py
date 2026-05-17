@@ -1581,6 +1581,7 @@ class WorktreeManager:
         target_branch: str | None = None,
         title: str | None = None,
         draft: bool = False,
+        body: str | None = None,
     ) -> PullRequestResult:
         """
         Create a GitHub pull request for a spec's branch using gh CLI with retry logic.
@@ -1590,6 +1591,9 @@ class WorktreeManager:
             target_branch: Target branch for PR (defaults to base_branch)
             title: PR title (defaults to spec name)
             draft: Whether to create as draft PR
+            body: PR body. If provided, used as-is; otherwise the body is
+                  auto-generated (AI-powered from project template, falling
+                  back to spec summary).
 
         Returns:
             PullRequestResult with keys:
@@ -1608,22 +1612,24 @@ class WorktreeManager:
         target = target_branch or self.base_branch
         pr_title = title or f"feat: {spec_name}"
 
-        # Try AI-powered PR body from project's PR template, fall back to spec summary
-        pr_body: str | None = None
-        try:
-            diff_summary, commit_log = self._gather_pr_context(spec_name, target)
-            pr_body = self._try_ai_pr_body(
-                spec_name=spec_name,
-                target_branch=target,
-                branch_name=info.branch,
-                diff_summary=diff_summary,
-                commit_log=commit_log,
-            )
-        except Exception as e:
-            logger.warning(f"AI PR body generation encountered an error: {e}")
+        # Caller-provided body wins. Otherwise try AI-powered PR body from
+        # project's PR template, falling back to spec summary.
+        pr_body: str | None = body
+        if pr_body is None:
+            try:
+                diff_summary, commit_log = self._gather_pr_context(spec_name, target)
+                pr_body = self._try_ai_pr_body(
+                    spec_name=spec_name,
+                    target_branch=target,
+                    branch_name=info.branch,
+                    diff_summary=diff_summary,
+                    commit_log=commit_log,
+                )
+            except Exception as e:
+                logger.warning(f"AI PR body generation encountered an error: {e}")
 
-        if not pr_body:
-            pr_body = self._extract_spec_summary(spec_name)
+            if not pr_body:
+                pr_body = self._extract_spec_summary(spec_name)
 
         # Find gh executable before attempting PR creation
         gh_executable = get_gh_executable()

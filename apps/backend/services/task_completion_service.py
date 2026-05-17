@@ -279,6 +279,7 @@ class TaskCompletionService:
             spec_name=spec_id,
             target_branch=target,
             title=pr_title,
+            body=pr_body,
             draft=False,  # PR normale qui nécessite review
         )
 
