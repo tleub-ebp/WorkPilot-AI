@@ -1916,66 +1916,9 @@ def get_auto_detect_status():
         return {"success": False, "error": _safe_error_message(e)}
 
 
-# --- 9.1 GitHub PR Details ---
-@app.get("/api/github/pr-details")
-def get_pr_details(pr_url: Annotated[str, Query(...)]):
-    """Get PR details including files and diffs from GitHub."""
-    try:
-        from runners.github.providers.github_provider import GitHubProvider
-
-        # Extract PR number and repo from URL
-        # Expected format: https://github.com/owner/repo/pull/123
-        if "github.com" not in pr_url or "/pull/" not in pr_url:
-            return {"success": False, "error": "Invalid GitHub PR URL format"}
-
-        # Parse URL to get owner, repo, and PR number
-        parts = pr_url.strip("/").split("/")
-        if len(parts) < 5 or parts[3] != "pull":
-            return {"success": False, "error": "Invalid GitHub PR URL format"}
-
-        owner = parts[2]
-        repo = parts[3]
-        pr_number = parts[4]
-
-        # Initialize GitHub provider
-        provider = GitHubProvider()
-
-        # Fetch PR data
-        pr_data = provider.fetch_pr(owner, repo, int(pr_number))
-
-        if not pr_data:
-            return {"success": False, "error": "Failed to fetch PR data"}
-
-        # Convert to dict for JSON serialization
-        result = {
-            "success": True,
-            "data": {
-                "number": pr_data.number,
-                "title": pr_data.title,
-                "body": pr_data.body,
-                "state": pr_data.state,
-                "author": pr_data.author,
-                "createdAt": pr_data.created_at,
-                "updatedAt": pr_data.updated_at,
-                "url": pr_data.url,
-                "baseBranch": pr_data.base_branch,
-                "headBranch": pr_data.head_branch,
-                "mergeable": pr_data.mergeable,
-                "additions": pr_data.additions,
-                "deletions": pr_data.deletions,
-                "changedFiles": pr_data.changed_files,
-                "files": pr_data.files,
-                "diff": pr_data.diff,
-            },
-        }
-
-        return result
-    except Exception as e:
-        return {"success": False, "error": _safe_error_message(e)}
-
-
-# Test Generation Agent API moved to test_generation/api.py — mounted below
-# alongside the other feature routers (see app.include_router block).
+# GitHub PR Details endpoint moved to runners/github/api.py
+# Test Generation Agent API moved to test_generation/api.py
+# Both mounted below alongside the other feature routers.
 
 
 # --- Event-Driven Hooks System API ---
@@ -2389,6 +2332,14 @@ try:
     app.include_router(test_generation_router)
 except ImportError as e:
     print(f"Warning: Could not import test_generation router: {e}")
+
+# --- GitHub PR Details API (extracted from this file) ---
+try:
+    from runners.github.api import router as github_api_router
+
+    app.include_router(github_api_router)
+except ImportError as e:
+    print(f"Warning: Could not import github api router: {e}")
 
 if __name__ == "__main__":
     import uvicorn
