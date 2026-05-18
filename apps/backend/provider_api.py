@@ -1569,146 +1569,8 @@ async def get_provider_usage(provider: str):
 # Dashboard + Session History endpoints moved to dashboard/api.py
 
 
-# --- 2.1 Refactoring Agent ---
-@app.post("/api/refactoring/detect-smells")
-def detect_smells(body: Annotated[dict[str, Any], Body(...)]):
-    try:
-        from agents.refactorer import RefactoringAgent
-
-        agent = RefactoringAgent(thresholds=body.get("thresholds", {}))
-        source = body.get("source", "")
-        smells = agent.detect_smells_from_source(source)
-        return {
-            "success": True,
-            "smells": [
-                s.to_dict() if hasattr(s, "to_dict") else s.__dict__ for s in smells
-            ],
-        }
-    except Exception as e:
-        return {"success": False, "error": _safe_error_message(e)}
-
-
-@app.post("/api/refactoring/propose")
-def propose_refactoring(body: Annotated[dict[str, Any], Body(...)]):
-    try:
-        from agents.refactorer import RefactoringAgent
-
-        agent = RefactoringAgent(thresholds=body.get("thresholds", {}))
-        source = body.get("source", "")
-        proposals = agent.propose_refactoring(source=source)
-        return {
-            "success": True,
-            "proposals": [
-                p.to_dict() if hasattr(p, "to_dict") else p.__dict__ for p in proposals
-            ],
-        }
-    except Exception as e:
-        return {"success": False, "error": _safe_error_message(e)}
-
-
-# --- 2.2 Documentation Agent ---
-@app.post("/api/documentation/coverage")
-def check_doc_coverage(body: Annotated[dict[str, Any], Body(...)]):
-    try:
-        from agents.documenter import DocFormat, DocumentationAgent
-
-        fmt = body.get("format", "google")
-        agent = DocumentationAgent(default_format=DocFormat(fmt))
-        file_path = body.get("file_path", "")
-        coverage = agent.check_documentation_coverage(file_path=file_path)
-        return {"success": True, "coverage": coverage}
-    except Exception as e:
-        return {"success": False, "error": _safe_error_message(e)}
-
-
-@app.post("/api/documentation/generate-docstrings")
-def generate_docstrings(body: Annotated[dict[str, Any], Body(...)]):
-    try:
-        from agents.documenter import DocFormat, DocumentationAgent
-
-        fmt = body.get("format", "google")
-        agent = DocumentationAgent(default_format=DocFormat(fmt))
-        file_path = body.get("file_path", "")
-        result = agent.generate_docstrings(file_path=file_path)
-        return {
-            "success": True,
-            "result": result.to_dict()
-            if hasattr(result, "to_dict")
-            else result.__dict__,
-        }
-    except Exception as e:
-        return {"success": False, "error": _safe_error_message(e)}
-
-
-@app.post("/api/documentation/generate-readme")
-def generate_readme(body: Annotated[dict[str, Any], Body(...)]):
-    try:
-        from agents.documenter import DocFormat, DocumentationAgent
-
-        fmt = body.get("format", "google")
-        agent = DocumentationAgent(default_format=DocFormat(fmt))
-        dir_path = body.get("dir_path", "")
-        result = agent.generate_module_readme(dir_path)
-        return {
-            "success": True,
-            "result": result.to_dict()
-            if hasattr(result, "to_dict")
-            else result.__dict__,
-        }
-    except Exception as e:
-        return {"success": False, "error": _safe_error_message(e)}
-
-
-# --- 2.4 Feedback Learning ---
-@app.get("/api/feedback/stats/{project_id}")
-def get_feedback_stats(project_id: str):
-    try:
-        from agents.feedback_learning import FeedbackLearning
-
-        fl = FeedbackLearning()
-        stats = fl.get_stats(project_id)
-        return {"success": True, "stats": stats}
-    except Exception as e:
-        return {"success": False, "error": _safe_error_message(e)}
-
-
-# --- 3.2 Task Templates ---
-@app.get("/api/templates")
-def list_task_templates():
-    try:
-        from scheduling.task_templates import TemplateManager
-
-        tm = TemplateManager()
-        templates = tm.list_templates()
-        return {
-            "success": True,
-            "templates": [
-                t.to_dict() if hasattr(t, "to_dict") else t.__dict__ for t in templates
-            ],
-        }
-    except Exception as e:
-        return {"success": False, "error": _safe_error_message(e)}
-
-
-# --- 3.3 AI Code Review ---
-@app.post("/api/code-review/analyze")
-def analyze_code_review(body: Annotated[dict[str, Any], Body(...)]):
-    try:
-        from review.ai_code_review import AICodeReview
-
-        reviewer = AICodeReview()
-        diff = body.get("diff", "")
-        result = reviewer.review_diff(diff)
-        return {
-            "success": True,
-            "review": result.to_dict()
-            if hasattr(result, "to_dict")
-            else result.__dict__,
-        }
-    except Exception as e:
-        return {"success": False, "error": _safe_error_message(e)}
-
-
+# Refactoring + documentation + feedback + templates + code-review
+# endpoints moved to agent_endpoints/api.py
 # System status endpoints moved to system_status/api.py
 # GitHub PR Details endpoint moved to runners/github/api.py
 # Test Generation Agent API moved to test_generation/api.py
@@ -2150,6 +2012,14 @@ try:
     app.include_router(dashboard_router)
 except ImportError as e:
     print(f"Warning: Could not import dashboard router: {e}")
+
+# --- Agent feature endpoints (extracted from this file) ---
+try:
+    from agent_endpoints.api import router as agent_endpoints_router
+
+    app.include_router(agent_endpoints_router)
+except ImportError as e:
+    print(f"Warning: Could not import agent_endpoints router: {e}")
 
 if __name__ == "__main__":
     import uvicorn
