@@ -1566,106 +1566,7 @@ async def get_provider_usage(provider: str):
 # ---------------------------------------------------------------------------
 
 
-# --- 1.1 Dashboard Metrics ---
-def _load_dashboard_snapshot(project_id: str) -> dict:
-    """Load dashboard_snapshot.json written by core.usage_tracker.
-    project_id is the project path (URL-decoded by FastAPI)."""
-    import json as _json
-    from pathlib import Path as _Path
-
-    base_dir = _Path.cwd().resolve()
-    try:
-        project_path = (base_dir / project_id).resolve()
-        project_path.relative_to(base_dir)
-    except Exception:
-        return {}
-
-    if not project_path.is_dir():
-        return {}
-    snap_path = project_path / ".workpilot" / "dashboard_snapshot.json"
-    if snap_path.is_file() and str(snap_path.resolve()).startswith(str(project_path)):
-        try:
-            return _json.loads(snap_path.read_text(encoding="utf-8"))
-        except Exception:
-            pass
-    return {
-        "tasks_by_status": {},
-        "avg_completion_by_complexity": {},
-        "qa_first_pass_rate": 0.0,
-        "qa_avg_score": 0.0,
-        "total_tokens": 0,
-        "tokens_by_provider": {},
-        "total_cost": 0.0,
-        "cost_by_model": {},
-        "merge_auto_count": 0,
-        "merge_manual_count": 0,
-    }
-
-
-@app.get("/api/dashboard/snapshot/{project_id:path}")
-def get_dashboard_snapshot(project_id: str):
-    try:
-        snap = _load_dashboard_snapshot(project_id)
-        # Compute merge rate
-        auto = snap.get("merge_auto_count", 0)
-        manual = snap.get("merge_manual_count", 0)
-        total_merges = auto + manual
-        merge_rate = (auto / total_merges * 100) if total_merges > 0 else 0.0
-        snap["merge_auto_rate"] = merge_rate
-        # Flatten avg_completion (list → mean)
-        avg_compl = {}
-        for k, v in snap.get("avg_completion_by_complexity", {}).items():
-            if isinstance(v, list) and v:
-                avg_compl[k] = sum(v) / len(v)
-            else:
-                avg_compl[k] = v or 0.0
-        snap["avg_completion_by_complexity"] = avg_compl
-        return {"success": True, "snapshot": snap}
-    except Exception as e:
-        return {"success": False, "error": _safe_error_message(e)}
-
-
-@app.get("/api/dashboard/stats")
-def get_dashboard_stats():
-    return {"success": True, "stats": {}}
-
-
-@app.get("/api/dashboard/export/{project_id:path}")
-def export_dashboard(project_id: str, fmt: str = "json"):
-    try:
-        import csv as _csv
-        import io as _io
-
-        snap = _load_dashboard_snapshot(project_id)
-        if fmt == "csv":
-            buf = _io.StringIO()
-            writer = _csv.writer(buf)
-            writer.writerow(["metric", "value"])
-            for k, v in snap.items():
-                if not k.startswith("_"):
-                    writer.writerow([k, v])
-            return {"success": True, "report": buf.getvalue(), "format": "csv"}
-        return {"success": True, "report": snap, "format": "json"}
-    except Exception as e:
-        return {"success": False, "error": _safe_error_message(e)}
-
-
-# --- 1.2 Session History ---
-@app.get("/api/sessions/{project_id}")
-def get_sessions(project_id: str):
-    try:
-        from agents.session_history import SessionRecorder
-
-        sh = SessionRecorder(project_id=project_id)
-        sessions = sh.list_sessions()
-        return {
-            "success": True,
-            "sessions": [
-                s.to_dict() if hasattr(s, "to_dict") else s.__dict__ for s in sessions
-            ],
-        }
-    except Exception as e:
-        return {"success": False, "error": _safe_error_message(e)}
+# Dashboard + Session History endpoints moved to dashboard/api.py
 
 
 # --- 2.1 Refactoring Agent ---
@@ -2241,6 +2142,14 @@ try:
     app.include_router(system_status_router)
 except ImportError as e:
     print(f"Warning: Could not import system_status router: {e}")
+
+# --- Dashboard + Sessions API (extracted from this file) ---
+try:
+    from dashboard.api import router as dashboard_router
+
+    app.include_router(dashboard_router)
+except ImportError as e:
+    print(f"Warning: Could not import dashboard router: {e}")
 
 if __name__ == "__main__":
     import uvicorn
