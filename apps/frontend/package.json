@@ -118,7 +118,7 @@
 		"zustand": "^5.0.9"
 	},
 	"devDependencies": {
-		"@biomejs/biome": "2.4.10",
+		"@biomejs/biome": "2.4.12",
 		"@electron-toolkit/preload": "^3.0.2",
 		"@electron-toolkit/utils": "^4.0.0",
 		"@electron/rebuild": "^4.0.2",
