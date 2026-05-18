@@ -233,20 +233,31 @@ if (pytestPath) {
 	);
 }
 
-// Frontend: biome check + typecheck + vitest run.
+// Frontend: biome check + typecheck. (vitest is run sequentially AFTER the
+// parallel batch — see below — to avoid CPU contention with backend:pytest
+// that was starving vitest worker forks and producing spurious
+// "Vitest failed to access its internal state" / worker-timeout errors.)
 const pnpmCmd = IS_WINDOWS ? "pnpm.cmd" : "pnpm";
 jobs.push(
 	runJob("frontend:lint", pnpmCmd, ["run", "lint"], { cwd: frontendDir }),
 	runJob("frontend:typecheck", pnpmCmd, ["run", "typecheck"], {
 		cwd: frontendDir,
 	}),
-	runJob("frontend:test", pnpmCmd, ["run", "test"], { cwd: frontendDir }),
 );
 
-console.log(`🚦 Running ${jobs.length} pre-push checks in parallel...\n`);
+console.log(
+	`🚦 Running ${jobs.length} pre-push checks in parallel (vitest deferred)...\n`,
+);
 const startedAt = Date.now();
 
-Promise.all(jobs).then((results) => {
+Promise.all(jobs).then(async (parallelResults) => {
+	// Run vitest only after the parallel batch settles, so it doesn't fight
+	// pytest for CPU. We still surface its result alongside the others.
+	const vitestResult = await runJob("frontend:test", pnpmCmd, ["run", "test"], {
+		cwd: frontendDir,
+	});
+	const results = [...parallelResults, vitestResult];
+
 	const totalSec = ((Date.now() - startedAt) / 1000).toFixed(1);
 	const failed = results.filter((r) => r.code !== 0);
 
