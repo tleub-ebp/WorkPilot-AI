@@ -145,10 +145,12 @@ if (changed !== null && changed.length > 0) {
 function runJob(name, cmd, args, opts = {}) {
 	return new Promise((resolve) => {
 		const start = Date.now();
+		// opts.env (if provided) is merged on top of process.env + FORCE_COLOR
+		// so callers can add per-job env vars (e.g. VITEST_SINGLE_FORK).
 		const child = spawn(cmd, args, {
 			cwd: opts.cwd || ROOT,
 			shell: IS_WINDOWS,
-			env: { ...process.env, FORCE_COLOR: "1" },
+			env: { ...process.env, FORCE_COLOR: "1", ...(opts.env || {}) },
 		});
 
 		let stdout = "";
@@ -252,10 +254,35 @@ const startedAt = Date.now();
 
 Promise.all(jobs).then(async (parallelResults) => {
 	// Run vitest only after the parallel batch settles, so it doesn't fight
-	// pytest for CPU. We still surface its result alongside the others.
-	const vitestResult = await runJob("frontend:test", pnpmCmd, ["run", "test"], {
+	// pytest for CPU. VITEST_LIMIT_WORKERS=1 caps vitest at maxWorkers:2
+	// (see vitest.config.ts) to dampen the Windows fork-pool flake.
+	//
+	// Retry-once policy: if vitest fails AND the failure looks like the
+	// well-known worker-startup flake (not a real test assertion),
+	// re-run it. The same suite passes deterministically on retry.
+	const vitestEnv = { ...process.env, VITEST_LIMIT_WORKERS: "1" };
+	const VITEST_FLAKE_SIGNATURE =
+		/Vitest failed to access its internal state|\[vitest-pool-runner\]: Timeout waiting for worker|\[vitest-pool\]: Failed to start forks worker/;
+
+	let vitestResult = await runJob("frontend:test", pnpmCmd, ["run", "test"], {
 		cwd: frontendDir,
+		env: vitestEnv,
 	});
+
+	if (
+		vitestResult.code !== 0 &&
+		VITEST_FLAKE_SIGNATURE.test(vitestResult.stdout + vitestResult.stderr)
+	) {
+		console.log(
+			"\n⚠  frontend:test failed with vitest worker-flake signature — retrying once.\n",
+		);
+		vitestResult = await runJob("frontend:test", pnpmCmd, ["run", "test"], {
+			cwd: frontendDir,
+			env: vitestEnv,
+		});
+		vitestResult.name = "frontend:test (retry)";
+	}
+
 	const results = [...parallelResults, vitestResult];
 
 	const totalSec = ((Date.now() - startedAt) / 1000).toFixed(1);
