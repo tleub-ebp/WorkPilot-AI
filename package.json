@@ -35,6 +35,7 @@
 		"node": ">=20.0.0",
 		"pnpm": ">=8.0.0"
 	},
+	"packageManager": "pnpm@10.27.0",
 	"repository": {
 		"type": "git",
 		"url": "https://github.com/tleub-ebp/WorkPilot-AI.git"
