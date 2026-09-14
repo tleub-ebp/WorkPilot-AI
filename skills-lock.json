@@ -15,6 +15,24 @@
 			"version": "1.0.0",
 			"source": "local",
 			"path": "skills/tooling"
+		},
+		"claude-mem": {
+			"upstreamTreeSha": "faf5f0359adf678672852fb2f2989ddefc5ce760"
+		},
+		"impeccable": {
+			"upstreamTreeSha": "5dcd0087efac1561c12c0fc429732258159adbf4"
+		},
+		"mattpocock": {
+			"upstreamTreeSha": "6e84c093fda2026396cea9fad6a924a6da0e1452"
+		},
+		"superpowers": {
+			"upstreamTreeSha": "21219529a4e224bcb27baf8816b039c8bf7c6673"
+		},
+		"task-observer": {
+			"upstreamTreeSha": "9ce1206d46a61f22af5af16fe3b8cbda013a1244"
+		},
+		"bmad": {
+			"upstreamTreeSha": "a36fbc10aa0ba59005e812fbf8fed1dd03404d6f"
 		}
 	},
 	"skills": {
